@@ -15,6 +15,10 @@ import {
   Shield,
   ChartArea,
   Home,
+  MessageSquare,
+  Calendar1,
+  Car,
+  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -36,39 +40,97 @@ import { RootState } from "@/store/store";
 import { getUser, clearAuth } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { permissionService } from "@/services/permissionService";
-
-
+import { Calendar } from "./ui/calendar";
+import axios from "axios";
+import { toast } from "sonner";
 
 // Employee modules/packages
 const employeeModules = [
+  { name: "Dashboard", icon: Home },
   { name: "Project Task", icon: FolderKanban },
   { name: "Ticket", icon: Ticket },
-
   { name: "Visitors", icon: Users },
+  { name: "Calendar", icon: Calendar1 },
+  { name: "Documents", icon: FileText },
+  { name: "ID Card", icon: User },
   { name: "MOM", icon: FileText },
-  { name: "Booking", icon: Package },
-  // { name: "Meeting Room", icon: Shield },
-  { name: "F&B", icon: ChartArea },
-  { name: "Documents", icon: ChartArea },
-  { name: "ID Card", icon: ChartArea },
-
-
-  { name: "Notes ", icon: FileText },
+  { name: "TO DO", icon: MessageSquare },
   { name: "Ask AI", icon: ChartArea },
-
-
+  { name: "Book Seats", icon: Calendar1 },
+  { name: "Parking", icon: Car },
+  { name: "Booking", icon: Package },
+  { name: "F&B", icon: ChartArea },
 ];
 
 export const EmployeeHeader: React.FC = () => {
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
+  const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
+
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const [availableBalance, setAvailableBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchWalleteDetails = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wallet/balance.json?user_id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response.data);
+      setAvailableBalance(response.data.available_amount);
+    } catch (error: any) {
+      console.log(error);
+      if (error.response?.data?.message === "Wallet not found") {
+        console.log(error);
+      } else {
+        toast.error("Failed to load wallet details");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id && baseUrl && token) {
+      fetchWalleteDetails();
+    }
+  }, [id, baseUrl, token]);
 
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+
+  // Module visibility management
+  const [visibleModules, setVisibleModules] = useState<string[]>(() => {
+    const saved = localStorage.getItem("employeeVisibleModules");
+    return saved
+      ? JSON.parse(saved)
+      : employeeModules.slice(0, 10).map((m) => m.name);
+  });
+
+  const MAX_VISIBLE_MODULES = 10;
+  // Get displayed modules in the order they appear in visibleModules array
+  const displayedModules = visibleModules
+    .slice(0, MAX_VISIBLE_MODULES)
+    .map((name) => employeeModules.find((m) => m.name === name))
+    .filter((m) => m !== undefined);
+  // Hidden modules are those NOT in the visibleModules list
+  const hiddenModules = employeeModules.filter(
+    (m) => !visibleModules.includes(m.name)
+  );
   // Get user data
   const user = getUser() || {
     id: 0,
@@ -78,6 +140,12 @@ export const EmployeeHeader: React.FC = () => {
   };
   const userFullName = `${user.firstname} ${user.lastname}`.trim();
 
+  const [viAccount, setViAccount] = useState<{
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    role_name?: string;
+  } | null>(null);
 
   const handleLogout = () => {
     clearAuth();
@@ -92,9 +160,42 @@ export const EmployeeHeader: React.FC = () => {
     navigate("/profile/settings");
   };
 
-  const handleNotificationsClick = () => {
-    navigate("/notifications");
+  const fetchNotifications = async () => {
+    try {
+      // Mock notifications - replace with actual API call
+      const userNotifications = await axios.get(`https://${localStorage.getItem("baseUrl")}/user_notifications.json`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+
+      setNotifications(userNotifications.data.unread_notifications);
+      setNotificationCount(userNotifications.data.unread_notifications.length);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
   };
+
+  const markAsRead = (notificationId: number) => {
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+    setNotificationCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+    setNotificationCount(0);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const loadUserInfo = () => {
@@ -109,22 +210,34 @@ export const EmployeeHeader: React.FC = () => {
 
   const handleModuleClick = (moduleName: string) => {
     setCurrentSection(moduleName);
+    setIsModuleMenuOpen(false);
+
     // Navigate to the module's default page
     switch (moduleName) {
+      case "Dashboard":
+        navigate("/employee/dashboard");
+        break;
       case "Project Task":
         navigate("/vas/projects");
         break;
       case "Ticket":
         navigate("/maintenance/ticket/employee");
         break;
-      case "MOM":
-        navigate("/vas/mom");
-        break;
       case "Visitors":
         navigate("/security/visitor/employee");
         break;
       case "MOM":
-        navigate("/settings/vas/mom/client-tag-setup");
+        navigate("/vas/mom");
+        break;
+
+      case "Book Seats":
+        navigate("/employee/space-management/bookings");
+        break;
+      case "Parking":
+        navigate("/parking");
+        break;
+      case "Calendar":
+        navigate("/employee/calendar");
         break;
       case "Booking":
         navigate("/bookings-overview");
@@ -138,7 +251,7 @@ export const EmployeeHeader: React.FC = () => {
       case "ID Card":
         navigate("/business-card");
         break;
-      case "Notes ":
+      case "TO DO":
         navigate("/vas/todo");
         break;
       case "Ask AI":
@@ -149,6 +262,63 @@ export const EmployeeHeader: React.FC = () => {
     }
   };
 
+  const handleModuleDragStart = (e: React.DragEvent, moduleName: string) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", moduleName);
+  };
+
+  const handleModuleDrop = (e: React.DragEvent, targetModuleName: string) => {
+    e.preventDefault();
+    const draggedModuleName = e.dataTransfer.getData("text/plain");
+
+    if (draggedModuleName === targetModuleName) return;
+
+    const newVisibleModules = [...visibleModules];
+    const draggedIndex = newVisibleModules.indexOf(draggedModuleName);
+    const targetIndex = newVisibleModules.indexOf(targetModuleName);
+
+    // Case 1: Both modules are in visible list - reorder them
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      // Remove dragged item from its current position
+      newVisibleModules.splice(draggedIndex, 1);
+      // Insert it at the target position
+      newVisibleModules.splice(targetIndex, 0, draggedModuleName);
+
+      setVisibleModules(newVisibleModules);
+      localStorage.setItem(
+        "employeeVisibleModules",
+        JSON.stringify(newVisibleModules)
+      );
+    }
+    // Case 2: Dragged module is hidden, target is visible - swap them
+    else if (draggedIndex === -1 && targetIndex !== -1) {
+      // Replace the target module with the dragged module
+      newVisibleModules[targetIndex] = draggedModuleName;
+
+      setVisibleModules(newVisibleModules);
+      localStorage.setItem(
+        "employeeVisibleModules",
+        JSON.stringify(newVisibleModules)
+      );
+    }
+  };
+
+  const handleModuleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const toggleModuleVisibility = (moduleName: string) => {
+    const newVisibleModules = visibleModules.includes(moduleName)
+      ? visibleModules.filter((m) => m !== moduleName)
+      : [...visibleModules, moduleName];
+
+    setVisibleModules(newVisibleModules);
+    localStorage.setItem(
+      "employeeVisibleModules",
+      JSON.stringify(newVisibleModules)
+    );
+  };
 
   const userType = localStorage.getItem("userType");
 
@@ -166,12 +336,15 @@ export const EmployeeHeader: React.FC = () => {
   const isWebSite = hostname.includes("web.gophygital.work");
 
   const isLocalhost =
-    hostname.includes("lockated.gophygital.work");
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("localhost") ||
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com");
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-[100] shadow-sm">
-      <div className="flex items-center justify-between h-full px-4 lg:px-6 max-w-[1920px] mx-auto">
+    <header className="fixed top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-200 z-[100] shadow-sm">
+      <div className="flex items-center justify-between h-full px-2 sm:px-4 lg:px-6 max-w-[1920px] mx-auto">
         {/* Left Section - Logo & Company Info */}
-        <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
           {isOmanSite ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -279,58 +452,143 @@ export const EmployeeHeader: React.FC = () => {
               </defs>
             </svg>
           )}
-
-
         </div>
 
         {/* Center Section - Module Navigation */}
         <div className="flex-1 flex justify-center px-2 lg:px-4 overflow-x-auto scrollbar-hide">
           <TooltipProvider delayDuration={300}>
-            <div className="flex items-center gap-1  rounded-lg p-1 ">
-              {employeeModules.map((module) => {
+            <div className="flex items-center gap-1 rounded-lg p-1">
+              {/* Main visible modules */}
+              {displayedModules.map((module) => {
                 const Icon = module.icon;
                 const isActive = currentSection === module.name;
-                // Truncate module name to 8 characters for display
-                const truncatedName = module.name.length > 8
-                  ? module.name.substring(0, 8) + '..'
-                  : module.name;
+                const truncatedName =
+                  module.name.length > 8
+                    ? module.name.substring(0, 8) + ".."
+                    : module.name;
 
                 return (
                   <Tooltip key={module.name}>
                     <TooltipTrigger asChild>
                       <button
+                        draggable
+                        onDragStart={(e) =>
+                          handleModuleDragStart(e, module.name)
+                        }
+                        onDrop={(e) => handleModuleDrop(e, module.name)}
+                        onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex  items-center align-middle gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${isActive
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
                           ? "bg-white text-[#C72030] shadow-sm"
                           : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
                           }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden lg:inline">{truncatedName}</span>
+                        <span className="hidden lg:inline text-[10px] sm:text-xs">
+                          {truncatedName}
+                        </span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-800">
+                    <TooltipContent
+                      side="bottom"
+                      className="bg-gray-900 text-white border-gray-800"
+                    >
                       <p className="text-xs font-medium">{module.name}</p>
                     </TooltipContent>
                   </Tooltip>
                 );
               })}
+
+              {/* More modules dropdown */}
+              {hiddenModules.length > 0 && (
+                <DropdownMenu
+                  open={isModuleMenuOpen}
+                  onOpenChange={setIsModuleMenuOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex flex-col items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-all hover:bg-white/50 text-gray-600 hover:text-gray-900">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                      </svg>
+                      <span className="text-[10px] sm:text-xs font-medium hidden lg:inline">
+                        More
+                      </span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="center"
+                    className="w-64 max-h-96 overflow-y-auto"
+                  >
+                    <div className="p-2">
+                      <p className="text-xs font-semibold text-gray-500 mb-2 px-2">
+                        More Modules
+                      </p>
+                      <div className="space-y-1">
+                        {hiddenModules.map((module) => {
+                          const Icon = module.icon;
+                          const isActive = currentSection === module.name;
+                          return (
+                            <button
+                              key={module.name}
+                              draggable
+                              onDragStart={(e) =>
+                                handleModuleDragStart(e, module.name)
+                              }
+                              onClick={() => handleModuleClick(module.name)}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
+                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                : "hover:bg-[#f6f4ee] text-gray-700"
+                                }`}
+                            >
+                              <Icon className="w-5 h-5 flex-shrink-0" />
+                              <span className="text-sm font-medium">
+                                {module.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs font-semibold text-gray-500 mb-1 px-2">
+                          💡 Tip
+                        </p>
+                        <p className="text-xs text-gray-400 px-2">
+                          Drag modules from here to the header to swap with
+                          visible modules
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </TooltipProvider>
         </div>
 
         {/* Right Section - Actions */}
-        <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           <button
-            className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
+            className="flex items-center gap-2"
+            onClick={() => navigate("/employee-wallet")}
+          >
+            <Wallet /> ₹ {availableBalance.toFixed(2)}
+          </button>
+          <button
+            className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
             onClick={() => {
+              setCurrentSection("Project Task");
               navigate(`/vas/channels`);
             }}
           >
             <svg
-              width="20"
-              height="20"
+              className="w-4 h-4 sm:w-5 sm:h-5"
               viewBox="0 0 36 33"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -344,37 +602,134 @@ export const EmployeeHeader: React.FC = () => {
                 strokeLinecap="round"
               />
             </svg>
-
           </button>
-          {/* Notifications */}
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleNotificationsClick}
-                  className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  {notificationCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    >
-                      {notificationCount}
-                    </Badge>
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-800">
-                <p className="text-xs font-medium">
-                  {notificationCount > 0
-                    ? `${notificationCount} Notification${notificationCount > 1 ? 's' : ''}`
-                    : 'Notifications'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Notifications Dropdown */}
+          <DropdownMenu
+            open={isNotificationOpen}
+            onOpenChange={setIsNotificationOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+                {notificationCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {notificationCount}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-w-[400px] p-0 max-h-[500px] overflow-hidden"
+            >
+              {/* Notification Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {notificationCount > 0
+                      ? `${notificationCount} unread notification${notificationCount > 1 ? "s" : ""}`
+                      : "All caught up!"}
+                  </p>
+                </div>
+                {notificationCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-[#C72030] hover:text-[#A01020] font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
 
+              {/* Notifications List */}
+              <div className="overflow-y-auto max-h-[400px]">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-12 text-center">
+                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No notifications yet
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      We'll notify you when something arrives
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => {
+                          if (!notification.read) {
+                            markAsRead(notification.id);
+                          }
+                        }}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p
+                                className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
+                              >
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {notification.time}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <div className="mt-2">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${notification.type === "task"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : notification.type === "meeting"
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : "bg-gray-50 text-gray-700 border-gray-200"
+                                  }`}
+                              >
+                                {notification.type}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              {notifications.length > 0 && (
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setIsNotificationOpen(false);
+                      navigate("/notifications");
+                    }}
+                    className="w-full text-center text-sm font-medium text-[#C72030] hover:text-[#A01020] transition-colors"
+                  >
+                    View all notifications
+                  </button>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
@@ -383,7 +738,6 @@ export const EmployeeHeader: React.FC = () => {
                 <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
-
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
@@ -401,7 +755,10 @@ export const EmployeeHeader: React.FC = () => {
                     className="text-xs bg-green-50 text-green-700 border-green-200 font-medium"
                   >
                     <User className="w-3 h-3 mr-1" />
-                    {userRoleName}
+                    {(isViSite && viAccount
+                      ? viAccount.role_name || ""
+                      : userRoleName || user?.lock_role?.name) ||
+                      "No Role"}{" "}
                   </Badge>
                   {/* <Badge
                     variant="outline"
@@ -447,14 +804,20 @@ export const EmployeeHeader: React.FC = () => {
 
               {/* Menu Items */}
               <div className="py-1">
-                <DropdownMenuItem onClick={handleProfileClick} className="mx-2 my-1 rounded-md">
+                <DropdownMenuItem
+                  onClick={handleProfileClick}
+                  className="mx-2 my-1 rounded-md"
+                >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSettingsClick} className="mx-2 my-1 rounded-md">
+                {/* <DropdownMenuItem
+                  onClick={handleSettingsClick}
+                  className="mx-2 my-1 rounded-md"
+                >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </div>
 
               <DropdownMenuSeparator className="my-1" />

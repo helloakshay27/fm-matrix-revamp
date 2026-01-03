@@ -2,11 +2,13 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchMoMs } from "@/store/slices/momSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 // Function to generate smooth, light random colors for participant badges
 const generateLightColor = (seed: number): string => {
@@ -95,15 +97,38 @@ const columns: ColumnConfig[] = [
 ]
 
 const MinutesOfMeeting = () => {
+    const { setCurrentSection } = useLayout();
+
+    const view = localStorage.getItem("selectedView");
+
+    useEffect(() => {
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    }, [setCurrentSection]);
+
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { data: momsData, loading } = useSelector((state: RootState) => state.fetchMoMs);
 
     const [meetings, setMeetings] = useState<MeetingData[]>([]);
 
-    useEffect(() => {
-        dispatch(fetchMoMs());
+    const fetchMoMsData = useCallback(async () => {
+        try {
+            await cache.getOrFetch(
+                'moms_list',
+                async () => {
+                    return await dispatch(fetchMoMs()).unwrap();
+                },
+                2 * 60 * 1000, // Fresh for 2 minutes
+                10 * 60 * 1000 // Stale up to 10 minutes
+            );
+        } catch (error) {
+            console.error('Error fetching MoMs:', error);
+        }
     }, [dispatch]);
+
+    useEffect(() => {
+        fetchMoMsData();
+    }, [fetchMoMsData]);
 
     useEffect(() => {
         if (momsData && Array.isArray(momsData)) {
@@ -166,7 +191,7 @@ const MinutesOfMeeting = () => {
                     size="sm"
                     variant="ghost"
                     className="p-1"
-                    onClick={() => {/* Edit logic */ }}
+                    onClick={() => navigate(`/vas/edit-mom/${item.id}`)}
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
@@ -178,6 +203,8 @@ const MinutesOfMeeting = () => {
         switch (columnKey) {
             case 'participants':
                 return renderParticipantBadges(item.participants);
+            case 'dateOfMeeting':
+                return item.dateOfMeeting ? new Date(item.dateOfMeeting).toLocaleDateString() : "-";
             default:
                 return (item as any)[columnKey] || "-";
         }
@@ -190,10 +217,10 @@ const MinutesOfMeeting = () => {
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Meeting
+                Add
             </Button>
         </>
-    )
+    );
 
     return (
         <div className="p-6">

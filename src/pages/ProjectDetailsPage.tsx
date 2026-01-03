@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/store/hooks";
 import { changeProjectStatus, fetchProjectById, attachFiles, removeAttachment } from "@/store/slices/projectManagementSlice";
 import { ArrowLeft, ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, Fragment } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
+import IssuesListPage from "./IssuesListPage";
+import ProjectEditModal from "@/components/ProjectEditModal";
 
 const Members = ({ allNames, projectOwner }) => {
     return (
@@ -78,7 +81,7 @@ const Status = ({ project }) => {
 
                             {duration && (
                                 <>
-                                    <div className="flex flex-col items-center justify-start min-w-[100px]">
+                                    <div className="flex flex-col items-center justify-start min-w-[70px]">
                                         <h1 className="text-[9px] text-center">{duration}</h1>
                                         <img src="/arrow.png" alt="arrow" className="mt-1" />
                                     </div>
@@ -92,7 +95,7 @@ const Status = ({ project }) => {
     );
 };
 
-const Attachments = ({ attachments, id }) => {
+const Attachments = ({ attachments, id, getProjectDetails }) => {
     const fileInputRef = useRef(null);
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
@@ -130,9 +133,7 @@ const Attachments = ({ attachments, id }) => {
             await dispatch(attachFiles({ token, baseUrl, id, payload: formData })).unwrap();
             toast.dismiss();
             toast.success('Files uploaded successfully');
-            // Refetch project details to get updated attachments
-            const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
-            setFiles(response.attachments || []);
+            getProjectDetails();
             // Reset file input
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
@@ -295,6 +296,14 @@ const Attachments = ({ attachments, id }) => {
 };
 
 const ProjectDetailsPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    const view = localStorage.getItem("selectedView");
+
+    useEffect(() => {
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    }, [setCurrentSection]);
+
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -305,15 +314,18 @@ const ProjectDetailsPage = () => {
     const dropdownRef = useRef(null);
     const secondContentRef = useRef(null);
 
-    const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
+    const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
+    const [isSecondCollapsed, setIsSecondCollapsed] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState(false);
     const [projectMembers, setProjectMembers] = useState([]);
     const [tab, setTab] = useState("Member");
+    const descriptionContentRef = useRef(null);
     const [project, setProject] = useState({
         id: "",
         title: "",
         status: "",
+        description: "",
         created_by_name: "",
         created_at: "",
         project_owner_name: "",
@@ -356,19 +368,19 @@ const ProjectDetailsPage = () => {
         }
     }, [project]);
 
-    useEffect(() => {
-        const getProjectDetails = async () => {
-            try {
-                const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
-                setProject(response)
-                if (response?.status) {
-                    setSelectedOption(mapStatusToDisplay(response.status));
-                }
-            } catch (error) {
-                console.log(error)
+    const getProjectDetails = async () => {
+        try {
+            const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
+            setProject(response)
+            if (response?.status) {
+                setSelectedOption(mapStatusToDisplay(response.status));
             }
+        } catch (error) {
+            console.log(error)
         }
+    }
 
+    useEffect(() => {
         getProjectDetails()
     }, [])
 
@@ -424,16 +436,11 @@ const ProjectDetailsPage = () => {
         return reverseStatusMap[displayStatus] || "active";
     };
 
+    const toggleDescriptionCollapse = () => {
+        setIsDescriptionCollapsed(!isDescriptionCollapsed);
+    };
+
     const toggleSecondCollapse = () => {
-        if (secondContentRef.current) {
-            if (isSecondCollapsed) {
-                secondContentRef.current.style.maxHeight = secondContentRef.current.scrollHeight + 'px';
-                secondContentRef.current.style.opacity = '1';
-            } else {
-                secondContentRef.current.style.maxHeight = '0';
-                secondContentRef.current.style.opacity = '0';
-            }
-        }
         setIsSecondCollapsed(!isSecondCollapsed);
     };
 
@@ -544,23 +551,78 @@ const ProjectDetailsPage = () => {
                 <div className="border-b-[3px] border-grey my-3"></div>
 
                 <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isDescriptionCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                onClick={toggleDescriptionCollapse}
+                            />
+                            Description
+                        </div>
+                    </div>
+
                     <div
-                        className="font-[600] text-[13px] flex items-center gap-4 cursor-pointer"
-                        onClick={toggleSecondCollapse}
+                        className="mt-3 overflow-hidden transition-all duration-500"
+                        ref={descriptionContentRef}
+                        style={{
+                            maxHeight: isDescriptionCollapsed ? '0px' : '1000px',
+                            opacity: isDescriptionCollapsed ? 0 : 1,
+                        }}
                     >
-                        <ChevronDownCircle
-                            color="#c72030"
-                            size={30}
-                            className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform`}
-                        />{" "}
-                        Details
+                        <div className="flex flex-col">
+                            <div className="text-[13px]">
+                                {project.description || 'No description available'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                onClick={toggleSecondCollapse}
+                            />
+                            Details
+                        </div>
+                        {isSecondCollapsed && (
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Project Manager:
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {project.project_owner_name}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Priority:</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.priority?.charAt(0).toUpperCase() + project.priority?.slice(1).toLowerCase() || ''}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">End Date:</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.end_date}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div
                         className="mt-3 overflow-hidden transition-all duration-500"
                         ref={secondContentRef}
                         style={{
-                            maxHeight: isSecondCollapsed ? '0' : 'auto',
+                            maxHeight: isSecondCollapsed ? '0px' : '1000px',
                             opacity: isSecondCollapsed ? 0 : 1,
                         }}
                     >
@@ -596,7 +658,7 @@ const ProjectDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <Link to={`milestones`} className="text-right text-[13px] font-[500]">
+                                    <Link to={`/vas/projects/${project.id}/milestones`} className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer">
                                         Milestones :
                                     </Link>
                                     <div className="text-left text-[13px]">{`${project.completed_milestone_count}/${project.total_milestone_count}`}</div>
@@ -616,8 +678,8 @@ const ProjectDetailsPage = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <Link
-                                        to={`/tasks?project_id=${project.id}`}
-                                        className="text-right text-[13px] font-semibold"
+                                        to={`/vas/tasks?project_id=${project.id}`}
+                                        className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
                                     >
                                         Tasks :
                                     </Link>
@@ -637,9 +699,12 @@ const ProjectDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[13px] font-[500]">
+                                    <Link
+                                        to={`/vas/issues?project_id=${project.id}`}
+                                        className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
+                                    >
                                         Issues :
-                                    </div>
+                                    </Link>
                                     <div className="text-left text-[13px]">{`${project.completed_issues_count}/${project.total_issues_count}`}</div>
                                 </div>
                             </div>
@@ -670,13 +735,25 @@ const ProjectDetailsPage = () => {
                             />
                         )}
                         {tab === "Documents" && (
-                            <Attachments attachments={project.attachments || []} id={project.id} />
+                            <Attachments attachments={project.attachments || []} id={project.id} getProjectDetails={getProjectDetails} />
                         )}
                         {tab === "Status" && <Status project={project} />}
-                        {tab === "Issues" && <div>Issues Table Placeholder</div>}
+                        {tab === "Issues" && <IssuesListPage preSelectedProjectId={project.id} />}
                     </div>
                 </div>
             </div>
+            <ProjectEditModal
+                openDialog={isEditModalOpen}
+                handleCloseDialog={() => setIsEditModalOpen(false)}
+                project={project}
+                onUpdated={async () => {
+                    try {
+                        const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
+                        setProject(response);
+                    } catch (error) {
+                    }
+                }}
+            />
         </div>
     );
 };

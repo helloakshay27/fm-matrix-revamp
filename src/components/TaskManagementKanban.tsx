@@ -6,12 +6,14 @@ import {
     DragStartEvent,
     DragOverlay,
 } from "@dnd-kit/core";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import KanbanBoard from "./KanbanBoard";
-import { editProjectTask } from "@/store/slices/projectTasksSlice";
+import { editProjectTask, fetchKanbanTasksOfProject } from "@/store/slices/projectTasksSlice";
 import TaskCard from "./TaskCard";
 import SubtaskCard from "./SubtaskCard";
 import Xarrow from "react-xarrows";
+import { toast } from "sonner";
+import { useLocation, useParams } from "react-router-dom";
 
 export const cardsTitle = [
     {
@@ -46,8 +48,12 @@ export const cardsTitle = [
     },
 ];
 
-const TaskManagementKanban = () => {
-    const { data } = useAppSelector((state) => state.filterTasks);
+const TaskManagementKanban = ({ fetchData }) => {
+    const { id } = useParams();
+    const { data } = useAppSelector((state) => state.fetchKanbanTasksOfProject);
+    const taskList = Array.isArray(data)
+        ? data
+        : [];
 
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
@@ -56,9 +62,15 @@ const TaskManagementKanban = () => {
     const [arrowLinks, setArrowLinks] = useState([]);
     const [subCardVisibility, setSubCardVisibility] = useState({});
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
-    const [droppedTasks, setDroppedTasks] = useState<{ [key: string]: string }>(
-        {}
-    );
+    const [droppedTasks, setDroppedTasks] = useState<{ [key: string]: string }>({});
+    const [droppedSubtasks, setDroppedSubtasks] = useState<{ [key: string]: string }>({});
+
+    // Fetch Kanban tasks when component mounts or project_id changes
+    useEffect(() => {
+        if (token && baseUrl) {
+            dispatch(fetchKanbanTasksOfProject({ baseUrl, token, id }));
+        }
+    }, [dispatch, token, baseUrl, id]);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const activeData = event.active.data.current;
@@ -111,20 +123,67 @@ const TaskManagementKanban = () => {
 
                 console.log(taskId);
 
-                // Call API to update project status
+                // Call API to update project status with optimistic rollback on error
                 if (token && baseUrl && taskId) {
-                    dispatch(
-                        editProjectTask({
-                            token,
-                            baseUrl,
-                            id: taskId.toString(),
-                            data: { status: apiStatus },
-                        })
-                    );
+                    dispatch(editProjectTask({
+                        token,
+                        baseUrl,
+                        id: taskId.toString(),
+                        data: { status: apiStatus },
+                    })).then(() => {
+                        fetchData();
+                    })
                 }
             }
         },
         [dispatch, token, baseUrl]
+    );
+
+    // Handle native HTML5 drag-and-drop for subtasks (status change on column drop)
+    const handleSubtaskStatusDrop = useCallback(
+        (dragData, newStatus: string) => {
+            if (!dragData || dragData.type !== "SUBTASK") return;
+
+            const subtaskId = dragData.id;
+            if (!subtaskId || !token || !baseUrl) return;
+
+            // Map column status to API status for subtasks
+            const statusMap: { [key: string]: string } = {
+                overdue: "overdue",
+                open: "open",
+                in_progress: "in_progress",
+                on_hold: "on_hold",
+                completed: "completed",
+            };
+
+            const apiStatus = statusMap[newStatus] || newStatus;
+
+            // Optimistic update for UI
+            setDroppedSubtasks((prev) => ({
+                ...prev,
+                [subtaskId]: apiStatus,
+            }));
+
+            dispatch(
+                editProjectTask({
+                    token,
+                    baseUrl,
+                    id: subtaskId.toString(),
+                    data: { status: apiStatus },
+                })
+            )
+                .unwrap()
+                .catch((error) => {
+                    // revert optimistic update
+                    setDroppedSubtasks((prev) => {
+                        const updated = { ...prev };
+                        delete updated[subtaskId];
+                        return updated;
+                    });
+                    toast.error(error?.response?.data?.error || "Failed to drop the subtask");
+                });
+        },
+        [baseUrl, token, dispatch]
     );
 
     const handleLink = (sourceId, targetIds = []) => {
@@ -154,8 +213,8 @@ const TaskManagementKanban = () => {
         arrowLinks.forEach((link) => {
             const sourceNum = parseInt(link.sourceId.replace("task-", ""));
             const targetNum = parseInt(link.targetId.replace("task-", ""));
-            const sourceTask = data.task_managements.find((t) => t.id === sourceNum);
-            const targetTask = data.task_managements.find((t) => t.id === targetNum);
+            const sourceTask = taskList.find((t) => t.id === sourceNum);
+            const targetTask = taskList.find((t) => t.id === targetNum);
 
             if (targetTask && Array.isArray(targetTask.predecessor_task_ids)) {
                 const flatPredecessors = targetTask.predecessor_task_ids.flat();
@@ -211,19 +270,22 @@ const TaskManagementKanban = () => {
                     {cardsTitle.map((card) => {
                         const cardStatus = card.title.toLowerCase().replace(" ", "_");
 
-                        const filteredTasks =
-                            Array.isArray(data.task_managements) &&
-                            data.task_managements.filter((task) => {
-                                // Check if this project was dropped with a new status
-                                const droppedStatus = droppedTasks[task.id];
-                                const projectStatus = droppedStatus || task.status;
+                        const filteredTasks = taskList.filter((task) => {
+                            const droppedStatus = droppedTasks[task.id];
+                            const projectStatus = droppedStatus || task.status;
+                            const normalizedCardStatus =
+                                cardStatus === "open" ? "open" : cardStatus;
 
-                                // Map "open" to "active" for comparison
-                                const normalizedCardStatus =
-                                    cardStatus === "open" ? "open" : cardStatus;
+                            const hasSubtaskInColumn = (task.sub_tasks_managements || []).some(
+                                (subtask) => {
+                                    const overrideStatus = droppedSubtasks[subtask.id];
+                                    const effectiveStatus = overrideStatus || subtask.status;
+                                    return effectiveStatus === normalizedCardStatus;
+                                }
+                            );
 
-                                return projectStatus === normalizedCardStatus;
-                            });
+                            return projectStatus === normalizedCardStatus || hasSubtaskInColumn;
+                        });
 
                         return (
                             <KanbanBoard
@@ -232,16 +294,18 @@ const TaskManagementKanban = () => {
                                 color={card.color}
                                 count={0}
                                 title={card.title}
+                                onDrop={handleSubtaskStatusDrop}
                             >
                                 {filteredTasks.length > 0 ? (
                                     (filteredTasks || []).map((task) => {
                                         let dependsOnArr = [];
+                                        const currentTaskKey = `task-${task.id}`;
 
-                                        if (Array.isArray(task.predecessor_task_ids)) {
-                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task_ids.flat().filter(Boolean)];
+                                        if (Array.isArray(task.predecessor_task)) {
+                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task.flat().filter(Boolean)];
                                         }
-                                        if (Array.isArray(task.successor_task_ids)) {
-                                            dependsOnArr = [...dependsOnArr, ...task.successor_task_ids.flat().filter(Boolean)];
+                                        if (Array.isArray(task.successor_task)) {
+                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task.flat().filter(Boolean)];
                                         }
 
                                         dependsOnArr = [...new Set(dependsOnArr.filter((id) => id && id !== task.id))];
@@ -252,18 +316,24 @@ const TaskManagementKanban = () => {
                                             formattedDependsOn.every((depId) =>
                                                 arrowLinks.some(
                                                     (link) =>
-                                                        (link.sourceId === depId && link.targetId === taskId) ||
-                                                        (link.sourceId === taskId && link.targetId === depId)
+                                                        (link.sourceId === depId && link.targetId === currentTaskKey) ||
+                                                        (link.sourceId === currentTaskKey && link.targetId === depId)
                                                 )
                                             );
 
-                                        const visibleSubtasks = (
-                                            task.sub_tasks_managements || []
-                                        ).filter((subtask) =>
-                                            cardStatus === "open"
-                                                ? subtask.status === "open"
-                                                : subtask.status === cardStatus
+                                        const visibleSubtasks = (task.sub_tasks_managements || []).filter(
+                                            (subtask) => {
+                                                const overrideStatus = droppedSubtasks[subtask.id];
+                                                const effectiveStatus = overrideStatus || subtask.status;
+                                                const normalizedCardStatus =
+                                                    cardStatus === "open" ? "open" : cardStatus;
+                                                return effectiveStatus === normalizedCardStatus;
+                                            }
                                         );
+
+                                        // Get all subtasks for toggle count
+                                        const allSubtasks = task.sub_tasks_managements || [];
+
                                         return (
                                             <div
                                                 key={task.id}
@@ -272,17 +342,14 @@ const TaskManagementKanban = () => {
                                             >
                                                 <TaskCard
                                                     task={task}
-                                                    count={visibleSubtasks.length}
-                                                    toggleSubCard={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleSubCard(task.id)
-                                                    }}
+                                                    count={allSubtasks.length}
+                                                    toggleSubCard={() => toggleSubCard(task.id)}
                                                     {...(formattedDependsOn.length > 0 && {
-                                                        handleLink: () => handleLink(taskId, formattedDependsOn),
+                                                        handleLink: () => handleLink(currentTaskKey, formattedDependsOn),
                                                         iconColor: allLinked ? "#A0A0A0" : "#DA2400",
                                                     })}
                                                 />
-                                                {visibleSubtasks.length > 0 &&
+                                                {allSubtasks.length > 0 &&
                                                     subCardVisibility[task.id] && (
                                                         <div className="ml-5 mt-1">
                                                             {visibleSubtasks.map((subtask) => (
@@ -388,7 +455,7 @@ const TaskManagementKanban = () => {
                         (dep) => dep.sourceId === link.sourceId && dep.targetId === link.targetId
                     );
 
-                    let dashness = false;
+                    let dashness: boolean | { strokeLen: number; nonStrokeLen: number } = false;
                     let strokeWidth = 1.5;
                     let color = "#DA2400";
 
@@ -421,19 +488,15 @@ const TaskManagementKanban = () => {
                             showHead={true}
                             dashness={dashness}
                             path="smooth"
-                            className="custom-xarrow"
                         />
                     );
                 })}
                 <DragOverlay>
                     {draggedTaskId ? (
-                        Array.isArray(data.task_managements) &&
-                            data.task_managements.find(
-                                (task) => task.id.toString() === draggedTaskId
-                            ) ? (
+                        taskList.find((task) => task.id.toString() === draggedTaskId) ? (
                             <div className="w-60 opacity-100">
                                 <TaskCard
-                                    task={data.task_managements.find(
+                                    task={taskList.find(
                                         (task) => task.id.toString() === draggedTaskId
                                     )}
                                 />

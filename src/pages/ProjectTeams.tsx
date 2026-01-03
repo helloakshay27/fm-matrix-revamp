@@ -1,14 +1,16 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
-import { Edit, Plus, X, ChevronDown, Trash } from "lucide-react";
+import { Edit, Plus, X, Trash } from "lucide-react";
 import { forwardRef, useEffect, useState } from "react";
-import { Dialog, DialogContent, Slide } from "@mui/material";
+import { Dialog, DialogContent, Slide, TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectTeams, createProjectTeam, updateProjectTeam, deleteProjectTeam } from "@/store/slices/projectTeamsSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import MuiMultiSelect from "@/components/MuiMultiSelect";
+import { toast } from "sonner";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -17,9 +19,16 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
+const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    "& .MuiInputBase-input, & .MuiSelect-select": {
+        padding: { xs: "8px", sm: "10px", md: "12px" },
+    },
+};
+
 const columns: ColumnConfig[] = [
     {
-        key: 'title', // mapped from item.name or item.title in logic
+        key: 'title',
         label: 'Team Name',
         sortable: true,
         draggable: true,
@@ -45,7 +54,6 @@ const ProjectTeams = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { teams, loading } = useSelector((state: RootState) => state.projectTeams);
     const { users: fmUsers } = useSelector((state: RootState) => {
-        // Safe access for createApiSlice structure (data.users) or standard slice (users directly)
         const sliceData = (state.fmUsers as any);
         return { users: sliceData.data?.users || sliceData.users || [] };
     });
@@ -57,9 +65,8 @@ const ProjectTeams = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [teamName, setTeamName] = useState('');
     const [selectedLead, setSelectedLead] = useState<number | null>(null);
-    const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-    const [showLeadDropdown, setShowLeadDropdown] = useState(false);
-    const [showMembersDropdown, setShowMembersDropdown] = useState(false);
+    const [selectedMembers, setSelectedMembers] = useState<{ value: number; label: string }[]>([]);
+    const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
         dispatch(fetchProjectTeams());
@@ -78,10 +85,6 @@ const ProjectTeams = () => {
     const openEditDialog = (item: any) => {
         setIsEditMode(true);
         setTeamName(item.name || item.title);
-        // Map response logic.
-        // If API returns team_lead_id, use that. If it returns nested object, map it.
-        // Given the payload requirement, the response likely has team_lead_id / user_ids or similar.
-        // Fallback to previous logic just in case.
         const leadId = item.team_lead_id || item.lead_id || (item.lead && item.lead.id);
         setSelectedLead(leadId);
 
@@ -92,8 +95,16 @@ const ProjectTeams = () => {
             memberIds = item.member_ids;
         } else if (item.members && Array.isArray(item.members)) {
             memberIds = item.members.map((m: any) => m.id);
+        } else if (item.project_team_members && Array.isArray(item.project_team_members)) {
+            memberIds = item.project_team_members.map((m: any) => m.user.id);
         }
-        setSelectedMembers(memberIds);
+
+        // Convert to MuiMultiSelect format
+        const membersForSelect = memberIds.map(id => {
+            const user = fmUsers.find((u: any) => u.id === id);
+            return { value: id, label: user?.full_name || `User ${id}` };
+        });
+        setSelectedMembers(membersForSelect);
 
         setEditingId(item.id);
         setIsDialogOpen(true);
@@ -105,42 +116,53 @@ const ProjectTeams = () => {
         setSelectedLead(null);
         setSelectedMembers([]);
         setEditingId(null);
-        setShowLeadDropdown(false);
-        setShowMembersDropdown(false);
     };
 
     const handleSubmit = async () => {
         if (!teamName.trim()) {
-            alert('Please enter team name');
+            toast.error('Please enter team name');
             return;
         }
         if (!selectedLead) {
-            alert('Please select a team lead');
+            toast.error('Please select a team lead');
             return;
         }
         if (selectedMembers.length === 0) {
-            alert('Please select at least one team member');
+            toast.error('Please select at least one team member');
             return;
         }
 
-        // Construct payload as requested
-        const payload = {
-            project_team: {
-                name: teamName,
-                team_lead_id: selectedLead,
-                user_ids: selectedMembers, // selectedMembers is already an array of IDs
-            },
-        };
+        try {
+            setSubmitting(true)
 
-        if (isEditMode && editingId) {
-            await dispatch(updateProjectTeam({ id: editingId, data: payload })).unwrap();
-            dispatch(fetchProjectTeams());
-        } else {
-            await dispatch(createProjectTeam(payload)).unwrap();
-            dispatch(fetchProjectTeams());
+            // Construct payload as requested
+            const payload = {
+                project_team: {
+                    name: teamName,
+                    team_lead_id: selectedLead,
+                    user_ids: selectedMembers.map(member => member.value), // Extract IDs from MuiMultiSelect format
+                },
+            };
+
+            if (isEditMode && editingId) {
+                await dispatch(updateProjectTeam({ id: editingId, data: payload })).unwrap();
+                dispatch(fetchProjectTeams());
+                toast.success('Team updated successfully');
+            } else {
+                await dispatch(createProjectTeam(payload)).unwrap();
+                dispatch(fetchProjectTeams());
+                toast.success('Team created successfully');
+            }
+
+            closeDialog();
+        } catch (error) {
+            console.log(error)
+            toast.error('Failed to save team');
+        } finally {
+            setSubmitting(false)
         }
 
-        closeDialog();
+
     };
 
     const handleDelete = async (id: number) => {
@@ -150,12 +172,8 @@ const ProjectTeams = () => {
         }
     };
 
-    const toggleMemberSelection = (memberId: number) => {
-        setSelectedMembers(prev =>
-            prev.includes(memberId)
-                ? prev.filter(id => id !== memberId)
-                : [...prev, memberId]
-        );
+    const handleMultiSelectChange = (values: any) => {
+        setSelectedMembers(values);
     };
 
     const renderActions = (item: any) => {
@@ -169,14 +187,14 @@ const ProjectTeams = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash className="w-4 h-4" />
-                </Button>
+                </Button> */}
             </div>
         )
     };
@@ -186,12 +204,6 @@ const ProjectTeams = () => {
             case 'lead_name':
                 if (item.team_lead?.name) return item.team_lead.name;
                 return 'N/A';
-            // case 'members_names':
-            //     if (Array.isArray(item.project_team_members)) {
-            //         const names = item.project_team_members.map((m: any) => m.user.name).filter(Boolean);
-            //         if (names.length > 0) return names.join(', ');
-            //     }
-            //     return '-';
             case 'members_names':
                 if (Array.isArray(item.project_team_members)) {
                     const names = item.project_team_members
@@ -266,90 +278,57 @@ const ProjectTeams = () => {
                         <div className="max-w-[90%] mx-auto pr-3">
                             {/* Team Name */}
                             <div className="mt-6 space-y-2">
-                                <label className="block text-sm font-medium">
-                                    Team Name<span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
+                                <TextField
+                                    label="Team Name*"
+                                    name="teamName"
+                                    placeholder="Enter Team Name"
+                                    fullWidth
+                                    variant="outlined"
                                     value={teamName}
                                     onChange={(e) => setTeamName(e.target.value)}
-                                    placeholder="Enter Team Name"
-                                    className="w-full px-4 py-1.5 border-2 border-gray-300 rounded focus:outline-none placeholder-gray-400 text-base"
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{ sx: fieldStyles }}
+                                    sx={{ mt: 1 }}
                                 />
                             </div>
 
-                            {/* Team Lead Dropdown */}
+                            {/* Team Lead */}
                             <div className="mt-4 space-y-2">
-                                <label className="block text-sm font-medium">
-                                    Team Lead<span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowLeadDropdown(!showLeadDropdown)}
-                                        className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
+                                <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
+                                    <InputLabel shrink>Team Lead*</InputLabel>
+                                    <Select
+                                        label="Team Lead*"
+                                        name="teamLead"
+                                        value={selectedLead || ''}
+                                        onChange={(e) => setSelectedLead(e.target.value as number)}
+                                        displayEmpty
+                                        sx={fieldStyles}
                                     >
-                                        <span className={selectedLead ? 'text-base' : 'text-gray-400'}>
-                                            {selectedLead
-                                                ? fmUsers.find((user: any) => user.id === selectedLead)?.full_name
-                                                : 'Select team Lead'}
-                                        </span>
-                                        <ChevronDown size={20} className="text-gray-400" />
-                                    </button>
-                                    {showLeadDropdown && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-60 overflow-y-auto">
-                                            {fmUsers && fmUsers.map((user: any) => (
-                                                <button
-                                                    key={user.id}
-                                                    onClick={() => {
-                                                        setSelectedLead(user.id);
-                                                        setShowLeadDropdown(false);
-                                                    }}
-                                                    className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b last:border-b-0"
-                                                >
+                                        <MenuItem value="">
+                                            <em>Select Team Lead</em>
+                                        </MenuItem>
+                                        {
+                                            fmUsers.map((user: any) => (
+                                                <MenuItem key={user.id} value={user.id}>
                                                     {user.full_name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                                </MenuItem>
+                                            ))
+                                        }
+                                    </Select>
+                                </FormControl>
                             </div>
 
-                            {/* Team Members Dropdown */}
+                            {/* Team Members */}
                             <div className="mt-4 space-y-2">
-                                <label className="block text-sm font-medium">
-                                    Team Members<span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowMembersDropdown(!showMembersDropdown)}
-                                        className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
-                                    >
-                                        <span className={selectedMembers.length > 0 ? 'text-base' : 'text-gray-400'}>
-                                            {selectedMembers.length > 0
-                                                ? `${selectedMembers.length} selected`
-                                                : 'Select Team Members'}
-                                        </span>
-                                        <ChevronDown size={20} className="text-gray-400" />
-                                    </button>
-                                    {showMembersDropdown && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                                            {fmUsers && fmUsers.map((user: any) => (
-                                                <label
-                                                    key={user.id}
-                                                    className="flex items-center px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedMembers.includes(user.id)}
-                                                        onChange={() => toggleMemberSelection(user.id)}
-                                                        className="w-4 h-4 rounded border-gray-300 cursor-pointer mr-3"
-                                                    />
-                                                    <span>{user.full_name}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <MuiMultiSelect
+                                    label="Team Members*"
+                                    options={fmUsers
+                                        .filter((user: any) => user.id !== selectedLead)
+                                        .map((user: any) => ({ value: user.id, label: user.full_name, id: user.id }))}
+                                    value={selectedMembers}
+                                    onChange={handleMultiSelectChange}
+                                    placeholder="Select Team Members"
+                                />
                             </div>
 
                             {/* Action Buttons */}
@@ -364,6 +343,7 @@ const ProjectTeams = () => {
                                 <Button
                                     className="bg-[#C72030] hover:bg-[#A01020] text-white px-6"
                                     onClick={handleSubmit}
+                                    disabled={submitting}
                                 >
                                     {isEditMode ? 'Update' : 'Save'}
                                 </Button>

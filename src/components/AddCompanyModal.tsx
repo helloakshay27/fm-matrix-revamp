@@ -1,11 +1,6 @@
 import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog as MuiDialog, DialogTitle as MuiDialogTitle, DialogContent as MuiDialogContent, DialogActions as MuiDialogActions } from "@mui/material";
+import { Button as MuiButton } from "@mui/material";
 import {
   TextField,
   FormControl,
@@ -64,18 +59,26 @@ const fieldStyles = {
 const selectMenuProps = {
   PaperProps: {
     style: {
-      maxHeight: 224,
+      maxHeight: 300,
       backgroundColor: "white",
       border: "1px solid #e2e8f0",
       borderRadius: "8px",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      zIndex: 9999,
+      zIndex: 99999,
+      overflow: "auto",
     },
   },
+  anchorOrigin: {
+    vertical: "bottom" as const,
+    horizontal: "left" as const,
+  },
+  transformOrigin: {
+    vertical: "top" as const,
+    horizontal: "left" as const,
+  },
   disablePortal: false,
-  disableAutoFocus: true,
-  disableEnforceFocus: true,
+  disableScrollLock: true,
 };
 
 export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
@@ -88,6 +91,9 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Local preview URLs for selected images (support multiple previews)
+  const [logoPreviewUrls, setLogoPreviewUrls] = useState<string[]>([]);
+  const [bannerPreviewUrls, setBannerPreviewUrls] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<CompanyFormData>({
     name: "",
@@ -136,26 +142,44 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
   };
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Maintain first file as the submitted logo if not set yet
+      const first = files[0];
+      if (first.size > 5 * 1024 * 1024) {
         toast.error("Logo file size should be less than 5MB");
         return;
       }
-      setFormData((prev) => ({ ...prev, logo: file }));
+      setFormData((prev) => ({ ...prev, logo: prev.logo ?? first }));
+      // Generate previews for all newly selected files and append to existing
+      const newUrls: string[] = Array.from(files).map((f) => URL.createObjectURL(f));
+      setLogoPreviewUrls((prev) => [...prev, ...newUrls]);
+      // Clear the input value to allow selecting the same file again if needed
+      event.currentTarget.value = "";
+    } else {
+      // Clear when no files
+      logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      setLogoPreviewUrls([]);
+      setFormData((prev) => ({ ...prev, logo: null }));
     }
   };
 
   const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const first = files[0];
+      if (first.size > 5 * 1024 * 1024) {
         toast.error("Banner file size should be less than 5MB");
         return;
       }
-      setFormData((prev) => ({ ...prev, company_banner: file }));
+      setFormData((prev) => ({ ...prev, company_banner: prev.company_banner ?? first }));
+      const newUrls: string[] = Array.from(files).map((f) => URL.createObjectURL(f));
+      setBannerPreviewUrls((prev) => [...prev, ...newUrls]);
+      event.currentTarget.value = "";
+    } else {
+      bannerPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      setBannerPreviewUrls([]);
+      setFormData((prev) => ({ ...prev, company_banner: null }));
     }
   };
 
@@ -167,25 +191,23 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
     }
 
     if (!formData.organization_id) {
-      newErrors.organization_id = "Organization is required";
+      newErrors.organization_id = "Please select an organization";
     }
 
-    if (!formData.country_id) {
-      newErrors.country_id = "Country is required";
-    }
+  // Country is optional; no validation required
 
     if (
       formData.finance_spoc.email &&
       !/\S+@\S+\.\S+/.test(formData.finance_spoc.email)
     ) {
-      newErrors.finance_email = "Invalid email format";
+      newErrors.finance_email = "Please enter a valid email address";
     }
 
     if (
       formData.operation_spoc.email &&
       !/\S+@\S+\.\S+/.test(formData.operation_spoc.email)
     ) {
-      newErrors.operation_email = "Invalid email format";
+      newErrors.operation_email = "Please enter a valid email address";
     }
 
     setErrors(newErrors);
@@ -199,7 +221,12 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
     }
 
     if (!validateForm()) {
-      toast.error("Please fix the errors in the form");
+      toast.error(
+        "Please fill in all required fields (Company Name and Organization)",
+        {
+          duration: 5000,
+        }
+      );
       return;
     }
 
@@ -335,9 +362,13 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
 
       onSuccess();
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating company:", error);
-      toast.error(`Failed to create company: ${error.message}`, {
+      const message =
+        typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message: unknown }).message)
+          : "An unexpected error occurred";
+      toast.error(`Failed to create company: ${message}`, {
         duration: 5000,
       });
     } finally {
@@ -362,6 +393,11 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
       operation_spoc: { name: "", designation: "", email: "", mobile: "" },
     });
     setErrors({});
+  // Revoke and clear previews
+  logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+  bannerPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+  setLogoPreviewUrls([]);
+  setBannerPreviewUrls([]);
   };
 
   const handleClose = () => {
@@ -370,28 +406,24 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50"
+  <MuiDialog open={isOpen} onClose={handleClose} fullWidth maxWidth="md">
+      <MuiDialogTitle>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-gray-900">ADD NEW COMPANY</span>
+          <MuiButton onClick={handleClose} size="small" variant="text">
+            <X className="h-4 w-4" color="black" />
+          </MuiButton>
+        </div>
+        <div id="add-company-dialog-description" className="sr-only">
+          Add company details including name, organization, country, billing information, addresses, and SPOC contacts
+        </div>
+      </MuiDialogTitle>
+      <MuiDialogContent
+        className="max-h-[90vh] overflow-y-auto bg-white p-0"
         aria-describedby="add-company-dialog-description"
       >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
-            ADD NEW COMPANY
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <div id="add-company-dialog-description" className="sr-only">
-            Add company details including name, organization, country, billing
-            information, addresses, and SPOC contacts
-          </div>
-        </DialogHeader>
+        <div className="px-6">
+        {/* ...existing content... */}
 
         <div className="space-y-6 py-4">
           {/* Basic Information */}
@@ -408,7 +440,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 onChange={(e) => handleChange("name", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 required
                 disabled={isSubmitting}
@@ -420,8 +455,14 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 fullWidth
                 variant="outlined"
                 error={!!errors.organization_id}
+                required
               >
-                <InputLabel shrink>Organization</InputLabel>
+                <InputLabel
+                  shrink
+                  sx={{ "& .MuiFormLabel-asterisk": { color: "#C72030" } }}
+                >
+                  Organization
+                </InputLabel>
                 <MuiSelect
                   value={formData.organization_id}
                   onChange={(e) =>
@@ -454,9 +495,13 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
               <FormControl
                 fullWidth
                 variant="outlined"
-                error={!!errors.country_id}
               >
-                <InputLabel shrink>Country</InputLabel>
+                <InputLabel
+                  shrink
+                  sx={{ "& .MuiFormLabel-asterisk": { color: "#C72030" } }}
+                >
+                  Country
+                </InputLabel>
                 <MuiSelect
                   value={formData.country_id}
                   onChange={(e) => handleChange("country_id", e.target.value)}
@@ -475,11 +520,7 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                     </MenuItem>
                   ))}
                 </MuiSelect>
-                {errors.country_id && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {errors.country_id}
-                  </div>
-                )}
+                {/* Country is optional; no error helper */}
               </FormControl>
 
               <TextField
@@ -489,7 +530,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 onChange={(e) => handleChange("billing_term", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -503,7 +547,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 onChange={(e) => handleChange("billing_rate", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -515,7 +562,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 onChange={(e) => handleChange("live_date", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -529,7 +579,24 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 onChange={(e) => handleChange("remarks", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 multiline
                 rows={3}
@@ -548,15 +615,55 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
               <span className="text-sm font-medium">Company Logo</span>
               <input
                 type="file"
+                multiple
                 onChange={handleLogoChange}
                 accept="image/*"
                 disabled={isSubmitting}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
               />
-              {formData.logo && (
-                <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  {formData.logo.name}
+              {(logoPreviewUrls.length > 0 || formData.logo) && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {formData.logo && (
+                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      {formData.logo.name}
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {logoPreviewUrls.map((url, idx) => (
+                      <div key={url} className="relative">
+                        <img
+                          src={url}
+                          alt={`Company Logo Preview ${idx + 1}`}
+                          className="h-16 w-16 object-cover border border-gray-200 rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // remove preview index
+                            setLogoPreviewUrls((prev) => {
+                              const copy = [...prev];
+                              const u = copy[idx];
+                              if (u) URL.revokeObjectURL(u);
+                              copy.splice(idx, 1);
+                              return copy;
+                            });
+                            // if no previews left, clear the submitted logo
+                            setFormData((prev) => {
+                              if (logoPreviewUrls.length - 1 <= 0) {
+                                return { ...prev, logo: null };
+                              }
+                              return prev;
+                            });
+                          }}
+                          className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                          aria-label="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -566,35 +673,69 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
               <span className="text-sm font-medium">Company Banner</span>
               <input
                 type="file"
+                multiple
                 onChange={handleBannerChange}
                 accept="image/*"
                 disabled={isSubmitting}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
               />
-              {formData.company_banner && (
-                <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  {formData.company_banner.name}
+              {(bannerPreviewUrls.length > 0 || formData.company_banner) && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {formData.company_banner && (
+                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      {formData.company_banner.name}
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {bannerPreviewUrls.map((url, idx) => (
+                      <div key={url} className="relative">
+                        <img
+                          src={url}
+                          alt={`Company Banner Preview ${idx + 1}`}
+                          className="h-16 w-16 object-cover border border-gray-200 rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBannerPreviewUrls((prev) => {
+                              const copy = [...prev];
+                              const u = copy[idx];
+                              if (u) URL.revokeObjectURL(u);
+                              copy.splice(idx, 1);
+                              return copy;
+                            });
+                            setFormData((prev) => {
+                              if (bannerPreviewUrls.length - 1 <= 0) {
+                                return { ...prev, company_banner: null };
+                              }
+                              return prev;
+                            });
+                          }}
+                          className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                          aria-label="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Image className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Image className="w-4 h-4 text-white" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-blue-800">
-                    Upload Guidelines
+                  <p className="text-sm font-medium text-white">Upload Guidelines</p>
+                  <p className="text-xs text-white/90">
+                    <strong>Logo:</strong> PNG, JPG, SVG • Max size: 5MB • Min dimensions: 200x200px
                   </p>
-                  <p className="text-xs text-blue-700">
-                    <strong>Logo:</strong> PNG, JPG, SVG • Max size: 5MB • Min
-                    dimensions: 200x200px
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    <strong>Banner:</strong> PNG, JPG • Max size: 5MB •
-                    Recommended: 1920x400px
+                  <p className="text-xs text-white/90">
+                    <strong>Banner:</strong> PNG, JPG • Max size: 5MB • Recommended: 1920x400px
                   </p>
                 </div>
               </div>
@@ -620,8 +761,24 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                 sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 multiline
                 rows={3}
                 disabled={isSubmitting}
@@ -640,8 +797,24 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                 sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 multiline
                 rows={3}
                 disabled={isSubmitting}
@@ -658,7 +831,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -672,7 +848,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -694,7 +873,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -712,7 +894,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -728,7 +913,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 error={!!errors.finance_email}
@@ -744,7 +932,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -766,7 +957,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -784,7 +978,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -800,7 +997,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 error={!!errors.operation_email}
@@ -816,7 +1016,10 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
               />
@@ -824,25 +1027,42 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="px-6 py-2"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !canEdit}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
-          >
-            {isSubmitting ? "Creating..." : "Create Company"}
-          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </MuiDialogContent>
+      <MuiDialogActions sx={{ justifyContent: "center", borderTop: "1px solid #e5e7eb", gap: 2, py: 2 }}>
+        <MuiButton
+          onClick={handleClose}
+          disabled={isSubmitting}
+          variant="outlined"
+          sx={{
+            color: "#BD2828",
+            borderColor: "#BD2828",
+            px: 3,
+            py: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            '&:hover': { borderColor: '#a52121', color: '#a52121' }
+          }}
+        >
+          Cancel
+        </MuiButton>
+        <MuiButton
+          onClick={handleSubmit}
+          disabled={isSubmitting || !canEdit}
+          sx={{
+            backgroundColor: "#ede9e4", // light neutral background like screenshot
+            color: "#BD2828",
+            px: 3,
+            py: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            boxShadow: "none",
+            '&:hover': { backgroundColor: '#e6e1db' }
+          }}
+        >
+          {isSubmitting ? "Creating..." : "Create Company"}
+        </MuiButton>
+      </MuiDialogActions>
+    </MuiDialog>
   );
 };

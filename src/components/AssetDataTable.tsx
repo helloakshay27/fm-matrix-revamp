@@ -8,6 +8,7 @@ import type { Asset } from "@/hooks/useAssets";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { getUser } from "@/utils/auth";
 
 // Asset interface now imported from useAssets hook
 
@@ -46,6 +47,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 }) => {
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
+  const user = getUser();
+  const isRestrictedUser = user?.email?.toLowerCase().trim() === 'karan.balsara@zycus.com';
 
   console.log("AssetDataTable rendered with assets:", assets);
   console.log("Available custom fields:", availableCustomFields);
@@ -114,12 +117,45 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       const currentVisibility = columnVisibility || visibleColumns;
 
       // Transform keys:
-      const visibleColumnKeys = Object.keys(currentVisibility)
-        .filter((key) => currentVisibility[key] === true)
+      const customKeyToFieldMap = new Map();
+      availableCustomFields.forEach(field => {
+        const colKey = `custom_${field.key.replace(/\s+/g, '_')}`;
+        customKeyToFieldMap.set(colKey, field.key);
+      });
+
+      console.log("Custom Field Map:", Object.fromEntries(customKeyToFieldMap));
+      console.log("Visible Keys before processing:", Object.keys(currentVisibility).filter(k => currentVisibility[k]));
+
+      // Transform keys:
+      // 1. Get all currently defined column keys from the `columns` prop
+      const definedColumnKeys = new Set(columns.map(col => col.key));
+
+      // 2. Intersect currentVisibility with definedColumnKeys to ensure we only export valid, existing columns
+      const validVisibleKeys = Object.keys(currentVisibility).filter(key =>
+        currentVisibility[key] === true && definedColumnKeys.has(key)
+      );
+
+      // Transform keys:
+      const visibleColumnKeys = validVisibleKeys
         // remove "actions"
         .filter((key) => key !== "actions")
         // convert camelCase → snake_case
-        .map((key) => key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase());
+        .map((key) => {
+          // Check if it's a custom field column
+          if (key.startsWith("custom_")) {
+            // Use the lookup map
+            if (customKeyToFieldMap.has(key)) {
+              return customKeyToFieldMap.get(key);
+            }
+            // Fallback: This is likely where 'PO_Number' comes from if lookup fails
+            return key.replace("custom_", "");
+          }
+
+          // Standard fields: convert camelCase to snake_case
+          return key
+            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+            .toLowerCase();
+        });
 
       // ✅ Pass as a JSON string in the `fields` query parameter
       const fieldsParam = encodeURIComponent(JSON.stringify(visibleColumnKeys));
@@ -291,6 +327,20 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       hideable: true,
       defaultVisible: visibleColumns.category,
     },
+    {
+      key: "allocationType",
+      label: "Allocation Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocationType,
+    },
+    {
+      key: "allocatedTo",
+      label: "Allocated To",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocatedTo,
+    },
     // Required fields that were missing
     {
       key: "purchaseDate",
@@ -420,7 +470,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     },
     // Dynamic custom field columns
     ...availableCustomFields.map((field) => ({
-      key: `custom_${field.key}`,
+      key: `custom_${field.key.replace(/\s+/g, '_')}`,
       label: field.title,
       sortable: true,
       hideable: true,
@@ -552,6 +602,18 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         return (
           <span className="text-sm text-gray-600">{asset.category || "-"}</span>
         );
+      case "allocationType":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocation_type || "-"}
+          </span>
+        );
+      case "allocatedTo":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocated_to || "-"}
+          </span>
+        );
       case "purchaseDate":
         return (
           <span className="text-sm text-gray-600">
@@ -669,8 +731,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       default:
         // Handle custom fields
         if (columnKey.startsWith("custom_")) {
-          const fieldKey = columnKey.replace("custom_", "");
-          const customFieldValue = asset[fieldKey];
+          // Priority 1: Check if the key exists directly (from updated AssetDashboard logic)
+          let customFieldValue = asset[columnKey];
+
+          // Priority 2: Fallback to stripping "custom_" (old logic)
+          if (customFieldValue === undefined) {
+            const fieldKey = columnKey.replace("custom_", "");
+            customFieldValue = asset[fieldKey];
+          }
 
           let displayValue = customFieldValue;
           if (customFieldValue && typeof customFieldValue === 'object') {
@@ -728,9 +796,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         loading={loading}
         rowClassName={getRowClassName}
         isRowDisabled={isRowDisabled}
-        key={`asset-table-${availableCustomFields.length}`} // Force re-render when custom fields change
+        key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          shouldShow("assets", "add") ? (
+          shouldShow("assets", "add") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
             <Button size="sm" className="mr-2" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action

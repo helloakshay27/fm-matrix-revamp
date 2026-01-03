@@ -1821,6 +1821,7 @@ export const TicketDashboard = () => {
         currentStatus={selectedTicketForEdit?.issue_status}
         onSuccess={() => {
           fetchTickets(currentPage);
+          fetchTicketSummary(); // Update summary counts immediately
           setSelectedTicketForEdit(null);
         }}
       />

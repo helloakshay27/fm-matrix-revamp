@@ -19,6 +19,32 @@ export const fetchProjectTasks = createAsyncThunk(
     }
 )
 
+export const fetchKanbanTasksOfProject = createAsyncThunk(
+    'fetchKanbanTasks',
+    async (
+        { baseUrl, token, id }: { baseUrl: string; token: string; id?: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const url = id
+                ? `https://${baseUrl}/task_managements/kanban.json?q[project_management_id_eq]=${id}`
+                : `https://${baseUrl}/task_managements/kanban.json`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error(error);
+            return rejectWithValue(error);
+        }
+    }
+);
+
+
 export const createProjectTask = createAsyncThunk(
     "createProjectTask",
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
@@ -131,6 +157,57 @@ export const fetchTargetDateTasks = createAsyncThunk('fetchTargetDateTasks', asy
     }
 })
 
+export const createTaskDependency = createAsyncThunk(
+    'createTaskDependency',
+    async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/task_dependencies.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const updateTaskDependency = createAsyncThunk(
+    'updateTaskDependency',
+    async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/task_dependencies/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const deleteTaskDependency = createAsyncThunk(
+    'deleteTaskDependency',
+    async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(`https://${baseUrl}/task_dependencies/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to delete dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchProjectTasksSlice = createApiSlice("fetchProjectTasks", fetchProjectTasks)
 const createProjectTaskSlice = createApiSlice("createProjectTask", createProjectTask)
 const fetchProjectTasksByIdSlice = createApiSlice("fetchProjectTasksById", fetchProjectTasksById)
@@ -139,6 +216,10 @@ const fetchTargetDateTasksSlice = createApiSlice("fetchTargetDateTasks", fetchTa
 const editProjectTaskSlice = createApiSlice("editProjectTask", editProjectTask)
 const filterTasksSlice = createApiSlice("filterTasks", filterTasks)
 const updateTaskStatusSlice = createApiSlice("updateTaskStatus", updateTaskStatus)
+const createTaskDependencySlice = createApiSlice("createTaskDependency", createTaskDependency)
+const updateTaskDependencySlice = createApiSlice("updateTaskDependency", updateTaskDependency)
+const deleteTaskDependencySlice = createApiSlice("deleteTaskDependency", deleteTaskDependency)
+const fetchKanbanTasksOfProjectSlice = createApiSlice("fetchKanbanTasksOfProject", fetchKanbanTasksOfProject)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
@@ -148,3 +229,7 @@ export const fetchTargetDateTasksReducer = fetchTargetDateTasksSlice.reducer
 export const editProjectTaskReducer = editProjectTaskSlice.reducer
 export const filterTasksReducer = filterTasksSlice.reducer
 export const updateTaskStatusReducer = updateTaskStatusSlice.reducer
+export const createTaskDependencyReducer = createTaskDependencySlice.reducer
+export const updateTaskDependencyReducer = updateTaskDependencySlice.reducer
+export const deleteTaskDependencyReducer = deleteTaskDependencySlice.reducer
+export const fetchKanbanTasksOfProjectReducer = fetchKanbanTasksOfProjectSlice.reducer

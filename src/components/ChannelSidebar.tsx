@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import NewConversationModal from "./NewConversationModal";
 import { fetchConversations, fetchGroups } from "@/store/slices/channelSlice";
 
@@ -11,6 +11,7 @@ const ChannelSidebar = () => {
     const { id } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -108,7 +109,7 @@ const ChannelSidebar = () => {
     }, [newConversationModal]);
 
     return (
-        <div className="w-64 h-[calc(100vh-112px)] py-3 border-r border-gray-200 shadow-md space-y-2 relative">
+        <div className={`w-64 ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} py-3 border-r border-gray-200 shadow-md space-y-2 relative`}>
             <div className="w-full px-3" onClick={() => setNewConversationModal(true)}>
                 <Button className="w-full">+ New Chat</Button>
             </div>
@@ -133,7 +134,7 @@ const ChannelSidebar = () => {
                 </button>
 
                 {isMessagesOpen && (
-                    <div className="pl-6 space-y-1 max-h-[15rem] overflow-auto">
+                    <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
                             filteredConversations.length > 0 ? (
                                 filteredConversations.map((conversation) => {
@@ -141,10 +142,13 @@ const ChannelSidebar = () => {
                                         currentUserId === conversation.sender_id
                                             ? conversation.receiver_name
                                             : conversation.sender_name;
+                                    const isActive = location.pathname === `/vas/channels/messages/${conversation.id}`;
 
                                     return (
                                         <div
-                                            className={`text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded ${conversation.id === Number(id) ? "text-[#c72030]" : ""
+                                            className={`text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded ${isActive
+                                                ? 'text-red-600 font-semibold'
+                                                : 'hover:text-red-600'
                                                 }`}
                                             key={conversation.id}
                                             onClick={() =>
@@ -175,19 +179,24 @@ const ChannelSidebar = () => {
                 </button>
 
                 {isGroupsOpen && (
-                    <div className="pl-6 space-y-1 max-h-[15rem] overflow-auto">
+                    <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
                             filteredGroups.length > 0 ? (
-                                filteredGroups.map((group) => (
-                                    <div
-                                        className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded ${group.id === Number(id) ? "text-[#c72030]" : ""
-                                            }`}
-                                        key={group.id}
-                                        onClick={() => navigate(`/vas/channels/groups/${group.id}`)}
-                                    >
-                                        {group.name}
-                                    </div>
-                                ))
+                                filteredGroups.map((group) => {
+                                    const isActive = location.pathname === `/vas/channels/groups/${group.id}`;
+                                    return (
+                                        <div
+                                            className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded ${isActive
+                                                ? 'text-red-600 font-semibold'
+                                                : 'hover:text-red-600'
+                                                }`}
+                                            key={group.id}
+                                            onClick={() => navigate(`/vas/channels/groups/${group.id}`)}
+                                        >
+                                            {group.name}
+                                        </div>
+                                    )
+                                })
                             ) : (
                                 <div className="text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded">
                                     No groups found
@@ -206,6 +215,8 @@ const ChannelSidebar = () => {
                     setSearchQuery={setSearchQuery}
                     setNewConversationModal={setNewConversationModal}
                     conversations={conversations}
+                    onConversationCreated={getConversations}
+                    onGroupCreated={getGroups}
                 />
             )}
         </div>

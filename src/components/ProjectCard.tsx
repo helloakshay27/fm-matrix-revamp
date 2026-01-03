@@ -4,6 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
@@ -22,11 +28,9 @@ const formatCountdown = (ms) => {
 };
 
 const ProjectCard = ({ project }) => {
-    const token = localStorage.getItem("token");
-    const dispatch = useDispatch();
-
     const navigate = useNavigate();
 
+    const [isOverdue, setIsOverdue] = useState(false)
     const [countdown, setCountdown] = useState("");
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -38,184 +42,218 @@ const ProjectCard = ({ project }) => {
         },
     });
 
-    // useEffect(() => {
-    //     if (!project?.end_date || project.status === "completed") {
-    //         setCountdown("Completed");
-    //         return;
-    //     }
+    useEffect(() => {
+        if (!project?.end_date) {
+            setCountdown("—");
+            return;
+        }
 
-    //     const interval = setInterval(() => {
-    //         const now = new Date();
-    //         const end = new Date(project.end_date);
-    //         const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(project.end_date);
 
-    //         const diff = endMidnight - now;
+            // End of the end_date day
+            const endOfDay = new Date(
+                end.getFullYear(),
+                end.getMonth(),
+                end.getDate(),
+                23,
+                59,
+                59,
+                999
+            );
 
-    //         if (diff <= 0 && project.status !== "completed") {
-    //             setCountdown("Overdue");
-    //             dispatch(changeTaskStatus({ token, id: task.id, payload: { status: "overdue" } }));
-    //             clearInterval(interval);
-    //         } else {
-    //             const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
-    //             const displayDiff = endOfDay - now;
-    //             setCountdown(formatCountdown(displayDiff));
-    //         }
-    //     }, 1000);
+            const diff = endOfDay.getTime() - now.getTime();
 
-    //     return () => clearInterval(interval);
-    // }, [project.end_date, project.status, project.id, token, dispatch]);
+            if (diff >= 0) {
+                // ⏳ Countdown mode
+                setCountdown(formatCountdown(diff));
+                setIsOverdue(false);
+            } else {
+                // 🔴 Overdue mode (forward timer)
+                setCountdown(formatCountdown(Math.abs(diff)));
+                setIsOverdue(true);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [project.end_date]);
+
 
     const memberColors = useMemo(() => {
         const colors = {};
-        project.project_members.forEach((member) => {
-            if (member.user) {
-                const id = member.user.id || member.user.firstname; // Use unique ID if available
+        // Get members from project_team structure
+        const members = project?.project_team?.project_team_members || [];
+        members.forEach((member) => {
+            if (member?.user) {
+                const id = member.user.id || member.user.name;
                 colors[id] = getRandomColor();
             }
         });
         return colors;
-    }, [project.project_members]);
+    }, [project?.project_team]);
 
     return (
         <div
             ref={setNodeRef}
             {...attributes}
-            {...listeners}
             style={{
                 opacity: isDragging ? 0.4 : 1,
-                cursor: isDragging ? "grabbing" : "grab",
                 transform: CSS.Translate.toString(transform),
             }}
             className={`w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-sm transition-all duration-200 ${isDragging ? "scale-105 shadow-2xl border-2 border-blue-400" : ""
                 }`}
         >
-            <p className="mb-2 truncate cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
+            <p
+                className="mb-2 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/vas/projects/${project.id}/milestones`)
+                }}
+            >
                 <span className="text-blue-500">{project.id}</span> {project.title}
             </p>
+            <div
+                {...listeners}
+                style={{
+                    cursor: isDragging ? "grabbing" : "grab",
+                }}
+                className="flex-1"
+            >
 
-            <div className="flex flex-col gap-1">
-                <div className="flex items-start gap-2">
-                    <Timer className="text-[#029464] flex-shrink-0" size={14} />
-                    <span className="text-[10px] text-[#029464] truncate">
-                        {countdown}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Briefcase className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{project.project_type_name}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                    <User2 className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{project.project_owner_name}</span>
-                </div>
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <CalendarDays className="text-[#C72030] flex-shrink-0" size={14} />
-                        <span className="text-[10px]">{project.start_date}</span>
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-start gap-2">
+                        <Timer className="text-[#029464] flex-shrink-0" size={14} />
+                        <span className={`text-[10px] ${isOverdue ? "text-red-500" : "text-[#029464]"} truncate`}>
+                            {countdown}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <CalendarDays className="text-[#C72030] flex-shrink-0" size={14} />
-                        <span className="text-[10px]">{project.end_date}</span>
+                        <Briefcase className="text-[#C72030] flex-shrink-0" size={14} />
+                        <span className="text-[10px] truncate">{project.project_type_name}</span>
                     </div>
-                </div>
-            </div>
-
-            <div className="space-y-3 text-sm">
-                {/* Milestones */}
-                <div className="flex items-center gap-2">
-                    <div className="w-20 font-light text-gray-600">Milestone</div>
-                    <div className="w-4 text-center">{project.completed_milestone_count}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
-                        <div
-                            className="absolute top-0 left-0 h-4 rounded-full bg-blue-500"
-                            style={{
-                                width: `${project.total_milestone_count > 0
-                                    ? (project.completed_milestone_count / project.total_milestone_count) * 100
-                                    : 0
-                                    }%`,
-                            }}
-                        ></div>
-                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
-                            {project.total_milestone_count > 0
-                                ? Math.round(
-                                    (project.completed_milestone_count / project.total_milestone_count) * 100
-                                ) + "%"
-                                : "0%"}
+                    <div className="flex items-start gap-2">
+                        <User2 className="text-[#C72030] flex-shrink-0" size={14} />
+                        <span className="text-[10px] truncate">{project.owner_name}</span>
+                    </div>
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <CalendarDays className="text-[#C72030] flex-shrink-0" size={14} />
+                            <span className="text-[10px]">{project.start_date}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CalendarDays className="text-[#C72030] flex-shrink-0" size={14} />
+                            <span className="text-[10px]">{project.end_date}</span>
                         </div>
                     </div>
-                    <div className="w-4 text-center">{project.total_milestone_count}</div>
                 </div>
 
-                {/* Tasks */}
-                <div className="flex items-center gap-2">
-                    <div className="w-20 font-light text-gray-600">Tasks</div>
-                    <div className="w-4 text-center">{project.completed_task_management_count}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
-                        <div
-                            className="absolute top-0 left-0 h-4 rounded-full bg-green-500"
-                            style={{
-                                width: `${project.total_task_management_count > 0
-                                    ? (project.completed_task_management_count / project.total_task_management_count) *
-                                    100
-                                    : 0
-                                    }%`,
-                            }}
-                        ></div>
-                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
-                            {project.total_task_management_count > 0
-                                ? Math.round(
-                                    (project.completed_task_management_count / project.total_task_management_count) * 100
-                                ) + "%"
-                                : "0%"}
-                        </div>
-                    </div>
-                    <div className="w-4 text-center">{project.total_task_management_count}</div>
-                </div>
-
-                {/* Issues */}
-                <div className="flex items-center gap-2">
-                    <div className="w-20 font-light text-gray-600">Issues</div>
-                    <div className="w-4 text-center">{project.completed_issues_count}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
-                        <div
-                            className="absolute top-0 left-0 h-4 rounded-full bg-red-500"
-                            style={{
-                                width: `${project.total_issues_count > 0
-                                    ? (project.completed_issues_count / project.total_issues_count) * 100
-                                    : 0
-                                    }%`,
-                            }}
-                        ></div>
-                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
-                            {project.total_issues_count > 0
-                                ? Math.round((project.completed_issues_count / project.total_issues_count) * 100) + "%"
-                                : "0%"}
-                        </div>
-                    </div>
-                    <div className="w-4 text-center">{project.total_issues_count}</div>
-                </div>
-            </div>
-
-
-            <hr className="border border-gray-200 my-2" />
-
-            <div className="flex items-center justify-between">
-                <div className="text-gray-600 text-xs">Members</div>
-                <div className="flex items-center">
-                    {project.project_members.map((member, index) => {
-                        if (!member.user) return null;
-                        const id = member.user.id || member.user.firstname;
-                        return (
+                <div className="space-y-3 text-sm">
+                    {/* Milestones */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-20 font-light text-gray-600">Milestone</div>
+                        <div className="w-4 text-center">{project.completed_milestone_count}</div>
+                        <div className="flex-1 relative bg-gray-200 rounded-full h-4">
                             <div
-                                key={index}
-                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""
-                                    }`}
-                                style={{ backgroundColor: memberColors[id] }}
-                            >
-                                {member.user.firstname ? member.user.firstname.charAt(0) : ""}
+                                className="absolute top-0 left-0 h-4 rounded-full bg-blue-500"
+                                style={{
+                                    width: `${project.total_milestone_count > 0
+                                        ? (project.completed_milestone_count / project.total_milestone_count) * 100
+                                        : 0
+                                        }%`,
+                                }}
+                            ></div>
+                            <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                                {project.total_milestone_count > 0
+                                    ? Math.round(
+                                        (project.completed_milestone_count / project.total_milestone_count) * 100
+                                    ) + "%"
+                                    : "0%"}
                             </div>
-                        );
-                    })}
+                        </div>
+                        <div className="w-4 text-center">{project.total_milestone_count}</div>
+                    </div>
+
+                    {/* Tasks */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-20 font-light text-gray-600">Tasks</div>
+                        <div className="w-4 text-center">{project.completed_task_management_count}</div>
+                        <div className="flex-1 relative bg-gray-200 rounded-full h-4">
+                            <div
+                                className="absolute top-0 left-0 h-4 rounded-full bg-green-500"
+                                style={{
+                                    width: `${project.total_task_management_count > 0
+                                        ? (project.completed_task_management_count / project.total_task_management_count) *
+                                        100
+                                        : 0
+                                        }%`,
+                                }}
+                            ></div>
+                            <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                                {project.total_task_management_count > 0
+                                    ? Math.round(
+                                        (project.completed_task_management_count / project.total_task_management_count) * 100
+                                    ) + "%"
+                                    : "0%"}
+                            </div>
+                        </div>
+                        <div className="w-4 text-center">{project.total_task_management_count}</div>
+                    </div>
+
+                    {/* Issues */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-20 font-light text-gray-600">Issues</div>
+                        <div className="w-4 text-center">{project.completed_issues_count}</div>
+                        <div className="flex-1 relative bg-gray-200 rounded-full h-4">
+                            <div
+                                className="absolute top-0 left-0 h-4 rounded-full bg-red-500"
+                                style={{
+                                    width: `${project.total_issues_count > 0
+                                        ? (project.completed_issues_count / project.total_issues_count) * 100
+                                        : 0
+                                        }%`,
+                                }}
+                            ></div>
+                            <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                                {project.total_issues_count > 0
+                                    ? Math.round((project.completed_issues_count / project.total_issues_count) * 100) + "%"
+                                    : "0%"}
+                            </div>
+                        </div>
+                        <div className="w-4 text-center">{project.total_issues_count}</div>
+                    </div>
+                </div>
+
+
+                <hr className="border border-gray-200 my-2" />
+
+                <div className="flex items-center justify-between">
+                    <div className="text-gray-600 text-xs">Members</div>
+                    <TooltipProvider>
+                        <div className="flex items-center">
+                            {/* Display team members */}
+                            {project?.project_team?.project_team_members?.map((member, index) => {
+                                if (!member?.user) return null;
+                                const id = member.user.id || member.user.name;
+                                const userName = member.user.full_name || member.user.name || '';
+                                return (
+                                    <Tooltip key={index}>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? '-ml-2' : ''}`}
+                                                style={{ backgroundColor: memberColors[id] }}
+                                            >
+                                                {userName.charAt(0).toUpperCase()}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{userName}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            })}
+                        </div>
+                    </TooltipProvider>
                 </div>
             </div>
         </div>

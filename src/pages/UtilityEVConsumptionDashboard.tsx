@@ -27,6 +27,7 @@ interface EVConsumptionData {
 
 interface FilterData {
   dateRange?: DateRange | string;
+  transactionId?: string;
 }
 
 const UtilityEVConsumptionDashboard = () => {
@@ -140,14 +141,6 @@ const UtilityEVConsumptionDashboard = () => {
     }
   };
 
-  // Filter data based on search term
-  const filteredData = evConsumptionData.filter(item =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.transaction_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.created_by_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Fetch EV consumption data from API
   const fetchEVConsumptionData = useCallback(async (filters?: FilterData) => {
     try {
@@ -188,6 +181,12 @@ const UtilityEVConsumptionDashboard = () => {
           urlWithParams.searchParams.append('q[date_range]', singleDate);
           console.log('📅 Adding single date filter:', singleDate);
         }
+      }
+      
+      // Add transaction ID filter if provided
+      if (filters?.transactionId) {
+        urlWithParams.searchParams.append('q[transaction_id_eq]', filters.transactionId);
+        console.log('🔍 Adding transaction ID filter:', filters.transactionId);
       }
       
       console.log('�📡 API URL with params:', urlWithParams.toString());
@@ -285,6 +284,12 @@ const UtilityEVConsumptionDashboard = () => {
         }
       }
       
+      // Add transaction ID filter to export if provided
+      if (appliedFilters?.transactionId) {
+        urlWithParams.searchParams.append('q[transaction_id_eq]', appliedFilters.transactionId);
+        console.log('🔍 Adding transaction ID filter to export:', appliedFilters.transactionId);
+      }
+      
       const options = getAuthenticatedFetchOptions();
       const response = await fetch(urlWithParams.toString(), options);
       
@@ -351,7 +356,7 @@ const UtilityEVConsumptionDashboard = () => {
         /* Enhanced EV Consumption Table */
         <div>
           <EnhancedTable
-            data={filteredData}
+            data={evConsumptionData}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
@@ -364,27 +369,8 @@ const UtilityEVConsumptionDashboard = () => {
             searchPlaceholder="Search EV consumption records..."
             pagination={true}
             pageSize={10}
-            hideColumnsButton={true}
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                {/* Left actions can be used for other buttons if needed */}
-              </div>
-            }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-                <ColumnVisibilityDropdown
-                  columns={dropdownColumns}
-                  onColumnToggle={handleColumnToggle}
-                />
-              </div>
-            }
+            hideColumnsButton={false}
+            onFilterClick={() => setIsFilterOpen(true)}
           />
         </div>
       )}

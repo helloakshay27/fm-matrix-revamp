@@ -1,18 +1,49 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star, ChevronDown, FileText, LogsIcon, File, FileIcon, Radio } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
-import { apiClient } from '@/utils/apiClient';
-import { getAuthHeader, getFullUrl } from '@/config/apiConfig';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { QuestionMark } from '@mui/icons-material';
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Edit,
+  Trash2,
+  List,
+  MapPin,
+  QrCode,
+  Shield,
+  Clock,
+  Users,
+  Calendar,
+  Eye,
+  Info,
+  Download,
+  Star,
+  ChevronDown,
+  FileText,
+  LogsIcon,
+  File,
+  FileIcon,
+  Radio,
+} from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import { apiClient } from "@/utils/apiClient";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { QuestionMark } from "@mui/icons-material";
 // Questions table item interface
 interface QuestionsTableItem {
   qnumber: string;
@@ -119,7 +150,7 @@ interface LocationTableItem {
 export const SurveyMappingDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [mapping, setMapping] = useState<SurveyMappingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("survey-information");
@@ -128,9 +159,11 @@ export const SurveyMappingDetailsPage = () => {
   const fetchSurveyMappingDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[id_eq]=${id}`);
-      console.log('Survey mapping details response:', response.data);
-      
+      const response = await apiClient.get(
+        `/survey_mappings/mappings_list.json?q[id_eq]=${id}`
+      );
+      console.log("Survey mapping details response:", response.data);
+
       // The API returns an object with survey_mappings array
       const surveyMappings = response.data.survey_mappings || [];
       if (surveyMappings.length > 0) {
@@ -139,7 +172,7 @@ export const SurveyMappingDetailsPage = () => {
         setMapping(null);
       }
     } catch (error: unknown) {
-      console.error('Error fetching survey mapping details:', error);
+      console.error("Error fetching survey mapping details:", error);
       toast.error("Failed to fetch survey mapping details");
       setMapping(null);
     } finally {
@@ -154,7 +187,7 @@ export const SurveyMappingDetailsPage = () => {
   }, [id, fetchSurveyMappingDetails]);
 
   const handleBack = () => {
-    navigate('/maintenance/survey/mapping');
+    navigate("/maintenance/survey/mapping");
   };
 
   const handleEdit = () => {
@@ -167,23 +200,27 @@ export const SurveyMappingDetailsPage = () => {
 
   const handleDownloadQRCode = async (qrCodeUrl: string, mappingId: number) => {
     try {
-      const response = await apiClient.post(`/survey_mappings/download_qr_codes?survey_mapping_ids=${mappingId}`, {}, {
-        responseType: 'blob'
-      });
-      
+      const response = await apiClient.post(
+        `/survey_mappings/download_qr_codes.json?survey_mapping_ids=${mappingId}`,
+        {},
+        {
+          responseType: "blob",
+        }
+      );
+
       const blob = response.data;
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `qr-code-mapping-${mappingId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("QR Code PDF downloaded successfully");
     } catch (error) {
-      console.error('Error downloading QR code:', error);
+      console.error("Error downloading QR code:", error);
       toast.error("Failed to download QR code PDF");
     }
   };
@@ -218,30 +255,28 @@ export const SurveyMappingDetailsPage = () => {
 
   // Location details table configuration
   const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
-  const [selectedLocationObjects, setSelectedLocationObjects] = useState<SurveyMapping[]>([]);
+  const [selectedLocationObjects, setSelectedLocationObjects] = useState<
+    SurveyMapping[]
+  >([]);
 
   // Selection handlers
   const handleLocationSelect = (locationId: string, isSelected: boolean) => {
     const id = parseInt(locationId);
-    setSelectedLocations(prev =>
-      isSelected
-        ? [...prev, id]
-        : prev.filter(locId => locId !== id)
+    setSelectedLocations((prev) =>
+      isSelected ? [...prev, id] : prev.filter((locId) => locId !== id)
     );
-    
-    const location = mapping?.mappings.find(m => m.id === id);
+
+    const location = mapping?.mappings.find((m) => m.id === id);
     if (location) {
-      setSelectedLocationObjects(prev =>
-        isSelected
-          ? [...prev, location]
-          : prev.filter(loc => loc.id !== id)
+      setSelectedLocationObjects((prev) =>
+        isSelected ? [...prev, location] : prev.filter((loc) => loc.id !== id)
       );
     }
   };
 
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      setSelectedLocations(mapping?.mappings.map(m => m.id) || []);
+      setSelectedLocations(mapping?.mappings.map((m) => m.id) || []);
       setSelectedLocationObjects(mapping?.mappings || []);
     } else {
       setSelectedLocations([]);
@@ -256,22 +291,22 @@ export const SurveyMappingDetailsPage = () => {
 
   const handleMoveAssets = () => {
     // Implement move assets logic
-    console.log('Moving assets for:', selectedLocations);
+    console.log("Moving assets for:", selectedLocations);
   };
 
   const handlePrintQR = () => {
     // Implement print QR logic
-    console.log('Printing QR codes for:', selectedLocations);
+    console.log("Printing QR codes for:", selectedLocations);
   };
 
   const handleDownload = () => {
     // Implement download logic
-    console.log('Downloading for:', selectedLocations);
+    console.log("Downloading for:", selectedLocations);
   };
 
   const handleDispose = () => {
     // Implement dispose logic
-    console.log('Disposing:', selectedLocations);
+    console.log("Disposing:", selectedLocations);
   };
 
   const locationTableColumns: ColumnConfig[] = [
@@ -345,7 +380,7 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
-     {
+    {
       key: "qr_code",
       label: "QR Code",
       sortable: false,
@@ -357,8 +392,8 @@ export const SurveyMappingDetailsPage = () => {
   // Prepare location data for table
   const locationTableData = React.useMemo((): LocationTableItem[] => {
     if (!mapping || !mapping.mappings) return [];
-    
-    return mapping.mappings.map(mappingItem => ({
+
+    return mapping.mappings.map((mappingItem) => ({
       mapping_id: mappingItem.id,
       site: mappingItem.site_name,
       building: mappingItem.building_name,
@@ -411,7 +446,7 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
-   
+
     {
       key: "created_by",
       label: "Created By",
@@ -442,7 +477,7 @@ export const SurveyMappingDetailsPage = () => {
       qnumber: `Q${index + 1}`,
       id: question.id,
       descr: question.descr,
-      qtype: question.qtype.replace(/_/g, ' '),
+      qtype: question.qtype.replace(/_/g, " "),
       options: question,
       active: question.active,
       created_by: question.created_by || "—",
@@ -451,24 +486,27 @@ export const SurveyMappingDetailsPage = () => {
   }, [mapping]);
 
   // Custom cell renderer for questions table
-  const renderQuestionCell = (item: QuestionsTableItem, columnKey: string): React.ReactNode => {
+  const renderQuestionCell = (
+    item: QuestionsTableItem,
+    columnKey: string
+  ): React.ReactNode => {
     switch (columnKey) {
       case "options": {
         const question = item.options as SurveyQuestion;
         return renderQuestionOptions(question);
       }
-      case 'status': {
+      case "status": {
         return (
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleQuestionStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? 'bg-green-500' : 'bg-gray-300'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
+                }`}
             >
-              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                item.active ? 'translate-x-6' : 'translate-x-1'
-              }`} />
+              <div
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                  }`}
+              />
             </button>
           </div>
         );
@@ -488,14 +526,14 @@ export const SurveyMappingDetailsPage = () => {
       // Use apiClient instead of fetch to avoid CORS issues
       await apiClient.put(`/snag_questions/${item.id}.json`, {
         question_id: item.id,
-        active: newStatus // Send as boolean (true/false) as requested
+        active: newStatus, // Send as boolean (true/false) as requested
       });
 
       // Update local state on success - update the question in the questions array
-      setMapping(prev => {
+      setMapping((prev) => {
         if (!prev) return prev;
 
-        const updatedQuestions = prev.questions.map(question =>
+        const updatedQuestions = prev.questions.map((question) =>
           question.id === item.id
             ? { ...question, active: newStatus ? 1 : 0 }
             : question
@@ -503,14 +541,15 @@ export const SurveyMappingDetailsPage = () => {
 
         return {
           ...prev,
-          questions: updatedQuestions
+          questions: updatedQuestions,
         };
       });
 
-      toast.success(`Question status ${newStatus ? 'activated' : 'deactivated'}`);
-
+      toast.success(
+        `Question status ${newStatus ? "activated" : "deactivated"}`
+      );
     } catch (error: unknown) {
-      console.error('Error toggling question status:', error);
+      console.error("Error toggling question status:", error);
       toast.error("Failed to toggle question status");
     }
   };
@@ -518,70 +557,95 @@ export const SurveyMappingDetailsPage = () => {
   // Handle status toggle for individual mappings
   const handleStatusToggle = async (item: LocationTableItem) => {
     const newStatus = !item.active;
-    
+
     try {
       // Call the API to toggle status for individual mapping
-      await apiClient.put(`/survey_mappings/${item.survey_id}/toggle_status.json`, {
-        mapping_id: item.mapping_id,
-        active: newStatus
-      });
-      
+      await apiClient.put(
+        `/survey_mappings/${item.survey_id}/toggle_status.json`,
+        {
+          mapping_id: item.mapping_id,
+          active: newStatus,
+        }
+      );
+
       // Update local state on success - update the mapping in the mappings array
-      setMapping(prev => {
+      setMapping((prev) => {
         if (!prev) return prev;
-        
-        const updatedMappings = prev.mappings.map(mappingItem => 
-          mappingItem.id === item.mapping_id 
+
+        const updatedMappings = prev.mappings.map((mappingItem) =>
+          mappingItem.id === item.mapping_id
             ? { ...mappingItem, active: newStatus }
             : mappingItem
         );
-        
+
         return {
           ...prev,
-          mappings: updatedMappings
+          mappings: updatedMappings,
         };
       });
-      
-      toast.success(`Location mapping status ${item.active ? 'deactivated' : 'activated'}`);
-      
+
+      toast.success(
+        `Location mapping status ${item.active ? "deactivated" : "activated"}`
+      );
     } catch (error: unknown) {
-      console.error('Error toggling location mapping status:', error);
+      console.error("Error toggling location mapping status:", error);
       toast.error("Cannot activate mapping because survey is inactive");
     }
   };
 
   // Custom cell renderer for the table
-  const renderLocationCell = (item: LocationTableItem, columnKey: string): React.ReactNode => {
+  const renderLocationCell = (
+    item: LocationTableItem,
+    columnKey: string
+  ): React.ReactNode => {
     switch (columnKey) {
-      case 'mapping_id':
-        return <span >{item.mapping_id}</span>;
-        // <Badge variant="outline" className="text-xs">
-         
-          // </Badge>;
-      case 'site':
-        return <span >{item.site}</span>;
-      case 'building':
-        return <span >{item.building}</span>;
-      case 'wing':
-        return item.wing ? <span >{item.wing}</span> : <span className="text-gray-400">—</span>;
-      case 'floor':
-        return item.floor ? <span >{item.floor}</span> : <span className="text-gray-400">—</span>;
-      case 'area':
-        return item.area ? <span >{item.area}</span> : <span className="text-gray-400">—</span>;
-      case 'room':
-        return item.room ? <span >{item.room}</span> : <span className="text-gray-400">—</span>;
-      case 'qr_code':
+      case "mapping_id":
+        return <span>{item.mapping_id}</span>;
+      // <Badge variant="outline" className="text-xs">
+
+      // </Badge>;
+      case "site":
+        return <span>{item.site}</span>;
+      case "building":
+        return <span>{item.building}</span>;
+      case "wing":
+        return item.wing ? (
+          <span>{item.wing}</span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        );
+      case "floor":
+        return item.floor ? (
+          <span>{item.floor}</span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        );
+      case "area":
+        return item.area ? (
+          <span>{item.area}</span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        );
+      case "room":
+        return item.room ? (
+          <span>{item.room}</span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        );
+      case "qr_code":
         return item.qr_code ? (
           <div className="flex items-center gap-2">
             <img
               src={item.qr_code}
               alt="QR Code"
               className="w-5 h-5 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
-              onClick={() => window.open(item.qr_code, '_blank')}
+              onClick={() => window.open(item.qr_code, "_blank")}
               title="Click to view full size"
             />
             <span
-              onClick={() => handleDownloadQRCode(item.qr_code!, item.mapping_id)}
+              onClick={() =>
+                handleDownloadQRCode(item.qr_code!, item.mapping_id)
+              }
               className="text-xs px-2 py-1 text-black cursor-pointer hover:underline"
               title="Download QR Code"
             >
@@ -591,22 +655,22 @@ export const SurveyMappingDetailsPage = () => {
         ) : (
           <span className="text-gray-400 text-sm">No QR Code</span>
         );
-      case 'created_by':
+      case "created_by":
         return <span className="text-sm">{item.created_by}</span>;
-      case 'created_at':
+      case "created_at":
         return <span className="text-sm">{formatDate(item.created_at)}</span>;
-      case 'status':
+      case "status":
         return (
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? 'bg-green-500' : 'bg-gray-300'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
+                }`}
             >
-              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                item.active ? 'translate-x-6' : 'translate-x-1'
-              }`} />
+              <div
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                  }`}
+              />
             </button>
           </div>
         );
@@ -619,24 +683,26 @@ export const SurveyMappingDetailsPage = () => {
   const renderQuestionOptions = (question: SurveyQuestion) => {
     // Check if question type is rating or emoji first (based on qtype field)
     const questionType = question.qtype.toLowerCase();
-    const isRating = questionType.includes('rating') || 
-                    questionType.includes('star') || 
-                    questionType.includes('scale');
-    
-    const isEmoji = questionType.includes('emoji') || 
-                   questionType.includes('smiley') || 
-                   questionType.includes('emotion');
+    const isRating =
+      questionType.includes("rating") ||
+      questionType.includes("star") ||
+      questionType.includes("scale");
+
+    const isEmoji =
+      questionType.includes("emoji") ||
+      questionType.includes("smiley") ||
+      questionType.includes("emotion");
 
     // Handle specific question types as per user request
-    if (question.qtype === 'rating') {
+    if (question.qtype === "rating") {
       return <span className="text-yellow-400 text-sm">⭐</span>;
     }
 
-    if (question.qtype === 'emoji') {
+    if (question.qtype === "emoji") {
       return <span className="text-1xl">😊</span>;
     }
 
-    if (question.qtype === 'multiple') {
+    if (question.qtype === "multiple") {
       return (
         <div>
           <span className="text-sm">Radio Button</span>
@@ -653,49 +719,57 @@ export const SurveyMappingDetailsPage = () => {
       );
     }
 
+    // Handle input_box type
+    if (question.qtype === "input_box") {
+      return <span className="text-sm text-gray-600">Text Input</span>;
+    }
+
     // Existing logic for other types
     // Check if it might be a numeric rating based on option names
-    const isNumericRating = question.options.every(opt => /^\d+$/.test(opt.qname.trim()));
-    
+    const isNumericRating = question.options.every((opt) =>
+      /^\d+$/.test(opt.qname.trim())
+    );
+
     if (isNumericRating) {
       const ratings = question.options
-        .map(opt => parseInt(opt.qname) || 0)
-        .filter(rating => rating > 0);
-      
+        .map((opt) => parseInt(opt.qname) || 0)
+        .filter((rating) => rating > 0);
+
       if (ratings.length > 0) {
         const maxRating = Math.max(...ratings);
         const minRating = Math.min(...ratings);
-        
+
         return (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 {Array.from({ length: maxRating }, (_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`w-4 h-4 ${
-                      i < minRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                    }`}
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${i < minRating
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-300"
+                      }`}
                   />
                 ))}
               </div>
               <span className="text-xs text-gray-600">
-                {minRating !== maxRating ? `${minRating}-${maxRating}` : `${maxRating}`} 
-                {' '}
-                {maxRating === 1 ? 'star' : 'stars'}
+                {minRating !== maxRating
+                  ? `${minRating}-${maxRating}`
+                  : `${maxRating}`}{" "}
+                {maxRating === 1 ? "star" : "stars"}
               </span>
             </div>
             <div className="flex flex-wrap gap-1">
               {question.options.map((option, optIndex) => (
                 <span
                   key={optIndex}
-                  className={`text-xs px-2 py-1 rounded border ${
-                    option.option_type === 'p' 
-                      ? 'bg-green-50 border-green-200 text-green-800' 
-                      : option.option_type === 'n'
-                      ? 'bg-red-50 border-red-200 text-red-800'
-                      : 'bg-yellow-50 border-yellow-200 text-gray-700'
-                  }`}
+                  className={`text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : option.option_type === "n"
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : "bg-yellow-50 border-yellow-200 text-gray-700"
+                    }`}
                 >
                   ⭐ {option.qname}
                 </span>
@@ -734,18 +808,31 @@ export const SurveyMappingDetailsPage = () => {
               {question.options.map((option, optIndex) => {
                 // Enhanced emoji mapping
                 const emojiMap: { [key: string]: string } = {
-                  'very_satisfied': '😀', 'satisfied': '😊', 'neutral': '😐',
-                  'dissatisfied': '😞', 'very_dissatisfied': '😢',
-                  'very_happy': '😀', 'happy': '😊', 'okay': '😐',
-                  'sad': '😞', 'very_sad': '😢',
-                  'excellent': '😀', 'good': '😊', 'average': '😐',
-                  'poor': '😞', 'terrible': '😢',
-                  'amazing': '😀', 'awesome': '😀', 'fantastic': '😀'
+                  very_satisfied: "😀",
+                  satisfied: "😊",
+                  neutral: "😐",
+                  dissatisfied: "😞",
+                  very_dissatisfied: "😢",
+                  very_happy: "😀",
+                  happy: "😊",
+                  okay: "😐",
+                  sad: "😞",
+                  very_sad: "😢",
+                  excellent: "😀",
+                  good: "😊",
+                  average: "😐",
+                  poor: "😞",
+                  terrible: "😢",
+                  amazing: "😀",
+                  awesome: "😀",
+                  fantastic: "😀",
                 };
-                
-                const optionKey = option.qname.toLowerCase().replace(/\s+/g, '_');
+
+                const optionKey = option.qname
+                  .toLowerCase()
+                  .replace(/\s+/g, "_");
                 let emoji = emojiMap[optionKey];
-                
+
                 if (!emoji) {
                   for (const [key, value] of Object.entries(emojiMap)) {
                     if (optionKey.includes(key) || key.includes(optionKey)) {
@@ -754,21 +841,20 @@ export const SurveyMappingDetailsPage = () => {
                     }
                   }
                 }
-                
+
                 if (!emoji) {
-                  emoji = defaultEmojis[optIndex % 5]?.emoji || '😐';
+                  emoji = defaultEmojis[optIndex % 5]?.emoji || "😐";
                 }
-                
+
                 return (
                   <div
                     key={optIndex}
-                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${
-                      option.option_type === 'p' 
-                        ? 'bg-green-50 border-green-200 text-green-800' 
-                        : option.option_type === 'n'
-                        ? 'bg-red-50 border-red-200 text-red-800'
-                        : 'bg-yellow-50 border-yellow-200 text-gray-700'
-                    }`}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : option.option_type === "n"
+                        ? "bg-red-50 border-red-200 text-red-800"
+                        : "bg-yellow-50 border-yellow-200 text-gray-700"
+                      }`}
                   >
                     <span className="text-sm">{emoji}</span>
                     <span>{option.qname}</span>
@@ -786,47 +872,50 @@ export const SurveyMappingDetailsPage = () => {
     // Handle regular questions with options
     if (question.options && question.options.length > 0) {
       // Check if it might be a numeric rating based on option names
-      const isNumericRating = question.options.every(opt => /^\d+$/.test(opt.qname.trim()));
-      
+      const isNumericRating = question.options.every((opt) =>
+        /^\d+$/.test(opt.qname.trim())
+      );
+
       if (isNumericRating) {
         const ratings = question.options
-          .map(opt => parseInt(opt.qname) || 0)
-          .filter(rating => rating > 0);
-        
+          .map((opt) => parseInt(opt.qname) || 0)
+          .filter((rating) => rating > 0);
+
         if (ratings.length > 0) {
           const maxRating = Math.max(...ratings);
           const minRating = Math.min(...ratings);
-          
+
           return (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   {Array.from({ length: maxRating }, (_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-4 h-4 ${
-                        i < minRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                      }`}
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${i < minRating
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                        }`}
                     />
                   ))}
                 </div>
                 <span className="text-xs text-gray-600">
-                  {minRating !== maxRating ? `${minRating}-${maxRating}` : `${maxRating}`} 
-                  {' '}
-                  {maxRating === 1 ? 'star' : 'stars'}
+                  {minRating !== maxRating
+                    ? `${minRating}-${maxRating}`
+                    : `${maxRating}`}{" "}
+                  {maxRating === 1 ? "star" : "stars"}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
                 {question.options.map((option, optIndex) => (
                   <span
                     key={optIndex}
-                    className={`text-xs px-2 py-1 rounded border ${
-                      option.option_type === 'p' 
-                        ? 'bg-green-50 border-green-200 text-green-800' 
-                        : option.option_type === 'n'
-                        ? 'bg-red-50 border-red-200 text-red-800'
-                        : 'bg-yellow-50 border-yellow-200 text-gray-700'
-                    }`}
+                    className={`text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : option.option_type === "n"
+                        ? "bg-red-50 border-red-200 text-red-800"
+                        : "bg-yellow-50 border-yellow-200 text-gray-700"
+                      }`}
                   >
                     ⭐ {option.qname}
                   </span>
@@ -843,15 +932,14 @@ export const SurveyMappingDetailsPage = () => {
           {question.options.map((option, optIndex) => (
             <span
               key={optIndex}
-              className={`text-xs px-2 py-1 rounded ${
-                option.option_type === 'p' 
-                  ? 'bg-green-100 text-green-800' 
-                  : option.option_type === 'n'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
+              className={`text-xs px-2 py-1 rounded ${option.option_type === "p"
+                ? "bg-green-100 text-green-800"
+                : option.option_type === "n"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+                }`}
             >
-              {option.qname} 
+              {option.qname}
             </span>
           ))}
         </div>
@@ -899,11 +987,7 @@ export const SurveyMappingDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={handleBack} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Survey Mapping List
         </Button>
@@ -913,23 +997,23 @@ export const SurveyMappingDetailsPage = () => {
             {mapping.name}
           </h1>
           <div className="flex gap-2">
-           <Badge
-  variant={mapping.active ? "default" : "secondary"}
-  className="mr-2 rounded-none flex items-center"
->
-  {mapping.active ? (
-    <>
-      <CheckCircle className="w-3 h-3 mr-1" />
-      Active
-    </>
-  ) : (
-    <>
-      <XCircle className="w-3 h-3 mr-1" />
-      Inactive
-    </>
-  )}
-  <ChevronDown className="w-3 h-3 ml-1" />
-</Badge>
+            <Badge
+              variant={mapping.active ? "default" : "secondary"}
+              className="mr-2 rounded-none flex items-center"
+            >
+              {mapping.active ? (
+                <>
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Active
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-3 h-3 mr-1" />
+                  Inactive
+                </>
+              )}
+              <ChevronDown className="w-3 h-3 ml-1" />
+            </Badge>
 
             <Button
               onClick={handleEdit}
@@ -937,7 +1021,6 @@ export const SurveyMappingDetailsPage = () => {
               className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 " />
-
             </Button>
             {/* <Button
               onClick={handleDelete}
@@ -971,117 +1054,116 @@ export const SurveyMappingDetailsPage = () => {
             ))}
           </TabsList> */}
           <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
-  {[
-    {
-      label: "Survey Information",
-      value: "survey-information",
-      // icon: (
-      //   <svg
-      //     xmlns="http://www.w3.org/2000/svg"
-      //     width="20"
-      //     height="20"
-      //     viewBox="0 0 24 24"
-      //     fill="none"
-      //     strokeWidth={2}
-      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-      //   >
-      //     <path d="M4 4h16v16H4z" />
-      //     <path d="M8 8h8v8H8z" />
-      //   </svg>
-      // ),
-    },
-    {
-      label: "Questions",
-      value: "questions",
-      // icon: (
-      //   <svg
-      //     xmlns="http://www.w3.org/2000/svg"
-      //     width="20"
-      //     height="20"
-      //     viewBox="0 0 24 24"
-      //     fill="none"
-      //     strokeWidth={2}
-      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-      //   >
-      //     <path d="M9 18h6" />
-      //     <path d="M10 14a4 4 0 1 1 4-4c0 2-2 3-2 3" />
-      //     <path d="M12 20h0" />
-      //   </svg>
-      // ),
-    },
-    {
-      label: "Location Details",
-      value: "location-details",
-      // icon: (
-      //   <svg
-      //     xmlns="http://www.w3.org/2000/svg"
-      //     width="20"
-      //     height="20"
-      //     viewBox="0 0 24 24"
-      //     fill="none"
-      //     strokeWidth={2}
-      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-      //   >
-      //     <path d="M12 21C12 21 5 13.6 5 9a7 7 0 0 1 14 0c0 4.6-7 12-7 12z" />
-      //     <circle cx="12" cy="9" r="2.5" />
-      //   </svg>
-      // ),
-    },
-    // {
-    //   label: "Logs",
-    //   value: "logs",
-    // },
-  ].map((tab) => (
-    <TabsTrigger
-      key={tab.value}
-      value={tab.value}
-      className="group flex items-center gap-2 border-none font-semibold data-[state=active]:bg-[#EDEAE3] data-[state=inactive]:bg-white data-[state=inactive]:text-black"
-    >
-      {tab.icon}
-      {tab.label}
-    </TabsTrigger>
-  ))}
-</TabsList>
-
+            {[
+              {
+                label: "Survey Information",
+                value: "survey-information",
+                // icon: (
+                //   <svg
+                //     xmlns="http://www.w3.org/2000/svg"
+                //     width="20"
+                //     height="20"
+                //     viewBox="0 0 24 24"
+                //     fill="none"
+                //     strokeWidth={2}
+                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                //   >
+                //     <path d="M4 4h16v16H4z" />
+                //     <path d="M8 8h8v8H8z" />
+                //   </svg>
+                // ),
+              },
+              {
+                label: "Questions",
+                value: "questions",
+                // icon: (
+                //   <svg
+                //     xmlns="http://www.w3.org/2000/svg"
+                //     width="20"
+                //     height="20"
+                //     viewBox="0 0 24 24"
+                //     fill="none"
+                //     strokeWidth={2}
+                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                //   >
+                //     <path d="M9 18h6" />
+                //     <path d="M10 14a4 4 0 1 1 4-4c0 2-2 3-2 3" />
+                //     <path d="M12 20h0" />
+                //   </svg>
+                // ),
+              },
+              {
+                label: "Location Details",
+                value: "location-details",
+                // icon: (
+                //   <svg
+                //     xmlns="http://www.w3.org/2000/svg"
+                //     width="20"
+                //     height="20"
+                //     viewBox="0 0 24 24"
+                //     fill="none"
+                //     strokeWidth={2}
+                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                //   >
+                //     <path d="M12 21C12 21 5 13.6 5 9a7 7 0 0 1 14 0c0 4.6-7 12-7 12z" />
+                //     <circle cx="12" cy="9" r="2.5" />
+                //   </svg>
+                // ),
+              },
+              // {
+              //   label: "Logs",
+              //   value: "logs",
+              // },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="group flex items-center gap-2 border-none font-semibold data-[state=active]:bg-[#EDEAE3] data-[state=inactive]:bg-white data-[state=inactive]:text-black"
+              >
+                {tab.icon}
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
           {/* Survey Information */}
           <TabsContent value="survey-information" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-             <Card className="bg-[#F6F4EE]">
-  <CardContent className="p-6">
-    <div className="flex items-center gap-3">
-      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-        <QuestionMark className="w-5 h-5 text-[#C72030]" />
-      </div>
-      <div>
-        <p className="text-xl font-semibold text-[#C72030]">
-          {mapping.questions_count || 0}
-        </p>
-        <p className="text-sm text-gray-600">Questions</p>
-      </div>
-    </div>
-  </CardContent>
-</Card>
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <QuestionMark className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {mapping.questions_count || 0}
+                      </p>
+                      <p className="text-sm text-gray-600">Questions</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <MapPin className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {mapping.mappings?.length || 0}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Location Associations
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-             <Card className="bg-[#F6F4EE]">
-  <CardContent className="p-6">
-    <div className="flex items-center gap-3">
-      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-        <MapPin className="w-5 h-5 text-[#C72030]" />
-      </div>
-      <div>
-         <p className="text-xl font-semibold text-[#C72030]">
-          {mapping.mappings?.length || 0}
-        </p>
-        <p className="text-sm text-gray-600">Location Associations</p>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-
-
-             {/* <Card className="bg-[#F6F4EE]">
+              {/* <Card className="bg-[#F6F4EE]">
   <CardContent className="p-6">
     <div className="flex items-center gap-3">
       <List className="w-8 h-8 text-[#C72030]" />
@@ -1095,47 +1177,45 @@ export const SurveyMappingDetailsPage = () => {
     </div>
   </CardContent>
 </Card> */}
-<Card className="bg-[#F6F4EE]">
-  <CardContent className="p-6">
-    <div className="flex items-center gap-3">
-      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6 text-[#C72030]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-      </div>
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-6 h-6 text-[#C72030]"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </div>
 
-      <div>
-        <p className="text-xl font-semibold capitalize text-[#C72030]">
-          {mapping.check_type || "N/A"}
-        </p>
-        <p className="text-sm text-gray-600">Question Type</p>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-
-
+                    <div>
+                      <p className="text-xl font-semibold capitalize text-[#C72030]">
+                        {mapping.check_type || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-600">Question Type</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-             <CardHeader className="bg-[#F6F4EE] mb-6">
-  <CardTitle className="text-lg flex items-center">
-    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-      <FileText className="h-5 w-5 text-[#C72030]" />
-    </div>
-    Survey Information
-  </CardTitle>
-</CardHeader>
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                    <FileText className="h-5 w-5 text-[#C72030]" />
+                  </div>
+                  Survey Information
+                </CardTitle>
+              </CardHeader>
 
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1145,18 +1225,17 @@ export const SurveyMappingDetailsPage = () => {
                       {mapping.name}
                     </span>
                   </div>
-                   <div className="text-sm text-gray-800">
+                  <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Question Type:</span>{" "}
                     <span className="font-medium text-gray-800">
                       {/* <Badge variant="outline" className="capitalize"> */}
-                        {mapping.check_type}
+                      {mapping.check_type}
                       {/* </Badge> */}
                     </span>
                   </div>
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Survey ID:</span>{" "}
                     <span className="font-medium text-gray-800">
-
                       #{mapping.id}
                     </span>
                   </div>
@@ -1166,7 +1245,7 @@ export const SurveyMappingDetailsPage = () => {
                       {mapping.mappings?.length || 0}
                     </span>
                   </div> */}
-                   <div className="text-sm text-gray-800">
+                  <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Total Associations:</span>{" "}
                     <span className="font-medium text-gray-800">
                       {mapping.no_of_associations || 0}
@@ -1178,7 +1257,7 @@ export const SurveyMappingDetailsPage = () => {
                       {mapping.questions_count || 0}
                     </span>
                   </div>
-                 
+
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Status:</span>{" "}
                     <span className="font-medium text-red-800">
@@ -1188,19 +1267,29 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Created By:</span>{" "}
                     <span className="font-medium text-gray-800">
-                      {mapping.created_by || mapping.mappings?.[0]?.created_by || "N/A"}
+                      {mapping.created_by ||
+                        mapping.mappings?.[0]?.created_by ||
+                        "N/A"}
                     </span>
                   </div>
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Created On:</span>{" "}
                     <span className="font-medium text-gray-800">
-                      {mapping.created_at ? formatDate(mapping.created_at) : mapping.mappings?.[0]?.created_at ? formatDate(mapping.mappings[0].created_at) : "N/A"}
+                      {mapping.created_at
+                        ? formatDate(mapping.created_at)
+                        : mapping.mappings?.[0]?.created_at
+                          ? formatDate(mapping.mappings[0].created_at)
+                          : "N/A"}
                     </span>
                   </div>
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Last Updated:</span>{" "}
                     <span className="font-medium text-gray-800">
-                      {mapping.updated_at ? formatDate(mapping.updated_at) : mapping.mappings?.[0]?.updated_at ? formatDate(mapping.mappings[0].updated_at) : "N/A"}
+                      {mapping.updated_at
+                        ? formatDate(mapping.updated_at)
+                        : mapping.mappings?.[0]?.updated_at
+                          ? formatDate(mapping.mappings[0].updated_at)
+                          : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -1266,10 +1355,10 @@ export const SurveyMappingDetailsPage = () => {
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-      <QuestionMark className="h-5 w-5 text-[#C72030]" />
-    </div>
-                  Survey Question 
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                    <QuestionMark className="h-5 w-5 text-[#C72030]" />
+                  </div>
+                  Survey Question
                   {/* ({mapping.questions?.length || 0}) */}
                 </CardTitle>
               </CardHeader>
@@ -1297,9 +1386,9 @@ export const SurveyMappingDetailsPage = () => {
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-      <MapPin className="h-5 w-5 text-[#C72030]" />
-    </div>
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                    <MapPin className="h-5 w-5 text-[#C72030]" />
+                  </div>
                   Location Details
                   {/* ({mapping.mappings?.length || 0} Locations) */}
                 </CardTitle>
@@ -1324,7 +1413,9 @@ export const SurveyMappingDetailsPage = () => {
                   selectedItems={selectedLocations.map(String)}
                   onSelectItem={handleLocationSelect}
                   onSelectAll={handleSelectAll}
-                  getItemId={(item: LocationTableItem) => String(item.mapping_id)}
+                  getItemId={(item: LocationTableItem) =>
+                    String(item.mapping_id)
+                  }
                   storageKey="location-details-table"
                   className="min-w-[1200px] bg-[#F6F7F7]"
                   emptyMessage="No location details found"
@@ -1338,121 +1429,129 @@ export const SurveyMappingDetailsPage = () => {
             </Card>
           </TabsContent>
 
-      <TabsContent value="logs" className="mt-4">
-  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-    <CardHeader className="bg-[#F6F4EE] mb-6">
-  <CardTitle className="text-lg flex items-center">
-    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="26"
-        viewBox="0 0 18 26"
-        fill="none"
-      >
-        <path
-          d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
-          stroke="#C72030"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
-          stroke="#C72030"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M5 8H13M5 13H9"
-          stroke="#C72030"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-    LOGS
-  </CardTitle>
-</CardHeader>
+          <TabsContent value="logs" className="mt-4">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="26"
+                      viewBox="0 0 18 26"
+                      fill="none"
+                    >
+                      <path
+                        d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
+                        stroke="#C72030"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
+                        stroke="#C72030"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M5 8H13M5 13H9"
+                        stroke="#C72030"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  LOGS
+                </CardTitle>
+              </CardHeader>
 
+              <CardContent>
+                <div className="relative">
+                  {/* Icon at the top of the line */}
+                  <div className="flex items-center mb-2">
+                    <div className="w-8 h-8 ml-2 flex items-center justify-center rounded-full mr-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="22"
+                        viewBox="0 0 18 26"
+                        fill="none"
+                      >
+                        <path
+                          d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
+                          stroke="#C72030"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
+                          stroke="#C72030"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M5 8H13M5 13H9"
+                          stroke="#C72030"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg text-[#C72030] font-semibold">
+                      Logs
+                    </h3>
+                  </div>
 
-    <CardContent>
-  <div className="relative">
-    {/* Icon at the top of the line */}
-<div className="flex items-center mb-2">
-  <div className="w-8 h-8 ml-2 flex items-center justify-center rounded-full mr-2">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="22"
-      viewBox="0 0 18 26"
-      fill="none"
-    >
-      <path
-        d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
-        stroke="#C72030"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
-        stroke="#C72030"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5 8H13M5 13H9"
-        stroke="#C72030"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  </div>
-  <h3 className="text-lg text-[#C72030] font-semibold">Logs</h3>
-</div>
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-5 top-8 bottom-9 w-0.5 bg-[#C72030] z-0"></div>
 
+                  <div className="space-y-6 relative z-10">
+                    {/* Log Entry - 23 Feb 2025 */}
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-4 ml-4"></div>
+                      <div className="ml-8">
+                        <p className="text-md font-semibold text-gray-900">
+                          23 Feb 2025
+                        </p>
+                        <p className="text-gray-700">
+                          <span className="text-gray-500">6:30PM </span>
+                          <span className="text-black font-semibold">
+                            Survey Created By Abdul
+                          </span>
+                        </p>
+                        <p className="text-gray-700">
+                          <span className="text-gray-500">7:30PM </span>
+                          <span className="text-black font-semibold">
+                            Location Edited By Abdul
+                          </span>
+                        </p>
+                      </div>
+                    </div>
 
-    {/* Vertical timeline line */}
-    <div className="absolute left-5 top-8 bottom-9 w-0.5 bg-[#C72030] z-0"></div>
-
-    <div className="space-y-6 relative z-10">
-      {/* Log Entry - 23 Feb 2025 */}
-      <div className="flex items-start">
-  <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-4 ml-4"></div>
-  <div className="ml-8">
-    <p className="text-md font-semibold text-gray-900">23 Feb 2025</p>
-    <p className="text-gray-700">
-      <span className="text-gray-500">6:30PM </span>
-      <span className="text-black font-semibold">Survey Created By Abdul</span>
-    </p>
-    <p className="text-gray-700">
-      <span className="text-gray-500">7:30PM </span>
-      <span className="text-black font-semibold">Location Edited By Abdul</span>
-    </p>
-  </div>
-</div>
-
-
-      {/* Log Entry - 21 Feb 2025 */}
-      <div className="flex items-start">
-        <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-1.5 ml-4"></div>
-        <div className="ml-8">
-          <p className="text-md font-semibold text-gray-900">21 Feb 2025</p>
-          <p className="text-gray-700">
-            <span className='text-gray-500'>6:30PM</span> 
-            <span className='text-black font-semibold'>Question Marked Inactive By Abdul</span>
-            </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</CardContent>
-  </Card>
-</TabsContent>
-
+                    {/* Log Entry - 21 Feb 2025 */}
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-1.5 ml-4"></div>
+                      <div className="ml-8">
+                        <p className="text-md font-semibold text-gray-900">
+                          21 Feb 2025
+                        </p>
+                        <p className="text-gray-700">
+                          <span className="text-gray-500">6:30PM</span>
+                          <span className="text-black font-semibold">
+                            Question Marked Inactive By Abdul
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* QR Code */}
           <TabsContent value="qr-code" className="p-3 sm:p-6">
@@ -1469,7 +1568,10 @@ export const SurveyMappingDetailsPage = () => {
                 {mapping.mappings && mapping.mappings.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {mapping.mappings.map((mappingItem) => (
-                      <div key={mappingItem.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div
+                        key={mappingItem.id}
+                        className="bg-white border border-gray-200 rounded-lg p-4"
+                      >
                         <div className="flex items-center justify-between mb-3">
                           <Badge variant="outline" className="text-xs">
                             Mapping #{mappingItem.id}
@@ -1478,19 +1580,30 @@ export const SurveyMappingDetailsPage = () => {
                             {mappingItem.created_by}
                           </span>
                         </div>
-                        
+
                         {/* Location Info */}
                         <div className="mb-4 text-sm space-y-1">
-                          <div><strong>Site:</strong> {mappingItem.site_name}</div>
-                          <div><strong>Building:</strong> {mappingItem.building_name}</div>
+                          <div>
+                            <strong>Site:</strong> {mappingItem.site_name}
+                          </div>
+                          <div>
+                            <strong>Building:</strong>{" "}
+                            {mappingItem.building_name}
+                          </div>
                           {mappingItem.wing_name && (
-                            <div><strong>Wing:</strong> {mappingItem.wing_name}</div>
+                            <div>
+                              <strong>Wing:</strong> {mappingItem.wing_name}
+                            </div>
                           )}
                           {mappingItem.floor_name && (
-                            <div><strong>Floor:</strong> {mappingItem.floor_name}</div>
+                            <div>
+                              <strong>Floor:</strong> {mappingItem.floor_name}
+                            </div>
                           )}
                           {mappingItem.room_name && (
-                            <div><strong>Room:</strong> {mappingItem.room_name}</div>
+                            <div>
+                              <strong>Room:</strong> {mappingItem.room_name}
+                            </div>
                           )}
                         </div>
 
@@ -1498,29 +1611,43 @@ export const SurveyMappingDetailsPage = () => {
                         {mappingItem.qr_code_url ? (
                           <div className="flex flex-col items-center">
                             <div className="mb-3">
-                              <img 
+                              <img
                                 src={mappingItem.qr_code_url}
                                 alt={`QR Code for Mapping ${mappingItem.id}`}
                                 className="w-32 h-32 object-contain border border-gray-200 rounded-lg shadow-sm"
                               />
                             </div>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
-                              onClick={() => window.open(mappingItem.qr_code_url, '_blank')}
+                              onClick={() =>
+                                window.open(mappingItem.qr_code_url, "_blank")
+                              }
                               className="flex items-center gap-2 text-xs"
                             >
                               <Eye className="w-3 h-3" />
                               View Full Size
                             </Button>
-                            
+
                             {/* QR Code Details */}
                             {mappingItem.qr_code && (
                               <div className="mt-3 text-xs text-gray-600 space-y-1">
-                                <div><strong>File:</strong> {mappingItem.qr_code.document_file_name}</div>
-                                <div><strong>Size:</strong> {mappingItem.qr_code.document_file_size} bytes</div>
-                                <div><strong>Type:</strong> {mappingItem.qr_code.document_content_type}</div>
-                                <div><strong>Created:</strong> {formatDate(mappingItem.qr_code.created_at)}</div>
+                                <div>
+                                  <strong>File:</strong>{" "}
+                                  {mappingItem.qr_code.document_file_name}
+                                </div>
+                                <div>
+                                  <strong>Size:</strong>{" "}
+                                  {mappingItem.qr_code.document_file_size} bytes
+                                </div>
+                                <div>
+                                  <strong>Type:</strong>{" "}
+                                  {mappingItem.qr_code.document_content_type}
+                                </div>
+                                <div>
+                                  <strong>Created:</strong>{" "}
+                                  {formatDate(mappingItem.qr_code.created_at)}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -1540,7 +1667,8 @@ export const SurveyMappingDetailsPage = () => {
                       No QR Codes Available
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      No QR codes have been generated for this survey mapping yet.
+                      No QR codes have been generated for this survey mapping
+                      yet.
                     </p>
                   </div>
                 )}
@@ -1554,9 +1682,10 @@ export const SurveyMappingDetailsPage = () => {
                       </p>
                     </div>
                     <p className="text-xs text-blue-700">
-                      Each QR code is specific to its location mapping. Place each QR code at its respective 
-                      mapped location for easy access by survey respondents. Scanning a QR code will direct 
-                      users to the survey for that specific location.
+                      Each QR code is specific to its location mapping. Place
+                      each QR code at its respective mapped location for easy
+                      access by survey respondents. Scanning a QR code will
+                      direct users to the survey for that specific location.
                     </p>
                   </div>
                 )}

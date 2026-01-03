@@ -2,13 +2,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileCard, FileItem } from "./DocumentFileCard";
+import { generateId } from "./DocumentUploadButton";
+import { useState } from "react";
+import Folder from "./Folder";
 
 interface FileGridProps {
     files: FileItem[];
     selectedFiles: string[];
     onSelectFile: (id: string) => void;
     onSelectAll: () => void;
-    viewMode: "grid" | "list";
+    viewMode: "grid" | "list" | "tree";
 }
 
 export const FileGrid = ({
@@ -19,6 +22,70 @@ export const FileGrid = ({
     viewMode
 }: FileGridProps) => {
     const allSelected = files.length > 0 && selectedFiles.length === files.length;
+
+    const [treeData, setTreeData] = useState([
+        {
+            id: 'root',
+            name: 'PROJECTS',
+            type: 'folder',
+            children: [],
+        },
+    ]);
+
+    const addFolder = (parentId, newFolder) => {
+        const add = (nodes) =>
+            nodes.map((node) => {
+                if (node.id === parentId && node.type === 'folder') {
+                    return { ...node, children: [...node.children, newFolder] };
+                }
+                if (node.children) {
+                    return { ...node, children: add(node.children) };
+                }
+                return node;
+            });
+        setTreeData((prev) => add(prev));
+    };
+
+    const uploadFile = (folderId, fileName) => {
+        const add = (nodes) =>
+            nodes.map((node) => {
+                if (node.id === folderId && node.type === 'folder') {
+                    return {
+                        ...node,
+                        children: [...node.children, { id: generateId(), name: fileName, type: 'file' }],
+                    };
+                }
+                if (node.children) {
+                    return { ...node, children: add(node.children) };
+                }
+                return node;
+            });
+        setTreeData((prev) => add(prev));
+    };
+
+    if (viewMode === "tree") {
+        return (
+            <div className="p-4">
+                <button
+                    onClick={() =>
+                        addFolder('root', {
+                            id: generateId(),
+                            name: 'New Folder',
+                            type: 'folder',
+                            children: [],
+                        })
+                    }
+                    className="bg-[#c72030] text-white px-3 py-1 text-sm rounded mb-3"
+                >
+                    + Add
+                </button>
+
+                {treeData.map((folder) => (
+                    <Folder key={folder.id} data={folder} onAddFolder={addFolder} onUploadFile={uploadFile} />
+                ))}
+            </div>
+        );
+    }
 
     if (viewMode === "list") {
         return (

@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchAssetsData } from '@/store/slices/assetsSlice';
+import { fetchAssetsData, setFilters as setReduxFilters } from '@/store/slices/assetsSlice';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -64,6 +64,7 @@ import {
   ENDPOINTS,
 } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { getUser } from '@/utils/auth';
 import {
   DndContext,
   closestCenter,
@@ -143,6 +144,8 @@ export const AssetDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Redux state
   const {
@@ -155,6 +158,7 @@ export const AssetDashboard = () => {
     filters,
     totalValue,
     available_custom_fields: reduxCustomFields,
+    asset_ids: allAssetIds,
   } = useSelector((state: RootState) => state.assets);
 
   // Local state
@@ -212,6 +216,8 @@ export const AssetDashboard = () => {
     group: true,
     subGroup: true,
     assetType: true,
+    allocationType: true,
+    allocatedTo: true,
   });
   const [chartOrder, setChartOrder] = useState<string[]>([
     'statusDistribution',
@@ -309,7 +315,7 @@ export const AssetDashboard = () => {
   const transformedAssets: TableAsset[] = assets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serial_number || '-',
     assetNumber: asset.asset_number || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.site_name || '',
@@ -335,6 +341,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -353,20 +360,21 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -375,7 +383,7 @@ export const AssetDashboard = () => {
   const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serialNumber || '-',
     assetNumber: asset.assetNumber || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.siteName || '',
@@ -399,6 +407,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -417,20 +426,21 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room', 'pms_floor', 'pms_area',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category', 'pms_asset_group',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -505,37 +515,108 @@ export const AssetDashboard = () => {
     })
   );
 
-  const handleStatCardClick = (filterType: string) => {
-    let filters: any = {};
-    switch (filterType) {
-      case 'total':
-        filters = {};
-        break;
-      case 'non_it':
-        filters = { it_asset_eq: false };
-        break;
-      case 'it':
-        filters = { it_asset_eq: true };
-        break;
-      case 'in_use':
-        filters = { breakdown_eq: false, status_eq: 'in_use' };
-        break;
-      case 'breakdown':
-        filters = { breakdown_eq: true };
-        break;
-      case 'in_store':
-        filters = { status_eq: 'in_storage' };
-        break;
-      case 'dispose':
-        filters = { status_eq: 'disposed' };
-        break;
-      default:
-        filters = {};
+  // const handleStatCardClick = (filterType: string) => {
+  //   let filters: any = {};
+  //   switch (filterType) {
+  //     case 'total':
+  //       filters = {};
+  //       break;
+  //     case 'non_it':
+  //       filters = { it_asset_eq: false };
+  //       break;
+  //     case 'it':
+  //       filters = { it_asset_eq: true };
+  //       break;
+  //     case 'in_use':
+  //       filters = { breakdown_eq: false, status_eq: 'in_use' };
+  //       break;
+  //     case 'breakdown':
+  //       filters = { breakdown_eq: true };
+  //       break;
+  //     case 'in_store':
+  //       filters = { status_eq: 'in_storage' };
+  //       break;
+  //     case 'allocated':
+  //       filters = { allocated: true };
+  //       break;
+  //     case 'dispose':
+  //       filters = { status_eq: 'disposed' };
+  //       break;
+  //     default:
+  //       filters = {};
+  //   }
+  //   setSearchTerm('');
+  //   dispatch(fetchAssetsData({ page: 1, filters }));
+  //   setCurrentPage(1);
+  // };
+
+
+  // Remove a single filter by key (component scope)
+  const handleRemoveFilter = (key: string) => {
+    const newFilters = { ...filters } as Record<string, any>;
+    if (key in newFilters) {
+      delete newFilters[key];
     }
-    setSearchTerm('');
-    dispatch(fetchAssetsData({ page: 1, filters }));
+    // Update redux filters and refetch
+    dispatch(setReduxFilters(newFilters));
     setCurrentPage(1);
+    dispatch(fetchAssetsData({ page: 1, filters: newFilters }));
   };
+
+  // Clear all filters (component scope)
+  const handleClearAllFilters = () => {
+  // Clear redux filters so dialog and other components see empty filters
+  dispatch(setReduxFilters({}));
+  // Reset search and pagination
+  setSearchTerm('');
+  setCurrentPage(1);
+  // Fetch unfiltered assets
+  dispatch(fetchAssetsData({ page: 1, filters: {} }));
+  };
+
+  const handleStatCardClick = (filterType: string) => {
+  let newFilter: any = {};
+
+  switch (filterType) {
+    case 'total':
+      newFilter = {};
+      break;
+    case 'non_it':
+      newFilter = { it_asset_eq: false };
+      break;
+    case 'it':
+      newFilter = { it_asset_eq: true };
+      break;
+    case 'in_use':
+      newFilter = { status_eq: 'in_use', breakdown_eq: false };
+      break;
+    case 'breakdown':
+      newFilter = { breakdown_eq: true };
+      break;
+    case 'in_store':
+      newFilter = { status_eq: 'in_storage' };
+      break;
+    case 'allocated':
+      newFilter = { allocated_to: true };
+      break;
+    case 'dispose':
+      newFilter = { status_eq: 'disposed' };
+      break;
+    default:
+      newFilter = {};
+  }
+
+  // ✅ MERGE existing filters with new card filter
+  const mergedFilters = {
+    ...filters,
+    ...newFilter,
+  };
+
+
+  setSearchTerm('');
+  dispatch(fetchAssetsData({ page: 1, filters: mergedFilters }));
+  setCurrentPage(1);
+};
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -566,6 +647,17 @@ export const AssetDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
+      // If we have allAssetIds from API, use those
+      if (allAssetIds && allAssetIds.length > 0) {
+        setSelectedAssets(
+          allAssetIds
+            .filter((id) => id !== null && id !== undefined)
+            .map((id) => id.toString())
+        );
+        return;
+      }
+
+      // Fallback to visible assets if for some reason API didn't return IDs
       const enabledAssetIds = displayAssets
         .filter((asset) => !asset.disabled)
         .map((asset) => asset.id);
@@ -658,6 +750,8 @@ export const AssetDashboard = () => {
       });
     }
   };
+const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
+
 
   // Analytics data (simplified)
   const statusData = [
@@ -686,7 +780,7 @@ export const AssetDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <Tabs defaultValue="list" className="w-full">
+  <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
@@ -730,7 +824,7 @@ export const AssetDashboard = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-6 mt-5">
+  <TabsContent value="analytics" className="space-y-6 mt-5">
           <AssetAnalyticsComponents
             defaultDateRange={analyticsDateRange}
             selectedAnalyticsTypes={selectedAnalyticsTypes}
@@ -741,9 +835,76 @@ export const AssetDashboard = () => {
             showSelector={true}
             layout="grid"
           />
-        </TabsContent>
+  </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
+          {/* Active filters chips */}
+          {hasActiveFilter && (
+            <div className="flex items-start justify-between mb-4 flex-col sm:flex-row gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {Object.entries(filters || {}).map(([key, value]) => {
+                  if (value === undefined || value === null || value === '') return null;
+                  const labelMap: Record<string, string> = {
+                    assetName: 'Name',
+                    assetId: 'ID',
+                    extra_fields_field_value_in: 'Category',
+                    critical_eq: 'Critical',
+                    groupId: 'Group',
+                    subgroupId: 'Subgroup',
+                    siteId: 'Site',
+                    buildingId: 'Building',
+                    wingId: 'Wing',
+                    areaId: 'Area',
+                    floorId: 'Floor',
+                    roomId: 'Room',
+                    status_eq: 'Status',
+                    breakdown_eq: 'Breakdown',
+                    it_asset_eq: 'IT Asset',
+                    allocation_type_eq: 'Allocation Type',
+                    allocation_ids_cont: 'Allocated To',
+                    allocated_to: 'Allocated',
+                  };
+                  const displayKey = labelMap[key] || key;
+                  const displayValue = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value);
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleRemoveFilter(key)}
+                      title={`Remove ${displayKey} filter`}
+                      className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-sm text-gray-800 px-3 py-1 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030]"
+                    >
+                      <span className="font-bold text-xs text-gray-600">{displayKey}</span>
+                      <span className="text-gray-900 text-sm">{displayValue}</span>
+                      <svg className="w-3 h-3 text-gray-400 hover:text-gray-700" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleClearAllFilters}
+                  className="text-sm text-[#C72030] hover:underline px-2 py-1"
+                >
+                  Clear all
+                </button>
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-100"
+                  title="Open filter dialog"
+                >
+                  <svg className="w-4 h-4 text-gray-600" viewBox="0 0 20 20" fill="none" aria-hidden>
+                    <path d="M3 5h14M6 10h8M8 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Edit filters
+                </button>
+              </div>
+            </div>
+          )}
           {error || searchError ? (
             <div className="flex justify-center items-center py-8">
               <div className="text-red-500">Error: {error || searchError}</div>
@@ -751,7 +912,8 @@ export const AssetDashboard = () => {
           ) : (
             <>
               {/* @ts-ignore - API stats object uses snake_case fields */}
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick}
+/>
 
               <div className="relative">
                 <AssetDataTable
@@ -783,10 +945,11 @@ export const AssetDashboard = () => {
                     </div>
                   )}
 
-                {selectedAssets.length > 0 && (
+                { selectedAssets.length > 0 && (
                   <AssetSelectionPanel
                     selectedCount={selectedAssets.length}
                     selectedAssets={selectedAssetObjects}
+                    selectedAssetIds={selectedAssets}
                     onMoveAsset={handleMoveAsset}
                     onDisposeAsset={handleDisposeAsset}
                     onPrintQRCode={handlePrintQRCode}

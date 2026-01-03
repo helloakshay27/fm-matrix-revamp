@@ -166,32 +166,20 @@ const DMConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.user_id === currentUser.id) {
+                    if (message.user_id === currentUser.id && message.conversation_id !== id) {
                         return;
                     }
 
                     setMessages((prev) => {
-                        const exists = prev.some(msg => msg.id === message.id);
+                        const exists = prev.some((msg) => msg.id === message.id);
                         if (exists) return prev;
                         return [message, ...prev];
                     });
 
-                    if (!("Notification" in window)) {
-                        toast.error("Not supported");
+                    if (!('Notification' in window)) {
+                        toast.error('Not supported');
                         return;
                     }
-
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            const notification = new Notification("New message", {
-                                body: message.body
-                            });
-
-                            notification.onclick = () => {
-                                window.focus();
-                            };
-                        }
-                    });
 
                     isUserInitiatedScroll.current = false;
                 },
@@ -212,7 +200,7 @@ const DMConversation = () => {
 
     return (
         <div
-            className={`flex flex-col h-[calc(100vh-112px)] ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
+            className={`flex flex-col ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
                 } min-w-0 overflow-hidden`}
         >
             <div className="flex justify-between items-center px-6 pt-4 border-b">
@@ -385,14 +373,25 @@ const DMConversation = () => {
                             ref={paperclipRef}
                         />
                     </div>
-                    <button type="button" className="text-gray-500 text-xl" onClick={sendMessages}>
+                    <button
+                        type="button"
+                        onClick={sendMessages}
+                        disabled={input.trim() === ""}
+                        className="
+    text-xl
+    text-[#C72030]
+    disabled:text-gray-300
+    disabled:cursor-not-allowed
+  "
+                    >
                         <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
                             <path
                                 d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z"
-                                fill="#C72030"
+                                fill="currentColor"
                             />
                         </svg>
                     </button>
+
                 </div>
             )}
         </div>

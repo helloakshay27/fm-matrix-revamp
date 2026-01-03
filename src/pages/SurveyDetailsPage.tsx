@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, X, Plus, ChevronDown, CheckCircle, Edit } from "lucide-react";
+import {
+  ArrowLeft,
+  X,
+  Plus,
+  ChevronDown,
+  CheckCircle,
+  Edit,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -33,7 +40,12 @@ const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
 // Local types to avoid 'any' and capture extra fields returned by API
 type QuestOption = { id: number; qname: string; option_type: string };
-type GenericIcon = { id: number; file_name: string; file_size: number; url?: string };
+type GenericIcon = {
+  id: number;
+  file_name: string;
+  file_size: number;
+  url?: string;
+};
 type GenericTag = { id: number; category_name: string; icons?: GenericIcon[] };
 type ExtendedQuestion = {
   id: number;
@@ -50,8 +62,12 @@ export const SurveyDetailsPage = () => {
   const navigate = useNavigate();
 
   // State declarations (renamed to avoid conflicts)
-  const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
+  const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(
+    null
+  );
+  const [categories, setCategories] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [buildings, setBuildings] = useState<
     Array<{ id: number; name: string }>
@@ -226,17 +242,28 @@ export const SurveyDetailsPage = () => {
                     </div>
                   </div>
                   <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Question Type
-  </label>
-  <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
-    {snagChecklist?.check_type
-      ? snagChecklist.check_type.charAt(0).toUpperCase() + snagChecklist.check_type.slice(1)
-      : "Not Specified"}
-  </div>
-</div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Question Type
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist?.check_type
+                        ? snagChecklist.check_type.charAt(0).toUpperCase() +
+                          snagChecklist.check_type.slice(1)
+                        : "Not Specified"}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Form View
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist?.form_view === "true" ||
+                      snagChecklist?.form_view === true
+                        ? "Enabled"
+                        : "Disabled"}
+                    </div>
+                  </div>
 
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ticket Category
@@ -245,12 +272,13 @@ export const SurveyDetailsPage = () => {
                       {snagChecklist.ticket_configs?.category || "Not Assigned"}
                     </div>
                   </div>
-                   <div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ticket Sub Category
                     </label>
                     <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
-                      {snagChecklist.ticket_configs?.subcategory || "Not Assigned"}
+                      {snagChecklist.ticket_configs?.subcategory ||
+                        "Not Assigned"}
                     </div>
                   </div>
                 </div>
@@ -292,191 +320,227 @@ export const SurveyDetailsPage = () => {
                     </p>
                   </div>
                   <div className="space-y-6">
-                    {snagChecklist.snag_questions?.map((question: ExtendedQuestion, index) => (
-                      <Card
-                        key={question.id}
-                        className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <CardHeader className="px-6 py-4 border-b border-gray-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-semibold text-gray-600">
-                                {index + 1}
-                              </span>
-                            </div>
-                            <CardTitle className="text-base font-medium text-gray-900">
-                              Question {index + 1}
-                            </CardTitle>
-                            <span
-                              className={`
+                    {snagChecklist.snag_questions?.map(
+                      (question: ExtendedQuestion, index) => (
+                        <Card
+                          key={question.id}
+                          className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <CardHeader className="px-6 py-4 border-b border-gray-200">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-semibold text-gray-600">
+                                  {index + 1}
+                                </span>
+                              </div>
+                              <CardTitle className="text-base font-medium text-gray-900">
+                                Question {index + 1}
+                              </CardTitle>
+                              <span
+                                className={`
                                 px-2 py-1 text-xs font-medium rounded-full
                                 ${
                                   question.qtype === "multiple"
                                     ? "bg-blue-100 text-blue-800"
-                                    : question.qtype === "input"
-                                    ? "bg-green-100 text-green-800"
-                                    : question.qtype === "rating"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : question.qtype === "emoji"
-                                    ? "bg-purple-100 text-purple-800"
-                                    : question.qtype === "description"
-                                    ? "bg-indigo-100 text-indigo-800"
-                                    : "bg-gray-100 text-gray-800"
+                                    : question.qtype === "input" ||
+                                        question.qtype === "input_box"
+                                      ? "bg-green-100 text-green-800"
+                                      : question.qtype === "rating"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : question.qtype === "emoji"
+                                          ? "bg-purple-100 text-purple-800"
+                                          : question.qtype === "description"
+                                            ? "bg-indigo-100 text-indigo-800"
+                                            : "bg-gray-100 text-gray-800"
                                 }
                               `}
-                            >
-                              {question.qtype === "multiple"
-                                ? "Multi Choice"
-                                : question.qtype === "input"
-                                ? "Input"
-                                : question.qtype === "rating"
-                                ? "Rating"
-                                : question.qtype === "emoji"
-                                ? "Emoji"
-                                : question.qtype === "description"
-                                ? "Description"
-                                : question.qtype || "Unknown"}
-                            </span>
-                            {question.quest_mandatory && (
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                                Required
-                              </span>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Question Text
-                              </label>
-                              <input
-                                type="text"
-                                className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                placeholder="Enter your Question"
-                                value={question.descr || ""}
-                                disabled
-                                readOnly
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Answer Type
-                              </label>
-                              <Select
-                                value={
-                                  question.qtype === "multiple"
-                                    ? "Multiple Choice"
-                                    : question.qtype === "input"
+                              >
+                                {question.qtype === "multiple"
+                                  ? "Multi Choice"
+                                  : question.qtype === "input" ||
+                                      question.qtype === "input_box"
                                     ? "Input Box"
                                     : question.qtype === "rating"
-                                    ? "Rating"
-                                    : question.qtype === "emoji"
-                                    ? "Emojis"
-                                    : question.qtype === "description"
-                                    ? "Description Box"
-                                    : "Unknown Type"
-                                }
-                                disabled
-                              >
-                                <SelectTrigger className="w-full h-10 bg-gray-50">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                                  <SelectItem value="Input Box">Input Box</SelectItem>
-                                  <SelectItem value="Description Box">Description Box</SelectItem>
-                                  <SelectItem value="Rating">Rating</SelectItem>
-                                  <SelectItem value="Emojis">Emojis</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          {/* Answer Options */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              Answer Options
-                            </label>
-                            <div className="space-y-3">
-                              {question.snag_quest_options && question.snag_quest_options.length > 0 && (
-                                <>
-                                  {question.snag_quest_options.map((option: QuestOption, optIdx: number) => (
-                                    <div key={option.id} className="flex items-center gap-3">
-                                      {/* Visual indicator aligned with Edit page */}
-                                      {question.qtype === "emoji" ? (
-                                        <div className="flex items-center justify-center w-12 h-12">
-                                          <span className="text-3xl">{EMOJIS[optIdx]}</span>
-                                        </div>
-                                      ) : question.qtype === "rating" ? (
-                                        <div className="flex items-center justify-center w-28 h-12">
-                                          <span className="text-base">{RATING_STARS[optIdx]}</span>
-                                        </div>
-                                      ) : (
-                                        <div className="w-12 h-12 flex items-center justify-center text-gray-400">
-                                          {optIdx + 1}
-                                        </div>
-                                      )}
-
-                                      <input
-                                        type="text"
-                                        placeholder={
-                                          question.qtype === "rating"
-                                            ? "Enter rating description"
-                                            : question.qtype === "emoji"
-                                            ? `Enter description for ${EMOJIS[optIdx]}`
-                                            : "Answer Option"
-                                        }
-                                        className="flex-1 h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                        value={option.qname || ""}
-                                        disabled
-                                        readOnly
-                                      />
-
-                                      <Select
-                                        value={option.option_type ? option.option_type.toUpperCase() : "P"}
-                                        disabled
-                                      >
-                                        <SelectTrigger className="w-16 h-10 bg-gray-50">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="P">P</SelectItem>
-                                          <SelectItem value="N">N</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  ))}
-                                </>
+                                      ? "Rating"
+                                      : question.qtype === "emoji"
+                                        ? "Emoji"
+                                        : question.qtype === "description"
+                                          ? "Description"
+                                          : question.qtype || "Unknown"}
+                              </span>
+                              {question.quest_mandatory && (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                  Required
+                                </span>
                               )}
                             </div>
-                          </div>
-                          {/* Additional Fields (Generic Tags with Files) */}
-                          {question.generic_tags &&
-                            question.generic_tags.length > 0 && (
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
-                                  Additional Fields for Negative Selection
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Question Text
                                 </label>
-                                <div className="space-y-4">
-                                  {question.generic_tags.map((tag: GenericTag, tagIndex: number) => (
-                                    <div
-                                      key={tag.id}
-                                      className="border border-gray-200 rounded-lg p-4 bg-white"
-                                    >
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Title
-                                          </label>
-                                          <input
-                                            type="text"
-                                            className="w-full h-9 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                            value={tag.category_name}
-                                            disabled
-                                            readOnly
-                                          />
-                                        </div>
-                                        {/* <div>
+                                <input
+                                  type="text"
+                                  className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                  placeholder="Enter your Question"
+                                  value={question.descr || ""}
+                                  disabled
+                                  readOnly
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Answer Type
+                                </label>
+                                <Select
+                                  value={
+                                    question.qtype === "multiple"
+                                      ? "Multiple Choice"
+                                      : question.qtype === "input" ||
+                                          question.qtype === "input_box"
+                                        ? "Input Box"
+                                        : question.qtype === "rating"
+                                          ? "Rating"
+                                          : question.qtype === "emoji"
+                                            ? "Emojis"
+                                            : question.qtype === "description"
+                                              ? "Description Box"
+                                              : "Unknown Type"
+                                  }
+                                  disabled
+                                >
+                                  <SelectTrigger className="w-full h-10 bg-gray-50">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Multiple Choice">
+                                      Multiple Choice
+                                    </SelectItem>
+                                    <SelectItem value="Input Box">
+                                      Input Box
+                                    </SelectItem>
+                                    <SelectItem value="Description Box">
+                                      Description Box
+                                    </SelectItem>
+                                    <SelectItem value="Rating">
+                                      Rating
+                                    </SelectItem>
+                                    <SelectItem value="Emojis">
+                                      Emojis
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            {/* Answer Options */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-3">
+                                Answer Options
+                              </label>
+                              <div className="space-y-3">
+                                {question.snag_quest_options &&
+                                  question.snag_quest_options.length > 0 && (
+                                    <>
+                                      {question.snag_quest_options.map(
+                                        (
+                                          option: QuestOption,
+                                          optIdx: number
+                                        ) => (
+                                          <div
+                                            key={option.id}
+                                            className="flex items-center gap-3"
+                                          >
+                                            {/* Visual indicator aligned with Edit page */}
+                                            {question.qtype === "emoji" ? (
+                                              <div className="flex items-center justify-center w-12 h-12">
+                                                <span className="text-3xl">
+                                                  {EMOJIS[optIdx]}
+                                                </span>
+                                              </div>
+                                            ) : question.qtype === "rating" ? (
+                                              <div className="flex items-center justify-center w-28 h-12">
+                                                <span className="text-base">
+                                                  {RATING_STARS[optIdx]}
+                                                </span>
+                                              </div>
+                                            ) : (
+                                              <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                                {optIdx + 1}
+                                              </div>
+                                            )}
+
+                                            <input
+                                              type="text"
+                                              placeholder={
+                                                question.qtype === "rating"
+                                                  ? "Enter rating description"
+                                                  : question.qtype === "emoji"
+                                                    ? `Enter description for ${EMOJIS[optIdx]}`
+                                                    : "Answer Option"
+                                              }
+                                              className="flex-1 h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                              value={option.qname || ""}
+                                              disabled
+                                              readOnly
+                                            />
+
+                                            <Select
+                                              value={
+                                                option.option_type
+                                                  ? option.option_type.toUpperCase()
+                                                  : "P"
+                                              }
+                                              disabled
+                                            >
+                                              <SelectTrigger className="w-16 h-10 bg-gray-50">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="P">
+                                                  P
+                                                </SelectItem>
+                                                <SelectItem value="N">
+                                                  N
+                                                </SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        )
+                                      )}
+                                    </>
+                                  )}
+                              </div>
+                            </div>
+                            {/* Additional Fields (Generic Tags with Files) */}
+                            {question.generic_tags &&
+                              question.generic_tags.length > 0 && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    Additional Fields for Negative Selection
+                                  </label>
+                                  <div className="space-y-4">
+                                    {question.generic_tags.map(
+                                      (tag: GenericTag, tagIndex: number) => (
+                                        <div
+                                          key={tag.id}
+                                          className="border border-gray-200 rounded-lg p-4 bg-white"
+                                        >
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Title
+                                              </label>
+                                              <input
+                                                type="text"
+                                                className="w-full h-9 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                                value={tag.category_name}
+                                                disabled
+                                                readOnly
+                                              />
+                                            </div>
+                                            {/* <div>
                                           <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Files Uploaded
                                           </label>
@@ -486,51 +550,58 @@ export const SurveyDetailsPage = () => {
                                               : "No files"}
                                           </div>
                                         </div> */}
-                                     
-                                      {tag.icons && tag.icons.length > 0 && (
-                                        <div className="mt-4">
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Uploaded Files
-                                          </label>
-                                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                            {tag.icons.map((icon: GenericIcon) => (
-                                              <div key={icon.id} className="mt-2">
-                                                <img
-                                                  src={icon.url}
-                                                  alt={icon.file_name}
-                                                  className="w-full h-20 object-cover rounded-lg border shadow-sm"
-                                                />
-                                                <p className="text-xs text-gray-500 mt-1 truncate">
-                                                  {icon.file_name}
-                                                </p>
-                                              </div>
-                                            ))}
+
+                                            {tag.icons &&
+                                              tag.icons.length > 0 && (
+                                                <div className="mt-4">
+                                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Uploaded Files
+                                                  </label>
+                                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                    {tag.icons.map(
+                                                      (icon: GenericIcon) => (
+                                                        <div
+                                                          key={icon.id}
+                                                          className="mt-2"
+                                                        >
+                                                          <img
+                                                            src={icon.url}
+                                                            alt={icon.file_name}
+                                                            className="w-full h-20 object-cover rounded-lg border shadow-sm"
+                                                          />
+                                                          <p className="text-xs text-gray-500 mt-1 truncate">
+                                                            {icon.file_name}
+                                                          </p>
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
                                           </div>
                                         </div>
-                                      )}
-                                    </div>
-                                    </div>
-                                  ))}
+                                      )
+                                    )}
+                                  </div>
                                 </div>
+                              )}
+                            {/* Question Meta Information */}
+                            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`mandatory-${question.id}`}
+                                  checked={question.quest_mandatory || false}
+                                  disabled
+                                  className="data-[state=checked]:bg-gray-400"
+                                />
+                                <label
+                                  htmlFor={`mandatory-${question.id}`}
+                                  className="text-sm text-gray-700"
+                                >
+                                  Mandatory
+                                </label>
                               </div>
-                            )}
-                          {/* Question Meta Information */}
-                          <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`mandatory-${question.id}`}
-                                checked={question.quest_mandatory || false}
-                                disabled
-                                className="data-[state=checked]:bg-gray-400"
-                              />
-                              <label
-                                htmlFor={`mandatory-${question.id}`}
-                                className="text-sm text-gray-700"
-                              >
-                                Mandatory
-                              </label>
-                            </div>
-                            {/* <div className="flex items-center space-x-2">
+                              {/* <div className="flex items-center space-x-2">
                               <Checkbox
                                 id={`img-mandatory-${question.id}`}
                                 checked={question.img_mandatory || false}
@@ -544,10 +615,11 @@ export const SurveyDetailsPage = () => {
                                 Image Mandatory
                               </label>
                             </div> */}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
                   </div>
                 </div>
               )}

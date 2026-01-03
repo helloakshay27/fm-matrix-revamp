@@ -6,8 +6,12 @@ export const fetchIssues = createAsyncThunk(
     "fetchIssues",
     async ({ token, baseUrl, id }: { token: string; baseUrl: string; id: string }, { rejectWithValue }) => {
         try {
+            let url = `https://${baseUrl}/issues.json`;
+            if (id) {
+                url += `?q[project_management_id_eq]=${id}`;
+            }
             const response = await axios.get(
-                `https://${baseUrl}/issues.json?q[project_id_eq]=${id}`,
+                url,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -51,21 +55,28 @@ export const createIssue = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
+            const headers: Record<string, string> = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            // If sending JSON (not FormData), set content type. Let the browser set boundary for FormData.
+            if (!(data instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+
             const response = await axios.post(
                 `https://${baseUrl}/issues.json`,
                 data,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
+                    headers,
                 }
             );
             return response.data;
         } catch (error: any) {
-            const message =
-                error.response?.data?.error || error.message || "Failed to create issue";
-            return rejectWithValue(message);
+            // If the backend returned structured validation errors (e.g. { task_management: ["must exist"] }),
+            // pass that full payload to rejectWithValue so callers can display detailed messages.
+            const payload = error.response?.data ?? { error: error.message ?? 'Failed to create issue' };
+            return rejectWithValue(payload);
         }
     }
 );

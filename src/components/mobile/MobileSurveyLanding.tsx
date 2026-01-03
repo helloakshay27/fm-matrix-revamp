@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { surveyApi } from "@/services/surveyApi";
 import baseClient from "@/utils/withoutTokenBase";
+import { FormViewAllQuestions, SurveyAnswers } from "./survey";
 
 interface GenericTag {
   id: number;
@@ -56,6 +57,7 @@ interface SurveyMapping {
     id: number;
     name: string;
     questions_count: number;
+    form_view: boolean;
     snag_attach?: string;
     survey_attachment?: SurveyAttach;
     snag_questions: SurveyQuestion[];
@@ -69,20 +71,6 @@ interface SurveyAttach {
   file_size: number;
   updated_at: string;
   url: string;
-}
-
-interface SurveyAnswers {
-  [questionId: number]: {
-    qtype: string;
-    value: string | number | SurveyOption[];
-    rating?: number;
-    emoji?: string;
-    label?: string;
-    selectedTags?: GenericTag[];
-    selectedOptions?: SurveyOption[];
-    comments?: string;
-    optionId?: number;
-  };
 }
 
 export const MobileSurveyLanding: React.FC = () => {
@@ -178,6 +166,17 @@ export const MobileSurveyLanding: React.FC = () => {
         console.log("Survey data fetched:", data);
         console.log("Survey status:", data.status);
         console.log("Survey active:", data.active);
+
+        // Set default value for form_view if missing
+        if (
+          data.snag_checklist &&
+          data.snag_checklist.form_view === undefined
+        ) {
+          data.snag_checklist.form_view = false;
+          console.log("form_view was missing, set default to false");
+        }
+        console.log("form_view:", data.snag_checklist?.form_view);
+
         setSurveyData(data);
       } catch (error) {
         console.error("Failed to fetch survey data:", error);
@@ -231,6 +230,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case "multiple":
         return selectedOptions.length > 0;
       case "input":
+      case "input_box":
       case "text":
       case "description":
         return currentQuestionValue.trim() !== "";
@@ -527,6 +527,12 @@ export const MobileSurveyLanding: React.FC = () => {
         }
         break;
       }
+      case "input_box": {
+        // Handle input_box same as other text inputs
+        answerData.value = currentQuestionValue;
+        answerData.comments = comments || "";
+        break;
+      }
       default: {
         // Handle text-based questions (input, text, description) and any other types
         answerData.value = currentQuestionValue;
@@ -664,15 +670,12 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          // Use dynamic label when available, fallback to star text
-          const ratingLabel =
-            currentAnswer.label ||
-            getRatingLabel(currentQuestion, currentAnswer.rating);
-          surveyResponseItem.ans_descr =
-            ratingLabel ||
-            `${currentAnswer.rating} star${
-              (currentAnswer.rating || 0) > 1 ? "s" : ""
-            }`;
+          // Use label from answer data or fetch dynamically from API options
+          const ratingLabel = currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
+          if (ratingLabel) {
+            surveyResponseItem.label = ratingLabel;
+            surveyResponseItem.ans_descr = ratingLabel; // dynamic label from API
+          }
 
           // Add option_id mapping for rating questions from API response
           if (currentAnswer.optionId) {
@@ -684,11 +687,11 @@ export const MobileSurveyLanding: React.FC = () => {
               (q) => q.id === currentQuestion.id
             );
             if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure (default order: first option = highest rating)
+              // Map rating to option based on API structure (ascending order: rating 1 = first option)
               const ratingToOptionMapping = Array.from(
                 { length: questionData.snag_quest_options.length },
                 (_, index) => ({
-                  rating: questionData.snag_quest_options.length - index, // Highest rating first
+                  rating: index + 1, // Rating matches option order: 1, 2, 3, 4, 5
                   optionIndex: index,
                 })
               );
@@ -717,6 +720,17 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           // New fields for text-based inputs
           surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "text_input";
+          break;
+
+        case "input_box":
+          // New type: input_box
+          if (currentAnswer.value && currentAnswer.value.toString().trim()) {
+            surveyResponseItem.ans_descr = currentAnswer.value
+              .toString()
+              .trim();
+          }
+          surveyResponseItem.answer_type = "input_box";
           surveyResponseItem.answer_mode = "text_input";
           break;
       }
@@ -865,15 +879,12 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          // Use dynamic label when available
-          const ratingLabelNeg =
-            answerData.label ||
-            getRatingLabel(currentQuestion, answerData.rating);
-          surveyResponseItem.ans_descr =
-            ratingLabelNeg ||
-            `${answerData.rating} star${
-              (answerData.rating || 0) > 1 ? "s" : ""
-            }`;
+          // Use label from answer data or fetch dynamically from API options
+          const ratingLabelNeg = answerData.label || getRatingLabel(currentQuestion, answerData.rating);
+          if (ratingLabelNeg) {
+            surveyResponseItem.label = ratingLabelNeg;
+            surveyResponseItem.ans_descr = ratingLabelNeg; // dynamic label from API
+          }
 
           // Add option_id for rating questions
           if (answerData.optionId) {
@@ -892,6 +903,15 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           // New fields for text-based inputs
           surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "text_input";
+          break;
+
+        case "input_box":
+          // New type: input_box
+          if (answerData.value && answerData.value.toString().trim()) {
+            surveyResponseItem.ans_descr = answerData.value.toString().trim();
+          }
+          surveyResponseItem.answer_type = "input_box";
           surveyResponseItem.answer_mode = "text_input";
           break;
       }
@@ -1025,12 +1045,13 @@ export const MobileSurveyLanding: React.FC = () => {
       setCurrentQuestionIndex(previousQuestionIndex);
 
       // Get the previous question
-      const previousQuestion = surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
-      
+      const previousQuestion =
+        surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
+
       if (previousQuestion) {
         // Restore saved answer for the previous question
         const savedAnswer = answers[previousQuestion.id];
-        
+
         if (savedAnswer) {
           // Restore question-specific states based on question type
           switch (previousQuestion.qtype) {
@@ -1039,32 +1060,43 @@ export const MobileSurveyLanding: React.FC = () => {
                 setSelectedOptions(savedAnswer.selectedOptions);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
-                
+
                 // Set pending negative data for restoration
-                if (savedAnswer.selectedOptions && savedAnswer.selectedOptions.length > 0) {
+                if (
+                  savedAnswer.selectedOptions &&
+                  savedAnswer.selectedOptions.length > 0
+                ) {
                   setPendingNegativeType("multiple");
                   setPendingNegativeAnswer(savedAnswer.selectedOptions);
                 }
               }
               break;
-              
+
             case "rating":
               if (savedAnswer.rating !== undefined) {
                 setSelectedRating(savedAnswer.rating);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
-                
+
                 // Set pending negative data for restoration
                 if (savedAnswer.rating !== undefined) {
                   // Find the corresponding option for the rating
                   const ratingToOptionIndex = Array.from(
-                    { length: previousQuestion.snag_quest_options?.length || 5 },
+                    {
+                      length: previousQuestion.snag_quest_options?.length || 5,
+                    },
                     (_, index) => ({
                       rating: index + 1,
                       optionIndex: index,
@@ -1075,8 +1107,10 @@ export const MobileSurveyLanding: React.FC = () => {
                   );
                   const selectedOption =
                     selectedOptionMapping &&
-                    previousQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
-                  
+                    previousQuestion.snag_quest_options?.[
+                    selectedOptionMapping.optionIndex
+                    ];
+
                   if (selectedOption) {
                     setPendingNegativeType("rating");
                     setPendingNegativeAnswer({
@@ -1087,20 +1121,29 @@ export const MobileSurveyLanding: React.FC = () => {
                 }
               }
               break;
-              
+
             case "emoji":
             case "smiley":
               if (savedAnswer.rating !== undefined) {
                 setSelectedRating(savedAnswer.rating);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
-                
+
                 // Set pending negative data for restoration
-                if (savedAnswer.rating !== undefined && savedAnswer.emoji && savedAnswer.label) {
-                  setPendingNegativeType(previousQuestion.qtype as "emoji" | "smiley");
+                if (
+                  savedAnswer.rating !== undefined &&
+                  savedAnswer.emoji &&
+                  savedAnswer.label
+                ) {
+                  setPendingNegativeType(
+                    previousQuestion.qtype as "emoji" | "smiley"
+                  );
                   setPendingNegativeAnswer({
                     rating: savedAnswer.rating,
                     emoji: savedAnswer.emoji,
@@ -1109,7 +1152,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 }
               }
               break;
-              
+
             case "input":
             case "text":
             case "description":
@@ -1261,11 +1304,12 @@ export const MobileSurveyLanding: React.FC = () => {
             // New fields for rating
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
-            const ratingLabelMulti =
-              answer.label || getRatingLabel(question, answer.rating);
-            surveyResponseItem.ans_descr =
-              ratingLabelMulti ||
-              `${answer.rating} star${(answer.rating || 0) > 1 ? "s" : ""}`;
+            // Use label from answer data or fetch dynamically from API options
+            const ratingLabelMulti = answer.label || getRatingLabel(question, answer.rating);
+            if (ratingLabelMulti) {
+              surveyResponseItem.label = ratingLabelMulti;
+              surveyResponseItem.ans_descr = ratingLabelMulti; // dynamic label from API
+            }
 
             // Add option_id mapping for rating questions from API response
             if (answer.optionId) {
@@ -1310,6 +1354,15 @@ export const MobileSurveyLanding: React.FC = () => {
             }
             // New fields for text-based inputs
             surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "text_input";
+            break;
+
+          case "input_box":
+            // New type: input_box
+            if (answer.value && answer.value.toString().trim()) {
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
+            }
+            surveyResponseItem.answer_type = "input_box";
             surveyResponseItem.answer_mode = "text_input";
             break;
         }
@@ -1592,10 +1645,168 @@ export const MobileSurveyLanding: React.FC = () => {
     );
   }
 
+  // Handler for answer changes in form view
+  const handleAnswerChange = (questionId: number, answerData: any) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: answerData,
+    }));
+  };
+
+  // Handler for form view submission
+  const handleFormViewSubmit = async () => {
+    if (!surveyData) return;
+
+    setIsSubmitting(true);
+    try {
+      const surveyResponseArray = [];
+
+      // Process each question
+      for (const question of surveyData.snag_checklist.snag_questions) {
+        const answer = answers[question.id];
+        if (!answer) continue;
+
+        const surveyResponseItem: any = {
+          mapping_id: mappingId || "",
+          question_id: question.id,
+          issues: [], // No generic tags in form view
+        };
+
+        // Build response based on question type
+        switch (question.qtype) {
+          case "multiple":
+            if (answer.selectedOptions && answer.selectedOptions.length > 0) {
+              surveyResponseItem.option_id = answer.selectedOptions[0].id;
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "multiple_choice";
+            break;
+
+          case "rating":
+            if (answer.rating !== undefined) {
+              surveyResponseItem.rating = answer.rating;
+              surveyResponseItem.level_id = answer.rating;
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "star_rating";
+
+            // Add label and ans_descr for rating
+            const formRatingLabel = answer.label || getRatingLabel(question, answer.rating);
+            if (formRatingLabel) {
+              surveyResponseItem.label = formRatingLabel;
+              surveyResponseItem.ans_descr = formRatingLabel;
+            }
+
+            // Map rating to option_id
+            if (question.snag_quest_options) {
+              const ratingToOptionMapping = Array.from(
+                { length: question.snag_quest_options.length },
+                (_, index) => ({
+                  rating: index + 1,
+                  optionIndex: index,
+                })
+              );
+              const mapping = ratingToOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (mapping && question.snag_quest_options[mapping.optionIndex]) {
+                surveyResponseItem.option_id =
+                  question.snag_quest_options[mapping.optionIndex].id;
+              }
+            }
+            break;
+
+          case "emoji":
+          case "smiley":
+            if (answer.rating !== undefined) {
+              surveyResponseItem.rating = answer.rating;
+              surveyResponseItem.level_id = answer.rating;
+            }
+            if (answer.emoji) {
+              surveyResponseItem.emoji = answer.emoji;
+            }
+            if (answer.label) {
+              surveyResponseItem.label = answer.label;
+              surveyResponseItem.ans_descr = answer.label;
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "emoji_selection";
+
+            // Map emoji rating to option_id
+            if (question.snag_quest_options) {
+              const ratingToOptionMapping = Array.from(
+                { length: question.snag_quest_options.length },
+                (_, index) => ({
+                  rating: question.snag_quest_options.length - index,
+                  optionIndex: index,
+                })
+              );
+              const mapping = ratingToOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (mapping && question.snag_quest_options[mapping.optionIndex]) {
+                surveyResponseItem.option_id =
+                  question.snag_quest_options[mapping.optionIndex].id;
+              }
+            }
+            break;
+
+          case "input":
+          case "text":
+          case "description":
+            if (answer.value && answer.value.toString().trim()) {
+              surveyResponseItem.response_text = answer.value.toString().trim();
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "text_input";
+            break;
+
+          case "input_box":
+            // New type: input_box
+            if (answer.value && answer.value.toString().trim()) {
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
+            }
+            surveyResponseItem.answer_type = "input_box";
+            surveyResponseItem.answer_mode = "text_input";
+            break;
+        }
+
+        surveyResponseItem.comments = answer.comments || "";
+        surveyResponseArray.push(surveyResponseItem);
+      }
+
+      // Submit
+      const payload = {
+        survey_response: surveyResponseArray,
+        final_comment: {
+          body: finalDescription.trim() || "",
+        },
+      };
+
+      await surveyApi.submitSurveyResponse(payload);
+
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: true,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to submit survey:", error);
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: false,
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const currentQuestion = getCurrentQuestion();
   const isMultiQuestion = surveyData.snag_checklist.questions_count > 1;
   const isLastStep =
     currentQuestionIndex >= surveyData.snag_checklist.questions_count;
+  const isFormView = surveyData?.form_view === "true";
 
   // Debug current question data
   if (currentQuestion) {
@@ -1607,11 +1818,12 @@ export const MobileSurveyLanding: React.FC = () => {
     );
   }
 
+  console.log("Form View Mode:", isFormView);
   // console.log("Survey Mapping", surveyData?.snag_checklist?.survey_attachment?.url);
 
   return (
     <div
-      className="h-[100dvh] min-h-[100dvh] flex flex-col relative"
+      className="h-screen w-screen max-w-md mx-auto flex flex-col relative bg-gray-50"
       style={{
         backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url})`,
         backgroundSize: "cover",
@@ -1621,22 +1833,33 @@ export const MobileSurveyLanding: React.FC = () => {
       }}
     >
       {/* Header with Logo */}
-      <div className="bg-transparent py-4 px-4 mt-2 relative z-10">
-        <div className="flex justify-between">
-          <div className="flex justify-start mt-2 items-start">
-            {((currentQuestion &&
-              !isLastStep &&
-              currentQuestionIndex > 0 &&
-              !showGenericTags) ||
-              (isLastStep && isMultiQuestion)) && (
-              <div className="w-full flex justify-start mb-4">
+      <div className="bg-transparent py-3 px-4 relative z-10">
+        <div className="flex justify-between items-center">
+          <div className="flex justify-start items-center">
+            {!isFormView &&
+              ((currentQuestion &&
+                !isLastStep &&
+                currentQuestionIndex > 0) ||
+                showGenericTags ||
+                (isLastStep && isMultiQuestion)) && (
                 <button
                   type="button"
-                  onClick={moveToPreviousQuestion}
-                  className="flex items-center text-black/100 hover:text-black/100 text-lg font-medium transition-colors"
+                  onClick={() => {
+                    if (showGenericTags) {
+                      // Going back from generic tags page
+                      setShowGenericTags(false);
+                      setSelectedTags([]);
+                      setCurrentNegativeComments("");
+                      setPendingNegativeType(null);
+                      setPendingNegativeAnswer(null);
+                    } else {
+                      moveToPreviousQuestion();
+                    }
+                  }}
+                  className="flex items-center bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-lg text-white font-bold text-sm hover:bg-black/50 transition-all shadow-lg border-2 border-white/40"
                 >
                   <svg
-                    className="w-4 h-4 mr-1 text-black/80"
+                    className="w-5 h-5 mr-1.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1644,627 +1867,739 @@ export const MobileSurveyLanding: React.FC = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="3"
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
                   Back
                 </button>
-              </div>
-            )}
+              )}
           </div>
-          <div className="flex justify-end item-end">
-            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-              <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-                {window.location.origin === "https://oig.gophygital.work" ? (
-                  <img
-                    src="/Without bkg.svg"
-                    alt="OIG Logo"
-                    className="w-full h-full object-contain"
-                  />
-                ) : window.location.origin === "https://web.gophygital.work" ? (
-                  <img
-                    src="/PSIPL-logo (1).png"
-                    alt="PSIPL Logo"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <img
-                    src="/gophygital-logo-min.jpg"
-                    alt="gophygital Logo"
-                    className="w-full h-full object-contain"
-                  />
-                )}
-              </div>
+          <div className="flex justify-end">
+            <div className="w-28 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+              {window.location.origin === "https://oig.gophygital.work" ? (
+                <img
+                  src="/Without bkg.svg"
+                  alt="OIG Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : window.location.origin === "https://web.gophygital.work" ? (
+                <img
+                  src="/PSIPL-logo (1).png"
+                  alt="PSIPL Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <img
+                  src="/gophygital-logo-min.jpg"
+                  alt="gophygital Logo"
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Progress Bar for Multi-Question Surveys */}
-      {isMultiQuestion && <div></div>}
+      {isMultiQuestion && !isFormView && (
+        <div className="px-4 py-2 relative z-10">
+          <div className="bg-white/20 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-white h-full transition-all duration-300"
+              style={{ width: `${getProgressPercentage()}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 min-h-0 flex flex-col py-4 sm:py-6 px-4 overflow-y-auto relative z-10">
-        <div className="flex flex-col items-center justify-end max-w-md mx-auto w-full h-full pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-6">
-          {/* Show image only on first question or single question surveys */}
-          {!showGenericTags && (
-            <div
-              className="relative w-full mb-6"
-              style={{ minHeight: "180px" }}
-            >
-              <div className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"></div>
-              <div className="relative z-10 flex items-center justify-center w-full h-full">
-                {/* Optionally overlay content here */}
-              </div>
-            </div>
-          )}
+      {isFormView && (
+        <h1 className="text-2xl font-bold text-black/100 mb-4 text-center">
+          {surveyData.survey_title}
+        </h1>
+      )}
 
-          {/* Show Final Description Step */}
-          {isLastStep && isMultiQuestion && (
-            <div className="w-full space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-white/100 mb-2">
-                  Any additional comments?
-                </h3>
-                <p className="text-sm text-white/90">
-                  Share any additional feedback or suggestions (optional)
-                </p>
-              </div>
-              <div>
-                <textarea
-                  value={finalDescription}
-                  onChange={(e) => setFinalDescription(e.target.value)}
-                  placeholder="Please share your thoughts..."
-                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  disabled={isSubmitting}
-                />
-              </div>
+      <div
+        className={`flex-1 overflow-hidden relative z-10 ${isFormView ? "overflow-y-auto" : ""}`}
+      >
+        <div
+          className={`h-full ${isFormView ? "overflow-y-scroll px-4 py-4" : "flex flex-col px-4 pb-6"}`}
+        >
+          {/* Title - Only for Form View */}
 
-              <button
-                type="button"
-                onClick={handleSubmitSurvey}
-                disabled={isSubmitting}
-                className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white py-3 px-4 rounded[0.20rem] font-medium transition-colors disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Submitting...
-                  </div>
-                ) : (
-                  "Submit Survey"
-                )}
-              </button>
-            </div>
-          )}
-
-          {!(
-            isLastStep &&
-            currentQuestionIndex === surveyData.snag_checklist.questions_count
-          ) && (
+          {/* Form View: All Questions at Once */}
+          {isFormView ? (
             <div className="w-full">
-              {/* Progress indicator */}
-
-              {/* Main title */}
-              <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
-                {!showGenericTags && surveyData?.survey_title}
-              </h1>
-
-              <div className="flex items-center space-x-3">
-                <span className="text-md text-white/90">
-                  {!showGenericTags && (
-                    <>
+              <FormViewAllQuestions
+                questions={surveyData.snag_checklist.snag_questions}
+                answers={answers}
+                onAnswerChange={handleAnswerChange}
+                onSubmit={handleFormViewSubmit}
+                isSubmitting={isSubmitting}
+                finalComment={finalDescription}
+                onFinalCommentChange={setFinalDescription}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Normal View: Question by Question */}
+              <div className="flex-1 flex flex-col justify-center">
+                {/* Survey Title for Normal View */}
+                <div className="text-center mb-6">
+                  <h1 className="text-xl font-bold text-black/100 mb-2">
+                    {surveyData.survey_title}
+                  </h1>
+                  {!showGenericTags && !isLastStep && (
+                    <span className="text-sm text-white/80 font-medium">
+                      Question{" "}
                       {Math.min(
                         currentQuestionIndex + 1,
                         surveyData.snag_checklist.questions_count
                       )}
                       /{surveyData.snag_checklist.questions_count}
-                    </>
+                    </span>
                   )}
-                </span>
-              </div>
+                </div>
 
-              {/* Subtitle - only show when we have a current question and not showing generic tags */}
-              {currentQuestion && !showGenericTags && (
-                <p className="text-xl  text-white/90 mb-6">
-                  {currentQuestion.descr}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Show Current Question */}
-          {currentQuestion && !isLastStep && (
-            <div className="w-full space-y-3 mb-10">
-              <div className="space-y-4">
-                {/* Multiple Choice Question */}
-                {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <div className="space-y-4 ">
-                    {currentQuestion.snag_quest_options.map((option) => (
-                      <button
-                        type="button"
-                        key={option.id}
-                        onClick={() => handleOptionSelect(option)}
-                        className={`w-full p-3 sm:p-4 rounded-[0.20rem] border-2 text-left transition-all ${
-                          selectedOptions.some((opt) => opt.id === option.id)
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-white hover:border-black/30"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm sm:text-base">
-                            {option.qname}
-                          </span>
-                          {selectedOptions.some(
-                            (opt) => opt.id === option.id
-                          ) && (
-                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Input Question */}
-                {currentQuestion.qtype === "input" && (
-                  <>
-                    <div className="mt-16">
-                      <input
-                        type="text"
-                        value={currentQuestionValue}
-                        onChange={(e) =>
-                          setCurrentQuestionValue(e.target.value)
-                        }
-                        placeholder="Enter your answer..."
-                        className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                      />
+                {/* Show Final Description Step */}
+                {isLastStep && isMultiQuestion && (
+                  <div className="w-full space-y-3 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <div className="text-center">
+                      <h3 className="text-base font-semibold text-gray-900 mb-1">
+                        Any additional comments?
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        Share any additional feedback or suggestions (optional)
+                      </p>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const isSingleQuestion =
-                          surveyData!.snag_checklist.questions_count === 1;
-
-                        // Save current answer first
-                        const answerData = saveCurrentAnswer();
-
-                        if (isSingleQuestion) {
-                          // Submit immediately with answer data
-                          handleSingleQuestionSubmit(answerData);
-                        } else {
-                          handleNextQuestion();
-                        }
-                      }}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : "Continue"}
-                    </button>
-                  </>
-                )}
-
-                {/* Text Question */}
-                {currentQuestion.qtype === "text" && (
-                  <>
-                    <div className="mt-14">
-                      <textarea
-                        value={currentQuestionValue}
-                        onChange={(e) =>
-                          setCurrentQuestionValue(e.target.value)
-                        }
-                        placeholder="Please enter your comments..."
-                        className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const isSingleQuestion =
-                          surveyData!.snag_checklist.questions_count === 1;
-
-                        // Save current answer first
-                        const answerData = saveCurrentAnswer();
-
-                        if (isSingleQuestion) {
-                          // Submit immediately with answer data
-                          handleSingleQuestionSubmit(answerData);
-                        } else {
-                          handleNextQuestion();
-                        }
-                      }}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : "Continue"}
-                    </button>
-                  </>
-                )}
-
-                {/* Description Question */}
-                {currentQuestion.qtype === "description" && (
-                  <>
-                    <div className="mt-14">
-                      <textarea
-                        value={currentQuestionValue}
-                        onChange={(e) =>
-                          setCurrentQuestionValue(e.target.value)
-                        }
-                        placeholder="Enter your description..."
-                        className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const isSingleQuestion =
-                          surveyData!.snag_checklist.questions_count === 1;
-
-                        // Save current answer first
-                        const answerData = saveCurrentAnswer();
-
-                        if (isSingleQuestion) {
-                          // Submit immediately with answer data
-                          handleSingleQuestionSubmit(answerData);
-                        } else {
-                          handleNextQuestion();
-                        }
-                      }}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : "Continue"}
-                    </button>
-                  </>
-                )}
-
-                {/* Rating Question */}
-                {currentQuestion.qtype === "rating" && !showGenericTags && (
-                  <>
-                    <div className="flex justify-center items-center space-x-2 sm:space-x-3">
-                      {getRatingOptions(currentQuestion).map((rating) => (
-                        <button
-                          type="button"
-                          key={rating}
-                          onClick={() => handleRatingSelect(rating)}
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all ${
-                            selectedRating !== null && rating <= selectedRating
-                              ? "text-yellow-500"
-                              : "text-gray-300 hover:text-yellow-300"
-                          }`}
-                        >
-                          <svg
-                            className="w-full h-full"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        </button>
-                      ))}
-                    </div>
-                    {selectedRating && (
-                      <div className="text-center">
-                        <span className="text-base sm:text-lg font-medium text-gray-700">
-                          {selectedRating} star{selectedRating > 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Emoji/Smiley Question */}
-                {(currentQuestion.qtype === "emoji" ||
-                  currentQuestion.qtype === "smiley") &&
-                  !showGenericTags && (
-                    <div className="w-full">
-                      <div className="flex justify-between items-center gap-3 sm:gap-4 bg-black/60 rounded-[0.20rem]">
-                        {getEmojiOptions(currentQuestion).map((option) => (
-                          <button
-                            type="button"
-                            key={option.rating}
-                            onClick={() =>
-                              handleEmojiSelect(
-                                option.rating,
-                                option.emoji,
-                                option.label
-                              )
-                            }
-                            className={`flex flex-col rounded-[0.20rem] items-center justify-center p-2 sm:p-3 transition-all flex-1 min-w-0 ${
-                              selectedRating === option.rating
-                                ? "bg-blue-500/40 border-2 border-blue-400 shadow-md"
-                                : "hover:bg-white/10 border-2 border-transparent"
-                            }`}
-                          >
-                            <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
-                              {option.emoji}
-                            </span>
-                            <span className="text-xs sm:text-sm text-white/90 text-center leading-tight break-words font-medium">
-                              {option.label}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
-                {showGenericTags && (
-                  <>
-                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 shadow-lg relative">
-
-
-                      {/* Grid Layout - 2x2 for first 4, then repeat */}
-                      <div className="overflow-x-auto pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
-                        {(() => {
-                          const tags = getCurrentQuestion()?.generic_tags || [];
-                          const itemsPerPage = 4;
-                          // Split tags into pages of 4 items each
-                          const pages = Array.from(
-                            { length: Math.ceil(tags.length / itemsPerPage) },
-                            (_, pageIdx) =>
-                              tags.slice(
-                                pageIdx * itemsPerPage,
-                                (pageIdx + 1) * itemsPerPage
-                              )
-                          );
-                          return (
-                            <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0">
-                              {pages.map((pageTags, pageIdx) => (
-                                <div
-                                  key={pageIdx}
-                                  className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
-                                >
-                                  {/* First row: items 0,1 */}
-                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
-                                    {[0, 1].map((slotIdx) => {
-                                      const tag = pageTags[slotIdx];
-                                      return tag ? (
-                                        <button
-                                          type="button"
-                                          key={tag.id}
-                                          onClick={() =>
-                                            handleGenericTagClick(tag)
-                                          }
-                                          className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
-                                            selectedTags.some(
-                                              (selectedTag) =>
-                                                selectedTag.id === tag.id
-                                            )
-                                              ? "border-blue-500 bg-gray-300"
-                                              : "border-white/5"
-                                          }`}
-                                        >
-                                          <div
-                                            className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                            style={{ aspectRatio: "16/9" }}
-                                          >
-                                            {tag.icons &&
-                                            tag.icons.length > 0 ? (
-                                              <img
-                                                src={tag.icons[0].url}
-                                                alt={tag.category_name}
-                                                className="w-full h-full object-contain"
-                                              />
-                                            ) : (
-                                              <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-sm xs:text-base sm:text-xl">
-                                                  🏷️
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
-                                            {tag.category_name}
-                                          </span>
-                                        </button>
-                                      ) : (
-                                        <div
-                                          key={`empty-row1-${pageIdx}-${slotIdx}`}
-                                          className="flex-1"
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                  {/* Second row: items 2,3 */}
-                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
-                                    {[2, 3].map((slotIdx) => {
-                                      const tag = pageTags[slotIdx];
-                                      return tag ? (
-                                        <button
-                                          type="button"
-                                          key={tag.id}
-                                          onClick={() =>
-                                            handleGenericTagClick(tag)
-                                          }
-                                          className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
-                                            selectedTags.some(
-                                              (selectedTag) =>
-                                                selectedTag.id === tag.id
-                                            )
-                                              ? "border-blue-500 bg-gray-300"
-                                              : "border-white/5"
-                                          }`}
-                                        >
-                                          <div
-                                            className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                            style={{ aspectRatio: "16/9" }}
-                                          >
-                                            {tag.icons &&
-                                            tag.icons.length > 0 ? (
-                                              <img
-                                                src={tag.icons[0].url}
-                                                alt={tag.category_name}
-                                                className="w-full h-full object-contain"
-                                              />
-                                            ) : (
-                                              <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-sm xs:text-base sm:text-xl">
-                                                  🏷️
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
-                                            {tag.category_name}
-                                          </span>
-                                        </button>
-                                      ) : (
-                                        <div
-                                          key={`empty-row2-${pageIdx}-${slotIdx}`}
-                                          className="flex-1"
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Description Field */}
                     <div>
-                      <label className="block text-[9px] xs:text-[10px] sm:text-xs font-medium text-white/90 mb-1 xs:mb-1 sm:mb-2">
-                        Comments (Optional)
-                      </label>
                       <textarea
-                        value={getCurrentNegativeComments()}
-                        onChange={(e) =>
-                          setCurrentNegativeComments(e.target.value)
-                        }
-                        placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-12 xs:h-14 sm:h-16 p-1.5 xs:p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[9px] xs:text-[10px] sm:text-xs"
+                        value={finalDescription}
+                        onChange={(e) => setFinalDescription(e.target.value)}
+                        placeholder="Please share your thoughts..."
+                        className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
                         disabled={isSubmitting}
                       />
                     </div>
 
                     <button
                       type="button"
-                      onClick={async () => {
-                        const isSingleQuestion =
-                          surveyData!.snag_checklist.questions_count === 1;
-
-                        // Save answer with tags and description, then proceed
-                        let answerData: SurveyAnswers[number] | undefined;
-                        const currentComments = getCurrentNegativeComments();
-
-                        if (
-                          (pendingNegativeType === "emoji" ||
-                            pendingNegativeType === "smiley") &&
-                          typeof pendingNegativeAnswer === "object" &&
-                          pendingNegativeAnswer !== null &&
-                          "rating" in pendingNegativeAnswer &&
-                          "emoji" in pendingNegativeAnswer
-                        ) {
-                          // Type guard for emoji/smiley objects
-                          const emojiAnswer = pendingNegativeAnswer as {
-                            rating: number;
-                            emoji: string;
-                            label: string;
-                          };
-                          answerData = saveCurrentAnswer(
-                            emojiAnswer.rating,
-                            emojiAnswer.emoji,
-                            emojiAnswer.label,
-                            selectedTags,
-                            currentComments
-                          );
-                        } else if (pendingNegativeType === "multiple") {
-                          answerData = saveCurrentAnswer(
-                            undefined,
-                            undefined,
-                            undefined,
-                            selectedTags,
-                            currentComments
-                          );
-                        } else if (
-                          pendingNegativeType === "rating" &&
-                          pendingNegativeAnswer &&
-                          typeof pendingNegativeAnswer === "object" &&
-                          "rating" in pendingNegativeAnswer &&
-                          "option" in pendingNegativeAnswer
-                        ) {
-                          answerData = saveCurrentAnswer(
-                            pendingNegativeAnswer.rating,
-                            undefined,
-                            undefined,
-                            selectedTags,
-                            currentComments
-                          );
-                          // Store the option_id for later use in submission
-                          if (answerData) {
-                            answerData.optionId =
-                              pendingNegativeAnswer.option.id;
-                          }
-                        }
-
-                        // Reset states immediately
-                        setShowGenericTags(false);
-                        setSelectedTags([]);
-                        setCurrentNegativeComments(""); // Reset only current question's comments
-                        setPendingNegativeType(null);
-                        setPendingNegativeAnswer(null);
-
-                        // For single question negative responses, submit with complete data
-                        if (isSingleQuestion && answerData) {
-                          handleSingleQuestionSubmitWithNegativeData(
-                            answerData
-                          );
-                        } else {
-                          // For multi-question surveys, proceed to next question
-                          // Use moveToNextQuestion to avoid re-saving the answer
-                          moveToNextQuestion();
-                        }
-                      }}
-                      disabled={
-                        selectedTags.length === 0 &&
-                        !getCurrentNegativeComments().trim()
-                      }
-                      className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
+                      onClick={handleSubmitSurvey}
+                      disabled={isSubmitting}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
-                          <span className="text-xs xs:text-sm">Submitting...</span>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Submitting...
                         </div>
-                      ) : surveyData!.snag_checklist.questions_count === 1 ? (
-                        "Submit Survey"
-                      ) : currentQuestionIndex <
-                        surveyData.snag_checklist.questions_count - 1 ? (
-                        "Next Question"
                       ) : (
-                        "Continue"
+                        "Submit Survey"
                       )}
                     </button>
-                  </>
+                  </div>
+                )}
+
+                {!((
+                  isLastStep &&
+                  currentQuestionIndex ===
+                  surveyData.snag_checklist.questions_count
+                )) &&
+                  currentQuestion &&
+                  !showGenericTags && (
+                    <div className="text-center mb-4">
+                      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
+                        <p className="text-lg text-gray-900 font-semibold">
+                          {currentQuestion.descr}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Show Current Question */}
+                {currentQuestion && !isLastStep && (
+                  <div className="w-full space-y-3 max-w-sm mx-auto">
+                    <div className="space-y-3">
+                      {/* Multiple Choice Question */}
+                      {currentQuestion.qtype === "multiple" &&
+                        !showGenericTags && (
+                          <div className="space-y-3">
+                            {currentQuestion.snag_quest_options.map(
+                              (option) => (
+                                <button
+                                  type="button"
+                                  key={option.id}
+                                  onClick={() => handleOptionSelect(option)}
+                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${selectedOptions.some(
+                                    (opt) => opt.id === option.id
+                                  )
+                                    ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                    : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                    }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-base">
+                                      {option.qname}
+                                    </span>
+                                    {selectedOptions.some(
+                                      (opt) => opt.id === option.id
+                                    ) && (
+                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                          <svg
+                                            className="w-4 h-4 text-blue-500"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        </div>
+                                      )}
+                                  </div>
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                      {/* Input Question */}
+                      {currentQuestion.qtype === "input" && (
+                        <>
+                          <div className="mt-4">
+                            <input
+                              type="text"
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              placeholder="Enter your answer..."
+                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
+
+                              // Save current answer first
+                              const answerData = saveCurrentAnswer();
+
+                              if (isSingleQuestion) {
+                                // Submit immediately with answer data
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {surveyData!.snag_checklist.questions_count === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Text Question */}
+                      {currentQuestion.qtype === "text" && (
+                        <>
+                          <div className="mt-4">
+                            <textarea
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              placeholder="Please enter your comments..."
+                              className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
+
+                              // Save current answer first
+                              const answerData = saveCurrentAnswer();
+
+                              if (isSingleQuestion) {
+                                // Submit immediately with answer data
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {surveyData!.snag_checklist.questions_count === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Description Question */}
+                      {currentQuestion.qtype === "description" && (
+                        <>
+                          <div className="mt-4">
+                            <textarea
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              placeholder="Enter your description..."
+                              className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
+
+                              // Save current answer first
+                              const answerData = saveCurrentAnswer();
+
+                              if (isSingleQuestion) {
+                                // Submit immediately with answer data
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {surveyData!.snag_checklist.questions_count === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Input Box Question - New Type */}
+                      {currentQuestion.qtype === "input_box" && (
+                        <>
+                          <div className="mt-4">
+                            <input
+                              type="text"
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              placeholder="Enter your answer..."
+                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
+
+                              // Save current answer first
+                              const answerData = saveCurrentAnswer();
+
+                              if (isSingleQuestion) {
+                                // Submit immediately with answer data
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {surveyData!.snag_checklist.questions_count === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Rating Question */}
+                      {currentQuestion.qtype === "rating" &&
+                        !showGenericTags && (
+                          <>
+                            <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-4">
+                              <div className="flex justify-center items-center space-x-2">
+                                {getRatingOptions(currentQuestion).map(
+                                  (rating) => (
+                                    <button
+                                      type="button"
+                                      key={rating}
+                                      onClick={() => handleRatingSelect(rating)}
+                                      className={`w-12 h-12 rounded-full transition-all ${selectedRating !== null &&
+                                        rating <= selectedRating
+                                        ? "text-yellow-400"
+                                        : "text-gray-300 hover:text-yellow-300"
+                                        }`}
+                                    >
+                                      <svg
+                                        className="w-full h-full"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    </button>
+                                  )
+                                )}
+                              </div>
+                              {selectedRating && (
+                                <div className="text-center mt-2">
+                                  <span className="text-base sm:text-lg font-medium text-gray-700">
+                                    {selectedRating} star
+                                    {selectedRating > 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                      {/* Emoji/Smiley Question */}
+                      {(currentQuestion.qtype === "emoji" ||
+                        currentQuestion.qtype === "smiley") &&
+                        !showGenericTags && (
+                          <div className="w-full mb-8">
+                            <div className="flex justify-between items-center gap-3 sm:gap-4 bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
+                              {" "}
+                              {getEmojiOptions(currentQuestion).map(
+                                (option) => (
+                                  <button
+                                    type="button"
+                                    key={option.rating}
+                                    onClick={() =>
+                                      handleEmojiSelect(
+                                        option.rating,
+                                        option.emoji,
+                                        option.label
+                                      )
+                                    }
+                                    className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${selectedRating === option.rating
+                                      ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
+                                      : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
+                                      }`}
+                                  >
+                                    <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
+                                      {option.emoji}
+                                    </span>
+                                    <span
+                                      className={`text-xs sm:text-sm font-semibold text-center leading-tight break-words ${selectedRating === option.rating ? "text-white" : "text-gray-900"}`}
+                                    >
+                                      {option.label}
+                                    </span>
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
+                      {showGenericTags && (
+                        <>
+                          <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
+                            {/* Grid Layout - 2x2 for first 4, then repeat */}
+                            <div className="overflow-x-scroll whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                              {(() => {
+                                const tags =
+                                  getCurrentQuestion()?.generic_tags || [];
+                                const itemsPerPage = 4;
+                                // Split tags into pages of 4 items each
+                                const pages = Array.from(
+                                  {
+                                    length: Math.ceil(
+                                      tags.length / itemsPerPage
+                                    ),
+                                  },
+                                  (_, pageIdx) =>
+                                    tags.slice(
+                                      pageIdx * itemsPerPage,
+                                      (pageIdx + 1) * itemsPerPage
+                                    )
+                                );
+                                return (
+                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0" style={{ minWidth: 'calc(100% + 1px)' }}>
+                                    {pages.map((pageTags, pageIdx) => (
+                                      <div
+                                        key={pageIdx}
+                                        className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
+                                      >
+                                        {/* First row: items 0,1 */}
+                                        <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
+                                          {[0, 1].map((slotIdx) => {
+                                            const tag = pageTags[slotIdx];
+                                            return tag ? (
+                                              <button
+                                                type="button"
+                                                key={tag.id}
+                                                onClick={() =>
+                                                  handleGenericTagClick(tag)
+                                                }
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
+                                                  (selectedTag) =>
+                                                    selectedTag.id === tag.id
+                                                )
+                                                  ? "border-blue-500 bg-gray-300"
+                                                  : "border-white/5"
+                                                  }`}
+                                              >
+                                                <div
+                                                  className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
+                                                  style={{
+                                                    aspectRatio: "16/9",
+                                                  }}
+                                                >
+                                                  {tag.icons &&
+                                                    tag.icons.length > 0 ? (
+                                                    <img
+                                                      src={tag.icons[0].url}
+                                                      alt={tag.category_name}
+                                                      className="w-full h-full object-contain"
+                                                    />
+                                                  ) : (
+                                                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                                                      <span className="text-sm xs:text-base sm:text-xl">
+                                                        🏷️
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
+                                                  {tag.category_name}
+                                                </span>
+                                              </button>
+                                            ) : (
+                                              <div
+                                                key={`empty-row1-${pageIdx}-${slotIdx}`}
+                                                className="flex-1"
+                                              />
+                                            );
+                                          })}
+                                        </div>
+                                        {/* Second row: items 2,3 */}
+                                        <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
+                                          {[2, 3].map((slotIdx) => {
+                                            const tag = pageTags[slotIdx];
+                                            return tag ? (
+                                              <button
+                                                type="button"
+                                                key={tag.id}
+                                                onClick={() =>
+                                                  handleGenericTagClick(tag)
+                                                }
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
+                                                  (selectedTag) =>
+                                                    selectedTag.id === tag.id
+                                                )
+                                                  ? "border-blue-500 bg-gray-300"
+                                                  : "border-white/5"
+                                                  }`}
+                                              >
+                                                <div
+                                                  className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
+                                                  style={{
+                                                    aspectRatio: "16/9",
+                                                  }}
+                                                >
+                                                  {tag.icons &&
+                                                    tag.icons.length > 0 ? (
+                                                    <img
+                                                      src={tag.icons[0].url}
+                                                      alt={tag.category_name}
+                                                      className="w-full h-full object-contain"
+                                                    />
+                                                  ) : (
+                                                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                                                      <span className="text-sm xs:text-base sm:text-xl">
+                                                        🏷️
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
+                                                  {tag.category_name}
+                                                </span>
+                                              </button>
+                                            ) : (
+                                              <div
+                                                key={`empty-row2-${pageIdx}-${slotIdx}`}
+                                                className="flex-1"
+                                              />
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+
+                            {/* Scroll Indicator Dots */}
+                            {(() => {
+                              const tags = getCurrentQuestion()?.generic_tags || [];
+                              const itemsPerPage = 4;
+                              const totalPages = Math.ceil(tags.length / itemsPerPage);
+
+                              if (totalPages <= 1) return null;
+
+                              return (
+                                <div className="flex justify-center gap-1.5 mt-2 pb-1">
+                                  {Array.from({ length: totalPages }).map((_, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="w-1.5 h-1.5 rounded-full bg-gray-400"
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Description Field */}
+                          <div>
+                            <label className="block text-[9px] xs:text-[10px] sm:text-xs font-medium text-white/90 mb-1 xs:mb-1 sm:mb-2">
+                              Comments (Optional)
+                            </label>
+                            <textarea
+                              value={getCurrentNegativeComments()}
+                              onChange={(e) =>
+                                setCurrentNegativeComments(e.target.value)
+                              }
+                              placeholder="Please describe any specific issues or suggestions..."
+                              className="w-full h-12 xs:h-14 sm:h-16 p-1.5 xs:p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[9px] xs:text-[10px] sm:text-xs"
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
+
+                              // Save answer with tags and description, then proceed
+                              let answerData: SurveyAnswers[number] | undefined;
+                              const currentComments =
+                                getCurrentNegativeComments();
+
+                              if (
+                                (pendingNegativeType === "emoji" ||
+                                  pendingNegativeType === "smiley") &&
+                                typeof pendingNegativeAnswer === "object" &&
+                                pendingNegativeAnswer !== null &&
+                                "rating" in pendingNegativeAnswer &&
+                                "emoji" in pendingNegativeAnswer
+                              ) {
+                                // Type guard for emoji/smiley objects
+                                const emojiAnswer = pendingNegativeAnswer as {
+                                  rating: number;
+                                  emoji: string;
+                                  label: string;
+                                };
+                                answerData = saveCurrentAnswer(
+                                  emojiAnswer.rating,
+                                  emojiAnswer.emoji,
+                                  emojiAnswer.label,
+                                  selectedTags,
+                                  currentComments
+                                );
+                              } else if (pendingNegativeType === "multiple") {
+                                answerData = saveCurrentAnswer(
+                                  undefined,
+                                  undefined,
+                                  undefined,
+                                  selectedTags,
+                                  currentComments
+                                );
+                              } else if (
+                                pendingNegativeType === "rating" &&
+                                pendingNegativeAnswer &&
+                                typeof pendingNegativeAnswer === "object" &&
+                                "rating" in pendingNegativeAnswer &&
+                                "option" in pendingNegativeAnswer
+                              ) {
+                                answerData = saveCurrentAnswer(
+                                  pendingNegativeAnswer.rating,
+                                  undefined,
+                                  undefined,
+                                  selectedTags,
+                                  currentComments
+                                );
+                                // Store the option_id for later use in submission
+                                if (answerData) {
+                                  answerData.optionId =
+                                    pendingNegativeAnswer.option.id;
+                                }
+                              }
+
+                              // Reset states immediately
+                              setShowGenericTags(false);
+                              setSelectedTags([]);
+                              setCurrentNegativeComments(""); // Reset only current question's comments
+                              setPendingNegativeType(null);
+                              setPendingNegativeAnswer(null);
+
+                              // For single question negative responses, submit with complete data
+                              if (isSingleQuestion && answerData) {
+                                handleSingleQuestionSubmitWithNegativeData(
+                                  answerData
+                                );
+                              } else {
+                                // For multi-question surveys, proceed to next question
+                                // Use moveToNextQuestion to avoid re-saving the answer
+                                moveToNextQuestion();
+                              }
+                            }}
+                            disabled={
+                              selectedTags.length === 0 &&
+                              !getCurrentNegativeComments().trim()
+                            }
+                            className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
+                          >
+                            {isSubmitting ? (
+                              <div className="flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
+                                <span className="text-xs xs:text-sm">
+                                  Submitting...
+                                </span>
+                              </div>
+                            ) : surveyData!.snag_checklist.questions_count ===
+                              1 ? (
+                              "Submit Survey"
+                            ) : currentQuestionIndex <
+                              surveyData.snag_checklist.questions_count - 1 ? (
+                              "Next Question"
+                            ) : (
+                              "Continue"
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

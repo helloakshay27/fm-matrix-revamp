@@ -4,11 +4,14 @@ import { Button } from "./ui/button";
 import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { createMilestone, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
+import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 import { useNavigate, useParams } from "react-router-dom";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
+import { SelectionPanel } from "./water-asset-details/PannelTab";
+import { CommonImportModal } from "./CommonImportModal";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
     {
@@ -47,6 +50,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "issues",
+        label: "Issues",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "start_date",
         label: "Start Date",
         sortable: true,
@@ -62,6 +72,14 @@ const columns: ColumnConfig[] = [
     },
 ];
 
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
+
 const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const { id } = useParams()
 
@@ -73,6 +91,18 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [data, setData] = useState([])
     const [owners, setOwners] = useState([])
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const statusColorMap = {
+        open: { dot: "bg-blue-500" },
+        in_progress: { dot: "bg-amber-500" },
+        on_hold: { dot: "bg-gray-500" },
+        completed: { dot: "bg-teal-500" },
+        overdue: { dot: "bg-red-500" },
+    };
 
     const getMilestones = async () => {
         try {
@@ -90,6 +120,22 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         } catch (error) {
             console.log(error)
             toast.error(error)
+        }
+    }
+
+    const handleStatusChange = async (milestoneId: number, status: string) => {
+        try {
+            await dispatch(updateMilestoneStatus({
+                token,
+                baseUrl,
+                id: String(milestoneId),
+                payload: { milestone: { status } }
+            })).unwrap();
+            getMilestones();
+            toast.success("Milestone status updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update milestone status");
         }
     }
 
@@ -119,38 +165,130 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         }
     };
 
-    const renderCell = (item: any, columnKey: string) => {
-        switch (columnKey) {
-            case "status":
-                return (
-                    <span>
-                        {
-                            item.status
-                                ? item.status
-                                    .split("_")
-                                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                    .join(" ")
-                                : ""
-                        }
-                    </span>
-                )
-            case "tasks": {
-                const completed = item.tasksCompleted || 0;
-                const total = item.tasksTotal || 0;
-                const progress = total > 0 ? (completed / total) * 100 : 0;
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/milestone_import.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-                return (
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_milestone.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImport = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            await axios.post(`https://${baseUrl}/milestones/import.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            toast.success("Milestones imported successfully");
+            setIsImportModalOpen(false);
+            setSelectedFile(null);
+            getMilestones();
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import milestones");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const renderCell = (item: any, columnKey: string) => {
+        const renderProgressBar = (completed: number, total: number, color: string) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
+            return (
+                <div className="flex items-center gap-2">
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
                         <div
-                            className="absolute top-0 left-0 h-3 bg-[#e9e575] rounded-full transition-all duration-300"
+                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
-                        <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-                            {progress.toFixed(2)}%
-                        </div>
                     </div>
+                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                </div>
+            );
+        };
+
+        switch (columnKey) {
+            case "id":
+                return `M-${item.id}`;
+            case "status": {
+                const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
+                return (
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 148 }}
+                    >
+                        <Select
+                            value={item.status}
+                            onChange={(e) =>
+                                handleStatusChange(item.id, e.target.value as string)
+                            }
+                            disableUnderline
+                            renderValue={(value) => (
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                                    <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                                </div>
+                            )}
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                },
+                            }}
+                        >
+                            {statusOptions.map((opt) => {
+                                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                                return (
+                                    <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                                        <span>{opt.label}</span>
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+                    </FormControl>
                 );
             }
+            case "tasks": {
+                const completed = item.completed_tasks || 0;
+                const total = item.total_tasks || 0;
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+            }
+            case "issues": {
+                const completed = item.completed_issues || 0;
+                const total = item.total_issues || 0;
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+            }
+            case "owner":
+                return item.owner_name ? item.owner_name : "-";
             case "start_date":
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";
@@ -163,10 +301,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         <>
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setOpenDialog(true)}
+                onClick={() => setShowActionPanel(true)}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add
+                Action
             </Button>
         </>
     );
@@ -309,14 +447,34 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 leftActions={leftActions}
                 rightActions={rightActions}
                 storageKey="projects-table"
-                onFilterClick={() => { }}
+                // onFilterClick={() => { }}
                 canAddRow={true}
-                readonlyColumns={["id", "tasks", "status"]}
+                readonlyColumns={["id", "tasks"]}
                 onAddRow={(newRowData) => {
                     handleSubmit(newRowData)
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
+            />
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={() => setOpenDialog(true)}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Milestones"
+                entityType="milestones"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImport}
+                isUploading={isUploading}
             />
         </div>
     )

@@ -1,10 +1,12 @@
-import { ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import ConvertModal from '@/components/ConvertModal';
+import { useLayout } from '@/contexts/LayoutContext';
+import { Button } from '@/components/ui/button';
 // TODO: Implement comments and user mentions when dependencies are available
 // import { Mention, MentionsInput } from 'react-mentions';
 // import { fetchUsers } from '@/redux/slices/userSlice';
@@ -27,6 +29,20 @@ interface OpportunityDetailsData {
     milestone_id?: number;
     project_name?: string;
     task_name?: string;
+    responsible_person?: {
+        id: string;
+        name: string;
+    };
+    task_tags?: Array<{
+        company_tag_id: number;
+        company_tag: {
+            name: string;
+        };
+    }>;
+    observers?: Array<{
+        id: number;
+        user_name: string;
+    }>;
     attachments?: Array<{
         id: number;
         document_file_name?: string;
@@ -55,6 +71,7 @@ interface CommentData {
     body: string;
     commentor_full_name: string;
     created_at: string;
+    updated_at?: string;
 }
 
 const Attachments = ({
@@ -69,6 +86,7 @@ const Attachments = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const token = localStorage.getItem('token');
     const [files, setFiles] = useState(attachments);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         setFiles(attachments);
@@ -87,15 +105,24 @@ const Attachments = ({
             formData.append('opportunity[attachments][]', file);
         });
 
+        setIsUploading(true);
+        toast.loading('Uploading files...', { id: 'file-upload' });
+
         try {
             await axios.put(getFullUrl(`/opportunities/${id}.json`), formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            toast.success('Files uploaded successfully.');
+            toast.success('Files uploaded successfully.', { id: 'file-upload' });
             getOpportunity();
         } catch (error) {
             console.error('File upload failed:', error);
-            toast.error('Failed to upload file.');
+            toast.error('Failed to upload file.', { id: 'file-upload' });
+        } finally {
+            setIsUploading(false);
+            // Reset the file input so the same file can be uploaded again if needed
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -169,10 +196,11 @@ const Attachments = ({
                     </div>
 
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </>
             ) : (
@@ -180,10 +208,11 @@ const Attachments = ({
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </div>
             )}
@@ -221,7 +250,7 @@ function formatToDDMMYYYY_AMPM(dateString: string): string {
 const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOpportunity: () => void }) => {
     const token = localStorage.getItem('token');
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const { opportunityId } = useParams();
+    const { id: opportunityId } = useParams();
     const [comment, setComment] = useState('');
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editedCommentText, setEditedCommentText] = useState('');
@@ -371,6 +400,9 @@ const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOp
 
                             <div className="flex gap-2 text-[10px]">
                                 <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
+                                {cmt.updated_at && cmt.updated_at !== cmt.created_at && (
+                                    <span className="text-gray-500 italic">(edited)</span>
+                                )}
                                 <span className="cursor-pointer hover:underline" onClick={() => handleEdit(cmt)}>
                                     Edit
                                 </span>
@@ -414,23 +446,35 @@ const mapDisplayToApiStatus = (displayStatus: string): string => {
 };
 
 const OpportunityDetailsPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    const view = localStorage.getItem("selectedView");
+
+    useEffect(() => {
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    }, [setCurrentSection]);
+
     const token = localStorage.getItem('token');
     const { id } = useParams();
     const navigate = useNavigate();
+    const baseUrl = localStorage.getItem('baseUrl');
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
+    const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
     const [tab, setTab] = useState('Comments');
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
     const firstContentRef = useRef<HTMLDivElement>(null);
     const secondContentRef = useRef<HTMLDivElement>(null);
+    const detailsContentRef = useRef<HTMLDivElement>(null);
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState('Open');
     const [opportunityDetails, setOpportunityDetails] = useState<OpportunityDetailsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [addingTodo, setAddingTodo] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -495,13 +539,43 @@ const OpportunityDetailsPage = () => {
         setIsTaskModalOpen(true);
     };
 
+    const handleAddToDo = async () => {
+        if (addingTodo) return;
+        setAddingTodo(true);
+        try {
+            const payload = {
+                todo: {
+                    title: opportunityDetails.title,
+                    status: 'open',
+                    target_date: new Date().toISOString().split('T')[0]
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/todos.json`, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            toast.success('To-Do added successfully.');
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response.data;
+            Object.keys(errorData).forEach((key) => {
+                toast.error(`${key} ${errorData[key]} for todo`);
+            });
+        } finally {
+            setAddingTodo(false);
+        }
+    }
+
     const handleGoToTask = () => {
         if (opportunityDetails?.project_management_id) {
-            navigate(`/projects/${opportunityDetails.project_management_id}`);
+            navigate(`/vas/projects/${opportunityDetails.project_management_id}`);
         } else if (opportunityDetails?.milestone_id) {
-            navigate(`/milestones/${opportunityDetails.milestone_id}`);
+            navigate(`/vas/milestones/${opportunityDetails.milestone_id}`);
         } else if (opportunityDetails?.task_created) {
-            navigate(`/tasks/${opportunityDetails.task_management_id}`);
+            navigate(`/vas/tasks/${opportunityDetails.task_management_id}`);
         }
     };
 
@@ -509,8 +583,8 @@ const OpportunityDetailsPage = () => {
         setIsFirstCollapsed(!isFirstCollapsed);
     };
 
-    const toggleSecondCollapse = () => {
-        setIsSecondCollapsed(!isSecondCollapsed);
+    const toggleDetailsCollapse = () => {
+        setIsDetailsCollapsed(!isDetailsCollapsed);
     };
 
     if (loading) {
@@ -521,26 +595,16 @@ const OpportunityDetailsPage = () => {
         );
     }
 
-    // if (error) {
-    //     return (
-    //         <div className="m-4">
-    //             <div className="flex items-center justify-center py-12 bg-red-50 border border-red-200 rounded">
-    //                 <p className="text-red-600">Error: {error}</p>
-    //             </div>
-    //         </div>
-    //     );
-    // }
-
-    // if (!opportunityDetails) {
-    //     return (
-    //         <div className="m-4">
-    //             <p className="text-center text-gray-600">Opportunity not found</p>
-    //         </div>
-    //     );
-    // }
-
     return (
         <div className="m-4">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="p-4"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
                     <span className="mr-3 text-[#c72030]">OP-{opportunityDetails?.id}</span>
@@ -614,12 +678,24 @@ const OpportunityDetailsPage = () => {
                         <span className="h-6 w-[1px] border border-gray-300"></span>
 
                         {!opportunityDetails?.task_created ? (
-                            <span
-                                className="cursor-pointer flex items-center gap-1"
-                                onClick={handleConvertToTask}
-                            >
-                                <CircleCheckBig className="mx-1" size={15} /> Convert
-                            </span>
+                            <>
+                                <span
+                                    className="cursor-pointer flex items-center gap-1"
+                                    onClick={handleConvertToTask}
+                                >
+                                    <RefreshCw className="mx-1" size={15} /> Convert
+                                </span>
+
+                                <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                                <span
+                                    className="flex items-center gap-1 cursor-pointer"
+                                    onClick={handleAddToDo}
+                                >
+                                    <CircleCheckBig size={15} />
+                                    <span>Add To Do</span>
+                                </span>
+                            </>
                         ) : (
                             <span className="cursor-pointer flex items-center gap-1" onClick={handleGoToTask}>
                                 <LogOut className="mx-1" size={15} /> Go to{' '}
@@ -634,10 +710,10 @@ const OpportunityDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
-                            color="#E95420"
+                            color="#c72030"
                             size={30}
                             className={`${isFirstCollapsed ? 'rotate-180' : 'rotate-0'
                                 } transition-transform cursor-pointer`}
@@ -651,6 +727,125 @@ const OpportunityDetailsPage = () => {
                                 .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                                 .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || 'No description provided'}
                         </p>
+                    </div>
+                </div>
+
+                <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isDetailsCollapsed ? 'rotate-180' : 'rotate-0'} cursor-pointer transition-transform`}
+                                onClick={toggleDetailsCollapse}
+                            />
+                            Details
+                        </div>
+                        {isDetailsCollapsed && (
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Responsible Person:
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {opportunityDetails?.responsible_person ? (
+                                            <span>{opportunityDetails.responsible_person.name}</span>
+                                        ) : (
+                                            <span className="text-gray-500">Not Assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Tags:</div>
+                                    <div className="text-left text-[12px]">
+                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                            <span>{opportunityDetails.task_tags.length} Tag(s)</span>
+                                        ) : (
+                                            <span className="text-gray-500">No Tags</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div
+                        className="mt-3 overflow-hidden transition-all duration-500"
+                        ref={detailsContentRef}
+                        style={{
+                            maxHeight: isDetailsCollapsed ? '0px' : '1000px',
+                            opacity: isDetailsCollapsed ? 0 : 1,
+                        }}
+                    >
+                        <div className="flex flex-col">
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Responsible Person :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.responsible_person ? (
+                                            <span>{opportunityDetails.responsible_person.name}</span>
+                                        ) : (
+                                            <span className="text-gray-500">Not Assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-start justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Tags :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {opportunityDetails.task_tags.map((tag, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                    >
+                                                        {tag.company_tag?.name || 'Unknown'}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">No tags assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-start justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Observers :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.observers && opportunityDetails.observers.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {opportunityDetails.observers.map((tag, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                    >
+                                                        {tag.user_name || 'Unknown'}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">No observers assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -699,6 +894,10 @@ const OpportunityDetailsPage = () => {
                         task: opportunityDetails?.task_management_id,
                         taskName: opportunityDetails?.task_name,
                         description: opportunityDetails?.description,
+                        responsible_person: {
+                            id: opportunityDetails?.responsible_person?.id
+                        },
+                        tags: opportunityDetails?.task_tags
                     }}
                     opportunityId={Number(id)}
                 />

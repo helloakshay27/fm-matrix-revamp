@@ -478,7 +478,6 @@ export const AddVendorPage = () => {
     otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
 
     // Hardcoded values from API spec
-    apiFormData.append('pms_supplier[society_id]', '1');
     apiFormData.append('pms_supplier[active]', 'true');
 
     // Debug: Log the FormData contents
@@ -556,83 +555,14 @@ export const AddVendorPage = () => {
     }
   };
 
-  const handleNext = async () => {
-    // First, run client-side validation
+  const handleNext = () => {
+    // Run client-side validation only
     if (!validateStep()) {
       toast.error('Please fill in all required fields before proceeding to the next step');
       return;
     }
 
-    // For Company Information step (step 0), validate with backend
-    if (activeStep === 0) {
-      // Show loading state
-      setIsSubmitting(true);
-      
-      try {
-        // Create FormData with company information to validate
-        const validationFormData = new FormData();
-        validationFormData.append('pms_supplier[company_name]', formData.companyName || '');
-        validationFormData.append('pms_supplier[email]', formData.email || '');
-        validationFormData.append('pms_supplier[mobile1]', formData.primaryPhone || '');
-        validationFormData.append('pms_supplier[pan_number]', formData.pan || '');
-        validationFormData.append('pms_supplier[gstin_number]', formData.gst || '');
-        
-        // Add required fields for validation
-        validationFormData.append('pms_supplier[society_id]', '1');
-        validationFormData.append('pms_supplier[active]', 'true');
-        
-        // Make API call to validate (this will throw error if validation fails)
-        await vendorService.createVendor(validationFormData);
-        
-        // If we reach here, validation passed but we don't want to create yet
-        // So we'll continue to next step
-        
-      } catch (error: any) {
-        // Handle validation errors from backend
-        if (error.status === 422 && error.validationErrors) {
-          const validationErrors = error.validationErrors;
-          const formErrors: any = {};
-          
-          // Map API errors to form fields
-          Object.keys(validationErrors).forEach(field => {
-            const errorMessage = Array.isArray(validationErrors[field]) 
-              ? validationErrors[field].join(', ') 
-              : validationErrors[field];
-              
-            const fieldMapping: { [key: string]: string } = {
-              'company_name': 'companyName',
-              'mobile1': 'primaryPhone',
-              'mobile2': 'secondaryPhone',
-              'pan_number': 'pan',
-              'gstin_number': 'gst',
-            };
-            
-            const formFieldName = fieldMapping[field] || field;
-            formErrors[formFieldName] = errorMessage;
-          });
-          
-          // Set errors and show notification
-          setErrors(formErrors);
-          
-          // Show specific error message
-          const firstError = Object.values(validationErrors)[0];
-          const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
-          toast.error(errorMessage || 'Validation failed. Please check the form.');
-          
-          setIsSubmitting(false);
-          return; // Don't proceed to next step
-        }
-        
-        // For other errors, show generic message
-        toast.error('An error occurred. Please try again.');
-        setIsSubmitting(false);
-        return;
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-
-    // If validation passed (or not Company Info step), mark step as completed and move forward
+    // Mark step as completed and move forward
     if (!completedSteps.includes(activeStep)) {
       setCompletedSteps((prev) => [...prev, activeStep]);
     }
@@ -1273,15 +1203,8 @@ export const AddVendorPage = () => {
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
           </RedButton>
         ) : (
-          <RedButton onClick={handleNext} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <CircularProgress size={16} sx={{ color: 'white' }} />
-                Validating...
-              </span>
-            ) : (
-              'Next'
-            )}
+          <RedButton onClick={handleNext}>
+            Next
           </RedButton>
         )}
       </div>

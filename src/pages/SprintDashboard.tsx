@@ -3,17 +3,44 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { MenuItem, Select, TextField } from "@mui/material";
-import {
-  ChartNoAxesColumn,
-  ChevronDown,
-  Eye,
-  List,
-  Plus,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddSprintModal from "@/components/AddSprintModal";
+import { useLayout } from "@/contexts/LayoutContext";
+import { CountdownTimer } from "@/components/Sprints/CountdownTimer";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import {
+  fetchSprints,
+  createSprint,
+  updateSprint,
+  updateSprintStatus,
+} from "@/store/slices/sprintSlice";
+import axios from "axios";
+
+// Define a Sprint type for better type safety
+interface Sprint {
+  id: string;
+  // API sometimes returns `name` instead of `title`, keep both for compatibility
+  name?: string;
+  title: string;
+  status: string;
+  sprint_owner: string;
+  start_date: string;
+  end_date: string;
+  duration: string;
+  priority: string;
+  number_of_projects: number;
+  _raw: unknown; // Replace `any` with `unknown` for better type safety
+}
+
+// Define a type guard to safely access properties on `_raw`
+const isSprintRaw = (raw: unknown): raw is { name?: string; owner_name?: string; sprint_owner_name?: string; project_count?: number; associated_projects_count?: number } => {
+  return typeof raw === "object" && raw !== null;
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -81,111 +108,190 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-const transformedSprints = (sprints: any) => {
-  return sprints.map((sprint: any) => {
-    // Calculate duration
-    let duration = "-";
-    if (sprint.start_date && sprint.end_date) {
-      const start = new Date(sprint.start_date);
-      const end = new Date(sprint.end_date);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(diffDays / 7);
-      const days = diffDays % 7;
-      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-      
-      duration = `${weeks}w:${days}d:${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
-    }
-
+// Fix transform to read API fields directly
+const transformedSprints = (sprints: any[]) => {
+  return sprints.map((item) => {
     return {
-      id: sprint.id,
-      title: sprint.title,
-      status: sprint.status
-        ? sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1)
-        : "",
-      sprint_owner: sprint.sprint_owner || sprint.owner_name || "-",
-      start_date: sprint.start_date,
-      end_date: sprint.end_date,
-      duration: duration,
-      priority: sprint.priority
-        ? sprint.priority.charAt(0).toUpperCase() + sprint.priority.slice(1)
-        : "",
-      number_of_projects: sprint.number_of_projects || sprint.project_count || 0,
-    };
+      id: String(item.id ?? ""),
+      title: item.title ?? item.name ?? "",
+      status: (item.status ?? "").charAt(0).toUpperCase() + (item.status ?? "").slice(1),
+      sprint_owner: item.sprint_owner_name ?? item.owner_name ?? "-",
+      start_date: item.start_date ?? "",
+      end_date: item.end_date ?? "",
+      duration: item.duration ?? "",
+      priority: item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : "",
+      number_of_projects: item.associated_projects_count ?? item.project_count ?? 0,
+    } as Sprint;
   });
 };
 
 export const SprintDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
 
-  const [sprints, setSprints] = useState([]);
+  // Redux state selectors
+  const { data: sprintsData, loading: fetchLoading } = useSelector(
+    (state: RootState) => state.fetchSprints
+  );
+  const { loading: createLoading } = useSelector(
+    (state: RootState) => state.createSprint
+  );
+  const { loading: updateLoading } = useSelector(
+    (state: RootState) => state.updateSprint
+  );
+
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [addSprintModalOpen, setAddSprintModalOpen] = useState(false);
+  const [owners, setOwners] = useState([]);
 
-  // Mock owners data - TODO: Replace with actual API call
-  const mockOwners = [
-    { id: "1", full_name: "Test User Name" },
-    { id: "2", full_name: "Sadanand Gupta" },
-    { id: "3", full_name: "Ubaid Hashmat" },
-    { id: "4", full_name: "Akshay" },
-    { id: "5", full_name: "Yadav" },
-  ];
-
-  const fetchData = async () => {
+  // Wrap `getOwners` in `useCallback` to stabilize its reference
+  const getOwners = useCallback(async () => {
     try {
-      // TODO: Replace with actual sprint API call when available
-      // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-      // setSprints(transformedSprints(response));
-      
-      // Mock data for now
-      setSprints([
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
         {
-          id: "S-78",
-          title: "test 333",
-          status: "Active",
-          sprint_owner: "Test User Name",
-          start_date: "2025-11-04",
-          end_date: "2025-11-04",
-          duration: "0w:0d:00h:00m:00s",
-          priority: "Medium",
-          number_of_projects: 3,
-        },
-      ]);
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setOwners(response.data.users);
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to fetch sprints");
+      handleError(error);
     }
-  };
+  }, [baseUrl, token]);
+
+  // Add missing dependencies to useEffect hooks
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      } catch (error) {
+        handleError(error);
+      }
+    };
+
+    fetchData();
+  }, [dispatch, token, baseUrl]);
+
+
+
+  useEffect(() => {
+    getOwners();
+  }, [getOwners]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const cachedResult = await cache.getOrFetch(
+        "sprints_list",
+        async () => {
+          // TODO: Replace with actual sprint API call when available
+          // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+          // return transformedSprints(response);
+
+          // Mock data for now
+          return [
+            {
+              id: "S-78",
+              title: "test 333",
+              status: "Active",
+              sprint_owner: "Test User Name",
+              start_date: "2025-11-04",
+              end_date: "2025-11-04",
+              duration: "0w:0d:00h:00m:00s",
+              priority: "Medium",
+              number_of_projects: 3,
+            },
+          ];
+        },
+        2 * 60 * 1000, // Fresh for 2 minutes
+        10 * 60 * 1000 // Stale up to 10 minutes
+      );
+      setSprints(cachedResult.data);
+    } catch (error) {
+      console.error(error);
+      toast.error(error || "Failed to fetch sprints");
+    }
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [dispatch, token, baseUrl]);
 
-  const handleSubmit = async (data: any) => {
+  useEffect(() => {
+    if (sprintsData && Array.isArray(sprintsData)) {
+      setSprints(transformedSprints(sprintsData));
+    }
+  }, [sprintsData]);
+
+  const handleSubmit = async (data: Sprint) => {
     try {
-      // TODO: Replace with actual create sprint API call
-      // const payload = {
-      //   sprint: {
-      //     title: data.title,
-      //     start_date: data.start_date,
-      //     end_date: data.end_date,
-      //     status: data.status || "active",
-      //     sprint_owner: data.sprint_owner,
-      //     priority: data.priority,
-      //   },
-      // };
-      // await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
+      const payload = {
+        sprint: {
+          title: data.title,
+          owner_id: data.sprint_owner,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          status: data.status,
+          priority: data.priority,
+        },
+      };
+
+      await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
       toast.success("Sprint created successfully");
+      // Invalidate cache after sprint creation
+      cache.invalidatePattern("sprints_*");
       fetchData();
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to create sprint");
+      setAddSprintModalOpen(false);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error || "Failed to create sprint");
+    }
+  };
+
+  const handleUpdateSprint = async (id: string, data: Partial<Sprint>) => {
+    try {
+      const payload = {
+        sprint: data,
+      };
+      await dispatch(
+        updateSprint({ token, baseUrl, id, data: payload })
+      ).unwrap();
+      toast.success("Sprint updated successfully");
+      // Invalidate cache after sprint update
+      cache.invalidatePattern("sprints_*");
+      fetchData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error || "Failed to update sprint");
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const payload = {
+        status: newStatus.toLowerCase(),
+      };
+      await dispatch(
+        updateSprintStatus({ token, baseUrl, id, data: payload })
+      ).unwrap();
+      toast.success("Sprint status updated successfully");
+      // Invalidate cache after sprint status update
+      cache.invalidatePattern("sprints_*");
+      fetchData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error || "Failed to update sprint status");
     }
   };
 
@@ -195,38 +301,64 @@ export const SprintDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/sprint/details/${item.id}`)}
+        onClick={() => navigate(`/vas/sprint/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/vas/sprint/${item.id}`)}
+      >
+        <LogOut className="w-4 h-4" />
       </Button>
     </div>
   );
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: Sprint, columnKey: string) => {
     switch (columnKey) {
+      case "number_of_projects":
+        return item.number_of_projects > 0 ? item.number_of_projects : "-"; // Ensure proper rendering of the value
       case "status":
         return (
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              item.status === "Active"
-                ? "bg-green-100 text-green-800"
-                : item.status === "Completed"
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
+              ? "bg-green-100 text-green-800"
+              : item.status === "Completed"
                 ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+                : item.status === "In_progress"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : item.status === "Stopped"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
+              }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                item.status === "Active"
-                  ? "bg-green-500"
-                  : item.status === "Completed"
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
+                ? "bg-green-500"
+                : item.status === "Completed"
                   ? "bg-blue-500"
-                  : "bg-gray-500"
-              }`}
+                  : item.status === "In_progress"
+                    ? "bg-yellow-500"
+                    : item.status === "Stopped"
+                      ? "bg-red-500"
+                      : "bg-gray-500"
+                }`}
             ></span>
             {item.status}
           </span>
         );
+      case "duration":
+        if (item.start_date && item.end_date) {
+          return (
+            <CountdownTimer
+              startDate={item.start_date}
+              targetDate={item.end_date}
+            />
+          );
+        }
+        return "-";
       default:
         return item[columnKey] || "-";
     }
@@ -248,7 +380,7 @@ export const SprintDashboard = () => {
     if (columnKey === "status") {
       return (
         <Select
-          value={value || ""}
+          value={value?.toLowerCase() || ""}
           onChange={(e) => onChange(e.target.value)}
           displayEmpty
           size="small"
@@ -259,8 +391,8 @@ export const SprintDashboard = () => {
           </MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="completed">Completed</MenuItem>
-          <MenuItem value="on_hold">On Hold</MenuItem>
-          <MenuItem value="cancelled">Cancelled</MenuItem>
+          <MenuItem value="in_progress">In Progress</MenuItem>
+          <MenuItem value="stopped">Stopped</MenuItem>
         </Select>
       );
     }
@@ -278,7 +410,7 @@ export const SprintDashboard = () => {
     if (columnKey === "priority") {
       return (
         <Select
-          value={value || ""}
+          value={value?.toLowerCase() || ""}
           onChange={(e) => onChange(e.target.value)}
           displayEmpty
           size="small"
@@ -291,6 +423,16 @@ export const SprintDashboard = () => {
           <MenuItem value="medium">Medium</MenuItem>
           <MenuItem value="low">Low</MenuItem>
         </Select>
+      );
+    }
+    if (columnKey === "title") {
+      return (
+        <TextField
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          fullWidth
+        />
       );
     }
     return null;
@@ -347,6 +489,8 @@ export const SprintDashboard = () => {
     </div>
   );
 
+  const isLoading = fetchLoading || createLoading || updateLoading;
+
   return (
     <div className="p-6">
       <EnhancedTable
@@ -357,7 +501,7 @@ export const SprintDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="sprint-table"
-        onFilterClick={() => {}}
+        onFilterClick={() => { }}
         canAddRow={true}
         readonlyColumns={["id", "duration", "number_of_projects"]}
         onAddRow={(newRowData) => {
@@ -365,17 +509,23 @@ export const SprintDashboard = () => {
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new sprint"
+        loading={isLoading}
       />
 
       {/* Add Sprint Modal */}
       <AddSprintModal
         openDialog={addSprintModalOpen}
         handleCloseDialog={() => setAddSprintModalOpen(false)}
-        owners={mockOwners}
+        owners={owners}
         onSubmit={(data) => {
           handleSubmit(data);
         }}
       />
     </div>
   );
+};
+
+// Ensure `handleError` is defined before its usage
+const handleError = (error: unknown) => {
+  console.error("An error occurred:", error);
 };

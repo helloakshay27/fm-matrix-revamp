@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, ScrollText, ClipboardList } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, ScrollText, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useLayout } from "@/contexts/LayoutContext";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { fetchSprintById } from "@/store/slices/sprintSlice";
 
 interface SprintDetails {
-  id?: string;
+  id?: string | number;
   title?: string;
-  created_by?: string;
-  created_on?: string;
+  created_by_name?: string; // align naming to milestone page
+  created_at?: string;
   status?: string;
   responsible_person?: string;
   priority?: string;
@@ -29,298 +32,306 @@ interface Task {
 }
 
 const taskColumns: ColumnConfig[] = [
-  {
-    key: "task_title",
-    label: "Task Title",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "status",
-    label: "Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "responsible_person",
-    label: "Responsible Person",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "start_date",
-    label: "Start Date",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_date",
-    label: "End Date",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "duration",
-    label: "Duration",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "priority",
-    label: "Priority",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
+  { key: "task_title", label: "Task Title", sortable: true, draggable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, draggable: true, defaultVisible: true },
+  { key: "responsible_person", label: "Responsible Person", sortable: true, draggable: true, defaultVisible: true },
+  { key: "start_date", label: "Start Date", sortable: true, draggable: true, defaultVisible: true },
+  { key: "end_date", label: "End Date", sortable: true, draggable: true, defaultVisible: true },
+  { key: "duration", label: "Duration", sortable: true, draggable: true, defaultVisible: true },
+  { key: "priority", label: "Priority", sortable: true, draggable: true, defaultVisible: true },
 ];
 
+function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const hoursStr = String(hours).padStart(2, "0");
+  return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`;
+}
+
+const calculateDuration = (start?: string, end?: string) => {
+  if (!start || !end) return "";
+  const now = new Date();
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  endDate.setHours(23, 59, 59, 999);
+  if (now < startDate) return "Not started";
+  const diffMs = endDate.getTime() - now.getTime();
+  if (diffMs <= 0) return "0s";
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  const remainingMinutes = minutes % 60;
+  return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""}${remainingMinutes > 0 ? remainingMinutes + "m" : ""}`;
+};
+
+const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
+  const [countdown, setCountdown] = useState(calculateDuration(startDate, targetDate));
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(calculateDuration(startDate, targetDate));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate, startDate]);
+  return <div className="text-left text-[#029464] text-[12px]">{countdown}</div>;
+};
+
+// Define API shapes based on backend response
+interface ApiSprintTask {
+  id: number;
+  sprint_id?: number;
+  task_id?: number;
+  created_at?: string;
+  status?: string;
+  title?: string;
+  name?: string;
+  responsible_person?: string;
+  owner_name?: string;
+  start_date?: string;
+  end_date?: string;
+  duration?: string | null;
+  priority?: string | null;
+}
+
+interface ApiSprint {
+  id: number;
+  name?: string;
+  title?: string;
+  description?: string | null;
+  project_id?: number;
+  duration?: string | null;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  owner_id?: number | null;
+  sprint_owner_name?: string | null;
+  status?: string; // e.g., "open"
+  priority?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  associated_projects_count?: number;
+  sprint_tasks?: ApiSprintTask[];
+}
+
+// Normalize raw status to display value
+const mapStatusToDisplay = (raw?: string) => {
+  if (!raw) return "Open";
+  const m: Record<string, string> = {
+    open: "Open",
+    in_progress: "In Progress",
+    on_hold: "On Hold",
+    overdue: "Overdue",
+    completed: "Completed",
+    active: "Active",
+  };
+  return m[raw.toLowerCase()] ?? raw;
+};
+
+// Map API sprint -> local details type
+const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
+  id: api.id,
+  title: api.title ?? api.name,
+  created_by_name: undefined, // field not present in sprint response
+  created_at: api.created_at,
+  status: mapStatusToDisplay(api.status),
+  responsible_person: api.sprint_owner_name ?? "-",
+  priority: api.priority ?? "-",
+  start_date: api.start_date,
+  end_date: api.end_date,
+});
+
+// Map API sprint_tasks -> table rows
+const mapApiTasks = (api: ApiSprint): Task[] => {
+  const list = api.sprint_tasks ?? [];
+  return list.map((t) => ({
+    task_title: t.title ?? t.name ?? `Task #${t.task_id ?? t.id}`,
+    status: mapStatusToDisplay(t.status),
+    responsible_person: t.responsible_person ?? t.owner_name ?? "-",
+    start_date: t.start_date ?? "",
+    end_date: t.end_date ?? "",
+    duration: t.duration ?? "",
+    priority: t.priority ?? "",
+  }));
+};
+
 export const SprintDetailsPage = () => {
+  const { setCurrentSection } = useLayout();
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { id } = useParams<{ id: string }>();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
 
   const [sprintDetails, setSprintDetails] = useState<SprintDetails>({});
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (!id) return;
     try {
-      // TODO: Replace with actual API call when available
-      // const response = await dispatch(getSprintById({ baseUrl, token, id })).unwrap();
-      // setSprintDetails(response);
-      // setTasks(response.tasks || []);
-
-      // Mock data for now
-      setSprintDetails({
-        id: "S-78",
-        title: "test 333",
-        created_by: "Tejas Chaudhary",
-        created_on: "11/04/2025, 5:55 PM",
-        status: "Active",
-        responsible_person: "Test User Name",
-        priority: "",
-        start_date: "2025-11-04",
-        end_date: "2025-11-04",
-      });
-
-      setTasks([
-        {
-          task_title: "Import Test 3",
-          status: "Open",
-          responsible_person: "Ubaid Hashmat",
-          start_date: "21 Nov 2025",
-          end_date: "12 Dec 2025",
-          duration: "17d 7h 49m 2s",
-          priority: "High",
-        },
-        {
-          task_title: "New Task",
-          status: "Overdue",
-          responsible_person: "Jihan",
-          start_date: "03 Jul 2025",
-          end_date: "03 Jul 2025",
-          duration: "0s",
-          priority: "High",
-        },
-        {
-          task_title: "TEST_Task",
-          status: "Open",
-          responsible_person: "External",
-          start_date: "20 Nov 2025",
-          end_date: "12 Dec 2025",
-          duration: "17d 7h 49m 2s",
-          priority: "High",
-        },
-        {
-          task_title: "Bill Process",
-          status: "Overdue",
-          responsible_person: "Deepak Yadav",
-          start_date: "04 Jul 2025",
-          end_date: "16 Jul 2025",
-          duration: "0s",
-          priority: "High",
-        },
-        {
-          task_title: "Payslip",
-          status: "Overdue",
-          responsible_person: "Deepak Yadav",
-          start_date: "04 Jul 2025",
-          end_date: "12 Jul 2025",
-          duration: "0s",
-          priority: "High",
-        },
-        {
-          task_title: "test",
-          status: "Overdue",
-          responsible_person: "Ubaid Hashmat",
-          start_date: "21 Nov 2025",
-          end_date: "24 Nov 2025",
-          duration: "0s",
-          priority: "Medium",
-        },
-      ]);
+      const resp = (await dispatch(fetchSprintById({ token, baseUrl, id })).unwrap()) as ApiSprint;
+      setSprintDetails(mapApiToDetails(resp));
+      setTasks(mapApiTasks(resp));
     } catch (error) {
-      console.error("Error fetching sprint details:", error);
       toast.error(String(error) || "Failed to fetch sprint details");
     }
-  };
+  }, [id, dispatch, token, baseUrl]);
 
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
+    fetchData();
+  }, [fetchData]);
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "open":
-        return "bg-blue-100 text-blue-800";
-      case "overdue":
-        return "bg-red-100 text-red-800";
-      case "completed":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  const renderTaskCell = (item: any, columnKey: string) => {
-    if (columnKey === "status") {
-      return (
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-            item.status
-          )}`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-              item.status?.toLowerCase() === "open"
-                ? "bg-blue-500"
-                : item.status?.toLowerCase() === "overdue"
-                ? "bg-red-500"
-                : item.status?.toLowerCase() === "completed"
-                ? "bg-gray-500"
-                : "bg-gray-400"
-            }`}
-          ></span>
-          {item.status}
-        </span>
-      );
-    }
-    return item[columnKey] || "-";
-  };
+  const renderTaskCell = (item: Task, columnKey: string) => item[columnKey as keyof Task] ?? "-";
 
   return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="mb-2 p-0"
-      >
+    <div className="m-4">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="py-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">
-          {sprintDetails.id} {sprintDetails.title}
-        </h1>
-        <div className="flex gap-2 flex-wrap items-center">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created By:</span> {sprintDetails.created_by}
-          </div>
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created On:</span> {sprintDetails.created_on}
-          </div>
-          <Button
-            size="sm"
-            className={`${getStatusColor(sprintDetails.status || "")} border-none`}
-          >
-            {sprintDetails.status}
-          </Button>
-        </div>
-      </div>
+      <div className="px-4 pt-1">
+        {/* Title */}
+        <h2 className="text-[15px] p-3 px-0">
+          <span className="mr-3">S-{sprintDetails.id}</span>
+          <span>{sprintDetails.title}</span>
+        </h2>
+        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
-      {/* Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6 border-b border-gray-200">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
-          </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Details</h3>
-        </div>
+        {/* Header Info & Dropdown (visual only to match image) */}
+        <div className="flex items-center justify-between my-3 text-[12px]">
+          <div className="flex items-center gap-3 text-[#323232] flex-wrap">
+            <span>Created By: {sprintDetails.created_by_name}</span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span className="flex items-center gap-3">
+              Created On: {formatToDDMMYYYY_AMPM(sprintDetails.created_at)}
+            </span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="flex items-start">
-            <div className="min-w-[200px]">
-              <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-900">{sprintDetails.responsible_person || "-"}</p>
-            </div>
-          </div>
+            {/* Dropdown */}
+            <div className="relative w-[150px]" ref={dropdownRef}>
+              <button
+                className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1 rounded bg-gray-200/40"
+                onClick={() => setOpenDropdown((o) => !o)}
+                aria-haspopup="true"
+                aria-expanded={openDropdown}
+              >
+                <ChevronDown size={15} className={`${openDropdown ? "rotate-180" : ""} transition-transform`} />
+              </button>
 
-          <div className="flex items-start">
-            <div className="min-w-[200px]">
-              <p className="text-sm font-medium text-gray-600">Priority:</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-900">{sprintDetails.priority || "-"}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <div className="min-w-[200px]">
-              <p className="text-sm font-medium text-gray-600">Start Date:</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-900">{sprintDetails.start_date || "-"}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <div className="min-w-[200px]">
-              <p className="text-sm font-medium text-gray-600">End Date:</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-900">{sprintDetails.end_date || "-"}</p>
+              {openDropdown && (
+                <div className="absolute top-[110%] left-0 z-50 min-w-[180px] rounded-lg bg-white shadow-lg border border-gray-200 py-2">
+                  {[
+                    "Active",
+                    "In Progress",
+                    "On Hold",
+                    "Overdue",
+                    "Completed",
+                  ].map((label) => (
+                    <div
+                      key={label}
+                      className="px-4 py-2 text-[#2E3748] hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setOpenDropdown(false)}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tasks Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ClipboardList className="w-4 h-4" />
+        <div className="border-b-[3px] border-grey my-3"></div>
+
+        {/* Details Section (matches card style) */}
+        <div className="border rounded-[10px] shadow-md p-5 mb-4">
+          <div className="font-[600] text-[16px] flex items-center gap-4">
+            <ChevronDownCircle color="#E95420" size={30} />
+            Details
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Tasks</h3>
+          <div className="mt-3">
+            {/* Rows styled like milestone */}
+            <div className="flex items-center gap-3 ml-10">
+              <span className="text-[13px] font-medium text-[#1A1A1A]">Responsible Person:</span>
+              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.responsible_person || "-"}</span>
+            </div>
+            <span className="border h-[1px] inline-block w-full my-4"></span>
+            <div className="flex items-center gap-3 ml-10">
+              <span className="text-[13px] font-medium text-[#1A1A1A]">Priority:</span>
+              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.priority || "-"}</span>
+            </div>
+            <span className="border h-[1px] inline-block w-full my-4"></span>
+            <div className="flex items-center gap-3 ml-10">
+              <span className="text-[13px] font-medium text-[#1A1A1A]">Start Date:</span>
+              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.start_date || "-"}</span>
+            </div>
+            <span className="border h-[1px] inline-block w-full my-4"></span>
+            <div className="flex items-center gap-3 ml-10">
+              <span className="text-[13px] font-medium text-[#1A1A1A]">End Date:</span>
+              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.end_date || "-"}</span>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto mt-4">
-          <EnhancedTable
-            data={tasks}
-            columns={taskColumns}
-            storageKey="sprint-tasks-table"
-            hideColumnsButton={true}
-            hideTableExport={true}
-            hideTableSearch={true}
-            exportFileName="sprint-tasks"
-            pagination={true}
-            pageSize={10}
-            emptyMessage="No tasks available"
-            className="min-w-[1200px] h-max"
-            renderCell={renderTaskCell}
-          />
+
+        {/* Tasks Section header + table */}
+        <div>
+          <div className="flex items-center justify-between my-3">
+            <div className="flex items-center gap-10">
+              <div className="text-[14px] font-[400] cursor-pointer">Tasks</div>
+            </div>
+          </div>
+          <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+          <div className="mt-4 overflow-x-auto">
+            <EnhancedTable
+              data={tasks}
+              columns={taskColumns}
+              storageKey="sprint-tasks-table"
+              hideColumnsButton={true}
+              hideTableExport={true}
+              hideTableSearch={true}
+              exportFileName="sprint-tasks"
+              pagination={true}
+              pageSize={10}
+              emptyMessage=""
+              className="min-w-[1200px]"
+              renderCell={renderTaskCell}
+              renderActions={(item) => (
+                <div className="flex items-center justify-center gap-2">
+                  <Button size="sm" variant="ghost" className="p-1" title="View Task Details">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            />
+          </div>
         </div>
       </div>
     </div>

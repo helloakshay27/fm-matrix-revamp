@@ -113,7 +113,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       const company = result.data || result.company || result;
 
       // Format date for HTML date input (YYYY-MM-DD)
-      const formatDateForInput = (dateStr: string) => {
+  const formatDateForInput = (dateStr: string) => {
         if (!dateStr) return '';
         try {
           // Handle different date formats
@@ -159,9 +159,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
           mobile: company.operation_spoc?.mobile || ''
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching company details:', error);
-      toast.error(`Failed to load company details: ${error.message}`, {
+      const message = typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: string }).message || '')
+        : 'Unknown error';
+      toast.error(`Failed to load company details: ${message}`, {
         duration: 5000,
       });
     } finally {
@@ -169,7 +172,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     }
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (
+    field: string,
+    value: string | number | File | null
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -233,12 +239,16 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Send the raw YYYY-MM-DD from the date input to the API to avoid timezone/locale changes
   const formatDateForAPI = (dateStr: string) => {
     if (!dateStr) return '';
+    // Expecting value from input type="date" -> 'YYYY-MM-DD'
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // Otherwise, attempt to normalize
     try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return '';
-      return date.toLocaleDateString('en-US'); // MM/DD/YYYY format
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
     } catch {
       return '';
     }
@@ -315,9 +325,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       });
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating company:', error);
-      toast.error(`Failed to update company: ${error.message}`, {
+      const message = typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: string }).message || '')
+        : 'Unknown error';
+      toast.error(`Failed to update company: ${message}`, {
         duration: 5000,
       });
     } finally {
@@ -387,7 +400,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleChange('name', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   error={!!errors.name}
                   helperText={errors.name}
@@ -396,7 +412,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                 />
 
                 <FormControl fullWidth variant="outlined" error={!!errors.organization_id}>
-                  <InputLabel shrink>Organization</InputLabel>
+                  <InputLabel
+                    shrink
+                    sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
+                  >
+                    Organization
+                  </InputLabel>
                   <MuiSelect
                     value={formData.organization_id}
                     onChange={(e) => handleChange('organization_id', e.target.value)}
@@ -423,7 +444,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
               
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <FormControl fullWidth variant="outlined" error={!!errors.country_id}>
-                  <InputLabel shrink>Country</InputLabel>
+                  <InputLabel
+                    shrink
+                    sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
+                  >
+                    Country
+                  </InputLabel>
                   <MuiSelect
                     value={formData.country_id}
                     onChange={(e) => handleChange('country_id', e.target.value)}
@@ -454,7 +480,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleChange('billing_term', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -468,7 +497,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleChange('billing_rate', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -480,7 +512,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleChange('live_date', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -494,11 +529,32 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleChange('remarks', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
                   disabled={isSubmitting}
+                   sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 />
               </div>
 
@@ -514,7 +570,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={handleLogoChange}
                   accept="image/*"
                   disabled={isSubmitting}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                 />
                 {formData.logo && (
                   <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
@@ -524,14 +580,14 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                 )}
               </div>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Image className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Image className="w-4 h-4 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-800">Upload Guidelines</p>
-                    <p className="text-xs text-blue-700">
+                    <p className="text-sm font-medium text-white">Upload Guidelines</p>
+                    <p className="text-xs text-white/90">
                       Recommended formats: PNG, JPG, SVG • Max size: 5MB • Min dimensions: 200x200px
                     </p>
                   </div>
@@ -550,11 +606,32 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('bill_to_address', 'address', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
                   disabled={isSubmitting}
+                   sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 />
 
                 <TextField
@@ -564,11 +641,32 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('postal_address', 'address', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
                   disabled={isSubmitting}
+                   sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 />
               </div>
               
@@ -580,7 +678,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('bill_to_address', 'email', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -592,7 +693,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('postal_address', 'email', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -610,7 +714,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('finance_spoc', 'name', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -622,7 +729,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('finance_spoc', 'designation', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -636,7 +746,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('finance_spoc', 'email', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   error={!!errors.finance_email}
@@ -650,7 +763,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('finance_spoc', 'mobile', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -668,7 +784,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('operation_spoc', 'name', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -680,7 +799,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('operation_spoc', 'designation', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -694,7 +816,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('operation_spoc', 'email', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   error={!!errors.operation_email}
@@ -708,7 +833,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   onChange={(e) => handleNestedChange('operation_spoc', 'mobile', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                 />
@@ -719,11 +847,11 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
         
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        <div className="flex justify-center space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={handleClose}
-            className="px-6 py-2"
+            className="px-6 py-2 text-[#BD2828] border-[#BD2828] hover:text-[#a52121] hover:border-[#a52121]"
             disabled={isSubmitting || isLoading}
           >
             Cancel
@@ -731,7 +859,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !canEdit || isLoading}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
+            className="bg-[#ede9e4] text-[#BD2828] hover:bg-[#e6e1db] px-6 py-2 shadow-none"
           >
             {isSubmitting ? (
               <>

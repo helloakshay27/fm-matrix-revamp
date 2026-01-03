@@ -10,7 +10,7 @@ import roleReducer from './slices/roleSlice'
 import roleWithModulesReducer from './slices/roleWithModulesSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
-import { createMoMReducer, fetchMoMsReducer } from './slices/momSlice'
+import { createMoMReducer, updateMoMReducer, fetchMoMsReducer, fetchMoMDetailReducer } from './slices/momSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
@@ -74,9 +74,11 @@ import { projectTypeReducer } from './slices/projectTypeSlice'
 import { projectTagReducer } from './slices/projectTagSlice'
 import { projectStatusReducer } from './slices/projectStatusSlice'
 import { projectRoleReducer } from './slices/projectRoleSlice'
-import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer } from './slices/projectTasksSlice'
+import projectTemplateReducer from './slices/projectTemplateSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer, fetchKanbanTasksOfProjectReducer } from './slices/projectTasksSlice'
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
 import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
+import { fetchSprintsReducer, fetchSprintByIdReducer, createSprintReducer, updateSprintReducer, updateSprintStatusReducer, deleteSprintReducer, filterSprintsReducer } from './slices/sprintSlice'
 
 export const store = configureStore({
   reducer: {
@@ -366,11 +368,17 @@ export const store = configureStore({
     editProjectTask: editProjectTaskReducer,
     filterTasks: filterTasksReducer,
     updateTaskStatus: updateTaskStatusReducer,
+    createTaskDependency: createTaskDependencyReducer,
+    updateTaskDependency: updateTaskDependencyReducer,
+    deleteTaskDependency: deleteTaskDependencyReducer,
+    fetchKanbanTasksOfProject: fetchKanbanTasksOfProjectReducer,
 
     // Project Team
     projectTeams: projectTeamsReducer,
 
     projectTypes: projectTypeReducer,
+
+    projectTemplates: projectTemplateReducer,
 
     projectTags: projectTagReducer,
     projectStatus: projectStatusReducer,
@@ -383,7 +391,9 @@ export const store = configureStore({
     deleteIssue: deleteIssueReducer,
     filterIssues: filterIssuesReducer,
     createMoM: createMoMReducer,
+    updateMoM: updateMoMReducer,
     fetchMoMs: fetchMoMsReducer,
+    fetchMoMDetail: fetchMoMDetailReducer,
     projectRole: projectRoleReducer,
 
     // Project Groups
@@ -391,6 +401,15 @@ export const store = configureStore({
     createProjectGroup: createProjectGroupReducer,
     updateProjectGroup: updateProjectGroupReducer,
     deleteProjectGroup: deleteProjectGroupReducer,
+
+    // Sprints
+    fetchSprints: fetchSprintsReducer,
+    fetchSprintById: fetchSprintByIdReducer,
+    createSprint: createSprintReducer,
+    updateSprint: updateSprintReducer,
+    updateSprintStatus: updateSprintStatusReducer,
+    deleteSprint: deleteSprintReducer,
+    filterSprints: filterSprintsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

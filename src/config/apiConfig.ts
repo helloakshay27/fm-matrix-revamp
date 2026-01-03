@@ -165,6 +165,14 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: "/pms/admin/restaurants",
     RESTAURANT_MENU: "/pms/admin/restaurants",
+    FOOD_ORDERS: "/pms/admin/restaurants", // Base path, will append /{restaurantId}/food_orders.json
+    // Task Management endpoints
+    MY_TASKS: "/task_managements/my_tasks.json",
+    MY_TODOS: "/todos.json",
+    // Seat Bookings endpoint
+    SEAT_BOOKINGS: "/pms/admin/seat_bookings.json",
+    // Combined Calendar Data endpoint
+    COMBINED_CALENDAR_DATA: "/users/combined_calendar_data.json",
     // Assets data report export endpoint
     ASSETS_DATA_EXPORT: "/pms/assets/assets_data_report.xlsx",
     // Recent assets endpoint
@@ -265,6 +273,10 @@ export const API_CONFIG = {
     DELIVERY_VENDORS: "/pms/admin/delivery_vendors.json",
     // Mail inbound states endpoint
     MAIL_INBOUND_STATES: "/pms/admin/mail_inbounds/state_list.json",
+    // Sprint endpoints
+    SPRINTS: "/sprints.json",
+    SPRINT_DETAILS: "/sprints", // Base path, will append /:id.json
+    UPDATE_SPRINT_STATUS: "/sprints", // Base path, will append /:id/update_status.json
   },
 } as const;
 

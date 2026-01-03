@@ -194,6 +194,7 @@ export const ViewFMUserPage = () => {
       daily_pms_report: false,
       lock_role_id: '',
       last_working_date: '',
+      user_type: ''
     },
     employee_type: '',
     face_added: false,
@@ -240,7 +241,7 @@ export const ViewFMUserPage = () => {
         daily_helpdesk_report: userData.lock_user_permission?.daily_pms_report,
         site: userData.site_id || '',
         base_unit: userData.unit_id,
-        system_user_type: userData.user_type,
+        system_user_type: userData.lock_user_permission?.user_type,
         department: userData.department_id,
         role: userData.lock_user_permission?.lock_role_id,
         vendor_company: userData.supplier_id,

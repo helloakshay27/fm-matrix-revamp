@@ -6,9 +6,17 @@ hooks:
     - location: src/scripts/install_dependencies.sh
       timeout: 300
       runas: root
-    
+
     - location: src/scripts/build_react.sh
       timeout: 300
+      runas: root
+
+    - location: src/scripts/deploy_build.sh
+      timeout: 120
+      runas: root
+
+    - location: src/scripts/configure_nginx.sh
+      timeout: 120
       runas: root
 
   ApplicationStart:

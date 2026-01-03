@@ -1441,3 +1441,27 @@ td a {
   border-radius: 50%;
   background-color: #c72030;
 }
+
+button.text-blue-600{
+
+  color: #000000 !important;
+
+}
+
+/* Optional scrollbar styling */
+.scrollbar-visible::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: #9ca3af; /* gray-400 */
+  border-radius: 999px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent; /* gray-400 */
+}

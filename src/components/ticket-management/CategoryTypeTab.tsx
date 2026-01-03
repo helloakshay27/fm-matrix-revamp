@@ -57,6 +57,7 @@ interface CategoryApiResponse {
     doc_type: string;
     selected_icon_url: string;
     tat: string;
+    assigned_to_names?: string;
     category_email: Array<{
       id: number;
       cat_id: number;
@@ -280,7 +281,6 @@ export const CategoryTypeTab: React.FC = () => {
       return;
     }
     
-    // Get form values
     const formValues = form.getValues();
     
     if (!formValues.siteId || formValues.siteId.trim() === '') {
@@ -288,6 +288,7 @@ export const CategoryTypeTab: React.FC = () => {
       return;
     }
 
+    // Get the form data
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
@@ -326,6 +327,16 @@ export const CategoryTypeTab: React.FC = () => {
         toast.error('Please provide at least one vendor email when vendor email is enabled.');
         return;
       }
+    }
+
+    // Validate FAQ items - if any FAQ is partially filled, both question and answer are required
+    const incompleteFaqItems = faqItems.filter(item => 
+      (item.question.trim() && !item.answer.trim()) || (!item.question.trim() && item.answer.trim())
+    );
+    
+    if (incompleteFaqItems.length > 0) {
+      toast.error('Please complete all FAQ items. If you enter a question, you must also provide an answer.');
+      return;
     }
 
     setIsSubmitting(true);
@@ -368,14 +379,14 @@ export const CategoryTypeTab: React.FC = () => {
         });
       }
       
-      // Location data (site_ids from form data)
+      // Location data (site_ids from account data)
+      // Location data (selected site IDs from the form)
       if (data.siteId) {
         const siteIds = data.siteId.split(',');
         siteIds.forEach(siteId => {
           formData.append('location_data[site_ids][]', siteId.trim());
         });
       }
-
       const response = await fetch(getFullUrl('/pms/admin/helpdesk_categories.json'), {
         method: 'POST',
         headers: {
@@ -480,8 +491,24 @@ export const CategoryTypeTab: React.FC = () => {
     }
     
     // Populate assigned engineers if available
-    if (category.complaint_worker?.assign_to && Array.isArray(category.complaint_worker.assign_to)) {
-      const engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+    if (category.complaint_worker?.assign_to) {
+      let engineerIds: number[] = [];
+      
+      // Handle both array and YAML string cases
+      if (Array.isArray(category.complaint_worker.assign_to)) {
+        engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+      } else if (typeof category.complaint_worker.assign_to === 'string') {
+        // Parse YAML string like "---\n- '33051'\n"
+        const matches = category.complaint_worker.assign_to.match(/'(\d+)'/g);
+        if (matches) {
+          engineerIds = matches.map(match => parseInt(match.replace(/'/g, '')));
+        }
+      }
+      
+      console.log('Available engineers:', engineers);
+      console.log('Engineer IDs from API:', engineerIds);
+      console.log('Matched engineers:', engineers.filter(e => engineerIds.includes(e.id)));
+      
       setSelectedEngineers(engineerIds);
       form.setValue('engineerIds', engineerIds); // Update form state
     } else {
@@ -536,6 +563,16 @@ export const CategoryTypeTab: React.FC = () => {
         toast.error('Please provide at least one vendor email when vendor email is enabled.');
         return;
       }
+    }
+
+    // Validate FAQ items - if any FAQ is partially filled, both question and answer are required
+    const incompleteFaqItems = editFaqItems.filter(item => 
+      !item._destroy && ((item.question.trim() && !item.answer.trim()) || (!item.question.trim() && item.answer.trim()))
+    );
+    
+    if (incompleteFaqItems.length > 0) {
+      toast.error('Please complete all FAQ items. If you enter a question, you must also provide an answer.');
+      return;
     }
     
     setIsSubmitting(true);
@@ -749,8 +786,21 @@ export const CategoryTypeTab: React.FC = () => {
       case 'name':
         return item.name;
       case 'assign_to_names':
-        if (item.complaint_worker && Array.isArray(item.complaint_worker.assign_to) && engineers.length > 0) {
-          const names = item.complaint_worker.assign_to
+        // Use the assigned_to_names field directly from the API response
+        if (item.assigned_to_names) {
+          return item.assigned_to_names;
+        }
+        
+        // Fallback: try to match from complaint_worker if assigned_to_names is not available
+        if (item.complaint_worker?.assign_to && engineers.length > 0) {
+          // Handle both array and non-array cases
+          const assignToArray = Array.isArray(item.complaint_worker.assign_to) 
+            ? item.complaint_worker.assign_to 
+            : [];
+          
+          if (assignToArray.length === 0) return '--';
+          
+          const names = assignToArray
             .map((id: string) => {
               const engineer = engineers.find(e => e.id === Number(id));
               return engineer ? engineer.full_name : null;
@@ -838,7 +888,17 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Response Time (Minutes) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" placeholder="Enter response time" {...field} />
+                        <Input 
+                          type="number" 
+                          placeholder="Enter response time" 
+                          min="0"
+                          onKeyDown={(e) => {
+                            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                              e.preventDefault();
+                            }
+                          }}
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -884,59 +944,66 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Enable Sites <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <ReactSelect
-                          isMulti
-                          options={sites.map(site => ({
-                            value: site.id.toString(),
-                            label: site.name
-                          }))}
-                          onChange={(selected) => {
-                            if (!selected || selected.length === 0) {
-                              field.onChange('');
-                              return;
+                        <div className="space-y-3">
+                          <ReactSelect
+                            isMulti
+                            options={sites.map(site => ({
+                              value: site.id.toString(),
+                              label: site.name
+                            }))}
+                            onChange={(selected) => {
+                              if (!selected || selected.length === 0) {
+                                field.onChange('');
+                                return;
+                              }
+                              // Store comma-separated site IDs
+                              const siteIds = selected.map(s => s.value).join(',');
+                              field.onChange(siteIds);
+                            }}
+                            value={field.value ? 
+                              sites
+                                .filter(site => field.value.split(',').includes(site.id.toString()))
+                                .map(site => ({
+                                  value: site.id.toString(),
+                                  label: site.name
+                                }))
+                              : []
                             }
-                            // Store comma-separated site IDs
-                            const siteIds = selected.map(s => s.value).join(',');
-                            field.onChange(siteIds);
-                          }}
-                          value={field.value ? field.value.split(',').map(id => {
-                            const site = sites.find(s => s.id.toString() === id);
-                            return site ? { value: id, label: site.name } : null;
-                          }).filter(Boolean) : []}
-                          className="mt-1"
-                          placeholder="Select sites..."
-                          noOptionsMessage={() => "No sites available"}
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              minHeight: '40px',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '0px',
-                              boxShadow: 'none',
-                              '&:hover': {
-                                border: '1px solid #cbd5e1'
-                              }
-                            }),
-                            multiValue: (base) => ({
-                              ...base,
-                              backgroundColor: '#f1f5f9',
-                              borderRadius: '0px'
-                            }),
-                            multiValueLabel: (base) => ({
-                              ...base,
-                              color: '#334155'
-                            }),
-                            multiValueRemove: (base) => ({
-                              ...base,
-                              color: '#64748b',
-                              borderRadius: '0px',
-                              '&:hover': {
-                                backgroundColor: '#e2e8f0',
-                                color: '#475569'
-                              }
-                            })
-                          }}
-                        />
+                            className="mt-1"
+                            placeholder="Select sites..."
+                            noOptionsMessage={() => "No sites available"}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '40px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '0px',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  border: '1px solid #cbd5e1'
+                                }
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: '0px'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#334155'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#64748b',
+                                borderRadius: '0px',
+                                '&:hover': {
+                                  backgroundColor: '#e2e8f0',
+                                  color: '#475569'
+                                }
+                              })
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1367,6 +1434,7 @@ export const CategoryTypeTab: React.FC = () => {
                 <Label className="text-base font-semibold">Assign Engineers</Label>
                 <div className="mt-2">
                   <ReactSelect
+                    key={selectedEngineers.join(',')}
                     isMulti
                     options={engineers.map(engineer => ({
                       value: engineer.id,

@@ -280,13 +280,21 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                                 {asset.asset_code || "-"}
                               </span>
                             </div>
+                            {(asset.asset_type_category === "Leasehold Improvement" || asset.asset_type_category === "Leasehold Land") && (
+                              <div className="text-sm text-gray-800">
+                                <span className="text-gray-500">Allocated To:</span>{" "}
+                                <span className="font-medium text-gray-800">
+                                  {asset?.allocated_to || "-"}
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
 
                         {fields.map((field, idx) => (
                           <div key={idx} className="text-sm text-gray-800">
                             <span className="text-gray-500">
-                              {field.field_name}:
+                              {field.field_name === "Amc Ppm Linked" ? "AMC/PPM Linked" : field.field_name}:
                             </span>{" "}
                             {field.field_value}
                           </div>
@@ -409,7 +417,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       ].includes(asset.asset_type_category) && ( */}
                       <div className="flex items-start">
                         <span className="w-28 text-gray-500 text-sm">
-                          Series No
+                          Serial No
                         </span>
                         <span className="mx-2 text-gray-500">:</span>
                         <span className="font-semibold text-black">
@@ -491,7 +499,9 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         </span>
                         <span className="mx-2 text-gray-500">:</span>
                         <span className="font-semibold text-black">
-                          {asset.allocated_to?.join(", ") || "-"}
+                          {Array.isArray(asset.allocated_to)
+                            ? asset.allocated_to.join(", ")
+                            : asset.allocated_to || "-"}
                         </span>
                       </div>
 

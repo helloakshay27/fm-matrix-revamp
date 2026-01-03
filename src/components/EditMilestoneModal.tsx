@@ -31,12 +31,12 @@ interface EditMilestoneModalProps {
     onUpdate?: () => void;
 }
 
-const EditMilestoneModal = ({ 
-    openDialog, 
-    handleCloseDialog, 
-    owners, 
+const EditMilestoneModal = ({
+    openDialog,
+    handleCloseDialog,
+    owners,
     milestoneData,
-    onUpdate 
+    onUpdate
 }: EditMilestoneModalProps) => {
     const handleClose = () => {
         handleCloseDialog();
@@ -45,7 +45,7 @@ const EditMilestoneModal = ({
     return (
         <Dialog open={openDialog} onClose={handleClose} TransitionComponent={Transition}>
             <DialogContent
-                className="w-[30rem] fixed right-0 top-0 h-full rounded-none bg-[#fff]"
+                className="w-[35rem] fixed right-0 top-0 h-full rounded-none bg-[#fff]"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important",
@@ -61,9 +61,9 @@ const EditMilestoneModal = ({
                 </Typography>
 
                 <hr className="border border-[#E95420] my-4" />
-                <EditMilestoneForm 
-                    owners={owners} 
-                    handleClose={handleClose} 
+                <EditMilestoneForm
+                    owners={owners}
+                    handleClose={handleClose}
                     milestoneData={milestoneData}
                     onUpdate={onUpdate}
                 />

@@ -230,13 +230,50 @@ const Chats = ({ messages, onReply, bottomRef }) => {
             },
         ];
 
+        // Combined regex to match mentions and URLs
         const mentionRegex = /@\*\*([^*]+)\*\*|@(\w+(?:\s+\w+)?)/g;
+        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+
+        // Split text by both mentions and URLs
         const parts = [];
         let lastIndex = 0;
         let match;
         let mentionIndex = 0;
 
+        // First pass: collect all matches with their positions
+        const allMatches = [];
+
+        // Collect mention matches
         while ((match = mentionRegex.exec(text)) !== null) {
+            allMatches.push({
+                type: 'mention',
+                index: match.index,
+                length: match[0].length,
+                username: match[1] || match[2],
+                colorIndex: mentionIndex % mentionColors.length
+            });
+            mentionIndex++;
+        }
+
+        // Collect URL matches
+        const urlMatches = [];
+        while ((match = urlRegex.exec(text)) !== null) {
+            urlMatches.push({
+                type: 'url',
+                index: match.index,
+                length: match[0].length,
+                url: match[0]
+            });
+        }
+
+        allMatches.push(...urlMatches);
+
+        // Sort by index
+        allMatches.sort((a, b) => a.index - b.index);
+
+        // Build parts array
+        lastIndex = 0;
+        allMatches.forEach((match) => {
             if (match.index > lastIndex) {
                 parts.push({
                     type: "text",
@@ -244,18 +281,23 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                 });
             }
 
-            const username = match[1] || match[2];
+            if (match.type === 'mention') {
+                parts.push({
+                    type: "mention",
+                    content: `@${match.username}`,
+                    username: match.username,
+                    colorIndex: match.colorIndex,
+                });
+            } else if (match.type === 'url') {
+                parts.push({
+                    type: "url",
+                    content: match.url,
+                    href: match.url.startsWith('http') ? match.url : `https://${match.url}`
+                });
+            }
 
-            parts.push({
-                type: "mention",
-                content: `@${username}`,
-                username: username,
-                colorIndex: mentionIndex % mentionColors.length,
-            });
-
-            mentionIndex++;
-            lastIndex = match.index + match[0].length;
-        }
+            lastIndex = match.index + match.length;
+        });
 
         if (lastIndex < text.length) {
             parts.push({
@@ -281,6 +323,20 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                             >
                                 {part.content}
                             </span>
+                        );
+                    }
+                    if (part.type === "url") {
+                        return (
+                            <a
+                                key={index}
+                                href={part.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#C72030] hover:text-[#a01828] underline font-medium transition-colors"
+                                title={`Open link: ${part.href}`}
+                            >
+                                {part.content}
+                            </a>
                         );
                     }
                     return <span key={index}>{part.content}</span>;
@@ -401,7 +457,7 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                 onMessageClick={(message) => scrollToMessage(message.id)}
             />
 
-            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6">
+            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5">
                 {[...messages].reverse().map((message, index) => {
                     const isMe = message?.user_id?.toString() === currentUserId;
                     const shouldShowActions = hoveredMessageIndex === index && showActions;
@@ -452,7 +508,7 @@ const Chats = ({ messages, onReply, bottomRef }) => {
 
                                         {!isMe && (
                                             <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
-                                                {(message.user_name || "U")[0].toUpperCase()}
+                                                {(message.user_name || message.user?.firstname || 'U')[0].toUpperCase()}
                                             </div>
                                         )}
                                         <div

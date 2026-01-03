@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -155,8 +156,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -195,7 +195,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "sumitra.patil@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
@@ -299,15 +299,86 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     }
   };
 
+  //   const fetchCountriesDropdown = async () => {
+  //   try {
+  //     const response = await fetch(getFullUrl("/pms/countries.json"), {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //         Authorization: getAuthHeader(),
+  //       },
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("Countries API response:", data);
+
+  //       // Map the API response to the expected dropdown format
+  //       // API returns array of objects with id and name properties
+  //       if (Array.isArray(data)) {
+  //         const mappedCountries = data
+  //           .filter((country) => country?.id && country?.name) // Filter out invalid entries
+  //           .map((country) => ({
+  //             id: Number(country.id),
+  //             name: String(country.name),
+  //           }));
+  //         setCountriesDropdown(mappedCountries);
+  //       } else {
+  //         console.error("Countries data format unexpected:", data);
+  //         setCountriesDropdown([]);
+  //         toast.error("Invalid countries data format");
+  //       }
+  //     } else {
+  //       toast.error("Failed to fetch countries");
+  //       setCountriesDropdown([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching countries:", error);
+  //     toast.error("Error fetching countries");
+  //     setCountriesDropdown([]);
+  //   }
+  // };
+
+
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const storedBaseUrl = localStorage.getItem("baseUrl");
+      const storedToken = localStorage.getItem("token");
+
+      let url: string;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      if (storedBaseUrl) {
+        const normalizedBase = storedBaseUrl.startsWith("http")
+          ? storedBaseUrl.replace(/\/+$/, "")
+          : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
+        url = `${normalizedBase}/pms/countries.json`;
+      } else {
+        url = getFullUrl("/pms/countries.json");
+      }
+
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      } else {
+        try {
+          headers["Authorization"] = getAuthHeader();
+        } catch (e) {
+          console.warn("No token available for Authorization header:", e);
+        }
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Countries API response:", data);
+  const data = await response.json();
+  console.warn("Countries API response:", data);
 
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
@@ -325,6 +396,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
+        console.error("Failed to fetch countries", response.status, await response.text());
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
@@ -337,15 +409,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   // Handle filter application
   const handleApplyFilters = (filters: OrganizationFilters) => {
-    console.log("📊 Applying filters:", filters);
+  console.warn("📊 Applying filters:", filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log("Search query:", term);
-    setSearchTerm(term);
+  console.warn("Search query:", term);
+    setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
@@ -399,10 +471,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => org?.id && handleView(org.id)}
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-          title="View"
-          disabled={!org?.id}
+          onClick={() => org?.id && org?.active && handleView(org.id)}
+          className={`p-1 rounded ${
+            org?.active
+              ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
+          }`}
+          title={org?.active ? "View" : "Inactive organization - View disabled"}
+          disabled={!org?.id || !org?.active}
         >
           <Eye className="w-4 h-4" />
         </button>
@@ -458,14 +534,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${org?.active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-          }`}
-      >
-        {org?.active ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={org.active}
+          onCheckedChange={() => handleToggleStatus(org.id, org.active)}
+          disabled={!canEditOrganization}
+          aria-label={`Toggle status for ${org.name || "organization"}`}
+        />
+        <span className={`text-xs font-medium ${org?.active ? "text-green-700" : "text-red-700"}`}></span>
+      </div>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
@@ -475,21 +552,65 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   });
 
   const handleView = (id: number) => {
-    console.log("View organization:", id);
+  console.warn("View organization:", id);
+
+    // Find the organization to check if it's active
+    const org = organizations.find((o) => o.id === id);
+    if (org && !org.active) {
+      toast.error(
+        "Cannot view inactive organization. Please activate it first.",
+        {
+          duration: 5000,
+        }
+      );
+      return;
+    }
+
     // Navigate to organization details page
-    navigate(`/ops-account/organizations/details/${id}`);
+    navigate(
+      `/ops-console/master/location/account/organizations/details/${id}`
+    );
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit organization:", id);
+  console.warn("Edit organization:", id);
     setSelectedOrganizationId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete organization:", id);
+    console.warn("Delete organization:", id);
     setSelectedOrganizationId(id);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleToggleStatus = async (orgId: number, currentStatus: boolean) => {
+    if (!canEditOrganization) {
+      toast.error("You do not have permission to update organization status");
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/organizations/${orgId}.json`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({ pms_organization: { active: !currentStatus } }),
+      });
+
+      if (response.ok) {
+        toast.success(`Organization ${!currentStatus ? "activated" : "deactivated"} successfully`);
+        fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      } else {
+        toast.error("Failed to update organization status");
+      }
+    } catch (error) {
+      console.error("Error updating organization status:", error);
+      toast.error("Error updating organization status");
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -561,7 +682,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
-            searchTerm={searchTerm}
+            searchTerm={searchQuery}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={

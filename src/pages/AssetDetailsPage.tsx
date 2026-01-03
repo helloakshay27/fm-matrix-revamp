@@ -4,6 +4,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { getUser } from "@/utils/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, Plus, ChevronDown } from "lucide-react";
 
@@ -23,11 +24,14 @@ import { OwnerCostTab } from "@/components/asset-details/OwnerCostTab";
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useToast } from "@/hooks/use-toast";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Get type from URL search params
   const searchParams = new URLSearchParams(location.search);
@@ -40,6 +44,8 @@ export const AssetDetailsPage = () => {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [showEnable, setShowEnable] = useState(false);
   const [activeTab, setActiveTab] = useState("asset-info");
+  const [isPrintingQR, setIsPrintingQR] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -107,6 +113,60 @@ export const AssetDetailsPage = () => {
 
   const handleCreateChecklist = () => {
     console.log("Create Checklist clicked");
+  };
+
+  const handlePrintQRCode = async () => {
+    if (!assetData?.id) return;
+
+    setIsPrintingQR(true);
+
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append("asset_ids[]", assetData.id);
+
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/download_qr_single?${urlParams.toString()}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: getAuthHeader(),
+          Accept: "application/pdf",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `QR code generation failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const blob = await response.blob();
+
+      // Create and trigger download
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "qr_codes.pdf";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      toast({
+        title: "QR Code Generated",
+        description: "Successfully downloaded the QR code PDF.",
+      });
+    } catch (error) {
+      console.error("QR code generation error:", error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate QR code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPrintingQR(false);
+    }
   };
 
   const handleSwitchChange = (checked: boolean) => {
@@ -183,37 +243,39 @@ export const AssetDetailsPage = () => {
                 View QR
               </Button>
 
-              <Button
-                onClick={handleEditDetails}
-                variant="outline"
-                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-              >
-                <svg
-                  width="21"
-                  height="21"
-                  viewBox="0 0 21 21"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+              {!isRestrictedUser && (
+                <Button
+                  onClick={handleEditDetails}
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
                 >
-                  <mask
-                    id="mask0_107_2076"
-                    style={{ maskType: "alpha" }}
-                    maskUnits="userSpaceOnUse"
-                    x="0"
-                    y="0"
+                  <svg
                     width="21"
                     height="21"
+                    viewBox="0 0 21 21"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    <rect width="21" height="21" fill="#C72030" />
-                  </mask>
-                  <g mask="url(#mask0_107_2076)">
-                    <path
-                      d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
-                      fill="#C72030"
-                    />
-                  </g>
-                </svg>
-              </Button>
+                    <mask
+                      id="mask0_107_2076"
+                      style={{ maskType: "alpha" }}
+                      maskUnits="userSpaceOnUse"
+                      x="0"
+                      y="0"
+                      width="21"
+                      height="21"
+                    >
+                      <rect width="21" height="21" fill="#C72030" />
+                    </mask>
+                    <g mask="url(#mask0_107_2076)">
+                      <path
+                        d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                        fill="#C72030"
+                      />
+                    </g>
+                  </svg>
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -227,7 +289,7 @@ export const AssetDetailsPage = () => {
               value="asset-info"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
-             Asset Info
+              Asset Info
             </TabsTrigger>
 
             <TabsTrigger
@@ -354,7 +416,8 @@ export const AssetDetailsPage = () => {
         onClose={() => setIsQRModalOpen(false)}
         qrCode={assetData.qr_url}
         serviceName={assetData.name}
-        site="Main Building"
+        site={assetData.building?.name || "NA"}
+        handleDownloadQR={handlePrintQRCode}
       />
     </div>
   );

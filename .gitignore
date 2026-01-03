@@ -7,18 +7,38 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Lock files
 bun.lock
 bun.lockb
+
+# Node
 node_modules
+
+# Build outputs
 dist
 dist-ssr
-*.local
+build
+out
+release
 
-# Editor directories and files
+# Desktop builds
+*.dmg
+*.exe
+*.zip
+*.AppImage
+*.deb
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Editor / OS
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+.AppleDouble
 *.suo
 *.ntvs*
 *.njsproj

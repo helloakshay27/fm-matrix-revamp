@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ScrollText, ClipboardList, Pencil, Trash2, ChevronDown, ChevronDownCircle } from "lucide-react";
+import { ArrowLeft, ScrollText, ClipboardList, Pencil, Trash2, ChevronDown, ChevronDownCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -10,7 +10,9 @@ import { useAppDispatch } from "@/store/hooks";
 import { createMilestone, fetchDependentMilestones, fetchMilestoneById, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { format } from "date-fns";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { MenuItem, Select, TextField, FormControl } from "@mui/material";
+import { useLayout } from "@/contexts/LayoutContext";
+import axios from "axios";
 
 interface Dependency {
   title?: string;
@@ -112,7 +114,7 @@ const calculateDuration = (start: string | undefined, end: string | undefined) =
   endDate.setHours(23, 59, 59, 999);
 
   if (now < startDate) {
-    return "Not started";
+    return <span className="text-green-700">Not started</span>;
   }
 
   const diffMs = endDate.getTime() - now.getTime();
@@ -128,7 +130,7 @@ const calculateDuration = (start: string | undefined, end: string | undefined) =
   const remainingSeconds = seconds % 60;
 
   return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""}${remainingMinutes > 0 ? remainingMinutes + "m " : ""
-    }${remainingSeconds}s`;
+    }`;
 };
 
 const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
@@ -161,6 +163,14 @@ function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
 }
 
 export const MilestoneDetailsPage = () => {
+  const { setCurrentSection } = useLayout();
+
+  const view = localStorage.getItem("selectedView");
+
+  useEffect(() => {
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { id, mid } = useParams<{ id: string; mid: string }>();
@@ -200,8 +210,13 @@ export const MilestoneDetailsPage = () => {
 
   const getOwners = async () => {
     try {
-      const response = await dispatch(fetchFMUsers()).unwrap();
-      setOwners(response.users);
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error);
       toast.error(String(error) || "Failed to fetch users");
@@ -210,8 +225,11 @@ export const MilestoneDetailsPage = () => {
 
   useEffect(() => {
     fetchData();
-    getOwners();
     getDependencies();
+  }, [mid]);
+
+  useEffect(() => {
+    getOwners();
   }, []);
 
   useEffect(() => {
@@ -246,6 +264,7 @@ export const MilestoneDetailsPage = () => {
         })
       ).unwrap();
       toast.success("Status updated successfully");
+      await fetchData(); // Refresh to get latest data
     } catch (error) {
       toast.error("Failed to update status");
       setSelectedOption(mapStatusToDisplay(milestoneDetails.status));
@@ -352,29 +371,89 @@ export const MilestoneDetailsPage = () => {
 
   const dropdownOptions = ["Open", "In Progress", "On Hold", "Overdue", "Completed"];
 
+  const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+  ];
+
+  const statusColorMap = {
+    open: { dot: "bg-red-500" },
+    in_progress: { dot: "bg-amber-500" },
+    on_hold: { dot: "bg-gray-500" },
+    completed: { dot: "bg-teal-500" },
+    overdue: { dot: "bg-red-500" },
+  };
+
   const renderDependencyCell = (item: any, columnKey: string) => {
     if (columnKey === "status") {
+      const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
       return (
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-            item.status
-          )}`}
+        <FormControl
+          variant="standard"
+          sx={{ width: 148 }}
         >
-          <span
-            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
-              ? "bg-red-500"
-              : item.status?.toLowerCase() === "in_progress"
-                ? "bg-green-500"
-                : item.status?.toLowerCase() === "overdue"
-                  ? "bg-red-500"
-                  : item.status?.toLowerCase() === "completed"
-                    ? "bg-gray-500"
-                    : "bg-gray-400"
-              }`}
-          ></span>
-          {item.status}
-        </span>
+          <Select
+            value={item.status || "open"}
+            onChange={async (e) => {
+              const newStatus = e.target.value as string;
+              try {
+                await dispatch(
+                  updateMilestoneStatus({
+                    token,
+                    baseUrl,
+                    id: item.id,
+                    payload: { status: newStatus },
+                  })
+                ).unwrap();
+                toast.success("Dependency status updated successfully");
+                await getDependencies(); // Refresh dependencies
+              } catch (error) {
+                toast.error("Failed to update dependency status");
+              }
+            }}
+            disableUnderline
+            renderValue={(value) => {
+              const valueColors = statusColorMap[value as keyof typeof statusColorMap] || statusColorMap.open;
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${valueColors.dot}`}></span>
+                  <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                </div>
+              );
+            }}
+            sx={{
+              fontSize: "0.875rem",
+              cursor: "pointer",
+              "& .MuiSelect-select": {
+                padding: "4px 0",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              },
+            }}
+          >
+            {statusOptions.map((opt) => {
+              const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+              return (
+                <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                  <span>{opt.label}</span>
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
       );
+    }
+    if (columnKey === "start_date" || columnKey === "end_date") {
+      return item[columnKey] ? format(new Date(item[columnKey]), "yyyy-MM-dd") : "-";
+    }
+    if (columnKey === "duration") {
+      return calculateDuration(item.start_date, item.end_date);
     }
     return item[columnKey] || "-";
   };
@@ -382,6 +461,14 @@ export const MilestoneDetailsPage = () => {
   return (
     <>
       <div className="m-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="py-0"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
         <div className="px-4 pt-1">
           {/* Title */}
           <h2 className="text-[15px] p-3 px-0">
@@ -461,7 +548,7 @@ export const MilestoneDetailsPage = () => {
           <div className="border-b-[3px] border-grey my-3"></div>
 
           {/* Details Section */}
-          <div className="border rounded-md shadow-custom p-5 mb-4">
+          <div className="border rounded-[10px] shadow-md p-5 mb-4">
             <div className="font-[600] text-[16px] flex items-center gap-4">
               <ChevronDownCircle
                 color="#E95420"
@@ -533,10 +620,23 @@ export const MilestoneDetailsPage = () => {
                 emptyMessage="No dependencies available"
                 className="min-w-[1200px]"
                 renderCell={renderDependencyCell}
+                renderActions={(item) => (
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="p-1"
+                      onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
+                      title="View Task Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
                 canAddRow={true}
                 newRowPlaceholder="Add Milestone title"
                 onAddRow={handleAddDependency}
-                readonlyColumns={["status", "duration"]}
+                readonlyColumns={["duration"]}
                 renderEditableCell={(columnKey: string, value: any, onChange: (value: any) => void) => {
                   if (columnKey === "milestone_title") {
                     return (
@@ -549,6 +649,9 @@ export const MilestoneDetailsPage = () => {
                         sx={{ minWidth: 200 }}
                       />
                     );
+                  }
+                  if (columnKey === "status") {
+                    return <span className="text-gray-500">Open</span>;
                   }
                   if (columnKey === "owner_name") {
                     return (

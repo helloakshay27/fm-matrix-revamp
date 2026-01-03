@@ -9,6 +9,7 @@ import ChatTasks from "./ChatTasks";
 import { Paperclip, X, UserMinus, Smile } from "lucide-react";
 import ChatAttachments from "./ChatAttachments";
 import { emojis } from "@/utils/emojies";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 const GroupConversation = () => {
     const { id } = useParams();
@@ -17,12 +18,14 @@ const GroupConversation = () => {
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("user"));
     const paperclipRef = useRef(null);
     const textareaRef = useRef(null);
     const mentionDropdownRef = useRef(null);
     const modalRef = useRef(null);
     const emojiPickerRef = useRef(null);
     const bottomRef = useRef(null);
+    const isUserInitiatedScroll = useRef(false);
 
     const [activeTab, setActiveTab] = useState("chat");
     const [input, setInput] = useState("");
@@ -43,6 +46,25 @@ const GroupConversation = () => {
     const [cursorPosition, setCursorPosition] = useState(0);
     const [mentionStartPos, setMentionStartPos] = useState(0);
     const [mentions, setMentions] = useState([]);
+    const [isSubscribed, setIsSubscribed] = useState(false);
+
+    const { manager: webSocketManager, connect } = useWebSocket();
+
+    useEffect(() => {
+        console.log('🔌 WebSocket connection effect running');
+
+        if (token) {
+            console.log('✅ Token available, connecting...');
+            connect(token, `wss://${baseUrl}/cable`);
+        } else {
+            console.error('❌ No token available for WebSocket connection');
+        }
+
+        return () => {
+            console.log('🧹 Cleaning up WebSocket subscriptions');
+            webSocketManager.unsubscribeFromConversation(id);
+        };
+    }, [token, connect]);
 
     const fetchData = async () => {
         try {
@@ -74,15 +96,15 @@ const GroupConversation = () => {
         fetchMessages();
     }, [id]);
 
-    useEffect(() => {
-        if (activeTab === "chat") {
-            const interval = setInterval(() => {
-                fetchMessages();
-            }, 5000);
+    // useEffect(() => {
+    //     if (activeTab === "chat") {
+    //         const interval = setInterval(() => {
+    //             fetchMessages();
+    //         }, 5000);
 
-            return () => clearInterval(interval);
-        }
-    }, [activeTab, id]);
+    //         return () => clearInterval(interval);
+    //     }
+    // }, [activeTab, id]);
 
     useEffect(() => {
         if (showMentionDropdown && mentionSearch !== null) {
@@ -259,9 +281,56 @@ const GroupConversation = () => {
         setInput((prev) => prev + emoji);
     };
 
+    useEffect(() => {
+        if (bottomRef.current && !isUserInitiatedScroll.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+
+    useEffect(() => {
+        const subscriptionTimer = setTimeout(() => {
+            const sub = webSocketManager.subscribeToProjectSpace(id, {
+                onConnected: () => {
+                    console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+                    setIsSubscribed(true);
+                    toast.success('Real-time chat connected!', { duration: 2000 });
+                },
+                onNewMessage: (message) => {
+                    if (message.user_id === currentUser.id && message.conversation_id !== id) {
+                        return;
+                    }
+
+                    setMessages((prev) => {
+                        const exists = prev.some((msg) => msg.id === message.id);
+                        if (exists) return prev;
+                        return [message, ...prev];
+                    });
+
+                    if (!('Notification' in window)) {
+                        toast.error('Not supported');
+                        return;
+                    }
+
+                    isUserInitiatedScroll.current = false;
+                },
+                onDisconnected: () => {
+                    console.log('❌ Chat subscription disconnected');
+                    setIsSubscribed(false);
+                    toast.error('Real-time chat disconnected');
+                }
+            });
+            console.log('📋 Subscription object:', sub);
+        }, 2000); // Wait 2 seconds for connection to establish
+
+        return () => {
+            console.log('⏰ Clearing subscription timer');
+            clearTimeout(subscriptionTimer);
+        };
+    }, [id, isSubscribed, webSocketManager, currentUser.id]);
+
     return (
         <div
-            className={`flex flex-col h-[calc(100vh-112px)] ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
+            className={`flex flex-col ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
                 } min-w-0 overflow-hidden`}
         >
             <div className="flex justify-between items-center px-6 py-4 border-b ">
@@ -546,14 +615,25 @@ const GroupConversation = () => {
                             />
                         </div>
                     </div>
-                    <button type="button" className="text-gray-500 text-xl" onClick={sendMessages}>
+                    <button
+                        type="button"
+                        onClick={sendMessages}
+                        disabled={input.trim() === ""}
+                        className="
+    text-xl
+    text-[#C72030]
+    disabled:text-gray-300
+    disabled:cursor-not-allowed
+  "
+                    >
                         <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
                             <path
                                 d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z"
-                                fill="#C72030"
+                                fill="currentColor"
                             />
                         </svg>
                     </button>
+
                 </div>
             )}
         </div>

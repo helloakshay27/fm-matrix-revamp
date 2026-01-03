@@ -1,13 +1,23 @@
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Subtask } from "@/pages/ProjectTaskDetails";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Eye } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { updateTaskStatus, editProjectTask } from "@/store/slices/projectTasksSlice";
+import { toast } from "sonner";
 
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
-    if (!start || !end) return { text: "N/A", isOverdue: false };
+    // If end date is missing, return N/A
+    if (!end) return { text: "N/A", isOverdue: false };
 
     const now = new Date();
-    const startDate = new Date(start);
+    // Use provided start date or today if not provided
+    const startDate = start ? new Date(start) : now;
     const endDate = new Date(end);
 
     // Set end date to end of the day
@@ -56,23 +66,6 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
     return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
 };
 
-const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-        case "open":
-            return "bg-red-100 text-red-800";
-        case "in_progress":
-            return "bg-blue-100 text-blue-800";
-        case "completed":
-            return "bg-green-100 text-green-800";
-        case "on_hold":
-            return "bg-yellow-100 text-yellow-800";
-        case "overdue":
-            return "bg-orange-100 text-orange-800";
-        default:
-            return "bg-gray-100 text-gray-800";
-    }
-};
-
 const subtaskColumns: ColumnConfig[] = [
     {
         key: "id",
@@ -98,6 +91,13 @@ const subtaskColumns: ColumnConfig[] = [
     {
         key: "responsible_person",
         label: "Responsible Person",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "issues",
+        label: "Issues",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -137,30 +137,140 @@ const subtaskColumns: ColumnConfig[] = [
         draggable: true,
         defaultVisible: true,
     },
+    {
+        key: "completion_percentage",
+        label: "Completion Percentage",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
 ];
 
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
+
 const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData: () => Promise<void> }) => {
+    const { id: projectId, mid } = useParams()
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token") || "";
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([])
+
+    const getUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers()
+    }, [])
+
+    const handleStatusChange = async (id: number, status: string) => {
+        try {
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+            fetchData();
+            toast.success("Task status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+        const percentage = Number(completionPercentage);
+
+        // Validate percentage
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            toast.error("Completion percentage must be between 0 and 100");
+            return;
+        }
+
+        try {
+            await dispatch(editProjectTask({
+                token,
+                baseUrl,
+                id: String(id),
+                data: { completion_percent: percentage }
+            })).unwrap();
+            fetchData();
+            toast.success("Completion percentage updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update completion percentage");
+        }
+    }
+
     const renderSubtaskCell = (item: any, columnKey: string) => {
-        if (columnKey === "status") {
+        const renderProgressBar = (
+            completed: number,
+            total: number,
+            color: string,
+            type?: string
+        ) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        item.status || ""
-                    )}`}
+                <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() =>
+                        type === "issues"
+                            ? navigate(`/vas/issues?task_id=${item.id}`)
+                            : null
+                    }
                 >
-                    <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
-                            ? "bg-red-500"
-                            : item.status?.toLowerCase() === "in_progress"
-                                ? "bg-blue-500"
-                                : item.status?.toLowerCase() === "completed"
-                                    ? "bg-green-500"
-                                    : "bg-gray-400"
-                            }`}
-                    ></span>
-                    {item.status}
-                </span>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {completed}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+                        <div
+                            className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(progress)}%
+                        </span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {total}
+                    </span>
+                </div>
             );
+        };
+
+        if (columnKey === "status") {
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.status}
+                    onChange={(e) =>
+                        handleStatusChange(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
+                >
+                    {statusOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
         }
         if (columnKey === "duration") {
             return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
@@ -168,8 +278,134 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         if (columnKey === "responsible_person") {
             return item?.responsible_person?.name
         }
+        if (columnKey === "issues") {
+            const completed = item.completed_issues || 0;
+            const total = item.total_issues || 0;
+            return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+        }
+        if (columnKey === "completion_percentage") {
+            return (
+                <input
+                    type="number"
+                    defaultValue={item.completion_percent || 0}
+                    className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                    min="0"
+                    max="100"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = e.target as HTMLInputElement;
+                            const value = target.value;
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                    onBlur={(e) => {
+                        const value = e.target.value;
+                        if (value && value !== String(item.completion_percent)) {
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                />
+            )
+        }
         return item[columnKey as keyof Subtask] || "-";
     };
+
+    const handleView = (id) => {
+        if (location.pathname.startsWith("/vas/tasks")) {
+            navigate(`/vas/tasks/${id}`);
+        } else {
+            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
+        }
+    }
+
+    const renderActions = (item: any) => (
+        <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => handleView(item.id)}
+            title="View Task Details"
+        >
+            <Eye className="w-4 h-4" />
+        </Button>
+    )
+
+    const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
+        if (columnKey === "responsible_person") {
+            return (
+                <Select
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 150 }}
+                >
+                    <MenuItem value="">
+                        <em>Select Responsible Person</em>
+                    </MenuItem>
+                    {
+                        users.map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name || user.name}
+                            </MenuItem>
+                        ))
+                    }
+                </Select>
+            );
+        }
+        if (columnKey === "expected_start_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "target_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "priority") {
+            return (
+                <Select
+                    value={value || "Medium"}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 110 }}
+                >
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
+                </Select>
+            );
+        }
+        if (columnKey === "title") {
+            return (
+                <TextField
+                    type="text"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Enter task title"
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                />
+            );
+        }
+        return null;
+    }
 
     return (
         <div>
@@ -186,7 +422,10 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 emptyMessage="No Subtask"
                 className="min-w-[1200px] h-max"
                 renderCell={renderSubtaskCell}
-                canAddRow={true}
+                renderActions={renderActions}
+                // canAddRow={true}
+                readonlyColumns={["id", "status", "duration"]}
+                renderEditableCell={renderEditableCell}
             />
         </div>
     )

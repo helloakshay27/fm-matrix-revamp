@@ -1,16 +1,26 @@
 import { Button } from '@/components/ui/button'
 import MilestoneBody from '../components/MilestoneBody'
-import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
+import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
 import AddMilestoneModal from '@/components/AddMilestoneModal'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks'
-import { fetchFMUsers } from '@/store/slices/fmUserSlice'
-import { toast } from 'sonner'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
+import { useLayout } from '@/contexts/LayoutContext'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 const ProjectMilestones = () => {
+    const { setCurrentSection } = useLayout();
+
+    const view = localStorage.getItem("selectedView");
+
+    useEffect(() => {
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    }, [setCurrentSection]);
+
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const [selectedView, setSelectedView] = useState<"Kanban" | "Gantt" | "List">("Gantt");
     const [isOpen, setIsOpen] = useState(false);
@@ -19,11 +29,16 @@ const ProjectMilestones = () => {
 
     const getOwners = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users);
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setOwners(response.data.users || []);
         } catch (error) {
-            console.log(error)
-            toast.error(error)
+            console.log('Error fetching mention users:', error);
         }
     }
 
@@ -125,6 +140,13 @@ const ProjectMilestones = () => {
 
     return (
         <div className='py-2'>
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className='flex items-center justify-between p-4'>
                 <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"

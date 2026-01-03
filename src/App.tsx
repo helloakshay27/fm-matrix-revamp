@@ -4,10 +4,11 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
@@ -335,6 +336,8 @@ import { CreateRosterTemplateDashboard } from "./pages/setup/CreateRosterTemplat
 
 // Import Employee pages
 import { EmployeesDashboard } from "./pages/setup/EmployeesDashboard";
+import { EmployeeDashboard } from "./pages/EmployeeDashboard";
+import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 
@@ -603,6 +606,9 @@ import { FloorPage } from "./pages/master/FloorPage";
 import { UnitPage } from "./pages/master/UnitPage";
 import { RoomPage } from "./pages/master/RoomPage";
 import { OpsAccountPage } from "./pages/master/OpsAccountPage";
+import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
+import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
+import HeadquartersDetailsPage from "./pages/master/HeadquartersDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -786,7 +792,6 @@ import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
-import useRouteLogger from "./hooks/useRouteLogger";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
@@ -835,6 +840,7 @@ import BusinessCard from "./pages/mobile/BusinessCard";
 import AskAI from "./pages/AskAI";
 import MinutesOfMeeting from "./pages/MinutesOfMeeting";
 import AddMoMPage from "./pages/AddMoMPage";
+import EditMoMPage from "./pages/EditMoMPage";
 import Todo from "./pages/Todo";
 import ProjectDocuments from "./pages/ProjectDocuments";
 import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
@@ -851,6 +857,17 @@ import SOSDirectory from "./pages/SOSDirectory";
 import EditSosDirectory from "./pages/EditSosDirectory";
 import AddSosDirectory from "./pages/AddSosDirectory";
 import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
+
+import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
+import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
+import ProfileDetailsPage from "./pages/ProfileDetailsPage";
+import PlaceFnbOrder from "./pages/PlaceFnbOrder";
+import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
+import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
+import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAddEmployee";
+import EmployeeWallet from "./pages/EmployeeWallet";
+import { useWebSocket } from "./hooks/useWebSocket";
+import SprintKanban from "./pages/SprintKanban";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -862,7 +879,13 @@ function App() {
   const hostname = window.location.hostname;
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  useRouteLogger();
+
+  const navigate = useNavigate();
+
+  const { manager: webSocketManager, connect } = useWebSocket();
+  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -915,6 +938,74 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
+  useEffect(() => {
+    console.log("🔌 WebSocket connection effect running");
+
+    if (token) {
+      console.log("✅ Token available, connecting...");
+      connect(token, socketUrl);
+    } else {
+      console.error("❌ No token available for WebSocket connection");
+    }
+
+    return () => {
+      console.log("🧹 Cleaning up WebSocket subscriptions");
+    };
+  }, [token, connect]);
+
+  useEffect(() => {
+    const subscriptionTimer = setTimeout(() => {
+      const sub = webSocketManager.subscribeToUserNotifications({
+        onConnected: () => {
+          console.log("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+          setIsSubscribed(true);
+          toast.success("Real-time connection established!", {
+            duration: 2000,
+          });
+        },
+        onMessageNotification: (message) => {
+          console.log(message)
+          if (message.user_id !== currentUser.id) {
+            return;
+          }
+
+          if (!("Notification" in window)) {
+            toast.error("Not supported");
+            return;
+          }
+
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+              const notification = new Notification("New Message Received", {
+                body: message.body,
+              });
+
+              notification.onclick = () => {
+                window.focus();
+                if (message.ntype === "conversation") {
+                  navigate(`/vas/channels/messages/${message.conversation_id}`);
+                } else if (message.ntype === "projectspace") {
+                  navigate(`/vas/channels/groups/${message.project_space_id}`);
+                }
+              };
+            }
+          });
+        },
+        onDisconnected: () => {
+          console.log("❌ Chat subscription disconnected");
+          setIsSubscribed(false);
+          toast.error("Real-time chat disconnected");
+        },
+      });
+      console.log("📋 Subscription object:", sub);
+    }, 2000); // Wait 2 seconds for connection to establish
+
+    return () => {
+      console.log("⏰ Clearing subscription timer");
+      clearTimeout(subscriptionTimer);
+    };
+  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+
   return (
     <>
       {/* <Router> */}
@@ -935,6 +1026,18 @@ function App() {
                   <Route
                     path="master/location/account"
                     element={<OpsAccountPage />}
+                  />
+                  <Route
+                    path="master/location/account/organizations/details/:id"
+                    element={<OrganizationDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/companies/details/:id"
+                    element={<CompanyDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/headquarters/details/:id"
+                    element={<HeadquartersDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route
@@ -1230,10 +1333,63 @@ function App() {
                   />
 
                   <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfileDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee-wallet"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeWallet />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingAddEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/employee/fnb"
                     element={
                       <ProtectedRoute>
                         <EmployeeFnb needPadding={true} />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb/add"
+                    element={
+                      <ProtectedRoute>
+                        <PlaceFnbOrder />
                       </ProtectedRoute>
                     }
                   />
@@ -1243,7 +1399,7 @@ function App() {
                       index
                       element={
                         <div
-                          className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}
+                          className={`flex justify-center items-center ${localStorage.getItem("selectedView") === "employee" ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                         >
                           Select a Chat/Group to view messages
                         </div>
@@ -1660,6 +1816,15 @@ function App() {
                     path="/maintenance/ticket/employee"
                     element={<TicketDashboardEmployee />}
                   />
+
+                  <Route
+                    path="/employee/dashboard"
+                    element={<EmployeeDashboard />}
+                  />
+                  <Route
+                    path="/employee/calendar"
+                    element={<EmployeeCalendarPage />}
+                  />
                   <Route
                     path="/maintenance/ticket"
                     element={<TicketDashboard />}
@@ -1817,10 +1982,7 @@ function App() {
                     path="/safety/permit/safety-check-form"
                     element={<PermitSafetyCheckForm />}
                   />
-                  <Route
-                    path="/safety/permit/vendor-form/:id?"
-                    element={<VendorPermitForm />}
-                  />
+                  <Route path="/safety/permit/vendor-form/:id?" />
                   <Route
                     path="/safety/permit/fill-form/:id?"
                     element={<FillForm />}
@@ -2450,11 +2612,13 @@ function App() {
                   />
                   <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
-                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                    //   element={<ProjectTaskDetailsPage />}
-                    // />
-                    //   <Route
+          
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
+                    element={<ProjectTaskDetails />}
+                  />
+                  
+                  <Route
+                    path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
                   <Route path="/vas/sprint" element={<SprintDashboard />} />
@@ -2462,6 +2626,7 @@ function App() {
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
                   />
+                  <Route path="/vas/sprint/:id" element={<SprintKanban />} />
 
                   <Route
                     path="/vas/projects/:id/milestones/:mid"
@@ -2500,6 +2665,8 @@ function App() {
                   <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
                   <Route path="/vas/add-mom" element={<AddMoMPage />} />
+
+                  <Route path="/vas/edit-mom/:id" element={<EditMoMPage />} />
 
                   <Route
                     path="/settings/project-task-setup/roles"
@@ -2786,10 +2953,10 @@ function App() {
                     path="/security/patrolling/create"
                     element={<PatrollingCreatePage />}
                   />
-                  <Route
+                  {/* <Route
                     path="/security/patrolling/edit/:id"
                     element={<PatrollingCreatePage />}
-                  />
+                  /> */}
                   <Route
                     path="/security/patrolling/details/:id"
                     element={<PatrollingDetailPage />}
@@ -3009,6 +3176,30 @@ function App() {
                   <Route
                     path="/vas/space-management/bookings"
                     element={<SpaceManagementBookingsDashboard />}
+                  />
+                  <Route
+                    path="/employee/space-management/bookings"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingsDashboardEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingAddEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/details/:id"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/vas/space-management/seat-requests"

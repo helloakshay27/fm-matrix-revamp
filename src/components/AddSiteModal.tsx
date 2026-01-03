@@ -107,6 +107,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     visitor_enabled: false,
     govt_id_enabled: false,
     visitor_host_mandatory: false,
+  attachfile: null,
   });
 
   // Filtered dropdown options based on selections
@@ -117,12 +118,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     HeadquarterOption[]
   >([]);
 
-  // Fetch dropdown data on component mount
-  useEffect(() => {
-    if (isOpen) {
-      fetchDropdownData();
-    }
-  }, [isOpen]);
+  // Local preview for site image (single)
+  const [siteImagePreviewUrl, setSiteImagePreviewUrl] = useState<string | null>(null);
+
+  // Fetch dropdown data on component mount (moved below after declaration)
 
   // Reset form when editing site changes
   useEffect(() => {
@@ -209,33 +208,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [editingSite, isOpen]);
 
-  // Filter countries based on selected company
+  // Country dropdown should not auto-select on company change; keep all countries available
   useEffect(() => {
-    if (formData.company_id) {
-      const selectedCompany = companies.find(
-        (c) => c.id === formData.company_id
-      );
-      if (selectedCompany && selectedCompany.country_id) {
-        const filtered = headquarters.filter(
-          (hq) => hq.id === selectedCompany.country_id
-        );
-        setFilteredHeadquarters(filtered);
-
-        // Auto-select the country if not already selected
-        if (
-          !formData.headquarter_id ||
-          formData.headquarter_id !== selectedCompany.country_id
-        ) {
-          setFormData((prev) => ({
-            ...prev,
-            headquarter_id: selectedCompany.country_id,
-          }));
-        }
-      }
-    } else {
-      setFilteredHeadquarters(headquarters);
-    }
-  }, [formData.company_id, companies, headquarters]);
+    setFilteredHeadquarters(headquarters);
+  }, [formData.company_id, headquarters]);
 
   // Filter regions based on selected company
   useEffect(() => {
@@ -255,17 +231,17 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     } else {
       setFilteredRegions([]);
     }
-  }, [formData.company_id, regions]);
+  }, [formData.company_id, regions, formData.region_id]);
 
   // Set all companies as available initially
   useEffect(() => {
     setFilteredCompanies(companies);
   }, [companies]);
 
-  const fetchDropdownData = async () => {
+  const fetchDropdownData = React.useCallback(async () => {
     setIsLoadingDropdowns(true);
     try {
-      console.log("Starting to fetch dropdown data...");
+  console.warn("Starting to fetch dropdown data...");
 
       // Fetch companies
       const companiesResponse = await fetch(
@@ -281,7 +257,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let companiesData: CompanyOption[] = [];
       if (companiesResponse.ok) {
         const companiesResult = await companiesResponse.json();
-        console.log("Companies API response:", companiesResult);
+  console.warn("Companies API response:", companiesResult);
 
         if (
           companiesResult &&
@@ -319,7 +295,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let headquartersData: HeadquarterOption[] = [];
       if (headquartersResponse.ok) {
         const headquartersResult = await headquartersResponse.json();
-        console.log("headquarters API response:", headquartersResult);
+  console.warn("headquarters API response:", headquartersResult);
 
         if (Array.isArray(headquartersResult)) {
           headquartersData = headquartersResult;
@@ -355,7 +331,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let regionsData: RegionOption[] = [];
       if (regionsResponse.ok) {
         const regionsResult = await regionsResponse.json();
-        console.log("Regions API response:", regionsResult);
+  console.warn("Regions API response:", regionsResult);
 
         if (Array.isArray(regionsResult)) {
           regionsData = regionsResult;
@@ -377,7 +353,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         toast.error("Failed to fetch regions");
       }
 
-      console.log("Fetched dropdown data counts:", {
+  console.warn("Fetched dropdown data counts:", {
         companies: companiesData?.length || 0,
         headquarters: headquartersData?.length || 0,
         regions: regionsData?.length || 0,
@@ -385,7 +361,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       });
 
       // Log sample data to check structure
-      console.log("Sample data:", {
+  console.warn("Sample data:", {
         firstCompany: companiesData?.[0],
         firstHeadquarter: headquartersData?.[0],
         firstRegion: regionsData?.[0],
@@ -401,9 +377,16 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     } finally {
       setIsLoadingDropdowns(false);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
 
-  const handleInputChange = (
+  // Fetch dropdown data on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchDropdownData();
+    }
+  }, [isOpen, fetchDropdownData]);
+
+  const handleInputChange = async (
     field: keyof SiteFormData,
     value: string | number
   ) => {
@@ -413,11 +396,42 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       // Reset dependent fields when parent changes
       if (field === "company_id") {
         newData.region_id = 0; // Reset region when company changes
-        // Country will be auto-set by the useEffect
+        newData.headquarter_id = 0; // Reset headquarter when company changes
       }
-
       return newData;
     });
+
+    // If company_id changes, fetch headquarters
+    if (field === "company_id") {
+      if (value && Number(value) > 0) {
+        try {
+          const apiUrl = getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': getAuthHeader(),
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.headquarters)) {
+              setFilteredHeadquarters(data.headquarters);
+            } else if (Array.isArray(data)) {
+              setFilteredHeadquarters(data);
+            } else {
+              setFilteredHeadquarters([]);
+            }
+          } else {
+            setFilteredHeadquarters([]);
+          }
+        } catch (error) {
+          setFilteredHeadquarters([]);
+        }
+      } else {
+        setFilteredHeadquarters([]);
+      }
+    }
   };
 
   const handleCheckboxChange = (
@@ -430,7 +444,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.company_id || !formData.headquarter_id) {
+    // Country (headquarter_id) is optional
+    if (!formData.name || !formData.company_id) {
       return;
     }
 
@@ -490,10 +505,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
             <p>Loading form data...</p>
-            <div className="text-xs text-gray-400 mt-2">
+            {/* <div className="text-xs text-gray-400 mt-2">
               Debug: Companies: {companies.length}, Countries:{" "}
               {headquarters.length}, Regions: {regions.length}
-            </div>
+            </div> */}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -511,18 +526,20 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   required
                   disabled={isLoading}
                 />
 
-                <FormControl fullWidth variant="outlined" required>
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Company</InputLabel>
                   <MuiSelect
                     value={formData.company_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Company selected:", e.target.value);
                       handleInputChange(
                         "company_id",
                         parseInt(e.target.value as string) || 0
@@ -553,12 +570,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-6 mt-6">
-                <FormControl fullWidth variant="outlined" required>
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Country</InputLabel>
                   <MuiSelect
                     value={formData.headquarter_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Country selected:", e.target.value);
                       handleInputChange(
                         "headquarter_id",
                         parseInt(e.target.value as string) || 0
@@ -568,17 +584,13 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={
-                      isLoading || isLoadingDropdowns || !formData.company_id
-                    }
+                    disabled={isLoading || isLoadingDropdowns || !formData.company_id}
                   >
                     <MenuItem value="">
                       <em>
-                        {!formData.company_id
-                          ? "Select company first"
-                          : filteredHeadquarters.length === 0
-                            ? "No countries available"
-                            : "Select Country"}
+                        {filteredHeadquarters.length === 0
+                          ? "No countries available"
+                          : "Select Country"}
                       </em>
                     </MenuItem>
                     {filteredHeadquarters.map((hq) => (
@@ -593,7 +605,6 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   <MuiSelect
                     value={formData.region_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Region selected:", e.target.value);
                       handleInputChange(
                         "region_id",
                         parseInt(e.target.value as string) || 0
@@ -704,11 +715,94 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   multiline
                   rows={2}
                   disabled={isLoading}
                 />
+
+                {/* Single image upload */}
+                <div className="space-y-2 mb-2">
+                  <span className="text-sm font-medium text-[#C72030] ">Site Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                      // enforce single image and 5MB max similar to AddCompanyModal
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error("Image file size should be less than 5MB");
+                          return;
+                        }
+                        // cleanup previous preview
+                        if (siteImagePreviewUrl) {
+                          URL.revokeObjectURL(siteImagePreviewUrl);
+                        }
+                        const url = URL.createObjectURL(file);
+                        setSiteImagePreviewUrl(url);
+                        setFormData((prev) => ({ ...prev, attachfile: file }));
+                        // clear input so same file can be selected again
+                        e.currentTarget.value = "";
+                      } else {
+                        if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                        setSiteImagePreviewUrl(null);
+                        setFormData((prev) => ({ ...prev, attachfile: null }));
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+                  />
+
+                  {(siteImagePreviewUrl || formData.attachfile) && (
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {formData.attachfile && (
+                        <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          {formData.attachfile.name}
+                        </div>
+                      )}
+                      {siteImagePreviewUrl && (
+                        <div className="relative">
+                          <img
+                            src={siteImagePreviewUrl}
+                            alt="Site Image Preview"
+                            className="h-16 w-16 object-cover border border-gray-200 rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                              setSiteImagePreviewUrl(null);
+                              setFormData((prev) => ({ ...prev, attachfile: null }));
+                            }}
+                            className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-6">
@@ -725,10 +819,12 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 />
 
                 <TextField
-                  label="City"
-                  placeholder="Enter city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
+                  label="District"
+                  placeholder="Enter district"
+                  value={formData.district}
+                  onChange={(e) =>
+                    handleInputChange("district", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -737,12 +833,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 />
 
                 <TextField
-                  label="District"
-                  placeholder="Enter district"
-                  value={formData.district}
-                  onChange={(e) =>
-                    handleInputChange("district", e.target.value)
-                  }
+                  label="City"
+                  placeholder="Enter city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange("city", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -978,7 +1072,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t">
+            <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
@@ -989,12 +1083,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  isLoading ||
-                  !formData.name ||
-                  !formData.company_id ||
-                  !formData.headquarter_id
-                }
+                disabled={isLoading || !formData.name || !formData.company_id}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectTypes, createProjectTypes, updateProjectTypes, deleteProjectTypes } from "@/store/slices/projectTypeSlice";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     {
@@ -47,6 +48,7 @@ const ProjectTypes = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [typeName, setTypeName] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProjectTypes());
@@ -75,37 +77,34 @@ const ProjectTypes = () => {
     const handleSubmit = async () => {
         const trimmedType = typeName.trim();
         if (!trimmedType) {
-            alert('Please enter project type name');
+            toast.error('Please enter project type name');
             return;
         }
+        setSubmitting(true);
 
-        // Safe extraction of user ID from localStorage
-        let userId = '';
         try {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                userId = user.id || '';
+            const payload = {
+                name: trimmedType,
+                created_by_id: JSON.parse(localStorage.getItem('user') || '{}').id,
+                active: true,
+            };
+
+            if (isEditMode && editingId) {
+                await dispatch(updateProjectTypes({ id: editingId, data: payload })).unwrap();
+                dispatch(fetchProjectTypes());
+                toast.success('Project type updated successfully');
+            } else {
+                await dispatch(createProjectTypes(payload)).unwrap();
+                dispatch(fetchProjectTypes());
+                toast.success('Project type created successfully');
             }
-        } catch (e) {
-            console.error("Error parsing user from localStorage", e);
+
+            closeDialog();
+        } catch (error) {
+            toast.error('Failed to create project type');
+        } finally {
+            setSubmitting(false);
         }
-
-        const payload = {
-            name: trimmedType,
-            created_by_id: userId,
-            active: true,
-        };
-
-        if (isEditMode && editingId) {
-            await dispatch(updateProjectTypes({ id: editingId, data: payload })).unwrap();
-            dispatch(fetchProjectTypes());
-        } else {
-            await dispatch(createProjectTypes(payload)).unwrap();
-            dispatch(fetchProjectTypes());
-        }
-
-        closeDialog();
     };
 
     const handleDelete = async (id: number) => {
@@ -146,14 +145,14 @@ const ProjectTypes = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1 text-red-500 hover:text-red-700"
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button> */}
             </div>
         )
     };

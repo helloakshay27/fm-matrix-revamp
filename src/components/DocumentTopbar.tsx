@@ -1,10 +1,10 @@
-import { Menu, Folder, Plus, List, Grid3X3 } from "lucide-react";
+import { Menu, Folder, Plus, List, Grid3X3, FolderTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface TopBarProps {
-    viewMode: "grid" | "list";
-    onViewModeChange: (mode: "grid" | "list") => void;
+    viewMode: "grid" | "list" | "tree";
+    onViewModeChange: (mode: "grid" | "list" | "tree") => void;
     onNewClick: () => void;
     onToggleSidebar: () => void;
 }
@@ -46,6 +46,17 @@ export const TopBar = ({ viewMode, onViewModeChange, onNewClick, onToggleSidebar
                     size="icon"
                     className={cn(
                         "text-muted-foreground hover:text-foreground",
+                        viewMode === "grid" && "bg-secondary text-foreground"
+                    )}
+                    onClick={() => onViewModeChange("grid")}
+                >
+                    <Grid3X3 className="h-5 w-5" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        "text-muted-foreground hover:text-foreground",
                         viewMode === "list" && "bg-secondary text-foreground"
                     )}
                     onClick={() => onViewModeChange("list")}
@@ -57,11 +68,11 @@ export const TopBar = ({ viewMode, onViewModeChange, onNewClick, onToggleSidebar
                     size="icon"
                     className={cn(
                         "text-muted-foreground hover:text-foreground",
-                        viewMode === "grid" && "bg-secondary text-foreground"
+                        viewMode === "tree" && "bg-secondary text-foreground"
                     )}
-                    onClick={() => onViewModeChange("grid")}
+                    onClick={() => onViewModeChange("tree")}
                 >
-                    <Grid3X3 className="h-5 w-5" />
+                    <FolderTree className="h-5 w-5" />
                 </Button>
             </div>
         </header>

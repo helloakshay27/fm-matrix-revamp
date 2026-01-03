@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Loader2, Package, Info } from "lucide-react";
+import { Download, Eye, Loader2, Package, Info, Plus } from "lucide-react";
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
@@ -18,19 +18,20 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 interface RestaurantOrder {
     id: number;
-    meeting_room: string;
-    created_at: string;
-    created_by: string;
-    details_url: string;
-    item_count: number;
-    payment_status: string;
-    payment_status_class: string;
-    restaurant_name: string;
     restaurant_id: number;
-    status_name: string;
+    user_id: number;
+    created_at: string;
     total_amount: number;
-    items: { id: number; menu_name: string; quantity: number; price: number }[];
-    statuses: { id: number; status_name: string; color_code: string }[];
+    payment_status: string;
+    order_status: string;
+    order_status_color: string;
+    restaurant_name: string;
+    user_name: string;
+    requests: string;
+    items: { id: number; menu_name: string; quantity: number; rate: number; total: number }[];
+    sub_total: number;
+    gst: number;
+    delivery_charge: number;
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -71,14 +72,14 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: 'created_by',
+        key: 'user_name',
         label: 'Created by',
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: 'status_name',
+        key: 'order_status',
         label: 'Status',
         sortable: true,
         draggable: true,
@@ -164,43 +165,39 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (restoId) {
-                setLoading(true);
-                try {
-                    const params = needPadding
-                        ? {
-                            baseUrl,
-                            token,
-                            id: Number(restoId),
-                            pageSize: 10,
-                            currentPage: pagination.current_page,
-                        }
-                        : {
-                            baseUrl,
-                            token,
-                            id: Number(restoId),
-                            pageSize: 10,
-                            currentPage: pagination.current_page,
-                        };
-                    const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
-                    setOrders(response.food_orders || []);
-                    setPagination({
-                        current_page: response.current_page || 1,
-                        total_count: response.total_records || 0,
-                        total_pages: response.total_pages || 0
-                    })
-                } catch (error) {
-                    console.error('Error fetching orders:', error);
-                    toast.error('Failed to fetch orders');
-                    setOrders([]);
-                } finally {
-                    setLoading(false);
-                }
+            setLoading(true);
+            try {
+                const response = await axios.get(
+                    `https://${baseUrl}/pms/food_orders.json`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        params: {
+                            page: pagination.current_page,
+                            per_page: 10,
+                        },
+                    }
+                );
+                setOrders(response.data.food_orders || []);
+                setPagination({
+                    current_page: response.data.current_page || 1,
+                    total_count: response.data.total_records || 0,
+                    total_pages: response.data.total_pages || 1
+                })
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                toast.error('Failed to fetch orders');
+                setOrders([]);
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchOrders();
-    }, [dispatch, restoId, baseUrl, token]);
+        if (baseUrl && token) {
+            fetchOrders();
+        }
+    }, [baseUrl, token, pagination.current_page]);
 
     const handleStatusUpdate = async (orderId: number, newStatus: string) => {
         setStatusUpdating(orderId);
@@ -299,37 +296,6 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
             ...prev,
             current_page: page,
         }));
-        setLoading(true);
-        try {
-            const params = needPadding
-                ? {
-                    baseUrl,
-                    token,
-                    id: Number(restoId),
-                    pageSize: 10,
-                    currentPage: page,
-                    all: true,
-                }
-                : {
-                    baseUrl,
-                    token,
-                    id: Number(restoId),
-                    pageSize: 10,
-                    currentPage: page,
-                };
-            const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
-            setOrders(response.food_orders || []);
-            setPagination({
-                current_page: response.current_page || page,
-                total_count: response.total_records || 0,
-                total_pages: response.total_pages || 0
-            });
-        } catch (error) {
-            toast.error('Failed to fetch orders');
-            setOrders([]);
-        } finally {
-            setLoading(false);
-        }
     };
 
     const renderPaginationItems = () => {
@@ -460,6 +426,16 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
         }
     }, []);
 
+    const leftActions = (
+        <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate("/employee/fnb/add")}
+        >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+        </Button>
+    )
+
     const renderCell = (item: RestaurantOrder, columnKey: string) => {
         switch (columnKey) {
             case 'items':
@@ -488,44 +464,23 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
                         </Tooltip>
                     </TooltipProvider>
                 );
-            case 'status_name':
-                if (statusUpdating === item.id) {
-                    return <Loader2 className="w-4 h-4 animate-spin" />;
-                }
+            case 'order_status':
                 return (
-                    <Select
-                        value={item.status_name}
-                        onValueChange={(newStatus) => handleStatusUpdate(item.id, newStatus)}
-                        disabled={statusUpdating === item.id}
+                    <span
+                        className={`px-2 py-1 rounded-full text-xs text-white font-semibold`}
+                        style={{ backgroundColor: item.order_status_color }}
                     >
-                        <SelectTrigger className="w-max border-none bg-transparent flex items-center [&>svg]:hidden">
-                            <SelectValue asChild>
-                                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: item.statuses.find(status => status.name === item.status_name && status.color_code)?.color_code }}>
-                                    {item.status_name}
-                                </span>
-                            </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {item.statuses
-                                .filter(status => status.active)
-                                .map((status) => (
-                                    <SelectItem key={status.id} value={status}>
-                                        <span className={`text-gray-900 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: status.color_code }}>
-                                            {status.name}
-                                        </span>
-                                    </SelectItem>
-                                ))}
-                        </SelectContent>
-                    </Select>
+                        {item.order_status}
+                    </span>
                 );
             case 'payment_status':
                 return item.payment_status ? (
                     <span
-                        className={`px-2 py-1 rounded-full text-xs ${item.payment_status === 'Paid'
+                        className={`px-2 py-1 rounded-full text-xs ${item.payment_status === 'PAID'
                             ? 'bg-green-100 text-green-800'
-                            : item.payment_status === 'Pending'
+                            : item.payment_status === 'PENDING'
                                 ? 'bg-yellow-100 text-yellow-800'
-                                : item.payment_status === 'Unpaid'
+                                : item.payment_status === 'UNPAID'
                                     ? 'bg-red-100 text-red-800'
                                     : 'bg-gray-100 text-gray-500'
                             }`}
@@ -537,6 +492,9 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
                 );
             case 'total_amount':
                 return `${localStorage.getItem('currency')} ${item.total_amount}` || '';
+            case 'created_at':
+                const date = new Date(item.created_at);
+                return date.toLocaleString();
             default:
                 return item[columnKey as keyof RestaurantOrder]?.toString() || '';
         }
@@ -562,6 +520,7 @@ export const EmployeeFnb = ({ needPadding }: { needPadding?: boolean }) => {
                 columns={columns}
                 renderCell={renderCell}
                 renderActions={renderActions}
+                leftActions={leftActions}
                 storageKey="restaurant-orders-table"
                 className="min-w-full"
                 emptyMessage="No orders found."

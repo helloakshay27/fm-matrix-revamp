@@ -11,6 +11,7 @@ export interface ColumnConfig {
   draggable?: boolean;
   defaultVisible?: boolean;
   width?: string;
+  group?: string; // Group name for grouping columns together in the visibility menu
 }
 
 export interface SortState {

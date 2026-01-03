@@ -47,6 +47,9 @@ export interface AssetFilters {
   status_eq?: string
   breakdown_eq?: boolean
   it_asset_eq?: boolean
+  allocation_type_eq?: string
+  allocation_ids_cont?: string
+  allocated_to?: boolean
 }
 
 interface AssetsState {
@@ -61,6 +64,7 @@ interface AssetsState {
   data: Asset[]
   totalValue?: number
   available_custom_fields?: Array<{ key: string; title: string }>
+  asset_ids?: number[]
 }
 
 const initialState: AssetsState = {
@@ -71,9 +75,10 @@ const initialState: AssetsState = {
   currentPage: 1,
   totalPages: 0,
   filters: {},
-  data: [] ,
+  data: [],
   totalValue: 0,
   available_custom_fields: [],
+  asset_ids: [],
 }
 
 // Async thunk for fetching assets data with filters
@@ -81,10 +86,10 @@ export const fetchAssetsData = createAsyncThunk(
   'assets/fetchAssetsData',
   async (params: { page?: number; filters?: AssetFilters } = {}) => {
     const { page = 1, filters = {} } = params
-    
+
     // Build query parameters for API
     const queryParams = new URLSearchParams({ page: page.toString() })
-    
+    console.log("filters", filters);
     // Add filter parameters
     if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName)
     if (filters.assetId) queryParams.append('q[id_eq]', filters.assetId)
@@ -94,7 +99,7 @@ export const fetchAssetsData = createAsyncThunk(
     }
     if (filters.critical_eq !== undefined) queryParams.append('q[critical_eq]', filters.critical_eq.toString())
     if (filters.groupId) queryParams.append('q[pms_asset_group_id_eq]', filters.groupId)
-    if (filters.subgroupId) queryParams.append('q[pms_sub_group_id_eq]', filters.subgroupId)
+    if (filters.subgroupId) queryParams.append('q[pms_asset_sub_group_id_eq]', filters.subgroupId)
     if (filters.siteId) queryParams.append('q[pms_site_id_eq]', filters.siteId)
     if (filters.buildingId) queryParams.append('q[pms_building_id_eq]', filters.buildingId)
     if (filters.wingId) queryParams.append('q[pms_wing_id_eq]', filters.wingId)
@@ -104,10 +109,14 @@ export const fetchAssetsData = createAsyncThunk(
     if (filters.status_eq) queryParams.append('q[status_eq]', filters.status_eq)
     if (filters.breakdown_eq !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown_eq.toString())
     if (filters.it_asset_eq !== undefined) queryParams.append('q[it_asset_eq]', filters.it_asset_eq.toString())
+    if (filters.allocation_type_eq) queryParams.append('q[allocation_type_eq]', filters.allocation_type_eq)
+    if (filters.allocation_ids_cont) queryParams.append('q[allocation_ids_cont]', filters.allocation_ids_cont)
+    if (filters.allocated_to) queryParams.append('allocated_to', "true")
+
 
     // Use the same endpoint that includes custom fields
     const response = await apiClient.get(`/pms/assets.json/?${queryParams}`)
-    console.log('Assets API response:', response.data);
+    // console.log('Assets API response:', response.data);
     return { ...response.data, appliedFilters: filters }
   }
 )
@@ -144,6 +153,7 @@ const assetsSlice = createSlice({
         state.totalPages = action.payload.pagination?.total_pages || 0
         state.totalValue = action.payload.total_value || 0
         state.available_custom_fields = action.payload.available_custom_fields || []
+        state.asset_ids = action.payload.asset_ids || []
         if (action.payload.appliedFilters) {
           state.filters = action.payload.appliedFilters
         }

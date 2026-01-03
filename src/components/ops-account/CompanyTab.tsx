@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Download,
@@ -40,6 +41,7 @@ interface CompanyItem {
   remarks: string;
   created_at: string;
   updated_at: string;
+  active?: boolean;
 }
 
 interface CompanyApiResponse {
@@ -101,8 +103,22 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: "billing_term",
+    label: "Billing Term",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
     key: "live_date",
     label: "Live Date",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "status",
+    label: "Status",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -130,8 +146,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -171,7 +186,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "sumitra.patil@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
@@ -216,7 +231,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       }
 
       if (filters.billing_rate) {
-        apiUrl += `&q[billing_rate_cont]=${encodeURIComponent(filters.billing_rate)}`;
+        apiUrl += `&q[billing_rate_eq]=${encodeURIComponent(filters.billing_rate)}`;
       }
 
       if (filters.live_date_from) {
@@ -300,11 +315,81 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     }
   };
 
+  //  const fetchCountriesDropdown = async () => {
+  //   try {
+  //     const response = await fetch(getFullUrl("/pms/countries.json"), {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //         Authorization: getAuthHeader(),
+  //       },
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("Countries API response:", data);
+
+  //       // Map the API response to the expected dropdown format
+  //       // API returns array of objects with id and name properties
+  //       if (Array.isArray(data)) {
+  //         const mappedCountries = data
+  //           .filter((country) => country?.id && country?.name) // Filter out invalid entries
+  //           .map((country) => ({
+  //             id: Number(country.id),
+  //             name: String(country.name),
+  //           }));
+  //         setCountriesDropdown(mappedCountries);
+  //       } else {
+  //         console.error("Countries data format unexpected:", data);
+  //         setCountriesDropdown([]);
+  //         toast.error("Invalid countries data format");
+  //       }
+  //     } else {
+  //       toast.error("Failed to fetch countries");
+  //       setCountriesDropdown([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching countries:", error);
+  //     toast.error("Error fetching countries");
+  //     setCountriesDropdown([]);
+  //   }
+  // };
+
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const storedBaseUrl = localStorage.getItem("baseUrl");
+      const storedToken = localStorage.getItem("token");
+
+      let url: string;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      if (storedBaseUrl) {
+        const normalizedBase = storedBaseUrl.startsWith("http")
+          ? storedBaseUrl.replace(/\/+$/, "")
+          : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
+        url = `${normalizedBase}/pms/countries.json`;
+      } else {
+        url = getFullUrl("/pms/countries.json");
+      }
+
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      } else {
+        try {
+          headers["Authorization"] = getAuthHeader();
+        } catch (e) {
+          console.warn("No token available for Authorization header:", e);
+        }
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -326,6 +411,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
+        console.error("Failed to fetch countries", response.status, await response.text());
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
@@ -346,7 +432,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   // Handle search
   const handleSearch = (term: string) => {
     console.log("Search query:", term);
-    setSearchTerm(term);
+    setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
@@ -383,18 +469,45 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     return country ? country.name : "Unknown";
   };
 
-  // Format date helper
+  // Format date helper (supports 'YYYY-MM-DD' and 'MM/DD/YYYY' without timezone shifts)
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "-";
     try {
-      return new Date(dateString).toLocaleDateString("en-US", {
+      let year: number, month: number, day: number;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        // YYYY-MM-DD
+        const [y, m, d] = dateString.split("-").map((p) => parseInt(p, 10));
+        year = y;
+        month = m;
+        day = d;
+      } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+        // MM/DD/YYYY
+        const [mStr, dStr, yStr] = dateString.split("/");
+        year = parseInt(yStr, 10);
+        month = parseInt(mStr, 10);
+        day = parseInt(dStr, 10);
+      } else {
+        // Fallback: try native parsing
+        const parsed = new Date(dateString);
+        if (isNaN(parsed.getTime())) return "-";
+        return parsed.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      // Use UTC to avoid timezone day-shifts
+      const utcDate = new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+      return utcDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
+        timeZone: "UTC",
       });
     } catch (error) {
       console.error("Error formatting date:", error);
-      return "Invalid date";
+      return "-";
     }
   };
 
@@ -455,18 +568,42 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       </span>
     ),
     billing_rate: (
-      <div className="text-sm">
-        <div>{company?.billing_rate || "-"}</div>
-        {company?.billing_term && (
-          <div className="text-gray-500">Term: {company.billing_term}</div>
-        )}
-      </div>
+      <span className="text-sm text-gray-900">
+        {/* {company?.billing_term
+          ? company.billing_term // show only term like 'M'
+          : company?.billing_rate
+          ? company.billing_rate
+          : "-"} */}
+
+        {company?.billing_rate ?? "-"}
+      </span>
+    ),
+
+    billing_term: (
+      <span className="text-sm text-gray-900">
+        {company?.billing_term && company.billing_term.trim() !== "" ? company.billing_term : "-"}
+      </span>
     ),
     live_date: (
       <span className="text-sm text-gray-600">
         {formatDate(company?.live_date)}
       </span>
     ),
+    status: (
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={!!company?.active}
+          onCheckedChange={() => handleToggleStatus(company.id, !!company.active)}
+          disabled={!canEditCompany}
+          aria-label={`Toggle status for ${company?.name || "company"}`}
+        />
+        {/* <span className={`text-xs font-semibold px-2 py-1 rounded-full ${!company?.active ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {company?.active ? 'Active' : 'Inactive'}
+        </span> */}
+      </div>
+    ),
+
+
     created_at: (
       <span className="text-sm text-gray-600">
         {formatDate(company?.created_at)}
@@ -474,20 +611,52 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     ),
   });
 
+  // Toggle company status handler
+  const handleToggleStatus = async (companyId: number, isActive: boolean) => {
+    if (!canEditCompany) {
+      toast.error("You do not have permission to update company status");
+      return;
+    }
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('pms_company_setup[active]', (!isActive).toString());
+
+      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
+        method: "PATCH",
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        toast.success(`Company ${!isActive ? "activated" : "deactivated"} successfully`);
+        fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Failed to update company status");
+      }
+    } catch (error) {
+      console.error("Error updating company status:", error);
+      toast.error("Error updating company status");
+    }
+  };
+
   const handleView = (id: number) => {
-    console.log("View company:", id);
+    console.warn("View company:", id);
     // Navigate to company details page
-    navigate(`/ops-account/companies/details/${id}`);
+    navigate(`/ops-console/master/location/account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit company:", id);
+    console.warn("Edit company:", id);
     setSelectedCompanyId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete company:", id);
+    console.warn("Delete company:", id);
     setSelectedCompanyId(id);
     setIsDeleteModalOpen(true);
   };
@@ -530,9 +699,13 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       );
       setIsDeleteModalOpen(false);
       setSelectedCompanyId(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting company:", error);
-      toast.error(`Failed to delete company: ${error.message}`, {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? String((error as { message?: string }).message || "")
+          : "Unknown error";
+      toast.error(`Failed to delete company: ${message}`, {
         duration: 5000,
       });
     }
@@ -561,7 +734,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
-            searchTerm={searchTerm}
+            searchTerm={searchQuery}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={
@@ -677,7 +850,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         description="Upload a CSV file to import companies"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log("Uploading companies file:", file);
+          console.warn("Uploading companies file:", file);
           toast.success("Companies uploaded successfully");
           fetchCompanies(
             currentPage,

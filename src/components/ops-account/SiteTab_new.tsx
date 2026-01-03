@@ -187,7 +187,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "sumitra.patil@lockated.com"
+      "dev@lockated.com"
     ];
     setCanEditSite(allowedEmails.includes(userEmail));
   };
