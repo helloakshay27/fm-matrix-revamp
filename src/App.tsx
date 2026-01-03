@@ -149,6 +149,8 @@ import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
+import { EditEventPage } from "./pages/EditEventPage";
+
 // Import Visitors pages
 import { VisitorsDashboard } from "./pages/VisitorsDashboard";
 import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
@@ -165,6 +167,9 @@ import { EditVisitorGatePage } from "./pages/EditVisitorGatePage";
 import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
+
+// Import Carpool pages
+import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
 
 // Import Icons pages
 import { IconsDashboard } from "./pages/IconsDashboard";
@@ -535,6 +540,7 @@ import CRMGroupDetailsPage from "./pages/CRMGroupDetailsPage";
 // Import Broadcast page
 import { BroadcastDashboard } from "./pages/BroadcastDashboard";
 import { AddBroadcastPage } from "./pages/AddBroadcastPage";
+import { EditBroadcastPage } from "./pages/EditBroadcastPage";
 import { BroadcastDetailsPage } from "./pages/BroadcastDetailsPage";
 
 // Import Redemption Marketplace page
@@ -771,10 +777,18 @@ import MobileLMCPage from "./pages/MobileLMCPage";
 import { ViBusinessCard } from "./pages/mobile/ViBusinessCard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
-import BannerSetupDashboard from "./pages/BannerSetupDashboard";
-import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
-import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
+import BannerListPage from "./pages/BannerListPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
+import BannerAddPage from "./pages/BannerAddPage";
+import BannerEditPage from "./pages/BannerEditPage";
+import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
+import PlusServiceDashboard from "./pages/PlusServiceDashboard";
+import { AddPlusServicePage } from "./pages/AddPlusServicePage";
+import { EditPlusServicePage } from "./pages/EditPlusServicePage";
+import ServiceCategoryDashboard from "./pages/ServiceCategoryDashboard";
+import { AddServiceCategoryPage } from "./pages/AddServiceCategoryPage";
+import { EditServiceCategoryPage } from "./pages/EditServiceCategoryPage";
+import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
@@ -836,8 +850,14 @@ import EmployeeBookingList from "./pages/EmployeeBookingList";
 import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
 import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
+// import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
+import SOSDirectory from "./pages/SOSDirectory";
+import EditSosDirectory from "./pages/EditSosDirectory";
+import AddSosDirectory from "./pages/AddSosDirectory";
+import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
+
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
 import ProfileDetailsPage from "./pages/ProfileDetailsPage";
@@ -2592,9 +2612,11 @@ function App() {
                   />
                   <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
+          
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
+                  
                   <Route
                     path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
@@ -3599,6 +3621,134 @@ function App() {
                 {/* Settings Routes */}
 
                 <Route
+                  path="/pulse"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <div />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route
+                    path="/pulse/community-modules/banner-list"
+                    element={<BannerListPage />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-list/add"
+                    element={<BannerAddPage />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-list/edit/:id"
+                    element={<BannerEditPage />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-list/:id"
+                    element={<BannerDetailsPage />}
+                  />
+                  <Route path="/pulse/events" element={<CRMEventsPage />} />
+                  <Route path="/pulse/events/add" element={<AddEventPage />} />
+                  <Route
+                    path="/pulse/events/details/:id"
+                    element={<CRMEventDetailsPage />}
+                  />
+                  <Route
+                    path="/pulse/events/edit/:id"
+                    element={<EditEventPage />}
+                  />
+
+                  <Route
+                    path="/pulse/notices"
+                    element={<BroadcastDashboard />}
+                  />
+                  <Route
+                    path="/pulse/notices/add"
+                    element={<AddBroadcastPage />}
+                  />
+                  <Route
+                    path="/pulse/notices/edit/:id"
+                    element={<EditBroadcastPage />}
+                  />
+                  <Route
+                    path="/pulse/notices/details/:id"
+                    element={<BroadcastDetailsPage />}
+                  />
+
+                  <Route
+                    path="/pulse/visitor"
+                    element={<VisitorsDashboard />}
+                  />
+                  <Route
+                    path="/pulse/visitor/add"
+                    element={<VisitorFormPage />}
+                  />
+                  <Route
+                    path="/pulse/visitor/details/:id"
+                    element={<VisitorDetailsPage />}
+                  />
+
+                  {/* Plus Service Routes */}
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service"
+                    element={<PlusServiceDashboard />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service/create"
+                    element={<AddPlusServicePage />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service/edit/:id"
+                    element={<EditPlusServicePage />}
+                  />
+
+                  {/* Service Category Routes */}
+                  <Route
+                    path="/pulse/pulse-privilege/service-category"
+                    element={<ServiceCategoryDashboard />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/service-category/create"
+                    element={<AddServiceCategoryPage />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/service-category/edit/:id"
+                    element={<EditServiceCategoryPage />}
+                  />
+                  <Route
+                    path="/pulse/amenity"
+                    element={<AmenitySetupDashboard />}
+                  />
+
+                  {/* Carpool Routes */}
+                  <Route path="/pulse/carpool" element={<CarpoolDashboard />} />
+
+                  <Route
+                    path="/pulse/amenity/:id"
+                    element={<AmenityDetailsPage />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory"
+                    element={<SOSDirectory />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory/add"
+                    element={<AddSosDirectory />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory/:id/edit"
+                    element={<EditSosDirectory />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory/:id"
+                    element={<SosDirectoryDetailsPage />}
+                  />
+                </Route>
+
+                <Route
                   path="/settings"
                   element={
                     <ProtectedRoute>
@@ -3782,7 +3932,7 @@ function App() {
                   />
                   <Route
                     path="/settings/community-modules/banner-setup"
-                    element={<BannerSetupDashboard />}
+                    element={<BannerListPage />}
                   />
                   <Route
                     path="/settings/community-modules/banner-setup/:id"

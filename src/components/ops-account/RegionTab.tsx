@@ -170,7 +170,8 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
@@ -468,9 +469,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       </div>
     ),
     code: (
-      <div className="text-sm text-center font-mono">
-        {region?.code || "-"}
-      </div>
+      <div className="text-sm text-center font-mono">{region?.code || "-"}</div>
     ),
     company: (
       <span className="text-sm text-gray-600">
@@ -490,7 +489,9 @@ export const RegionTab: React.FC<RegionTabProps> = ({
           disabled={!canEditRegion}
           aria-label={`Toggle status for ${region.name || "region"}`}
         />
-        <span className={`text-xs font-medium ${region?.active ? "text-green-700" : "text-red-700"}`}></span>
+        <span
+          className={`text-xs font-medium ${region?.active ? "text-green-700" : "text-red-700"}`}
+        ></span>
       </div>
     ),
     created_at: (
@@ -518,26 +519,39 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     setIsDeleteModalOpen(true);
   };
 
-  const handleToggleStatus = async (regionId: number, currentStatus: boolean) => {
+  const handleToggleStatus = async (
+    regionId: number,
+    currentStatus: boolean
+  ) => {
     if (!canEditRegion) {
       toast.error("You do not have permission to update region status");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/regions/${regionId}.json`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-        body: JSON.stringify({ pms_region: { active: !currentStatus } }),
-      });
+      const response = await fetch(
+        getFullUrl(`/pms/regions/${regionId}.json`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+          body: JSON.stringify({ pms_region: { active: !currentStatus } }),
+        }
+      );
 
       if (response.ok) {
-        toast.success(`Region ${!currentStatus ? "activated" : "deactivated"} successfully`);
-        fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        toast.success(
+          `Region ${!currentStatus ? "activated" : "deactivated"} successfully`
+        );
+        fetchRegions(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
       } else {
         toast.error("Failed to update region status");
       }
@@ -623,27 +637,27 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Region
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditRegion}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditRegion}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
