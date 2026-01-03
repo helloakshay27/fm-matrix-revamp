@@ -146,7 +146,7 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-    {
+  {
     key: "site_image",
     label: "Site Image",
     sortable: false,
@@ -195,9 +195,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
   // Dropdowns and permissions
   type DropdownItem = { id: number; name: string };
-  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>([]);
+  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>(
+    []
+  );
   const [regionsDropdown, setRegionsDropdown] = useState<DropdownItem[]>([]);
-  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>([]);
+  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>(
+    []
+  );
   const [canEditSite, setCanEditSite] = useState(false);
 
   const user = getUser() || {
@@ -213,7 +217,8 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditSite(allowedEmails.includes(userEmail));
   }, [user.email]);
@@ -221,97 +226,95 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   // Effects moved below function declarations to avoid temporal dead zone
 
   // Fetch sites data from API
-  const fetchSites = useCallback(async (
-    page = 1,
-    per_page = 10,
-    search = "",
-    filters: SiteFilters = {}
-  ) => {
-    setLoading(true);
-    try {
-      // Build API URL with parameters
-      let apiUrl = getFullUrl(
-        `/pms/sites/all_site_list.json?page=${page}&per_page=${per_page}`
-      );
+  const fetchSites = useCallback(
+    async (page = 1, per_page = 10, search = "", filters: SiteFilters = {}) => {
+      setLoading(true);
+      try {
+        // Build API URL with parameters
+        let apiUrl = getFullUrl(
+          `/pms/sites/all_site_list.json?page=${page}&per_page=${per_page}`
+        );
 
-      // Add search parameter
-      if (search.trim()) {
-        apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
-      }
-
-      // Add filter parameters
-      if (filters.companyId) {
-        apiUrl += `&q[company_id_eq]=${filters.companyId}`;
-      }
-
-      if (filters.regionId) {
-        apiUrl += `&q[region_id_eq]=${filters.regionId}`;
-      }
-
-      if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
-      }
-
-      if (filters.site_type) {
-        apiUrl += `&q[site_type_cont]=${encodeURIComponent(filters.site_type)}`;
-      }
-
-      if (filters.status) {
-        const isActive = filters.status === "active";
-        apiUrl += `&q[active_eq]=${isActive}`;
-      }
-
-  console.warn("🔗 API URL with filters:", apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: SiteApiResponse = await response.json();
-  console.warn("Sites API response:", result);
-
-      if (result && Array.isArray(result.sites)) {
-        setSites(result.sites);
-        // Set pagination if available, otherwise use default
-        if (result.pagination) {
-          setPagination(result.pagination);
-        } else {
-          setPagination({
-            current_page: page,
-            per_page: per_page,
-            total_pages: Math.ceil(result.sites.length / per_page),
-            total_count: result.sites.length,
-            has_next_page: false,
-            has_prev_page: false,
-          });
+        // Add search parameter
+        if (search.trim()) {
+          apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
         }
-      } else if (result && Array.isArray(result.data)) {
-        setSites(result.data);
-      } else if (Array.isArray(result)) {
-        setSites(result);
-      } else {
-        throw new Error("Invalid sites data format");
+
+        // Add filter parameters
+        if (filters.companyId) {
+          apiUrl += `&q[company_id_eq]=${filters.companyId}`;
+        }
+
+        if (filters.regionId) {
+          apiUrl += `&q[region_id_eq]=${filters.regionId}`;
+        }
+
+        if (filters.countryId) {
+          apiUrl += `&q[country_id_eq]=${filters.countryId}`;
+        }
+
+        if (filters.site_type) {
+          apiUrl += `&q[site_type_cont]=${encodeURIComponent(filters.site_type)}`;
+        }
+
+        if (filters.status) {
+          const isActive = filters.status === "active";
+          apiUrl += `&q[active_eq]=${isActive}`;
+        }
+
+        console.warn("🔗 API URL with filters:", apiUrl);
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: SiteApiResponse = await response.json();
+        console.warn("Sites API response:", result);
+
+        if (result && Array.isArray(result.sites)) {
+          setSites(result.sites);
+          // Set pagination if available, otherwise use default
+          if (result.pagination) {
+            setPagination(result.pagination);
+          } else {
+            setPagination({
+              current_page: page,
+              per_page: per_page,
+              total_pages: Math.ceil(result.sites.length / per_page),
+              total_count: result.sites.length,
+              has_next_page: false,
+              has_prev_page: false,
+            });
+          }
+        } else if (result && Array.isArray(result.data)) {
+          setSites(result.data);
+        } else if (Array.isArray(result)) {
+          setSites(result);
+        } else {
+          throw new Error("Invalid sites data format");
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error("Error fetching sites:", error);
+        toast.error(`Failed to load sites: ${msg}`, {
+          duration: 5000,
+        });
+        setSites([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error("Error fetching sites:", error);
-      toast.error(`Failed to load sites: ${msg}`, {
-        duration: 5000,
-      });
-      setSites([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [getFullUrl, getAuthHeader]);
+    },
+    [getFullUrl, getAuthHeader]
+  );
 
   const fetchCompaniesDropdown = useCallback(async () => {
     try {
@@ -374,13 +377,20 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       });
 
       if (response.ok) {
-  const data = await response.json();
-  console.warn("Countries API response:", data);
+        const data = await response.json();
+        console.warn("Countries API response:", data);
 
         if (Array.isArray(data)) {
           // Handle direct array format
           const uniqueCountries = new Map();
-          (data as Array<{ id?: number; country_id?: number; name?: string; country_name?: string }>).forEach((country) => {
+          (
+            data as Array<{
+              id?: number;
+              country_id?: number;
+              name?: string;
+              country_name?: string;
+            }>
+          ).forEach((country) => {
             const id = country?.country_id || country?.id;
             const name = country?.country_name || country?.name;
             if (id && name && !uniqueCountries.has(id)) {
@@ -399,7 +409,12 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         ) {
           // Handle nested headquarters format
           const uniqueCountries = new Map();
-          (data.headquarters as Array<{ country_id?: number; country_name?: string }>).forEach((hq) => {
+          (
+            data.headquarters as Array<{
+              country_id?: number;
+              country_name?: string;
+            }>
+          ).forEach((hq) => {
             const id = hq?.country_id;
             const name = hq?.country_name;
             if (id && name && !uniqueCountries.has(id)) {
@@ -432,7 +447,12 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     fetchRegionsDropdown();
     fetchCountriesDropdown();
     checkEditPermission();
-  }, [fetchCompaniesDropdown, fetchRegionsDropdown, fetchCountriesDropdown, checkEditPermission]);
+  }, [
+    fetchCompaniesDropdown,
+    fetchRegionsDropdown,
+    fetchCountriesDropdown,
+    checkEditPermission,
+  ]);
 
   // Load data on component mount and when page/perPage/filters change (after fetchSites is declared)
   useEffect(() => {
@@ -441,14 +461,14 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
   // Handle filter application
   const handleApplyFilters = (filters: SiteFilters) => {
-  console.warn("📊 Applying filters:", filters);
+    console.warn("📊 Applying filters:", filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-  console.warn("Search query:", term);
+    console.warn("Search query:", term);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
@@ -532,7 +552,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success(`Site ${!currentStatus ? "activated" : "deactivated"} successfully`);
+      toast.success(
+        `Site ${!currentStatus ? "activated" : "deactivated"} successfully`
+      );
       // Refresh the data
       fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     } catch (error) {
@@ -583,14 +605,14 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         {site?.attachfile?.document_url ? (
           <img
             src={site.attachfile.document_url}
-            alt={site?.attachfile?.document_file_name || site?.name || "Site image"}
+            alt={
+              site?.attachfile?.document_file_name || site?.name || "Site image"
+            }
             className="h-12 w-12 object-cover rounded border border-gray-200"
             loading="lazy"
           />
         ) : (
-          <div>
-            -
-          </div>
+          <div>-</div>
         )}
       </div>
     ),
@@ -608,9 +630,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       </div>
     ),
     code: (
-      <div className="text-sm text-center font-mono">
-        {site?.code || "-"}
-      </div>
+      <div className="text-sm text-center font-mono">{site?.code || "-"}</div>
     ),
     location: (
       <div className="text-sm">
@@ -642,9 +662,11 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       <div className="flex items-center justify-center">
         <Switch
           checked={!!site?.active}
-          onCheckedChange={() => site?.id && handleToggleStatus(site.id, !!site.active)}
+          onCheckedChange={() =>
+            site?.id && handleToggleStatus(site.id, !!site.active)
+          }
           disabled={!canEditSite}
-          aria-label={`Toggle status for ${site?.name || 'site'}`}
+          aria-label={`Toggle status for ${site?.name || "site"}`}
         />
       </div>
     ),
@@ -656,13 +678,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   });
 
   const handleView = (id: number) => {
-  console.warn("View site:", id);
+    console.warn("View site:", id);
     // Navigate to site details page
     navigate(`/ops-account/sites/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-  console.warn("Edit site:", id);
+    console.warn("Edit site:", id);
     // Find the site data from the current list
     const siteToEdit = sites.find((site) => site.id === id);
     if (siteToEdit) {
@@ -689,7 +711,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   };
 
   const handleDelete = (id: number) => {
-  console.warn("Delete site:", id);
+    console.warn("Delete site:", id);
     setSelectedSiteId(id);
     setIsDeleteModalOpen(true);
   };
@@ -771,27 +793,27 @@ export const SiteTab: React.FC<SiteTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Site
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditSite}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditSite}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination

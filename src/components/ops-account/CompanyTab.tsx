@@ -187,6 +187,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
       "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
@@ -411,7 +412,11 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
-        console.error("Failed to fetch countries", response.status, await response.text());
+        console.error(
+          "Failed to fetch countries",
+          response.status,
+          await response.text()
+        );
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
@@ -581,7 +586,9 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
     billing_term: (
       <span className="text-sm text-gray-900">
-        {company?.billing_term && company.billing_term.trim() !== "" ? company.billing_term : "-"}
+        {company?.billing_term && company.billing_term.trim() !== ""
+          ? company.billing_term
+          : "-"}
       </span>
     ),
     live_date: (
@@ -593,7 +600,9 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       <div className="flex items-center gap-2">
         <Switch
           checked={!!company?.active}
-          onCheckedChange={() => handleToggleStatus(company.id, !!company.active)}
+          onCheckedChange={() =>
+            handleToggleStatus(company.id, !!company.active)
+          }
           disabled={!canEditCompany}
           aria-label={`Toggle status for ${company?.name || "company"}`}
         />
@@ -602,7 +611,6 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         </span> */}
       </div>
     ),
-
 
     created_at: (
       <span className="text-sm text-gray-600">
@@ -620,19 +628,32 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('pms_company_setup[active]', (!isActive).toString());
+      formDataToSend.append(
+        "pms_company_setup[active]",
+        (!isActive).toString()
+      );
 
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
-        method: "PATCH",
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formDataToSend,
-      });
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${companyId}/company_update.json`),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+          body: formDataToSend,
+        }
+      );
 
       if (response.ok) {
-        toast.success(`Company ${!isActive ? "activated" : "deactivated"} successfully`);
-        fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        toast.success(
+          `Company ${!isActive ? "activated" : "deactivated"} successfully`
+        );
+        fetchCompanies(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || "Failed to update company status");
@@ -746,27 +767,27 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditCompany}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditCompany}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination

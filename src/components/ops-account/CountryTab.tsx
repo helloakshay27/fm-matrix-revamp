@@ -189,6 +189,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
       "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditCountry(allowedEmails.includes(userEmail));
   }, [user.email]);
@@ -661,34 +662,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsFilterOpen(true)}
-          //     >
-          //       <Filter className="w-4 h-4 mr-2" />
-          //       Filter
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Import
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsFilterOpen(true)}
+            //     >
+            //       <Filter className="w-4 h-4 mr-2" />
+            //       Filter
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Import
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
