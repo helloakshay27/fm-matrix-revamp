@@ -73,12 +73,17 @@ const UtilitySolarGeneratorDashboard = () => {
   );
 
   // Fetch solar generator data
-  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters) => {
+  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters, search?: string) => {
     try {
       setLoading(true);
-      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters);
+      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters, 'search:', search);
       
-      const data = await solarGeneratorAPI.getSolarGenerators(appliedFilters || filters);
+      const filtersWithSearch = {
+        ...(appliedFilters || filters),
+        tower_name: search || undefined
+      };
+      
+      const data = await solarGeneratorAPI.getSolarGenerators(filtersWithSearch);
       console.log('✅ Solar generator data fetched successfully:', data);
       
       setSolarGeneratorData(data);
@@ -101,6 +106,19 @@ const UtilitySolarGeneratorDashboard = () => {
   useEffect(() => {
     fetchSolarGenerators();
   }, [fetchSolarGenerators]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm) {
+        fetchSolarGenerators(filters, searchTerm);
+      } else {
+        fetchSolarGenerators(filters);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Filter handler functions
   const handleApplyFilters = (appliedFilters: SolarGeneratorFilters) => {
@@ -141,8 +159,15 @@ const UtilitySolarGeneratorDashboard = () => {
     switch (columnKey) {
       case 'id':
         return <span>{item.id}</span>;
-      case 'transaction_date':
-        return <span>{item.transaction_date}</span>;
+      case 'transaction_date': {
+        if (!item.transaction_date) return <span>-</span>;
+        // Convert date to DD/MM/YYYY format
+        const date = new Date(item.transaction_date);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return <span>{`${day}/${month}/${year}`}</span>;
+      }
       case 'unit_consumed':
         return <span>{item.unit_consumed?.toLocaleString() || '-'}</span>;
       case 'plant_day_generation':
@@ -157,12 +182,7 @@ const UtilitySolarGeneratorDashboard = () => {
     }
   };
 
-  // Filter data based on search term
-  const filteredData = solarGeneratorData.filter(item =>
-    item.tower_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.transaction_date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id?.toString().includes(searchTerm)
-  );
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -183,7 +203,7 @@ const UtilitySolarGeneratorDashboard = () => {
         /* Enhanced Solar Generator Table */
         <div>
           <EnhancedTable
-            data={filteredData}
+            data={solarGeneratorData}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
@@ -195,27 +215,8 @@ const UtilitySolarGeneratorDashboard = () => {
             searchPlaceholder="Search solar generator records..."
             pagination={true}
             pageSize={10}
-            hideColumnsButton={true}
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                {/* Left actions can be used for other buttons if needed */}
-              </div>
-            }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-                <ColumnVisibilityDropdown
-                  columns={dropdownColumns}
-                  onColumnToggle={handleColumnToggle}
-                />
-              </div>
-            }
+            hideColumnsButton={false}
+            onFilterClick={() => setIsFilterOpen(true)}
           />
         </div>
       )}

@@ -29,12 +29,18 @@ export const UtilityEVConsumptionFilterDialog = ({
     console.log('Filtering EV consumption data with dates:', { startDate, endDate });
     
     if (startDate && endDate) {
-      // Pass date range as string in DD/MM/YYYY - DD/MM/YYYY format
-      const dateRangeString = `${startDate} - ${endDate}`;
+      // Convert DD/MM/YYYY to MM/DD/YYYY format for the API
+      const convertToAPIFormat = (dateStr: string) => {
+        const [day, month, year] = dateStr.split('/');
+        return `${month}/${day}/${year}`;
+      };
       
-      // Apply filters with the date range string
+      // Pass date range as string in MM/DD/YYYY - MM/DD/YYYY format
+      const dateRangeString = `${convertToAPIFormat(startDate)} - ${convertToAPIFormat(endDate)}`;
+      
+      // Apply filters with the date range string in the format: q[date_range]="MM/DD/YYYY - MM/DD/YYYY"
       onApplyFilters({
-        dateRange: dateRangeString as any // Will be handled by dashboard
+        dateRange: dateRangeString as any
       });
     } else {
       // Apply empty filters if dates not selected

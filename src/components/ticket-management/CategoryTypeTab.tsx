@@ -281,20 +281,19 @@ export const CategoryTypeTab: React.FC = () => {
       return;
     }
     
-    if (!selectedSite) {
-      toast.error('Please select a site');
+    const formValues = form.getValues();
+    
+    if (!formValues.siteId || formValues.siteId.trim() === '') {
+      toast.error('Please select at least one site');
       return;
     }
 
     // Get the form data
-    // Get form values
-    const formValues = form.getValues();
-    
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
       customerEnabled: false, // or get from checkbox if needed
-      siteId: selectedSite.id.toString(),
+      siteId: formValues.siteId,
       engineerIds: formValues.engineerIds || [],
     };
 
@@ -330,13 +329,13 @@ export const CategoryTypeTab: React.FC = () => {
       }
     }
 
-    // Validate FAQ items - both question and answer are required for each FAQ
+    // Validate FAQ items - if any FAQ is partially filled, both question and answer are required
     const incompleteFaqItems = faqItems.filter(item => 
-      !item.question.trim() || !item.answer.trim()
+      (item.question.trim() && !item.answer.trim()) || (!item.question.trim() && item.answer.trim())
     );
     
     if (incompleteFaqItems.length > 0) {
-      toast.error('Please complete all FAQ items. Both question and answer are required for each FAQ.');
+      toast.error('Please complete all FAQ items. If you enter a question, you must also provide an answer.');
       return;
     }
 
@@ -381,10 +380,13 @@ export const CategoryTypeTab: React.FC = () => {
       }
       
       // Location data (site_ids from account data)
-      if (accountData?.site_id) {
-        formData.append('location_data[site_ids][]', accountData.site_id.toString());
+      // Location data (selected site IDs from the form)
+      if (data.siteId) {
+        const siteIds = data.siteId.split(',');
+        siteIds.forEach(siteId => {
+          formData.append('location_data[site_ids][]', siteId.trim());
+        });
       }
-
       const response = await fetch(getFullUrl('/pms/admin/helpdesk_categories.json'), {
         method: 'POST',
         headers: {
@@ -562,13 +564,13 @@ export const CategoryTypeTab: React.FC = () => {
       }
     }
 
-    // Validate FAQ items - both question and answer are required for each FAQ
+    // Validate FAQ items - if any FAQ is partially filled, both question and answer are required
     const incompleteFaqItems = editFaqItems.filter(item => 
-      !item._destroy && (!item.question.trim() || !item.answer.trim())
+      !item._destroy && ((item.question.trim() && !item.answer.trim()) || (!item.question.trim() && item.answer.trim()))
     );
     
     if (incompleteFaqItems.length > 0) {
-      toast.error('Please complete all FAQ items. Both question and answer are required for each FAQ.');
+      toast.error('Please complete all FAQ items. If you enter a question, you must also provide an answer.');
       return;
     }
     
@@ -882,7 +884,17 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Response Time (Minutes) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Enter response time" {...field} />
+                        <Input 
+                          type="number" 
+                          placeholder="Enter response time" 
+                          min="0"
+                          onKeyDown={(e) => {
+                            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                              e.preventDefault();
+                            }
+                          }}
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -916,9 +928,9 @@ export const CategoryTypeTab: React.FC = () => {
                       <span className="text-sm text-gray-600">{iconFile.name}</span>
                     )}
                   </div>
-                  {!iconFile && (
+                  {/* {!iconFile && (
                     <p className="text-sm text-red-500">Icon is required</p>
-                  )}
+                  )} */}
                 </div>
 
                 <FormField
@@ -928,12 +940,66 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Enable Sites <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input 
-                          value={selectedSite?.name || ''} 
-                          placeholder={selectedSite?.name || 'Loading site...'} 
-                          disabled 
-                          readOnly
-                        />
+                        <div className="space-y-3">
+                          <ReactSelect
+                            isMulti
+                            options={sites.map(site => ({
+                              value: site.id.toString(),
+                              label: site.name
+                            }))}
+                            onChange={(selected) => {
+                              if (!selected || selected.length === 0) {
+                                field.onChange('');
+                                return;
+                              }
+                              // Store comma-separated site IDs
+                              const siteIds = selected.map(s => s.value).join(',');
+                              field.onChange(siteIds);
+                            }}
+                            value={field.value ? 
+                              sites
+                                .filter(site => field.value.split(',').includes(site.id.toString()))
+                                .map(site => ({
+                                  value: site.id.toString(),
+                                  label: site.name
+                                }))
+                              : []
+                            }
+                            className="mt-1"
+                            placeholder="Select sites..."
+                            noOptionsMessage={() => "No sites available"}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '40px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '0px',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  border: '1px solid #cbd5e1'
+                                }
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: '0px'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#334155'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#64748b',
+                                borderRadius: '0px',
+                                '&:hover': {
+                                  backgroundColor: '#e2e8f0',
+                                  color: '#475569'
+                                }
+                              })
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1080,7 +1146,7 @@ export const CategoryTypeTab: React.FC = () => {
                   <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Question <span className="text-red-500">*</span>
+                        Question
                       </label>
                       <Input
                         placeholder="Enter question"
@@ -1090,7 +1156,7 @@ export const CategoryTypeTab: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Answer <span className="text-red-500">*</span>
+                        Answer
                       </label>
                       <div className="flex gap-2">
                         <Input
@@ -1394,7 +1460,7 @@ export const CategoryTypeTab: React.FC = () => {
                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                       <div>
                         <label className="block text-sm font-medium mb-1">
-                          Question <span className="text-red-500">*</span>
+                          Question
                         </label>
                         <textarea
                           placeholder="Question"
@@ -1405,7 +1471,7 @@ export const CategoryTypeTab: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">
-                          Answer <span className="text-red-500">*</span>
+                          Answer
                         </label>
                         <div className="flex gap-2">
                           <textarea
