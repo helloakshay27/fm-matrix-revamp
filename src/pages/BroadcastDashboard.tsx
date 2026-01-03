@@ -1,34 +1,27 @@
 import { useEffect, useState } from "react";
-import { Plus, Eye, Edit } from "lucide-react";
+import { Plus, Eye, Edit, Circle, Rows4, Star, CalendarX, ThumbsUp, ThumbsDown, CalendarOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchBroadcasts } from "@/store/slices/broadcastSlice";
+import { fetchBroadcasts, updateBroadcast } from "@/store/slices/broadcastSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { BroadcastFilterModal } from "@/components/BroadcastFilterModal";
+import { Switch } from "@/components/ui/switch";
 
 const columns: ColumnConfig[] = [
   {
+    key: "sr_no",
+    label: "Sr. No.",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
     key: "notice_heading",
     label: "Title",
-    sortable: true,
-    hideable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "type",
-    label: "Type",
-    sortable: true,
-    hideable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "created_at",
-    label: "Created On",
     sortable: true,
     hideable: true,
     defaultVisible: true,
@@ -41,6 +34,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
     key: "status",
     label: "Status",
     sortable: true,
@@ -48,27 +48,53 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "expire_time",
-    label: "Expired On",
+    key: "show_on_home_screen",
+    label: "Show on Home Screen",
     sortable: true,
     hideable: true,
     defaultVisible: true,
   },
   {
-    key: "expired",
-    label: "Expired",
+    key: "visible_after_expire",
+    label: "Visible After Expire",
     sortable: true,
-    hideable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "attachments",
-    label: "Attachment",
-    sortable: false,
     hideable: true,
     defaultVisible: true,
   },
 ];
+
+const cardsData = [
+  {
+    title: "Total Notices",
+    value: 0,
+    icon: <Rows4 className="w-5 h-5" color="#C72030" />
+  },
+  {
+    title: "Important",
+    value: 0,
+    icon: <Star className="w-5 h-5" color="#C72030" />
+  },
+  {
+    title: "Expiring Soon",
+    value: 0,
+    icon: <CalendarX className="w-5 h-5" color="#C72030" />
+  },
+  {
+    title: "Active Now",
+    value: 0,
+    icon: <ThumbsUp className="w-5 h-5" color="#C72030" />
+  },
+  {
+    title: "Inactive",
+    value: 0,
+    icon: <ThumbsDown className="w-5 h-5" color="#C72030" />
+  },
+  {
+    title: "Expired",
+    value: 0,
+    icon: <CalendarOff className="w-5 h-5" color="#C72030" />
+  },
+]
 
 export const BroadcastDashboard = () => {
   const dispatch = useAppDispatch();
@@ -86,6 +112,7 @@ export const BroadcastDashboard = () => {
     total_count: 0,
     total_pages: 0,
   });
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,64 +140,95 @@ export const BroadcastDashboard = () => {
     fetchData();
   }, []);
 
-  const handleViewDetails = (id: number) => {
-    navigate(`/crm/broadcast/details/${id}`);
+  const handleStatusChange = async (item: any, checked: boolean) => {
+    // 1: Published, 2: Disabled
+    const newStatus = checked ? 1 : 2;
+
+    // Optimistic update
+    setUpdatingStatus((prev) => ({ ...prev, [item.id]: true }));
+
+    try {
+      await dispatch(
+        updateBroadcast({
+          id: item.id,
+          data: { noticeboard: { publish: newStatus } },
+          baseUrl,
+          token,
+        })
+      ).unwrap();
+
+      toast.success("Broadcast status updated successfully");
+
+      // Refresh list to ensure consistency
+      handlePageChange(pagination.current_page);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update broadcast status");
+    } finally {
+      setUpdatingStatus((prev) => {
+        const newState = { ...prev };
+        delete newState[item.id];
+        return newState;
+      });
+    }
   };
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case "type":
-        return (
-          <span>
-            {item.shared === 0 ? "General" : "Personal"}
-          </span>
-        );
+      case "sr_no":
+        return <div>{pagination.current_page * 10 - 9 + broadcasts.indexOf(item)}</div>;
       case "created_at":
-        return new Date(item.created_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
+        return new Intl.DateTimeFormat("en-GB", {
           day: "numeric",
-        });
+          month: "short",
+          year: "numeric",
+        }).format(new Date(item.created_at))
       case "createdBy":
         return item.created_by;
       case "status":
+        const isChecked = item.status === "Published";
+
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            {item.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isChecked}
+              onCheckedChange={(checked) => handleStatusChange(item, checked)}
+              disabled={updatingStatus[item.id]}
+              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            {isChecked ? "Active" : "Inactive"}
+          </div>
         );
-      case "expire_time":
-        return item.expire_time
-          ? new Date(item.expire_time).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
-          : "N/A";
-      case "expired":
+      case "show_on_home_screen":
+        const isShowOnHomeScreenChecked = item.show_on_home_screen === "Published";
+
         return (
-          <Badge
-            variant={item.is_expired ? "destructive" : "secondary"}
-            className={
-              item.is_expired
-                ? "bg-red-100 text-red-800"
-                : "bg-green-100 text-green-800"
-            }
-          >
-            {item.is_expired ? "Yes" : "No"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isShowOnHomeScreenChecked}
+              onCheckedChange={(checked) => handleStatusChange(item, checked)}
+              disabled={updatingStatus[item.id]}
+              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            {isShowOnHomeScreenChecked ? "Active" : "Inactive"}
+          </div>
         );
-      case 'attachments':
-        return item.attachments.length > 0 ? (
-          <img
-            style={{ width: "100px", height: "50px", objectFit: "contain" }}
-            src={item.attachments[0].document_url}
-          />
-        ) : (
-          'None'
+      case "visible_after_expire":
+        const isVisibleAfterExpireChecked = item.visible_after_expire === "Published";
+
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isVisibleAfterExpireChecked}
+              onCheckedChange={(checked) => handleStatusChange(item, checked)}
+              disabled={updatingStatus[item.id]}
+              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            {isVisibleAfterExpireChecked ? "Active" : "Inactive"}
+          </div>
         );
       default:
-        return item[columnKey] || "N/A";
+        return item[columnKey] || "-";
     }
   };
 
@@ -211,7 +269,7 @@ export const BroadcastDashboard = () => {
     navigate(`/pulse/notices/edit/${id}`);
   }
 
-  const handleApplyFilter = async (data) => {
+  const handleApplyFilter = async (data: { status: string }) => {
     const params = {
       "q[publish_eq]": data.status,
     }
@@ -250,9 +308,9 @@ export const BroadcastDashboard = () => {
       items.push(
         <PaginationItem key={1} className='cursor-pointer'>
           <PaginationLink
-            onClick={() => handlePageChange(1)}
+            onClick={() => !loading && handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
           >
             1
           </PaginationLink>
@@ -270,9 +328,9 @@ export const BroadcastDashboard = () => {
           items.push(
             <PaginationItem key={i} className='cursor-pointer'>
               <PaginationLink
-                onClick={() => handlePageChange(i)}
+                onClick={() => !loading && handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -286,9 +344,9 @@ export const BroadcastDashboard = () => {
           items.push(
             <PaginationItem key={i} className='cursor-pointer'>
               <PaginationLink
-                onClick={() => handlePageChange(i)}
+                onClick={() => !loading && handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -309,9 +367,9 @@ export const BroadcastDashboard = () => {
             items.push(
               <PaginationItem key={i} className='cursor-pointer'>
                 <PaginationLink
-                  onClick={() => handlePageChange(i)}
+                  onClick={() => !loading && handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
                 >
                   {i}
                 </PaginationLink>
@@ -325,9 +383,9 @@ export const BroadcastDashboard = () => {
         items.push(
           <PaginationItem key={totalPages} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(totalPages)}
+              onClick={() => !loading && handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {totalPages}
             </PaginationLink>
@@ -339,9 +397,9 @@ export const BroadcastDashboard = () => {
         items.push(
           <PaginationItem key={i} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(i)}
+              onClick={() => !loading && handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {i}
             </PaginationLink>
@@ -354,14 +412,13 @@ export const BroadcastDashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <div className="flex gap-1">
+    <div className="flex">
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => handleEdit(item.id)}
         className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
       >
-        <Edit className="w-4 h-4" />
+        <Star className="w-4 h-4" />
       </Button>
       <Button
         variant="ghost"
@@ -371,11 +428,42 @@ export const BroadcastDashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleEdit(item.id)}
+        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
     </div>
   );
 
   return (
     <div className="p-6 space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        {
+          cardsData.map((_, index) => (
+            <div key={index}>
+              <div
+                className={`bg-[#F6F4EE] p-6 rounded-lg shadow-sm flex items-center gap-4`}
+              >
+                <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded-[3px]">
+                  {cardsData[index].icon}
+                </div>
+                <div>
+                  <div className="text-2xl font-semibold text-[#1A1A1A]">
+                    {cardsData[index].value}
+                  </div>
+                  <div className="text-sm font-medium text-[#1A1A1A]">
+                    {cardsData[index].title}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
       <EnhancedTable
         data={broadcasts}
         columns={columns}

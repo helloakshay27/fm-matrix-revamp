@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { TextField, Radio, RadioGroup, FormControlLabel, FormControl } from "@mui/material";
+import { TextField, Radio, RadioGroup, FormControlLabel, FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import axios from "axios";
 import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft } from "lucide-react";
 import { useRef, useState } from "react";
@@ -155,7 +155,7 @@ const AddSosDirectory = () => {
             submitData.append(`sos_directory[${key}]`, payload.sos_directory[key]);
         });
         if (formData.image) {
-            submitData.append('sos_directory[image]', formData.image);
+            submitData.append('attachment', formData.image);
         }
 
         try {
@@ -220,26 +220,32 @@ const AddSosDirectory = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <TextField
-                                label={<>Category<span className="text-[#C72030]">*</span></>}
-                                id="category"
-                                name="category"
-                                value={formData.category}
-                                onChange={handleInputChange}
-                                placeholder="Enter Category (Max 25 Character)"
-                                inputProps={{ maxLength: 25 }}
-                                fullWidth
-                                InputLabelProps={{ shrink: true }}
-                                size="small"
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
+                            <FormControl fullWidth size="small">
+                                <InputLabel shrink>Category<span className="text-[#C72030]">*</span></InputLabel>
+                                <Select
+                                    id="category"
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                                    label="Category*"
+                                    displayEmpty
+                                    sx={{
                                         backgroundColor: '#FAFAFA',
-                                        '&.Mui-focused fieldset': {
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                             borderColor: '#C72030',
                                         },
-                                    },
-                                }}
-                            />
+                                    }}
+                                >
+                                    <MenuItem value="" disabled>Select Category</MenuItem>
+                                    <MenuItem value="Police">Police</MenuItem>
+                                    <MenuItem value="Fire">Fire</MenuItem>
+                                    <MenuItem value="Ambulance">Ambulance</MenuItem>
+                                    <MenuItem value="Hospital">Hospital</MenuItem>
+                                    <MenuItem value="Security">Security</MenuItem>
+                                    <MenuItem value="Maintenance">Maintenance</MenuItem>
+                                    <MenuItem value="Other">Other</MenuItem>
+                                </Select>
+                            </FormControl>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <TextField
