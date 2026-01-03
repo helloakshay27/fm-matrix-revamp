@@ -12,6 +12,8 @@ import {
   MenuItem,
   TextField,
   CircularProgress,
+  Box,
+  Typography,
 } from "@mui/material";
 
 interface ServiceCategory {
@@ -377,33 +379,54 @@ export const AddPlusServicePage = () => {
             </div>
 
             {/* Description - Full width */}
-            <div className="relative w-full">
-              <textarea
-                id="description"
+            <Box sx={{ position: "relative" }}>
+              <TextField
+                label={<span>Description<span className="text-red-500">*</span></span>}
+                placeholder="Enter Description"
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
                 value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                rows={3}
-                placeholder=" "
-                required
-                className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-      focus:outline-none 
-      focus:border-[2px] 
-      focus:border-[rgb(25,118,210)] 
-      resize-vertical"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 255) {
+                    handleInputChange("description", value);
+                  }
+                }}
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
               />
-              <label
-                htmlFor="description"
-                className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
-      peer-placeholder-shown:top-4
-      peer-placeholder-shown:text-base
-      peer-placeholder-shown:text-gray-400
-      peer-focus:-top-[10px]
-      peer-focus:text-sm
-      peer-focus:text-[rgb(25,118,210)]"
+              <Typography
+                variant="caption"
+                sx={{
+                  position: "absolute",
+                  bottom: -4,
+                  right: 8,
+                  color: formData.description.length > 255 ? "red" : "gray",
+                }}
               >
-                Description
-              </label>
-            </div>
+                {formData.description.length}/255
+              </Typography>
+            </Box>
           </div>
         </div>
 

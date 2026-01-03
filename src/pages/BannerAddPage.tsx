@@ -87,6 +87,11 @@ const BannerAddPage = () => {
             return;
         }
 
+        if (uploadedImages.length === 0) {
+            toast.error('At least one banner image is required');
+            return;
+        }
+
         const payload = new FormData();
         const siteId = localStorage.getItem("selectedSiteId") || '';
 
@@ -199,7 +204,7 @@ const BannerAddPage = () => {
                 {/* Banner Images Card */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Banner Images</CardTitle>
+                        <CardTitle>Banner Images <span className="text-red-500">*</span></CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">

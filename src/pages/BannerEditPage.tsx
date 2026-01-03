@@ -20,6 +20,8 @@ interface UploadedImage {
     uploadTime: string;
     preview: string;
     type: 'image';
+    attachmentId?: number; // For existing images from API
+    isExisting?: boolean; // Flag to identify existing vs new images
 }
 
 const fieldStyles = {
@@ -97,6 +99,8 @@ const BannerEditPage = () => {
                             uploadTime: new Date().toLocaleTimeString(),
                             preview: response[key].document_url,
                             type: 'image',
+                            attachmentId: response[key].id,
+                            isExisting: true,
                         });
                     }
                 });
@@ -124,8 +128,31 @@ const BannerEditPage = () => {
         }));
     };
 
-    const handleRemoveImage = (imageId: number) => {
-        setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+    const handleRemoveImage = async (imageId: number) => {
+        const imageToRemove = uploadedImages.find(img => img.id === imageId);
+        
+        // If it's an existing image from the server, call the remove API
+        if (imageToRemove?.isExisting && imageToRemove.attachmentId) {
+            try {
+                const apiUrl = `https://${baseUrl}/banners/${id}/remove_image/${imageToRemove.attachmentId}.json`;
+                const response = await axios.delete(apiUrl, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                
+                if (response.status === 200) {
+                    toast.success('Image removed successfully');
+                    setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+                }
+            } catch (error: any) {
+                console.error('Error removing image:', error);
+                toast.error(error?.response?.data?.message || 'Failed to remove image');
+            }
+        } else {
+            // For newly uploaded images (not yet saved), just remove from state
+            setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +160,11 @@ const BannerEditPage = () => {
 
         if (!formData.title.trim()) {
             toast.error('Title is required');
+            return;
+        }
+
+        if (uploadedImages.length === 0) {
+            toast.error('At least one banner image is required');
             return;
         }
 
@@ -249,7 +281,7 @@ const BannerEditPage = () => {
                 {/* Banner Images Card */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Banner Images</CardTitle>
+                        <CardTitle>Banner Images <span className="text-red-500">*</span></CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
