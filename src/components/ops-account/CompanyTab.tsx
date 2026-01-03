@@ -102,7 +102,7 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-   {
+  {
     key: "billing_term",
     label: "Billing Term",
     sortable: true,
@@ -187,6 +187,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
       "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
@@ -411,7 +412,11 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
-        console.error("Failed to fetch countries", response.status, await response.text());
+        console.error(
+          "Failed to fetch countries",
+          response.status,
+          await response.text()
+        );
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
@@ -575,13 +580,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
           ? company.billing_rate
           : "-"} */}
 
-            {company?.billing_rate ?? "-"}
+        {company?.billing_rate ?? "-"}
       </span>
     ),
 
     billing_term: (
       <span className="text-sm text-gray-900">
-        {company?.billing_term && company.billing_term.trim() !== "" ? company.billing_term : "-"}
+        {company?.billing_term && company.billing_term.trim() !== ""
+          ? company.billing_term
+          : "-"}
       </span>
     ),
     live_date: (
@@ -593,7 +600,9 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       <div className="flex items-center gap-2">
         <Switch
           checked={!!company?.active}
-          onCheckedChange={() => handleToggleStatus(company.id, !!company.active)}
+          onCheckedChange={() =>
+            handleToggleStatus(company.id, !!company.active)
+          }
           disabled={!canEditCompany}
           aria-label={`Toggle status for ${company?.name || "company"}`}
         />
@@ -603,7 +612,6 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       </div>
     ),
 
-    
     created_at: (
       <span className="text-sm text-gray-600">
         {formatDate(company?.created_at)}
@@ -611,37 +619,50 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     ),
   });
 
-    // Toggle company status handler
-    const handleToggleStatus = async (companyId: number, isActive: boolean) => {
-      if (!canEditCompany) {
-        toast.error("You do not have permission to update company status");
-        return;
-      }
+  // Toggle company status handler
+  const handleToggleStatus = async (companyId: number, isActive: boolean) => {
+    if (!canEditCompany) {
+      toast.error("You do not have permission to update company status");
+      return;
+    }
 
-      try {
-        const formDataToSend = new FormData();
-        formDataToSend.append('pms_company_setup[active]', (!isActive).toString());
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append(
+        "pms_company_setup[active]",
+        (!isActive).toString()
+      );
 
-        const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${companyId}/company_update.json`),
+        {
           method: "PATCH",
           headers: {
-            'Authorization': getAuthHeader(),
+            Authorization: getAuthHeader(),
           },
           body: formDataToSend,
-        });
-
-        if (response.ok) {
-          toast.success(`Company ${!isActive ? "activated" : "deactivated"} successfully`);
-          fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        } else {
-          const errorData = await response.json();
-          toast.error(errorData.message || "Failed to update company status");
         }
-      } catch (error) {
-        console.error("Error updating company status:", error);
-        toast.error("Error updating company status");
+      );
+
+      if (response.ok) {
+        toast.success(
+          `Company ${!isActive ? "activated" : "deactivated"} successfully`
+        );
+        fetchCompanies(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Failed to update company status");
       }
-    };
+    } catch (error) {
+      console.error("Error updating company status:", error);
+      toast.error("Error updating company status");
+    }
+  };
 
   const handleView = (id: number) => {
     console.warn("View company:", id);
