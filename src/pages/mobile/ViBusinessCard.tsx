@@ -65,6 +65,38 @@ export const ViBusinessCard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Add meta tags for cache control
+  useEffect(() => {
+    const metaTags = [
+      {
+        httpEquiv: "Cache-Control",
+        content: "no-cache, no-store, must-revalidate",
+      },
+      { httpEquiv: "Pragma", content: "no-cache" },
+      { httpEquiv: "Expires", content: "0" },
+    ];
+
+    const createdTags: HTMLMetaElement[] = [];
+
+    metaTags.forEach((tag) => {
+      const meta = document.createElement("meta");
+      if (tag.httpEquiv) {
+        meta.httpEquiv = tag.httpEquiv;
+      }
+      meta.content = tag.content;
+      document.head.appendChild(meta);
+      createdTags.push(meta);
+    });
+
+    return () => {
+      createdTags.forEach((tag) => {
+        if (tag.parentNode) {
+          tag.parentNode.removeChild(tag);
+        }
+      });
+    };
+  }, []);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -75,8 +107,10 @@ export const ViBusinessCard: React.FC = () => {
           return;
         }
 
+        // Add timestamp for cache busting
+        const timestamp = new Date().getTime();
         const response = await fetch(
-          `https://live-api.gophygital.work/pms/users/user_info.json?token=${card}`
+          `https://live-api.gophygital.work/pms/users/user_info.json?token=${card}&_t=${timestamp}`
         );
 
         if (!response.ok) {
