@@ -193,6 +193,43 @@ const modulesByPackage = {
         },
       ],
     },
+     {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
 
     // {
     //   name: 'Inventory Sub Type',
