@@ -680,7 +680,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   const handleView = (id: number) => {
     console.warn("View site:", id);
     // Navigate to site details page
-    navigate(`/ops-account/sites/details/${id}`);
+    navigate(`/ops-console/master/location/account/sites/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
