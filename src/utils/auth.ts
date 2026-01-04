@@ -210,7 +210,7 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
-  // Default fallback for other sites
+  // Default fallback for other sitess
   const response = await fetch(
     `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
