@@ -609,6 +609,7 @@ import { OpsAccountPage } from "./pages/master/OpsAccountPage";
 import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
 import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
 import HeadquartersDetailsPage from "./pages/master/HeadquartersDetailsPage";
+import SiteDetailsPage from "./pages/master/SiteDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -964,7 +965,7 @@ function App() {
           });
         },
         onMessageNotification: (message) => {
-          console.log(message)
+          console.log(message);
           if (message.user_id !== currentUser.id) {
             return;
           }
@@ -1038,6 +1039,10 @@ function App() {
                   <Route
                     path="master/location/account/headquarters/details/:id"
                     element={<HeadquartersDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/sites/details/:id"
+                    element={<SiteDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route
@@ -2612,11 +2617,10 @@ function App() {
                   />
                   <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
-          
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
-                  
+
                   <Route
                     path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
