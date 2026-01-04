@@ -800,6 +800,7 @@ import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
+import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -1045,6 +1046,7 @@ function App() {
                     element={<SiteDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
+                  <Route path="admin/users/:id" element={<UserDetailsPage />} />
                   <Route
                     path="admin/create-admin-user"
                     element={<CreateAdminUserPage />}
