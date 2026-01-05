@@ -19,6 +19,7 @@ import {
   FormControlLabel,
   Radio,
 } from "@mui/material";
+import { Label } from "@/components/ui/label";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
 
@@ -105,6 +106,22 @@ export const AddDocumentDashboard = () => {
     }
   };
 
+  // Handle radio button changes
+  const handleRadioChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "shareWith" && value === "individual") {
+      setShowTechParkModal(true);
+    }
+
+    if (name === "shareWithCommunities" && value === "yes") {
+      setShowCommunityModal(true);
+    }
+  };
+
   // Handle file upload for cover image
   const handleCoverImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -143,10 +160,6 @@ export const AddDocumentDashboard = () => {
     setIsSubmitting(true);
     try {
       // TODO: Implement API call to create document
-      console.log("Form Data:", formData);
-      console.log("Cover Image:", coverImage);
-      console.log("Attached Files:", attachedFiles);
-
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -280,79 +293,69 @@ export const AddDocumentDashboard = () => {
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Share With */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-8">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Share With:
-                </label>
+                </Label>
                 <RadioGroup
+                  row
+                  name="shareWith"
                   value={formData.shareWith}
                   onChange={(e) =>
-                    handleInputChange("shareWith", e.target.value)
+                    handleRadioChange("shareWith", e.target.value)
                   }
+                  className="gap-2"
                 >
                   <FormControlLabel
-                    value="all_tech_park"
+                    value="all"
                     control={
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="All Tech Park"
+                    label={
+                      <span className="text-sm text-gray-600">
+                        All Tech Park
+                      </span>
+                    }
                   />
                   <FormControlLabel
-                    value="individual_tech_park"
+                    value="individual"
                     control={
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="Individual Tech Park"
+                    label={
+                      <span className="text-sm text-gray-600">
+                        Individual Tech Park
+                      </span>
+                    }
                   />
                 </RadioGroup>
-                {formData.shareWith === "individual_tech_park" &&
-                  selectedTechParks.length > 0 && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-sm text-[#C72030] cursor-pointer hover:underline">
-                        Tech Parks{" "}
-                        {selectedTechParks
-                          .map(
-                            (id, idx) =>
-                              `${id}${idx < selectedTechParks.length - 1 ? ", Tech Parks " : ""}`
-                          )
-                          .join("")}
-                      </span>
-                      <button
-                        onClick={() => setShowTechParkModal(true)}
-                        className="text-[#C72030] hover:text-[#A01828] transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
               </div>
 
-              {/* Share With Communities */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Share With Communities:
-                </label>
+                </Label>
                 <RadioGroup
+                  row
+                  name="shareWithCommunities"
                   value={formData.shareWithCommunities}
                   onChange={(e) =>
-                    handleInputChange("shareWithCommunities", e.target.value)
+                    handleRadioChange("shareWithCommunities", e.target.value)
                   }
+                  className="gap-2"
                 >
                   <FormControlLabel
                     value="yes"
@@ -360,13 +363,12 @@ export const AddDocumentDashboard = () => {
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="Yes"
+                    label={<span className="text-sm text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
@@ -374,17 +376,51 @@ export const AddDocumentDashboard = () => {
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="No"
+                    label={<span className="text-sm text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
             </div>
+
+            {/* Selected Tech Parks Display */}
+            {formData.shareWith === "individual" &&
+              selectedTechParks.length > 0 && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-[#C72030] text-sm">
+                    {selectedTechParks
+                      .map((_, i) => `Tech Parks ${i + 1}`)
+                      .join(", ")}
+                    .
+                  </span>
+                  <button
+                    onClick={() => setShowTechParkModal(true)}
+                    className="text-gray-500 hover:text-[#C72030] transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+            {/* Selected Communities Display */}
+            {formData.shareWithCommunities === "yes" &&
+              selectedCommunities.length > 0 && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-[#C72030] text-sm">
+                    {selectedCommunities.map((c) => c.name).join(", ")}.
+                  </span>
+                  <button
+                    onClick={() => setShowCommunityModal(true)}
+                    className="text-gray-500 hover:text-[#C72030] transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
           </div>
         </div>
 
