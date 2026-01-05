@@ -53,7 +53,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           <AssetTableDisplay selectedAssets={selectedAssets} />
-          
+
           <MovementToSection
             siteId={siteId}
             setSiteId={setSiteId}
@@ -107,7 +107,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
         {/* Submit Button - Fixed at bottom */}
         <div className="border-t border-gray-200 px-4 sm:px-6 py-4 flex justify-center flex-shrink-0 bg-white">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8 sm:px-12 py-2 text-sm font-medium rounded-none w-full sm:w-auto"
           >
