@@ -6,6 +6,7 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import NewConversationModal from "./NewConversationModal";
 import { fetchConversations, fetchGroups } from "@/store/slices/channelSlice";
+import { Skeleton } from "./ui/skeleton";
 
 const ChannelSidebar = () => {
     const { id } = useParams();
@@ -25,6 +26,8 @@ const ChannelSidebar = () => {
     const [sidebarSearchQuery, setSidebarSearchQuery] = useState("");
     const [conversations, setConversations] = useState([]);
     const [groups, setGroups] = useState([]);
+    const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+    const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
     const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
 
@@ -40,6 +43,7 @@ const ChannelSidebar = () => {
     };
 
     const getConversations = async () => {
+        setIsLoadingConversations(true);
         try {
             const response = await dispatch(
                 fetchConversations({ baseUrl, token })
@@ -47,15 +51,20 @@ const ChannelSidebar = () => {
             setConversations(response);
         } catch (error) {
             console.log(error);
+        } finally {
+            setIsLoadingConversations(false);
         }
     };
 
     const getGroups = async () => {
+        setIsLoadingGroups(true);
         try {
             const response = await dispatch(fetchGroups({ baseUrl, token })).unwrap();
             setGroups(response);
         } catch (error) {
             console.log(error);
+        } finally {
+            setIsLoadingGroups(false);
         }
     };
 
@@ -136,7 +145,14 @@ const ChannelSidebar = () => {
                 {isMessagesOpen && (
                     <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
-                            filteredConversations.length > 0 ? (
+                            isLoadingConversations ? (
+                                // Skeleton loaders for conversations
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <div key={index} className="py-1 px-2">
+                                        <Skeleton className="h-5 w-full bg-gray-200 rounded-[4px]" />
+                                    </div>
+                                ))
+                            ) : filteredConversations.length > 0 ? (
                                 filteredConversations.map((conversation) => {
                                     const displayedName =
                                         currentUserId === conversation.sender_id
@@ -181,7 +197,14 @@ const ChannelSidebar = () => {
                 {isGroupsOpen && (
                     <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
-                            filteredGroups.length > 0 ? (
+                            isLoadingGroups ? (
+                                // Skeleton loaders for groups
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <div key={index} className="py-1 px-2">
+                                        <Skeleton className="h-5 w-full rounded-[4px] bg-gray-200" />
+                                    </div>
+                                ))
+                            ) : filteredGroups.length > 0 ? (
                                 filteredGroups.map((group) => {
                                     const isActive = location.pathname === `/vas/channels/groups/${group.id}`;
                                     return (
