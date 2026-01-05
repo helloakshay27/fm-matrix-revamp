@@ -111,20 +111,20 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-  {
-    key: "user_company_name",
-    label: "Company",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
-  {
-    key: "site_name",
-    label: "Site",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "user_company_name",
+  //   label: "Company",
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true,
+  // },
+  // {
+  //   key: "site_name",
+  //   label: "Site",
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true,
+  // },
   {
     key: "user_type",
     label: "User Type",
@@ -175,7 +175,7 @@ export const AdminUsersDashboard = () => {
         per_page: limit.toString(),
         ...(search && { search }),
         ...(statusFilter !== "all" && {
-          active: statusFilter === "active" ? "true" : "false",
+          "q[:active_eq]": statusFilter === "active" ? "true" : "false",
         }),
       });
 
@@ -302,7 +302,7 @@ export const AdminUsersDashboard = () => {
       </a>
     ),
     mobile: `+${user.country_code} ${user.mobile}`,
-    user_organization_name: user.user_organization_name || "-",
+    user_organization_name: user.organization_list || "-",
     user_company_name: user.user_company_name || "-",
     site_name: user.site_name || "-",
     user_type: (

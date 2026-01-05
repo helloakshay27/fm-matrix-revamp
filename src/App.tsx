@@ -801,6 +801,12 @@ import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
+import { DocumentManagement } from "./pages/DocumentManagement";
+import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
+import { EditDocumentPage } from "./pages/EditDocumentPage";
+import { FolderDetailsPage } from "./pages/FolderDetailsPage";
+import { DocumentDetailPage } from "./pages/DocumentDetailPage";
+import { CreateFolderPage } from "./pages/CreateFolderPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -2418,6 +2424,30 @@ function App() {
                     element={<AssetDashboard />}
                   />
                   <Route
+                    path="/maintenance/documents"
+                    element={<DocumentManagement />}
+                  />
+                  <Route
+                    path="/maintenance/documents/add"
+                    element={<AddDocumentDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/create-folder"
+                    element={<CreateFolderPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/folder/:id"
+                    element={<FolderDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/details/:id"
+                    element={<DocumentDetailPage />}
+                  />
+                  <Route
                     path="/maintenance/asset/details/:id"
                     element={<AssetDetailsPage />}
                   />
@@ -3691,6 +3721,32 @@ function App() {
                   <Route
                     path="/pulse/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+
+                  {/* Document Routes */}
+                  <Route
+                    path="/pulse/documents"
+                    element={<DocumentManagement />}
+                  />
+                  <Route
+                    path="/pulse/documents/add"
+                    element={<AddDocumentDashboard />}
+                  />
+                  <Route
+                    path="/pulse/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/create-folder"
+                    element={<CreateFolderPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/folder/:id"
+                    element={<FolderDetailsPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/details/:id"
+                    element={<DocumentDetailPage />}
                   />
 
                   {/* Plus Service Routes */}

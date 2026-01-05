@@ -253,7 +253,7 @@ export const CreateAdminUserPage = () => {
         toast.success("Organization admin user created successfully!");
 
         // Navigate back to the users list or admin console
-        navigate("/ops-console/master/user/fm-users");
+        navigate("/ops-console/admin/users");
       } else {
         console.error("Failed to create admin user:", result.error);
 
@@ -274,8 +274,15 @@ export const CreateAdminUserPage = () => {
           toast.error(
             "User with this email or mobile already exists. Please use different credentials."
           );
+        } else if (
+          errorMessage.toLowerCase().includes("firstname with same last name already exists")
+        ) {
+          toast.error(
+            "Firstname with same last name already exists. Please use different credentials."
+          );
         } else {
           toast.error(errorMessage);
+          console.log("Unhandled error data:", errorMessage)
         }
       }
     } catch (error: unknown) {
@@ -292,6 +299,12 @@ export const CreateAdminUserPage = () => {
       ) {
         toast.error(
           "User with this email or mobile already exists. Please use different credentials."
+        );
+      } else if (
+        errorMessage.toLowerCase().includes("firstname with same last name already exists")
+      ) {
+        toast.error(
+          "Firstname with same last name already exists. Please use different credentials."
         );
       } else {
         toast.error("An unexpected error occurred. Please try again.");

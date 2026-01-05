@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import MilestoneBody from '../components/MilestoneBody'
 import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
 import AddMilestoneModal from '@/components/AddMilestoneModal'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAppDispatch } from '@/store/hooks'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
@@ -26,6 +26,7 @@ const ProjectMilestones = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [openDialog, setOpenDialog] = useState(false)
     const [owners, setOwners] = useState([])
+    const dropdownRef = useRef<HTMLDivElement>(null)
 
     const getOwners = async () => {
         try {
@@ -45,6 +46,22 @@ const ProjectMilestones = () => {
     useEffect(() => {
         getOwners()
     }, [])
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen])
 
     if (selectedView === "List") {
         return (
@@ -69,7 +86,7 @@ const ProjectMilestones = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -155,7 +172,7 @@ const ProjectMilestones = () => {
                     <Plus className="w-4 h-4 mr-2" />
                     Add
                 </Button>
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsOpen(!isOpen)}
                         className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"

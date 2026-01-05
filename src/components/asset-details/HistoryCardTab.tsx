@@ -56,6 +56,7 @@ interface Asset {
   building?: { name: string };
   wing?: { name: string };
   area?: { name: string };
+  asset_type_category?: string;
 }
 
 interface ActivityHistoryEntry {
@@ -73,7 +74,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     const fetchHistory = async () => {
       // Use assetId prop if available, otherwise fall back to asset.id
       const idToUse = assetId || asset.id;
-      
+
       if (!idToUse) {
         console.warn('No asset ID available for history fetch');
         return;
@@ -101,7 +102,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
   const basicAssetInfo = [
     { label: 'Asset Name', value: asset?.name || '-' },
     { label: 'Asset Code', value: asset?.asset_code || '-' },
-    { label: 'Category', value: asset?.group || '-' },
+    { label: 'Category', value: asset?.asset_type_category || '-' },
     { label: 'Current Status', value: asset?.status || '-' },
     { label: 'Location', value: asset?.site_name || '-' },
     { label: 'Responsible Dept.', value: asset?.allocation_type || '-' }
@@ -127,7 +128,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="w-full text-center"> 
+                <TableHeader className="w-full text-center">
                   <TableRow>
                     <TableHead className="font-medium text-center">Label</TableHead>
                     <TableHead className="font-medium text-center">Value</TableHead>
@@ -262,27 +263,25 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           </button>
         </div> */}
         <div className="flex border-b border-gray-200">
-  <button
-    onClick={() => setActiveTab('history-details')}
-    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-      activeTab === 'history-details'
-        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
-        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-    }`}
-  >
-    History Details
-  </button>
-  <button
-    onClick={() => setActiveTab('logs')}
-    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-      activeTab === 'logs'
-        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
-        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-    }`}
-  >
-    Logs
-  </button>
-</div>
+          <button
+            onClick={() => setActiveTab('history-details')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
+          >
+            History Details
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'logs'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
+          >
+            Logs
+          </button>
+        </div>
 
 
         <div className="p-4 sm:p-6 ">

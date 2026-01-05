@@ -1,17 +1,30 @@
 import axios from 'axios';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos }) => {
+const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false }) => {
     const baseURL = localStorage.getItem('baseUrl');
     const [title, setTitle] = useState('');
     const [date, setDate] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Initialize form with editing data if in edit mode
+    useEffect(() => {
+        if (isEditMode && editingTodo) {
+            setTitle(editingTodo.title || '');
+            setDate(editingTodo.target_date || null);
+        } else {
+            setTitle('');
+            setDate(null);
+        }
+    }, [isEditMode, editingTodo]);
+
     const closeModal = () => {
-        setIsModalOpen(false);
+        setIsModalOpen();
+        setTitle('');
+        setDate(null);
     };
 
     const handleSubmit = async (e) => {
@@ -28,21 +41,34 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos }) => {
                 todo: {
                     title,
                     target_date: date,
-                    status: 'open',
+                    status: isEditMode ? editingTodo.status : 'open',
                 },
             };
 
-            await axios.post(`https://${baseURL}/todos.json`, payload, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-            toast.success('To-Do added successfully');
+            if (isEditMode && editingTodo) {
+                // Update existing todo
+                await axios.put(`https://${baseURL}/todos/${editingTodo.id}.json`, payload, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                toast.success('To-Do updated successfully');
+            } else {
+                // Create new todo
+                await axios.post(`https://${baseURL}/todos.json`, payload, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                toast.success('To-Do added successfully');
+            }
             closeModal();
             getTodos();
         } catch (error) {
             console.log(error);
+            toast.error(isEditMode ? 'Failed to update To-Do' : 'Failed to add To-Do');
         } finally {
             setIsSubmitting(false);
         }
@@ -74,7 +100,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos }) => {
             }}
         >
             <DialogTitle className="relative py-6 !px-0">
-                <h3 className="text-lg font-medium text-center">Add ToDo</h3>
+                <h3 className="text-lg font-medium text-center">{isEditMode ? 'Edit ToDo' : 'Add ToDo'}</h3>
                 <X
                     className="absolute top-6 right-8 cursor-pointer"
                     onClick={closeModal}
@@ -120,7 +146,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos }) => {
                                 className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? 'Submitting...' : 'Add Todo'}
+                                {isSubmitting ? 'Submitting...' : isEditMode ? 'Update' : 'Add Todo'}
                             </button>
                         </div>
                     </div>
