@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Check, Play, Pause } from 'lucide-react';
+import { Plus, Check, Play, Pause, Pencil } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AddToDoModal from '@/components/AddToDoModal';
@@ -78,6 +78,8 @@ export default function Todo() {
     const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
     const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
+    const [editingTodo, setEditingTodo] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const getTodos = async () => {
         try {
@@ -200,6 +202,18 @@ export default function Todo() {
         }
     };
 
+    const handleEditTodo = (todo) => {
+        setEditingTodo(todo);
+        setIsEditMode(true);
+        setIsAddTodoModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsAddTodoModalOpen(false);
+        setEditingTodo(null);
+        setIsEditMode(false);
+    };
+
     const pendingTodos = todos.filter((t) => t.status !== 'completed');
     const completedTodos = todos.filter((t) => t.status === 'completed');
 
@@ -257,6 +271,7 @@ export default function Todo() {
                                             handlePlayTask={handlePlayTask}
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
+                                            handleEditTodo={handleEditTodo}
                                         />
                                     ))}
                                 </div>
@@ -275,6 +290,7 @@ export default function Todo() {
                                             handlePlayTask={handlePlayTask}
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
+                                            handleEditTodo={handleEditTodo}
                                         />
                                     ))}
                                 </div>
@@ -293,6 +309,7 @@ export default function Todo() {
                                             handlePlayTask={handlePlayTask}
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
+                                            handleEditTodo={handleEditTodo}
                                         />
                                     ))}
                                 </div>
@@ -311,6 +328,7 @@ export default function Todo() {
                                             handlePlayTask={handlePlayTask}
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
+                                            handleEditTodo={handleEditTodo}
                                         />
                                     ))}
                                 </div>
@@ -363,8 +381,10 @@ export default function Todo() {
             {isAddTodoModalOpen && (
                 <AddToDoModal
                     isModalOpen={isAddTodoModalOpen}
-                    setIsModalOpen={setIsAddTodoModalOpen}
+                    setIsModalOpen={handleCloseModal}
                     getTodos={getTodos}
+                    editingTodo={editingTodo}
+                    isEditMode={isEditMode}
                 />
             )}
 
@@ -443,7 +463,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 // ----------------------------------------------
 // Separate Todo Item Component (Cleaner UI)
 // ----------------------------------------------
-const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen }) => {
+const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen, handleEditTodo }) => {
     const navigate = useNavigate();
 
     const handleTaskClick = () => {
@@ -459,6 +479,13 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId
 
     return (
         <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors group">
+            <button
+                onClick={() => handleEditTodo(todo)}
+                className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                title="Edit todo"
+            >
+                <Pencil size={14} />
+            </button>
             <button
                 onClick={() => toggleTodo(todo.id)}
                 className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
