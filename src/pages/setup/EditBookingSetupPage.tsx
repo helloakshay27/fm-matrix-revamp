@@ -3,17 +3,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share2, Tv, Upload, User, X } from "lucide-react";
 import {
     TextField,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
+    Radio,
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
+import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -87,12 +89,16 @@ export const EditBookingSetupPage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
     const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
+    const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+    const [selectedGalleryImages, setSelectedGalleryImages] = useState<any[]>([]);
+    const [existingGalleryImages, setExistingGalleryImages] = useState<any[]>([]);
+    const [blockDaySlots, setBlockDaySlots] = useState<{ [key: number]: any[] }>({});
     const [additionalOpen, setAdditionalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
-
-    console.log(selectedBookingFiles)
+    const [inventories, setInventories] = useState<any[]>([]);
+    const [loadingInventories, setLoadingInventories] = useState(false);
 
     const [formData, setFormData] = useState({
         facilityName: "",
@@ -107,6 +113,7 @@ export const EditBookingSetupPage = () => {
         complimentary: false,
         gstPercentage: "",
         sgstPercentage: "",
+        igstPercentage: "",
         perSlotCharge: "",
         bookingAllowedBefore: { d: "", h: "", m: "" },
         advanceBooking: { d: "", h: "", m: "" },
@@ -117,26 +124,7 @@ export const EditBookingSetupPage = () => {
         description: "",
         termsConditions: "",
         cancellationText: "",
-        amenities: {
-            tv: { name: "TV", selected: false, tag_id: null },
-            whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
-            casting: { name: "Casting", selected: false, tag_id: null },
-            smartPenForTV: {
-                name: "Smart Pen for TV",
-                selected: false,
-                tag_id: null,
-            },
-            wirelessCharging: {
-                name: "Wireless Charging",
-                selected: false,
-                tag_id: null,
-            },
-            meetingRoomInventory: {
-                name: "Meeting Room Inventory",
-                selected: false,
-                tag_id: null,
-            },
-        },
+        amenities: {} as Record<number, boolean>,
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
@@ -149,6 +137,22 @@ export const EditBookingSetupPage = () => {
                 concurrentSlots: "",
                 slotBy: 15,
                 wrapTime: "",
+            },
+        ],
+        chargeSetup: {
+            member: { selected: false, adult: "", child: "" },
+            guest: { selected: false, adult: "", child: "" },
+            minimumPersonAllowed: "1",
+            maximumPersonAllowed: "1",
+        },
+        blockDays: [
+            {
+                id: undefined,
+                startDate: "",
+                endDate: "",
+                dayType: "entireDay",
+                blockReason: "",
+                selectedSlots: [],
             },
         ],
     });
@@ -202,6 +206,30 @@ export const EditBookingSetupPage = () => {
         }
     };
 
+    const fetchInventories = async () => {
+        if (inventories.length > 0) return;
+        setLoadingInventories(true);
+        try {
+            const response = await fetch(`https://${baseUrl}/pms/inventories.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            if (data && Array.isArray(data.inventories)) {
+                setInventories(data.inventories);
+            } else {
+                setInventories([]);
+            }
+        } catch (error) {
+            console.error("Error fetching inventories:", error);
+            setInventories([]);
+        } finally {
+            setLoadingInventories(false);
+        }
+    };
+
     const fetchFacilityBookingDetails = async () => {
         try {
             const response = await axios.get(
@@ -215,7 +243,8 @@ export const EditBookingSetupPage = () => {
             );
             const responseData = response.data.facility_setup;
 
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
@@ -228,6 +257,7 @@ export const EditBookingSetupPage = () => {
                 complimentary: responseData.complementary,
                 gstPercentage: responseData.gst,
                 sgstPercentage: responseData.sgst,
+                igstPercentage: responseData.igst,
                 perSlotCharge: responseData?.facility_charge?.per_slot_charge,
                 bookingAllowedBefore: responseData.bb_dhm,
                 advanceBooking: responseData.ab_dhm,
@@ -238,42 +268,15 @@ export const EditBookingSetupPage = () => {
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
-                amenities: {
-                    tv: {
-                        name: "TV",
-                        selected: responseData.amenity_info[0].selected,
-                        tag_id: responseData.amenity_info[0].tag_id
-                    },
-                    whiteboard: {
-                        name: "Whiteboard",
-                        selected: responseData.amenity_info[1].selected,
-                        tag_id: responseData.amenity_info[1].tag_id
-                    },
-                    casting: {
-                        name: "Casting",
-                        selected: responseData.amenity_info[2].selected,
-                        tag_id: responseData.amenity_info[2].tag_id
-                    },
-                    smartPenForTV: {
-                        name: "Smart Pen for TV",
-                        selected: responseData.amenity_info[3].selected,
-                        tag_id: responseData.amenity_info[3].tag_id
-                    },
-                    wirelessCharging: {
-                        name: "Wireless Charging",
-                        selected: responseData.amenity_info[4].selected,
-                        tag_id: responseData.amenity_info[4].tag_id
-                    },
-                    meetingRoomInventory: {
-                        name: "Meeting Room Inventory",
-                        selected: responseData.amenity_info[5].selected,
-                        tag_id: responseData.amenity_info[5].tag_id
-                    },
-                },
+                amenities: responseData.facility_setup_accessories?.reduce((acc, item) => {
+                    const accessory = item.facility_setup_accessory;
+                    acc[accessory.pms_inventory_id] = true;
+                    return acc;
+                }, {}) || {},
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
-                slots: responseData.facility_slots.map((slot) => ({
+                slots: responseData.facility_slots?.map((slot) => ({
                     id: slot.facility_slot.id,
                     startTime: {
                         hour: slot.facility_slot.start_hour,
@@ -292,21 +295,81 @@ export const EditBookingSetupPage = () => {
                         minute: slot.facility_slot.end_min,
                     },
                     concurrentSlots: slot.facility_slot.max_bookings,
-                    slotBy: slot.facility_slot.breakminutes_label,
+                    slotBy: slot.facility_slot.breakminutes || slot.facility_slot.breakminutes_label,
                     wrapTime: slot.facility_slot.wrap_time,
                     dayofweek: slot.facility_slot.dayofweek || "",
                     _destroy: false,
-                })),
+                })) || [],
+                chargeSetup: {
+                    member: {
+                        ...prev.chargeSetup.member,
+                        selected: responseData.facility_charge?.member ?? false,
+                        adult: responseData.facility_charge?.adult_member_charge,
+                        child: responseData.facility_charge?.child_member_charge
+                    },
+                    guest: {
+                        ...prev.chargeSetup.guest,
+                        selected: responseData.facility_charge?.guest ?? false,
+                        adult: responseData.facility_charge?.adult_guest_charge,
+                        child: responseData.facility_charge?.child_guest_charge
+                    },
+                    minimumPersonAllowed: responseData.min_people,
+                    maximumPersonAllowed: responseData.max_people,
+                },
+                blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
+                    id: blocking.facility_blocking?.id || blocking.id,
+                    startDate: blocking.facility_blocking?.ondate || "",
+                    endDate: "",
+                    dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+                    blockReason: blocking.facility_blocking?.reason || "",
+                    selectedSlots: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)) || [],
+                })) || [
+                        {
+                            id: undefined,
+                            startDate: "",
+                            endDate: "",
+                            dayType: "entireDay",
+                            blockReason: "",
+                            selectedSlots: [],
+                        },
+                    ],
+            }));
+
+            console.log('=== Block Days Loaded ===');
+            console.log('Raw facility_blockings:', responseData?.facility_blockings);
+            console.log('Mapped blockDays:', responseData?.facility_blockings?.map((blocking: any) => ({
+                id: blocking.facility_blocking?.id,
+                date: blocking.facility_blocking?.ondate,
+                dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+                block_slot_raw: blocking.facility_blocking?.block_slot,
+                selectedSlots_parsed: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)),
+            })));
+
+            // Fetch slots for all block days that have dates (so slots can be displayed)
+            responseData?.facility_blockings?.forEach((blocking: any, index: number) => {
+                const ondate = blocking.facility_blocking?.ondate;
+                const blockSlot = blocking.facility_blocking?.block_slot;
+                const dayType = blockSlot && blockSlot.length > 0 ? "selectedSlots" : "entireDay";
+
+                // Only fetch slots if it's a selectedSlots type (or if we want to show available slots for potential editing)
+                if (ondate && dayType === "selectedSlots") {
+                    console.log(`Fetching slots for block day ${index}:`, {
+                        date: ondate,
+                        blockSlotIds: blockSlot,
+                        willPreselect: blockSlot?.map((slotId: string) => parseInt(slotId))
+                    });
+                    fetchBlockDaySlots(id!, ondate, index);
+                }
             });
-            const transformedRules = responseData.cancellation_rules.map((rule) => ({
+            const transformedRules = responseData.cancellation_rules?.map((rule) => ({
                 description: rule.description,
                 time: {
-                    type: rule.hour,
-                    value: rule.min,
-                    day: rule.day,
+                    type: rule.hour?.toString().padStart(2, "0") || "00",
+                    value: rule.min?.toString().padStart(2, "0") || "00",
+                    day: rule.day?.toString() || "0",
                 },
                 deduction: rule.deduction?.toString() || "",
-            }));
+            })) || [];
 
             setCancellationRules([...transformedRules]);
 
@@ -317,16 +380,111 @@ export const EditBookingSetupPage = () => {
                     id: doc.document.id
                 })) || []
             );
+
+            // Extract gallery images from API response
+            const galleryImages: any[] = [];
+            const ratioKeys = ['gallery_image_1_by_1', 'gallery_image_16_by_9', 'gallery_image_9_by_16', 'gallery_image_3_by_2'];
+            const ratioLabels: { [key: string]: string } = {
+                'gallery_image_1_by_1': '1:1',
+                'gallery_image_16_by_9': '16:9',
+                'gallery_image_9_by_16': '9:16',
+                'gallery_image_3_by_2': '3:2'
+            };
+
+            ratioKeys.forEach((ratioKey) => {
+                const imageArray = responseData?.[ratioKey];
+                if (Array.isArray(imageArray) && imageArray.length > 0) {
+                    imageArray.forEach((item: any) => {
+                        const imageData = item[ratioKey];
+                        if (imageData?.document) {
+                            galleryImages.push({
+                                name: imageData.name || `Image ${galleryImages.length + 1}`,
+                                preview: imageData.document,
+                                ratio: ratioLabels[ratioKey],
+                                url: imageData.document,
+                                doctype: imageData.doctype,
+                                fileSize: imageData.document_file_size,
+                                enableToApp: true
+                            });
+                        }
+                    });
+                }
+            });
+
+            setExistingGalleryImages(galleryImages);
+            setSelectedGalleryImages(galleryImages); // Also set to selectedGalleryImages to display them
         } catch (error) {
             console.error("Error fetching facility details:", error);
             toast.error("Failed to fetch facility details");
         }
     };
 
+    const handleGalleryModalOpen = () => {
+        setGalleryModalOpen(true);
+    };
+
+    const handleGalleryModalClose = () => {
+        setGalleryModalOpen(false);
+    };
+
+    const handleGalleryModalContinue = (galleryImages: any[]) => {
+        setSelectedGalleryImages(galleryImages);
+        setGalleryModalOpen(false);
+    };
+
+    const fetchBlockDaySlots = async (facilityId: string, date: string, blockIndex: number) => {
+        try {
+            const formattedDate = date.replace(/-/g, '/');
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    params: {
+                        on_date: formattedDate,
+                    }
+                }
+            );
+
+            if (response.data && response.data.slots) {
+                console.log(`Slots fetched for block day ${blockIndex}:`, response.data.slots);
+                console.log(`Sample slot IDs:`, response.data.slots.slice(0, 3).map((s: any) => ({ id: s.id, type: typeof s.id, ampm: s.ampm })));
+                setBlockDaySlots(prev => ({
+                    ...prev,
+                    [blockIndex]: response.data.slots
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching block day slots:', error);
+            setBlockDaySlots(prev => ({
+                ...prev,
+                [blockIndex]: []
+            }));
+        }
+    };
+
+    const addBlockDay = () => {
+        const newBlockDay = {
+            id: undefined,
+            startDate: "",
+            endDate: "",
+            dayType: "entireDay",
+            blockReason: "",
+            selectedSlots: [],
+        };
+        setFormData({
+            ...formData,
+            blockDays: [...formData.blockDays, newBlockDay],
+        });
+    };
+
     console.log(formData);
 
     useEffect(() => {
         fetchDepartments();
+        fetchInventories();
         fetchFacilityBookingDetails();
     }, [id]);
 
@@ -407,12 +565,12 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
-            if (formData.department) {
-                formDataToSend.append(
-                    "facility_setup[department_id]",
-                    formData.department
-                );
-            }
+            // if (formData.department) {
+            //     formDataToSend.append(
+            //         "facility_setup[department_id]",
+            //         formData.department
+            //     );
+            // }
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
             formDataToSend.append(
                 "facility_setup[postpaid]",
@@ -432,13 +590,124 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
+            formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
+            // formDataToSend.append(
+            //     "facility_setup[facility_charge_attributes][per_slot_charge]",
+            // formData.perSlotChasrge
+            // );
+
+
+            // Charge Setup - Member selected boolean
             formDataToSend.append(
-                "facility_setup[facility_charge_attributes][per_slot_charge]",
-                formData.perSlotCharge
+                "facility_setup[facility_charge_attributes][member]",
+                formData.chargeSetup.member.selected ? "true" : "false"
+            );
+            // Member charges (pass if selected or if any value exists)
+            if (formData.chargeSetup.member.selected || formData.chargeSetup.member.adult || formData.chargeSetup.member.child) {
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][adult_member_charge]",
+                    formData.chargeSetup.member.adult || "0"
+                );
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][child_member_charge]",
+                    formData.chargeSetup.member.child || "0"
+                );
+            }
+
+            // Charge Setup - Guest selected boolean
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][guest]",
+                formData.chargeSetup.guest.selected ? "true" : "false"
+            );
+            // Guest charges (pass if selected or if any value exists)
+            if (formData.chargeSetup.guest.selected || formData.chargeSetup.guest.adult || formData.chargeSetup.guest.child) {
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][adult_guest_charge]",
+                    formData.chargeSetup.guest.adult || "0"
+                );
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][child_guest_charge]",
+                    formData.chargeSetup.guest.child || "0"
+                );
+            }
+
+            // Charge Setup - Person limits and GST
+            formDataToSend.append(
+                "facility_setup[min_people]",
+                formData.chargeSetup.minimumPersonAllowed || "1"
             );
             formDataToSend.append(
+                "facility_setup[max_people]",
+                formData.chargeSetup.maximumPersonAllowed || "1"
+            );
+
+            // Block Days - Handle multiple block day records
+            console.log('=== Preparing Block Days Payload ===');
+            formData.blockDays.forEach((blockDay, index) => {
+                console.log(`Block day ${index}:`, {
+                    id: blockDay.id,
+                    startDate: blockDay.startDate,
+                    dayType: blockDay.dayType,
+                    selectedSlots: blockDay.selectedSlots,
+                    selectedSlotsCount: blockDay.selectedSlots?.length || 0
+                });
+
+                // Include ID only if it exists (existing block day from API)
+                if (blockDay.id) {
+                    console.log(`Block day ${index} has ID: ${blockDay.id} - will update existing record`);
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][id]`,
+                        blockDay.id.toString()
+                    );
+                } else {
+                    console.log(`Block day ${index} has no ID - will create new record`);
+                }
+
+                if (blockDay.startDate) {
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][ondate]`,
+                        blockDay.startDate
+                    );
+                }
+
+                if (blockDay.blockReason) {
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][reason]`,
+                        blockDay.blockReason
+                    );
+                }
+
+                // Add selected slots if dayType is selectedSlots
+                if (blockDay.dayType === "selectedSlots" && blockDay.selectedSlots && blockDay.selectedSlots.length > 0) {
+                    console.log(`Adding ${blockDay.selectedSlots.length} slot IDs to payload for block day ${index}:`, blockDay.selectedSlots);
+                    blockDay.selectedSlots.forEach((slotId: number) => {
+                        console.log(`  Adding slot ID: ${slotId} (type: ${typeof slotId})`);
+                        formDataToSend.append(
+                            `facility_setup[facility_blockings_attributes][${index}][block_slot][]`,
+                            slotId.toString()
+                        );
+                    });
+                } else if (blockDay.dayType === "selectedSlots") {
+                    console.log(`Block day ${index} is selectedSlots type but no slots selected`);
+                } else {
+                    console.log(`Block day ${index} is entireDay type - no slots to add`);
+                }
+
+                // Default values for facility blockings
+                formDataToSend.append(
+                    `facility_setup[facility_blockings_attributes][${index}][order_allowed]`,
+                    "false"
+                );
+
+                formDataToSend.append(
+                    `facility_setup[facility_blockings_attributes][${index}][booking_allowed]`,
+                    "false"
+                );
+            });
+
+            formDataToSend.append(
                 "facility_setup[multi_slot]",
-                formData.allowMultipleSlots
+                formData.allowMultipleSlots ? "1" : "0"
             )
             formDataToSend.append(
                 "facility_setup[max_slots]",
@@ -525,27 +794,38 @@ export const EditBookingSetupPage = () => {
                 }
             });
 
+            // Append gallery images
+            selectedGalleryImages.forEach((image: any, index: number) => {
+                // Convert aspect ratio to format: 16_by_9, 9_by_16, 1_by_1, 3_by_2
+                const ratioKey = image.ratio.replace(':', '_by_');
+                formDataToSend.append(
+                    `facility_setup[attach_file_${ratioKey}][${index}][file]`,
+                    image.file
+                );
+            });
+
             // Append image IDs to remove
             imageIdsToRemove.forEach((id) => {
                 formDataToSend.append(`image_remove[]`, id);
             });
 
-            let index = 0;
-            Object.keys(formData.amenities).forEach((key) => {
-                const amenity = formData.amenities[key];
-                if (amenity.tag_id && !amenity.selected) {
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
-                    index++;
-                } else if (amenity.selected) {
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-                    if (amenity.tag_id) {
-                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
-                    }
-                    index++;
-                }
+            // Facility Setup Accessories
+            const selectedAccessories = Object.entries(formData.amenities)
+                .filter(([_, isSelected]) => isSelected)
+                .map(([inventoryId]) => parseInt(inventoryId));
+
+            console.log('=== Selected Accessories (Edit) ===');
+            console.log('formData.amenities:', formData.amenities);
+            console.log('selectedAccessories IDs:', selectedAccessories);
+            console.log('Total accessories selected:', selectedAccessories.length);
+            console.log('====================================');
+
+            selectedAccessories.forEach((inventoryId, index) => {
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
+                    inventoryId.toString()
+                );
+                console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
             });
 
             // Facility Slots
@@ -622,6 +902,24 @@ export const EditBookingSetupPage = () => {
                 "shared_content_info",
                 formData.sharedContentInfo || ""
             );
+
+            // Log the FormData payload for debugging
+            console.log("=== EDIT PAYLOAD ===");
+            const payloadEntries: any = {};
+            formDataToSend.forEach((value, key) => {
+                if (payloadEntries[key]) {
+                    // If key already exists, convert to array
+                    if (Array.isArray(payloadEntries[key])) {
+                        payloadEntries[key].push(value);
+                    } else {
+                        payloadEntries[key] = [payloadEntries[key], value];
+                    }
+                } else {
+                    payloadEntries[key] = value;
+                }
+            });
+            console.log(JSON.stringify(payloadEntries, null, 2));
+            console.log("===================");
 
             const response = await fetch(
                 `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
@@ -701,7 +999,7 @@ export const EditBookingSetupPage = () => {
                                     }
                                     variant="outlined"
                                 />
-                                <FormControl>
+                                {/* <FormControl>
                                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                                     <Select
                                         value={formData.department}
@@ -724,7 +1022,7 @@ export const EditBookingSetupPage = () => {
                                                 </MenuItem>
                                             ))}
                                     </Select>
-                                </FormControl>
+                                </FormControl> */}
                             </div>
                             <div className="flex gap-6">
                                 <div className="flex items-center space-x-2">
@@ -765,6 +1063,270 @@ export const EditBookingSetupPage = () => {
                         </div>
                     </div>
 
+
+                    {/* Charge Setup Card */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <DollarSign className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full border">
+                                <thead>
+                                    <tr className="bg-gray-50">
+                                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
+                                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
+                                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.member.selected}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    selected: !!checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <span>Member</span>
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.member.adult}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    member: {
+                                                                        ...formData.chargeSetup.member,
+                                                                        adult: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.member.adult}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    adult: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.member.child}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    member: {
+                                                                        ...formData.chargeSetup.member,
+                                                                        child: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.member.child}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    child: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.guest.selected}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    selected: !!checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <span>Guest</span>
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.guest.adult}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    guest: {
+                                                                        ...formData.chargeSetup.guest,
+                                                                        adult: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.guest.adult}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    adult: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.guest.child}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    guest: {
+                                                                        ...formData.chargeSetup.guest,
+                                                                        child: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.guest.child}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    child: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Minimum Person Allowed</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.minimumPersonAllowed}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            chargeSetup: {
+                                                ...formData.chargeSetup,
+                                                minimumPersonAllowed: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    className="w-32"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Maximum Person Allowed</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.maximumPersonAllowed}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            chargeSetup: {
+                                                ...formData.chargeSetup,
+                                                maximumPersonAllowed: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    className="w-32"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -786,7 +1348,7 @@ export const EditBookingSetupPage = () => {
                                 <div>End Time</div>
                                 <div>Concurrent Slots</div>
                                 <div>Slot by</div>
-                                <div>Wrap Time</div>
+                                {/* <div>Wrap Time</div> */}
                             </div>
                             {formData.slots.map((slot, index) => (
                                 <div key={index} className="grid grid-cols-7 gap-2 mb-2">
@@ -948,16 +1510,20 @@ export const EditBookingSetupPage = () => {
                                                 setFormData({ ...formData, slots: newSlots });
                                             }}
                                         >
-                                            <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
-                                            <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
-                                            <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
-                                            <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
-                                            <MenuItem value={"90 Minutes"}>
-                                                1 and a half hours
-                                            </MenuItem>
+                                            <MenuItem value={15}>15 Minutes</MenuItem>
+                                            <MenuItem value={30}>Half hour</MenuItem>
+                                            <MenuItem value={45}>45 Minutes</MenuItem>
+                                            <MenuItem value={60}>1 hour</MenuItem>
+                                            <MenuItem value={90}>1 and a half hours</MenuItem>
+                                            <MenuItem value={120}>2 hours</MenuItem>
+                                            <MenuItem value={150}>2 and a half hours</MenuItem>
+                                            <MenuItem value={180}>3 hours</MenuItem>
+                                            <MenuItem value={210}>3 and a half hours</MenuItem>
+                                            <MenuItem value={240}>4 hours</MenuItem>
+                                            <MenuItem value={270}>4 and a half hours</MenuItem>
                                         </Select>
                                     </FormControl>
-                                    <TextField
+                                    {/* <TextField
                                         size="small"
                                         onChange={(e) => {
                                             const newSlots = [...formData.slots];
@@ -966,7 +1532,7 @@ export const EditBookingSetupPage = () => {
                                         }}
                                         value={slot.wrapTime}
                                         variant="outlined"
-                                    />
+                                    /> */}
                                 </div>
                             ))}
                             <div className="space-y-4 mt-4">
@@ -994,7 +1560,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1011,7 +1577,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1028,7 +1594,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                                 <div>
@@ -1052,7 +1618,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1069,7 +1635,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1086,7 +1652,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                                 <div>
@@ -1110,7 +1676,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1127,7 +1693,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1144,12 +1710,12 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                             </div>
                             <div className="space-y-4 flex items-center justify-between mt-4">
-                                <div className="flex flex-col gap-5">
+                                {/* <div className="flex flex-col gap-5">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
                                             id="allowMultipleSlots"
@@ -1183,7 +1749,7 @@ export const EditBookingSetupPage = () => {
                                             />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                     <span>Facility can be booked</span>
                                     <TextField
@@ -1204,6 +1770,182 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Block Days Section */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    <CalendarDays className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days </h3>
+                            </div>
+                            <Button
+                                onClick={addBlockDay}
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                size="sm"
+                            >
+                                Add
+                            </Button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[...formData.blockDays].reverse().map((blockDay, reverseIndex) => {
+                                const blockIndex = formData.blockDays.length - 1 - reverseIndex;
+                                return (
+                                    <div key={blockIndex} className="space-y-4 p-4 border rounded-lg">
+                                        {formData.blockDays.length > 1 && (
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-semibold">Block Day {blockIndex + 1}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: formData.blockDays.filter((_, idx) => idx !== blockIndex),
+                                                        });
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <TextField
+                                                label="Date"
+                                                type="date"
+                                                value={blockDay.startDate}
+                                                onChange={(e) => {
+                                                    const newBlockDays = [...formData.blockDays];
+                                                    newBlockDays[blockIndex].startDate = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        blockDays: newBlockDays,
+                                                    });
+                                                    // Fetch slots automatically if selectedSlots is active
+                                                    if (blockDay.dayType === "selectedSlots" && e.target.value) {
+                                                        fetchBlockDaySlots(id!, e.target.value, blockIndex);
+                                                    }
+                                                }}
+                                                variant="outlined"
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-6 px-1">
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    type="radio"
+                                                    id={`entireDay-${blockIndex}`}
+                                                    name={`dayType-${blockIndex}`}
+                                                    checked={blockDay.dayType === "entireDay"}
+                                                    onChange={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        newBlockDays[blockIndex].dayType = "entireDay";
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="text-blue-600"
+                                                />
+                                                <label htmlFor={`entireDay-${blockIndex}`}>Entire Day</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    type="radio"
+                                                    id={`selectedSlots-${blockIndex}`}
+                                                    name={`dayType-${blockIndex}`}
+                                                    checked={blockDay.dayType === "selectedSlots"}
+                                                    onChange={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        newBlockDays[blockIndex].dayType = "selectedSlots";
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="text-blue-600"
+                                                />
+                                                <label htmlFor={`selectedSlots-${blockIndex}`}>Selected Slots</label>
+                                            </div>
+                                        </div>
+
+                                        {blockDay.dayType === "selectedSlots" && (
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Select Slots</h4>
+                                                {blockDaySlots[blockIndex]?.length > 0 ? (
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                        {blockDaySlots[blockIndex].map((slot) => {
+                                                            const isChecked = blockDay.selectedSlots?.includes(slot.id) || false;
+                                                            console.log(`Block ${blockIndex} - Slot ${slot.id} (${slot.ampm}):`, {
+                                                                slotId: slot.id,
+                                                                slotIdType: typeof slot.id,
+                                                                selectedSlots: blockDay.selectedSlots,
+                                                                isChecked: isChecked
+                                                            });
+                                                            return (
+                                                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`slot-${blockIndex}-${slot.id}`}
+                                                                        checked={isChecked}
+                                                                        onChange={(e) => {
+                                                                            const newBlockDays = [...formData.blockDays];
+                                                                            if ((e.target as HTMLInputElement).checked) {
+                                                                                newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
+                                                                            } else {
+                                                                                newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
+                                                                            }
+                                                                            setFormData({
+                                                                                ...formData,
+                                                                                blockDays: newBlockDays,
+                                                                            });
+                                                                        }}
+                                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                    />
+                                                                    <label
+                                                                        htmlFor={`slot-${blockIndex}-${slot.id}`}
+                                                                        className="cursor-pointer text-sm font-medium"
+                                                                    >
+                                                                        {slot.ampm}
+                                                                    </label>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : blockDay.startDate ? (
+                                                    <p className="text-sm text-gray-500">No slots available for the selected date</p>
+                                                ) : (
+                                                    <p className="text-sm text-gray-500">Please select a date to fetch available slots</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                                            <Textarea
+                                                placeholder="Please mention block reason"
+                                                value={blockDay.blockReason}
+                                                onChange={(e) => {
+                                                    const newBlockDays = [...formData.blockDays];
+                                                    newBlockDays[blockIndex].blockReason = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        blockDays: newBlockDays,
+                                                    });
+                                                }}
+                                                className="min-h-[100px]"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1214,7 +1956,7 @@ export const EditBookingSetupPage = () => {
 
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="flex items-center space-x-2">
+                                {/* <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="postpaid"
                                         checked={formData.postpaid}
@@ -1223,7 +1965,7 @@ export const EditBookingSetupPage = () => {
                                         }
                                     />
                                     <label htmlFor="postpaid">Postpaid</label>
-                                </div>
+                                </div> */}
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="prepaid"
@@ -1255,7 +1997,7 @@ export const EditBookingSetupPage = () => {
                                     <label htmlFor="complimentary">Complimentary</label>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <TextField
                                     label="SGST(%)"
                                     value={formData.sgstPercentage}
@@ -1278,15 +2020,26 @@ export const EditBookingSetupPage = () => {
                                     }
                                     variant="outlined"
                                 />
+                                <TextField
+                                    label="IGST(%)"
+                                    value={formData.igstPercentage}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            igstPercentage: e.target.value,
+                                        })
+                                    }
+                                    variant="outlined"
+                                />
                             </div>
-                            <TextField
+                            {/* <TextField
                                 label="Per Slot Charge"
                                 value={formData.perSlotCharge}
                                 onChange={(e) =>
                                     setFormData({ ...formData, perSlotCharge: e.target.value })
                                 }
                                 variant="outlined"
-                            />
+                            /> */}
                         </div>
                     </div>
 
@@ -1407,6 +2160,98 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Gallery Images Card */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    <Image className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                                    GALLERY IMAGES [{selectedGalleryImages.length}]
+                                </h3>
+                            </div>
+                            <Button
+                                onClick={handleGalleryModalOpen}
+                                className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                            >
+                                + Add
+                            </Button>
+                        </div>
+
+                        {selectedGalleryImages.length > 0 && (
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-[#E5E0D3]">
+                                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Image Name</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Preview</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Ratio</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Enable to App</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedGalleryImages.map((image: any, index: number) => (
+                                            <tr key={index} className="border-b hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-4 py-3">
+                                                    <input
+                                                        type="text"
+                                                        value={image.name || `Image ${index + 1}`}
+                                                        onChange={(e) => {
+                                                            const newImages = [...selectedGalleryImages];
+                                                            newImages[index] = { ...newImages[index], name: e.target.value };
+                                                            setSelectedGalleryImages(newImages);
+                                                        }}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                                                    />
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3">
+                                                    <div className="flex justify-center">
+                                                        <img
+                                                            src={image.preview}
+                                                            alt={`gallery-preview-${index}`}
+                                                            className="h-20 w-20 rounded border border-gray-200 object-cover"
+                                                        />
+                                                    </div>
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    {image.ratio || '1:1'}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    <div className="flex items-center justify-center">
+                                                        <Checkbox
+                                                            checked={image.enableToApp ?? true}
+                                                            onCheckedChange={(checked) => {
+                                                                const newImages = [...selectedGalleryImages];
+                                                                newImages[index] = { ...newImages[index], enableToApp: !!checked };
+                                                                setSelectedGalleryImages(newImages);
+                                                            }}
+                                                            className="w-5 h-5 mx-auto"
+                                                        />
+                                                    </div>
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedGalleryImages(
+                                                                selectedGalleryImages.filter((_: any, i: number) => i !== index)
+                                                            );
+                                                        }}
+                                                        className="bg-[#C72030] text-white w-8 h-8 flex items-center justify-center rounded hover:bg-[#A01828] mx-auto"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1426,7 +2271,7 @@ export const EditBookingSetupPage = () => {
                             />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid  gap-6">
                         <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1449,7 +2294,7 @@ export const EditBookingSetupPage = () => {
                                 />
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                     <MessageSquareX className="w-4 h-4" />
@@ -1469,7 +2314,7 @@ export const EditBookingSetupPage = () => {
                                     className="min-h-[100px]"
                                 />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
@@ -1491,10 +2336,14 @@ export const EditBookingSetupPage = () => {
                                     key={index}
                                     className="grid grid-cols-3 gap-4 mb-2 items-center"
                                 >
+                                    {/* Description */}
                                     <div className="text-sm text-gray-600">
                                         {rule.description}
                                     </div>
-                                    <div className="flex gap-2">
+
+                                    {/* Time Type & Value */}
+                                    <div className="flex gap-2 items-center">
+                                        {/* Day Input */}
                                         <TextField
                                             placeholder="Day"
                                             size="small"
@@ -1507,6 +2356,9 @@ export const EditBookingSetupPage = () => {
                                                 setCancellationRules(newRules);
                                             }}
                                         />
+                                        <span>DD</span>
+
+                                        {/* Type: Hr or Day */}
                                         <FormControl size="small" style={{ width: "80px" }}>
                                             <Select
                                                 value={rule.time.type}
@@ -1516,14 +2368,19 @@ export const EditBookingSetupPage = () => {
                                                     setCancellationRules(newRules);
                                                 }}
                                             >
-                                                <MenuItem value="Hr">Hr</MenuItem>
-                                                {Array.from({ length: 24 }, (_, i) => (
-                                                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                                                        {i + 1}
+                                                {Array.from({ length: 25 }, (_, i) => (
+                                                    <MenuItem
+                                                        key={i}
+                                                        value={i.toString().padStart(2, "0")}
+                                                    >
+                                                        {i.toString().padStart(2, "0")}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
+                                        <span>HH</span>
+
+                                        {/* Value: 0 - 59 */}
                                         <FormControl size="small" style={{ width: "80px" }}>
                                             <Select
                                                 value={rule.time.value}
@@ -1533,14 +2390,20 @@ export const EditBookingSetupPage = () => {
                                                     setCancellationRules(newRules);
                                                 }}
                                             >
-                                                {Array.from({ length: 24 }, (_, i) => (
-                                                    <MenuItem key={i} value={i.toString()}>
-                                                        {i.toString()}
+                                                {Array.from({ length: 60 }, (_, i) => (
+                                                    <MenuItem
+                                                        key={i}
+                                                        value={i.toString().padStart(2, "0")}
+                                                    >
+                                                        {i.toString().padStart(2, "0")}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
+                                        <span>MM</span>
                                     </div>
+
+                                    {/* Percentage Input */}
                                     <TextField
                                         placeholder="%"
                                         size="small"
@@ -1554,6 +2417,23 @@ export const EditBookingSetupPage = () => {
                                     />
                                 </div>
                             ))}
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="font-medium text-gray-700">
+                                Cancellation Policy <span>*</span>
+                            </div>
+                            <Textarea
+                                placeholder="Enter cancellation text"
+                                value={formData.cancellationText}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        cancellationText: e.target.value,
+                                    })
+                                }
+                                className="min-h-[100px]"
+                            />
                         </div>
                     </div>
                     <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
@@ -1583,36 +2463,43 @@ export const EditBookingSetupPage = () => {
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Tv className="w-4 h-4" />
                                     </div>
-                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                                    {Object.keys(formData.amenities).map((key) => (
-                                        <div key={key} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={key}
-                                                checked={formData.amenities[key].selected}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: {
-                                                            ...formData.amenities,
-                                                            [key]: {
-                                                                ...formData.amenities[key],
-                                                                selected: !!checked,
-                                                            },
-                                                        },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor={key}>
-                                                {formData.amenities[key].name}
-                                            </label>
-                                        </div>
-                                    ))}
+                                    {loadingInventories ? (
+                                        <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
+                                    ) : inventories.length === 0 ? (
+                                        <div className="col-span-full text-center text-gray-500">No inventories available</div>
+                                    ) : (
+                                        inventories.map((inventory) => {
+                                            const isSelected = formData.amenities[inventory.id] || false;
+
+                                            return (
+                                                <div key={inventory.id} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`inventory-${inventory.id}`}
+                                                        checked={isSelected}
+                                                        onCheckedChange={(checked) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                amenities: {
+                                                                    ...formData.amenities,
+                                                                    [inventory.id]: !!checked,
+                                                                },
+                                                            })
+                                                        }
+                                                    />
+                                                    <label htmlFor={`inventory-${inventory.id}`} className="cursor-pointer">
+                                                        {inventory.name}
+                                                    </label>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Armchair className="w-4 h-4" />
@@ -1738,9 +2625,10 @@ export const EditBookingSetupPage = () => {
                                         variant="outlined"
                                     />
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
+
                     <div className="flex gap-4 pt-6 border-t justify-center">
                         <Button
                             onClick={handleSave}
@@ -1755,6 +2643,26 @@ export const EditBookingSetupPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Gallery Image Upload Modal */}
+            {galleryModalOpen && (
+                <GalleryImageUpload
+                    showAsModal={galleryModalOpen}
+                    onClose={handleGalleryModalClose}
+                    onContinue={handleGalleryModalContinue}
+                    label="Upload Gallery Images"
+                    description="Upload images supporting multiple aspect ratios."
+                    ratios={[
+                        { label: '16:9', ratio: 16 / 9, width: 200, height: 112 },
+                        { label: '9:16', ratio: 9 / 16, width: 120, height: 213 },
+                        { label: '1:1', ratio: 1, width: 150, height: 150 },
+                        { label: '3:2', ratio: 3 / 2, width: 180, height: 120 }
+                    ]}
+                    enableCropping={true}
+                    initialImages={selectedGalleryImages}
+                    onImagesChange={setSelectedGalleryImages}
+                />
+            )}
         </ThemeProvider >
     );
 };

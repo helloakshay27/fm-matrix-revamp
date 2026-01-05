@@ -868,6 +868,9 @@ import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAdd
 import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
+import Communtiy from "./pages/Communtiy";
+import CommunityAdd from "./pages/CommunityAdd";
+import CommunityDetails from "./pages/CommunityDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -938,20 +941,20 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
-  useEffect(() => {
-    console.log("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.log("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.log("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.log("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.log("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect]);
+  //   return () => {
+  //     console.log("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect]);
 
   useEffect(() => {
     const subscriptionTimer = setTimeout(() => {
@@ -2612,11 +2615,11 @@ function App() {
                   />
                   <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
-          
+
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
-                  
+
                   <Route
                     path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
@@ -3673,6 +3676,26 @@ function App() {
                     path="/pulse/notices/details/:id"
                     element={<BroadcastDetailsPage />}
                   />
+
+                  <Route
+                    path="/pulse/community"
+                    element={<Communtiy />}
+                  />
+
+                  <Route
+                    path="/pulse/community/add"
+                    element={<CommunityAdd />}
+                  />
+
+                  <Route
+                    path="/pulse/community/:id"
+                    element={<CommunityDetails />}
+                  />
+
+                  {/* <Route
+                    path="/pulse/community/edit/:id"
+                    element={<EditCommuntiy />}
+                  /> */}
 
                   <Route
                     path="/pulse/visitor"

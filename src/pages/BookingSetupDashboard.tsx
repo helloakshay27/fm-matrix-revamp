@@ -41,16 +41,10 @@ export const BookingSetupDashboard = () => {
   };
 
   // Format dhm object to string like "0D • 0H • 4M"
-  const formatDHM = (dhm: { d: number | null; h: number | null; m: number | null } | null) => {
+  const formatDHM = (dhm: { d: number; h: number; m: number } | null) => {
     if (!dhm) return "0D • 0H • 0M";
-
-    const d = dhm.d ?? 0;
-    const h = dhm.h ?? 0;
-    const m = dhm.m ?? 0;
-
-    return `${d}D • ${h}H • ${m}M`;
+    return `${dhm.d ?? 0}D • ${dhm.h ?? 0}H • ${dhm.m ?? 0}M`;
   };
-
 
   // Format date string to "22-11-2022" format
   const formatDate = (dateString: string): string => {
@@ -168,12 +162,12 @@ export const BookingSetupDashboard = () => {
       sortable: true,
       draggable: true,
     },
-    {
-      key: 'department',
-      label: 'Department',
-      sortable: true,
-      draggable: true,
-    },
+    // {
+    //   key: 'department',
+    //   label: 'Department',
+    //   sortable: true,
+    //   draggable: true,
+    // },
     {
       key: 'bookBefore',
       label: 'Book before',
@@ -222,8 +216,15 @@ export const BookingSetupDashboard = () => {
         return item.bookBefore || '';
       case 'advanceBooking':
         return item.advanceBooking || '';
-      case 'createdOn':
-        return item.createdOn || '';
+      case 'createdOn': {
+        if (!item.createdOn) return '';
+        // If format is YYYY-MM-DD, convert to DD/MM/YYYY directly
+        if (/^\d{4}-\d{2}-\d{2}$/.test(item.createdOn)) {
+          const [year, month, day] = item.createdOn.split('-');
+          return `${day}/${month}/${year}`;
+        }
+        return item.createdOn;
+      }
       case 'createdBy':
         return item.createdBy || '';
       case 'status':
