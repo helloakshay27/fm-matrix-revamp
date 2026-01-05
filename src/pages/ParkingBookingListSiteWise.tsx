@@ -455,6 +455,32 @@ const ParkingBookingListSiteWise = () => {
     'floor_wise_occupancy'
   ]);
 
+  // Helper function to generate a label based on date range
+  const generateDateRangeLabel = (startDate: string, endDate: string): string => {
+    if (!startDate || !endDate) return '';
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+    
+    // Check if it's the same month and year
+    if (start.getMonth() === end.getMonth() && startYear === endYear) {
+      return `${startMonth} ${startYear}`;
+    }
+    
+    // Check if it's the same year but different months
+    if (startYear === endYear) {
+      return `${startMonth} - ${endMonth} ${startYear}`;
+    }
+    
+    // Different years
+    return `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
+  };
+
   // Analytics date range state - default to current month for Range A and last month for Range B
   const getDefaultAnalyticsDateRange = () => {
     const today = new Date();
@@ -474,16 +500,21 @@ const ParkingBookingListSiteWise = () => {
       return `${year}-${month}-${day}`;
     };
 
+    const rangeAStartStr = formatDate(rangeAStart);
+    const rangeAEndStr = formatDate(rangeAEnd);
+    const rangeBStartStr = formatDate(rangeBStart);
+    const rangeBEndStr = formatDate(rangeBEnd);
+
     return {
       rangeA: {
-        startDate: formatDate(rangeAStart),
-        endDate: formatDate(rangeAEnd),
-        label: 'This Month'
+        startDate: rangeAStartStr,
+        endDate: rangeAEndStr,
+        label: generateDateRangeLabel(rangeAStartStr, rangeAEndStr)
       },
       rangeB: {
-        startDate: formatDate(rangeBStart),
-        endDate: formatDate(rangeBEnd),
-        label: 'Last Month'
+        startDate: rangeBStartStr,
+        endDate: rangeBEndStr,
+        label: generateDateRangeLabel(rangeBStartStr, rangeBEndStr)
       }
     };
   };
@@ -2616,7 +2647,7 @@ const ParkingBookingListSiteWise = () => {
             >
               <Calendar className="w-4 h-4 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">
-                {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                {analyticsDateRange.rangeA.label} vs {analyticsDateRange.rangeB.label}
               </span>
               <Filter className="w-4 h-4 text-gray-600" />
             </Button>
@@ -2788,10 +2819,44 @@ const ParkingBookingListSiteWise = () => {
                     type="date"
                     value={analyticsDateRange.rangeA.startDate}
                     onChange={(e) => {
-                      setAnalyticsDateRange(prev => ({
-                        ...prev,
-                        rangeA: { ...prev.rangeA, startDate: e.target.value }
-                      }));
+                      const newStartDate = e.target.value;
+                      setAnalyticsDateRange(prev => {
+                        // Calculate the duration of Range A
+                        const rangeAEnd = prev.rangeA.endDate ? new Date(prev.rangeA.endDate) : new Date();
+                        const rangeAStart = new Date(newStartDate);
+                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        // Calculate Range B: previous period of same duration
+                        const rangeBEnd = new Date(rangeAStart);
+                        rangeBEnd.setDate(rangeBEnd.getDate() - 1); // Day before Range A starts
+                        
+                        const rangeBStart = new Date(rangeBEnd);
+                        rangeBStart.setDate(rangeBStart.getDate() - durationInDays + 1);
+                        
+                        const formatDate = (date: Date) => {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          return `${year}-${month}-${day}`;
+                        };
+                        
+                        const rangeBStartStr = formatDate(rangeBStart);
+                        const rangeBEndStr = formatDate(rangeBEnd);
+                        
+                        return {
+                          rangeA: { 
+                            ...prev.rangeA, 
+                            startDate: newStartDate,
+                            label: generateDateRangeLabel(newStartDate, prev.rangeA.endDate)
+                          },
+                          rangeB: {
+                            ...prev.rangeB,
+                            startDate: rangeBStartStr,
+                            endDate: rangeBEndStr,
+                            label: generateDateRangeLabel(rangeBStartStr, rangeBEndStr)
+                          }
+                        };
+                      });
                     }}
                     className="h-10"
                   />
@@ -2809,10 +2874,44 @@ const ParkingBookingListSiteWise = () => {
                     type="date"
                     value={analyticsDateRange.rangeA.endDate}
                     onChange={(e) => {
-                      setAnalyticsDateRange(prev => ({
-                        ...prev,
-                        rangeA: { ...prev.rangeA, endDate: e.target.value }
-                      }));
+                      const newEndDate = e.target.value;
+                      setAnalyticsDateRange(prev => {
+                        // Calculate the duration of Range A
+                        const rangeAStart = prev.rangeA.startDate ? new Date(prev.rangeA.startDate) : new Date();
+                        const rangeAEnd = new Date(newEndDate);
+                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        // Calculate Range B: previous period of same duration
+                        const rangeBEnd = new Date(rangeAStart);
+                        rangeBEnd.setDate(rangeBEnd.getDate() - 1); // Day before Range A starts
+                        
+                        const rangeBStart = new Date(rangeBEnd);
+                        rangeBStart.setDate(rangeBStart.getDate() - durationInDays + 1);
+                        
+                        const formatDate = (date: Date) => {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          return `${year}-${month}-${day}`;
+                        };
+                        
+                        const rangeBStartStr = formatDate(rangeBStart);
+                        const rangeBEndStr = formatDate(rangeBEnd);
+                        
+                        return {
+                          rangeA: { 
+                            ...prev.rangeA, 
+                            endDate: newEndDate,
+                            label: generateDateRangeLabel(prev.rangeA.startDate, newEndDate)
+                          },
+                          rangeB: {
+                            ...prev.rangeB,
+                            startDate: rangeBStartStr,
+                            endDate: rangeBEndStr,
+                            label: generateDateRangeLabel(rangeBStartStr, rangeBEndStr)
+                          }
+                        };
+                      });
                     }}
                     className="h-10"
                   />
@@ -2854,9 +2953,14 @@ const ParkingBookingListSiteWise = () => {
                     type="date"
                     value={analyticsDateRange.rangeB.startDate}
                     onChange={(e) => {
+                      const newStartDate = e.target.value;
                       setAnalyticsDateRange(prev => ({
                         ...prev,
-                        rangeB: { ...prev.rangeB, startDate: e.target.value }
+                        rangeB: { 
+                          ...prev.rangeB, 
+                          startDate: newStartDate,
+                          label: generateDateRangeLabel(newStartDate, prev.rangeB.endDate)
+                        }
                       }));
                     }}
                     className="h-10"
@@ -2875,9 +2979,14 @@ const ParkingBookingListSiteWise = () => {
                     type="date"
                     value={analyticsDateRange.rangeB.endDate}
                     onChange={(e) => {
+                      const newEndDate = e.target.value;
                       setAnalyticsDateRange(prev => ({
                         ...prev,
-                        rangeB: { ...prev.rangeB, endDate: e.target.value }
+                        rangeB: { 
+                          ...prev.rangeB, 
+                          endDate: newEndDate,
+                          label: generateDateRangeLabel(prev.rangeB.startDate, newEndDate)
+                        }
                       }));
                     }}
                     className="h-10"
