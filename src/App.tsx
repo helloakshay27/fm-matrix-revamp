@@ -803,8 +803,10 @@ import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
+import { EditDocumentPage } from "./pages/EditDocumentPage";
 import { FolderDetailsPage } from "./pages/FolderDetailsPage";
 import { DocumentDetailPage } from "./pages/DocumentDetailPage";
+import { CreateFolderPage } from "./pages/CreateFolderPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -2430,6 +2432,14 @@ function App() {
                     element={<AddDocumentDashboard />}
                   />
                   <Route
+                    path="/maintenance/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/create-folder"
+                    element={<CreateFolderPage />}
+                  />
+                  <Route
                     path="/maintenance/documents/folder/:id"
                     element={<FolderDetailsPage />}
                   />
@@ -3721,6 +3731,14 @@ function App() {
                   <Route
                     path="/pulse/documents/add"
                     element={<AddDocumentDashboard />}
+                  />
+                  <Route
+                    path="/pulse/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/create-folder"
+                    element={<CreateFolderPage />}
                   />
                   <Route
                     path="/pulse/documents/folder/:id"
