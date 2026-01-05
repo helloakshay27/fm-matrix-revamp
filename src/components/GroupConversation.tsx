@@ -347,6 +347,7 @@ const GroupConversation = () => {
                             onClick={() => setShowGroupDetails(true)}
                         >
                             {conversation?.name}
+                            <p className="text-sm text-gray-500">{spaceUsers.length} members</p>
                         </h2>
                     </div>
                     <div className="flex space-x-6 mt-2 ml-1 text-sm font-medium text-gray-500">

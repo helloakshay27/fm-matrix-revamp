@@ -987,15 +987,26 @@ const ProjectTasksPage = () => {
         try {
             const formData = new FormData();
             formData.append("file", selectedFile);
-            await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
+            const response = await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
-            toast.success("Tasks imported successfully");
-            setIsImportModalOpen(false);
-            setSelectedFile(null);
-            fetchData();
+            // toast.success("Tasks imported successfully");
+            // setIsImportModalOpen(false);
+            // setSelectedFile(null);
+            // fetchData();
+            if (response.data.failed && response.data.failed.length > 0) {
+                response.data.failed.forEach((item: { row: number; errors: string[] }) => {
+                    const errorMessages = item.errors.join(', ');
+                    toast.error(`Row ${item.row}: ${errorMessages}`);
+                });
+            } else {
+                toast.success("Tasks imported successfully");
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+                fetchData();
+            }
         } catch (error) {
             console.log(error);
             toast.error("Failed to import tasks");

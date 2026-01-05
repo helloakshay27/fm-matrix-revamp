@@ -99,7 +99,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    const newErrors: Record<string, string> = { ...errors };
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Organization name is required";
     }
@@ -120,9 +120,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
 
     // No format validation for sub_domain, only required check above
 
-    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
-    }
+    // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+    //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
+    // }
 
     // if (
     //   formData.front_subdomain &&
@@ -132,6 +132,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     // }
 
     setErrors(newErrors);
+    console.log("Validation errors:", newErrors,Object.keys(newErrors),errors)
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -485,7 +486,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
             <div className="grid grid-cols-2 gap-6 mt-6">
               <TextField
                 label="Frontend Domain"
-                placeholder="www.example.com"
+                placeholder="example.com"
                 value={formData.front_domain}
                 onChange={(e) =>
                   setFormData({ ...formData, front_domain: e.target.value })
@@ -497,7 +498,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend domain (e.g., www.example.com)"
+                helperText="Enter frontend domain (e.g., example.com)"
               />
 
               <TextField
