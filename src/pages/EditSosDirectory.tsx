@@ -54,6 +54,28 @@ const EditSosDirectory = () => {
     const [techParks, setTechParks] = useState<any[]>([]);
     const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
     const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+    const [categories, setCategories] = useState<any[]>([]);
+
+    console.log(techParks)
+    console.log(selectedTechParks)
+
+    const fetchCategories = async () => {
+        setIsLoadingCategories(true);
+        try {
+            const response = await axios.get(`https://${baseUrl}/sos_directories/get_sos_directory_category.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setCategories(response.data.sos_directory_categories || []);
+        } catch (error) {
+            console.error("Failed to fetch categories", error);
+            toast.error("Failed to load categories");
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
 
     useEffect(() => {
         fetchDetails();
@@ -69,7 +91,7 @@ const EditSosDirectory = () => {
 
             setFormData({
                 title: dirData.title || "",
-                category: dirData.category || "",
+                category: dirData.sos_category_id || "",
                 contact_number: dirData.contact_number || "",
                 shareWith: dirData.share_with || "all",
                 image: null,
@@ -79,9 +101,8 @@ const EditSosDirectory = () => {
                 setImagePreview(dirData.document_url);
             }
 
-            if (dirData.share_with === 'individual' && dirData.site_ids) {
-                setSelectedTechParks(dirData.site_ids);
-                fetchTechParks();
+            if (dirData.share_with === 'individual' && dirData.shared_sos_directories) {
+                setSelectedTechParks(dirData.shared_sos_directories.map((dir: any) => dir.site_id));
             }
 
         } catch (error) {
@@ -110,6 +131,11 @@ const EditSosDirectory = () => {
             setIsLoadingTechParks(false);
         }
     };
+
+    useEffect(() => {
+        fetchTechParks();
+        fetchCategories();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -156,7 +182,7 @@ const EditSosDirectory = () => {
             toast.error("Title is required");
             return;
         }
-        if (!formData.category.trim()) {
+        if (!formData.category) {
             toast.error("Category is required");
             return;
         }
@@ -178,21 +204,26 @@ const EditSosDirectory = () => {
         const payload = {
             sos_directory: {
                 title: formData.title,
-                category: formData.category,
+                sos_category_id: formData.category, // Assuming backend accepts this
                 contact_number: formData.contact_number,
-                // status: "true", // Don't reset status on edit usually, unless intended
-                // directory_type: type, // Don't change type on edit
-                // resource_id: localStorage.getItem('selectedSiteId'),
-                // resource_type: "Pms::Site",
-                share_with: formData.shareWith
-            }
+                status: "true",
+                directory_type: type, // Or use formData.category if that's what it means? keeping type for now as in original code
+                resource_id: localStorage.getItem('selectedSiteId'),
+                resource_type: "Pms::Site",
+                share_with: formData.shareWith // Assuming backend accepts this
+            },
+            site_ids: formData.shareWith === 'all'
+                ? techParks.map(park => park.id)
+                : selectedTechParks
         }
 
         setSubmitting(true)
         const submitData = new FormData();
         Object.keys(payload.sos_directory).forEach(key => {
-            // @ts-ignore
             submitData.append(`sos_directory[${key}]`, payload.sos_directory[key]);
+        });
+        payload.site_ids.forEach(id => {
+            submitData.append('site_ids[]', id);
         });
         if (formData.image) {
             submitData.append('attachment', formData.image);
@@ -273,6 +304,7 @@ const EditSosDirectory = () => {
                                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                                     label="Category*"
                                     displayEmpty
+                                    disabled={isLoadingCategories}
                                     sx={{
                                         backgroundColor: '#FAFAFA',
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
@@ -280,14 +312,14 @@ const EditSosDirectory = () => {
                                         },
                                     }}
                                 >
-                                    <MenuItem value="" disabled>Select Category</MenuItem>
-                                    <MenuItem value="Police">Police</MenuItem>
-                                    <MenuItem value="Fire">Fire</MenuItem>
-                                    <MenuItem value="Ambulance">Ambulance</MenuItem>
-                                    <MenuItem value="Hospital">Hospital</MenuItem>
-                                    <MenuItem value="Security">Security</MenuItem>
-                                    <MenuItem value="Maintenance">Maintenance</MenuItem>
-                                    <MenuItem value="Other">Other</MenuItem>
+                                    <MenuItem value="" disabled>
+                                        {isLoadingCategories ? "Loading categories..." : "Select Category"}
+                                    </MenuItem>
+                                    {categories.map((category) => (
+                                        <MenuItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </div>
@@ -337,7 +369,6 @@ const EditSosDirectory = () => {
                                         const value = e.target.value;
                                         setFormData(prev => ({ ...prev, shareWith: value }));
                                         if (value === "individual") {
-                                            fetchTechParks();
                                             setIsTechParkModalOpen(true);
                                         }
                                     }}

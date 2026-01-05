@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { TextField, Radio, RadioGroup, FormControlLabel, FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import axios from "axios";
 import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -53,6 +53,10 @@ const AddSosDirectory = () => {
     const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
     const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
 
+    // Categories State
+    const [categories, setCategories] = useState<any[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
     const fetchTechParks = async () => {
         if (techParks.length > 0) return;
 
@@ -71,6 +75,28 @@ const AddSosDirectory = () => {
             setIsLoadingTechParks(false);
         }
     };
+
+    const fetchCategories = async () => {
+        setIsLoadingCategories(true);
+        try {
+            const response = await axios.get(`https://${baseUrl}/sos_directories/get_sos_directory_category.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setCategories(response.data.sos_directory_categories || []);
+        } catch (error) {
+            console.error("Failed to fetch categories", error);
+            toast.error("Failed to load categories");
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTechParks();
+        fetchCategories();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -117,7 +143,7 @@ const AddSosDirectory = () => {
             toast.error("Title is required");
             return;
         }
-        if (!formData.category.trim()) {
+        if (!formData.category) {
             toast.error("Category is required");
             return;
         }
@@ -139,20 +165,26 @@ const AddSosDirectory = () => {
         const payload = {
             sos_directory: {
                 title: formData.title,
-                category: formData.category, // Assuming backend accepts this
+                sos_category_id: formData.category, // Assuming backend accepts this
                 contact_number: formData.contact_number,
                 status: "true",
                 directory_type: type, // Or use formData.category if that's what it means? keeping type for now as in original code
                 resource_id: localStorage.getItem('selectedSiteId'),
                 resource_type: "Pms::Site",
                 share_with: formData.shareWith // Assuming backend accepts this
-            }
+            },
+            site_ids: formData.shareWith === 'all'
+                ? techParks.map(park => park.id)
+                : selectedTechParks
         }
 
         setSubmitting(true)
         const submitData = new FormData();
         Object.keys(payload.sos_directory).forEach(key => {
             submitData.append(`sos_directory[${key}]`, payload.sos_directory[key]);
+        });
+        payload.site_ids.forEach(id => {
+            submitData.append('site_ids[]', id);
         });
         if (formData.image) {
             submitData.append('attachment', formData.image);
@@ -229,6 +261,7 @@ const AddSosDirectory = () => {
                                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                                     label="Category*"
                                     displayEmpty
+                                    disabled={isLoadingCategories}
                                     sx={{
                                         backgroundColor: '#FAFAFA',
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
@@ -236,14 +269,14 @@ const AddSosDirectory = () => {
                                         },
                                     }}
                                 >
-                                    <MenuItem value="" disabled>Select Category</MenuItem>
-                                    <MenuItem value="Police">Police</MenuItem>
-                                    <MenuItem value="Fire">Fire</MenuItem>
-                                    <MenuItem value="Ambulance">Ambulance</MenuItem>
-                                    <MenuItem value="Hospital">Hospital</MenuItem>
-                                    <MenuItem value="Security">Security</MenuItem>
-                                    <MenuItem value="Maintenance">Maintenance</MenuItem>
-                                    <MenuItem value="Other">Other</MenuItem>
+                                    <MenuItem value="" disabled>
+                                        {isLoadingCategories ? "Loading categories..." : "Select Category"}
+                                    </MenuItem>
+                                    {categories.map((category) => (
+                                        <MenuItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </div>
@@ -293,7 +326,6 @@ const AddSosDirectory = () => {
                                         const value = e.target.value;
                                         setFormData(prev => ({ ...prev, shareWith: value }));
                                         if (value === "individual") {
-                                            fetchTechParks();
                                             setIsTechParkModalOpen(true);
                                         }
                                     }}

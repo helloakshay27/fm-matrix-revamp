@@ -14,6 +14,12 @@ interface SosDirectory {
     document_url?: string;
     created_at?: string;
     created_by?: string;
+    shared_sos_directories?: [
+        {
+            site_id: number;
+            site_name: string;
+        }
+    ];
     user?: {
         name: string;
     }
@@ -178,10 +184,10 @@ const SosDirectoryDetailsPage = () => {
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Tech Park</span>
                             <span className="text-gray-500 mx-2">:</span>
-                            <div className="text-gray-900 font-medium">
-                                Tech Park 1,<br />
-                                Tech Park 2,<br />
-                                Tech Park 3.
+                            <div className="text-gray-900 font-medium space-y-1">
+                                {data?.shared_sos_directories?.map((dir: any, index: number) => (
+                                    <div key={index}>{dir.site_name}</div>
+                                ))}
                             </div>
                         </div>
                         <div className="flex items-start">
