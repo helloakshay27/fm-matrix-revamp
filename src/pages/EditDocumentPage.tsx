@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Share2, Paperclip } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Share2,
+  Paperclip,
+  Pencil,
+  X,
+} from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -306,15 +313,21 @@ export const EditDocumentPage = () => {
               </RadioGroup>
               {formData.shareWith === "individual_tech_park" &&
                 selectedTechParks.length > 0 && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
-                    <p className="text-sm text-gray-600">
-                      {selectedTechParks.length} Tech Park(s) selected
-                    </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm text-[#C72030] cursor-pointer hover:underline">
+                      Tech Parks{" "}
+                      {selectedTechParks
+                        .map(
+                          (id, idx) =>
+                            `${id}${idx < selectedTechParks.length - 1 ? ", Tech Parks " : ""}`
+                        )
+                        .join("")}
+                    </span>
                     <button
                       onClick={() => setShowTechParkModal(true)}
-                      className="mt-2 text-sm text-[#C72030] hover:underline"
+                      className="text-[#C72030] hover:text-[#A01828] transition-colors"
                     >
-                      Change Selection
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </div>
                 )}

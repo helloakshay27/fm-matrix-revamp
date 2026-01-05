@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Share2, Paperclip } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Share2,
+  Paperclip,
+  Pencil,
+  X,
+} from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -314,6 +321,26 @@ export const AddDocumentDashboard = () => {
                     label="Individual Tech Park"
                   />
                 </RadioGroup>
+                {formData.shareWith === "individual_tech_park" &&
+                  selectedTechParks.length > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-sm text-[#C72030] cursor-pointer hover:underline">
+                        Tech Parks{" "}
+                        {selectedTechParks
+                          .map(
+                            (id, idx) =>
+                              `${id}${idx < selectedTechParks.length - 1 ? ", Tech Parks " : ""}`
+                          )
+                          .join("")}
+                      </span>
+                      <button
+                        onClick={() => setShowTechParkModal(true)}
+                        className="text-[#C72030] hover:text-[#A01828] transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
               </div>
 
               {/* Share With Communities */}
@@ -376,19 +403,19 @@ export const AddDocumentDashboard = () => {
 
           <div className="p-6">
             <h3 className="text-base font-semibold text-[#1a1a1a] mb-4">
-              Upload Cover Image
+              Upload Document
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            {/* Upload Area or File Display */}
+            {!coverImage ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
                 <p className="text-sm text-gray-500 mb-4">
                   Choose a file or drag & drop it here
                 </p>
                 <label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".pdf,.doc,.docx,image/*"
                     onChange={handleCoverImageUpload}
                     className="hidden"
                   />
@@ -399,65 +426,49 @@ export const AddDocumentDashboard = () => {
                         .querySelector<HTMLInputElement>('input[type="file"]')
                         ?.click()
                     }
-                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors"
+                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors font-medium"
                   >
                     Browse
                   </button>
                 </label>
-                {coverImage && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    {coverImage.name}
-                  </p>
-                )}
               </div>
-
-              {/* Add New Button */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex items-center justify-center">
-                <label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const inputs =
-                        document.querySelectorAll<HTMLInputElement>(
-                          'input[type="file"]'
-                        );
-                      inputs[1]?.click();
-                    }}
-                    className="px-6 py-2 bg-[#FFF5F5] text-[#C72030] rounded hover:bg-[#FFE5E5] transition-colors"
-                  >
-                    Add New
-                  </button>
-                </label>
-              </div>
-            </div>
-
-            {/* Attached Files List */}
-            {attachedFiles.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">
-                  Attached Files ({attachedFiles.length})
-                </h4>
-                <div className="space-y-2">
-                  {attachedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200"
-                    >
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center">
+                      <svg
+                        className="w-8 h-8 text-red-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
                       >
-                        Remove
-                      </button>
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                        <text
+                          x="10"
+                          y="14"
+                          fontSize="6"
+                          fill="white"
+                          textAnchor="middle"
+                          fontWeight="bold"
+                        >
+                          PDF
+                        </text>
+                      </svg>
                     </div>
-                  ))}
+                    <span className="text-sm text-gray-700 font-medium">
+                      {coverImage.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setCoverImage(null)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
               </div>
             )}
