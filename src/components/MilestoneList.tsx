@@ -2,7 +2,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable"
 import { Button } from "./ui/button";
 import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 import { useNavigate, useParams } from "react-router-dom";
@@ -95,6 +95,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const statusColorMap = {
         open: { dot: "bg-blue-500" },
@@ -143,6 +144,22 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         getMilestones();
         getOwners();
     }, [])
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen])
 
     const handleSubmit = async (data) => {
         try {
@@ -197,15 +214,22 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         try {
             const formData = new FormData();
             formData.append("file", selectedFile);
-            await axios.post(`https://${baseUrl}/milestones/import.json`, formData, {
+            const response = await axios.post(`https://${baseUrl}/milestones/import.json`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
-            toast.success("Milestones imported successfully");
-            setIsImportModalOpen(false);
-            setSelectedFile(null);
-            getMilestones();
+            if (response.data.failed && response.data.failed.length > 0) {
+                response.data.failed.forEach((item: { row: number; errors: string[] }) => {
+                    const errorMessages = item.errors.join(', ');
+                    toast.error(`Row ${item.row}: ${errorMessages}`);
+                });
+            } else {
+                toast.success("Milestones imported successfully");
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+                getMilestones();
+            }
         } catch (error) {
             console.log(error);
             toast.error("Failed to import milestones");
@@ -310,7 +334,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     );
 
     const rightActions = (
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
