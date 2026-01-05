@@ -210,7 +210,7 @@ export const RegionFilterModal: React.FC<RegionFilterModalProps> = ({
                 {filters.companyId && (
                   <div className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
                     <MapPin className="w-3 h-3" />
-                    Company: {headquartersDropdown.find(c => c.id.toString() === filters.companyId)?.name}
+                    Company: {companiesDropdown.find(c => c.id.toString() === filters.companyId)?.name}
                     <button 
                       onClick={() => handleFilterChange('companyId', '')}
                       className="ml-1 hover:bg-blue-200 rounded-full p-0.5"

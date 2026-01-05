@@ -208,7 +208,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
             </FormControl>
 
             {/* Site Type Filter */}
-            <FormControl fullWidth>
+            {/* <FormControl fullWidth>
               <InputLabel>Site Type</InputLabel>
               <MuiSelect
                 value={filters.site_type || ''}
@@ -227,7 +227,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
                 <MenuItem value="Branch">Branch</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
               </MuiSelect>
-            </FormControl>
+            </FormControl> */}
 
             {/* Status Filter */}
             <FormControl fullWidth>
