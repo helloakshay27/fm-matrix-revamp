@@ -118,20 +118,18 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
-      newErrors.sub_domain = "Please enter a valid sub domain (e.g., app.example.com)";
-    }
+    // No format validation for sub_domain, only required check above
 
     if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
       newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
     }
 
-    if (
-      formData.front_subdomain &&
-      !domainRegex.test(formData.front_subdomain)
-    ) {
-      newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
-    }
+    // if (
+    //   formData.front_subdomain &&
+    //   !domainRegex.test(formData.front_subdomain)
+    // ) {
+    //   newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    // }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -466,7 +464,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                   setFormData({ ...formData, sub_domain: val });
                   setErrors((prev) => ({
                     ...prev,
-                    sub_domain: isValidDomain(val) ? "" : prev.sub_domain,
+                    sub_domain: ""
                   }));
                 }}
                 fullWidth
@@ -480,7 +478,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 disabled={isSubmitting}
                 required
                 error={!!errors.sub_domain}
-                helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
+                helperText={errors.sub_domain || ""}
               />
             </div>
 
@@ -516,7 +514,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend subdomain (e.g., portal.example.com)"
+                helperText="Enter frontend subdomain "
               />
             </div>
           </div>

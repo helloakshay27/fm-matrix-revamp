@@ -212,7 +212,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       }
 
       if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
+        apiUrl += `&q[headquarter_id_eq]=${filters.countryId}`;
       }
 
       if (filters.status) {
@@ -432,14 +432,14 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const renderRow = (region: RegionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <button
+        {/* <button
           onClick={() => region?.id && handleView(region.id)}
           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
           title="View"
           disabled={!region?.id}
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button> */}
         <button
           onClick={() => region?.id && handleEdit(region.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"

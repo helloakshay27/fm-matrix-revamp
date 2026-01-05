@@ -717,6 +717,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   };
 
   const handleDeleteConfirm = async () => {
+    console.log("Delete Confirm Clicked", selectedSiteId);
     if (!selectedSiteId) return;
 
     if (!canEditSite) {
@@ -726,7 +727,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
     try {
       const response = await fetch(
-        getFullUrl(`/sites/${selectedSiteId}.json`),
+        getFullUrl(`pms/sites/${selectedSiteId}.json`),
         {
           method: "DELETE",
           headers: {
