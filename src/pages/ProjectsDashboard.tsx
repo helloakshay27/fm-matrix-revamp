@@ -515,9 +515,17 @@ export const ProjectsDashboard = () => {
           Authorization: `Bearer ${token}`,
         }
       })
-      toast.success("Projects imported successfully");
-      setIsImportModalOpen(false);
-      setSelectedFile(null);
+      if (response.data.failed && response.data.failed.length > 0) {
+        response.data.failed.forEach((item: { row: number; errors: string[] }) => {
+          const errorMessages = item.errors.join(', ');
+          toast.error(`Row ${item.row}: ${errorMessages}`);
+        });
+      } else {
+        toast.success("Projects imported successfully");
+        setIsImportModalOpen(false);
+        setSelectedFile(null);
+        fetchData(1, "", false, debouncedSearchTerm);
+      }
     } catch (error) {
       console.log(error)
     } finally {
