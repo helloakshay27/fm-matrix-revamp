@@ -678,8 +678,11 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => {
-                          if (!notification.read) {
-                            markAsRead(notification.id);
+                          if (notification.ntype === "conversation") {
+                            navigate(`/vas/channels/messages/${notification.payload.conversation_id}`);
+                          }
+                          if (notification.ntype === "projectspace") {
+                            navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
                           }
                         }}
                         className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
@@ -707,7 +710,27 @@ export const Header = () => {
                               {notification.message}
                             </p>
                             <div className="mt-2">
-                              <Badge
+                              {
+                                notification.ntype === "conversation" && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                  >
+                                    Conversation
+                                  </Badge>
+                                )
+                              }
+                              {
+                                notification.ntype === "projectspace" && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                  >
+                                    Project Space
+                                  </Badge>
+                                )
+                              }
+                              {/* <Badge
                                 variant="outline"
                                 className={`text-xs ${notification.ntype === "conversation"
                                   ? "bg-blue-50 text-blue-700 border-blue-200"
@@ -717,7 +740,7 @@ export const Header = () => {
                                   }`}
                               >
                                 {notification.ntype}
-                              </Badge>
+                              </Badge> */}
                             </div>
                           </div>
                         </div>
