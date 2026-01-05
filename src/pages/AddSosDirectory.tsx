@@ -435,7 +435,14 @@ const AddSosDirectory = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-center mt-8 pb-8">
+                <div className="flex justify-center mt-8 pb-8 gap-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/pulse/sos-directory')}
+                        className="min-w-[150px] h-10"
+                    >
+                        Cancel
+                    </Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={submitting}
