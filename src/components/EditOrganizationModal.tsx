@@ -158,7 +158,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       newErrors.domain = "Main domain is required";
     }
     if (!formData.sub_domain.trim()) {
-      newErrors.sub_domain = "Sub domain is required";
+          newErrors.sub_domain = "Sub domain is required"; 
     }
 
     // Domain validation
@@ -169,9 +169,6 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
-      newErrors.sub_domain = "Please enter a valid sub domain (e.g., app.example.com)";
-    }
 
     if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
       newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
@@ -474,7 +471,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     setFormData({ ...formData, sub_domain: val });
                     setErrors((prev) => ({
                       ...prev,
-                      sub_domain: isValidDomain(val) ? '' : prev.sub_domain,
+                      sub_domain: ''
                     }));
                   }}
                   fullWidth
@@ -489,6 +486,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   required
                   error={!!errors.sub_domain}
                   helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
+                  helperText={errors.sub_domain || ""}
                 />
               </div>
 

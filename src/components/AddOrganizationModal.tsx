@@ -99,7 +99,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    const newErrors: Record<string, string> = { ...errors };
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Organization name is required";
     }
@@ -118,22 +118,21 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
-      newErrors.sub_domain = "Please enter a valid sub domain (e.g., app.example.com)";
-    }
+    // No format validation for sub_domain, only required check above
 
-    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
-    }
+    // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+    //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
+    // }
 
-    if (
-      formData.front_subdomain &&
-      !domainRegex.test(formData.front_subdomain)
-    ) {
-      newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
-    }
+    // if (
+    //   formData.front_subdomain &&
+    //   !domainRegex.test(formData.front_subdomain)
+    // ) {
+    //   newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    // }
 
     setErrors(newErrors);
+    console.log("Validation errors:", newErrors,Object.keys(newErrors),errors)
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -466,7 +465,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                   setFormData({ ...formData, sub_domain: val });
                   setErrors((prev) => ({
                     ...prev,
-                    sub_domain: isValidDomain(val) ? "" : prev.sub_domain,
+                    sub_domain: ""
                   }));
                 }}
                 fullWidth
@@ -480,14 +479,14 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 disabled={isSubmitting}
                 required
                 error={!!errors.sub_domain}
-                helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
+                helperText={errors.sub_domain || ""}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-6 mt-6">
               <TextField
                 label="Frontend Domain"
-                placeholder="www.example.com"
+                placeholder="example.com"
                 value={formData.front_domain}
                 onChange={(e) =>
                   setFormData({ ...formData, front_domain: e.target.value })
@@ -499,7 +498,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend domain (e.g., www.example.com)"
+                helperText="Enter frontend domain (e.g., example.com)"
               />
 
               <TextField
@@ -516,7 +515,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend subdomain (e.g., portal.example.com)"
+                helperText="Enter frontend subdomain "
               />
             </div>
           </div>

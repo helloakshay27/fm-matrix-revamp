@@ -96,12 +96,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       : null
   );
 
-
   // Detect Pulse site - used for fallback when no API role exists
   const isPulseSite =
     hostname.includes("pulse.lockated.com") ||
     hostname.includes("pulse.gophygital.work") ||
-    hostname.includes("localhost") || // Pulse-specific port
     location.pathname.startsWith("/pulse");
   const isLocalhost =
     hostname.includes("localhost") ||

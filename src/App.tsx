@@ -609,6 +609,7 @@ import { OpsAccountPage } from "./pages/master/OpsAccountPage";
 import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
 import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
 import HeadquartersDetailsPage from "./pages/master/HeadquartersDetailsPage";
+import SiteDetailsPage from "./pages/master/SiteDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -799,6 +800,13 @@ import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
+import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
+import { DocumentManagement } from "./pages/DocumentManagement";
+import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
+import { EditDocumentPage } from "./pages/EditDocumentPage";
+import { FolderDetailsPage } from "./pages/FolderDetailsPage";
+import { DocumentDetailPage } from "./pages/DocumentDetailPage";
+import { CreateFolderPage } from "./pages/CreateFolderPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -967,7 +975,7 @@ function App() {
           });
         },
         onMessageNotification: (message) => {
-          console.log(message)
+          console.log(message);
           if (message.user_id !== currentUser.id) {
             return;
           }
@@ -1042,7 +1050,12 @@ function App() {
                     path="master/location/account/headquarters/details/:id"
                     element={<HeadquartersDetailsPage />}
                   />
+                  <Route
+                    path="master/location/account/sites/details/:id"
+                    element={<SiteDetailsPage />}
+                  />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
+                  <Route path="admin/users/:id" element={<UserDetailsPage />} />
                   <Route
                     path="admin/create-admin-user"
                     element={<CreateAdminUserPage />}
@@ -2414,6 +2427,30 @@ function App() {
                     element={<AssetDashboard />}
                   />
                   <Route
+                    path="/maintenance/documents"
+                    element={<DocumentManagement />}
+                  />
+                  <Route
+                    path="/maintenance/documents/add"
+                    element={<AddDocumentDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/create-folder"
+                    element={<CreateFolderPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/folder/:id"
+                    element={<FolderDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/details/:id"
+                    element={<DocumentDetailPage />}
+                  />
+                  <Route
                     path="/maintenance/asset/details/:id"
                     element={<AssetDetailsPage />}
                   />
@@ -3708,6 +3745,32 @@ function App() {
                   <Route
                     path="/pulse/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+
+                  {/* Document Routes */}
+                  <Route
+                    path="/pulse/documents"
+                    element={<DocumentManagement />}
+                  />
+                  <Route
+                    path="/pulse/documents/add"
+                    element={<AddDocumentDashboard />}
+                  />
+                  <Route
+                    path="/pulse/documents/edit/:id"
+                    element={<EditDocumentPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/create-folder"
+                    element={<CreateFolderPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/folder/:id"
+                    element={<FolderDetailsPage />}
+                  />
+                  <Route
+                    path="/pulse/documents/details/:id"
+                    element={<DocumentDetailPage />}
                   />
 
                   {/* Plus Service Routes */}

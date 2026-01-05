@@ -604,7 +604,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
           Accept: "application/json",
           Authorization: getAuthHeader(),
         },
-        body: JSON.stringify({ pms_organization: { active: !currentStatus } }),
+        body: JSON.stringify({ organization: { active: !currentStatus } }),
       });
 
       if (response.ok) {

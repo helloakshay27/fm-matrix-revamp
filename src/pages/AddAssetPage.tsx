@@ -3334,7 +3334,7 @@ const AddAssetPage = () => {
         // Asset type flags
         it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
-        is_meter: formData.is_meter,
+        is_meter: (consumptionMeasureFields.length > 0 || nonConsumptionMeasureFields.length > 0) ? true : formData.is_meter,
         asset_loaned: formData.asset_loaned,
         depreciation_applicable: true,
 
