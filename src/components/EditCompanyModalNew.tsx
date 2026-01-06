@@ -76,11 +76,16 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     live_date: '',
     remarks: '',
     logo: null,
+    logoUrl: null,
+    company_banner: null,
+    bannerUrl: null,
     bill_to_address: { address: '', email: '' },
     postal_address: { address: '', email: '' },
     finance_spoc: { name: '', designation: 'Finance', email: '', mobile: '' },
     operation_spoc: { name: '', designation: 'Operation', email: '', mobile: '' }
   });
+
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -134,6 +139,9 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
         live_date: formatDateForInput(company.live_date),
         remarks: company.remarks || '',
         logo: null,
+        logoUrl: company.company_logo_url || null,
+        company_banner: null,
+        bannerUrl: company.company_banner_url || null,
         bill_to_address: {
           id: company.bill_to_address?.id,
           address: company.bill_to_address?.address || '',
@@ -207,7 +215,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, logo: file }));
+    setFormData(prev => ({ ...prev, logo: file, logoUrl: file ? URL.createObjectURL(file) : null }));
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, company_banner: file, bannerUrl: file ? URL.createObjectURL(file) : null }));
+    setBannerPreviewUrl(file ? URL.createObjectURL(file) : null);
   };
 
   const validateForm = () => {
@@ -258,9 +272,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     if (!validateForm() || !canEdit) return;
 
     setIsSubmitting(true);
+
     try {
       const formDataToSend = new FormData();
-      
+
       // Basic company data
       formDataToSend.append('pms_company_setup[name]', formData.name);
       formDataToSend.append('pms_company_setup[organization_id]', formData.organization_id);
@@ -269,14 +284,14 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       formDataToSend.append('pms_company_setup[billing_rate]', formData.billing_rate);
       formDataToSend.append('pms_company_setup[live_date]', formatDateForAPI(formData.live_date));
       formDataToSend.append('pms_company_setup[remarks]', formData.remarks);
-      
+
       // Address data with nested attributes structure (include IDs for updates)
       if (formData.bill_to_address.id) {
         formDataToSend.append('pms_company_setup[bill_to_address_attributes][id]', formData.bill_to_address.id.toString());
       }
       formDataToSend.append('pms_company_setup[bill_to_address_attributes][address]', formData.bill_to_address.address);
       formDataToSend.append('pms_company_setup[bill_to_address_attributes][email]', formData.bill_to_address.email);
-      
+
       if (formData.postal_address.id) {
         formDataToSend.append('pms_company_setup[postal_address_attributes][id]', formData.postal_address.id.toString());
       }
@@ -291,7 +306,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       formDataToSend.append('pms_company_setup[finance_spoc_attributes][designation]', formData.finance_spoc.designation);
       formDataToSend.append('pms_company_setup[finance_spoc_attributes][email]', formData.finance_spoc.email);
       formDataToSend.append('pms_company_setup[finance_spoc_attributes][mobile]', formData.finance_spoc.mobile);
-      
+
       if (formData.operation_spoc.id) {
         formDataToSend.append('pms_company_setup[operation_spoc_attributes][id]', formData.operation_spoc.id.toString());
       }
@@ -299,12 +314,19 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       formDataToSend.append('pms_company_setup[operation_spoc_attributes][designation]', formData.operation_spoc.designation);
       formDataToSend.append('pms_company_setup[operation_spoc_attributes][email]', formData.operation_spoc.email);
       formDataToSend.append('pms_company_setup[operation_spoc_attributes][mobile]', formData.operation_spoc.mobile);
-      
+
       // Logo
       if (formData.logo) {
         formDataToSend.append('logo', formData.logo);
       } else {
         formDataToSend.append('logo', '');
+      }
+
+      // Company Banner (add this for edit, like create)
+      if (formData.company_banner) {
+        formDataToSend.append('company_banner', formData.company_banner);
+      } else {
+        formDataToSend.append('company_banner', '');
       }
 
       const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
@@ -562,8 +584,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
             {/* Logo Upload Section */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Logo Upload</h3>
-              <div className="space-y-2">
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Logo & Banner Upload</h3>
+
+              {/* Logo Upload */}
+              <div className="space-y-2 mb-6">
                 <span className="text-sm font-medium">Company Logo</span>
                 <input
                   type="file"
@@ -572,14 +596,56 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                 />
-                {formData.logo && (
-                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    {formData.logo.name}
+                {(formData.logoUrl || formData.logo) && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img
+                      src={formData.logoUrl || (formData.logo ? URL.createObjectURL(formData.logo) : "")}
+                      alt="Company Logo Preview"
+                      className="w-16 h-16 object-contain border rounded shadow"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, logo: null, logoUrl: null }))}
+                      className="h-6 w-6 p-0"
+                      title="Remove logo"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
-              
+
+              {/* Company Banner Upload */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Company Banner</span>
+                <input
+                  type="file"
+                  onChange={handleBannerChange}
+                  accept="image/*"
+                  disabled={isSubmitting}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+                />
+                {(formData.bannerUrl || formData.company_banner) && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img
+                      src={formData.bannerUrl || (formData.company_banner ? URL.createObjectURL(formData.company_banner) : "")}
+                      alt="Company Banner Preview"
+                      className="w-16 h-16 object-contain border rounded shadow"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, company_banner: null, bannerUrl: null }))}
+                      className="h-6 w-6 p-0"
+                      title="Remove banner"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -588,7 +654,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-white">Upload Guidelines</p>
                     <p className="text-xs text-white/90">
-                      Recommended formats: PNG, JPG, SVG • Max size: 5MB • Min dimensions: 200x200px
+                      <strong>Logo:</strong> PNG, JPG, SVG • Max size: 5MB • Min dimensions: 200x200px
+                    </p>
+                    <p className="text-xs text-white/90">
+                      <strong>Banner:</strong> PNG, JPG • Max size: 5MB • Recommended: 1920x400px
                     </p>
                   </div>
                 </div>

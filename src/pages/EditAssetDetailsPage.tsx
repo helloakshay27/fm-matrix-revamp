@@ -3031,7 +3031,7 @@ export const EditAssetDetailsPage = () => {
         if (!isEmpty(field.name) && !isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
           const original = findOriginal(field.name, sectionKey);
-          const finalId = original?.id || field.id;
+          const finalId = original?.id;
           const finalName = original?.field_name || field.name;
 
           if (finalId) {

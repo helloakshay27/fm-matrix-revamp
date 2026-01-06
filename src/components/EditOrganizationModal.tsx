@@ -39,6 +39,8 @@ interface OrganizationFormData {
   active: boolean;
   logo: File | null;
   powered_by_logo: File | null;
+  logoUrl?: string | null;
+  poweredByLogoUrl?: string | null;
 }
 
 const fieldStyles = {
@@ -92,7 +94,8 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   // Validate domains like example.com and with more segments (e.g., app.example.co.in)
   const isValidDomain = (value: string) => {
     if (!value) return false;
-    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    const domainRegex =
+      /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
     return domainRegex.test(value.trim());
   };
 
@@ -126,9 +129,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
           active: org?.active !== undefined ? org.active : true,
           logo: null,
           powered_by_logo: null,
+          logoUrl: org?.attachfile?.document_url || null,
+          poweredByLogoUrl: org?.powered_by_attachfile?.document_url || null,
         });
-
-        // Existing attachments can be handled here if needed
       } else {
         const errorText = await response.text();
         console.error("Failed to fetch organization data:", errorText);
@@ -150,7 +153,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   }, [isOpen, organizationId, fetchOrganizationData]);
 
   const handleSubmit = async () => {
-    const newErrors: Record<string, string> = { ...errors };
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Organization name is required";
     }
@@ -158,7 +161,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       newErrors.domain = "Main domain is required";
     }
     if (!formData.sub_domain.trim()) {
-          newErrors.sub_domain = "Sub domain is required"; 
+      newErrors.sub_domain = "Sub domain is required";
     }
 
     // Domain validation
@@ -169,19 +172,19 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
+    // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+    //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
+    // }
 
-    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
-    }
-
-    if (
-      formData.front_subdomain &&
-      !domainRegex.test(formData.front_subdomain)
-    ) {
-      newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
-    }
+    // if (
+    //   formData.front_subdomain &&
+    //   !domainRegex.test(formData.front_subdomain)
+    // ) {
+    //   newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    // }
 
     setErrors(newErrors);
+    console.warn("Validation errors:", newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -249,7 +252,11 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, logo: file });
+      setFormData({
+        ...formData,
+        logo: file,
+        logoUrl: URL.createObjectURL(file),
+      });
     }
   };
 
@@ -258,7 +265,11 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, powered_by_logo: file });
+      setFormData({
+        ...formData,
+        powered_by_logo: file,
+        poweredByLogoUrl: URL.createObjectURL(file),
+      });
     }
   };
 
@@ -274,8 +285,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       active: true,
       logo: null,
       powered_by_logo: null,
+      logoUrl: null,
+      poweredByLogoUrl: null,
     });
-  setErrors({});
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -328,7 +341,8 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   value={formData.name}
                   onChange={(e) => {
                     setFormData({ ...formData, name: e.target.value });
-                    if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+                    if (errors.name)
+                      setErrors((prev) => ({ ...prev, name: "" }));
                   }}
                   fullWidth
                   variant="outlined"
@@ -384,23 +398,23 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   fullWidth
                   variant="outlined"
                   sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: "auto !important",
-                    padding: "2px !important",
-                    display: "flex",
-                  },
-                  "& .MuiInputBase-input[aria-hidden='true']": {
-                    flex: 0,
-                    width: 0,
-                    height: 0,
-                    padding: "0 !important",
-                    margin: 0,
-                    display: "none",
-                  },
-                  "& .MuiInputBase-input": {
-                    resize: "none !important",
-                  },
-                }}
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
@@ -445,7 +459,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     setFormData({ ...formData, domain: val });
                     setErrors((prev) => ({
                       ...prev,
-                      domain: isValidDomain(val) ? '' : prev.domain,
+                      domain: isValidDomain(val) ? "" : prev.domain,
                     }));
                   }}
                   fullWidth
@@ -459,7 +473,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   disabled={isSubmitting}
                   required
                   error={!!errors.domain}
-                  helperText={errors.domain || "Enter a valid domain (e.g., example.com)"}
+                  helperText={
+                    errors.domain || "Enter a valid domain (e.g., example.com)"
+                  }
                 />
 
                 <TextField
@@ -471,7 +487,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     setFormData({ ...formData, sub_domain: val });
                     setErrors((prev) => ({
                       ...prev,
-                      sub_domain: ''
+                      sub_domain: "",
                     }));
                   }}
                   fullWidth
@@ -485,8 +501,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   disabled={isSubmitting}
                   required
                   error={!!errors.sub_domain}
-                  helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
-                  helperText={errors.sub_domain || ""}
+                  helperText={
+                    errors.sub_domain ||
+                    "Enter subdomain (e.g., app.example.com)"
+                  }
                 />
               </div>
 
@@ -547,10 +565,33 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     disabled={isSubmitting}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
-                  {formData.logo && (
-                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      {formData.logo.name}
+                  {(formData.logoUrl || formData.logo) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <img
+                        src={
+                          formData.logoUrl ||
+                          (formData.logo
+                            ? URL.createObjectURL(formData.logo)
+                            : "")
+                        }
+                        alt="Organization Logo Preview"
+                        className="w-16 h-16 object-contain border rounded shadow"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            logo: null,
+                            logoUrl: null,
+                          })
+                        }
+                        className="h-6 w-6 p-0"
+                        title="Remove logo"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -564,10 +605,33 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     disabled={isSubmitting}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
-                  {formData.powered_by_logo && (
-                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      {formData.powered_by_logo.name}
+                  {(formData.poweredByLogoUrl || formData.powered_by_logo) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <img
+                        src={
+                          formData.poweredByLogoUrl ||
+                          (formData.powered_by_logo
+                            ? URL.createObjectURL(formData.powered_by_logo)
+                            : "")
+                        }
+                        alt="Powered By Logo Preview"
+                        className="w-16 h-16 object-contain border rounded shadow"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            powered_by_logo: null,
+                            poweredByLogoUrl: null,
+                          })
+                        }
+                        className="h-6 w-6 p-0"
+                        title="Remove powered by logo"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -579,9 +643,12 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     <Image className="w-4 h-4 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-white">Upload Guidelines</p>
+                    <p className="text-sm font-medium text-white">
+                      Upload Guidelines
+                    </p>
                     <p className="text-xs text-white/90">
-                      Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min dimensions: 200x200px
+                      Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min
+                      dimensions: 200x200px
                     </p>
                   </div>
                 </div>

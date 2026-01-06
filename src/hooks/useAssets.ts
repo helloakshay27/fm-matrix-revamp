@@ -103,6 +103,27 @@ export const useAssets = (page: number = 1) => {
     assetType: apiAsset.asset_type,
     category: apiAsset.asset_type_category,
     disabled: !!apiAsset.disabled,
+    // Additional location fields
+    pms_floor: apiAsset.pms_floor || apiAsset.floor,
+    pms_area: apiAsset.pms_area || apiAsset.area,
+    // Additional fields for table display
+    allocation_type: apiAsset.allocation_type || '',
+    allocated_to: apiAsset.allocated_to || '',
+    useful_life: apiAsset.useful_life || 0,
+    depreciation_method: apiAsset.depreciation_method || '',
+    accumulated_depreciation: apiAsset.accumulated_depreciation || 0,
+    current_book_value: apiAsset.current_book_value || 0,
+    disposal_date: apiAsset.disposal_date || '',
+    model_number: apiAsset.model_number || '',
+    manufacturer: apiAsset.manufacturer || '',
+    critical: apiAsset.critical || false,
+    commisioning_date: apiAsset.commisioning_date || '',
+    warranty: apiAsset.warranty || '',
+    amc: apiAsset.amc || '',
+    purchased_on: apiAsset.purchased_on || '',
+    supplier_name: apiAsset.supplier_name || '',
+    purchase_cost: apiAsset.purchase_cost || 0,
+    custom_fields: apiAsset.custom_fields || {},
   });
 
   const formatStatusLabel = (status: string): string => {
