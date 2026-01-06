@@ -207,11 +207,6 @@ class CacheManager {
       // Use sessionStorage to track if this is a fresh page load
       const isPageRefresh = !sessionStorage.getItem("app_initialized");
 
-      if (isPageRefresh) {
-        this.clearAll();
-        console.log("Cache cleared on page refresh");
-      }
-
       // Mark app as initialized for this session
       sessionStorage.setItem("app_initialized", "true");
     } catch (error) {
