@@ -748,8 +748,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                       const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                       // enforce single image and 5MB max similar to AddCompanyModal
                       if (file) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast.error("Image file size should be less than 5MB");
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast.error("Image file size should be less than 10MB");
                           return;
                         }
                         // cleanup previous preview

@@ -225,11 +225,10 @@ export const SiteDetailsPage: React.FC = () => {
               <p className="text-gray-600 mt-2">{site.name_with_zone}</p>
               <div className="flex items-center gap-2 mt-3">
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    site.active
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${site.active
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
-                  }`}
+                    }`}
                 >
                   {site.active ? "Active" : "Inactive"}
                 </span>
@@ -300,6 +299,14 @@ export const SiteDetailsPage: React.FC = () => {
                       #{site.company_id}
                     </p>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name
+                    </label>
+                    <p className="text-gray-900 font-mono">
+                      {site?.company_name}
+                    </p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -307,7 +314,7 @@ export const SiteDetailsPage: React.FC = () => {
                       Region
                     </label>
                     <p className="text-gray-900">
-                      {site.pms_region?.name || "Not specified"}
+                      {site.region_name || "Not specified"}
                     </p>
                   </div>
                   <div>
@@ -315,7 +322,7 @@ export const SiteDetailsPage: React.FC = () => {
                       Zone
                     </label>
                     <p className="text-gray-900">
-                      {site.pms_zone?.name || "Not specified"}
+                      {site?.name_with_zone || "Not specified"}
                     </p>
                   </div>
                 </div>
@@ -324,7 +331,7 @@ export const SiteDetailsPage: React.FC = () => {
                     Headquarters
                   </label>
                   <p className="text-gray-900">
-                    {site.pms_region?.headquarter?.name || "Not specified"}
+                    {site?.headquarter_name || "Not specified"}
                   </p>
                 </div>
               </div>
@@ -374,10 +381,18 @@ export const SiteDetailsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Coordinates
+                      Coordinates (Latitude, Longitude)
                     </label>
                     <p className="text-gray-900 font-mono text-sm">
                       {site.latitude}, {site.longitude}
+                    </p>
+                  </div>
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Geofence Range
+                    </label>
+                    <p className="text-gray-900 font-mono text-sm">
+                      {site.geofence_range}
                     </p>
                   </div>
                 </div>
@@ -396,6 +411,8 @@ export const SiteDetailsPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+
 
             {/* Site Advantages */}
             {site.site_advantages && site.site_advantages.length > 0 && (
@@ -462,14 +479,70 @@ export const SiteDetailsPage: React.FC = () => {
             )}
 
             {/* Shared Content */}
-            {site.shared_content && (
+            {/* {site.shared && ( */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                {/* Enabled Site Configuration Details */}
+                <div className="">
+                  {/* <h3 className="text-sm font-medium  mb-4">
+                    Enabled Site Configurations
+                  </h3> */}
+
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Building className="w-5 h-5 text-[#C72030]" />
+               Enabled Site Configurations
+              </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {[
+                      { key: "skip_host_approval", label: "Skip Host Approval" },
+                      { key: "survey_enabled", label: "Survey Enabled" },
+                      { key: "fitout_enabled", label: "Fitout Enabled" },
+                      { key: "mailroom_enabled", label: "Mailroom Enabled" },
+                      { key: "create_breakdown_ticket", label: "Create Breakdown Ticket" },
+                      { key: "parking_enabled", label: "Parking Enabled" },
+                      { key: "default_visitor_pass", label: "Default Visitor Pass" },
+                      { key: "ecommerce_service_enabled", label: "Ecommerce Service Enabled" },
+                      { key: "operational_audit_enabled", label: "Operational Audit Enabled" },
+                      { key: "steps_enabled", label: "Steps Enabled" },
+                      { key: "transportation_enabled", label: "Transportation Enabled" },
+                      { key: "business_card_enabled", label: "Business Card Enabled" },
+                      { key: "visitor_enabled", label: "Visitor Enabled" },
+                      { key: "govt_id_enabled", label: "Govt ID Enabled" },
+                      { key: "visitor_host_mandatory", label: "Visitor Host Mandatory" },
+                    ]
+                      .filter(item => site && site[item.key])
+                      .map(item => (
+                        <div key={item.key} className="flex items-center gap-2 text-black-700">
+                          <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                          {item.label}
+                        </div>
+                      ))}
+                    {site && [
+                      "skip_host_approval",
+                      "survey_enabled",
+                      "fitout_enabled",
+                      "mailroom_enabled",
+                      "create_breakdown_ticket",
+                      "parking_enabled",
+                      "default_visitor_pass",
+                      "ecommerce_service_enabled",
+                      "operational_audit_enabled",
+                      "steps_enabled",
+                      "transportation_enabled",
+                      "business_card_enabled",
+                      "visitor_enabled",
+                      "govt_id_enabled",
+                      "visitor_host_mandatory"
+                    ].every(key => !site[key]) && (
+                        <div className="text-gray-500 col-span-2">No configurations enabled</div>
+                      )}
+                  </div>
+                </div>
+                {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Additional Information
                 </h2>
-                <p className="text-gray-900">{site.shared_content}</p>
+                <p className="text-gray-900">{site.shared_content}</p> */}
               </div>
-            )}
+            {/* )} */}
           </div>
 
           {/* Right Column - Meta Information */}
