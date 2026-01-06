@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Share2, Paperclip } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Share2,
+  Paperclip,
+  Pencil,
+  X,
+} from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -12,6 +19,7 @@ import {
   FormControlLabel,
   Radio,
 } from "@mui/material";
+import { Label } from "@/components/ui/label";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
 
@@ -98,6 +106,22 @@ export const AddDocumentDashboard = () => {
     }
   };
 
+  // Handle radio button changes
+  const handleRadioChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "shareWith" && value === "individual") {
+      setShowTechParkModal(true);
+    }
+
+    if (name === "shareWithCommunities" && value === "yes") {
+      setShowCommunityModal(true);
+    }
+  };
+
   // Handle file upload for cover image
   const handleCoverImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -136,10 +160,6 @@ export const AddDocumentDashboard = () => {
     setIsSubmitting(true);
     try {
       // TODO: Implement API call to create document
-      console.log("Form Data:", formData);
-      console.log("Cover Image:", coverImage);
-      console.log("Attached Files:", attachedFiles);
-
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -273,59 +293,69 @@ export const AddDocumentDashboard = () => {
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Share With */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-8">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Share With:
-                </label>
+                </Label>
                 <RadioGroup
+                  row
+                  name="shareWith"
                   value={formData.shareWith}
                   onChange={(e) =>
-                    handleInputChange("shareWith", e.target.value)
+                    handleRadioChange("shareWith", e.target.value)
                   }
+                  className="gap-2"
                 >
                   <FormControlLabel
-                    value="all_tech_park"
+                    value="all"
                     control={
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="All Tech Park"
+                    label={
+                      <span className="text-sm text-gray-600">
+                        All Tech Park
+                      </span>
+                    }
                   />
                   <FormControlLabel
-                    value="individual_tech_park"
+                    value="individual"
                     control={
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="Individual Tech Park"
+                    label={
+                      <span className="text-sm text-gray-600">
+                        Individual Tech Park
+                      </span>
+                    }
                   />
                 </RadioGroup>
               </div>
 
-              {/* Share With Communities */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Share With Communities:
-                </label>
+                </Label>
                 <RadioGroup
+                  row
+                  name="shareWithCommunities"
                   value={formData.shareWithCommunities}
                   onChange={(e) =>
-                    handleInputChange("shareWithCommunities", e.target.value)
+                    handleRadioChange("shareWithCommunities", e.target.value)
                   }
+                  className="gap-2"
                 >
                   <FormControlLabel
                     value="yes"
@@ -333,13 +363,12 @@ export const AddDocumentDashboard = () => {
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="Yes"
+                    label={<span className="text-sm text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
@@ -347,17 +376,51 @@ export const AddDocumentDashboard = () => {
                       <Radio
                         sx={{
                           color: "#C72030",
-                          "&.Mui-checked": {
-                            color: "#C72030",
-                          },
+                          "&.Mui-checked": { color: "#C72030" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
                     }
-                    label="No"
+                    label={<span className="text-sm text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
             </div>
+
+            {/* Selected Tech Parks Display */}
+            {formData.shareWith === "individual" &&
+              selectedTechParks.length > 0 && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-[#C72030] text-sm">
+                    {selectedTechParks
+                      .map((_, i) => `Tech Parks ${i + 1}`)
+                      .join(", ")}
+                    .
+                  </span>
+                  <button
+                    onClick={() => setShowTechParkModal(true)}
+                    className="text-gray-500 hover:text-[#C72030] transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+            {/* Selected Communities Display */}
+            {formData.shareWithCommunities === "yes" &&
+              selectedCommunities.length > 0 && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-[#C72030] text-sm">
+                    {selectedCommunities.map((c) => c.name).join(", ")}.
+                  </span>
+                  <button
+                    onClick={() => setShowCommunityModal(true)}
+                    className="text-gray-500 hover:text-[#C72030] transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
           </div>
         </div>
 
@@ -376,19 +439,19 @@ export const AddDocumentDashboard = () => {
 
           <div className="p-6">
             <h3 className="text-base font-semibold text-[#1a1a1a] mb-4">
-              Upload Cover Image
+              Upload Document
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            {/* Upload Area or File Display */}
+            {!coverImage ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
                 <p className="text-sm text-gray-500 mb-4">
                   Choose a file or drag & drop it here
                 </p>
                 <label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".pdf,.doc,.docx,image/*"
                     onChange={handleCoverImageUpload}
                     className="hidden"
                   />
@@ -399,65 +462,49 @@ export const AddDocumentDashboard = () => {
                         .querySelector<HTMLInputElement>('input[type="file"]')
                         ?.click()
                     }
-                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors"
+                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors font-medium"
                   >
                     Browse
                   </button>
                 </label>
-                {coverImage && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    {coverImage.name}
-                  </p>
-                )}
               </div>
-
-              {/* Add New Button */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex items-center justify-center">
-                <label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const inputs =
-                        document.querySelectorAll<HTMLInputElement>(
-                          'input[type="file"]'
-                        );
-                      inputs[1]?.click();
-                    }}
-                    className="px-6 py-2 bg-[#FFF5F5] text-[#C72030] rounded hover:bg-[#FFE5E5] transition-colors"
-                  >
-                    Add New
-                  </button>
-                </label>
-              </div>
-            </div>
-
-            {/* Attached Files List */}
-            {attachedFiles.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">
-                  Attached Files ({attachedFiles.length})
-                </h4>
-                <div className="space-y-2">
-                  {attachedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200"
-                    >
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center">
+                      <svg
+                        className="w-8 h-8 text-red-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
                       >
-                        Remove
-                      </button>
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                        <text
+                          x="10"
+                          y="14"
+                          fontSize="6"
+                          fill="white"
+                          textAnchor="middle"
+                          fontWeight="bold"
+                        >
+                          PDF
+                        </text>
+                      </svg>
                     </div>
-                  ))}
+                    <span className="text-sm text-gray-700 font-medium">
+                      {coverImage.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setCoverImage(null)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
               </div>
             )}
