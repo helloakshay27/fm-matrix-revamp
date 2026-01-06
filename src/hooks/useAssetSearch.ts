@@ -39,7 +39,7 @@ export const useAssetSearch = () => {
       siteName: apiAsset.site?.name || apiAsset.site_name || '',
       building: apiAsset.building ? { name: apiAsset.building.name } : null,
       wing: apiAsset.wing ? { name: apiAsset.wing.name } : null,
-      floor: apiAsset.floor
+      pmsFloor: apiAsset.floor
         ? { name: apiAsset.floor.name }
         : apiAsset.pms_floor
           ? { name: apiAsset.pms_floor.name }
@@ -64,6 +64,7 @@ export const useAssetSearch = () => {
       supplier_name: apiAsset.supplier_name || '',
       purchase_cost: apiAsset.purchase_cost || 0,
       allocation_type: apiAsset.allocation_type || '',
+      allocated_to: apiAsset.allocated_to || '',
       useful_life: apiAsset.useful_life || 0,
       depreciation_method: apiAsset.depreciation_method || '',
       accumulated_depreciation: apiAsset.accumulated_depreciation || 0,
@@ -100,7 +101,7 @@ export const useAssetSearch = () => {
     try {
       const response = await apiClient.get<SearchResponse>(ENDPOINTS.ASSETS, {
         params: {
-          'q[name_or_asset_number_or_serial_number_or_id_value_cont]': searchTerm,
+          'q[name_or_asset_number_or_serial_number_or_id_value_or_allocated_to_cont]': searchTerm,
           page: page,
           per_page: 15,
         }
