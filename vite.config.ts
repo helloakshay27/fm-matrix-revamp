@@ -2,14 +2,13 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // server: {
-  //   host: "::",
-  //   port: 5174,
-  // },
+  server: {
+    host: "::",
+    port: 5173,
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -76,9 +75,14 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // Add hash to filenames for cache busting
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        // Add hash to generated files for better cache invalidation
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
       },
     },
   },
