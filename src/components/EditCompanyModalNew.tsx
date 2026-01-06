@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { X, Building, Loader2, Image } from 'lucide-react';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
+import { X, Building, Loader2, Image } from "lucide-react";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
 
 interface EditCompanyModalProps {
   isOpen: boolean;
@@ -27,14 +38,26 @@ interface CompanyFormData {
   logo: File | null;
   bill_to_address: { id?: number; address: string; email: string };
   postal_address: { id?: number; address: string; email: string };
-  finance_spoc: { id?: number; name: string; designation: string; email: string; mobile: string };
-  operation_spoc: { id?: number; name: string; designation: string; email: string; mobile: string };
+  finance_spoc: {
+    id?: number;
+    name: string;
+    designation: string;
+    email: string;
+    mobile: string;
+  };
+  operation_spoc: {
+    id?: number;
+    name: string;
+    designation: string;
+    email: string;
+    mobile: string;
+  };
 }
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
 
@@ -42,10 +65,11 @@ const selectMenuProps = {
   PaperProps: {
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       zIndex: 9999,
     },
   },
@@ -61,27 +85,36 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
   companyId,
   organizationsDropdown,
   countriesDropdown,
-  canEdit
+  canEdit,
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState<CompanyFormData>({
-    name: '',
-    organization_id: '',
-    country_id: '',
-    billing_term: '',
-    billing_rate: '',
-    live_date: '',
-    remarks: '',
+    name: "",
+    organization_id: "",
+    country_id: "",
+    billing_term: "",
+    billing_rate: "",
+    live_date: "",
+    remarks: "",
     logo: null,
     logoUrl: null,
-    bill_to_address: { address: '', email: '' },
-    postal_address: { address: '', email: '' },
-    finance_spoc: { name: '', designation: 'Finance', email: '', mobile: '' },
-    operation_spoc: { name: '', designation: 'Operation', email: '', mobile: '' }
+    company_banner: null,
+    bannerUrl: null,
+    bill_to_address: { address: "", email: "" },
+    postal_address: { address: "", email: "" },
+    finance_spoc: { name: "", designation: "Finance", email: "", mobile: "" },
+    operation_spoc: {
+      name: "",
+      designation: "Operation",
+      email: "",
+      mobile: "",
+    },
   });
+
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -95,74 +128,79 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
   const fetchCompanyDetails = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_show.json`), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${companyId}/company_show.json`),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Company details response:', result);
+      console.log("Company details response:", result);
 
       const company = result.data || result.company || result;
 
       // Format date for HTML date input (YYYY-MM-DD)
       const formatDateForInput = (dateStr: string) => {
-        if (!dateStr) return '';
+        if (!dateStr) return "";
         try {
           // Handle different date formats
           const date = new Date(dateStr);
-          if (isNaN(date.getTime())) return '';
-          return date.toISOString().split('T')[0];
+          if (isNaN(date.getTime())) return "";
+          return date.toISOString().split("T")[0];
         } catch {
-          return '';
+          return "";
         }
       };
 
       setFormData({
-        name: company.name || '',
-        organization_id: company.organization_id?.toString() || '',
-        country_id: company.country_id?.toString() || '',
-        billing_term: company.billing_term || '',
-        billing_rate: company.billing_rate || '',
+        name: company.name || "",
+        organization_id: company.organization_id?.toString() || "",
+        country_id: company.country_id?.toString() || "",
+        billing_term: company.billing_term || "",
+        billing_rate: company.billing_rate || "",
         live_date: formatDateForInput(company.live_date),
-        remarks: company.remarks || '',
+        remarks: company.remarks || "",
         logo: null,
         logoUrl: company.company_logo_url || null,
+        company_banner: null,
+        bannerUrl: company.company_banner_url || null,
         bill_to_address: {
           id: company.bill_to_address?.id,
-          address: company.bill_to_address?.address || '',
-          email: company.bill_to_address?.email || ''
+          address: company.bill_to_address?.address || "",
+          email: company.bill_to_address?.email || "",
         },
         postal_address: {
           id: company.postal_address?.id,
-          address: company.postal_address?.address || '',
-          email: company.postal_address?.email || ''
+          address: company.postal_address?.address || "",
+          email: company.postal_address?.email || "",
         },
         finance_spoc: {
           id: company.finance_spoc?.id,
-          name: company.finance_spoc?.name || '',
-          designation: company.finance_spoc?.designation || 'Finance',
-          email: company.finance_spoc?.email || '',
-          mobile: company.finance_spoc?.mobile || ''
+          name: company.finance_spoc?.name || "",
+          designation: company.finance_spoc?.designation || "Finance",
+          email: company.finance_spoc?.email || "",
+          mobile: company.finance_spoc?.mobile || "",
         },
         operation_spoc: {
           id: company.operation_spoc?.id,
-          name: company.operation_spoc?.name || '',
-          designation: company.operation_spoc?.designation || 'Operation',
-          email: company.operation_spoc?.email || '',
-          mobile: company.operation_spoc?.mobile || ''
-        }
+          name: company.operation_spoc?.name || "",
+          designation: company.operation_spoc?.designation || "Operation",
+          email: company.operation_spoc?.email || "",
+          mobile: company.operation_spoc?.mobile || "",
+        },
       });
     } catch (error: any) {
-      console.error('Error fetching company details:', error);
+      console.error("Error fetching company details:", error);
       toast.error(`Failed to load company details: ${error.message}`, {
         duration: 5000,
       });
@@ -172,29 +210,33 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
   };
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
   };
 
-  const handleNestedChange = (parentField: string, childField: string, value: string) => {
-    setFormData(prev => {
+  const handleNestedChange = (
+    parentField: string,
+    childField: string,
+    value: string
+  ) => {
+    setFormData((prev) => {
       const parent = prev[parentField as keyof CompanyFormData];
-      if (typeof parent === 'object' && parent !== null) {
+      if (typeof parent === "object" && parent !== null) {
         return {
           ...prev,
           [parentField]: {
             ...parent,
-            [childField]: value
-          }
+            [childField]: value,
+          },
         };
       }
       return prev;
@@ -203,32 +245,52 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, logo: file, logoUrl: file ? URL.createObjectURL(file) : null }));
+    setFormData((prev) => ({
+      ...prev,
+      logo: file,
+      logoUrl: file ? URL.createObjectURL(file) : null,
+    }));
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData((prev) => ({
+      ...prev,
+      company_banner: file,
+      bannerUrl: file ? URL.createObjectURL(file) : null,
+    }));
+    setBannerPreviewUrl(file ? URL.createObjectURL(file) : null);
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
+      newErrors.name = "Company name is required";
     }
 
     if (!formData.organization_id) {
-      newErrors.organization_id = 'Organization is required';
+      newErrors.organization_id = "Organization is required";
     }
 
     if (!formData.country_id) {
-      newErrors.country_id = 'Country is required';
+      newErrors.country_id = "Country is required";
     }
 
     // Email validation for SPOCs
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.finance_spoc.email && !emailRegex.test(formData.finance_spoc.email)) {
-      newErrors.finance_email = 'Invalid email format';
+    if (
+      formData.finance_spoc.email &&
+      !emailRegex.test(formData.finance_spoc.email)
+    ) {
+      newErrors.finance_email = "Invalid email format";
     }
 
-    if (formData.operation_spoc.email && !emailRegex.test(formData.operation_spoc.email)) {
-      newErrors.operation_email = 'Invalid email format';
+    if (
+      formData.operation_spoc.email &&
+      !emailRegex.test(formData.operation_spoc.email)
+    ) {
+      newErrors.operation_email = "Invalid email format";
     }
 
     setErrors(newErrors);
@@ -236,13 +298,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
   };
 
   const formatDateForAPI = (dateStr: string) => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     try {
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return '';
-      return date.toLocaleDateString('en-US'); // MM/DD/YYYY format
+      if (isNaN(date.getTime())) return "";
+      return date.toLocaleDateString("en-US"); // MM/DD/YYYY format
     } catch {
-      return '';
+      return "";
     }
   };
 
@@ -250,75 +312,149 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     if (!validateForm() || !canEdit) return;
 
     setIsSubmitting(true);
+
     try {
       const formDataToSend = new FormData();
-      
+
       // Basic company data
-      formDataToSend.append('pms_company_setup[name]', formData.name);
-      formDataToSend.append('pms_company_setup[organization_id]', formData.organization_id);
-      formDataToSend.append('pms_company_setup[country_id]', formData.country_id);
-      formDataToSend.append('pms_company_setup[billing_term]', formData.billing_term);
-      formDataToSend.append('pms_company_setup[billing_rate]', formData.billing_rate);
-      formDataToSend.append('pms_company_setup[live_date]', formatDateForAPI(formData.live_date));
-      formDataToSend.append('pms_company_setup[remarks]', formData.remarks);
-      
+      formDataToSend.append("pms_company_setup[name]", formData.name);
+      formDataToSend.append(
+        "pms_company_setup[organization_id]",
+        formData.organization_id
+      );
+      formDataToSend.append(
+        "pms_company_setup[country_id]",
+        formData.country_id
+      );
+      formDataToSend.append(
+        "pms_company_setup[billing_term]",
+        formData.billing_term
+      );
+      formDataToSend.append(
+        "pms_company_setup[billing_rate]",
+        formData.billing_rate
+      );
+      formDataToSend.append(
+        "pms_company_setup[live_date]",
+        formatDateForAPI(formData.live_date)
+      );
+      formDataToSend.append("pms_company_setup[remarks]", formData.remarks);
+
       // Address data with nested attributes structure (include IDs for updates)
       if (formData.bill_to_address.id) {
-        formDataToSend.append('pms_company_setup[bill_to_address_attributes][id]', formData.bill_to_address.id.toString());
+        formDataToSend.append(
+          "pms_company_setup[bill_to_address_attributes][id]",
+          formData.bill_to_address.id.toString()
+        );
       }
-      formDataToSend.append('pms_company_setup[bill_to_address_attributes][address]', formData.bill_to_address.address);
-      formDataToSend.append('pms_company_setup[bill_to_address_attributes][email]', formData.bill_to_address.email);
-      
+      formDataToSend.append(
+        "pms_company_setup[bill_to_address_attributes][address]",
+        formData.bill_to_address.address
+      );
+      formDataToSend.append(
+        "pms_company_setup[bill_to_address_attributes][email]",
+        formData.bill_to_address.email
+      );
+
       if (formData.postal_address.id) {
-        formDataToSend.append('pms_company_setup[postal_address_attributes][id]', formData.postal_address.id.toString());
+        formDataToSend.append(
+          "pms_company_setup[postal_address_attributes][id]",
+          formData.postal_address.id.toString()
+        );
       }
-      formDataToSend.append('pms_company_setup[postal_address_attributes][address]', formData.postal_address.address);
-      formDataToSend.append('pms_company_setup[postal_address_attributes][email]', formData.postal_address.email);
+      formDataToSend.append(
+        "pms_company_setup[postal_address_attributes][address]",
+        formData.postal_address.address
+      );
+      formDataToSend.append(
+        "pms_company_setup[postal_address_attributes][email]",
+        formData.postal_address.email
+      );
 
       // SPOC data with nested attributes structure (include IDs for updates)
       if (formData.finance_spoc.id) {
-        formDataToSend.append('pms_company_setup[finance_spoc_attributes][id]', formData.finance_spoc.id.toString());
+        formDataToSend.append(
+          "pms_company_setup[finance_spoc_attributes][id]",
+          formData.finance_spoc.id.toString()
+        );
       }
-      formDataToSend.append('pms_company_setup[finance_spoc_attributes][name]', formData.finance_spoc.name);
-      formDataToSend.append('pms_company_setup[finance_spoc_attributes][designation]', formData.finance_spoc.designation);
-      formDataToSend.append('pms_company_setup[finance_spoc_attributes][email]', formData.finance_spoc.email);
-      formDataToSend.append('pms_company_setup[finance_spoc_attributes][mobile]', formData.finance_spoc.mobile);
-      
+      formDataToSend.append(
+        "pms_company_setup[finance_spoc_attributes][name]",
+        formData.finance_spoc.name
+      );
+      formDataToSend.append(
+        "pms_company_setup[finance_spoc_attributes][designation]",
+        formData.finance_spoc.designation
+      );
+      formDataToSend.append(
+        "pms_company_setup[finance_spoc_attributes][email]",
+        formData.finance_spoc.email
+      );
+      formDataToSend.append(
+        "pms_company_setup[finance_spoc_attributes][mobile]",
+        formData.finance_spoc.mobile
+      );
+
       if (formData.operation_spoc.id) {
-        formDataToSend.append('pms_company_setup[operation_spoc_attributes][id]', formData.operation_spoc.id.toString());
+        formDataToSend.append(
+          "pms_company_setup[operation_spoc_attributes][id]",
+          formData.operation_spoc.id.toString()
+        );
       }
-      formDataToSend.append('pms_company_setup[operation_spoc_attributes][name]', formData.operation_spoc.name);
-      formDataToSend.append('pms_company_setup[operation_spoc_attributes][designation]', formData.operation_spoc.designation);
-      formDataToSend.append('pms_company_setup[operation_spoc_attributes][email]', formData.operation_spoc.email);
-      formDataToSend.append('pms_company_setup[operation_spoc_attributes][mobile]', formData.operation_spoc.mobile);
-      
+      formDataToSend.append(
+        "pms_company_setup[operation_spoc_attributes][name]",
+        formData.operation_spoc.name
+      );
+      formDataToSend.append(
+        "pms_company_setup[operation_spoc_attributes][designation]",
+        formData.operation_spoc.designation
+      );
+      formDataToSend.append(
+        "pms_company_setup[operation_spoc_attributes][email]",
+        formData.operation_spoc.email
+      );
+      formDataToSend.append(
+        "pms_company_setup[operation_spoc_attributes][mobile]",
+        formData.operation_spoc.mobile
+      );
+
       // Logo
       if (formData.logo) {
-        formDataToSend.append('logo', formData.logo);
+        formDataToSend.append("logo", formData.logo);
       } else {
-        formDataToSend.append('logo', '');
+        formDataToSend.append("logo", "");
       }
 
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formDataToSend,
-      });
+      // Company Banner (add this for edit, like create)
+      if (formData.company_banner) {
+        formDataToSend.append("company_banner", formData.company_banner);
+      } else {
+        formDataToSend.append("company_banner", "");
+      }
+
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${companyId}/company_update.json`),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+          body: formDataToSend,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update company');
+        throw new Error(errorData.message || "Failed to update company");
       }
 
-      toast.success('Company updated successfully!', {
+      toast.success("Company updated successfully!", {
         duration: 3000,
       });
 
       onSuccess();
     } catch (error: any) {
-      console.error('Error updating company:', error);
+      console.error("Error updating company:", error);
       toast.error(`Failed to update company: ${error.message}`, {
         duration: 5000,
       });
@@ -329,18 +465,18 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      organization_id: '',
-      country_id: '',
-      billing_term: '',
-      billing_rate: '',
-      live_date: '',
-      remarks: '',
+      name: "",
+      organization_id: "",
+      country_id: "",
+      billing_term: "",
+      billing_rate: "",
+      live_date: "",
+      remarks: "",
       logo: null,
-      bill_to_address: { address: '', email: '' },
-      postal_address: { address: '', email: '' },
-      finance_spoc: { name: '', designation: '', email: '', mobile: '' },
-      operation_spoc: { name: '', designation: '', email: '', mobile: '' }
+      bill_to_address: { address: "", email: "" },
+      postal_address: { address: "", email: "" },
+      finance_spoc: { name: "", designation: "", email: "", mobile: "" },
+      operation_spoc: { name: "", designation: "", email: "", mobile: "" },
     });
     setErrors({});
   };
@@ -354,9 +490,14 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="edit-company-dialog-description">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50"
+        aria-describedby="edit-company-dialog-description"
+      >
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">EDIT COMPANY</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            EDIT COMPANY
+          </DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -366,27 +507,32 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
           <div id="edit-company-dialog-description" className="sr-only">
-            Edit company details including name, organization, country, billing information, addresses, and SPOC contacts
+            Edit company details including name, organization, country, billing
+            information, addresses, and SPOC contacts
           </div>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-            <span className="ml-2 text-gray-600">Loading company details...</span>
+            <span className="ml-2 text-gray-600">
+              Loading company details...
+            </span>
           </div>
         ) : (
           <div className="space-y-6 py-4">
             {/* Basic Information */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Basic Information</h3>
-              
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Basic Information
+              </h3>
+
               <div className="grid grid-cols-2 gap-6">
                 <TextField
                   label="Company Name"
                   placeholder="Enter company name"
                   value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
+                  onChange={(e) => handleChange("name", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -397,11 +543,17 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   required
                 />
 
-                <FormControl fullWidth variant="outlined" error={!!errors.organization_id}>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  error={!!errors.organization_id}
+                >
                   <InputLabel shrink>Organization</InputLabel>
                   <MuiSelect
                     value={formData.organization_id}
-                    onChange={(e) => handleChange('organization_id', e.target.value)}
+                    onChange={(e) =>
+                      handleChange("organization_id", e.target.value)
+                    }
                     label="Organization"
                     displayEmpty
                     MenuProps={selectMenuProps}
@@ -418,17 +570,23 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                     ))}
                   </MuiSelect>
                   {errors.organization_id && (
-                    <div className="text-red-500 text-xs mt-1">{errors.organization_id}</div>
+                    <div className="text-red-500 text-xs mt-1">
+                      {errors.organization_id}
+                    </div>
                   )}
                 </FormControl>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6 mt-6">
-                <FormControl fullWidth variant="outlined" error={!!errors.country_id}>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  error={!!errors.country_id}
+                >
                   <InputLabel shrink>Country</InputLabel>
                   <MuiSelect
                     value={formData.country_id}
-                    onChange={(e) => handleChange('country_id', e.target.value)}
+                    onChange={(e) => handleChange("country_id", e.target.value)}
                     label="Country"
                     displayEmpty
                     MenuProps={selectMenuProps}
@@ -445,7 +603,9 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                     ))}
                   </MuiSelect>
                   {errors.country_id && (
-                    <div className="text-red-500 text-xs mt-1">{errors.country_id}</div>
+                    <div className="text-red-500 text-xs mt-1">
+                      {errors.country_id}
+                    </div>
                   )}
                 </FormControl>
 
@@ -453,7 +613,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Billing Term"
                   placeholder="Enter billing term"
                   value={formData.billing_term}
-                  onChange={(e) => handleChange('billing_term', e.target.value)}
+                  onChange={(e) => handleChange("billing_term", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -461,13 +621,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <TextField
                   label="Billing Rate"
                   placeholder="Enter billing rate"
                   value={formData.billing_rate}
-                  onChange={(e) => handleChange('billing_rate', e.target.value)}
+                  onChange={(e) => handleChange("billing_rate", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -479,7 +639,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Live Date"
                   type="date"
                   value={formData.live_date}
-                  onChange={(e) => handleChange('live_date', e.target.value)}
+                  onChange={(e) => handleChange("live_date", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -487,13 +647,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-              
+
               <div className="mt-6">
                 <TextField
                   label="Remarks"
                   placeholder="Enter remarks"
                   value={formData.remarks}
-                  onChange={(e) => handleChange('remarks', e.target.value)}
+                  onChange={(e) => handleChange("remarks", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -503,13 +663,16 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-
             </div>
 
             {/* Logo Upload Section */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Logo Upload</h3>
-              <div className="space-y-2">
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Logo & Banner Upload
+              </h3>
+
+              {/* Logo Upload */}
+              <div className="space-y-2 mb-6">
                 <span className="text-sm font-medium">Company Logo</span>
                 <input
                   type="file"
@@ -521,14 +684,25 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                 {(formData.logoUrl || formData.logo) && (
                   <div className="flex items-center gap-2 mt-2">
                     <img
-                      src={formData.logoUrl || (formData.logo ? URL.createObjectURL(formData.logo) : "")}
+                      src={
+                        formData.logoUrl ||
+                        (formData.logo
+                          ? URL.createObjectURL(formData.logo)
+                          : "")
+                      }
                       alt="Company Logo Preview"
                       className="w-16 h-16 object-contain border rounded shadow"
                     />
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, logo: null, logoUrl: null }))}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          logo: null,
+                          logoUrl: null,
+                        }))
+                      }
                       className="h-6 w-6 p-0"
                       title="Remove logo"
                     >
@@ -537,16 +711,64 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   </div>
                 )}
               </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+
+              {/* Company Banner Upload */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Company Banner</span>
+                <input
+                  type="file"
+                  onChange={handleBannerChange}
+                  accept="image/*"
+                  disabled={isSubmitting}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+                />
+                {(formData.bannerUrl || formData.company_banner) && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img
+                      src={
+                        formData.bannerUrl ||
+                        (formData.company_banner
+                          ? URL.createObjectURL(formData.company_banner)
+                          : "")
+                      }
+                      alt="Company Banner Preview"
+                      className="w-16 h-16 object-contain border rounded shadow"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          company_banner: null,
+                          bannerUrl: null,
+                        }))
+                      }
+                      className="h-6 w-6 p-0"
+                      title="Remove banner"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <Image className="w-4 h-4 text-blue-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-800">Upload Guidelines</p>
-                    <p className="text-xs text-blue-700">
-                      Recommended formats: PNG, JPG, SVG • Max size: 5MB • Min dimensions: 200x200px
+                    <p className="text-sm font-medium text-white">
+                      Upload Guidelines
+                    </p>
+                    <p className="text-xs text-white/90">
+                      <strong>Logo:</strong> PNG, JPG, SVG • Max size: 5MB • Min
+                      dimensions: 200x200px
+                    </p>
+                    <p className="text-xs text-white/90">
+                      <strong>Banner:</strong> PNG, JPG • Max size: 5MB •
+                      Recommended: 1920x400px
                     </p>
                   </div>
                 </div>
@@ -555,13 +777,21 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
             {/* Address Information */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Address Information</h3>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Address Information
+              </h3>
               <div className="grid grid-cols-2 gap-6">
                 <TextField
                   label="Bill To Address"
                   placeholder="Enter billing address"
                   value={formData.bill_to_address.address}
-                  onChange={(e) => handleNestedChange('bill_to_address', 'address', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "bill_to_address",
+                      "address",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -575,7 +805,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Postal Address"
                   placeholder="Enter postal address"
                   value={formData.postal_address.address}
-                  onChange={(e) => handleNestedChange('postal_address', 'address', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "postal_address",
+                      "address",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -585,13 +821,19 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <TextField
                   label="Bill To Email"
                   placeholder="Enter billing email"
                   value={formData.bill_to_address.email}
-                  onChange={(e) => handleNestedChange('bill_to_address', 'email', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "bill_to_address",
+                      "email",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -603,7 +845,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Postal Email"
                   placeholder="Enter postal email"
                   value={formData.postal_address.email}
-                  onChange={(e) => handleNestedChange('postal_address', 'email', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "postal_address",
+                      "email",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -615,13 +863,17 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
             {/* Finance SPOC */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Finance SPOC</h3>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Finance SPOC
+              </h3>
               <div className="grid grid-cols-2 gap-6">
                 <TextField
                   label="Name"
                   placeholder="Enter finance SPOC name"
                   value={formData.finance_spoc.name}
-                  onChange={(e) => handleNestedChange('finance_spoc', 'name', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange("finance_spoc", "name", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -633,7 +885,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Designation"
                   placeholder="Enter designation"
                   value={formData.finance_spoc.designation}
-                  onChange={(e) => handleNestedChange('finance_spoc', 'designation', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "finance_spoc",
+                      "designation",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -641,13 +899,15 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <TextField
                   label="Email"
                   placeholder="Enter email address"
                   value={formData.finance_spoc.email}
-                  onChange={(e) => handleNestedChange('finance_spoc', 'email', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange("finance_spoc", "email", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -661,7 +921,9 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Mobile"
                   placeholder="Enter mobile number"
                   value={formData.finance_spoc.mobile}
-                  onChange={(e) => handleNestedChange('finance_spoc', 'mobile', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange("finance_spoc", "mobile", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -673,13 +935,17 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
             {/* Operation SPOC */}
             <div>
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Operation SPOC</h3>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Operation SPOC
+              </h3>
               <div className="grid grid-cols-2 gap-6">
                 <TextField
                   label="Name"
                   placeholder="Enter operation SPOC name"
                   value={formData.operation_spoc.name}
-                  onChange={(e) => handleNestedChange('operation_spoc', 'name', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange("operation_spoc", "name", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -691,7 +957,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Designation"
                   placeholder="Enter designation"
                   value={formData.operation_spoc.designation}
-                  onChange={(e) => handleNestedChange('operation_spoc', 'designation', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "operation_spoc",
+                      "designation",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -699,13 +971,19 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <TextField
                   label="Email"
                   placeholder="Enter email address"
                   value={formData.operation_spoc.email}
-                  onChange={(e) => handleNestedChange('operation_spoc', 'email', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "operation_spoc",
+                      "email",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -719,7 +997,13 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   label="Mobile"
                   placeholder="Enter mobile number"
                   value={formData.operation_spoc.mobile}
-                  onChange={(e) => handleNestedChange('operation_spoc', 'mobile', e.target.value)}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "operation_spoc",
+                      "mobile",
+                      e.target.value
+                    )
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -731,7 +1015,6 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
           </div>
         )}
 
-        
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
@@ -753,7 +1036,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                 Updating...
               </>
             ) : (
-              'Update Company'
+              "Update Company"
             )}
           </Button>
         </div>

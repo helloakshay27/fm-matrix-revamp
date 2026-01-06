@@ -15,6 +15,7 @@ import {
   FileText,
   Phone,
   Settings,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApiConfig } from "@/hooks/useApiConfig";
@@ -306,7 +307,7 @@ export const CompanyDetailsPage: React.FC = () => {
                       Organization
                     </label>
                     <p className="text-gray-900">
-                      {company.organization?.name ||
+                      {company.organization_name ||
                         `ID: ${company.organization_id}`}
                     </p>
                   </div>
@@ -315,7 +316,7 @@ export const CompanyDetailsPage: React.FC = () => {
                       Country
                     </label>
                     <p className="text-gray-900">
-                      {company.country?.name || `ID: ${company.country_id}`}
+                      {company.country_name || `ID: ${company.country_id}`}
                     </p>
                   </div>
                 </div>
@@ -557,14 +558,28 @@ export const CompanyDetailsPage: React.FC = () => {
                       <p className="text-gray-900 mb-2">
                         {company.bill_to_address.address || "Not specified"}
                       </p>
-                      {company.bill_to_address.email && (
+                      {/* {company.bill_to_address.email && (
                         <p className="text-sm text-gray-600 flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {company.bill_to_address.email}
                         </p>
-                      )}
+                      )} */}
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bill To Email
+                    </label>
+
+                    {company.bill_to_address.email && (
+                      <p className="text-sm  flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {company.bill_to_address.email}
+                      </p>
+                    )}
+                  </div>
+
                   {company.postal_address && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -573,14 +588,27 @@ export const CompanyDetailsPage: React.FC = () => {
                       <p className="text-gray-900 mb-2">
                         {company.postal_address.address || "Not specified"}
                       </p>
-                      {company.postal_address.email && (
+                      {/* {company.postal_address.email && (
                         <p className="text-sm text-gray-600 flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {company.postal_address.email}
                         </p>
-                      )}
+                      )} */}
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Postal Email
+                    </label>
+
+                    {company.postal_address.email && (
+                      <p className="text-sm  flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {company.postal_address.email}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -725,11 +753,47 @@ export const CompanyDetailsPage: React.FC = () => {
 
             {/* Features Card */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              {/* <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Settings className="w-5 h-5 text-[#C72030]" />
                 Features
+              </h2> */}
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-[#C72030]" />
+                Company Logo & Company Banner
               </h2>
-              <div className="space-y-2">
+              {/* Company Logo and Banner */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-sm font-medium  mb-2">Company Logo</h3>
+                  {company &&
+                  company.company_logo &&
+                  company.company_logo.document_url ? (
+                    <img
+                      src={company.company_logo.document_url}
+                      alt="Company Logo"
+                      className="w-40 h-40 object-contain border rounded shadow bg-white"
+                    />
+                  ) : (
+                    <div className="text-gray-400">No logo available</div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium  mb-2">Company Banner</h3>
+                  {company &&
+                  company.company_banner &&
+                  company.company_banner.document_url ? (
+                    <img
+                      src={company.company_banner.document_url}
+                      alt="Company Banner"
+                      className="w-full max-w-lg h-40 object-contain border rounded shadow bg-white"
+                    />
+                  ) : (
+                    <div className="text-gray-400">No banner available</div>
+                  )}
+                </div>
+              </div>
+
+              {/* <div className="space-y-2">
                 {[
                   {
                     label: "Visitor Enabled",
@@ -800,11 +864,11 @@ export const CompanyDetailsPage: React.FC = () => {
                       </span>
                     </div>
                   ))}
-              </div>
+              </div> */}
             </div>
 
             {/* System URLs */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Globe className="w-5 h-5 text-[#C72030]" />
                 System URLs
@@ -837,10 +901,10 @@ export const CompanyDetailsPage: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* Status Information */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-[#C72030]" />
                 Status Information
@@ -911,7 +975,7 @@ export const CompanyDetailsPage: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* Timeline Card */}
             <div className="bg-white rounded-lg shadow p-6">

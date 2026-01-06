@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { useState, useEffect } from "react";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
 export interface Asset {
   id: string;
   name: string;
   serialNumber: number;
   assetNumber: string;
-  status: 'in_use' | 'in_storage' | 'breakdown' | 'disposed';
+  status: "in_use" | "in_storage" | "breakdown" | "disposed";
   siteName: string;
   building: { name: string } | null;
   wing: { name: string } | null;
@@ -70,7 +70,7 @@ export const useAssets = (page: number = 1) => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [stats, setStats] = useState<AssetStats>({
     total: 0,
-    totalValue: `${localStorage.getItem('currency')}0.00`,
+    totalValue: `${localStorage.getItem("currency")}0.00`,
     nonItAssets: 0,
     itAssets: 0,
     inUse: 0,
@@ -89,7 +89,7 @@ export const useAssets = (page: number = 1) => {
   const mapAssetData = (apiAsset: any): Asset => ({
     id: apiAsset.id.toString(),
     name: apiAsset.name,
-    serialNumber: apiAsset.serial_number || 'NA',
+    serialNumber: apiAsset.serial_number || "NA",
     assetNumber: apiAsset.asset_number,
     status: apiAsset.status,
     siteName: apiAsset.site_name,
@@ -103,18 +103,39 @@ export const useAssets = (page: number = 1) => {
     assetType: apiAsset.asset_type,
     category: apiAsset.asset_type_category,
     disabled: !!apiAsset.disabled,
+    // Additional location fields
+    pms_floor: apiAsset.pms_floor || apiAsset.floor,
+    pms_area: apiAsset.pms_area || apiAsset.area,
+    // Additional fields for table display
+    allocation_type: apiAsset.allocation_type || "",
+    allocated_to: apiAsset.allocated_to || "",
+    useful_life: apiAsset.useful_life || 0,
+    depreciation_method: apiAsset.depreciation_method || "",
+    accumulated_depreciation: apiAsset.accumulated_depreciation || 0,
+    current_book_value: apiAsset.current_book_value || 0,
+    disposal_date: apiAsset.disposal_date || "",
+    model_number: apiAsset.model_number || "",
+    manufacturer: apiAsset.manufacturer || "",
+    critical: apiAsset.critical || false,
+    commisioning_date: apiAsset.commisioning_date || "",
+    warranty: apiAsset.warranty || "",
+    amc: apiAsset.amc || "",
+    purchased_on: apiAsset.purchased_on || "",
+    supplier_name: apiAsset.supplier_name || "",
+    purchase_cost: apiAsset.purchase_cost || 0,
+    custom_fields: apiAsset.custom_fields || {},
   });
 
   const formatStatusLabel = (status: string): string => {
     switch (status) {
-      case 'in_use':
-        return 'In Use';
-      case 'in_storage':
-        return 'In Store';
-      case 'breakdown':
-        return 'Breakdown';
-      case 'disposed':
-        return 'Disposed';
+      case "in_use":
+        return "In Use";
+      case "in_storage":
+        return "In Store";
+      case "breakdown":
+        return "Breakdown";
+      case "disposed":
+        return "Disposed";
       default:
         return status;
     }
@@ -129,14 +150,14 @@ export const useAssets = (page: number = 1) => {
         `${API_CONFIG.BASE_URL}/pms/assets.json?page=${page}`,
         {
           headers: {
-            'Authorization': getAuthHeader(),
-            'Content-Type': 'application/json',
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch assets');
+        throw new Error("Failed to fetch assets");
       }
 
       const data: AssetResponse = await response.json();
@@ -155,7 +176,8 @@ export const useAssets = (page: number = 1) => {
       // Set stats
       setStats({
         total: data.total_count || 0,
-        totalValue: data.total_value || `${localStorage.getItem('currency')}0.00`,
+        totalValue:
+          data.total_value || `${localStorage.getItem("currency")}0.00`,
         nonItAssets: data.non_it_assets || 0,
         itAssets: data.it_assets || 0,
         inUse: data.in_use_count || 0,
@@ -163,9 +185,8 @@ export const useAssets = (page: number = 1) => {
         inStore: data.in_store || 0,
         dispose: data.dispose_assets || 0,
       });
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
