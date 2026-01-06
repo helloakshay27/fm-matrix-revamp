@@ -39,6 +39,8 @@ interface OrganizationFormData {
   active: boolean;
   logo: File | null;
   powered_by_logo: File | null;
+  logoUrl?: string | null;
+  poweredByLogoUrl?: string | null;
 }
 
 const fieldStyles = {
@@ -127,18 +129,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
           active: org?.active !== undefined ? org.active : true,
           logo: null,
           powered_by_logo: null,
+          logoUrl: org?.attachfile?.document_url || null,
+          poweredByLogoUrl: org?.powered_by_attachfile?.document_url || null,
         });
-
-        // Store existing attachments for reference
-        if (org?.attachfile) {
-          console.log("Existing logo:", org.attachfile.document_url);
-        }
-        if (org?.powered_by_attachfile) {
-          console.log(
-            "Existing powered by logo:",
-            org.powered_by_attachfile.document_url
-          );
-        }
       } else {
         const errorText = await response.text();
         console.error("Failed to fetch organization data:", errorText);
@@ -150,10 +143,17 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getAuthHeader, getFullUrl, organizationId]);
+  console.log("formData", formData)
+  // Fetch organization data when modal opens
+  useEffect(() => {
+    if (isOpen && organizationId) {
+      fetchOrganizationData();
+    }
+  }, [isOpen, organizationId, fetchOrganizationData]);
 
   const handleSubmit = async () => {
-    const newErrors: Record<string, string> = { ...errors };
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Organization name is required";
     }
@@ -173,18 +173,19 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     }
 
 
-    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
-    }
+    // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+    //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
+    // }
 
-    if (
-      formData.front_subdomain &&
-      !domainRegex.test(formData.front_subdomain)
-    ) {
-      newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
-    }
+    // if (
+    //   formData.front_subdomain &&
+    //   !domainRegex.test(formData.front_subdomain)
+    // ) {
+    //   newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    // }
 
     setErrors(newErrors);
+    console.log("Validation errors:", newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -252,7 +253,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, logo: file });
+      setFormData({ ...formData, logo: file, logoUrl: URL.createObjectURL(file) });
     }
   };
 
@@ -261,7 +262,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, powered_by_logo: file });
+      setFormData({ ...formData, powered_by_logo: file, poweredByLogoUrl: URL.createObjectURL(file) });
     }
   };
 
@@ -277,7 +278,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       active: true,
       logo: null,
       powered_by_logo: null,
+      logoUrl: null,
+      poweredByLogoUrl: null,
     });
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -515,10 +519,22 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     disabled={isSubmitting}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
-                  {formData.logo && (
-                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      {formData.logo.name}
+                  {(formData.logoUrl || formData.logo) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <img
+                        src={formData.logoUrl || (formData.logo ? URL.createObjectURL(formData.logo) : "")}
+                        alt="Organization Logo Preview"
+                        className="w-16 h-16 object-contain border rounded shadow"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, logo: null, logoUrl: null })}
+                        className="h-6 w-6 p-0"
+                        title="Remove logo"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -532,10 +548,22 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     disabled={isSubmitting}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
-                  {formData.powered_by_logo && (
-                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      {formData.powered_by_logo.name}
+                  {(formData.poweredByLogoUrl || formData.powered_by_logo) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <img
+                        src={formData.poweredByLogoUrl || (formData.powered_by_logo ? URL.createObjectURL(formData.powered_by_logo) : "")}
+                        alt="Powered By Logo Preview"
+                        className="w-16 h-16 object-contain border rounded shadow"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, powered_by_logo: null, poweredByLogoUrl: null })}
+                        className="h-6 w-6 p-0"
+                        title="Remove powered by logo"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </div>

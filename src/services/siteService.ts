@@ -226,12 +226,10 @@ export interface RegionOption {
 class SiteService {
   private getFullUrl(endpoint: string): string {
     const baseUrl = API_CONFIG.BASE_URL;
-    const token = API_CONFIG.TOKEN;
-
     if (!baseUrl.startsWith("http")) {
-      return `https://${baseUrl}${endpoint}?access_token=${token}`;
+      return `https://${baseUrl}${endpoint}`;
     }
-    return `${baseUrl}${endpoint}?access_token=${token}`;
+    return `${baseUrl}${endpoint}`;
   }
 
   async createSite(siteData: SiteFormData): Promise<SiteResponse> {
@@ -432,7 +430,7 @@ class SiteService {
         formData.append("pms_site[attachfile]", siteData.attachfile);
 
         response = await fetch(url, {
-          method: "PATCH",
+          method: "PUT",
           headers: {
             Authorization: getAuthHeader(),
           },
@@ -441,7 +439,7 @@ class SiteService {
       } else {
         const payload = { pms_site: basePayload };
         response = await fetch(url, {
-          method: "PATCH",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: getAuthHeader(),
