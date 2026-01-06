@@ -509,28 +509,30 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId
 
     return (
         <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors group">
-            <button
-                onClick={() => handleEditTodo(todo)}
-                className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                title="Edit todo"
-            >
-                <Pencil size={14} />
-            </button>
-            {!todo.task_management_id && (
+            <div className="flex items-center gap-1">
                 <button
-                    onClick={() => handleConvertTodo(todo)}
+                    onClick={() => handleEditTodo(todo)}
                     className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                    title="Convert to Task"
+                    title="Edit todo"
                 >
-                    <RefreshCw size={14} />
+                    <Pencil size={14} />
                 </button>
-            )}
-            <button
-                onClick={() => toggleTodo(todo.id)}
-                className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-            >
-                <Check size={16} className="text-primary opacity-0 group-hover:opacity-100" />
-            </button>
+                {!todo.task_management_id && (
+                    <button
+                        onClick={() => handleConvertTodo(todo)}
+                        className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                        title="Convert to Task"
+                    >
+                        <RefreshCw size={14} />
+                    </button>
+                )}
+                <button
+                    onClick={() => toggleTodo(todo.id)}
+                    className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+                >
+                    <Check size={16} className="text-primary opacity-0 group-hover:opacity-100" />
+                </button>
+            </div>
 
             <div className="flex flex-col flex-1">
                 <div className="flex items-center gap-2">
