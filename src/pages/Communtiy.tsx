@@ -2,7 +2,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
+import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 const columns: ColumnConfig[] = [
@@ -50,21 +52,34 @@ const columns: ColumnConfig[] = [
     },
 ]
 
-const communityData = [
-    {
-        id: 1,
-        images: "https://images.unsplash.com/photo-1511485977113-f34c92461ad9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        title: "Community 1",
-        description: "Description 1",
-        members: 10,
-        status: true,
-        created_at: "2022-01-01",
-        created_by: "John Doe"
-    }
-]
-
 const Communtiy = () => {
     const navigate = useNavigate();
+    const baseUrl = localStorage.getItem("baseUrl")
+    const token = localStorage.getItem("token")
+
+    const [communities, setCommunities] = useState([])
+    const [loading, setLoading] = useState(false)
+
+    const fetchCommunities = async () => {
+        setLoading(true)
+        try {
+            const response = await axios.get(`https://${baseUrl}/communities.json`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+
+            setCommunities(response.data.communities)
+        } catch (error) {
+            console.log(error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchCommunities()
+    }, [])
 
     const renderActions = (item: any) => (
         <div className="flex">
@@ -100,17 +115,19 @@ const Communtiy = () => {
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case "images":
-                return <img src={item.images} alt="" className="h-14 w-14 object-fit" />
+                return <img src={item.icon} alt="" className="h-14 w-14 object-fit" />
             case "title":
-                return <div className="w-60">{item.title}</div>;
+                return <div className="w-60">{item.name}</div>;
             case "status":
                 return <div className="flex items-center gap-2">
                     <Switch
-                        checked={!!item.status}
-                    // onCheckedChange={() => handleStatusChange(item.id, item.status)} 
+                        checked={!!item.active}
+                    // onCheckedChange={() => handleStatusChange(item.id, item.active)} 
                     />
-                    {item.status ? "Active" : "Inactive"}
+                    {item.active ? "Active" : "Inactive"}
                 </div>
+            case "members":
+                return item.all_members.length || "-";
             case "created_at":
                 return new Intl.DateTimeFormat("en-GB", {
                     day: "numeric",
@@ -125,12 +142,13 @@ const Communtiy = () => {
     return (
         <div className="p-6">
             <EnhancedTable
-                data={communityData}
+                data={communities}
                 columns={columns}
                 renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 onFilterClick={() => { }}
+                loading={loading}
             />
         </div>
     )
