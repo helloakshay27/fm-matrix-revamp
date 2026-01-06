@@ -193,6 +193,18 @@ const modulesByPackage = {
         },
       ],
     },
+    {
+      name: "Document",
+      icon: FileText,
+      href: "/master/document",
+      subItems: [
+        {
+          name: "Category",
+          href: "/master/document-category",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
 
     // {
     //   name: 'Inventory Sub Type',
