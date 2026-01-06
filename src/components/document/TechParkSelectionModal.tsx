@@ -1,57 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-
-interface TechPark {
-  id: number;
-  name: string;
-  towerName: string;
-  image: string;
-}
-
-const TECH_PARKS: TechPark[] = [
-  {
-    id: 1,
-    name: "Tech Park One",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 2,
-    name: "Business Bay",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 3,
-    name: "Eon Free Zone",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 4,
-    name: "WTC",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 5,
-    name: "Business Bay",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 6,
-    name: "Eon Free Zone",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-  {
-    id: 7,
-    name: "Tech Park One",
-    towerName: "Tower Name",
-    image: "/lovable-uploads/default-building.jpg",
-  },
-];
+import { getAllSites, Site } from "@/services/documentService";
 
 interface TechParkSelectionModalProps {
   isOpen: boolean;
@@ -67,6 +16,27 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
   onSelectionChange,
 }) => {
   const [tempSelected, setTempSelected] = useState<number[]>(selectedParks);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTempSelected(selectedParks);
+      fetchSites();
+    }
+  }, [isOpen, selectedParks]);
+
+  const fetchSites = async () => {
+    setLoading(true);
+    try {
+      const response = await getAllSites();
+      setSites(response.sites);
+    } catch (error) {
+      console.error("Error fetching sites:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -106,35 +76,52 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
-            {TECH_PARKS.map((park) => (
-              <div
-                key={park.id}
-                onClick={() => handleToggle(park.id)}
-                className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-gray-200"
-              >
-                <input
-                  type="checkbox"
-                  checked={tempSelected.includes(park.id)}
-                  onChange={() => handleToggle(park.id)}
-                  className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] rounded"
-                />
-                <img
-                  src={park.image}
-                  alt={park.name}
-                  className="w-16 h-12 object-cover rounded"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="48"%3E%3Crect fill="%23f0f0f0" width="64" height="48"/%3E%3C/svg%3E';
-                  }}
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-[#1a1a1a]">{park.name}</h3>
-                  <p className="text-sm text-[#C72030]">{park.towerName}</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">Loading tech parks...</p>
+            </div>
+          ) : sites.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">No tech parks available</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {sites.map((site) => (
+                <div
+                  key={site.id}
+                  onClick={() => handleToggle(site.id)}
+                  className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                >
+                  <input
+                    type="checkbox"
+                    checked={tempSelected.includes(site.id)}
+                    onChange={() => handleToggle(site.id)}
+                    className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] rounded"
+                  />
+                  {site.attachfile?.document_url && (
+                    <img
+                      src={site.attachfile.document_url}
+                      alt={site.name}
+                      className="w-16 h-12 object-cover rounded"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="48"%3E%3Crect fill="%23f0f0f0" width="64" height="48"/%3E%3C/svg%3E';
+                      }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[#1a1a1a]">
+                      {site.name}
+                    </h3>
+                    <p className="text-sm text-[#C72030]">
+                      {site.city}
+                      {site.pms_region && ` • ${site.pms_region.name}`}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

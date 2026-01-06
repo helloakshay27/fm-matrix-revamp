@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   FileText,
@@ -8,6 +8,13 @@ import {
   Pencil,
   X,
 } from "lucide-react";
+import {
+  getCategories,
+  getAllSites,
+  fileToBase64,
+  Category,
+  Site,
+} from "@/services/documentService";
 import {
   FormControl,
   InputLabel,
@@ -69,8 +76,18 @@ const DOCUMENT_FOLDERS = [
   { value: "policies", label: "Policies & SOPs" },
 ];
 
+interface NewDocument {
+  title: string;
+  documentCategory: string;
+  attachment: File | null;
+}
+
 export const AddDocumentDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get("source");
+  const isFolderDisabled = source === "new";
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -80,14 +97,33 @@ export const AddDocumentDashboard = () => {
   const [selectedCommunities, setSelectedCommunities] = useState<
     { id: number; name: string }[]
   >([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
     documentFolder: "",
     title: "",
-    shareWith: "all_tech_park",
+    shareWith: "all",
     shareWithCommunities: "no",
   });
+
+  // Fetch categories and sites on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesData, sitesData] = await Promise.all([
+          getCategories(),
+          getAllSites(),
+        ]);
+        setCategories(categoriesData);
+        setSites(sitesData.sites);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
@@ -148,23 +184,59 @@ export const AddDocumentDashboard = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Validation
-    if (
-      !formData.documentCategory ||
-      !formData.documentFolder ||
-      !formData.title
-    ) {
+    if (!formData.documentCategory || !formData.title) {
       alert("Please fill in all required fields");
+      return;
+    }
+
+    // If not from CreateFolderPage, validate folder field
+    if (!isFolderDisabled && !formData.documentFolder) {
+      alert("Please select a document folder");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement API call to create document
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (isFolderDisabled) {
+        // Convert file to base64 for sessionStorage
+        const attachmentBase64 = coverImage
+          ? await fileToBase64(coverImage)
+          : "";
 
-      alert("Document added successfully!");
-      navigate("/maintenance/documents");
+        // Return to CreateFolderPage with document data
+        const documentData = {
+          title: formData.title,
+          documentCategory: formData.documentCategory,
+          attachment: attachmentBase64,
+          fileName: coverImage?.name || "",
+          fileSize: coverImage?.size || 0,
+        };
+
+        // Store in sessionStorage and navigate back
+        const existingDocs = sessionStorage.getItem("pendingDocuments");
+        const docs = existingDocs ? JSON.parse(existingDocs) : [];
+        docs.push(documentData);
+        sessionStorage.setItem("pendingDocuments", JSON.stringify(docs));
+
+        // Store folder settings (category and share settings)
+        const folderSettings = {
+          categoryId: formData.documentCategory,
+          shareWith: formData.shareWith,
+          selectedTechParks: selectedTechParks,
+          selectedCommunities: selectedCommunities,
+        };
+        sessionStorage.setItem(
+          "folderSettings",
+          JSON.stringify(folderSettings)
+        );
+
+        navigate("/maintenance/documents/create-folder");
+      } else {
+        // TODO: Implement API call to create document directly
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        alert("Document added successfully!");
+        navigate("/maintenance/documents");
+      }
     } catch (error) {
       console.error("Error submitting document:", error);
       alert("Failed to add document. Please try again.");
@@ -178,7 +250,11 @@ export const AddDocumentDashboard = () => {
       "Are you sure you want to go back? Any unsaved changes will be lost."
     );
     if (confirmed) {
-      navigate("/maintenance/documents");
+      if (isFolderDisabled) {
+        navigate("/maintenance/documents/create-folder");
+      } else {
+        navigate("/maintenance/documents");
+      }
     }
   };
 
@@ -231,9 +307,9 @@ export const AddDocumentDashboard = () => {
                   <MenuItem value="" disabled>
                     Select Document Category
                   </MenuItem>
-                  {DOCUMENT_CATEGORIES.map((category) => (
-                    <MenuItem key={category.value} value={category.value}>
-                      {category.label}
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -251,10 +327,22 @@ export const AddDocumentDashboard = () => {
                     handleInputChange("documentFolder", e.target.value)
                   }
                   displayEmpty
-                  sx={fieldStyles}
+                  disabled={isFolderDisabled}
+                  sx={{
+                    ...fieldStyles,
+                    ...(isFolderDisabled && {
+                      backgroundColor: "#f5f5f5",
+                      "& .MuiOutlinedInput-root": {
+                        ...fieldStyles["& .MuiOutlinedInput-root"],
+                        backgroundColor: "#f5f5f5",
+                      },
+                    }),
+                  }}
                 >
                   <MenuItem value="" disabled>
-                    Select Document Folder
+                    {isFolderDisabled
+                      ? "Folder will be created"
+                      : "Select Document Folder"}
                   </MenuItem>
                   {DOCUMENT_FOLDERS.map((folder) => (
                     <MenuItem key={folder.value} value={folder.value}>
