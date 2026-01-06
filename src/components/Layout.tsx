@@ -23,6 +23,8 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { ViewSelectionModal } from "./ViewSelectionModal";
+import { PulseSidebar } from "./PulseSidebar";
+import { PulseDynamicHeader } from "./PulseDynamicHeader";
 import { ZycusSidebar } from "./ZycusSidebar";
 import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
 
@@ -94,6 +96,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       : null
   );
 
+  // Detect Pulse site - used for fallback when no API role exists
+  const isPulseSite =
+    hostname.includes("pulse.lockated.com") ||
+    hostname.includes("pulse.gophygital.work") ||
+    location.pathname.startsWith("/pulse");
   const isLocalhost =
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
@@ -151,6 +158,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <PrimeSupportSidebar />;
     }
 
+    // Pulse Privilege - Company ID 305 OR isPulseSite fallback
+    if (selectedCompany?.id === 305 || isPulseSite) {
+      return <PulseSidebar />;
+    }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -202,6 +214,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     if (selectedCompany?.id === 304) {
       return <PrimeSupportDynamicHeader />;
+    }
+
+    // Pulse Privilege - Company ID 305 OR isPulseSite fallback
+    if (selectedCompany?.id === 305 || isPulseSite) {
+      return <PulseDynamicHeader />;
     }
 
     if (

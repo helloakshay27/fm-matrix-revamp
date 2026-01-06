@@ -62,10 +62,29 @@ export const fetchEventById = createAsyncThunk(
     }
 )
 
+export const updateEvent = createAsyncThunk(
+    'updateEvent',
+    async ({ id, data, baseUrl, token }: { id: string, data: any, baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/admin/events/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update event'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchEventsSlice = createApiSlice("fetchEvents", fetchEvents);
 const createEventSlice = createApiSlice("createEvent", createEvent);
 const fetchEventByIdSlice = createApiSlice("fetchEventById", fetchEventById);
+const updateEventSlice = createApiSlice("updateEvent", updateEvent);
 
 export const fetchEventsReducer = fetchEventsSlice.reducer
 export const createEventReducer = createEventSlice.reducer
 export const fetchEventByIdReducer = fetchEventByIdSlice.reducer
+export const updateEventReducer = updateEventSlice.reducer

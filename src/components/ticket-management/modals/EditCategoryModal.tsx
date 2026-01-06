@@ -192,6 +192,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                     <FormControl>
                       <Input
                         type="number"
+                         min="0"
                         placeholder="Enter response time"
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}

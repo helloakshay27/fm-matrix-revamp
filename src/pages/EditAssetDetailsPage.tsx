@@ -670,6 +670,7 @@ export const EditAssetDetailsPage = () => {
     alertAboveVal: string;
     multiplierFactor: string;
     checkPreviousReading?: boolean;
+    isNew?: boolean;
   }
 
   //   const [attachments, setAttachments] = useState({
@@ -1261,7 +1262,11 @@ export const EditAssetDetailsPage = () => {
         }
 
         // Only add to nextExtra if it's NOT a custom field (custom fields are handled separately via customFields state)
-        if (String(description).trim().toLowerCase() !== "custom_field") {
+        // Also exclude assetDetails group attributes as they are treated as custom fields
+        if (
+          String(description).trim().toLowerCase() !== "custom_field" &&
+          groupKey !== "assetDetails"
+        ) {
           nextExtra[key] = {
             value,
             fieldType: "text",
@@ -1292,12 +1297,20 @@ export const EditAssetDetailsPage = () => {
             // Don't add to customFieldsUpdate to avoid duplication
           } else {
             // Generic sections like assetDetails, buildingMiscellaneous, etc.
-            if (!customFieldsUpdate[groupKey]) customFieldsUpdate[groupKey] = [];
-            customFieldsUpdate[groupKey].push({
-              id: attr.id,
-              name: label,
-              value: value
-            });
+
+            // FIX: Only add to custom fields if it is explicitly a custom field OR assetDetails
+            // This prevents standard fields (which go to extraFormFields) from duplicated in the custom field list
+            const isCustomDesc = String(description).trim().toLowerCase() === "custom_field";
+            const isAssetDetails = groupKey === "assetDetails";
+
+            if (isCustomDesc || isAssetDetails) {
+              if (!customFieldsUpdate[groupKey]) customFieldsUpdate[groupKey] = [];
+              customFieldsUpdate[groupKey].push({
+                id: attr.id,
+                name: label,
+                value: value
+              });
+            }
           }
         }
 
@@ -1315,6 +1328,32 @@ export const EditAssetDetailsPage = () => {
           setFormData((prev) => ({ ...prev, warranty_period: value }));
         }
       });
+
+      // Update customFields state
+      // Special handling: Move "assetDetails" group fields to the "Basic Identification" section
+      // for the first four categories (Land, Building, Leasehold Improvement, Vehicle)
+      const rawCategoryForMap = categoryFromExtra || asset?.asset_type_category || "";
+      if (rawCategoryForMap && customFieldsUpdate["assetDetails"]) {
+        const normalizedCat = String(rawCategoryForMap).trim().toLowerCase();
+        let targetSectionKey = "";
+
+        if (normalizedCat === "land") targetSectionKey = "basicIdentification";
+        else if (normalizedCat === "building") targetSectionKey = "buildingBasicId";
+        else if (normalizedCat === "leasehold improvement") targetSectionKey = "leaseholdBasicId";
+        else if (normalizedCat === "vehicle") targetSectionKey = "vehicleBasicId";
+
+        if (targetSectionKey) {
+          if (!customFieldsUpdate[targetSectionKey]) {
+            customFieldsUpdate[targetSectionKey] = [];
+          }
+          // Move items
+          customFieldsUpdate[targetSectionKey] = [
+            ...customFieldsUpdate[targetSectionKey],
+            ...customFieldsUpdate["assetDetails"]
+          ];
+          delete customFieldsUpdate["assetDetails"];
+        }
+      }
 
       // Update customFields state
       if (Object.keys(customFieldsUpdate).length > 0) {
@@ -1790,6 +1829,16 @@ export const EditAssetDetailsPage = () => {
       if (asset.is_meter === true) {
         setMeterDetailsToggle(true);
 
+        // Set meter details based on asset_meter_type_id
+        if (asset.asset_meter_type_id) {
+          const meterDetails = getMeterTypeFromId(asset.asset_meter_type_id);
+          if (meterDetails) {
+            setMeterCategoryType(meterDetails.category);
+            setSubCategoryType(meterDetails.subCategory || "");
+            setTertiaryCategory(meterDetails.tertiaryCategory || "");
+          }
+        }
+
         // Preselect meter type radio
         setMeterType(asset.meter_tag_type || "");
 
@@ -1864,10 +1913,47 @@ export const EditAssetDetailsPage = () => {
                   ? String(m.multiplier_factor)
                   : "",
               checkPreviousReading: Boolean(m.check_previous_reading),
+              isNew: false,
             }))
           );
         } else {
           setNonConsumptionMeasureFields([]);
+        }
+
+        // Preload CONSUMPTION METER MEASURE fields
+        if (Array.isArray(asset.consumption_pms_asset_measures)) {
+          setConsumptionMeasureFields(
+            asset.consumption_pms_asset_measures.map((m) => ({
+              id: String(m.id ?? `${Date.now()}-${Math.random()}`),
+              name: m.name || "",
+              unitType: m.meter_unit_id ? String(m.meter_unit_id) : "",
+              min:
+                m.min_value !== undefined && m.min_value !== null
+                  ? String(m.min_value)
+                  : "",
+              max:
+                m.max_value !== undefined && m.max_value !== null
+                  ? String(m.max_value)
+                  : "",
+              alertBelowVal:
+                m.alert_below !== undefined && m.alert_below !== null
+                  ? String(m.alert_below)
+                  : "",
+              alertAboveVal:
+                m.alert_above !== undefined && m.alert_above !== null
+                  ? String(m.alert_above)
+                  : "",
+              multiplierFactor:
+                m.multiplier_factor !== undefined &&
+                  m.multiplier_factor !== null
+                  ? String(m.multiplier_factor)
+                  : "",
+              checkPreviousReading: Boolean(m.check_previous_reading),
+              isNew: false,
+            }))
+          );
+        } else {
+          setConsumptionMeasureFields([]);
         }
 
         setFormData((prev) => ({
@@ -1882,6 +1968,26 @@ export const EditAssetDetailsPage = () => {
             asset.non_consumption_pms_asset_measures
           )
             ? asset.non_consumption_pms_asset_measures.map((m) => ({
+              id: m.id,
+              asset_id: m.asset_id,
+              name: m.name || "",
+              min_value: m.min_value || "",
+              max_value: m.max_value || "",
+              alert_below: m.alert_below || "",
+              alert_above: m.alert_above || "",
+              active: m.active,
+              unit_type: m.unit_type || "",
+              multiplier_factor: m.multiplier_factor || "",
+              meter_tag: m.meter_tag || "",
+              meter_unit_id: m.meter_unit_id || "",
+              cloned: m.cloned || false,
+              check_previous_reading: m.check_previous_reading || false,
+            }))
+            : [],
+          consumption_pms_asset_measures_attributes: Array.isArray(
+            asset.consumption_pms_asset_measures
+          )
+            ? asset.consumption_pms_asset_measures.map((m) => ({
               id: m.id,
               asset_id: m.asset_id,
               name: m.name || "",
@@ -2282,6 +2388,75 @@ export const EditAssetDetailsPage = () => {
       return meterTypeMapping[meterCategory];
     }
 
+    return null;
+  };
+
+  // Function to get meter type details from ID
+  const getMeterTypeFromId = (id) => {
+    const meterTypeMapping = {
+      // Board category mappings
+      board: {
+        "ht-panel": 5, // HT Panel
+        vcb: 8, // VCB
+        transformer: 2, // Transformer
+        "lt-panel": 9, // LT Panel
+      },
+      // DG category
+      dg: 1, // DG
+
+      // Renewable energy mappings
+      renewable: {
+        solar: 7, // Solar Panel
+        "bio-methanol": 10, // Bio Methanol
+        wind: 11, // Wind
+      },
+
+      // Fresh water mappings (three-level hierarchy)
+      "fresh-water": {
+        source: {
+          "municipal-corporation": 12, // Municipal Corporation
+          tanker: 13, // Tanker
+          borewell: 14, // Borewell
+          rainwater: 15, // Rainwater
+          jackwell: 16, // Jackwell
+          pump: 3, // Pump (general pump type)
+        },
+        destination: {
+          output: 18, // Domestic (as a placeholder for destination)
+        },
+      },
+
+      // Recycled water
+      recycled: 6, // Recycled Water
+
+      // Water distribution mappings
+      "water-distribution": {
+        irrigation: 17, // Irrigation
+        domestic: 18, // Domestic
+        flushing: 19, // Flushing
+      },
+
+      // IEX-GDAM
+      "iex-gdam": 21, // IEX GDAM
+    };
+
+    for (const [category, value] of Object.entries(meterTypeMapping)) {
+      if (typeof value === 'number' && value === id) {
+        return { category, subCategory: null, tertiaryCategory: null };
+      } else if (typeof value === 'object') {
+        for (const [sub, subValue] of Object.entries(value)) {
+          if (typeof subValue === 'number' && subValue === id) {
+            return { category, subCategory: sub, tertiaryCategory: null };
+          } else if (typeof subValue === 'object') {
+            for (const [tertiary, tertiaryValue] of Object.entries(subValue)) {
+              if (tertiaryValue === id) {
+                return { category, subCategory: sub, tertiaryCategory: tertiary };
+              }
+            }
+          }
+        }
+      }
+    }
     return null;
   };
 
@@ -2769,6 +2944,8 @@ export const EditAssetDetailsPage = () => {
     let extraFields = [];
     console.log("Building extra fields attributes...", customFields);
 
+    const usedIds = new Set<number>();
+
     // Helper function to check if a value is empty
     const isEmpty = (value) => {
       if (value === null || value === undefined) return true;
@@ -2794,15 +2971,36 @@ export const EditAssetDetailsPage = () => {
     };
 
     // Build a quick lookup of original attributes by group::field
-    const originalByKey = new Map<string, { id?: number; value?: any }>();
+    const originalByKey = new Map<string, { id?: number; value?: any; field_name?: string }>();
     (originalExtraFieldsAttributes || []).forEach((attr: any) => {
       const k = `${attr.group_name}::${attr.field_name}`;
-      originalByKey.set(k, { id: attr.id, value: attr.field_value });
+      originalByKey.set(k, { id: attr.id, value: attr.field_value, field_name: attr.field_name });
     });
 
-    // Helper to find original field ID and value
+    // Helper to find original field ID and value with smart fallback
     const findOriginal = (fieldName: string, groupName: string) => {
-      return originalByKey.get(`${groupName}::${fieldName}`);
+      // 1. Try exact match
+      const exactKey = `${groupName}::${fieldName}`;
+      if (originalByKey.has(exactKey)) return originalByKey.get(exactKey);
+
+      // 2. Try match with snake_case name (e.g. "Invoice Number" -> "invoice_number")
+      const snakeName = fieldName.trim().toLowerCase().replace(/\s+/g, '_');
+      const snakeKey = `${groupName}::${snakeName}`;
+      if (originalByKey.has(snakeKey)) return originalByKey.get(snakeKey);
+
+      // 3. Fallback: check 'assetDetails' group if current group is one of the mapped ones
+      const remappedSections = ['basicIdentification', 'buildingBasicId', 'leaseholdBasicId', 'vehicleBasicId'];
+      if (remappedSections.includes(groupName)) {
+        // Try exact name in assetDetails
+        const fallbackExact = `assetDetails::${fieldName}`;
+        if (originalByKey.has(fallbackExact)) return originalByKey.get(fallbackExact);
+
+        // Try snake_name in assetDetails
+        const fallbackSnake = `assetDetails::${snakeName}`;
+        if (originalByKey.has(fallbackSnake)) return originalByKey.get(fallbackSnake);
+      }
+
+      return undefined;
     };
 
     // Normalize field name: strip repeated `<group>_` prefixes if present
@@ -2818,8 +3016,12 @@ export const EditAssetDetailsPage = () => {
     // De-dup collector to avoid duplicates: last write wins
     const candidates = new Map<string, any>();
     const addOrReplace = (entry: any) => {
+      // Use the entry's actual name to key, not normalized logic that might fail for custom fields
       const key = `${entry.group_name}::${entry.field_name}`;
       candidates.set(key, entry);
+      if (entry.id) {
+        usedIds.add(entry.id);
+      }
     };
 
     // Custom fields - only include fields with non-empty values AND non-empty names
@@ -2829,21 +3031,23 @@ export const EditAssetDetailsPage = () => {
         if (!isEmpty(field.name) && !isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
           const original = findOriginal(field.name, sectionKey);
-          console.log(original);
-          const originalValue = original?.value ?? undefined;
-          console.log(field.value, originalValue);
-          if (String(field.value ?? "") === String(originalValue ?? "")) {
+          const finalId = original?.id;
+          const finalName = original?.field_name || field.name;
+
+          if (finalId) {
+            console.log(`Matched original ID: ${finalId} for ${field.name}`);
             addOrReplace({
-              ...(original?.id && { id: original.id }),
-              field_name: field.name,
+              id: finalId,
+              field_name: finalName,
               field_value: field.value,
               group_name: sectionKey,
               field_description: "custom_field",
               _destroy: false,
             });
           } else {
+            console.log(`No original match for ${field.name}, creating new.`);
             addOrReplace({
-              field_name: field.name,
+              field_name: finalName,
               field_value: field.value,
               group_name: sectionKey,
               field_description: "custom_field",
@@ -2858,17 +3062,25 @@ export const EditAssetDetailsPage = () => {
       });
     });
 
-    // IT Assets custom fields are already synchronized with customFields, 
-    // so we don't need to iterate over them separately to avoid duplicates.
+    // Create a set of keys from customFields to prevent duplication in standard fields
+    const customKeys = new Set<string>();
+    Object.keys(customFields).forEach((sectionKey) => {
+      (customFields[sectionKey] || []).forEach((field: any) => {
+        if (!isEmpty(field.name) && !isEmpty(field.value)) {
+          const snakeKey = `${sectionKey}::${field.name.trim().toLowerCase().replace(/\s+/g, '_')}`;
+          customKeys.add(snakeKey);
+        }
+      });
+    });
 
     // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
-      // Skip custom fields here to avoid duplicates; they are handled above via customFields/itAssetsCustomFields
-      const isCustomFieldDesc =
-        String(fieldObj?.fieldDescription || "")
-          .trim()
-          .toLowerCase() === "custom_field";
-      if (isCustomFieldDesc) {
+      // Skip custom fields here to avoid duplicates
+      const isCustomFieldDesc = String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field";
+
+      const groupName = String(fieldObj.groupType || "");
+      // SKIP assetDetails explicitly to prevent duplication with custom fields
+      if (isCustomFieldDesc || groupName === "assetDetails") {
         return;
       }
 
@@ -2882,79 +3094,60 @@ export const EditAssetDetailsPage = () => {
         const groupName = String(fieldObj.groupType || "");
         const baseName = normalizeFieldName(key, groupName);
         const original = findOriginal(baseName, groupName);
-        const originalValue = original?.value ?? undefined;
-        if (String(processedValue ?? "") === String(originalValue ?? "")) {
-          addOrReplace({
-            ...(original?.id && { id: original.id }),
-            field_name: baseName,
-            field_value: processedValue,
-            group_name: groupName,
-            field_description: fieldObj.fieldDescription,
-            _destroy: false,
-          });
-        } else {
-          addOrReplace({
-            field_name: baseName,
-            field_value: processedValue,
-            group_name: groupName,
-            field_description: fieldObj.fieldDescription,
-            _destroy: false,
-          });
+
+        const entryKey = `${groupName}::${baseName}`;
+        if (customKeys.has(entryKey)) {
+          return;
         }
-      } else {
-        console.log(
-          `Skipping empty standard field: ${key} (value: ${fieldObj?.value})`
-        );
+
+        const entry: any = {
+          field_name: baseName,
+          field_value: processedValue,
+          group_name: groupName,
+          field_description: fieldObj.fieldDescription,
+          _destroy: false,
+        };
+        if (original?.id) {
+          entry.id = original.id;
+        }
+        addOrReplace(entry);
       }
     });
 
-    // Handle deletions for custom fields: include original records with _destroy: true
+    // Handle deletions
     try {
       const currentCustomKeys = new Set<string>();
-
       // Track current custom fields from UI (customFields) - only those with non-empty names
       Object.keys(customFields).forEach((sectionKey) => {
         (customFields[sectionKey] || []).forEach((field: any) => {
-          // Only track fields that have both name and value
           if (field.name && String(field.name).trim() && field.value && String(field.value).trim()) {
-            const key = `${sectionKey}::${field.name}`;
-            currentCustomKeys.add(key);
+            const snakeKey = `${sectionKey}::${field.name.trim().toLowerCase().replace(/\s+/g, '_')}`;
+            currentCustomKeys.add(snakeKey);
           }
         });
       });
 
-      // Track current IT assets custom fields - only those with non-empty names
-      Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
-        (itAssetsCustomFields[sectionKey] || []).forEach((field: any) => {
-          // Only track fields that have both name and value
-          if (field.name && String(field.name).trim() && field.value && String(field.value).trim()) {
-            const key = `${sectionKey}::${field.name}`;
-            currentCustomKeys.add(key);
-          }
-        });
-      });
+      // From original attributes, find removed custom fields
+      (originalExtraFieldsAttributes || []).forEach((attr: any) => {
+        // If this ID was used/updated in the current payload, do NOT destroy it
+        if (attr.id && usedIds.has(attr.id)) {
+          return;
+        }
 
-      // From original attributes, find removed custom fields (field_description === 'custom_field')
-      (originalExtraFieldsAttributes || [])
-        .filter(
-          (attr: any) =>
-            String(attr.field_description).trim().toLowerCase() ===
-            "custom_field"
-        )
-        .forEach((attr: any) => {
-          const key = `${attr.group_name}::${attr.field_name}`;
-          if (!currentCustomKeys.has(key)) {
-            // Not present anymore -> mark for destroy
-            addOrReplace({
-              id: attr.id,
-              field_name: attr.field_name,
-              field_value: "",
-              group_name: attr.group_name,
-              field_description: attr.field_description,
-              _destroy: true,
-            });
-          }
-        });
+        const key = `${attr.group_name}::${attr.field_name}`;
+
+        // If it wasn't used, and it's not present in current keys (checking direct match)
+        if (!currentCustomKeys.has(key)) {
+          addOrReplace({
+            id: attr.id,
+            field_name: attr.field_name,
+            field_value: "",
+            group_name: attr.group_name,
+            field_description: attr.field_description,
+            _destroy: true,
+          });
+        }
+      });
     } catch (e) {
       console.warn("Failed to compute custom field deletions", e);
     }
@@ -3462,6 +3655,7 @@ export const EditAssetDetailsPage = () => {
       alertAboveVal: "",
       multiplierFactor: "",
       checkPreviousReading: false,
+      isNew: true,
     };
 
     if (type === "consumption") {
@@ -4437,7 +4631,7 @@ export const EditAssetDetailsPage = () => {
         it_asset:
           selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
-        is_meter: formData.is_meter,
+        is_meter: (consumptionMeasureFields.length > 0 || nonConsumptionMeasureFields.length > 0) ? true : formData.is_meter,
         asset_loaned: formData.asset_loaned,
         // depreciation_applicable: formData.depreciation_applicable,
         depreciation_applicable: true,
@@ -4528,6 +4722,7 @@ export const EditAssetDetailsPage = () => {
             meter_tag: "Consumption",
             check_previous_reading: field.checkPreviousReading || false,
             _destroy: false,
+            id: field.isNew ? undefined : field.id,
           })
         ),
 
@@ -4544,6 +4739,7 @@ export const EditAssetDetailsPage = () => {
             meter_tag: "Non Consumption",
             check_previous_reading: field.checkPreviousReading || false,
             _destroy: false,
+            id: field.isNew ? undefined : field.id,
           })),
 
         // Category-specific file attachments

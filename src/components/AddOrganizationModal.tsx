@@ -89,11 +89,25 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     logo: null,
     powered_by_logo: null,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Validate domains like example.com and with more segments (e.g., app.example.co.in)
+  const isValidDomain = (value: string) => {
+    if (!value) return false;
+    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    return domainRegex.test(value.trim());
+  };
 
   const handleSubmit = async () => {
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
-      toast.error("Please enter organization name");
-      return;
+      newErrors.name = "Organization name is required";
+    }
+    if (!formData.domain.trim()) {
+      newErrors.domain = "Main domain is required";
+    }
+    if (!formData.sub_domain.trim()) {
+      newErrors.sub_domain = "Sub domain is required";
     }
 
     // Domain validation
@@ -101,29 +115,26 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+$/;
 
     if (formData.domain && !domainRegex.test(formData.domain)) {
-      toast.error("Please enter a valid main domain (e.g., example.com)");
-      return;
+      newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
-      toast.error("Please enter a valid sub domain (e.g., app.example.com)");
-      return;
-    }
+    // No format validation for sub_domain, only required check above
 
-    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      toast.error(
-        "Please enter a valid frontend domain (e.g., www.example.com)"
-      );
-      return;
-    }
+    // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+    //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
+    // }
 
-    if (
-      formData.front_subdomain &&
-      !domainRegex.test(formData.front_subdomain)
-    ) {
-      toast.error(
-        "Please enter a valid frontend subdomain (e.g., portal.example.com)"
-      );
+    // if (
+    //   formData.front_subdomain &&
+    //   !domainRegex.test(formData.front_subdomain)
+    // ) {
+    //   newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    // }
+
+    setErrors(newErrors);
+    console.log("Validation errors:", newErrors, Object.keys(newErrors), errors)
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted errors");
       return;
     }
 
@@ -272,11 +283,11 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       logo: null,
       powered_by_logo: null,
     });
-  // Revoke and clear previews
-  logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
-  poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
-  setLogoPreviewUrls([]);
-  setPoweredByPreviewUrls([]);
+    // Revoke and clear previews
+    logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setLogoPreviewUrls([]);
+    setPoweredByPreviewUrls([]);
   };
 
   const handleClose = () => {
@@ -418,43 +429,60 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 label="Main Domain"
                 placeholder="example.com"
                 value={formData.domain}
-                onChange={(e) =>
-                  setFormData({ ...formData, domain: e.target.value })
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, domain: val });
+                  // Clear error when valid
+                  setErrors((prev) => ({
+                    ...prev,
+                    domain: isValidDomain(val) ? "" : prev.domain,
+                  }));
+                }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{
                   shrink: true,
+                  required: true,
                   sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 required
-                helperText="Enter a valid domain (e.g., example.com)"
+                error={!!errors.domain}
+                helperText={errors.domain || "Enter a valid domain (e.g., example.com)"}
               />
 
               <TextField
                 label="Sub Domain"
                 placeholder="app.example.com"
                 value={formData.sub_domain}
-                onChange={(e) =>
-                  setFormData({ ...formData, sub_domain: e.target.value })
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, sub_domain: val });
+                  setErrors((prev) => ({
+                    ...prev,
+                    sub_domain: ""
+                  }));
+                }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{
                   shrink: true,
+                  required: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter subdomain (e.g., app.example.com)"
+                required
+                error={!!errors.sub_domain}
+                helperText={errors.sub_domain || ""}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-6 mt-6">
               <TextField
                 label="Frontend Domain"
-                placeholder="www.example.com"
+                placeholder="example.com"
                 value={formData.front_domain}
                 onChange={(e) =>
                   setFormData({ ...formData, front_domain: e.target.value })
@@ -466,7 +494,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend domain (e.g., www.example.com)"
+                helperText="Enter frontend domain (e.g., example.com)"
               />
 
               <TextField
@@ -483,7 +511,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
-                helperText="Enter frontend subdomain (e.g., portal.example.com)"
+                helperText="Enter frontend subdomain "
               />
             </div>
           </div>

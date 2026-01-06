@@ -62,10 +62,29 @@ export const fetchBroadcastById = createAsyncThunk(
     }
 )
 
+export const updateBroadcast = createAsyncThunk(
+    "updateBroadcast",
+    async ({ id, data, baseUrl, token }: { id: string, data: any, baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/admin/noticeboards/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update broadcast'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchBroadcastsSlice = createApiSlice("fetchBroadcasts", fetchBroadcasts);
 const createBroadcastSlice = createApiSlice("createBroadcast", createBroadcast)
 const fetchBroadcastByIdSlice = createApiSlice("fetchBroadcastById", fetchBroadcastById)
+const updateBroadcastSlice = createApiSlice("updateBroadcast", updateBroadcast)
 
 export const fetchBroadcastsReducer = fetchBroadcastsSlice.reducer
 export const createBroadcastReducer = createBroadcastSlice.reducer
 export const fetchBroadcastByIdReducer = fetchBroadcastByIdSlice.reducer
+export const updateBroadcastReducer = updateBroadcastSlice.reducer

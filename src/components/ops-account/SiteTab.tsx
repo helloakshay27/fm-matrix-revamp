@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
 import { AddSiteModal } from "@/components/AddSiteModal";
 import { DeleteSiteModal } from "@/components/DeleteSiteModal";
 import { SiteFilterModal, SiteFilters } from "@/components/SiteFilterModal";
@@ -51,6 +52,12 @@ interface SiteItem {
   country_name?: string;
   region_name?: string;
   company_name?: string;
+  attachfile?: {
+    id?: number;
+    document_file_name?: string;
+    document_content_type?: string;
+    document_url?: string;
+  };
 }
 
 interface SiteApiResponse {
@@ -82,6 +89,7 @@ const columns: ColumnConfig[] = [
     hideable: false,
     draggable: false,
   },
+
   {
     key: "name",
     label: "Site Name",
@@ -138,6 +146,13 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
+  {
+    key: "site_image",
+    label: "Site Image",
+    sortable: false,
+    hideable: true,
+    draggable: true,
+  },
 ];
 
 export const SiteTab: React.FC<SiteTabProps> = ({
@@ -179,9 +194,14 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   );
 
   // Dropdowns and permissions
-  const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
-  const [regionsDropdown, setRegionsDropdown] = useState<any[]>([]);
-  const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
+  type DropdownItem = { id: number; name: string };
+  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>(
+    []
+  );
+  const [regionsDropdown, setRegionsDropdown] = useState<DropdownItem[]>([]);
+  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>(
+    []
+  );
   const [canEditSite, setCanEditSite] = useState(false);
 
   const user = getUser() || {
@@ -191,122 +211,112 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     email: "",
   };
 
-  const checkEditPermission = () => {
+  const checkEditPermission = useCallback(() => {
     const userEmail = user.email || "";
     const allowedEmails = [
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditSite(allowedEmails.includes(userEmail));
-  };
+  }, [user.email]);
 
-  useEffect(() => {
-    fetchCompaniesDropdown();
-    fetchRegionsDropdown();
-    fetchCountriesDropdown();
-    checkEditPermission();
-  }, []);
-
-  // Load data on component mount and when page/perPage/filters change
-  useEffect(() => {
-    fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+  // Effects moved below function declarations to avoid temporal dead zone
 
   // Fetch sites data from API
-  const fetchSites = async (
-    page = 1,
-    per_page = 10,
-    search = "",
-    filters: SiteFilters = {}
-  ) => {
-    setLoading(true);
-    try {
-      // Build API URL with parameters
-      let apiUrl = getFullUrl(
-        `/pms/sites/all_site_list.json?page=${page}&per_page=${per_page}`
-      );
+  const fetchSites = useCallback(
+    async (page = 1, per_page = 10, search = "", filters: SiteFilters = {}) => {
+      setLoading(true);
+      try {
+        // Build API URL with parameters
+        let apiUrl = getFullUrl(
+          `/pms/sites/all_site_list.json?page=${page}&per_page=${per_page}`
+        );
 
-      // Add search parameter
-      if (search.trim()) {
-        apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
-      }
-
-      // Add filter parameters
-      if (filters.companyId) {
-        apiUrl += `&q[company_id_eq]=${filters.companyId}`;
-      }
-
-      if (filters.regionId) {
-        apiUrl += `&q[region_id_eq]=${filters.regionId}`;
-      }
-
-      if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
-      }
-
-      if (filters.site_type) {
-        apiUrl += `&q[site_type_cont]=${encodeURIComponent(filters.site_type)}`;
-      }
-
-      if (filters.status) {
-        const isActive = filters.status === "active";
-        apiUrl += `&q[active_eq]=${isActive}`;
-      }
-
-      console.log("🔗 API URL with filters:", apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: SiteApiResponse = await response.json();
-      console.log("Sites API response:", result);
-
-      if (result && Array.isArray(result.sites)) {
-        setSites(result.sites);
-        // Set pagination if available, otherwise use default
-        if (result.pagination) {
-          setPagination(result.pagination);
-        } else {
-          setPagination({
-            current_page: page,
-            per_page: per_page,
-            total_pages: Math.ceil(result.sites.length / per_page),
-            total_count: result.sites.length,
-            has_next_page: false,
-            has_prev_page: false,
-          });
+        // Add search parameter
+        if (search.trim()) {
+          apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
         }
-      } else if (result && Array.isArray(result.data)) {
-        setSites(result.data);
-      } else if (Array.isArray(result)) {
-        setSites(result);
-      } else {
-        throw new Error("Invalid sites data format");
-      }
-    } catch (error: any) {
-      console.error("Error fetching sites:", error);
-      toast.error(`Failed to load sites: ${error.message}`, {
-        duration: 5000,
-      });
-      setSites([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchCompaniesDropdown = async () => {
+        // Add filter parameters
+        if (filters.companyId) {
+          apiUrl += `&q[company_id_eq]=${filters.companyId}`;
+        }
+
+        if (filters.regionId) {
+          apiUrl += `&q[region_id_eq]=${filters.regionId}`;
+        }
+
+        if (filters.countryId) {
+          apiUrl += `&q[country_id_eq]=${filters.countryId}`;
+        }
+
+        if (filters.site_type) {
+          apiUrl += `&q[site_type_cont]=${encodeURIComponent(filters.site_type)}`;
+        }
+
+        if (filters.status) {
+          const isActive = filters.status === "active";
+          apiUrl += `&q[active_eq]=${isActive}`;
+        }
+
+        console.warn("🔗 API URL with filters:", apiUrl);
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: SiteApiResponse = await response.json();
+        console.warn("Sites API response:", result);
+
+        if (result && Array.isArray(result.sites)) {
+          setSites(result.sites);
+          // Set pagination if available, otherwise use default
+          if (result.pagination) {
+            setPagination(result.pagination);
+          } else {
+            setPagination({
+              current_page: page,
+              per_page: per_page,
+              total_pages: Math.ceil(result.sites.length / per_page),
+              total_count: result.sites.length,
+              has_next_page: false,
+              has_prev_page: false,
+            });
+          }
+        } else if (result && Array.isArray(result.data)) {
+          setSites(result.data);
+        } else if (Array.isArray(result)) {
+          setSites(result);
+        } else {
+          throw new Error("Invalid sites data format");
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error("Error fetching sites:", error);
+        toast.error(`Failed to load sites: ${msg}`, {
+          duration: 5000,
+        });
+        setSites([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getFullUrl, getAuthHeader]
+  );
+
+  const fetchCompaniesDropdown = useCallback(async () => {
     try {
       const response = await fetch(
         getFullUrl("/pms/company_setups/company_index.json"),
@@ -331,9 +341,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
 
-  const fetchRegionsDropdown = async () => {
+  const fetchRegionsDropdown = useCallback(async () => {
     try {
       const response = await fetch(getFullUrl("/pms/regions.json"), {
         headers: {
@@ -355,9 +365,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     } catch (error) {
       console.error("Error fetching regions:", error);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
 
-  const fetchCountriesDropdown = async () => {
+  const fetchCountriesDropdown = useCallback(async () => {
     try {
       const response = await fetch(getFullUrl("/headquarters.json"), {
         headers: {
@@ -368,12 +378,19 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Countries API response:", data);
+        console.warn("Countries API response:", data);
 
         if (Array.isArray(data)) {
           // Handle direct array format
           const uniqueCountries = new Map();
-          data.forEach((country: any) => {
+          (
+            data as Array<{
+              id?: number;
+              country_id?: number;
+              name?: string;
+              country_name?: string;
+            }>
+          ).forEach((country) => {
             const id = country?.country_id || country?.id;
             const name = country?.country_name || country?.name;
             if (id && name && !uniqueCountries.has(id)) {
@@ -392,7 +409,12 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         ) {
           // Handle nested headquarters format
           const uniqueCountries = new Map();
-          data.headquarters.forEach((hq: any) => {
+          (
+            data.headquarters as Array<{
+              country_id?: number;
+              country_name?: string;
+            }>
+          ).forEach((hq) => {
             const id = hq?.country_id;
             const name = hq?.country_name;
             if (id && name && !uniqueCountries.has(id)) {
@@ -417,18 +439,36 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       toast.error("Error fetching countries");
       setCountriesDropdown([]);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
+
+  // Load dropdowns and permissions on mount (after declarations)
+  useEffect(() => {
+    fetchCompaniesDropdown();
+    fetchRegionsDropdown();
+    fetchCountriesDropdown();
+    checkEditPermission();
+  }, [
+    fetchCompaniesDropdown,
+    fetchRegionsDropdown,
+    fetchCountriesDropdown,
+    checkEditPermission,
+  ]);
+
+  // Load data on component mount and when page/perPage/filters change (after fetchSites is declared)
+  useEffect(() => {
+    fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters, fetchSites]);
 
   // Handle filter application
   const handleApplyFilters = (filters: SiteFilters) => {
-    console.log("📊 Applying filters:", filters);
+    console.warn("📊 Applying filters:", filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log("Search query:", term);
+    console.warn("Search query:", term);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
@@ -490,6 +530,40 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     }
   };
 
+  // Toggle site active status
+  const handleToggleStatus = async (siteId: number, currentStatus: boolean) => {
+    if (!canEditSite) {
+      toast.error("You do not have permission to change site status");
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/pms/sites/${siteId}.json`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({ pms_site: { active: !currentStatus } }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success(
+        `Site ${!currentStatus ? "activated" : "deactivated"} successfully`
+      );
+      // Refresh the data
+      fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("Error toggling site status:", error);
+      toast.error(`Failed to update site status: ${msg}`);
+    }
+  };
+
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
 
@@ -526,6 +600,22 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         </button>
       </div>
     ),
+    site_image: (
+      <div className="flex items-center justify-center">
+        {site?.attachfile?.document_url ? (
+          <img
+            src={site.attachfile.document_url}
+            alt={
+              site?.attachfile?.document_file_name || site?.name || "Site image"
+            }
+            className="h-12 w-12 object-cover rounded border border-gray-200"
+            loading="lazy"
+          />
+        ) : (
+          <div>-</div>
+        )}
+      </div>
+    ),
     name: (
       <div className="flex items-center gap-3">
         {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -540,9 +630,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       </div>
     ),
     code: (
-      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-        {site?.code || "-"}
-      </span>
+      <div className="text-sm text-center font-mono">{site?.code || "-"}</div>
     ),
     location: (
       <div className="text-sm">
@@ -571,14 +659,16 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${site?.active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-          }`}
-      >
-        {site?.active ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center justify-center">
+        <Switch
+          checked={!!site?.active}
+          onCheckedChange={() =>
+            site?.id && handleToggleStatus(site.id, !!site.active)
+          }
+          disabled={!canEditSite}
+          aria-label={`Toggle status for ${site?.name || "site"}`}
+        />
+      </div>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
@@ -588,13 +678,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   });
 
   const handleView = (id: number) => {
-    console.log("View site:", id);
+    console.warn("View site:", id);
     // Navigate to site details page
-    navigate(`/ops-account/sites/details/${id}`);
+    navigate(`/ops-console/master/location/account/sites/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit site:", id);
+    console.warn("Edit site:", id);
     // Find the site data from the current list
     const siteToEdit = sites.find((site) => site.id === id);
     if (siteToEdit) {
@@ -621,12 +711,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete site:", id);
+    console.warn("Delete site:", id);
     setSelectedSiteId(id);
     setIsDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
+    console.log("Delete Confirm Clicked", selectedSiteId);
     if (!selectedSiteId) return;
 
     if (!canEditSite) {
@@ -636,7 +727,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
     try {
       const response = await fetch(
-        getFullUrl(`/sites/${selectedSiteId}.json`),
+        getFullUrl(`pms/sites/${selectedSiteId}.json`),
         {
           method: "DELETE",
           headers: {
@@ -659,9 +750,10 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
       setIsDeleteModalOpen(false);
       setSelectedSiteId(null);
-    } catch (error: any) {
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       console.error("Error deleting site:", error);
-      toast.error(`Failed to delete site: ${error.message}`, {
+      toast.error(`Failed to delete site: ${msg}`, {
         duration: 5000,
       });
     }
@@ -702,27 +794,27 @@ export const SiteTab: React.FC<SiteTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Site
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditSite}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditSite}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
@@ -787,7 +879,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         description="Upload a CSV file to import sites"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log("Uploading sites file:", file);
+          console.warn("Uploading sites file:", file);
           toast.success("Sites uploaded successfully");
           fetchSites(
             currentPage,

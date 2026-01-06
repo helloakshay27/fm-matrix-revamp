@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useApiConfig } from '@/hooks/useApiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Filter, MapPin, X } from 'lucide-react';
+// import { useApiConfig } from '@/hooks/useApiConfig';
 
 export interface RegionFilters {
   companyId?: string;
@@ -47,18 +49,58 @@ export const RegionFilterModal: React.FC<RegionFilterModalProps> = ({
   onApply,
   companiesDropdown,
   countriesDropdown
+ 
 }) => {
+   const { getFullUrl, getAuthHeader } = useApiConfig();
+
   const [filters, setFilters] = useState<RegionFilters>({
     companyId: '',
     countryId: '',
     status: '',
   });
 
-  const handleFilterChange = (field: keyof RegionFilters, value: string) => {
+  // Local state for headquarters/countries
+  const [headquartersDropdown, setHeadquartersDropdown] = useState<Array<{ id: number; name: string }>>(countriesDropdown || []);
+
+  const handleFilterChange = async (field: keyof RegionFilters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // If companyId changes, fetch headquarters
+    if (field === 'companyId') {
+      if (value) {
+        try {
+          const apiUrl =  getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': getAuthHeader(),
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.headquarters)) {
+              setHeadquartersDropdown(data.headquarters.map((hq: any) => ({ id: hq.id, name: hq.headquarter_name })));
+            } else if (Array.isArray(data)) {
+              setHeadquartersDropdown(data.map((hq: any) => ({ id: hq.id, name: hq.headquarter_name })));
+            } else {
+              setHeadquartersDropdown([]);
+            }
+          } else {
+            setHeadquartersDropdown([]);
+          }
+        } catch (error) {
+          setHeadquartersDropdown([]);
+        }
+      } else {
+        setHeadquartersDropdown([]);
+      }
+      // Reset countryId when company changes
+      setFilters(prev => ({ ...prev, countryId: '' }));
+    }
   };
 
   const handleApply = () => {
@@ -87,7 +129,7 @@ export const RegionFilterModal: React.FC<RegionFilterModalProps> = ({
   const hasActiveFilters = Object.values(filters).some(value => value !== '' && value !== undefined);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -128,11 +170,12 @@ export const RegionFilterModal: React.FC<RegionFilterModalProps> = ({
                 label="Country"
                 MenuProps={selectMenuProps}
                 sx={fieldStyles}
+                disabled={!filters.companyId}
               >
                 <MenuItem value="">
                   <em>All Countries</em>
                 </MenuItem>
-                {countriesDropdown.map((country) => (
+                {headquartersDropdown.map((country) => (
                   <MenuItem key={country.id} value={country.id.toString()}>
                     {country.name}
                   </MenuItem>
@@ -179,7 +222,7 @@ export const RegionFilterModal: React.FC<RegionFilterModalProps> = ({
                 
                 {filters.countryId && (
                   <div className="flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                    Country: {countriesDropdown.find(c => c.id.toString() === filters.countryId)?.name}
+                    Country: {headquartersDropdown.find(c => c.id.toString() === filters.countryId)?.name}
                     <button 
                       onClick={() => handleFilterChange('countryId', '')}
                       className="ml-1 hover:bg-green-200 rounded-full p-0.5"

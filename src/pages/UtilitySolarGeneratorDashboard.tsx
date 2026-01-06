@@ -15,6 +15,9 @@ const UtilitySolarGeneratorDashboard = () => {
   const [solarGeneratorData, setSolarGeneratorData] = useState<SolarGenerator[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<SolarGeneratorFilters>({});
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { toast } = useToast();
 
   // Column visibility state
@@ -73,16 +76,34 @@ const UtilitySolarGeneratorDashboard = () => {
   );
 
   // Fetch solar generator data
-  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters) => {
+  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters, search?: string, page: number = 1, size: number = 10) => {
     try {
       setLoading(true);
-      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters);
+      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters, 'search:', search, 'Page:', page, 'Size:', size);
       
-      const data = await solarGeneratorAPI.getSolarGenerators(appliedFilters || filters);
+      const filtersWithSearch = {
+        ...(appliedFilters || filters),
+        tower_name: search || undefined,
+        page: page,
+        per_page: size
+      };
+      
+      const data = await solarGeneratorAPI.getSolarGenerators(filtersWithSearch);
       console.log('✅ Solar generator data fetched successfully:', data);
       
       setSolarGeneratorData(data);
       console.log('📊 Set solar generator data:', data.length, 'records');
+      
+      // Set total records - adjust based on your API response structure
+      // The API might return total count in different formats
+      if ((data as any).total_count !== undefined) {
+        setTotalRecords((data as any).total_count);
+      } else if ((data as any).meta?.total !== undefined) {
+        setTotalRecords((data as any).meta.total);
+      } else if (Array.isArray(data)) {
+        // Fallback: if no total provided, use array length (this won't work correctly for pagination)
+        setTotalRecords(data.length);
+      }
       
     } catch (error) {
       console.error('❌ Error fetching solar generators:', error);
@@ -92,27 +113,54 @@ const UtilitySolarGeneratorDashboard = () => {
         variant: "destructive"
       });
       setSolarGeneratorData([]);
+      setTotalRecords(0);
     } finally {
       setLoading(false);
     }
   }, [filters, toast]);
 
-  // Fetch data on component mount
+  // Fetch data on component mount and when page/pageSize changes
   useEffect(() => {
-    fetchSolarGenerators();
-  }, [fetchSolarGenerators]);
+    fetchSolarGenerators(filters, searchTerm, currentPage, pageSize);
+  }, [currentPage, pageSize]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on search
+      if (searchTerm) {
+        fetchSolarGenerators(filters, searchTerm, 1, pageSize);
+      } else {
+        fetchSolarGenerators(filters, undefined, 1, pageSize);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Filter handler functions
   const handleApplyFilters = (appliedFilters: SolarGeneratorFilters) => {
     console.log('Applying filters:', appliedFilters);
     setFilters(appliedFilters);
-    fetchSolarGenerators(appliedFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+    fetchSolarGenerators(appliedFilters, searchTerm, 1, pageSize);
   };
 
   const handleResetFilters = () => {
     console.log('Resetting filters');
     setFilters({});
-    fetchSolarGenerators({});
+    setCurrentPage(1); // Reset to first page when filters reset
+    fetchSolarGenerators({}, searchTerm, 1, pageSize);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   // Handle export
@@ -141,8 +189,15 @@ const UtilitySolarGeneratorDashboard = () => {
     switch (columnKey) {
       case 'id':
         return <span>{item.id}</span>;
-      case 'transaction_date':
-        return <span>{item.transaction_date}</span>;
+      case 'transaction_date': {
+        if (!item.transaction_date) return <span>-</span>;
+        // Convert date to DD/MM/YYYY format
+        const date = new Date(item.transaction_date);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return <span>{`${day}/${month}/${year}`}</span>;
+      }
       case 'unit_consumed':
         return <span>{item.unit_consumed?.toLocaleString() || '-'}</span>;
       case 'plant_day_generation':
@@ -157,12 +212,7 @@ const UtilitySolarGeneratorDashboard = () => {
     }
   };
 
-  // Filter data based on search term
-  const filteredData = solarGeneratorData.filter(item =>
-    item.tower_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.transaction_date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id?.toString().includes(searchTerm)
-  );
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -183,7 +233,7 @@ const UtilitySolarGeneratorDashboard = () => {
         /* Enhanced Solar Generator Table */
         <div>
           <EnhancedTable
-            data={filteredData}
+            data={solarGeneratorData}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
@@ -194,28 +244,13 @@ const UtilitySolarGeneratorDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search solar generator records..."
             pagination={true}
-            pageSize={10}
-            hideColumnsButton={true}
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                {/* Left actions can be used for other buttons if needed */}
-              </div>
-            }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-                <ColumnVisibilityDropdown
-                  columns={dropdownColumns}
-                  onColumnToggle={handleColumnToggle}
-                />
-              </div>
-            }
+            pageSize={pageSize}
+            currentPage={currentPage}
+            totalRecords={totalRecords}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            hideColumnsButton={false}
+            onFilterClick={() => setIsFilterOpen(true)}
           />
         </div>
       )}

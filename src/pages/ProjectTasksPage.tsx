@@ -251,7 +251,7 @@ const statusOptions = [
 ]
 
 // Pause Reason Modal Component
-const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, taskId }) => {
     const [reason, setReason] = useState('');
 
     useEffect(() => {
@@ -268,39 +268,56 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
         onSubmit(reason, taskId);
     };
 
+    const handleEndTask = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for ending the task');
+            return;
+        }
+        onEndTask(reason, taskId);
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause</h2>
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause/End</h2>
 
                 <div className="mb-6">
                     <textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder="Enter reason for pausing this task..."
+                        placeholder="Enter reason..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
                         rows={4}
                         disabled={isLoading}
                     />
                 </div>
 
-                <div className="flex gap-3 justify-end">
-                    <button
-                        onClick={onClose}
+                <div className="flex gap-3 justify-between">
+                    <Button
+                        onClick={handleEndTask}
                         disabled={isLoading}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
                     >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                    >
-                        {isLoading ? 'Submitting...' : 'Pause Task'}
-                    </button>
+                        {isLoading ? 'Submitting...' : 'End Task'}
+                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={isLoading}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        >
+                            {isLoading ? 'Submitting...' : 'Pause Task'}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -947,6 +964,66 @@ const ProjectTasksPage = () => {
         }
     };
 
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/task_import.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_task.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImportTasks = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            const response = await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            // toast.success("Tasks imported successfully");
+            // setIsImportModalOpen(false);
+            // setSelectedFile(null);
+            // fetchData();
+            if (response.data.failed && response.data.failed.length > 0) {
+                response.data.failed.forEach((item: { row: number; errors: string[] }) => {
+                    const errorMessages = item.errors.join(', ');
+                    toast.error(`Row ${item.row}: ${errorMessages}`);
+                });
+            } else {
+                toast.success("Tasks imported successfully");
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+                fetchData();
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import tasks");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleView = (id) => {
         if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
@@ -1061,6 +1138,56 @@ const ProjectTasksPage = () => {
         }
     };
 
+    const handleEndTaskSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
+
+        setIsPauseLoading(true);
+        try {
+            // Update task status to "completed"
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'completed' } })).unwrap();
+
+            // Update local state
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.id === tid ? { ...task, status: 'completed', is_started: false } : task
+                )
+            );
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
+
+            const commentPayload = {
+                comment: {
+                    body: `Ended with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Task ended successfully');
+            setIsPauseModalOpen(false);
+            setPauseTaskId(null);
+
+            // Refresh task list in background
+            fetchData();
+        } catch (error) {
+            console.error('Failed to end task:', error);
+            toast.error(
+                `Failed to end task: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsPauseLoading(false);
+        }
+    };
+
     const handlePlayTask = async (id: number) => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status: 'started' } })).unwrap();
@@ -1135,7 +1262,7 @@ const ProjectTasksPage = () => {
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        {!hasSubtasks &&
+                        {!hasSubtasks && !isCompleted &&
                             (isTaskStarted ? (
                                 <button
                                     onClick={() => {
@@ -2053,6 +2180,7 @@ const ProjectTasksPage = () => {
                     setPauseTaskId(null);
                 }}
                 onSubmit={handlePauseTaskSubmit}
+                onEndTask={handleEndTaskSubmit}
                 isLoading={isPauseLoading}
                 taskId={pauseTaskId}
             />

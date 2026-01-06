@@ -6,7 +6,7 @@ export const fetchBanners = createAsyncThunk(
     "fetchBanners",
     async ({ baseUrl, token, siteId }: { baseUrl: string, token: string, siteId: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/society_banners.json?site_id=${siteId}`, {
+            const response = await axios.get(`https://${baseUrl}/banners.json?site_id=${siteId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -23,7 +23,7 @@ export const fetchBannersById = createAsyncThunk(
     "fetchBannersById",
     async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/society_banners/${id}.json`, {
+            const response = await axios.get(`https://${baseUrl}/banners/${id}.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -40,7 +40,7 @@ export const createBanner = createAsyncThunk(
     "createBanner",
     async ({ baseUrl, token, data }: { baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`https://${baseUrl}/pms/society_banners.json`, data, {
+            const response = await axios.post(`https://${baseUrl}/banners.json`, data, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -57,14 +57,14 @@ export const editBanner = createAsyncThunk(
     "editBanner",
     async ({ baseUrl, token, data, id }: { baseUrl: string, token: string, data: any, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/pms/society_banners/${id}.json`, data, {
+            const response = await axios.put(`https://${baseUrl}/banners/${id}.json`, data, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create banner'
+            const message = error.response?.data?.error || error.error || 'Failed to update banner'
             return rejectWithValue(message)
         }
     }

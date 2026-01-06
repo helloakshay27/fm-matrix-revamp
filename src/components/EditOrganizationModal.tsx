@@ -87,13 +87,14 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     logo: null,
     powered_by_logo: null,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch organization data when modal opens
-  useEffect(() => {
-    if (isOpen && organizationId) {
-      fetchOrganizationData();
-    }
-  }, [isOpen, organizationId]);
+  // Validate domains like example.com and with more segments (e.g., app.example.co.in)
+  const isValidDomain = (value: string) => {
+    if (!value) return false;
+    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    return domainRegex.test(value.trim());
+  };
 
   const fetchOrganizationData = async () => {
     setIsLoading(true);
@@ -152,9 +153,15 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   };
 
   const handleSubmit = async () => {
+    const newErrors: Record<string, string> = { ...errors };
     if (!formData.name.trim()) {
-      toast.error("Please enter organization name");
-      return;
+      newErrors.name = "Organization name is required";
+    }
+    if (!formData.domain.trim()) {
+      newErrors.domain = "Main domain is required";
+    }
+    if (!formData.sub_domain.trim()) {
+      newErrors.sub_domain = "Sub domain is required";
     }
 
     // Domain validation
@@ -162,29 +169,24 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+$/;
 
     if (formData.domain && !domainRegex.test(formData.domain)) {
-      toast.error("Please enter a valid main domain (e.g., example.com)");
-      return;
+      newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
-      toast.error("Please enter a valid sub domain (e.g., app.example.com)");
-      return;
-    }
 
     if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
-      toast.error(
-        "Please enter a valid frontend domain (e.g., www.example.com)"
-      );
-      return;
+      newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
     }
 
     if (
       formData.front_subdomain &&
       !domainRegex.test(formData.front_subdomain)
     ) {
-      toast.error(
-        "Please enter a valid frontend subdomain (e.g., portal.example.com)"
-      );
+      newErrors.front_subdomain = "Please enter a valid frontend subdomain (e.g., portal.example.com)";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted errors");
       return;
     }
 
@@ -412,30 +414,53 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   label="Main Domain"
                   placeholder="example.com"
                   value={formData.domain}
-                  onChange={(e) =>
-                    setFormData({ ...formData, domain: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, domain: val });
+                    setErrors((prev) => ({
+                      ...prev,
+                      domain: isValidDomain(val) ? '' : prev.domain,
+                    }));
+                  }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    required: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
-                  helperText="Enter a valid domain (e.g., example.com)"
+                  required
+                  error={!!errors.domain}
+                  helperText={errors.domain || "Enter a valid domain (e.g., example.com)"}
                 />
 
                 <TextField
                   label="Sub Domain"
                   placeholder="app.example.com"
                   value={formData.sub_domain}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sub_domain: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, sub_domain: val });
+                    setErrors((prev) => ({
+                      ...prev,
+                      sub_domain: ''
+                    }));
+                  }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    required: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
-                  helperText="Enter subdomain (e.g., app.example.com)"
+                  required
+                  error={!!errors.sub_domain}
+                  helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
+                  helperText={errors.sub_domain || ""}
                 />
               </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -169,7 +170,8 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
@@ -210,7 +212,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       }
 
       if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
+        apiUrl += `&q[headquarter_id_eq]=${filters.countryId}`;
       }
 
       if (filters.status) {
@@ -430,14 +432,14 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const renderRow = (region: RegionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <button
+        {/* <button
           onClick={() => region?.id && handleView(region.id)}
           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
           title="View"
           disabled={!region?.id}
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button> */}
         <button
           onClick={() => region?.id && handleEdit(region.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
@@ -467,9 +469,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       </div>
     ),
     code: (
-      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-        {region?.code || "-"}
-      </span>
+      <div className="text-sm text-center font-mono">{region?.code || "-"}</div>
     ),
     company: (
       <span className="text-sm text-gray-600">
@@ -482,14 +482,17 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${region?.active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-          }`}
-      >
-        {region?.active ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={region.active}
+          onCheckedChange={() => handleToggleStatus(region.id, region.active)}
+          disabled={!canEditRegion}
+          aria-label={`Toggle status for ${region.name || "region"}`}
+        />
+        <span
+          className={`text-xs font-medium ${region?.active ? "text-green-700" : "text-red-700"}`}
+        ></span>
+      </div>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
@@ -499,21 +502,63 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   });
 
   const handleView = (id: number) => {
-    console.log("View region:", id);
+    console.warn("View region:", id);
     // Navigate to region details page
     navigate(`/ops-account/regions/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit region:", id);
+    console.warn("Edit region:", id);
     setSelectedRegionId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete region:", id);
+    console.warn("Delete region:", id);
     setSelectedRegionId(id);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleToggleStatus = async (
+    regionId: number,
+    currentStatus: boolean
+  ) => {
+    if (!canEditRegion) {
+      toast.error("You do not have permission to update region status");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        getFullUrl(`/pms/regions/${regionId}.json`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+          body: JSON.stringify({ pms_region: { active: !currentStatus } }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success(
+          `Region ${!currentStatus ? "activated" : "deactivated"} successfully`
+        );
+        fetchRegions(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
+      } else {
+        toast.error("Failed to update region status");
+      }
+    } catch (error) {
+      console.error("Error updating region status:", error);
+      toast.error("Error updating region status");
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -592,27 +637,27 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Region
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditRegion}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditRegion}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination

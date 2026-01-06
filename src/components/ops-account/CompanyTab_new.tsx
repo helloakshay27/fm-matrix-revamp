@@ -161,7 +161,8 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };

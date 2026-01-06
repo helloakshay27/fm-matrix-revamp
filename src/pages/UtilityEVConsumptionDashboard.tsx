@@ -27,6 +27,7 @@ interface EVConsumptionData {
 
 interface FilterData {
   dateRange?: DateRange | string;
+  transactionId?: string;
 }
 
 const UtilityEVConsumptionDashboard = () => {
@@ -35,6 +36,9 @@ const UtilityEVConsumptionDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [evConsumptionData, setEvConsumptionData] = useState<EVConsumptionData[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<FilterData>({});
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { toast } = useToast();
 
   // Column visibility state - updated to match API response
@@ -140,19 +144,11 @@ const UtilityEVConsumptionDashboard = () => {
     }
   };
 
-  // Filter data based on search term
-  const filteredData = evConsumptionData.filter(item =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.transaction_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.created_by_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Fetch EV consumption data from API
-  const fetchEVConsumptionData = useCallback(async (filters?: FilterData) => {
+  const fetchEVConsumptionData = useCallback(async (filters?: FilterData, page: number = 1, size: number = 10) => {
     try {
       setIsLoading(true);
-      console.log('🚀 Fetching EV consumption data from API with filters:', filters);
+      console.log('🚀 Fetching EV consumption data from API with filters:', filters, 'Page:', page, 'Size:', size);
       
       const url = getFullUrl('/ev_consumptions.json');
       const urlWithParams = new URL(url);
@@ -162,6 +158,10 @@ const UtilityEVConsumptionDashboard = () => {
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
       }
+      
+      // Add pagination parameters
+      urlWithParams.searchParams.append('page', page.toString());
+      urlWithParams.searchParams.append('per_page', size.toString());
       
       // Add date range filter if provided
       if (filters?.dateRange) {
@@ -190,6 +190,12 @@ const UtilityEVConsumptionDashboard = () => {
         }
       }
       
+      // Add transaction ID filter if provided
+      if (filters?.transactionId) {
+        urlWithParams.searchParams.append('q[transaction_id_eq]', filters.transactionId);
+        console.log('🔍 Adding transaction ID filter:', filters.transactionId);
+      }
+      
       console.log('�📡 API URL with params:', urlWithParams.toString());
       console.log('🔑 Using token:', API_CONFIG.TOKEN ? 'Present' : 'Missing');
       
@@ -207,9 +213,20 @@ const UtilityEVConsumptionDashboard = () => {
       if (data.ev_consumptions && Array.isArray(data.ev_consumptions)) {
         setEvConsumptionData(data.ev_consumptions);
         console.log('📊 Set EV consumption data:', data.ev_consumptions.length, 'records');
+        
+        // Set total records from API response
+        if (data.total_count !== undefined) {
+          setTotalRecords(data.total_count);
+        } else if (data.meta?.total !== undefined) {
+          setTotalRecords(data.meta.total);
+        } else {
+          // Fallback: use current page data length
+          setTotalRecords(data.ev_consumptions.length);
+        }
       } else {
         console.warn('⚠️ No ev_consumptions array found in response');
         setEvConsumptionData([]);
+        setTotalRecords(0);
       }
       
     } catch (error) {
@@ -220,27 +237,40 @@ const UtilityEVConsumptionDashboard = () => {
         variant: "destructive"
       });
       setEvConsumptionData([]);
+      setTotalRecords(0);
     } finally {
       setIsLoading(false);
     }
   }, [toast]);
 
-  // Fetch data on component mount
+  // Fetch data on component mount and when page/pageSize changes
   useEffect(() => {
-    fetchEVConsumptionData();
-  }, [fetchEVConsumptionData]);
+    fetchEVConsumptionData(appliedFilters, currentPage, pageSize);
+  }, [currentPage, pageSize]);
 
   // Filter handler functions
   const handleApplyFilters = (filters: FilterData) => {
     console.log('Applying filters:', filters);
     setAppliedFilters(filters);
-    fetchEVConsumptionData(filters);
+    setCurrentPage(1); // Reset to first page when filters change
+    fetchEVConsumptionData(filters, 1, pageSize);
   };
 
   const handleResetFilters = () => {
     console.log('Resetting filters');
     setAppliedFilters({});
-    fetchEVConsumptionData({});
+    setCurrentPage(1); // Reset to first page when filters reset
+    fetchEVConsumptionData({}, 1, pageSize);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   const handleExport = async () => {
@@ -283,6 +313,12 @@ const UtilityEVConsumptionDashboard = () => {
           urlWithParams.searchParams.append('q[date_range]', singleDate);
           console.log('📅 Adding single date filter to export:', singleDate);
         }
+      }
+      
+      // Add transaction ID filter to export if provided
+      if (appliedFilters?.transactionId) {
+        urlWithParams.searchParams.append('q[transaction_id_eq]', appliedFilters.transactionId);
+        console.log('🔍 Adding transaction ID filter to export:', appliedFilters.transactionId);
       }
       
       const options = getAuthenticatedFetchOptions();
@@ -351,7 +387,7 @@ const UtilityEVConsumptionDashboard = () => {
         /* Enhanced EV Consumption Table */
         <div>
           <EnhancedTable
-            data={filteredData}
+            data={evConsumptionData}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
@@ -363,28 +399,13 @@ const UtilityEVConsumptionDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search EV consumption records..."
             pagination={true}
-            pageSize={10}
-            hideColumnsButton={true}
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                {/* Left actions can be used for other buttons if needed */}
-              </div>
-            }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-                <ColumnVisibilityDropdown
-                  columns={dropdownColumns}
-                  onColumnToggle={handleColumnToggle}
-                />
-              </div>
-            }
+            pageSize={pageSize}
+            currentPage={currentPage}
+            totalRecords={totalRecords}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            hideColumnsButton={false}
+            onFilterClick={() => setIsFilterOpen(true)}
           />
         </div>
       )}

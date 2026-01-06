@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useApiConfig } from '@/hooks/useApiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -49,7 +50,11 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
   companiesDropdown,
   regionsDropdown,
   countriesDropdown
+ 
 }) => {
+
+   const { getFullUrl, getAuthHeader } = useApiConfig();
+  const [headquartersDropdown, setHeadquartersDropdown] = useState<Array<{ id: number; name: string }>>(countriesDropdown || []);
   const [filters, setFilters] = useState<SiteFilters>({
     companyId: '',
     regionId: '',
@@ -58,11 +63,45 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
     status: '',
   });
 
-  const handleFilterChange = (field: keyof SiteFilters, value: string) => {
+  const handleFilterChange = async (field: keyof SiteFilters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // If companyId changes, fetch headquarters
+    if (field === 'companyId') {
+      if (value) {
+        try {
+          const apiUrl = getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': getAuthHeader(),
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.headquarters)) {
+              setHeadquartersDropdown(data.headquarters.map((hq: any) => ({ id: hq.id, name: hq.country_name })));
+            } else if (Array.isArray(data)) {
+              setHeadquartersDropdown(data.map((hq: any) => ({ id: hq.id, name: hq.country_name })));
+            } else {
+              setHeadquartersDropdown([]);
+            }
+          } else {
+            setHeadquartersDropdown([]);
+          }
+        } catch (error) {
+          setHeadquartersDropdown([]);
+        }
+      } else {
+        setHeadquartersDropdown([]);
+      }
+      // Reset countryId when company changes
+      setFilters(prev => ({ ...prev, countryId: '' }));
+    }
   };
 
   const handleApply = () => {
@@ -93,7 +132,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
   const hasActiveFilters = Object.values(filters).some(value => value !== '' && value !== undefined);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -155,11 +194,12 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
                 label="Country"
                 MenuProps={selectMenuProps}
                 sx={fieldStyles}
+                disabled={!filters.companyId}
               >
                 <MenuItem value="">
                   <em>All Countries</em>
                 </MenuItem>
-                {countriesDropdown.map((country) => (
+                {headquartersDropdown.map((country) => (
                   <MenuItem key={country.id} value={country.id.toString()}>
                     {country.name}
                   </MenuItem>
@@ -168,7 +208,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
             </FormControl>
 
             {/* Site Type Filter */}
-            <FormControl fullWidth>
+            {/* <FormControl fullWidth>
               <InputLabel>Site Type</InputLabel>
               <MuiSelect
                 value={filters.site_type || ''}
@@ -187,7 +227,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
                 <MenuItem value="Branch">Branch</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
               </MuiSelect>
-            </FormControl>
+            </FormControl> */}
 
             {/* Status Filter */}
             <FormControl fullWidth>
@@ -240,7 +280,7 @@ export const SiteFilterModal: React.FC<SiteFilterModalProps> = ({
 
                 {filters.countryId && (
                   <div className="flex items-center gap-1 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
-                    Country: {countriesDropdown.find(c => c.id.toString() === filters.countryId)?.name}
+                    Country: {headquartersDropdown.find(c => c.id.toString() === filters.countryId)?.name}
                     <button 
                       onClick={() => handleFilterChange('countryId', '')}
                       className="ml-1 hover:bg-purple-200 rounded-full p-0.5"

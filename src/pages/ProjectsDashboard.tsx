@@ -471,6 +471,62 @@ export const ProjectsDashboard = () => {
     }
   };
 
+  const handleSampleDownload = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/assets/project_import.xlsx`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Create a download link and trigger it
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'sample_project_management.xlsx'); // specify filename
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // cleanup
+      toast.success('Sample format downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.');
+    }
+  };
+
+  const handleImport = async () => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const response = await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      if (response.data.failed && response.data.failed.length > 0) {
+        response.data.failed.forEach((item: { row: number; errors: string[] }) => {
+          const errorMessages = item.errors.join(', ');
+          toast.error(`Row ${item.row}: ${errorMessages}`);
+        });
+      } else {
+        toast.success("Projects imported successfully");
+        setIsImportModalOpen(false);
+        setSelectedFile(null);
+        fetchData(1, "", false, debouncedSearchTerm);
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
       <Button

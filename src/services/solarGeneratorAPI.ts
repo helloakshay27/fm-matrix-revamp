@@ -48,7 +48,7 @@ class SolarGeneratorAPI {
         params.append('site_id', filters.site_id.toString());
       }
       if (filters?.tower_name) {
-        params.append('tower_name', filters.tower_name);
+        params.append('q[tower_name_cont]', filters.tower_name);
       }
 
       const queryString = params.toString();
@@ -91,7 +91,7 @@ class SolarGeneratorAPI {
         params.append('site_id', filters.site_id.toString());
       }
       if (filters?.tower_name) {
-        params.append('tower_name', filters.tower_name);
+        params.append('q[tower_name_cont]', filters.tower_name);
       }
 
       const queryString = params.toString();

@@ -62,7 +62,9 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
       return;
     }
 
-    if (!formData.name.trim() || !formData.company_setup_id || !formData.country_id) {
+    if (
+      // !formData.name.trim() ||
+     !formData.company_setup_id || !formData.country_id) {
       toast.error('Please fill in all required fields (Name, Company, and Country)', {
         duration: 5000,
       });
@@ -146,7 +148,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-6">
-            <TextField
+            {/* <TextField
               label="Headquarter Name"
               placeholder="Enter headquarter name"
               value={formData.name}
@@ -164,7 +166,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
               }}
               required
               disabled={isSubmitting}
-            />
+            /> */}
 
             <FormControl fullWidth variant="outlined">
               <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Organization</InputLabel>
@@ -214,10 +216,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
                 ))}
               </MuiSelect>
             </FormControl>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <FormControl fullWidth variant="outlined" required>
+                        <FormControl fullWidth variant="outlined" required>
               <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Company</InputLabel>
               <MuiSelect
                 value={formData.company_setup_id}
@@ -265,9 +264,60 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
                 ))}
               </MuiSelect>
             </FormControl>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {/* <FormControl fullWidth variant="outlined" required>
+              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Company</InputLabel>
+              <MuiSelect
+                value={formData.company_setup_id}
+                onChange={(e) => handleInputChange('company_setup_id', e.target.value)}
+                label="Company"
+                displayEmpty
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300,
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      zIndex: 99999,
+                      overflow: 'auto',
+                    },
+                  },
+                  anchorOrigin: {
+                    vertical: 'bottom' as const,
+                    horizontal: 'left' as const,
+                  },
+                  transformOrigin: {
+                    vertical: 'top' as const,
+                    horizontal: 'left' as const,
+                  },
+                  disablePortal: false,
+                  disableScrollLock: true,
+                }}
+                sx={{
+                  height: { xs: 28, sm: 36, md: 45 },
+                  '& .MuiInputBase-input, & .MuiSelect-select': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                }}
+                disabled={isSubmitting}
+              >
+                <MenuItem value="">
+                  <em>Select Company</em>
+                </MenuItem>
+                {companiesDropdown.map((company) => (
+                  <MenuItem key={company.id} value={company.id.toString()}>
+                    {company.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl> */}
 
             <FormControl fullWidth variant="outlined" required>
-              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Country</InputLabel>
+              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Country Name</InputLabel>
               <MuiSelect
                 value={formData.country_id}
                 onChange={(e) => handleInputChange('country_id', e.target.value)}
@@ -312,11 +362,13 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
                     {country.name}
                   </MenuItem>
                 ))}
+
+                {/* {console.log("country:", countriesDropdown)} */}
               </MuiSelect>
             </FormControl>
           </div>
 
-          <div>
+          {/* <div>
             <span className="text-sm font-medium mb-2 block">Logo</span>
             <input
               type="file"
@@ -356,7 +408,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
         {/* Action Buttons */}
         <div className="flex justify-center space-x-3 pt-6 border-t">

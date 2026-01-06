@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -195,6 +196,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
       "dev@lockated.com",
+      "sumitra.patil@lockated.com",
     ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
@@ -339,7 +341,6 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   //   }
   // };
 
-
   const fetchCountriesDropdown = async () => {
     try {
       const storedBaseUrl = localStorage.getItem("baseUrl");
@@ -377,7 +378,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Countries API response:", data);
+        console.warn("Countries API response:", data);
 
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
@@ -395,7 +396,11 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
-        console.error("Failed to fetch countries", response.status, await response.text());
+        console.error(
+          "Failed to fetch countries",
+          response.status,
+          await response.text()
+        );
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
@@ -408,14 +413,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   // Handle filter application
   const handleApplyFilters = (filters: OrganizationFilters) => {
-    console.log("📊 Applying filters:", filters);
+    console.warn("📊 Applying filters:", filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log("Search query:", term);
+    console.warn("Search query:", term);
     setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
@@ -533,15 +538,17 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          org?.active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-        }`}
-      >
-        {org?.active ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={org.active}
+          onCheckedChange={() => handleToggleStatus(org.id, org.active)}
+          disabled={!canEditOrganization}
+          aria-label={`Toggle status for ${org.name || "organization"}`}
+        />
+        <span
+          className={`text-xs font-medium ${org?.active ? "text-green-700" : "text-red-700"}`}
+        ></span>
+      </div>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
@@ -551,7 +558,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   });
 
   const handleView = (id: number) => {
-    console.log("View organization:", id);
+    console.warn("View organization:", id);
 
     // Find the organization to check if it's active
     const org = organizations.find((o) => o.id === id);
@@ -572,15 +579,51 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit organization:", id);
+    console.warn("Edit organization:", id);
     setSelectedOrganizationId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete organization:", id);
+    console.warn("Delete organization:", id);
     setSelectedOrganizationId(id);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleToggleStatus = async (orgId: number, currentStatus: boolean) => {
+    if (!canEditOrganization) {
+      toast.error("You do not have permission to update organization status");
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/organizations/${orgId}.json`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({ organization: { active: !currentStatus } }),
+      });
+
+      if (response.ok) {
+        toast.success(
+          `Organization ${!currentStatus ? "activated" : "deactivated"} successfully`
+        );
+        fetchOrganizations(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
+      } else {
+        toast.error("Failed to update organization status");
+      }
+    } catch (error) {
+      console.error("Error updating organization status:", error);
+      toast.error("Error updating organization status");
+    }
   };
 
   const handleDeleteConfirm = async () => {

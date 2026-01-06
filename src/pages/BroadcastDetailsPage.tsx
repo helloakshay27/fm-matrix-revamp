@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
+import { Switch } from '@mui/material';
 
 interface BroadcastDetails {
   id?: string;
@@ -19,9 +20,13 @@ interface BroadcastDetails {
   expire_time?: string | Date;
   isImportant?: boolean;
   notice_text?: string;
-  attachments?: any[]; // Uncomment if the attachments section is used
+  attachments?: any[];
+  cover_image?: any;
   shared_notices?: string[];
   shared?: number;
+  show_on_home_screen?: boolean;
+  visible_after_expire?: boolean;
+  share_with_communities?: boolean;
 }
 
 export const BroadcastDetailsPage = () => {
@@ -36,12 +41,19 @@ export const BroadcastDetailsPage = () => {
   const [broadcastStatus, setBroadcastStatus] = useState('Published');
   const [broadcastDetails, setBroadcastDetails] = useState<BroadcastDetails>({})
   const [isPrinting, setIsPrinting] = useState(false)
+  const [isActive, setIsActive] = useState(false);
+  const [showOnHomeScreen, setShowOnHomeScreen] = useState(false);
+  const [visibleAfterExpire, setVisibleAfterExpire] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
         setBroadcastDetails(response)
+        // Set initial switch states
+        setIsActive(response.status === 'active' || response.status === 'Active');
+        setShowOnHomeScreen(response.show_on_home_screen || false);
+        setVisibleAfterExpire(response.visible_after_expire || false);
       } catch (error) {
         console.log(error)
         toast.error("Failed to fetch broadcast details")
@@ -87,177 +99,277 @@ export const BroadcastDetailsPage = () => {
     }
   }
 
+  const handleStatusToggle = async (field: string, value: boolean) => {
+    try {
+      const formData = new FormData();
+
+      if (field === 'active') {
+        formData.append('noticeboard[status]', value ? 'active' : 'inactive');
+        setIsActive(value);
+      } else if (field === 'show_on_home_screen') {
+        formData.append('noticeboard[show_on_home_screen]', value.toString());
+        setShowOnHomeScreen(value);
+      } else if (field === 'visible_after_expire') {
+        formData.append('noticeboard[visible_after_expire]', value.toString());
+        setVisibleAfterExpire(value);
+      }
+
+      await axios.patch(
+        `https://${baseUrl}/pms/admin/noticeboards/${id}.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success('Status updated successfully');
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast.error('Failed to update status');
+      // Revert the state on error
+      if (field === 'active') setIsActive(!value);
+      else if (field === 'show_on_home_screen') setShowOnHomeScreen(!value);
+      else if (field === 'visible_after_expire') setVisibleAfterExpire(!value);
+    }
+  };
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
       {/* Header with back button */}
       <div className="flex items-center justify-between gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0 hover:bg-transparent"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Broadcasts
+          Back
         </Button>
         <Button
           variant="outline"
-          onClick={handlePrint}
-          disabled={isPrinting}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          onClick={() => navigate(`/pulse/notices/edit/${id}`)}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-2 hover:bg-transparent"
         >
-          {
-            isPrinting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />
-          }
+          <Pencil className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Broadcast Details Section */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-            B
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">BROADCAST DETAILS</h2>
-        </div>
-
-        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Broadcast ID</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.id || "-"}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Created by</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.created_by || "-"}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Type</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.shared === 0 ? "General" : "Personal"}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Title</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.notice_heading || "-"}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Created Date</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.created_at && format(broadcastDetails.created_at, "dd-MM-yyyy")}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Status</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                {broadcastDetails.status || "-"}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Created Time</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.created_at && format(broadcastDetails.created_at, "hh:mm a")}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">End Date</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.expire_time && format(broadcastDetails.expire_time, "dd-MM-yyyy")}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">End Time</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="text-gray-900 font-medium">
-                {broadcastDetails.expire_time && format(broadcastDetails.expire_time, "hh:mm a")}
-              </span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="text-gray-500 min-w-[140px]">Important</span>
-              <span className="text-gray-500 mx-2">:</span>
-              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                {broadcastDetails.isImportant ? 'Yes' : 'No'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-            D
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">Description</h2>
-        </div>
-
-        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
-          {broadcastDetails.notice_text}
-        </div>
-      </div>
-
-      {/* Attachments Section */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-            A
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
-        </div>
-
-        <div className="px-[40px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
-          {
-            broadcastDetails?.attachments ? (
-              <img src={broadcastDetails?.attachments[0]?.document_url} alt="" height={100} width={150} />
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No attachments available for this event.
+      {/* Main Content Card */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+        {/* Header with Title, Star, and Active Badge */}
+        <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+                <FileText size={22} />
               </div>
-            )
-          }
+              <h2 className="text-lg font-semibold text-gray-900">
+                {broadcastDetails.notice_heading || "Fire Safety Drill Report"}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+              <div>
+                <Switch
+                  checked={isActive}
+                  onChange={(e) => handleStatusToggle('active', e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase': {
+                      color: '#ef4444',
+                      '&.Mui-checked': {
+                        color: '#22c55e',
+                      },
+                      '&.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#22c55e',
+                      },
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: '#ef4444',
+                    },
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Description Section */}
+        <div className="p-6 bg-white border-b border-gray-200">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Description</h3>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {broadcastDetails.notice_text || "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."}
+          </p>
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-3 gap-y-4 mt-6">
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[140px]">Created On</span>
+              <span className="text-sm font-medium text-gray-900">
+                {broadcastDetails.created_at && format(new Date(broadcastDetails.created_at), "d MMMM yyyy")}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[140px]">Home Screen</span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showOnHomeScreen}
+                  onChange={(e) => handleStatusToggle('show_on_home_screen', e.target.checked)}
+                  size="small"
+                  sx={{
+                    '& .MuiSwitch-switchBase': {
+                      color: '#ef4444',
+                      '&.Mui-checked': {
+                        color: '#22c55e',
+                      },
+                      '&.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#22c55e',
+                      },
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: '#ef4444',
+                    },
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">{showOnHomeScreen ? 'Active' : 'Inactive'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[140px]">Expire On</span>
+              <span className="text-sm font-medium text-gray-900">
+                {broadcastDetails.expire_time && format(new Date(broadcastDetails.expire_time), "d MMMM yyyy")}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[140px]">Created By</span>
+              <span className="text-sm font-medium text-gray-900">
+                {broadcastDetails.created_by || "Abdul Ghaffar"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[140px]">Visible After Expire</span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={visibleAfterExpire}
+                  onChange={(e) => handleStatusToggle('visible_after_expire', e.target.checked)}
+                  size="small"
+                  sx={{
+                    '& .MuiSwitch-switchBase': {
+                      color: '#ef4444',
+                      '&.Mui-checked': {
+                        color: '#22c55e',
+                      },
+                      '&.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#22c55e',
+                      },
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: '#ef4444',
+                    },
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">{visibleAfterExpire ? 'Active' : 'Inactive'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-            S
+      {/* Share Section */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+            <Share2 size={16} />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Shared With</h2>
+          <span className="font-semibold text-lg text-gray-800">Share</span>
         </div>
+        <div className="p-6 bg-white">
+          <div className="grid grid-cols-2 gap-8">
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[160px]">Share With</span>
+              <span className="text-sm font-medium text-gray-900">
+                {broadcastDetails.shared === 2 ? "All Tech Park" : "Individual Tech Park"}
+              </span>
+            </div>
+            <div className="flex items-center gap-8">
+              <span className="text-sm text-gray-500 min-w-[180px]">Share With Communities</span>
+              <span className="text-sm font-medium text-gray-900">
+                {broadcastDetails.share_with_communities ? "Yes" : "No"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
-          <ol className="list-decimal pl-6">
-            {
-              broadcastDetails.shared_notices?.map(((data, idx) => (
-                <li key={idx} className="text-14">
-                  <span className="fw-medium text-13">{data}</span>
-                </li>
-              )))
-            }
-          </ol>
+      {/* Attachment Section */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+            <File size={16} />
+          </div>
+          <span className="font-semibold text-lg text-gray-800">Attachment</span>
+        </div>
+        <div className="p-6 bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+            {/* Upload Document */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Document</h4>
+              {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
+                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
+                    {broadcastDetails.attachments[0]?.document_name || "Document.pdf"}
+                  </span>
+                  <div className="flex flex-col items-center">
+                    {broadcastDetails.attachments[0]?.document_url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                      <img
+                        src={broadcastDetails.attachments[0].document_url}
+                        alt="Document"
+                        className="w-16 h-16 object-contain"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center mb-1">
+                          <span className="text-white text-xs font-bold">PDF</span>
+                        </div>
+                        <div className="w-12 h-1 bg-gray-300 rounded"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                  <span className="text-sm text-gray-400">No document</span>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Cover Image */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Cover Image</h4>
+              {broadcastDetails?.cover_image ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
+                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
+                    {broadcastDetails.cover_image?.name || "Name.jpg"}
+                  </span>
+                  <img
+                    src={broadcastDetails.cover_image?.url || "https://via.placeholder.com/80"}
+                    alt="Cover"
+                    className="w-16 h-16 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                  <span className="text-sm text-gray-400">No cover image</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
