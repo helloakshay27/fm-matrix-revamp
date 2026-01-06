@@ -11,9 +11,14 @@ import {
 import {
   getCategories,
   getAllSites,
+  getFoldersTree,
+  createDocument,
   fileToBase64,
   Category,
   Site,
+  Folder,
+  CreateDocumentPayload,
+  FolderPermission,
 } from "@/services/documentService";
 import {
   FormControl,
@@ -99,6 +104,7 @@ export const AddDocumentDashboard = () => {
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
@@ -111,15 +117,36 @@ export const AddDocumentDashboard = () => {
   // Fetch categories and sites on mount
   useEffect(() => {
     const fetchData = async () => {
+      console.warn("Starting to fetch data...");
+
+      // Fetch categories
       try {
-        const [categoriesData, sitesData] = await Promise.all([
-          getCategories(),
-          getAllSites(),
-        ]);
+        const categoriesData = await getCategories();
+        console.warn("Categories loaded:", categoriesData);
         setCategories(categoriesData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+
+      // Fetch sites
+      try {
+        const sitesData = await getAllSites();
+        console.warn("Sites loaded:", sitesData);
         setSites(sitesData.sites);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching sites:", error);
+      }
+
+      // Fetch folders (may fail, that's okay)
+      try {
+        const foldersData = await getFoldersTree();
+        console.warn("Folders loaded:", foldersData);
+        setFolders(foldersData.folders || []);
+      } catch (error) {
+        console.warn(
+          "Folders endpoint not available (500 error) - continuing without folders"
+        );
+        setFolders([]);
       }
     };
     fetchData();
@@ -189,9 +216,8 @@ export const AddDocumentDashboard = () => {
       return;
     }
 
-    // If not from CreateFolderPage, validate folder field
-    if (!isFolderDisabled && !formData.documentFolder) {
-      alert("Please select a document folder");
+    if (!coverImage) {
+      alert("Please upload a document");
       return;
     }
 
@@ -232,14 +258,61 @@ export const AddDocumentDashboard = () => {
 
         navigate("/maintenance/documents/create-folder");
       } else {
-        // TODO: Implement API call to create document directly
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Normal document creation flow
+        const attachmentBase64 = await fileToBase64(coverImage);
+        const contentType = coverImage.type || "application/pdf";
+
+        const permissions: FolderPermission[] = [
+          {
+            access_level: formData.shareWith === "all" ? "all" : "selected",
+            scope_type: "Site",
+            scope_ids:
+              formData.shareWith === "individual" ? selectedTechParks : [],
+          },
+          {
+            access_level:
+              formData.shareWithCommunities === "yes" ? "view" : "none",
+            scope_type: "community",
+            scope_ids:
+              formData.shareWithCommunities === "yes"
+                ? selectedCommunities.map((c) => c.id)
+                : [],
+          },
+        ];
+
+        const payload: CreateDocumentPayload = {
+          document: {
+            title: formData.title,
+            folder_id: formData.documentFolder
+              ? parseInt(formData.documentFolder, 10)
+              : undefined,
+            category_id: parseInt(formData.documentCategory, 10),
+            attachments: [
+              {
+                filename: coverImage.name,
+                content: `data:${contentType};base64,${attachmentBase64}`,
+                content_type: contentType,
+              },
+            ],
+          },
+          permissions,
+        };
+
+        await createDocument(payload);
         alert("Document added successfully!");
         navigate("/maintenance/documents");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error submitting document:", error);
-      alert("Failed to add document. Please try again.");
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to add document. Please try again.";
+      alert(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -303,15 +376,29 @@ export const AddDocumentDashboard = () => {
                   }
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="" disabled>
                     Select Document Category
                   </MenuItem>
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
+                  {categories.length === 0 ? (
+                    <MenuItem disabled>Loading categories...</MenuItem>
+                  ) : (
+                    categories.map((category) => (
+                      <MenuItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
+                        {category.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </MuiSelect>
               </FormControl>
 
@@ -338,17 +425,28 @@ export const AddDocumentDashboard = () => {
                       },
                     }),
                   }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="" disabled>
                     {isFolderDisabled
                       ? "Folder will be created"
                       : "Select Document Folder"}
                   </MenuItem>
-                  {DOCUMENT_FOLDERS.map((folder) => (
-                    <MenuItem key={folder.value} value={folder.value}>
-                      {folder.label}
-                    </MenuItem>
-                  ))}
+                  {folders.length === 0 ? (
+                    <MenuItem disabled>Loading folders...</MenuItem>
+                  ) : (
+                    folders.map((folder) => (
+                      <MenuItem key={folder.id} value={folder.id.toString()}>
+                        {folder.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </MuiSelect>
               </FormControl>
 

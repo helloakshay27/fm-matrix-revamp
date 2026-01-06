@@ -64,6 +64,32 @@ export interface CreateFolderPayload {
   documents: DocumentPayload[];
 }
 
+export interface Folder {
+  id: number;
+  name: string;
+  category_id?: number;
+  parent_id?: number;
+  children?: Folder[];
+}
+
+export interface FolderTreeResponse {
+  folders: Folder[];
+}
+
+export interface CreateDocumentPayload {
+  document: {
+    title: string;
+    folder_id?: number;
+    category_id: number;
+    attachments: Array<{
+      filename: string;
+      content: string;
+      content_type: string;
+    }>;
+  };
+  permissions: FolderPermission[];
+}
+
 /**
  * Fetch all categories
  */
@@ -102,6 +128,23 @@ export const getAllSites = async (): Promise<SitesResponse> => {
 };
 
 /**
+ * Fetch folders tree
+ */
+export const getFoldersTree = async (): Promise<FolderTreeResponse> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.get(`https://${baseUrl}/folders/tree.json`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.data;
+};
+
+/**
  * Create a new folder with permissions and documents
  */
 export const createFolder = async (
@@ -112,6 +155,29 @@ export const createFolder = async (
 
   const response = await axios.post(
     `https://${baseUrl}/folders.json`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Create a new document
+ */
+export const createDocument = async (
+  payload: CreateDocumentPayload
+): Promise<unknown> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.post(
+    `https://${baseUrl}/documents.json`,
     payload,
     {
       headers: {
