@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -94,11 +94,12 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   // Validate domains like example.com and with more segments (e.g., app.example.co.in)
   const isValidDomain = (value: string) => {
     if (!value) return false;
-    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    const domainRegex =
+      /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
     return domainRegex.test(value.trim());
   };
 
-  const fetchOrganizationData = async () => {
+  const fetchOrganizationData = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -113,7 +114,6 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Fetched organization data:", result);
 
         // Handle different response formats - the data might be directly in result or nested
         const org = result.organization || result.data || result;
@@ -144,7 +144,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       setIsLoading(false);
     }
   }, [getAuthHeader, getFullUrl, organizationId]);
-  console.log("formData", formData)
+
   // Fetch organization data when modal opens
   useEffect(() => {
     if (isOpen && organizationId) {
@@ -172,7 +172,6 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       newErrors.domain = "Please enter a valid main domain (e.g., example.com)";
     }
 
-
     // if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
     //   newErrors.front_domain = "Please enter a valid frontend domain (e.g., www.example.com)";
     // }
@@ -185,7 +184,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     // }
 
     setErrors(newErrors);
-    console.log("Validation errors:", newErrors);
+    console.warn("Validation errors:", newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -253,7 +252,11 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, logo: file, logoUrl: URL.createObjectURL(file) });
+      setFormData({
+        ...formData,
+        logo: file,
+        logoUrl: URL.createObjectURL(file),
+      });
     }
   };
 
@@ -262,7 +265,11 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, powered_by_logo: file, poweredByLogoUrl: URL.createObjectURL(file) });
+      setFormData({
+        ...formData,
+        powered_by_logo: file,
+        poweredByLogoUrl: URL.createObjectURL(file),
+      });
     }
   };
 
@@ -332,19 +339,31 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   label="Organization Name"
                   placeholder="Enter organization name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (errors.name)
+                      setErrors((prev) => ({ ...prev, name: "" }));
+                  }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   required
                   disabled={isSubmitting}
+                  error={!!errors.name}
+                  helperText={errors.name}
                 />
 
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Country</InputLabel>
+                  <InputLabel
+                    shrink
+                    sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
+                  >
+                    Country
+                  </InputLabel>
                   <MuiSelect
                     value={formData.country_id}
                     onChange={(e) =>
@@ -378,7 +397,24 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
@@ -423,7 +459,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     setFormData({ ...formData, domain: val });
                     setErrors((prev) => ({
                       ...prev,
-                      domain: isValidDomain(val) ? '' : prev.domain,
+                      domain: isValidDomain(val) ? "" : prev.domain,
                     }));
                   }}
                   fullWidth
@@ -437,7 +473,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   disabled={isSubmitting}
                   required
                   error={!!errors.domain}
-                  helperText={errors.domain || "Enter a valid domain (e.g., example.com)"}
+                  helperText={
+                    errors.domain || "Enter a valid domain (e.g., example.com)"
+                  }
                 />
 
                 <TextField
@@ -449,7 +487,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     setFormData({ ...formData, sub_domain: val });
                     setErrors((prev) => ({
                       ...prev,
-                      sub_domain: ''
+                      sub_domain: "",
                     }));
                   }}
                   fullWidth
@@ -463,8 +501,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   disabled={isSubmitting}
                   required
                   error={!!errors.sub_domain}
-                  helperText={errors.sub_domain || "Enter subdomain (e.g., app.example.com)"}
-                  helperText={errors.sub_domain || ""}
+                  helperText={
+                    errors.sub_domain ||
+                    "Enter subdomain (e.g., app.example.com)"
+                  }
                 />
               </div>
 
@@ -478,7 +518,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter frontend domain (e.g., www.example.com)"
@@ -496,7 +539,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter frontend subdomain (e.g., portal.example.com)"
@@ -517,19 +563,30 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     onChange={handleLogoChange}
                     accept="image/*"
                     disabled={isSubmitting}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
                   {(formData.logoUrl || formData.logo) && (
                     <div className="flex items-center gap-2 mt-2">
                       <img
-                        src={formData.logoUrl || (formData.logo ? URL.createObjectURL(formData.logo) : "")}
+                        src={
+                          formData.logoUrl ||
+                          (formData.logo
+                            ? URL.createObjectURL(formData.logo)
+                            : "")
+                        }
                         alt="Organization Logo Preview"
                         className="w-16 h-16 object-contain border rounded shadow"
                       />
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, logo: null, logoUrl: null })}
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            logo: null,
+                            logoUrl: null,
+                          })
+                        }
                         className="h-6 w-6 p-0"
                         title="Remove logo"
                       >
@@ -546,19 +603,30 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     onChange={handlePoweredByLogoChange}
                     accept="image/*"
                     disabled={isSubmitting}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
                   {(formData.poweredByLogoUrl || formData.powered_by_logo) && (
                     <div className="flex items-center gap-2 mt-2">
                       <img
-                        src={formData.poweredByLogoUrl || (formData.powered_by_logo ? URL.createObjectURL(formData.powered_by_logo) : "")}
+                        src={
+                          formData.poweredByLogoUrl ||
+                          (formData.powered_by_logo
+                            ? URL.createObjectURL(formData.powered_by_logo)
+                            : "")
+                        }
                         alt="Powered By Logo Preview"
                         className="w-16 h-16 object-contain border rounded shadow"
                       />
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setFormData({ ...formData, powered_by_logo: null, poweredByLogoUrl: null })}
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            powered_by_logo: null,
+                            poweredByLogoUrl: null,
+                          })
+                        }
                         className="h-6 w-6 p-0"
                         title="Remove powered by logo"
                       >
@@ -569,16 +637,16 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Image className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Image className="w-4 h-4 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-800">
+                    <p className="text-sm font-medium text-white">
                       Upload Guidelines
                     </p>
-                    <p className="text-xs text-blue-700">
+                    <p className="text-xs text-white/90">
                       Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min
                       dimensions: 200x200px
                     </p>
