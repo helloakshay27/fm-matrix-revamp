@@ -73,7 +73,7 @@ const TaskForm = ({
   endDate,
   setEndDate,
 }) => {
-  console.log(users)
+  console.log(users);
   const { data: userAvailabilityData } = useAppSelector(
     (state) => state.fetchUserAvailability
   );
@@ -319,11 +319,11 @@ const TaskForm = ({
         />
       )}
       {project &&
-        milestone &&
-        !Array.isArray(project) &&
-        !Array.isArray(milestone) &&
-        project.title &&
-        milestone.title ? (
+      milestone &&
+      !Array.isArray(project) &&
+      !Array.isArray(milestone) &&
+      project.title &&
+      milestone.title ? (
         <div className="flex items-center justify-between gap-3 mb-4 mt-4">
           <div className="w-full">
             <TextField
@@ -646,7 +646,7 @@ const TaskForm = ({
         ) : (
           <TasksOfDate
             selectedDate={startDate}
-            onClose={() => { }}
+            onClose={() => {}}
             tasks={startDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -685,7 +685,7 @@ const TaskForm = ({
         ) : (
           <TasksOfDate
             selectedDate={endDate}
-            onClose={() => { }}
+            onClose={() => {}}
             tasks={targetDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -794,7 +794,30 @@ const ProjectTaskCreateModal = ({
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [dateWiseHours, setDateWiseHours] = useState([]);
   const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [endDate, setEndDate] = useState(() => {
+    const targetDate = prefillData?.target_date;
+    if (!targetDate) return null;
+
+    if (typeof targetDate === "string") {
+      // Handle YYYY-MM-DD format manually to avoid timezone issues
+      const parts = targetDate.split("-");
+      if (parts.length === 3) {
+        return {
+          year: parseInt(parts[0], 10),
+          month: parseInt(parts[1], 10) - 1,
+          date: parseInt(parts[2], 10),
+        };
+      }
+
+      const date = new Date(targetDate);
+      return {
+        date: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+      };
+    }
+    return targetDate;
+  });
   const [members, setMembers] = useState([]);
   const selectedTags = (prefillData?.tags || [])?.map((tag: any) => ({
     value: tag.company_tag_id,
@@ -820,7 +843,7 @@ const ProjectTaskCreateModal = ({
     tags: selectedTags || [],
   });
 
-  console.log(members)
+  console.log(members);
 
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
@@ -942,10 +965,12 @@ const ProjectTaskCreateModal = ({
   }, [isEdit, task, id, mid, getTagName]);
 
   const createTaskPayload = (data) => {
-    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${endDate?.date
-      }`;
-    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
-      }`;
+    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${
+      endDate?.date
+    }`;
+    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${
+      startDate?.date
+    }`;
     return {
       task_management: {
         title: data.taskTitle,
@@ -1107,7 +1132,7 @@ const ProjectTaskCreateModal = ({
           <TaskForm
             key={task.id}
             formData={task.formData}
-            setFormData={() => { }}
+            setFormData={() => {}}
             isReadOnly={true}
             project={project}
             milestone={milestone}
