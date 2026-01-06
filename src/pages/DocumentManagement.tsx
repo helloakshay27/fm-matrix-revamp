@@ -277,7 +277,7 @@ export const DocumentManagement = () => {
         }}
         onCreateFolder={() => {
           setShowActionPanel(false);
-          console.log("Create Folder clicked");
+          navigate("/maintenance/documents/create-folder");
         }}
       />
 

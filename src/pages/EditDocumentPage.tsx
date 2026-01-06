@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   FileText,
@@ -69,8 +69,30 @@ const DOCUMENT_FOLDERS = [
   { value: "policies", label: "Policies & SOPs" },
 ];
 
-export const AddDocumentDashboard = () => {
+// Mock data for existing document
+const mockDocumentData = {
+  1: {
+    documentCategory: "lease_legal",
+    documentFolder: "lease_agreements",
+    title: "Lease Agreement - Tech Park A",
+    shareWith: "individual",
+    shareWithCommunities: "yes",
+    techParks: [1, 3],
+    communities: [
+      { id: 1, name: "Building A Community" },
+      { id: 2, name: "Building B Community" },
+    ],
+    existingFiles: [
+      { name: "lease_agreement.pdf", url: "#" },
+      { name: "annexure_a.pdf", url: "#" },
+    ],
+    coverImageUrl: "#",
+  },
+};
+
+export const EditDocumentPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -80,14 +102,39 @@ export const AddDocumentDashboard = () => {
   const [selectedCommunities, setSelectedCommunities] = useState<
     { id: number; name: string }[]
   >([]);
+  const [existingFiles, setExistingFiles] = useState<
+    { name: string; url: string }[]
+  >([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
     documentFolder: "",
     title: "",
-    shareWith: "all_tech_park",
+    shareWith: "all",
     shareWithCommunities: "no",
   });
+
+  // Load existing document data
+  useEffect(() => {
+    if (id) {
+      const documentId = parseInt(id, 10);
+      const existingData =
+        mockDocumentData[documentId as keyof typeof mockDocumentData];
+
+      if (existingData) {
+        setFormData({
+          documentCategory: existingData.documentCategory,
+          documentFolder: existingData.documentFolder,
+          title: existingData.title,
+          shareWith: existingData.shareWith,
+          shareWithCommunities: existingData.shareWithCommunities,
+        });
+        setSelectedTechParks(existingData.techParks);
+        setSelectedCommunities(existingData.communities);
+        setExistingFiles(existingData.existingFiles);
+      }
+    }
+  }, [id]);
 
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
@@ -122,17 +169,6 @@ export const AddDocumentDashboard = () => {
     }
   };
 
-  // Handle file upload for cover image
-  const handleCoverImageUpload = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = event.target.files;
-    if (files && files[0]) {
-      setCoverImage(files[0]);
-    }
-  };
-
-  // Handle file upload for attachments
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -140,68 +176,50 @@ export const AddDocumentDashboard = () => {
     }
   };
 
-  // Remove file from attachments
+  const handleCoverImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setCoverImage(file);
+    }
+  };
+
   const removeFile = (index: number) => {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Handle form submission
-  const handleSubmit = async () => {
-    // Validation
-    if (
-      !formData.documentCategory ||
-      !formData.documentFolder ||
-      !formData.title
-    ) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // TODO: Implement API call to create document
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      alert("Document added successfully!");
-      navigate("/maintenance/documents");
-    } catch (error) {
-      console.error("Error submitting document:", error);
-      alert("Failed to add document. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const removeExistingFile = (index: number) => {
+    setExistingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleGoBack = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to go back? Any unsaved changes will be lost."
-    );
-    if (confirmed) {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    // TODO: Implement API call to update document
+    setTimeout(() => {
+      setIsSubmitting(false);
       navigate("/maintenance/documents");
-    }
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <button
-            onClick={handleGoBack}
+            onClick={() => navigate("/maintenance/documents")}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Add New Document
-          </h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Edit Document</h1>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto p-6 space-y-4">
-        {/* Details Section */}
+      <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+        {/* Document Details Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -216,21 +234,15 @@ export const AddDocumentDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Document Category */}
               <FormControl fullWidth>
-                <InputLabel id="document-category-label" shrink>
-                  Document Category
-                </InputLabel>
+                <InputLabel>Document Category</InputLabel>
                 <MuiSelect
-                  labelId="document-category-label"
                   value={formData.documentCategory}
                   onChange={(e: SelectChangeEvent) =>
                     handleInputChange("documentCategory", e.target.value)
                   }
-                  displayEmpty
+                  label="Document Category"
                   sx={fieldStyles}
                 >
-                  <MenuItem value="" disabled>
-                    Select Document Category
-                  </MenuItem>
                   {DOCUMENT_CATEGORIES.map((category) => (
                     <MenuItem key={category.value} value={category.value}>
                       {category.label}
@@ -241,21 +253,15 @@ export const AddDocumentDashboard = () => {
 
               {/* Document Folder */}
               <FormControl fullWidth>
-                <InputLabel id="document-folder-label" shrink>
-                  Document Folder
-                </InputLabel>
+                <InputLabel>Document Folder</InputLabel>
                 <MuiSelect
-                  labelId="document-folder-label"
                   value={formData.documentFolder}
                   onChange={(e: SelectChangeEvent) =>
                     handleInputChange("documentFolder", e.target.value)
                   }
-                  displayEmpty
+                  label="Document Folder"
                   sx={fieldStyles}
                 >
-                  <MenuItem value="" disabled>
-                    Select Document Folder
-                  </MenuItem>
                   {DOCUMENT_FOLDERS.map((folder) => (
                     <MenuItem key={folder.value} value={folder.value}>
                       {folder.label}
@@ -267,13 +273,10 @@ export const AddDocumentDashboard = () => {
               {/* Title */}
               <div className="md:col-span-2">
                 <TextField
+                  fullWidth
                   label="Title"
-                  placeholder="Enter Title"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                 />
               </div>
@@ -281,7 +284,7 @@ export const AddDocumentDashboard = () => {
           </div>
         </div>
 
-        {/* Share Section */}
+        {/* Sharing Settings Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -424,7 +427,7 @@ export const AddDocumentDashboard = () => {
           </div>
         </div>
 
-        {/* Attachment Section */}
+        {/* Attachments Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -438,87 +441,137 @@ export const AddDocumentDashboard = () => {
           </div>
 
           <div className="p-6">
-            <h3 className="text-base font-semibold text-[#1a1a1a] mb-4">
-              Upload Document
-            </h3>
-
-            {/* Upload Area or File Display */}
-            {!coverImage ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-                <p className="text-sm text-gray-500 mb-4">
-                  Choose a file or drag & drop it here
-                </p>
-                <label>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,image/*"
-                    onChange={handleCoverImageUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document
-                        .querySelector<HTMLInputElement>('input[type="file"]')
-                        ?.click()
-                    }
-                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors font-medium"
-                  >
-                    Browse
-                  </button>
-                </label>
-              </div>
-            ) : (
-              <div className="border border-gray-300 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-red-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
+            <div className="space-y-6">
+              {/* Existing Files */}
+              {existingFiles.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">
+                    Current Files ({existingFiles.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {existingFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200"
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                          clipRule="evenodd"
-                        />
-                        <text
-                          x="10"
-                          y="14"
-                          fontSize="6"
-                          fill="white"
-                          textAnchor="middle"
-                          fontWeight="bold"
+                        <span className="text-sm text-gray-700">
+                          {file.name}
+                        </span>
+                        <button
+                          onClick={() => removeExistingFile(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
                         >
-                          PDF
-                        </text>
-                      </svg>
-                    </div>
-                    <span className="text-sm text-gray-700 font-medium">
-                      {coverImage.name}
-                    </span>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <button
-                    onClick={() => setCoverImage(null)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
+                </div>
+              )}
+
+              {/* Upload Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Cover Image */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <p className="text-sm text-gray-600 mb-4">Cover Image</p>
+                  <label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverImageUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        document
+                          .querySelectorAll<HTMLInputElement>(
+                            'input[type="file"]'
+                          )[0]
+                          ?.click()
+                      }
+                      className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors"
+                    >
+                      Browse
+                    </button>
+                  </label>
+                  {coverImage && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      {coverImage.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Add New Button */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex items-center justify-center">
+                  <label>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputs =
+                          document.querySelectorAll<HTMLInputElement>(
+                            'input[type="file"]'
+                          );
+                        inputs[1]?.click();
+                      }}
+                      className="px-6 py-2 bg-[#FFF5F5] text-[#C72030] rounded hover:bg-[#FFE5E5] transition-colors"
+                    >
+                      Add New Files
+                    </button>
+                  </label>
                 </div>
               </div>
-            )}
+
+              {/* Newly Attached Files List */}
+              {attachedFiles.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">
+                    New Files to Upload ({attachedFiles.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {attachedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-green-50 rounded border border-green-200"
+                      >
+                        <span className="text-sm text-gray-700">
+                          {file.name}
+                        </span>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-center pt-4">
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-4 pt-4">
+          <button
+            onClick={() => navigate("/maintenance/documents")}
+            className="px-12 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Cancel
+          </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="px-12 py-3 bg-[#C72030] text-white rounded-lg hover:bg-[#A01828] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? "Updating..." : "Update Document"}
           </button>
         </div>
       </div>
