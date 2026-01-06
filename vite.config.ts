@@ -6,10 +6,18 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // server: {
-  //   host: "::",
-  //   port: 5174,
-  // },
+  server: {
+    host: "::",
+    port: 5173,
+    headers: {
+      // Prevent aggressive caching in development
+      "Cache-Control":
+        "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+      Pragma: "no-cache",
+      Expires: "0",
+      "Surrogate-Control": "no-store",
+    },
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -76,9 +84,14 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // Add hash to filenames for cache busting
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        // Add hash to generated files for better cache invalidation
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
       },
     },
   },
