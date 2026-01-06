@@ -882,6 +882,7 @@ import SprintKanban from "./pages/SprintKanban";
 import Communtiy from "./pages/Communtiy";
 import CommunityAdd from "./pages/CommunityAdd";
 import CommunityDetails from "./pages/CommunityDetails";
+import CommunityEdit from "./pages/CommunityEdit";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3744,10 +3745,10 @@ function App() {
                     element={<CommunityDetails />}
                   />
 
-                  {/* <Route
+                  <Route
                     path="/pulse/community/edit/:id"
-                    element={<EditCommuntiy />}
-                  /> */}
+                    element={<CommunityEdit />}
+                  />
 
                   <Route
                     path="/pulse/visitor"

@@ -5,7 +5,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 
 const columns: ColumnConfig[] = [
     {
@@ -54,11 +54,16 @@ const columns: ColumnConfig[] = [
 
 const Communtiy = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
 
     const [communities, setCommunities] = useState([])
     const [loading, setLoading] = useState(false)
+    const [selectedRows, setSelectedRows] = useState<number[]>([])
+
+    // Check if we're in selection mode
+    const isSelectionMode = searchParams.get('mode') === 'selection';
 
     const fetchCommunities = async () => {
         setLoading(true)
@@ -81,6 +86,13 @@ const Communtiy = () => {
         fetchCommunities()
     }, [])
 
+    const handleContinue = () => {
+        // Save selected community IDs to localStorage
+        localStorage.setItem('selectedCommunityIds', JSON.stringify(selectedRows));
+        // Navigate back to add broadcast page
+        navigate('/pulse/notices/add');
+    }
+
     const renderActions = (item: any) => (
         <div className="flex">
             <Button
@@ -93,7 +105,7 @@ const Communtiy = () => {
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/pulse/community/${item.id}/edit`)}
+                onClick={() => navigate(`/pulse/community/edit/${item.id}`)}
             >
                 <Edit className="w-4 h-4" />
             </Button>
@@ -102,13 +114,15 @@ const Communtiy = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => navigate("/pulse/community/add")}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            {!isSelectionMode && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={() => navigate("/pulse/community/add")}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>
+            )}
         </>
     );
 
@@ -139,16 +153,71 @@ const Communtiy = () => {
         }
     }
 
+    const handleCommunitySelection = (communityIdString: string, isSelected: boolean) => {
+        const communityId = parseInt(communityIdString);
+        setSelectedRows(prev => {
+            if (isSelected) {
+                return [...prev, communityId];
+            } else {
+                return prev.filter(id => id !== communityId);
+            }
+        });
+    };
+
+    const handleSelectAll = (isSelected: boolean) => {
+        if (isSelected) {
+            const allCommunityIds = communities.map((community: any) => community.id);
+            setSelectedRows(allCommunityIds);
+        } else {
+            setSelectedRows([]);
+        }
+    };
+
     return (
-        <div className="p-6">
+        <div className="p-6 space-y-4">
+            {isSelectionMode && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="font-semibold text-gray-900">Select Communities</h3>
+                        <p className="text-sm text-gray-600">
+                            {selectedRows?.length > 0
+                                ? `${selectedRows?.length} ${selectedRows?.length === 1 ? 'community' : 'communities'} selected`
+                                : 'Please select communities to share the broadcast with'}
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/pulse/notices/add')}
+                            className="border-gray-300"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleContinue}
+                            disabled={selectedRows.length === 0}
+                            className="bg-[#C72030] hover:bg-[#A01020] text-white disabled:opacity-50"
+                        >
+                            Continue
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <EnhancedTable
                 data={communities}
                 columns={columns}
-                renderActions={renderActions}
+                renderActions={!isSelectionMode ? renderActions : undefined}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 onFilterClick={() => { }}
                 loading={loading}
+                selectable={isSelectionMode}
+                enableSelection={isSelectionMode}
+                selectedItems={selectedRows.map(id => String(id))}
+                onSelectItem={handleCommunitySelection}
+                onSelectAll={handleSelectAll}
+                getItemId={(item: any) => String(item.id)}
             />
         </div>
     )

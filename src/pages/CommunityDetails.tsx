@@ -12,6 +12,7 @@ const CommunityDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("details");
+    const [communityName, setCommunityName] = useState("")
 
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
@@ -35,11 +36,11 @@ const CommunityDetails = () => {
                 </TabsList>
 
                 <TabsContent value="details">
-                    <CommunityDetailsTab communityId={id} />
+                    <CommunityDetailsTab communityId={id} setCommunityName={setCommunityName} />
                 </TabsContent>
 
                 <TabsContent value="feed">
-                    <CommunityFeedTab communityId={id} />
+                    <CommunityFeedTab communityId={id} communityName={communityName} />
                 </TabsContent>
 
                 <TabsContent value="reports">

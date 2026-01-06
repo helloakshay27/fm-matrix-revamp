@@ -12,9 +12,12 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
+import axios from "axios";
 
 const CommunityAdd = () => {
     const navigate = useNavigate();
+    const baseUrl = localStorage.getItem("baseUrl")
+    const token = localStorage.getItem("token")
     const coverImageInputRef = useRef<HTMLInputElement>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,13 +94,15 @@ const CommunityAdd = () => {
             const formDataToSend = new FormData();
             formDataToSend.append("community[name]", formData.communityName);
             formDataToSend.append("community[description]", formData.description);
-            formDataToSend.append("community[status]", isActive ? "true" : "false");
+            formDataToSend.append("community[status]", "true");
 
             if (formData.coverImage) {
-                formDataToSend.append("community[cover_image]", formData.coverImage);
+                formDataToSend.append("community[attachment]", formData.coverImage);
             }
 
-            // await dispatch(createCommunity({ data: formDataToSend, baseUrl, token })).unwrap();
+            await axios.post(`https://${baseUrl}/communities.json`, formDataToSend, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             toast.success("Community created successfully");
             navigate(-1);
         } catch (error: any) {
@@ -129,7 +134,7 @@ const CommunityAdd = () => {
                             </div>
                             <span className="font-semibold text-lg text-gray-800">Details</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                             <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                             <Switch
@@ -137,7 +142,7 @@ const CommunityAdd = () => {
                                 onCheckedChange={setIsActive}
                                 className="data-[state=checked]:bg-green-500"
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="p-6 bg-white">
