@@ -76,6 +76,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     live_date: '',
     remarks: '',
     logo: null,
+    logoUrl: null,
     bill_to_address: { address: '', email: '' },
     postal_address: { address: '', email: '' },
     finance_spoc: { name: '', designation: 'Finance', email: '', mobile: '' },
@@ -134,6 +135,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
         live_date: formatDateForInput(company.live_date),
         remarks: company.remarks || '',
         logo: null,
+        logoUrl: company.company_logo_url || null,
         bill_to_address: {
           id: company.bill_to_address?.id,
           address: company.bill_to_address?.address || '',
@@ -207,7 +209,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, logo: file }));
+    setFormData(prev => ({ ...prev, logo: file, logoUrl: file ? URL.createObjectURL(file) : null }));
   };
 
   const validateForm = () => {
@@ -572,10 +574,22 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
                   disabled={isSubmitting}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                 />
-                {formData.logo && (
-                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    {formData.logo.name}
+                {(formData.logoUrl || formData.logo) && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img
+                      src={formData.logoUrl || (formData.logo ? URL.createObjectURL(formData.logo) : "")}
+                      alt="Company Logo Preview"
+                      className="w-16 h-16 object-contain border rounded shadow"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, logo: null, logoUrl: null }))}
+                      className="h-6 w-6 p-0"
+                      title="Remove logo"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
