@@ -242,6 +242,7 @@ export const IncidentSetupDashboard = () => {
   const [preventiveActions, setPreventiveActions] = useState([]);
   const [correctiveActions, setCorrectiveActions] = useState([]);
   const [escalateToUsersList, setEscalateToUsersList] = useState([]);
+  const [colorCode, setColorCode] = useState('#000000');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Substandard Act', 'Substandard Condition', 'Preventive Action', 'Corrective Action'];
 
 
@@ -344,9 +345,10 @@ export const IncidentSetupDashboard = () => {
       });
       if (response.ok) {
         const result = await response.json();
-        const levels = result.data
-          .filter(item => item.tag_type === 'IncidenceLevel')
-          .map(({ id, name }) => ({ id, name }));
+        const rawLevels = result.data.filter(item => item.tag_type === 'IncidenceLevel');
+        console.log('Raw Incidence Levels from API:', rawLevels);
+        const levels = rawLevels.map(({ id, name, color_code }) => ({ id, name, color_code: color_code || '#000000' }));
+        console.log('Mapped Incidence Levels:', levels);
         setIncidenceLevels(levels);
       } else {
         console.error('Failed to fetch incidence levels');
@@ -946,8 +948,10 @@ export const IncidentSetupDashboard = () => {
             tag_type: 'IncidenceLevel',
             active: true,
             name: categoryName
-          }
+          },
+          color_code: colorCode
         };
+        console.log('Submitting Incidence Level with color:', colorCode, 'Body:', JSON.stringify(body, null, 2));
         const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
           method: 'POST',
           headers: {
@@ -957,8 +961,11 @@ export const IncidentSetupDashboard = () => {
           body: JSON.stringify(body)
         });
         if (response.ok) {
+          const result = await response.json();
+          console.log('Response from API:', result);
           await fetchIncidenceLevels();
           setCategoryName('');
+          setColorCode('#000000');
           toast.success('Incidence Level added successfully!');
         } else {
           const errorText = await response.text();
@@ -1196,12 +1203,12 @@ export const IncidentSetupDashboard = () => {
           } else {
             const errorText = await response.text();
             console.error('Failed to add secondary sub sub sub category:', response.status, errorText);
-            alert('Failed to add secondary sub sub sub category. Please try again.');
+            toast.error('Failed to add secondary sub sub sub category. Please try again.');
           }
         } catch (error) {
           // Only show alert if the POST itself fails
           console.error('Error adding secondary sub sub sub category:', error);
-          alert('An error occurred while adding the secondary sub sub sub category.');
+          toast.error('An error occurred while adding the secondary sub sub sub category.');
         }
       }
     } else if (selectedCategory === 'Who got injured') {
@@ -1434,6 +1441,7 @@ export const IncidentSetupDashboard = () => {
     }
 
     setCategoryName('');
+    setColorCode('#000000');
     // Optionally, fetch all PropertyDamageCategory from API (for future use or refresh)
     // const fetchPropertyDamageCategories = async () => {
     //   try {
@@ -1500,6 +1508,18 @@ export const IncidentSetupDashboard = () => {
         users: '',
         id: ""
       });
+    } else if (type === 'Incidence level') {
+      setEditFormData({
+        category: '',
+        subCategory: '',
+        subSubCategory: '',
+        name: item.name || '',
+        level: '',
+        escalateInDays: '',
+        users: '',
+        id: ""
+      });
+      setColorCode(item.color_code || '#000000');
     } else if (type === 'Who got injured' || type === 'Property Damage Category' || type === 'RCA Category' || type === 'Category' || type === 'Preventive Action' || type === 'Corrective Action') {
       setEditFormData({
         category: '',
@@ -1638,12 +1658,12 @@ export const IncidentSetupDashboard = () => {
           await fetchPropertyDamageCategories();
         } else {
           console.error('Failed to update property damage category:', response.statusText);
-          alert('Failed to update property damage category. Please try again.');
+          toast.error('Failed to update property damage category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating property damage category:', error);
-        alert('An error occurred while updating the property damage category.');
+        toast.error('An error occurred while updating the property damage category.');
         return;
       }
     } else if (editingItem?.type === 'RCA Category') {
@@ -1872,6 +1892,7 @@ export const IncidentSetupDashboard = () => {
       }
     } else if (editingItem?.type === 'Incidence level') {
       try {
+        console.log('Updating Incidence Level with color:', colorCode);
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
           headers: {
@@ -1881,10 +1902,13 @@ export const IncidentSetupDashboard = () => {
           body: JSON.stringify({
             incidence_tag: {
               name: editFormData.name
-            }
+            },
+            color_code: colorCode
           })
         });
         if (response.ok) {
+          const result = await response.json();
+          console.log('Update response:', result);
           await fetchIncidenceLevels();
           toast.success('Incidence Level updated successfully!');
         } else {
@@ -2169,6 +2193,7 @@ export const IncidentSetupDashboard = () => {
       users: '',
       id: ""
     });
+    setColorCode('#000000');
   };
 
   const handleEditBack = () => {
@@ -2184,6 +2209,7 @@ export const IncidentSetupDashboard = () => {
       users: '',
       id: ""
     });
+    setColorCode('#000000');
   };
 
   // Special function for escalation deletion using GET method
@@ -2650,6 +2676,23 @@ export const IncidentSetupDashboard = () => {
                       InputLabelProps={{ shrink: true }}
                     />
                   </div>
+
+                  {editingItem?.type === 'Incidence level' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Color Code <span style={{ color: '#C72030' }}>*</span>
+                      </label>
+                      <TextField
+                        type="color"
+                        value={colorCode}
+                        onChange={e => setColorCode(e.target.value)}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex gap-3 pt-2">
                     <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
@@ -3120,6 +3163,20 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
+                  {selectedCategory === 'Incidence level' && (
+                    <div className="flex-1">
+                      <TextField
+                        label={<>Color Code <span style={{ color: '#C72030' }}>*</span></>}
+                        type="color"
+                        value={colorCode}
+                        onChange={e => setColorCode(e.target.value)}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  )}
                   <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
                     {selectedCategory === 'Approval Setup' && existingApprovalSetupId ? 'Update' : 'Submit'}
                   </Button>
@@ -3209,6 +3266,12 @@ export const IncidentSetupDashboard = () => {
                             <>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Incidence level' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Color</TableHead>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                             </>
                           ) : (
@@ -3425,6 +3488,15 @@ export const IncidentSetupDashboard = () => {
                         )) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => (
                           <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  style={{ backgroundColor: level.color_code || '#000000' }}
+                                  className="w-8 h-8 rounded border border-gray-300"
+                                />
+                                <span className="text-sm text-gray-600">{level.color_code || '#000000'}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="px-4 py-3">
                               <div className="flex gap-2">
                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
