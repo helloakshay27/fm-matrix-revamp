@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { AssetSelectionPanel } from "@/components/AssetSelectionPanel";
+import {
+  getFolderDetails,
+  FolderDetailsResponse,
+} from "@/services/documentService";
 
 interface FolderItem {
   id: number;
@@ -173,11 +177,91 @@ export const FolderDetailsPage = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "grid" | "tree">("table");
+  const [folderData, setFolderData] = useState<FolderDetailsResponse | null>(
+    null
+  );
+  const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const folderName = "Tenant Documents"; // This would come from API
+  const folderName = folderData?.name || "Folder Details";
+
+  // Fetch folder details
+  useEffect(() => {
+    const fetchFolderDetails = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      try {
+        const response = await getFolderDetails(parseInt(id));
+        setFolderData(response);
+
+        // Transform child folders and documents to FolderItem[]
+        const items: FolderItem[] = [
+          // Add child folders
+          ...response.childs.map((child) => ({
+            id: child.id,
+            folder_title: child.name,
+            type: "folder" as const,
+            category: response.name || "Uncategorized",
+            size: "0 B",
+            document_count: 0,
+            status: "Active" as const,
+            created_by: "Unknown",
+            created_date: new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+          })),
+          // Add documents
+          ...response.documents.map((doc) => ({
+            id: doc.id,
+            folder_title: doc.title,
+            type: "file" as const,
+            category: response.name || "Uncategorized",
+            format: doc.file_type?.toUpperCase() || "PDF",
+            size: formatFileSize(doc.file_size || 0),
+            document_count: 1,
+            status: "Active" as const,
+            created_by: "Unknown",
+            created_date: formatDate(doc.created_at),
+            modified_date: formatDate(doc.updated_at),
+          })),
+        ];
+
+        setFolderItems(items);
+      } catch (error) {
+        console.error("Error fetching folder details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFolderDetails();
+  }, [id]);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i)) + " " + sizes[i];
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-GB", options);
+  };
 
   const handleViewItem = (itemId: string) => {
-    const item = mockFolderItems.find((i) => i.id.toString() === itemId);
+    const item = folderItems.find((i) => i.id.toString() === itemId);
     if (item?.type === "folder") {
       navigate(`/maintenance/documents/folder/${itemId}`);
     } else {
@@ -187,7 +271,7 @@ export const FolderDetailsPage = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(mockFolderItems.map((item) => item.id.toString()));
+      setSelectedItems(folderItems.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -221,7 +305,7 @@ export const FolderDetailsPage = () => {
   };
 
   // Convert selected items for AssetSelectionPanel
-  const selectedItemObjects = mockFolderItems
+  const selectedItemObjects = folderItems
     .filter((item) => selectedItems.includes(item.id.toString()))
     .map((item) => ({
       id: item.id.toString(),
@@ -278,7 +362,7 @@ export const FolderDetailsPage = () => {
   // Grid View Component
   const GridView = () => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
-      {mockFolderItems.map((item) => (
+      {folderItems.map((item) => (
         <div
           key={item.id}
           className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] hover:shadow-md transition-all cursor-pointer bg-white"
@@ -326,8 +410,8 @@ export const FolderDetailsPage = () => {
 
   // Tree View Component
   const TreeView = () => {
-    const folders = mockFolderItems.filter((item) => item.type === "folder");
-    const files = mockFolderItems.filter((item) => item.type === "file");
+    const folders = folderItems.filter((item) => item.type === "folder");
+    const files = folderItems.filter((item) => item.type === "file");
 
     return (
       <div className="p-6 space-y-4">
@@ -440,21 +524,29 @@ export const FolderDetailsPage = () => {
           {/* View Mode Switcher */}
 
           {/* Render View based on mode */}
-          {viewMode === "table" && (
-            <DocumentEnhancedTable
-              documents={mockFolderItems}
-              columns={columns}
-              renderCell={renderCell}
-              renderActions={renderActions}
-              onViewDetails={(itemId) => handleViewItem(itemId.toString())}
-              onFilterOpen={() => {}}
-              onActionClick={() => {}}
-            />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-500">Loading folder contents...</div>
+            </div>
+          ) : (
+            <>
+              {viewMode === "table" && (
+                <DocumentEnhancedTable
+                  documents={folderItems}
+                  columns={columns}
+                  renderCell={renderCell}
+                  renderActions={renderActions}
+                  onViewDetails={(itemId) => handleViewItem(itemId.toString())}
+                  onFilterOpen={() => {}}
+                  onActionClick={() => {}}
+                />
+              )}
+
+              {viewMode === "grid" && <GridView />}
+
+              {viewMode === "tree" && <TreeView />}
+            </>
           )}
-
-          {viewMode === "grid" && <GridView />}
-
-          {viewMode === "tree" && <TreeView />}
 
           {/* Asset Selection Panel - matches asset dashboard pattern */}
           {selectedItems.length > 0 && (
