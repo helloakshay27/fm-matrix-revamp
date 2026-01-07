@@ -265,6 +265,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           latitude: response.latitude,
           longitude: response.longitude,
           country_code: response.country_code,
+          user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
         });
@@ -305,6 +306,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           latitude: response.latitude,
           longitude: response.longitude,
           country_code: response.country_code,
+          user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
         });
@@ -337,6 +339,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         latitude: response.latitude,
         longitude: response.longitude,
         country_code: response.country_code,
+        user_type: response.user_type || "",
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
       });
