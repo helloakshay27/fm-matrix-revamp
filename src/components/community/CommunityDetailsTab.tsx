@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { FileText, Eye, Pencil } from "lucide-react";
+import { FileText, Eye, Pencil, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CommunityDetailsTabProps {
     communityId?: string;
@@ -13,6 +14,12 @@ interface CommunityDetailsTabProps {
 }
 
 const memberColumns: ColumnConfig[] = [
+    {
+        key: 'checkbox',
+        label: '',
+        sortable: false,
+        draggable: false
+    },
     {
         key: 'access_card_number',
         label: 'Access card Number',
@@ -68,6 +75,8 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
         created_by: ""
     });
     const [members, setMembers] = useState([]);
+    const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -88,18 +97,104 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
         fetchData()
     }, [communityId])
 
-    const renderMemberActions = (member: any) => (
-        <Button variant="ghost" size="sm">
-            <Eye className="w-4 h-4" />
-        </Button>
-    );
+    const handleMemberSelection = (memberId: number, isSelected: boolean) => {
+        setSelectedMembers(prev => {
+            if (isSelected) {
+                return [...prev, memberId];
+            } else {
+                return prev.filter(id => id !== memberId);
+            }
+        });
+    };
+
+    const handleClearSelection = () => {
+        setSelectedMembers([]);
+    };
+
+    const handleDeleteMembers = async () => {
+        if (selectedMembers.length === 0) {
+            toast.error("Please select members to delete");
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to delete ${selectedMembers.length} member(s)? This action cannot be undone.`)) {
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            await Promise.all(
+                selectedMembers.map(memberId =>
+                    axios.delete(
+                        `https://${baseUrl}/community_members/${memberId}.json`,
+                        {
+                            headers: {
+                                "Authorization": `Bearer ${token}`
+                            }
+                        }
+                    )
+                )
+            );
+
+            await fetchData();
+            setSelectedMembers([]);
+            toast.success(`${selectedMembers.length} member(s) deleted successfully`);
+        } catch (error) {
+            console.error('Error deleting members:', error);
+            toast.error("Failed to delete member(s). Please try again.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const renderMemberCell = (member: any, columnKey: string) => {
+        if (columnKey === 'checkbox') {
+            return (
+                <input
+                    type="checkbox"
+                    checked={selectedMembers.includes(member.id)}
+                    onChange={(e) => handleMemberSelection(member.id, e.target.checked)}
+                    className="w-4 h-4 cursor-pointer"
+                />
+            );
+        }
         return member[columnKey] || "-";
     };
 
     return (
         <div className="space-y-6">
+            {/* Member Selection Panel */}
+            {selectedMembers.length > 0 && (
+                <div className="fixed bottom-6 left-6 right-6 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-gray-700">
+                                {selectedMembers.length} member(s) selected
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleClearSelection}
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={handleDeleteMembers}
+                                disabled={isDeleting}
+                                className="flex items-center gap-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete ({selectedMembers.length})
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Community Details Section */}
             <div className="flex items-center justify-end">
                 <Button
@@ -185,7 +280,6 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                 <EnhancedTable
                     data={members}
                     columns={memberColumns}
-                    renderActions={renderMemberActions}
                     renderCell={renderMemberCell}
                     hideColumnsButton={true}
                     hideTableSearch={true}

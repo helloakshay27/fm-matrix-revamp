@@ -255,6 +255,26 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
+    const deleteComment = async (commentId: number) => {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+        try {
+            await axios.delete(
+                `https://${baseUrl}/comments/${commentId}.json`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+            toast.success('Comment deleted successfully');
+            await fetchPosts();
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            toast.error('Failed to delete comment. Please try again.');
+        }
+    };
 
     // Helper function to format timestamp
     const formatTimestamp = (timestamp: string) => {
@@ -465,6 +485,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                         variant="ghost"
                                         size="sm"
                                         className="!text-red-600 hover:!bg-red-50 flex items-center gap-1 h-8 px-3"
+                                        onClick={() => deleteComment(comment.id)}
                                     >
                                         <Trash2 size={14} />
                                         Delete

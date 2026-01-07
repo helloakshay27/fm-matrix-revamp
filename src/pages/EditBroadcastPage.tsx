@@ -92,9 +92,9 @@ export const EditBroadcastPage = () => {
                     title: response.notice_heading || "",
                     expiryDate,
                     description: response.notice_text || "",
-                    markImportant: response.important ? "yes" : "no",
+                    markImportant: response.is_important ? "yes" : "no",
                     showOnHomeScreen: response.show_on_home_screen ? "yes" : "no",
-                    visibleAfterExpire: response.visible_after_expire ? "yes" : "no",
+                    visibleAfterExpire: response.flag_expire ? "yes" : "no",
                     shareWith,
                     shareWithCommunities: response.share_with_communities ? "yes" : "no",
                     attachment: null,
@@ -105,16 +105,16 @@ export const EditBroadcastPage = () => {
 
                 // Set existing attachments
                 if (response.attachments && response.attachments.length > 0) {
-                    setExistingAttachmentUrl(response.attachments[0].document_url);
+                    setExistingAttachmentUrl(response.attachments[0].url);
                 }
 
                 // Set existing cover image
-                if (response.cover_image_url) {
-                    setExistingCoverImageUrl(response.cover_image_url);
+                if (response.cover_image) {
+                    setExistingCoverImageUrl(response.cover_image.url);
                 }
             } catch (error) {
                 console.log(error);
-                toast.error("Failed to fetch broadcast details");
+                toast.error("Failed to fetch notice details");
                 navigate(-1);
             } finally {
                 setIsLoading(false);
@@ -276,38 +276,42 @@ export const EditBroadcastPage = () => {
             formDataToSend.append("noticeboard[notice_text]", formData.description);
 
             // Mapping fields to backend keys
-            formDataToSend.append("noticeboard[important]", formData.markImportant === "yes" ? "true" : "false");
-            formDataToSend.append("noticeboard[show_on_home_screen]", formData.showOnHomeScreen === "yes" ? "true" : "false");
-            formDataToSend.append("noticeboard[visible_after_expire]", formData.visibleAfterExpire === "yes" ? "true" : "false");
+            formDataToSend.append("noticeboard[is_important]", formData.markImportant === "yes" ? "1" : "0");
+            formDataToSend.append("noticeboard[show_on_home_screen]", formData.showOnHomeScreen === "yes" ? "1" : "0");
+            formDataToSend.append("noticeboard[flag_expire]", formData.visibleAfterExpire === "yes" ? "1" : "0");
 
-            formDataToSend.append("noticeboard[shared]", formData.shareWith === "all" ? "2" : "1");
-            formDataToSend.append("noticeboard[share_with_communities]", formData.shareWithCommunities === "yes" ? "true" : "false");
+            formDataToSend.append("noticeboard[shared]", formData.shareWith === "all" ? "2" : "1"); // 2 for all, 1 for specific?
+            formDataToSend.append("noticeboard[shared_community]", formData.shareWithCommunities === "yes" ? "1" : "0");
 
-            formDataToSend.append("noticeboard[of_phase]", "pms");
             formDataToSend.append("noticeboard[of_atype]", "Pms::Site");
             formDataToSend.append("noticeboard[of_atype_id]", localStorage.getItem("selectedSiteId") || "");
             formDataToSend.append("noticeboard[publish]", "1");
+            formDataToSend.append("noticeboard[active]", "1");
 
             if (formData.shareWith === 'individual') {
                 selectedTechParks.forEach(id => {
-                    formDataToSend.append("noticeboard[site_ids][]", id.toString());
+                    formDataToSend.append("site_ids[]", id.toString());
+                });
+            } else {
+                techParks.forEach(techPark => {
+                    formDataToSend.append("site_ids[]", techPark.id.toString());
                 });
             }
 
             if (formData.attachment) {
-                formDataToSend.append("noticeboard[files_attached][]", formData.attachment);
+                formDataToSend.append("documents[]", formData.attachment);
             }
 
             if (formData.coverImage) {
-                formDataToSend.append("noticeboard[cover_image]", formData.coverImage);
+                formDataToSend.append("cover_image", formData.coverImage);
             }
 
             await dispatch(updateBroadcast({ id, data: formDataToSend, baseUrl, token })).unwrap();
-            toast.success("Broadcast updated successfully");
+            toast.success("Notice updated successfully");
             navigate(-1);
         } catch (error: any) {
             console.log(error);
-            toast.error(error.message || "Failed to update broadcast");
+            toast.error(error.message || "Failed to update notice");
         } finally {
             setIsSubmitting(false);
         }
@@ -316,7 +320,7 @@ export const EditBroadcastPage = () => {
     if (isLoading) {
         return (
             <div className="p-4 md:px-8 py-6 bg-white min-h-screen flex items-center justify-center">
-                <div className="text-lg text-gray-600">Loading broadcast details...</div>
+                <div className="text-lg text-gray-600">Loading notice details...</div>
             </div>
         );
     }
