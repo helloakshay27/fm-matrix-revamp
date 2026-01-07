@@ -883,6 +883,8 @@ import Communtiy from "./pages/Communtiy";
 import CommunityAdd from "./pages/CommunityAdd";
 import CommunityDetails from "./pages/CommunityDetails";
 import CommunityEdit from "./pages/CommunityEdit";
+import CommunityUserDetails from "./pages/CommunityUserDetails";
+import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3748,6 +3750,15 @@ function App() {
                   <Route
                     path="/pulse/community/edit/:id"
                     element={<CommunityEdit />}
+                  />
+
+                  <Route
+                    path="/pulse/community/:communityId/user/:userId"
+                    element={<CommunityUserDetails />}
+                  />
+                  <Route
+                    path="/pulse/community/:communityId/user/:userId/details"
+                    element={<ReportsDetailsPage />}
                   />
 
                   <Route
