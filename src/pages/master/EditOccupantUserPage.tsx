@@ -290,48 +290,166 @@ export const EditOccupantUserPage: React.FC = () => {
       const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',
-          lock_user_permissions_attributes: [
-            {
-              id: lockId,
-              account_id: accountId,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_shift_id: formData.shift,
-              work_type: formData.workType,
-              user_type: formData.userType,
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-              lock_role_id: formData.selectRole || undefined,
-              on_boarding_attachments_attributes: formData.onBoardingFile ? [{ document: formData.onBoardingFile }] : [],
-              handbook_attachments_attributes: formData.employeeHandbookFile ? [{ document: formData.employeeHandbookFile }] : [],
-              compensation_attachments_attributes: formData.employeeCompensationFile ? [{ document: formData.employeeCompensationFile }] : [],
-              exit_process_attachments_attributes: formData.exitProcessFile ? [{ document: formData.exitProcessFile }] : [],
-              management_record_attachments_attributes: formData.managementFile ? [{ document: formData.managementFile }] : [],
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory,
-          report_to_id: formData.reportsTo,
-        },
-      };
+      // const payload = {
+      //   user: {
+      //     site_id: siteId,
+      //     registration_source: 'Web',
+      //     lock_user_permissions_attributes: [
+      //       {
+      //         id: lockId,
+      //         account_id: accountId,
+      //         employee_id: formData.employeeId,
+      //         designation: formData.designation,
+      //         department_id: formData.department || undefined,
+      //         user_shift_id: formData.shift,
+      //         work_type: formData.workType,
+      //         user_type: formData.userType,
+      //         access_level: formData.accessLevel,
+      //         access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+      //         lock_role_id: formData.selectRole || undefined,
+      //         on_boarding_attachments_attributes: formData.onBoardingFile ? [{ document: formData.onBoardingFile }] : [],
+      //         handbook_attachments_attributes: formData.employeeHandbookFile ? [{ document: formData.employeeHandbookFile }] : [],
+      //         compensation_attachments_attributes: formData.employeeCompensationFile ? [{ document: formData.employeeCompensationFile }] : [],
+      //         exit_process_attachments_attributes: formData.exitProcessFile ? [{ document: formData.exitProcessFile }] : [],
+      //         management_record_attachments_attributes: formData.managementFile ? [{ document: formData.managementFile }] : [],
+      //       },
+      //     ],
+      //     firstname: formData.firstName,
+      //     lastname: formData.lastName,
+      //     mobile: formData.mobileNumber,
+      //     email: formData.email,
+      //     gender: formData.gender,
+      //     alternate_address: formData.address,
+      //     alternate_mobile: formData.altMobileNumber,
+      //     birth_date: formData.birthDate,
+      //     entity_id: formData.selectEntity,
+      //     user_category_id: formData.selectUserCategory,
+      //     report_to_id: formData.reportsTo,
+      //   },
+      // };
+
+      const formDataPayload = new FormData();
+
+      // ---- USER LEVEL FIELDS ----
+      formDataPayload.append("user[site_id]", siteId);
+      formDataPayload.append("user[registration_source]", "Web");
+      formDataPayload.append("user[firstname]", formData.firstName);
+      formDataPayload.append("user[lastname]", formData.lastName);
+      formDataPayload.append("user[mobile]", formData.mobileNumber);
+      formDataPayload.append("user[email]", formData.email);
+      formDataPayload.append("user[gender]", formData.gender);
+      formDataPayload.append("user[alternate_address]", formData.address);
+      formDataPayload.append("user[alternate_mobile]", formData.altMobileNumber);
+      formDataPayload.append("user[birth_date]", formData.birthDate);
+      formDataPayload.append("user[entity_id]", formData.selectEntity);
+      formDataPayload.append("user[user_category_id]", formData.selectUserCategory);
+      formDataPayload.append("user[report_to_id]", formData.reportsTo);
+
+      // ---- LOCK USER PERMISSIONS (index 0) ----
+      if (lockId) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][id]",
+          String(lockId)
+        );
+      }
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][account_id]",
+        accountId
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][employee_id]",
+        formData.employeeId
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][designation]",
+        formData.designation
+      );
+
+      if (formData.department) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][department_id]",
+          formData.department
+        );
+      }
+
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][user_shift_id]",
+        formData.shift
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][work_type]",
+        formData.workType
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][user_type]",
+        formData.userType
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][access_level]",
+        formData.accessLevel
+      );
+
+      if (formData.selectRole) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][lock_role_id]",
+          formData.selectRole
+        );
+      }
+
+      // ---- ACCESS TO (ARRAY – IMPORTANT) ----
+      const accessToValues =
+        formData.accessLevel === "Company"
+          ? formData.selectedCompanies
+          : formData.selectedSites;
+
+      accessToValues.forEach((value) => {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][access_to][]",
+          String(value)
+        );
+      });
+
+      // ---- ATTACHMENTS ----
+      if (formData.onBoardingFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][on_boarding_attachments_attributes][0][document]",
+          formData.onBoardingFile
+        );
+      }
+
+      if (formData.employeeHandbookFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][handbook_attachments_attributes][0][document]",
+          formData.employeeHandbookFile
+        );
+      }
+
+      if (formData.employeeCompensationFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][compensation_attachments_attributes][0][document]",
+          formData.employeeCompensationFile
+        );
+      }
+
+      if (formData.exitProcessFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][exit_process_attachments_attributes][0][document]",
+          formData.exitProcessFile
+        );
+      }
+
+      if (formData.managementFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][management_record_attachments_attributes][0][document]",
+          formData.managementFile
+        );
+      }
+
 
       if (!id) throw new Error('Missing user id');
 
       const url = `https://${baseUrl}/pms/users/${id}.json`;
-      await axios.put(url, payload, {
+      await axios.put(url, formDataPayload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

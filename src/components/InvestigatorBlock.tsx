@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import { toast } from 'sonner';
 
 interface InvestigatorBlockProps {
     index: number;
@@ -89,7 +90,7 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
     const handleSubmit = () => {
         if (activeTab === 'internal') {
             if (!selectedInternalUser) {
-                alert('Please select an internal user');
+                toast.warning('Please select an internal user');
                 return;
             }
 
