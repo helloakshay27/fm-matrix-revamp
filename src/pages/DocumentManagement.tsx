@@ -15,6 +15,7 @@ import { DocumentActionPanel } from "@/components/document/DocumentActionPanel";
 import { DocumentFilterModal } from "@/components/document/DocumentFilterModal";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
 import { getFoldersList, FolderListItem } from "@/services/documentService";
+import { toast } from "sonner";
 
 interface Document {
   id: number;
@@ -141,6 +142,58 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const documentColumns: ColumnConfig[] = [
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
+  },
+  {
+    key: "folder_title",
+    label: "Title",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "category",
+    label: "Category",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "size",
+    label: "Size",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "created_by",
+    label: "Created By",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "created_date",
+    label: "Created Date",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+];
+
 export const DocumentManagement = () => {
   const navigate = useNavigate();
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -158,7 +211,7 @@ export const DocumentManagement = () => {
 
   // Fetch folders data
   useEffect(() => {
-    const fetchFolders = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const response = await getFoldersList(currentPage);
@@ -184,12 +237,13 @@ export const DocumentManagement = () => {
         setTotalPages(response.pagination.total_pages);
       } catch (error) {
         console.error("Error fetching folders:", error);
+        toast.error("Failed to load folders");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFolders();
+    fetchData();
   }, [currentPage]);
 
   // Helper function to format file size

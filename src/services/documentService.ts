@@ -62,6 +62,8 @@ export interface CreateFolderPayload {
   };
   permissions: FolderPermission[];
   documents: DocumentPayload[];
+  move_document_ids?: number[];
+  copy_document_ids?: number[];
 }
 
 export interface Folder {
@@ -165,6 +167,55 @@ export interface CommunitiesResponse {
   communities: Community[];
 }
 
+export interface DocumentAttachment {
+  id: number;
+  relation: string;
+  relation_id: number;
+  filename: string;
+  content_type: string;
+  file_size: number;
+  created_at: string;
+  updated_at: string;
+  url: string;
+}
+
+export interface Document {
+  id: number;
+  title: string;
+  category_id: number;
+  folder_id: number;
+  created_at: string;
+  document_category_name: string | null;
+  created_by_full_name: string | null;
+  folder_name: string;
+  active: boolean | null;
+  created_by_id: number | null;
+  attachment: DocumentAttachment;
+}
+
+export interface DocumentsResponse {
+  documents: Document[];
+  pagination: {
+    total_count: number;
+    current_page: number;
+    total_pages: number;
+  };
+}
+
+export interface DocumentDetailResponse {
+  id: number;
+  title: string;
+  category_id: number;
+  folder_id: number;
+  created_at: string;
+  document_category_name: string | null;
+  created_by_full_name: string | null;
+  folder_name: string;
+  active: boolean | null;
+  created_by_id: number | null;
+  attachment: DocumentAttachment;
+}
+
 export interface CreateDocumentPayload {
   document: {
     title: string;
@@ -177,6 +228,20 @@ export interface CreateDocumentPayload {
     }>;
   };
   permissions: FolderPermission[];
+}
+
+export interface UpdateDocumentPayload {
+  document: {
+    title?: string;
+    category_id?: number;
+    folder_id?: number;
+    attachments?: Array<{
+      filename: string;
+      content: string;
+      content_type: string;
+    }>;
+  };
+  permissions?: FolderPermission[];
 }
 
 /**
@@ -338,6 +403,89 @@ export const getCommunities = async (): Promise<CommunitiesResponse> => {
   });
 
   return response.data;
+};
+
+/**
+ * Fetch all documents with pagination
+ */
+export const getDocuments = async (
+  page: number = 1
+): Promise<DocumentsResponse> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.get(
+    `https://${baseUrl}/documents.json?page=${page}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Fetch document details by ID
+ */
+export const getDocumentDetail = async (
+  documentId: number
+): Promise<Document> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.get(
+    `https://${baseUrl}/documents/${documentId}.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Update document by ID
+ */
+export const updateDocument = async (
+  documentId: number,
+  payload: UpdateDocumentPayload
+): Promise<Document> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.put(
+    `https://${baseUrl}/documents/${documentId}.json`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Delete document by ID
+ */
+export const deleteDocument = async (documentId: number): Promise<void> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  await axios.delete(`https://${baseUrl}/documents/${documentId}.json`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
 };
 
 /**
