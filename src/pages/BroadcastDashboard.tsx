@@ -509,8 +509,8 @@ export const BroadcastDashboard = () => {
       >
         <Star
           className="w-4 h-4"
-          stroke={item.is_important ? "rgb(234, 179, 8)" : ""}
-          fill={item.is_important ? "rgb(234, 179, 8)" : ""}
+          stroke={item.is_important ? "rgb(234, 179, 8)" : "#000"}
+          fill={item.is_important ? "rgb(234, 179, 8)" : "#fff"}
         />
       </Button>
       <Button
