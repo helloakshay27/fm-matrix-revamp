@@ -1,11 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { getAllSites, Site } from "@/services/documentService";
 
@@ -45,6 +38,8 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   const handleToggle = (id: number) => {
     setTempSelected((prev) =>
       prev.includes(id) ? prev.filter((parkId) => parkId !== id) : [...prev, id]
@@ -56,38 +51,31 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
     onClose();
   };
 
-  const handleClear = () => {
-    setTempSelected([]);
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white z-50"
-        aria-describedby="tech-park-selection-dialog-description"
-      >
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-30 z-50"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-50 w-[600px] max-h-[600px] flex flex-col">
         {/* Header */}
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
-            SELECT TECH PARK
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-[#1a1a1a]">
+            Select Tech Park
+          </h2>
+          <button
             onClick={onClose}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X className="h-4 w-4" />
-          </Button>
-          <div id="tech-park-selection-dialog-description" className="sr-only">
-            Select tech parks to share documents with
-          </div>
-        </DialogHeader>
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
 
         {/* Content */}
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <p className="text-gray-500">Loading tech parks...</p>
@@ -108,19 +96,27 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
                     type="checkbox"
                     checked={tempSelected.includes(site.id)}
                     onChange={() => handleToggle(site.id)}
-                    onClick={(e) => e.stopPropagation()}
                     className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] rounded"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                  {site.attachfile?.document_url && (
+                    <img
+                      src={site.attachfile.document_url}
+                      alt={site.name}
+                      className="w-16 h-12 object-cover rounded"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="48"%3E%3Crect fill="%23f0f0f0" width="64" height="48"/%3E%3C/svg%3E';
+                      }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[#1a1a1a]">
                       {site.name}
+                    </h3>
+                    <p className="text-sm text-[#C72030]">
+                      {site.city}
+                      {site.pms_region && ` • ${site.pms_region.name}`}
                     </p>
-                    <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                      {site.city && <span>City: {site.city}</span>}
-                      {site.pms_company_setup?.name && (
-                        <span>Company: {site.pms_company_setup.name}</span>
-                      )}
-                    </div>
                   </div>
                 </div>
               ))}
@@ -128,24 +124,22 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
           )}
         </div>
 
-        {/* Footer Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
-          <Button
+        {/* Footer */}
+        <div className="flex justify-end gap-3 p-4 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
             onClick={handleApply}
-            disabled={loading}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
+            className="px-6 py-2 bg-[#C72030] text-white rounded hover:bg-[#A01828] transition-colors"
           >
-            Apply Selection
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleClear}
-            className="flex-1 h-11"
-          >
-            Clear All
-          </Button>
+            Apply
+          </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>
   );
 };

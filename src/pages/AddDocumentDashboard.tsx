@@ -195,6 +195,44 @@ export const AddDocumentDashboard = () => {
     }
   };
 
+  // Get file extension and icon
+  const getFileIcon = (file: File) => {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    const fileType = file.type.toLowerCase();
+
+    // Define icon colors and types
+    if (fileType.includes("pdf") || extension === "pdf") {
+      return { color: "text-red-600", bg: "bg-red-50", label: "PDF" };
+    } else if (
+      fileType.includes("word") ||
+      ["doc", "docx"].includes(extension)
+    ) {
+      return { color: "text-blue-600", bg: "bg-blue-50", label: "DOC" };
+    } else if (
+      fileType.includes("excel") ||
+      fileType.includes("spreadsheet") ||
+      ["xls", "xlsx"].includes(extension)
+    ) {
+      return { color: "text-green-600", bg: "bg-green-50", label: "XLS" };
+    } else if (
+      fileType.includes("powerpoint") ||
+      fileType.includes("presentation") ||
+      ["ppt", "pptx"].includes(extension)
+    ) {
+      return { color: "text-orange-600", bg: "bg-orange-50", label: "PPT" };
+    } else if (fileType.includes("image")) {
+      return { color: "text-purple-600", bg: "bg-purple-50", label: "IMG" };
+    } else if (fileType.includes("text") || extension === "txt") {
+      return { color: "text-gray-600", bg: "bg-gray-50", label: "TXT" };
+    } else {
+      return {
+        color: "text-gray-600",
+        bg: "bg-gray-50",
+        label: extension.toUpperCase().substring(0, 3),
+      };
+    }
+  };
+
   // Handle file upload for attachments
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -658,9 +696,11 @@ export const AddDocumentDashboard = () => {
               <div className="border border-gray-300 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center">
+                    <div
+                      className={`w-12 h-12 ${getFileIcon(coverImage).bg} rounded flex items-center justify-center`}
+                    >
                       <svg
-                        className="w-8 h-8 text-red-600"
+                        className={`w-8 h-8 ${getFileIcon(coverImage).color}`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -672,18 +712,23 @@ export const AddDocumentDashboard = () => {
                         <text
                           x="10"
                           y="14"
-                          fontSize="6"
+                          fontSize="5"
                           fill="white"
                           textAnchor="middle"
                           fontWeight="bold"
                         >
-                          PDF
+                          {getFileIcon(coverImage).label}
                         </text>
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-700 font-medium">
-                      {coverImage.name}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-700 font-medium block truncate">
+                        {coverImage.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {(coverImage.size / 1024).toFixed(2)} KB
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() => setCoverImage(null)}

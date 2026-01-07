@@ -1,294 +1,196 @@
 import React, { useState, useEffect } from "react";
-import { X, Eye, Pencil, Search, Filter } from "lucide-react";
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-interface Community {
-  id: number;
-  name: string;
-  image?: string;
-  description?: string;
-  members?: number;
-  status?: "Active" | "Inactive";
-  created_date?: string;
-}
+import { X, Users } from "lucide-react";
+import { getCommunities, Community } from "@/services/documentService";
 
 interface CommunitySelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedCommunities: Community[];
-  onSelectionChange: (communities: Community[]) => void;
+  selectedCommunities: { id: number; name: string }[];
+  onSelectionChange: (communities: { id: number; name: string }[]) => void;
 }
-
-// Mock community data matching the screenshot
-const mockCommunities: Community[] = [
-  {
-    id: 1,
-    name: "Wellness Warriors",
-    image: "/lovable-uploads/wellness.jpg",
-    description: "Lorem ipsum dolor sit amet,",
-    members: 200,
-    status: "Active",
-    created_date: "13 Oct 2024",
-  },
-  {
-    id: 2,
-    name: "Green Guardians",
-    image: "/lovable-uploads/green.jpg",
-    description: "Lorem ipsum dolor sit amet,",
-    members: 250,
-    status: "Active",
-    created_date: "13 Oct 2024",
-  },
-  {
-    id: 3,
-    name: "Overtime overlords",
-    image: "/lovable-uploads/overtime.jpg",
-    description: "-",
-    members: 346,
-    status: "Active",
-    created_date: "13 Oct 2024",
-  },
-  {
-    id: 4,
-    name: "Coffee before code",
-    image: "/lovable-uploads/coffee.jpg",
-    description: "Lorem ipsum dolor sit amet,",
-    members: 453,
-    status: "Inactive",
-    created_date: "13 Oct 2024",
-  },
-];
-
-const columns: ColumnConfig[] = [
-  {
-    key: "image",
-    label: "Community Image",
-    sortable: false,
-    defaultVisible: true,
-  },
-  {
-    key: "name",
-    label: "Community Name",
-    sortable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "description",
-    label: "Description",
-    sortable: true,
-    defaultVisible: true,
-  },
-  { key: "members", label: "Members", sortable: true, defaultVisible: true },
-  { key: "status", label: "Status", sortable: true, defaultVisible: true },
-  {
-    key: "created_date",
-    label: "Created",
-    sortable: true,
-    defaultVisible: true,
-  },
-];
 
 export const CommunitySelectionModal: React.FC<
   CommunitySelectionModalProps
 > = ({ isOpen, onClose, selectedCommunities, onSelectionChange }) => {
-  const [communities, setCommunities] = useState<Community[]>(mockCommunities);
-  const [selectedIds, setSelectedIds] = useState<string[]>(
-    selectedCommunities.map((c) => c.id.toString())
+  const [tempSelected, setTempSelected] = useState<number[]>(
+    selectedCommunities.map((c) => c.id)
   );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // TODO: Fetch communities from API
-    // For now using mock data
-  }, []);
+    if (isOpen) {
+      setTempSelected(selectedCommunities.map((c) => c.id));
+      fetchCommunities();
+    }
+  }, [isOpen, selectedCommunities]);
 
-  if (!isOpen) return null;
-
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedIds((prev) => [...prev, itemId]);
-    } else {
-      setSelectedIds((prev) => prev.filter((id) => id !== itemId));
+  const fetchCommunities = async () => {
+    setLoading(true);
+    try {
+      const response = await getCommunities();
+      setCommunities(response.communities);
+    } catch (error) {
+      console.error("Error fetching communities:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(communities.map((c) => c.id.toString()));
-    } else {
-      setSelectedIds([]);
-    }
+  const handleToggle = (id: number) => {
+    setTempSelected((prev) =>
+      prev.includes(id) ? prev.filter((commId) => commId !== id) : [...prev, id]
+    );
   };
 
   const handleApply = () => {
-    const selected = communities.filter((c) =>
-      selectedIds.includes(c.id.toString())
-    );
-    onSelectionChange(selected);
+    const selectedComms = communities
+      .filter((c) => tempSelected.includes(c.id))
+      .map((c) => ({ id: c.id, name: c.name }));
+    onSelectionChange(selectedComms);
     onClose();
   };
 
-  const filteredCommunities = communities.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleClear = () => {
+    setTempSelected([]);
+  };
 
-  const renderCell = (item: Community, columnKey: string) => {
-    switch (columnKey) {
-      case "image":
-        return (
-          <div className="w-12 h-12 rounded overflow-hidden bg-gray-100">
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://via.placeholder.com/48x48?text=IMG";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
-                IMG
-              </div>
-            )}
-          </div>
-        );
-      case "name":
-        return <span className="font-medium text-gray-900">{item.name}</span>;
-      case "description":
-        return <span className="text-gray-600">{item.description || "-"}</span>;
-      case "members":
-        return <span className="text-gray-700">{item.members || 0}</span>;
-      case "status":
-        return (
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-10 h-5 rounded-full relative ${
-                item.status === "Active" ? "bg-green-500" : "bg-red-400"
-              }`}
-            >
-              <div
-                className={`absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all ${
-                  item.status === "Active" ? "right-0.5" : "left-0.5"
-                }`}
-              />
-            </div>
-            <span
-              className={`text-sm ${
-                item.status === "Active" ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              {item.status}
-            </span>
-          </div>
-        );
-      case "created_date":
-        return <span className="text-gray-600">{item.created_date}</span>;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
+      case "exited":
+        return "bg-gray-100 text-gray-700";
       default:
-        return <span>{String(item[columnKey as keyof Community] || "")}</span>;
+        return "bg-blue-100 text-blue-700";
     }
   };
 
-  const renderActions = (item: Community) => (
-    <div className="flex items-center gap-1">
-      <Button variant="ghost" size="icon" className="h-8 w-8">
-        <Eye className="h-4 w-4 text-gray-600" />
-      </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8">
-        <Pencil className="h-4 w-4 text-gray-600" />
-      </Button>
-    </div>
-  );
+  if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-30 z-50"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-50 w-[900px] max-w-[95vw] max-h-[85vh] flex flex-col">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white z-50"
+        aria-describedby="community-selection-dialog-description"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-[#1a1a1a]">Community</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-end gap-3">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 h-9 border-gray-300"
-            />
-          </div>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            SELECT COMMUNITIES
+          </DialogTitle>
           <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 border-[#C72030] text-[#C72030]"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
           >
-            <Filter className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </Button>
-        </div>
+          <div id="community-selection-dialog-description" className="sr-only">
+            Select communities to share documents with
+          </div>
+        </DialogHeader>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <EnhancedTable
-            data={filteredCommunities}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="community-selection-table"
-            emptyMessage="No communities found"
-            selectable={true}
-            selectedItems={selectedIds}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            getItemId={(item) => item.id.toString()}
-            hideTableSearch={true}
-            hideTableExport={true}
-            pagination={false}
-          />
+        <div className="space-y-4 py-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">Loading communities...</p>
+            </div>
+          ) : communities.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">No communities available</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {communities.map((community) => (
+                <div
+                  key={community.id}
+                  onClick={() => handleToggle(community.id)}
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                >
+                  <input
+                    type="checkbox"
+                    checked={tempSelected.includes(community.id)}
+                    onChange={() => handleToggle(community.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] rounded"
+                  />
+
+                  {/* Community Icon/Image */}
+                  <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {community.icon ? (
+                      <img
+                        src={community.icon}
+                        alt={community.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Users className="w-6 h-6 text-gray-400" />
+                    )}
+                  </div>
+
+                  {/* Community Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {community.name}
+                      </p>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(community.status)}`}
+                      >
+                        {community.status}
+                      </span>
+                    </div>
+                    <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {community.members_count} members
+                      </span>
+                      {community.description && (
+                        <span className="truncate max-w-xs">
+                          {community.description}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Created by: {community.created_by}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
-            {selectedIds.length} community(ies) selected
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleApply}
-              className="px-6 py-2 bg-[#C72030] text-white rounded hover:bg-[#A01828] transition-colors"
-            >
-              Apply
-            </button>
-          </div>
+        {/* Footer Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+          <Button
+            onClick={handleApply}
+            disabled={loading}
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
+          >
+            Apply Selection
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClear}
+            className="flex-1 h-11"
+          >
+            Clear All
+          </Button>
         </div>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 };

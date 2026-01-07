@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { AssetTableDisplay } from "@/components/AssetTableDisplay";
 import { MovementToSection } from "@/components/MovementToSection";
 import { AllocateToSection } from "@/components/AllocateToSection";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 export const MoveAssetPage: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const selectedAssets = location.state?.selectedAssets || [];
   const [allocateTo, setAllocateTo] = useState("department");
   const [siteId, setSiteId] = useState<number | null>(null);
@@ -113,22 +112,18 @@ export const MoveAssetPage: React.FC = () => {
   // };
   const handleSubmit = async () => {
     if (!selectedAssets.length) {
-      toast({
-        title: "Validation Error",
+      toast.error("Validation Error", {
         description: "No assets selected for movement.",
-        variant: "destructive",
       });
       return;
     }
 
-    if (!siteId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a site.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!siteId) {
+    //   toast.error("Validation Error", {
+    //     description: "Please select a site.",
+    //   });
+    //   return;
+    // }
 
     // Building, department/user allocation, and other location fields are optional
 
@@ -141,7 +136,7 @@ export const MoveAssetPage: React.FC = () => {
       area_id: areaId || null,
       room_id: roomId || null,
       allocate_to_id: allocatedToId || null,
-      allocate_type: allocateTo === 'user' ? 'users' : allocateTo,
+      allocate_type: allocateTo === 'user' ? 'users' : (allocateTo || null),
       comments: comments || "",
     }));
 
@@ -165,25 +160,19 @@ export const MoveAssetPage: React.FC = () => {
       );
 
       if (response.ok) {
-        toast({
-          title: "Asset Movement Successful",
+        toast.success("Asset Movement Successful", {
           description: "Assets moved successfully!",
-          variant: "default",
         });
         navigate("/maintenance/asset", { state: { refreshAssets: true } });
       } else {
-        toast({
-          title: "Asset Movement Failed",
+        toast.error("Asset Movement Failed", {
           description: "Failed to move assets. Please try again.",
-          variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error moving assets:", error);
-      toast({
-        title: "Asset Movement Error",
+      toast.error("Asset Movement Error", {
         description: "An error occurred. Please try again.",
-        variant: "destructive",
       });
     }
   };
