@@ -323,12 +323,12 @@ export const BroadcastDetailsPage = () => {
               {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
                   <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.attachments[0]?.document_name || "Document.pdf"}
+                    {broadcastDetails.attachments[0]?.document_name || "Document"}
                   </span>
                   <div className="flex flex-col items-center">
-                    {broadcastDetails.attachments[0]?.document_url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                    {broadcastDetails.attachments[0]?.url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                       <img
-                        src={broadcastDetails.attachments[0].document_url}
+                        src={broadcastDetails.attachments[0].url}
                         alt="Document"
                         className="w-16 h-16 object-contain"
                       />
