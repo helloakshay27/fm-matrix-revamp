@@ -114,7 +114,7 @@ export const EditBroadcastPage = () => {
                 }
             } catch (error) {
                 console.log(error);
-                toast.error("Failed to fetch broadcast details");
+                toast.error("Failed to fetch notice details");
                 navigate(-1);
             } finally {
                 setIsLoading(false);
@@ -307,11 +307,11 @@ export const EditBroadcastPage = () => {
             }
 
             await dispatch(updateBroadcast({ id, data: formDataToSend, baseUrl, token })).unwrap();
-            toast.success("Broadcast updated successfully");
+            toast.success("Notice updated successfully");
             navigate(-1);
         } catch (error: any) {
             console.log(error);
-            toast.error(error.message || "Failed to update broadcast");
+            toast.error(error.message || "Failed to update notice");
         } finally {
             setIsSubmitting(false);
         }
@@ -320,7 +320,7 @@ export const EditBroadcastPage = () => {
     if (isLoading) {
         return (
             <div className="p-4 md:px-8 py-6 bg-white min-h-screen flex items-center justify-center">
-                <div className="text-lg text-gray-600">Loading broadcast details...</div>
+                <div className="text-lg text-gray-600">Loading notice details...</div>
             </div>
         );
     }

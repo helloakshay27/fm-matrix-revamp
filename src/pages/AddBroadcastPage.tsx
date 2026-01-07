@@ -342,11 +342,11 @@ export const AddBroadcastPage = () => {
       localStorage.removeItem('selectedTechParks');
       localStorage.removeItem('selectedCommunityIds');
 
-      toast.success("Broadcast created successfully");
+      toast.success("Notice created successfully");
       navigate(-1);
     } catch (error: any) {
       console.log(error);
-      toast.error(error.message || "Failed to create broadcast");
+      toast.error(error.message || "Failed to create notice");
     } finally {
       setIsSubmitting(false);
     }
