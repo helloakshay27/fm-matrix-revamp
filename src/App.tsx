@@ -883,6 +883,12 @@ import Communtiy from "./pages/Communtiy";
 import CommunityAdd from "./pages/CommunityAdd";
 import CommunityDetails from "./pages/CommunityDetails";
 import CommunityEdit from "./pages/CommunityEdit";
+import CuratedServiceDashboard from "./pages/CuratedServiceDashboard";
+import { AddCuratedServicePage } from "./pages/AddCuratedServicePage";
+import { EditCuratedServicePage } from "./pages/EditCuratedServicePage";
+import CuratedServiceCategoryDashboard from "./pages/CuratedServiceCategoryDashboard";
+import { AddCuratedServiceCategoryPage } from "./pages/AddCuratedServiceCategoryPage";
+import { EditCuratedServiceCategoryPage } from "./pages/EditCuratedServiceCategoryPage";
 import CommunityUserDetails from "./pages/CommunityUserDetails";
 import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
@@ -3827,6 +3833,35 @@ function App() {
                     path="/pulse/pulse-privilege/service-category/edit/:id"
                     element={<EditServiceCategoryPage />}
                   />
+
+  {/* Plus curated Service Routes */}
+                  <Route
+                    path="/pulse/curated-services/service"
+                    element={<CuratedServiceDashboard/>}
+                  />
+                  <Route
+                    path="/pulse/curated-services/service/create"
+                    element={<AddCuratedServicePage />}
+                  />
+                  <Route
+                    path="/pulse/curated-services/service/edit/:id"
+                    element={<EditCuratedServicePage />}
+                  />
+
+                  {/*  curated Service  Category Routes */}
+                  <Route
+                    path="/pulse/curated-services/service-category"
+                    element={<CuratedServiceCategoryDashboard/>}
+                  />
+                  <Route
+                    path="/pulse/curated-services/service-category/create"
+                    element={<AddCuratedServiceCategoryPage />}
+                  />
+                  <Route
+                    path="/pulse/curated-services/service-category/edit/:id"
+                    element={<EditCuratedServiceCategoryPage />}
+                  />
+
                   <Route
                     path="/pulse/amenity"
                     element={<AmenitySetupDashboard />}
