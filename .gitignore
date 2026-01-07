@@ -44,3 +44,10 @@ release
 *.njsproj
 *.sln
 *.sw?
+
+# Cache and temporary files
+.vite
+.vite-no-cache
+*.cache
+.cache
+clear-cache.js
