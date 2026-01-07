@@ -10,7 +10,7 @@ const getApiConfig = () => {
   const finalBaseUrl =
     savedBaseUrl ||
     import.meta.env.VITE_API_BASE_URL ||
-    "live-api.gophygital.work/";
+    "https://fm-uat-api.lockated.com/";
 
   console.log("API Config Debug:", {
     savedToken: savedToken ? "Present" : "Missing",
