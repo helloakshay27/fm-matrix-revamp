@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
-import { usePermissions } from "../contexts/PermissionsContext";
 import {
   ChevronLeft,
   ChevronRight,
@@ -193,6 +192,55 @@ const modulesByPackage = {
         },
       ],
     },
+    {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Document",
+      icon: FileText,
+      href: "/master/document",
+      subItems: [
+        {
+          name: "Category",
+          href: "/master/document-category",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
 
     // {
     //   name: 'Inventory Sub Type',
@@ -267,41 +315,17 @@ const modulesByPackage = {
     },
 
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
+    {
+      name: "Amenity Setup",
+      icon: Settings,
+      href: "/settings/vas/booking/setup",
+    },
     // {
     //   name: 'Currency',
     //   icon: Currency,
     //   href: '/settings/currency',
     // }
   ],
-};
-
-// Permission check helper function
-const checkPermission = (item: any, userRole: any = null) => {
-  // If no userRole provided, allow access (for testing/development)
-  if (!userRole) {
-    return true;
-  }
-
-  // If userRole exists but has no lock_modules, deny access
-  if (!userRole.lock_modules || !Array.isArray(userRole.lock_modules)) {
-    return false;
-  }
-
-  // Extract active functions from API (IGNORING module_active)
-  const activeFunctions: string[] = [];
-  userRole.lock_modules.forEach((module: any) => {
-    if (module.lock_functions && Array.isArray(module.lock_functions)) {
-      module.lock_functions.forEach((func: any) => {
-        if (func.function_active === 1) {
-          activeFunctions.push(func.function_name?.toLowerCase() || "");
-        }
-      });
-    }
-  });
-
-  // Check if item name matches any active function
-  const itemName = item.name?.toLowerCase() || "";
-  return activeFunctions.includes(itemName);
 };
 
 export const PulseSidebar = () => {
@@ -313,74 +337,7 @@ export const PulseSidebar = () => {
     isSidebarCollapsed,
     setIsSidebarCollapsed,
   } = useLayout();
-  const {
-    userRole,
-    loading: permissionsLoading,
-    hasPermissionForPath,
-  } = usePermissions();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
-  // Detect if user is on Pulse site - FALLBACK for when no API role exists
-  const hostname = window.location.hostname;
-  const isPulseSite =
-    hostname.includes("pulse.lockated.com") ||
-    hostname.includes("localhost") || // Update port if different
-    location.pathname.startsWith("/pulse");
-
-  // Filter modules based on user permissions
-  const filteredModulesByPackage = React.useMemo(() => {
-    // FALLBACK: If no userRole but on Pulse site, show all modules
-    if (!userRole && isPulseSite) {
-      console.log(
-        "📊 Pulse Sidebar: ALL modules (no user role, but isPulseSite detected)"
-      );
-      return modulesByPackage;
-    }
-
-    if (!userRole) {
-      console.log(
-        "📊 Pulse Sidebar: No modules (no user role, not Pulse site)"
-      );
-      return {};
-    }
-
-    const filtered: any = {};
-
-    // Recursive function to filter subItems at ALL levels
-    const filterSubItemsRecursively = (items: any[]): any[] => {
-      return items
-        .map((item) => {
-          // First, recursively filter any nested subItems
-          const filteredSubItems = item.subItems
-            ? filterSubItemsRecursively(item.subItems)
-            : [];
-
-          return {
-            ...item,
-            subItems: filteredSubItems,
-          };
-        })
-        .filter((item) => {
-          const hasDirectPermission = checkPermission(item, userRole);
-          const hasAccessibleSubItems =
-            item.subItems && item.subItems.length > 0;
-
-          return hasDirectPermission || hasAccessibleSubItems;
-        });
-    };
-
-    Object.entries(modulesByPackage).forEach(([sectionName, items]) => {
-      const filteredItems = filterSubItemsRecursively(items);
-
-      if (filteredItems.length > 0) {
-        filtered[sectionName] = filteredItems;
-      }
-    });
-
-    console.log("🎯 Pulse Sidebar Filtering Results:", filtered);
-
-    return filtered;
-  }, [userRole, isPulseSite]);
 
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
@@ -421,7 +378,7 @@ export const PulseSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
-  const currentModules = filteredModulesByPackage[currentSection] || [];
+  const currentModules = modulesByPackage[currentSection] || [];
 
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
@@ -431,7 +388,7 @@ export const PulseSidebar = () => {
   // Auto-expand functionality
   React.useEffect(() => {
     const path = location.pathname;
-    const currentSectionItems = filteredModulesByPackage[currentSection];
+    const currentSectionItems = modulesByPackage[currentSection];
     const itemsToExpand: string[] = [];
 
     if (currentSectionItems) {
@@ -451,7 +408,7 @@ export const PulseSidebar = () => {
 
       setExpandedItems(itemsToExpand);
     }
-  }, [currentSection, location.pathname, filteredModulesByPackage]);
+  }, [currentSection, location.pathname]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
