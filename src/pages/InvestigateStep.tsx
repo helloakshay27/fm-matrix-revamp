@@ -8,7 +8,55 @@ import { FormControl, Select as MuiSelect, MenuItem, InputLabel, TextField } fro
 import { Incident } from '@/services/incidentService';
 import { InvestigatorRepeater } from '@/components/InvestigatorRepeater';
 import dayjs from 'dayjs';
-import type { Investigator, Condition, RootCause, InjuredPerson } from '../IncidentNewDetails';
+// Define types locally
+export interface Investigator {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
+    contactNo?: string;
+    type: 'internal' | 'external';
+    company?: string;
+}
+
+export interface Condition {
+    id: string;
+    condition: string;
+    act: string;
+    description: string;
+}
+
+export interface RootCause {
+    id: string;
+    causeId: string;
+    description: string;
+}
+
+export interface InjuredPerson {
+    id: string;
+    type: 'internal' | 'external';
+    name: string;
+    age: string;
+    company?: string;
+    role: string;
+    bodyParts: {
+        head: boolean;
+        neck: boolean;
+        arms: boolean;
+        eyes: boolean;
+        legs: boolean;
+        skin: boolean;
+        mouth: boolean;
+        ears: boolean;
+    };
+    attachments: File[];
+}
+
+export interface PropertyDamage {
+    id: string;
+    propertyType: string;
+    attachments: File[];
+}
 
 interface InvestigateStepProps {
     incident: Incident | null;
@@ -112,43 +160,43 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
         }
     };
 
- const calculateTotalDuration = (
-  incident: Incident | null,
-  incidentOverTime: string
-) => {
-  if (!incident?.inc_time || !incidentOverTime) return '-';
+    const calculateTotalDuration = (
+        incident: Incident | null,
+        incidentOverTime: string
+    ) => {
+        if (!incident?.inc_time || !incidentOverTime) return '-';
 
-  const occurredDate = dayjs(incident.inc_time);
-  if (!occurredDate.isValid()) return '-';
+        const occurredDate = dayjs(incident.inc_time);
+        if (!occurredDate.isValid()) return '-';
 
-  let overDate: dayjs.Dayjs;
+        let overDate: dayjs.Dayjs;
 
-  // If only time (HH:mm)
-  if (incidentOverTime.includes(':') && !incidentOverTime.includes('T')) {
-    const [h, m] = incidentOverTime.split(':').map(Number);
+        // If only time (HH:mm)
+        if (incidentOverTime.includes(':') && !incidentOverTime.includes('T')) {
+            const [h, m] = incidentOverTime.split(':').map(Number);
 
-    overDate = occurredDate
-      .hour(h)
-      .minute(m)
-      .second(0)
-      .millisecond(0);
+            overDate = occurredDate
+                .hour(h)
+                .minute(m)
+                .second(0)
+                .millisecond(0);
 
-    // 🔑 handle next-day case
-    if (overDate.isBefore(occurredDate)) {
-      overDate = overDate.add(1, 'day');
-    }
-  } else {
-    overDate = dayjs(incidentOverTime);
-  }
+            // 🔑 handle next-day case
+            if (overDate.isBefore(occurredDate)) {
+                overDate = overDate.add(1, 'day');
+            }
+        } else {
+            overDate = dayjs(incidentOverTime);
+        }
 
-  if (!overDate.isValid()) return '-';
+        if (!overDate.isValid()) return '-';
 
-  const diffMinutes = overDate.diff(occurredDate, 'minute');
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
+        const diffMinutes = overDate.diff(occurredDate, 'minute');
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
 
-  return `${hours} Hrs. ${minutes} Min.`;
-};
+        return `${hours} Hrs. ${minutes} Min.`;
+    };
 
 
     const handleAddCondition = useCallback(() => {
@@ -159,6 +207,16 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
             description: '',
         };
         setConditions(prev => [...prev, newCondition]);
+    }, [setConditions]);
+
+    const updateCondition = useCallback((id: string, field: string, value: any) => {
+        setConditions(prev => prev.map(cond =>
+            cond.id === id ? { ...cond, [field]: value } : cond
+        ));
+    }, [setConditions]);
+
+    const removeCondition = useCallback((id: string) => {
+        setConditions(prev => prev.filter(cond => cond.id !== id));
     }, [setConditions]);
 
     const handleAddRootCause = useCallback(() => {
@@ -406,72 +464,95 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                 </div>
 
                 <div className="p-3 space-y-4">
-                    {/* Substandard Condition */}
-                    <div className="space-y-2">
-                        <div className="text-sm font-medium">Substandard Condition</div>
-                        <FormControl fullWidth size="small">
-                            <MuiSelect
-                                value={subStandardConditionId}
-                                onChange={(e) => setSubStandardConditionId(e.target.value)}
-                                displayEmpty
-                                sx={{ backgroundColor: 'white' }}
-                            >
-                                <MenuItem value="" disabled>
-                                    <span className="text-gray-400">Select condition...</span>
-                                </MenuItem>
-                                {substandardConditionCategories.length > 0 ? (
-                                    substandardConditionCategories.map((category) => (
-                                        <MenuItem key={category.id} value={category.id.toString()}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem value="no-data" disabled>
-                                        No conditions available
-                                    </MenuItem>
-                                )}
-                            </MuiSelect>
-                        </FormControl>
-                    </div>
+                    {/* Dynamic Condition Blocks */}
+                    {conditions.length > 0 && (
+                        <div className="space-y-4">
+                            {conditions.map((condition, index) => (
+                                <div key={condition.id} className="p-4 rounded-lg border border-gray-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-semibold">Condition #{index + 1}</h4>
+                                        {conditions.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeCondition(condition.id)}
+                                                className="h-6 text-red-500 hover:text-red-700"
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
+                                    </div>
 
-                    {/* Substandard Act */}
-                    <div className="space-y-2">
-                        <div className="text-sm font-medium">Substandard Act</div>
-                        <FormControl fullWidth size="small">
-                            <MuiSelect
-                                value={subStandardActId}
-                                onChange={(e) => setSubStandardActId(e.target.value)}
-                                displayEmpty
-                                sx={{ backgroundColor: 'white' }}
-                            >
-                                <MenuItem value="" disabled>
-                                    <span className="text-gray-400">Select act...</span>
-                                </MenuItem>
-                                {substandardActCategories.length > 0 ? (
-                                    substandardActCategories.map((category) => (
-                                        <MenuItem key={category.id} value={category.id.toString()}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem value="no-data" disabled>
-                                        No acts available
-                                    </MenuItem>
-                                )}
-                            </MuiSelect>
-                        </FormControl>
-                    </div>
+                                    {/* Substandard Condition */}
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-medium">Substandard Condition</div>
+                                        <FormControl fullWidth size="small">
+                                            <MuiSelect
+                                                value={condition.condition}
+                                                onChange={(e) => updateCondition(condition.id, 'condition', e.target.value)}
+                                                displayEmpty
+                                                sx={{ backgroundColor: 'white' }}
+                                            >
+                                                <MenuItem value="" disabled>
+                                                    <span className="text-gray-400">Select condition...</span>
+                                                </MenuItem>
+                                                {substandardConditionCategories.length > 0 ? (
+                                                    substandardConditionCategories.map((category) => (
+                                                        <MenuItem key={category.id} value={category.id.toString()}>
+                                                            {category.name}
+                                                        </MenuItem>
+                                                    ))
+                                                ) : (
+                                                    <MenuItem value="no-data" disabled>
+                                                        No conditions available
+                                                    </MenuItem>
+                                                )}
+                                            </MuiSelect>
+                                        </FormControl>
+                                    </div>
 
-                    {/* Description */}
-                    <div className="space-y-2">
-                        <div className="text-sm font-medium">Description</div>
-                        <Textarea
-                            value={investigationDescription}
-                            onChange={handleInvestigationDescriptionChange}
-                            placeholder="Give a brief description of the issue..."
-                            className="bg-white min-h-[80px]"
-                        />
-                    </div>
+                                    {/* Substandard Act */}
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-medium">Substandard Act</div>
+                                        <FormControl fullWidth size="small">
+                                            <MuiSelect
+                                                value={condition.act}
+                                                onChange={(e) => updateCondition(condition.id, 'act', e.target.value)}
+                                                displayEmpty
+                                                sx={{ backgroundColor: 'white' }}
+                                            >
+                                                <MenuItem value="" disabled>
+                                                    <span className="text-gray-400">Select act...</span>
+                                                </MenuItem>
+                                                {substandardActCategories.length > 0 ? (
+                                                    substandardActCategories.map((category) => (
+                                                        <MenuItem key={category.id} value={category.id.toString()}>
+                                                            {category.name}
+                                                        </MenuItem>
+                                                    ))
+                                                ) : (
+                                                    <MenuItem value="no-data" disabled>
+                                                        No acts available
+                                                    </MenuItem>
+                                                )}
+                                            </MuiSelect>
+                                        </FormControl>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-medium">Description</div>
+                                        <Textarea
+                                            value={condition.description}
+                                            onChange={(e) => updateCondition(condition.id, 'description', e.target.value)}
+                                            placeholder="Give a brief description of the issue..."
+                                            className="bg-white min-h-[80px]"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Add Condition Button */}
                     <Button
@@ -843,7 +924,7 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                         >
                                             <Plus className="w-6 h-6 text-gray-400" />
                                         </label>
-                                        {(propertyDamages.find(pd => pd.propertyType === selectedPropertyDamage)?.attachments || []).map((file, idx) => (
+                                        {(propertyDamages?.find(pd => pd.propertyType === selectedPropertyDamage)?.attachments || []).map((file, idx) => (
                                             <div key={idx} className="w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center relative">
                                                 <img
                                                     src={URL.createObjectURL(file)}

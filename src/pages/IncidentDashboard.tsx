@@ -1411,6 +1411,7 @@ import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { toast } from 'sonner';
 import {
   Pagination,
   PaginationContent,
@@ -1746,7 +1747,7 @@ export const IncidentDashboard = () => {
       const baseUrl = localStorage.getItem("baseUrl") || "";
       const token = localStorage.getItem("token") || "";
       if (!baseUrl || !token) {
-        alert("API base URL or token not found in localStorage.");
+        toast.error("API base URL or token not found in localStorage.");
         return;
       }
 
@@ -1781,7 +1782,7 @@ export const IncidentDashboard = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting incidents:", error);
-      alert("Failed to export incidents");
+      toast.error("Failed to export incidents");
     }
   };
 
