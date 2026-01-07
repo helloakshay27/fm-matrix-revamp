@@ -794,7 +794,30 @@ const ProjectTaskCreateModal = ({
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [dateWiseHours, setDateWiseHours] = useState([]);
   const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [endDate, setEndDate] = useState(() => {
+    const targetDate = prefillData?.target_date;
+    if (!targetDate) return null;
+
+    if (typeof targetDate === "string") {
+      // Handle YYYY-MM-DD format manually to avoid timezone issues
+      const parts = targetDate.split("-");
+      if (parts.length === 3) {
+        return {
+          year: parseInt(parts[0], 10),
+          month: parseInt(parts[1], 10) - 1,
+          date: parseInt(parts[2], 10),
+        };
+      }
+
+      const date = new Date(targetDate);
+      return {
+        date: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+      };
+    }
+    return targetDate;
+  });
   const [members, setMembers] = useState([]);
   const selectedTags = (prefillData?.tags || [])?.map((tag: any) => ({
     value: tag.company_tag_id,
