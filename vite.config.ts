@@ -86,4 +86,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  // Disable caching in development
+  cacheDir: mode === 'development' ? '.vite-no-cache' : '.vite',
 }));
