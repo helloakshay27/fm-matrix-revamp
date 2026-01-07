@@ -87,6 +87,13 @@ const modulesByPackage = {
       name: "Curated Services",
       icon: Gift,
       href: "/pulse/curated-services",
+       subItems: [
+        {
+          name: "Service Category",
+          href: "/pulse/curated-services/service-category",
+        },
+        { name: "Service", href: "/pulse/curated-services/service" },
+      ],
     },
     {
       name: "Pulse Privilege",
