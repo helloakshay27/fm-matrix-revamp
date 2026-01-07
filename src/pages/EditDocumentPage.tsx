@@ -22,6 +22,17 @@ import {
 import { Label } from "@/components/ui/label";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
+import { toast } from "sonner";
+import {
+  getDocumentDetail,
+  updateDocument,
+  getCategories,
+  getFoldersTree,
+  UpdateDocumentPayload,
+  Category,
+  Folder,
+  fileToBase64,
+} from "@/services/documentService";
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -94,6 +105,7 @@ export const EditDocumentPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [showTechParkModal, setShowTechParkModal] = useState(false);
@@ -105,6 +117,8 @@ export const EditDocumentPage = () => {
   const [existingFiles, setExistingFiles] = useState<
     { name: string; url: string }[]
   >([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
@@ -114,26 +128,59 @@ export const EditDocumentPage = () => {
     shareWithCommunities: "no",
   });
 
+  // Fetch categories and folders
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesData, foldersData] = await Promise.all([
+          getCategories(),
+          getFoldersTree(),
+        ]);
+        setCategories(categoriesData);
+        setFolders(foldersData.folders);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load categories and folders");
+      }
+    };
+    fetchData();
+  }, []);
+
   // Load existing document data
   useEffect(() => {
-    if (id) {
-      const documentId = parseInt(id, 10);
-      const existingData =
-        mockDocumentData[documentId as keyof typeof mockDocumentData];
+    const fetchDocument = async () => {
+      if (!id) return;
 
-      if (existingData) {
+      try {
+        setLoading(true);
+        const document = await getDocumentDetail(parseInt(id, 10));
+
         setFormData({
-          documentCategory: existingData.documentCategory,
-          documentFolder: existingData.documentFolder,
-          title: existingData.title,
-          shareWith: existingData.shareWith,
-          shareWithCommunities: existingData.shareWithCommunities,
+          documentCategory: document.category_id?.toString() || "",
+          documentFolder: document.folder_id?.toString() || "",
+          title: document.title,
+          shareWith: "all",
+          shareWithCommunities: "no",
         });
-        setSelectedTechParks(existingData.techParks);
-        setSelectedCommunities(existingData.communities);
-        setExistingFiles(existingData.existingFiles);
+
+        // Set existing file if attachment exists
+        if (document.attachment) {
+          setExistingFiles([
+            {
+              name: document.attachment.filename,
+              url: document.attachment.url,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching document:", error);
+        toast.error("Failed to load document");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchDocument();
   }, [id]);
 
   // Handle form field changes
@@ -194,13 +241,91 @@ export const EditDocumentPage = () => {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    // TODO: Implement API call to update document
-    setTimeout(() => {
-      setIsSubmitting(false);
+    if (!id) return;
+
+    // Validation
+    if (
+      !formData.title ||
+      !formData.documentCategory ||
+      !formData.documentFolder
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Convert attached files to base64
+      const attachments = await Promise.all(
+        attachedFiles.map(async (file) => {
+          const base64Content = await fileToBase64(file);
+          return {
+            filename: file.name,
+            content: base64Content,
+            content_type: file.type,
+          };
+        })
+      );
+
+      // Build permissions array
+      const permissions = [];
+
+      // Add site permissions
+      if (formData.shareWith === "individual" && selectedTechParks.length > 0) {
+        permissions.push({
+          access_level: "selected",
+          scope_type: "Site",
+          scope_ids: selectedTechParks,
+        });
+      } else if (formData.shareWith === "all") {
+        permissions.push({
+          access_level: "all",
+          scope_type: "Site",
+          scope_ids: [],
+        });
+      }
+
+      // Add community permissions
+      if (
+        formData.shareWithCommunities === "yes" &&
+        selectedCommunities.length > 0
+      ) {
+        permissions.push({
+          access_level: "view",
+          scope_type: "community",
+          scope_ids: selectedCommunities.map((c) => c.id),
+        });
+      }
+
+      const payload: UpdateDocumentPayload = {
+        document: {
+          title: formData.title,
+          category_id: parseInt(formData.documentCategory, 10),
+          folder_id: parseInt(formData.documentFolder, 10),
+          ...(attachments.length > 0 && { attachments }),
+        },
+        ...(permissions.length > 0 && { permissions }),
+      };
+
+      await updateDocument(parseInt(id, 10), payload);
+      toast.success("Document updated successfully");
       navigate("/maintenance/documents");
-    }, 1000);
+    } catch (error) {
+      console.error("Error updating document:", error);
+      toast.error("Failed to update document");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading document...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -243,9 +368,9 @@ export const EditDocumentPage = () => {
                   label="Document Category"
                   sx={fieldStyles}
                 >
-                  {DOCUMENT_CATEGORIES.map((category) => (
-                    <MenuItem key={category.value} value={category.value}>
-                      {category.label}
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -262,9 +387,9 @@ export const EditDocumentPage = () => {
                   label="Document Folder"
                   sx={fieldStyles}
                 >
-                  {DOCUMENT_FOLDERS.map((folder) => (
-                    <MenuItem key={folder.value} value={folder.value}>
-                      {folder.label}
+                  {folders.map((folder) => (
+                    <MenuItem key={folder.id} value={folder.id.toString()}>
+                      {folder.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>

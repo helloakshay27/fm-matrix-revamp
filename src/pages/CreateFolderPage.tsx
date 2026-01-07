@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Trash2, MoveRight, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { AddDocumentModal } from "@/components/document/AddDocumentModal";
 import { AddExistingDocumentModal } from "@/components/document/AddExistingDocumentModal";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+
 import {
   getCategories,
   createFolder,
@@ -35,46 +37,6 @@ interface SelectedDocument {
   created_by: string;
 }
 
-// Mock data to map selected IDs to document details
-const documentData: Record<number, SelectedDocument> = {
-  1: {
-    id: 1,
-    title: "Lease Agreement",
-    category: "Lease / Legal",
-    folder: "Lease Agreements",
-    format: "PDF",
-    size: "1.2 MB",
-    created_by: "Rohan Desai",
-  },
-  2: {
-    id: 2,
-    title: "Fire Safety Drill Report",
-    category: "Safety & Compliance",
-    folder: "Fire Safety Certificates",
-    format: "DOCX",
-    size: "320 KB",
-    created_by: "Priya Kulkarni",
-  },
-  3: {
-    id: 3,
-    title: "Visitor Pass Template",
-    category: "Templates",
-    folder: "Visitor Pass Templates",
-    format: "PDF",
-    size: "450 KB",
-    created_by: "Admin System",
-  },
-  4: {
-    id: 4,
-    title: "Maintenance Work Order",
-    category: "Maintenance",
-    folder: "Work Orders",
-    format: "XLSX",
-    size: "780 KB",
-    created_by: "Mahesh Patil",
-  },
-};
-
 const columns: ColumnConfig[] = [
   { key: "title", label: "Title", sortable: true, defaultVisible: true },
   {
@@ -94,8 +56,8 @@ export const CreateFolderPage = () => {
   const [shareWith, setShareWith] = useState<"all" | "individual">("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExistingDocModal, setShowExistingDocModal] = useState(false);
-  const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
-  const [documentAction, setDocumentAction] = useState<"copy" | "move">("copy");
+  const [moveDocuments, setMoveDocuments] = useState<SelectedDocument[]>([]);
+  const [copyDocuments, setCopyDocuments] = useState<SelectedDocument[]>([]);
   const [newDocuments, setNewDocuments] = useState<NewDocument[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
@@ -167,12 +129,7 @@ export const CreateFolderPage = () => {
 
   const handleSubmit = async () => {
     if (!title) {
-      alert("Please enter a folder name");
-      return;
-    }
-
-    if (!categoryId) {
-      alert("Please add documents with category from Add Document page");
+      toast.error("Please enter a folder name");
       return;
     }
 
@@ -206,11 +163,13 @@ export const CreateFolderPage = () => {
           },
         ],
         documents: documentsPayload,
+        move_document_ids: moveDocuments.map((doc) => doc.id),
+        copy_document_ids: copyDocuments.map((doc) => doc.id),
       };
 
       const response = await createFolder(payload);
 
-      alert("Folder created successfully!");
+      toast.success("Folder created successfully!");
       navigate("/maintenance/documents");
     } catch (error: unknown) {
       console.error("Error creating folder:", error);
@@ -224,7 +183,7 @@ export const CreateFolderPage = () => {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to create folder. Please try again.";
-      alert(`Error: ${errorMessage}`);
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -234,12 +193,12 @@ export const CreateFolderPage = () => {
     setNewDocuments(newDocuments.filter((doc) => doc.id !== docId));
   };
 
-  const handleRemoveDocument = (docId: number) => {
-    setSelectedDocuments(selectedDocuments.filter((id) => id !== docId));
+  const handleRemoveMoveDocument = (docId: number) => {
+    setMoveDocuments(moveDocuments.filter((doc) => doc.id !== docId));
   };
 
-  const getSelectedDocumentDetails = (): SelectedDocument[] => {
-    return selectedDocuments.map((id) => documentData[id]).filter(Boolean);
+  const handleRemoveCopyDocument = (docId: number) => {
+    setCopyDocuments(copyDocuments.filter((doc) => doc.id !== docId));
   };
 
   return (
@@ -289,13 +248,12 @@ export const CreateFolderPage = () => {
               Insert Document
             </h2>
 
-            <button
+            <Button
               onClick={handleAddClick}
-              className="px-6 py-2 bg-[#F6F4EE] text-[#C72030] rounded-md hover:bg-[#E5E0D3] transition-colors flex items-center gap-2 font-medium"
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
             >
-              <span className="text-lg">+</span>
-              Add
-            </button>
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
 
             {/* New Documents Table */}
             {newDocuments.length > 0 && (
@@ -340,18 +298,18 @@ export const CreateFolderPage = () => {
               </div>
             )}
 
-            {/* Existing Documents Table */}
-            {selectedDocuments.length > 0 && (
+            {/* Move Documents Table */}
+            {moveDocuments.length > 0 && (
               <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-[#1a1a1a]">
-                    {selectedDocuments.length} document(s) selected to{" "}
-                    {documentAction}
+                <div className="bg-orange-50 px-4 py-3 border-b border-orange-200 flex items-center gap-2">
+                  <MoveRight className="w-4 h-4 text-orange-600" />
+                  <p className="text-sm font-medium text-orange-900">
+                    {moveDocuments.length} document(s) to Move
                   </p>
                 </div>
                 <div className="overflow-x-auto">
                   <EnhancedTable
-                    data={getSelectedDocumentDetails()}
+                    data={moveDocuments}
                     columns={columns}
                     renderCell={(doc, columnKey) => {
                       const value = doc[columnKey as keyof SelectedDocument];
@@ -366,7 +324,47 @@ export const CreateFolderPage = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => handleRemoveDocument(doc.id)}
+                          onClick={() => handleRemoveMoveDocument(doc.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    )}
+                    enableSearch={false}
+                    pagination={false}
+                    hideTableSearch={true}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Copy Documents Table */}
+            {copyDocuments.length > 0 && (
+              <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-200 flex items-center gap-2">
+                  <Copy className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-medium text-blue-900">
+                    {copyDocuments.length} document(s) to Copy
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <EnhancedTable
+                    data={copyDocuments}
+                    columns={columns}
+                    renderCell={(doc, columnKey) => {
+                      const value = doc[columnKey as keyof SelectedDocument];
+                      return <span>{value}</span>;
+                    }}
+                    renderActions={(doc) => (
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4 text-gray-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleRemoveCopyDocument(doc.id)}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
@@ -407,8 +405,28 @@ export const CreateFolderPage = () => {
         isOpen={showExistingDocModal}
         onClose={() => setShowExistingDocModal(false)}
         onSelectDocuments={(docs, action) => {
-          setSelectedDocuments(docs);
-          setDocumentAction(action);
+          // Transform to SelectedDocument format
+          const selectedDocs: SelectedDocument[] = docs.map((doc) => ({
+            id: doc.id,
+            title: doc.title,
+            category: doc.category,
+            folder: doc.folder,
+            format: doc.format,
+            size: doc.size,
+            created_by: doc.created_by,
+          }));
+
+          if (action === "move") {
+            setMoveDocuments(selectedDocs);
+            toast.success(
+              `${selectedDocs.length} document(s) added to move list`
+            );
+          } else {
+            setCopyDocuments(selectedDocs);
+            toast.success(
+              `${selectedDocs.length} document(s) added to copy list`
+            );
+          }
           setShowExistingDocModal(false);
         }}
       />

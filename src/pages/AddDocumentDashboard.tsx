@@ -32,8 +32,10 @@ import {
   Radio,
 } from "@mui/material";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
+import { toast } from "sonner";
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -200,28 +202,33 @@ export const AddDocumentDashboard = () => {
     const extension = file.name.split(".").pop()?.toLowerCase() || "";
     const fileType = file.type.toLowerCase();
 
-    // Define icon colors and types
+    // Define icon colors and types aligned with design
     if (fileType.includes("pdf") || extension === "pdf") {
-      return { color: "text-red-600", bg: "bg-red-50", label: "PDF" };
+      return { color: "text-[#C72030]", bg: "bg-red-50", label: "PDF" };
     } else if (
       fileType.includes("word") ||
       ["doc", "docx"].includes(extension)
     ) {
-      return { color: "text-blue-600", bg: "bg-blue-50", label: "DOC" };
+      return { color: "text-[#2563eb]", bg: "bg-blue-50", label: "DOC" };
     } else if (
       fileType.includes("excel") ||
       fileType.includes("spreadsheet") ||
       ["xls", "xlsx"].includes(extension)
     ) {
-      return { color: "text-green-600", bg: "bg-green-50", label: "XLS" };
+      return { color: "text-[#16a34a]", bg: "bg-green-50", label: "XLS" };
     } else if (
       fileType.includes("powerpoint") ||
       fileType.includes("presentation") ||
       ["ppt", "pptx"].includes(extension)
     ) {
-      return { color: "text-orange-600", bg: "bg-orange-50", label: "PPT" };
+      return { color: "text-[#ea580c]", bg: "bg-orange-50", label: "PPT" };
     } else if (fileType.includes("image")) {
-      return { color: "text-purple-600", bg: "bg-purple-50", label: "IMG" };
+      return {
+        color: "text-[#9333ea]",
+        bg: "bg-purple-50",
+        label: "IMG",
+        isImage: true,
+      };
     } else if (fileType.includes("text") || extension === "txt") {
       return { color: "text-gray-600", bg: "bg-gray-50", label: "TXT" };
     } else {
@@ -250,12 +257,12 @@ export const AddDocumentDashboard = () => {
   const handleSubmit = async () => {
     // Validation
     if (!formData.documentCategory || !formData.title) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (!coverImage) {
-      alert("Please upload a document");
+      toast.error("Please upload a document");
       return;
     }
 
@@ -294,6 +301,7 @@ export const AddDocumentDashboard = () => {
           JSON.stringify(folderSettings)
         );
 
+        toast.success("Document added to folder");
         navigate("/maintenance/documents/create-folder");
       } else {
         // Normal document creation flow
@@ -337,7 +345,7 @@ export const AddDocumentDashboard = () => {
         };
 
         await createDocument(payload);
-        alert("Document added successfully!");
+        toast.success("Document added successfully!");
         navigate("/maintenance/documents");
       }
     } catch (error: unknown) {
@@ -350,7 +358,7 @@ export const AddDocumentDashboard = () => {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to add document. Please try again.";
-      alert(`Error: ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -366,6 +374,19 @@ export const AddDocumentDashboard = () => {
       } else {
         navigate("/maintenance/documents");
       }
+    }
+  };
+
+  const handleCancel = () => {
+    if (coverImage || formData.title || formData.documentCategory) {
+      const confirmed = window.confirm(
+        "Are you sure you want to cancel? Any unsaved changes will be lost."
+      );
+      if (confirmed) {
+        handleGoBack();
+      }
+    } else {
+      handleGoBack();
     }
   };
 
@@ -696,31 +717,41 @@ export const AddDocumentDashboard = () => {
               <div className="border border-gray-300 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-12 h-12 ${getFileIcon(coverImage).bg} rounded flex items-center justify-center`}
-                    >
-                      <svg
-                        className={`w-8 h-8 ${getFileIcon(coverImage).color}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                          clipRule="evenodd"
+                    {getFileIcon(coverImage).isImage ? (
+                      <div className="w-12 h-12 rounded overflow-hidden bg-gray-100">
+                        <img
+                          src={URL.createObjectURL(coverImage)}
+                          alt={coverImage.name}
+                          className="w-full h-full object-cover"
                         />
-                        <text
-                          x="10"
-                          y="14"
-                          fontSize="5"
-                          fill="white"
-                          textAnchor="middle"
-                          fontWeight="bold"
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-12 h-12 ${getFileIcon(coverImage).bg} rounded flex items-center justify-center`}
+                      >
+                        <svg
+                          className={`w-8 h-8 ${getFileIcon(coverImage).color}`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
                         >
-                          {getFileIcon(coverImage).label}
-                        </text>
-                      </svg>
-                    </div>
+                          <path
+                            fillRule="evenodd"
+                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                            clipRule="evenodd"
+                          />
+                          <text
+                            x="10"
+                            y="14"
+                            fontSize="5"
+                            fill="white"
+                            textAnchor="middle"
+                            fontWeight="bold"
+                          >
+                            {getFileIcon(coverImage).label}
+                          </text>
+                        </svg>
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-gray-700 font-medium block truncate">
                         {coverImage.name}
@@ -742,15 +773,23 @@ export const AddDocumentDashboard = () => {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-center pt-4">
-          <button
+        {/* Submit and Cancel Buttons */}
+        <div className="flex flex-col justify-center sm:flex-row gap-4 pt-6 border-t">
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-12 py-3 bg-[#C72030] text-white rounded-lg hover:bg-[#A01828] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90  h-11 w-40"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
-          </button>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="w-40 h-11"
+          >
+            Cancel
+          </Button>
         </div>
       </div>
 

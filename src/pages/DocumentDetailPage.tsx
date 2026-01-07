@@ -1,76 +1,132 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Trash2, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import {
+  getDocumentDetail,
+  deleteDocument,
+  Document,
+  DocumentAttachment,
+} from "@/services/documentService";
 
 interface DocumentDetail {
   id: number;
   title: string;
-  category: string;
-  folder: string;
-  created_by: string;
-  created_date: string;
-  share_with: string[];
-  share_with_communities: boolean;
-  attachments: {
-    name: string;
-    type: string;
-    url: string;
-  }[];
-  status: boolean;
+  category_id: number;
+  folder_id: number;
+  document_category_name: string | null;
+  created_by_full_name: string | null;
+  folder_name: string;
+  created_at: string;
+  active: boolean | null;
+  attachment: DocumentAttachment;
+  // UI fields
+  share_with?: string[];
+  share_with_communities?: boolean;
 }
-
-// Mock data - would come from API
-const mockDocument: DocumentDetail = {
-  id: 1,
-  title: "Fire Safety Drill Report",
-  category: "Lease / Legal",
-  folder: "Lease Agreement",
-  created_by: "Abdul",
-  created_date: "5 October 2025",
-  share_with: ["Tech Park 1", "Tech Park 2", "Tech Park 3"],
-  share_with_communities: false,
-  attachments: [
-    {
-      name: "Document.pdf",
-      type: "PDF",
-      url: "#",
-    },
-    {
-      name: "Document.pdf",
-      type: "PDF",
-      url: "#",
-    },
-  ],
-  status: true,
-};
 
 export const DocumentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [document, setDocument] = useState<DocumentDetail>(mockDocument);
+  const [document, setDocument] = useState<DocumentDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDocument = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        const response = await getDocumentDetail(parseInt(id, 10));
+        setDocument(response);
+      } catch (error) {
+        console.error("Error fetching document:", error);
+        toast.error("Failed to load document details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocument();
+  }, [id]);
 
   const handleEdit = () => {
     navigate(`/maintenance/documents/edit/${id}`);
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this document?")) {
-      // TODO: Implement delete API call
+  const handleDelete = async () => {
+    if (
+      !id ||
+      !window.confirm("Are you sure you want to delete this document?")
+    ) {
+      return;
+    }
+
+    try {
+      await deleteDocument(parseInt(id, 10));
+      toast.success("Document deleted successfully");
       navigate("/maintenance/documents");
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document");
     }
   };
 
   const handleToggleStatus = (checked: boolean) => {
-    setDocument({ ...document, status: checked });
+    if (!document) return;
+    setDocument({ ...document, active: checked });
+    toast.success(
+      `Document ${checked ? "activated" : "deactivated"} successfully`
+    );
     // TODO: Implement status update API call
   };
 
-  const handleDownload = (attachment: { name: string; url: string }) => {
-    // TODO: Implement download logic
-    window.open(attachment.url, "_blank");
+  const handleDownload = (url: string, filename: string) => {
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const fullUrl = `https://${baseUrl}${decodeURIComponent(url)}`;
+    window.open(fullUrl, "_blank");
+    toast.success("Downloading document...");
   };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-GB", options);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i)) + " " + sizes[i];
+  };
+
+  const getFileExtension = (filename: string): string => {
+    return filename.split(".").pop()?.toUpperCase() || "FILE";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading document...</div>
+      </div>
+    );
+  }
+
+  if (!document) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Document not found</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -114,14 +170,16 @@ export const DocumentDetailPage = () => {
             </div>
             <div className="flex items-center gap-3">
               <Switch
-                checked={document.status}
+                checked={document.active ?? false}
                 onCheckedChange={handleToggleStatus}
                 className="data-[state=checked]:bg-green-500"
               />
               <span
-                className={`text-sm font-medium ${document.status ? "text-green-600" : "text-gray-500"}`}
+                className={`text-sm font-medium ${
+                  document.active ? "text-green-600" : "text-gray-500"
+                }`}
               >
-                {document.status ? "Active" : "Inactive"}
+                {document.active ? "Active" : "Inactive"}
               </span>
             </div>
           </div>
@@ -130,22 +188,26 @@ export const DocumentDetailPage = () => {
           <div className="grid grid-cols-2 gap-x-12 gap-y-4 mt-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">Category</p>
-              <p className="font-medium text-[#1a1a1a]">{document.category}</p>
+              <p className="font-medium text-[#1a1a1a]">
+                {document.document_category_name || "N/A"}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Created By</p>
               <p className="font-medium text-[#1a1a1a]">
-                {document.created_by}
+                {document.created_by_full_name || "Unknown"}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Folder</p>
-              <p className="font-medium text-[#1a1a1a]">{document.folder}</p>
+              <p className="font-medium text-[#1a1a1a]">
+                {document.folder_name}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Created On</p>
               <p className="font-medium text-[#1a1a1a]">
-                {document.created_date}
+                {formatDate(document.created_at)}
               </p>
             </div>
           </div>
@@ -175,11 +237,15 @@ export const DocumentDetailPage = () => {
             <div>
               <p className="text-sm text-gray-500 mb-2">Share With</p>
               <div className="space-y-1">
-                {document.share_with.map((park, index) => (
-                  <p key={index} className="font-medium text-[#1a1a1a]">
-                    {park}
-                  </p>
-                ))}
+                {document.share_with && document.share_with.length > 0 ? (
+                  document.share_with.map((park, index) => (
+                    <p key={index} className="font-medium text-[#1a1a1a]">
+                      {park}
+                    </p>
+                  ))
+                ) : (
+                  <p className="font-medium text-gray-400">Not shared</p>
+                )}
               </div>
             </div>
             <div>
@@ -204,52 +270,55 @@ export const DocumentDetailPage = () => {
 
           <div>
             <p className="text-sm font-medium text-[#1a1a1a] mb-4">
-              Upload Document
+              Document File
             </p>
             <div className="grid grid-cols-2 gap-4">
-              {document.attachments.map((attachment, index) => (
-                <div
-                  key={index}
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center gap-3 hover:border-[#C72030] transition-colors group cursor-pointer"
-                >
-                  <div className="relative">
-                    <svg
-                      width="48"
-                      height="48"
-                      viewBox="0 0 48 48"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M28 4H12C10.9 4 10 4.9 10 6V42C10 43.1 10.9 44 12 44H36C37.1 44 38 43.1 38 42V16L28 4Z"
-                        fill="#E74C3C"
-                      />
-                      <path d="M28 4V16H38L28 4Z" fill="#C0392B" />
-                      <text
-                        x="24"
-                        y="32"
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize="10"
-                        fontWeight="bold"
-                      >
-                        PDF
-                      </text>
-                    </svg>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-[#1a1a1a]">
-                      {attachment.name}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDownload(attachment)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-[#C72030] rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center gap-3 hover:border-[#C72030] transition-colors group cursor-pointer relative">
+                <div className="relative">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 48 48"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    <Download className="w-4 h-4 text-white" />
-                  </button>
+                    <path
+                      d="M28 4H12C10.9 4 10 4.9 10 6V42C10 43.1 10.9 44 12 44H36C37.1 44 38 43.1 38 42V16L28 4Z"
+                      fill="#E74C3C"
+                    />
+                    <path d="M28 4V16H38L28 4Z" fill="#C0392B" />
+                    <text
+                      x="24"
+                      y="32"
+                      textAnchor="middle"
+                      fill="white"
+                      fontSize="10"
+                      fontWeight="bold"
+                    >
+                      {getFileExtension(document.attachment.filename)}
+                    </text>
+                  </svg>
                 </div>
-              ))}
+                <div className="text-center">
+                  <p className="text-sm font-medium text-[#1a1a1a]">
+                    {document.attachment.filename}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatFileSize(document.attachment.file_size)}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleDownload(
+                      document.attachment.url,
+                      document.attachment.filename
+                    )
+                  }
+                  className="absolute top-3 right-3 w-8 h-8 bg-[#C72030] rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Download className="w-4 h-4 text-white" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
