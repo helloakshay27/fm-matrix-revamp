@@ -481,7 +481,7 @@ const BookingCalenderView = () => {
                                                                     ${selectedDateInfo?.isOff || isSlotBlocked
                                                                         ? "bg-gray-100 cursor-not-allowed"
                                                                         : slotBooked
-                                                                            ? "bg-gray-400 cursor-pointer hover:bg-gray-500"
+                                                                            ? "bg-gray-300 cursor-pointer hover:bg-gray-400"
                                                                             : "bg-white hover:bg-blue-50 cursor-pointer"
                                                                     }
                                                                     ${slot.quarter === 0 ? 'border-l border-l-gray-400' : ''}
