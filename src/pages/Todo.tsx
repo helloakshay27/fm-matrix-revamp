@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Check, Play, Pause, Pencil } from 'lucide-react';
+import { Plus, Check, Play, Pause, Pencil, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AddToDoModal from '@/components/AddToDoModal';
+import TodoConvertModal from '@/components/TodoConvertModal';
 import { Button } from '@/components/ui/button';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
@@ -80,6 +81,9 @@ export default function Todo() {
     const [isPauseLoading, setIsPauseLoading] = useState(false);
     const [editingTodo, setEditingTodo] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+    const [convertTodoData, setConvertTodoData] = useState(null);
+    const [convertTodoId, setConvertTodoId] = useState(null);
 
     const getTodos = async () => {
         try {
@@ -214,6 +218,18 @@ export default function Todo() {
         setIsEditMode(false);
     };
 
+    const handleConvertTodo = (todo) => {
+        setConvertTodoData({
+            title: todo.title,
+            target_date: todo.target_date,
+            responsible_person: {
+                id: JSON.parse(localStorage.getItem('user'))?.id
+            }
+        });
+        setConvertTodoId(todo.id);
+        setIsConvertModalOpen(true);
+    };
+
     const pendingTodos = todos.filter((t) => t.status !== 'completed');
     const completedTodos = todos.filter((t) => t.status === 'completed');
 
@@ -272,6 +288,7 @@ export default function Todo() {
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
                                             handleEditTodo={handleEditTodo}
+                                            handleConvertTodo={handleConvertTodo}
                                         />
                                     ))}
                                 </div>
@@ -291,6 +308,7 @@ export default function Todo() {
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
                                             handleEditTodo={handleEditTodo}
+                                            handleConvertTodo={handleConvertTodo}
                                         />
                                     ))}
                                 </div>
@@ -310,6 +328,7 @@ export default function Todo() {
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
                                             handleEditTodo={handleEditTodo}
+                                            handleConvertTodo={handleConvertTodo}
                                         />
                                     ))}
                                 </div>
@@ -329,6 +348,7 @@ export default function Todo() {
                                             setPauseTaskId={setPauseTaskId}
                                             setIsPauseModalOpen={setIsPauseModalOpen}
                                             handleEditTodo={handleEditTodo}
+                                            handleConvertTodo={handleConvertTodo}
                                         />
                                     ))}
                                 </div>
@@ -385,6 +405,19 @@ export default function Todo() {
                     getTodos={getTodos}
                     editingTodo={editingTodo}
                     isEditMode={isEditMode}
+                />
+            )}
+
+            {isConvertModalOpen && (
+                <TodoConvertModal
+                    isModalOpen={isConvertModalOpen}
+                    setIsModalOpen={setIsConvertModalOpen}
+                    prefillData={convertTodoData}
+                    todoId={convertTodoId}
+                    onSuccess={() => {
+                        getTodos();
+                        setIsConvertModalOpen(false);
+                    }}
                 />
             )}
 
@@ -463,7 +496,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 // ----------------------------------------------
 // Separate Todo Item Component (Cleaner UI)
 // ----------------------------------------------
-const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen, handleEditTodo }) => {
+const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen, handleEditTodo, handleConvertTodo }) => {
     const navigate = useNavigate();
 
     const handleTaskClick = () => {
@@ -479,19 +512,30 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId
 
     return (
         <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors group">
-            <button
-                onClick={() => handleEditTodo(todo)}
-                className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                title="Edit todo"
-            >
-                <Pencil size={14} />
-            </button>
-            <button
-                onClick={() => toggleTodo(todo.id)}
-                className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-            >
-                <Check size={16} className="text-primary opacity-0 group-hover:opacity-100" />
-            </button>
+            <div className="flex items-center gap-1">
+                <button
+                    onClick={() => handleEditTodo(todo)}
+                    className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                    title="Edit todo"
+                >
+                    <Pencil size={14} />
+                </button>
+                {!todo.task_management_id && (
+                    <button
+                        onClick={() => handleConvertTodo(todo)}
+                        className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                        title="Convert to Task"
+                    >
+                        <RefreshCw size={14} />
+                    </button>
+                )}
+                <button
+                    onClick={() => toggleTodo(todo.id)}
+                    className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+                >
+                    <Check size={16} className="text-primary opacity-0 group-hover:opacity-100" />
+                </button>
+            </div>
 
             <div className="flex flex-col flex-1">
                 <div className="flex items-center gap-2">

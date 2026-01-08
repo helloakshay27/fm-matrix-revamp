@@ -85,8 +85,10 @@ const employeeNavigationByModule: Record<string, any> = {
   "Project Task": {
     Projects: {
       icon: Briefcase,
-      href: "/vas/projects",
-      items: [],
+      items: [
+        { name: "Project Overview", href: "/vas/projects" },
+        { name: "Project Dashboard", href: "/vas/project-dashboard" },
+      ],
     },
     "My Tasks": {
       icon: ListChecks,
@@ -375,6 +377,25 @@ export const EmployeeSidebar: React.FC = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  // Collapse sections when module changes or route changes, unless a section has an active subitem
+  React.useEffect(() => {
+    // Determine which sections should be open based on active route
+    const nextOpen: Record<string, boolean> = {};
+    Object.entries(navigationStructure).forEach(([key, section]: [string, any]) => {
+      const sectionHref = section.href || "";
+      const hasItems = section.items && section.items.length > 0;
+      const sectionHasActiveItem = hasItems
+        ? section.items.some((item: { href: string }) => isActive(item.href))
+        : false;
+      const sectionIsActive = sectionHref ? isActive(sectionHref) : sectionHasActiveItem;
+      if (sectionIsActive) {
+        nextOpen[key] = true;
+      }
+    });
+    setOpenSections(nextOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, currentSection]);
+
   /**
    * Handle navigation within the sidebar
    *
@@ -443,7 +464,10 @@ export const EmployeeSidebar: React.FC = () => {
               const Icon = section.icon;
               const hasItems = section.items && section.items.length > 0;
               const sectionHref = section.href || "";
-              const isSectionOpen = openSections[key];
+              const sectionHasActiveItem = hasItems
+                ? section.items.some((item: { href: string }) => isActive(item.href))
+                : false;
+              const isSectionOpen = openSections[key] ?? sectionHasActiveItem;
 
               // Direct link (no subitems)
               if (!hasItems && sectionHref) {

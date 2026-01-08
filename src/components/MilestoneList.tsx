@@ -9,6 +9,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
+import { SelectionPanel } from "./water-asset-details/PannelTab";
+import { CommonImportModal } from "./CommonImportModal";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
     {
@@ -322,10 +325,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         <>
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setOpenDialog(true)}
+                onClick={() => setShowActionPanel(true)}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add
+                Action
             </Button>
         </>
     );
@@ -476,6 +479,26 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
+            />
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={() => setOpenDialog(true)}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Milestones"
+                entityType="milestones"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImport}
+                isUploading={isUploading}
             />
         </div>
     )

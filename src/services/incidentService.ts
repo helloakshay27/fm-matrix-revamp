@@ -118,6 +118,16 @@ export interface Incident {
   inc_sub_sub_sub_category_id?: number;
   inc_sec_sub_sub_sub_category_id?: number;
   incident_over_time?: string | null;
+  root_causes?: any[];
+  property_damages?: any[];
+  substandard_condition_id?: number | null;
+  substandard_act_id?: number | null;
+  corrective_fields?: any[];
+  preventive_fields?: any[];
+  corrective_summary?: string | null;
+  preventive_summary?: string | null;
+  next_review_date?: string | null;
+  next_review_responsible_person_id?: number | null;
 }
 
 export interface IncidentResponse {

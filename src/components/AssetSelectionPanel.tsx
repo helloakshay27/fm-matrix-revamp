@@ -11,8 +11,8 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
-import { BASE_URL, getAuthHeader } from "@/config/apiConfig";
-import { useToast } from "@/hooks/use-toast";
+import { getAuthHeader } from "@/config/apiConfig";
+import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface Asset {
@@ -47,7 +47,6 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   const [showAll, setShowAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isPrintingQR, setIsPrintingQR] = useState(false);
-  const { toast } = useToast();
 
   const handleClearClick = () => {
     console.log("X button clicked - clearing selection");
@@ -56,10 +55,16 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
 
   const handleExport = async () => {
     if (selectedAssets.length === 0) {
-      toast({
-        title: "No assets selected",
+      toast.error("No assets selected", {
         description: "Please select at least one asset to export.",
-        variant: "destructive",
+      });
+      return;
+    }
+
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl) {
+      toast.error("Configuration Error", {
+        description: "Base URL not set. Please log in again.",
       });
       return;
     }
@@ -78,7 +83,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
         urlParams.append("q[id_in][]", id);
       });
 
-      const url = `${BASE_URL}/pms/assets/assets_data_report.xlsx?${urlParams.toString()}`;
+      const url = `https://${baseUrl}/pms/assets/assets_data_report.xlsx?${urlParams.toString()}`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -108,19 +113,16 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      toast({
-        title: "Export successful",
+      toast.success("Export successful", {
         description: `Successfully exported ${selectedAssets.length} asset(s) to Excel.`,
       });
     } catch (error) {
       console.error("Export error:", error);
-      toast({
-        title: "Export failed",
+      toast.error("Export failed", {
         description:
           error instanceof Error
             ? error.message
             : "Failed to export assets. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsExporting(false);
@@ -192,10 +194,10 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   //   }
   // };
 
-const waitForPdfReady = async (fileName: string): Promise<Response> => {
+const waitForPdfReady = async (fileName: string, baseUrl: string): Promise<Response> => {
   while (true) {
     const res = await fetch(
-      `${BASE_URL}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
+      `https://${baseUrl}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
       {
         headers: { Authorization: getAuthHeader() },
       }
@@ -224,10 +226,16 @@ const waitForPdfReady = async (fileName: string): Promise<Response> => {
 
 const handlePrintQRCode = async () => {
   if (selectedAssetIds.length === 0) {
-    toast({
-      title: "No assets selected",
+    toast.error("No assets selected", {
       description: "Please select at least one asset to print QR codes.",
-      variant: "destructive",
+    });
+    return;
+  }
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  if (!baseUrl) {
+    toast.error("Configuration Error", {
+      description: "Base URL not set. Please log in again.",
     });
     return;
   }
@@ -236,13 +244,16 @@ const handlePrintQRCode = async () => {
 
   try {
     // STEP 1: Start PDF generation
-    const response = await fetch(`${BASE_URL}/pms/assets/print_qr_codes`, {
+    const response = await fetch(`https://${baseUrl}/pms/assets/print_qr_codes`, {
       method: "POST",
       headers: {
         Authorization: getAuthHeader(),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ asset_ids: selectedAssetIds }),
+      body: JSON.stringify({ 
+        asset_ids: selectedAssetIds,
+        base_url: baseUrl // Send base URL without https://
+      }),
     });
 
     if (!response.ok) {
@@ -254,13 +265,12 @@ const handlePrintQRCode = async () => {
       throw new Error("File name not returned from server");
     }
 
-    toast({
-      title: "Generating QR PDF",
+    toast("Generating QR PDF", {
       description: "Please wait while the PDF is being prepared…",
     });
 
     // STEP 2: ⏳ Wait until PDF is READY
-    const pdfResponse = await waitForPdfReady(file_name);
+    const pdfResponse = await waitForPdfReady(file_name, baseUrl);
 
     // STEP 3: Download PDF (only once, guaranteed ready)
     const blob = await pdfResponse.blob();
@@ -274,19 +284,16 @@ const handlePrintQRCode = async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast({
-      title: "Download complete",
+    toast.success("Download complete", {
       description: "QR codes downloaded successfully.",
     });
   } catch (error) {
     console.error(error);
-    toast({
-      title: "QR code generation failed",
+    toast.error("QR code generation failed", {
       description:
         error instanceof Error
           ? error.message
           : "Something went wrong. Please try again.",
-      variant: "destructive",
     });
   } finally {
     setIsPrintingQR(false);

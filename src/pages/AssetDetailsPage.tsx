@@ -24,7 +24,7 @@ import { OwnerCostTab } from "@/components/asset-details/OwnerCostTab";
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -45,7 +45,6 @@ export const AssetDetailsPage = () => {
   const [showEnable, setShowEnable] = useState(false);
   const [activeTab, setActiveTab] = useState("asset-info");
   const [isPrintingQR, setIsPrintingQR] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -153,16 +152,13 @@ export const AssetDetailsPage = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      toast({
-        title: "QR Code Generated",
+      toast.success("QR Code Generated", {
         description: "Successfully downloaded the QR code PDF.",
       });
     } catch (error) {
       console.error("QR code generation error:", error);
-      toast({
-        title: "Generation Failed",
+      toast.error("Generation Failed", {
         description: "Failed to generate QR code. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsPrintingQR(false);

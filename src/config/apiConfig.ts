@@ -5,12 +5,8 @@ const getApiConfig = () => {
   const savedToken = getToken();
   const savedBaseUrl = getBaseUrl();
 
-  // Fallback base URL - can be overridden by environment variable or login process
-  // In Vite, use import.meta.env instead of process.env
-  const finalBaseUrl =
-    savedBaseUrl ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "live-api.gophygital.work/";
+  // Always use dynamic base URL from localStorage only
+  const finalBaseUrl = savedBaseUrl;
 
   console.log("API Config Debug:", {
     savedToken: savedToken ? "Present" : "Missing",

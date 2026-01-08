@@ -735,6 +735,9 @@ import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
 import CommunicationTemplateListPage from "./pages/master/CommunicationTemplateListPage";
 import AddCommunicationTemplatePage from "./pages/master/AddCommunicationTemplatePage";
 import EditCommunicationTemplatePage from "./pages/master/EditCommunicationTemplatePage";
+import DocumentCategoryListPage from "./pages/master/DocumentCategoryListPage";
+import AddDocumentCategoryPage from "./pages/master/AddDocumentCategoryPage";
+import EditDocumentCategoryPage from "./pages/master/EditDocumentCategoryPage";
 
 // Import Template pages
 import RootCauseAnalysisListPage from "./pages/master/template/RootCauseAnalysisListPage";
@@ -851,6 +854,7 @@ import AddMoMPage from "./pages/AddMoMPage";
 import EditMoMPage from "./pages/EditMoMPage";
 import Todo from "./pages/Todo";
 import ProjectDocuments from "./pages/ProjectDocuments";
+import SupersetDashboard from "./components/SupersetDashboard";
 import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
 import { AddTicketDashboardEmployee } from "./pages/AddTicketDashboardEmployee";
 import { VisitorsDashboardEmployee } from "./pages/VisitorsDashboardEmployee";
@@ -897,7 +901,7 @@ function App() {
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
-    console.log(
+    console.warn(
       "🚀 Initializing Global MUI Select Search Enhancer from App.tsx"
     );
     const cleanup = initializeGlobalMUISelectSearchEnhancer();
@@ -924,22 +928,22 @@ function App() {
 
     const fetchCurrency = async () => {
       try {
-        const response: any = await dispatch(
+        const response = (await dispatch(
           getCurrency({ baseUrl, token, id })
-        ).unwrap();
+        ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
-          Array.isArray(response) && response[0]?.currency
+          Array.isArray(response) && (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
-          Array.isArray(response) && response[0]?.symbol
+          Array.isArray(response) && (response[0]?.symbol as string | undefined)
             ? response[0].symbol
             : "₹";
         if (currency) localStorage.setItem("currency", currency);
         if (currencySymbol)
           localStorage.setItem("currencySymbol", currencySymbol);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
 
@@ -947,32 +951,32 @@ function App() {
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
   useEffect(() => {
-    console.log("🔌 WebSocket connection effect running");
+    console.warn("🔌 WebSocket connection effect running");
 
     if (token) {
-      console.log("✅ Token available, connecting...");
+      console.warn("✅ Token available, connecting...");
       connect(token, socketUrl);
     } else {
       console.error("❌ No token available for WebSocket connection");
     }
 
     return () => {
-      console.log("🧹 Cleaning up WebSocket subscriptions");
+      console.warn("🧹 Cleaning up WebSocket subscriptions");
     };
-  }, [token, connect]);
+  }, [token, connect, socketUrl]);
 
   useEffect(() => {
     const subscriptionTimer = setTimeout(() => {
       const sub = webSocketManager.subscribeToUserNotifications({
         onConnected: () => {
-          console.log("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
           setIsSubscribed(true);
           toast.success("Real-time connection established!", {
             duration: 2000,
           });
         },
         onMessageNotification: (message) => {
-          console.log(message);
+          console.warn(message);
           if (message.user_id !== currentUser.id) {
             return;
           }
@@ -1000,16 +1004,16 @@ function App() {
           });
         },
         onDisconnected: () => {
-          console.log("❌ Chat subscription disconnected");
+      console.warn("❌ Chat subscription disconnected");
           setIsSubscribed(false);
           toast.error("Real-time chat disconnected");
         },
       });
-      console.log("📋 Subscription object:", sub);
+    console.warn("📋 Subscription object:", sub);
     }, 2000); // Wait 2 seconds for connection to establish
 
     return () => {
-      console.log("⏰ Clearing subscription timer");
+    console.warn("⏰ Clearing subscription timer");
       clearTimeout(subscriptionTimer);
     };
   }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
@@ -2700,6 +2704,11 @@ function App() {
 
                   <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
+                  <Route
+                    path="/vas/project-dashboard"
+                    element={<SupersetDashboard />}
+                  />
+
                   <Route path="/vas/add-mom" element={<AddMoMPage />} />
 
                   <Route path="/vas/edit-mom/:id" element={<EditMoMPage />} />
@@ -3512,6 +3521,18 @@ function App() {
                   <Route
                     path="/master/communication-template/edit/:id"
                     element={<EditCommunicationTemplatePage />}
+                  />
+                  <Route
+                    path="/master/document-category"
+                    element={<DocumentCategoryListPage />}
+                  />
+                  <Route
+                    path="/master/document-category/add"
+                    element={<AddDocumentCategoryPage />}
+                  />
+                  <Route
+                    path="/master/document-category/edit/:id"
+                    element={<EditDocumentCategoryPage />}
                   />
 
                   {/* Template Routes - Root Cause Analysis */}

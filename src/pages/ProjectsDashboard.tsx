@@ -37,6 +37,8 @@ import ProjectFilterModal from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
 import axios from "axios";
 import { useDebounce } from "@/hooks/useDebounce";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
 
 const columns: ColumnConfig[] = [
   {
@@ -221,7 +223,11 @@ export const ProjectsDashboard = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false)
 
   // Refs for click outside detection
   const viewDropdownRef = useRef<HTMLDivElement>(null);
@@ -279,11 +285,14 @@ export const ProjectsDashboard = () => {
             10 * 60 * 1000 // Stale up to 10 minutes
           );
 
-          const transformedData = transformedProjects(
-            cachedResult.data.project_managements
-          );
+          // cachedResult has structure: { data: <actual-response>, fromCache: boolean }
+          const actualData = cachedResult?.data || cachedResult;
+          const projectsData = actualData?.project_managements || [];
+          const transformedData = transformedProjects(projectsData);
           setProjects(transformedData);
-          setHasMore(page < (cachedResult.data.pagination?.total_pages || 1));
+
+          const paginationData = actualData?.pagination;
+          setHasMore(page < (paginationData?.total_pages || 1));
           setCurrentPage(page);
         } else {
           // For pagination, fetch fresh data
@@ -291,9 +300,8 @@ export const ProjectsDashboard = () => {
             filterProjects({ token, baseUrl, filters })
           ).unwrap();
 
-          const transformedData = transformedProjects(
-            response.project_managements
-          );
+          const projectsData = response?.data?.project_managements || response?.project_managements || [];
+          const transformedData = transformedProjects(projectsData);
 
           if (isLoadMore) {
             setProjects((prev) => [...prev, ...transformedData]);
@@ -301,7 +309,8 @@ export const ProjectsDashboard = () => {
             setProjects(transformedData);
           }
 
-          setHasMore(page < (response.pagination?.total_pages || 1));
+          const paginationData = response?.data?.pagination || response?.pagination;
+          setHasMore(page < (paginationData?.total_pages || 1));
           setCurrentPage(page);
         }
       } catch (error) {
@@ -321,35 +330,44 @@ export const ProjectsDashboard = () => {
     setAppliedFilters("");
   }, [dispatch, token, baseUrl, selectedFilterOption, debouncedSearchTerm]);
 
-  // Infinite scroll handler
+  // Infinite scroll handler with debouncing
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    let lastLoadedPage = currentPage;
 
-      // Load more when user is 200px from bottom
-      if (
-        scrollTop + clientHeight >= scrollHeight - 200 &&
-        !scrollLoading &&
-        !loading &&
-        hasMore
-      ) {
-        fetchData(currentPage + 1, "", true, debouncedSearchTerm);
-      }
+    const handleScroll = () => {
+      // Clear any existing timeout
+      clearTimeout(scrollTimeout);
+
+      // Debounce the scroll check to avoid excessive calls
+      scrollTimeout = setTimeout(async () => {
+        const scrollElement = document.documentElement;
+        const scrollTop = window.pageYOffset || scrollElement.scrollTop;
+        const scrollHeight = scrollElement.scrollHeight;
+        const clientHeight = window.innerHeight;
+
+        // Load more when user is 500px from bottom
+        const threshold = 500;
+        if (
+          scrollTop + clientHeight >= scrollHeight - threshold &&
+          !scrollLoading &&
+          !loading &&
+          hasMore &&
+          lastLoadedPage === currentPage // Prevent duplicate requests
+        ) {
+          const nextPage = currentPage + 1;
+          lastLoadedPage = nextPage;
+          await fetchData(nextPage, "", true, debouncedSearchTerm);
+        }
+      }, 150); // Debounce for 150ms
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [
-    scrollLoading,
-    loading,
-    hasMore,
-    currentPage,
-    appliedFilters,
-    debouncedSearchTerm,
-  ]);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [currentPage, scrollLoading, loading, hasMore, debouncedSearchTerm, fetchData]);
 
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -746,13 +764,14 @@ export const ProjectsDashboard = () => {
     <>
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleOpenDialog}
+        onClick={() => setShowActionPanel(true)}
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add
+        Action
       </Button>
     </>
   );
+
 
   const renderEditableCell = (columnKey, value, onChange) => {
     if (columnKey === "status") {
@@ -1099,6 +1118,7 @@ export const ProjectsDashboard = () => {
         searchPlaceholder="Search by title, type, or manager..."
         enableExport={true}
         exportFileName="projects"
+        hideTableExport={true}
       />
 
       {scrollLoading && hasMore && (
@@ -1112,6 +1132,26 @@ export const ProjectsDashboard = () => {
           No more projects to load
         </div>
       )}
+
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={handleOpenDialog}
+          onImport={() => setIsImportModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+
+      <CommonImportModal
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        title="Import Projects"
+        entityType="projects"
+        onSampleDownload={handleSampleDownload}
+        onImport={handleImport}
+        isUploading={isUploading}
+      />
 
       <AddProjectModal
         openDialog={openDialog}
@@ -1140,6 +1180,8 @@ export const ProjectsDashboard = () => {
         setIsModalOpen={setIsFilterModalOpen}
         onApplyFilters={(filterString) => {
           setAppliedFilters(filterString);
+          setCurrentPage(1);
+          setHasMore(true);
           fetchData(1, filterString, false, debouncedSearchTerm);
         }}
       />

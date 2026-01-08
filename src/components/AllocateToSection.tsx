@@ -12,6 +12,7 @@ interface AllocateToSectionProps {
   setAllocatedToId: (value: number | null) => void;
   type?: string; // Optional type parameter for API filtering
   siteId?: number | null; // Optional site ID parameter for API filtering
+  prefillSelectedLabel?: string; // Optional display label when selected id isn't in fetched list
 }
 
 // Custom theme for MUI dropdowns (same as MovementToSection)
@@ -92,6 +93,7 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
   setAllocatedToId,
   type,
   siteId,
+  prefillSelectedLabel,
 }) => {
   const { departments, users, loading } = useAllocationData(type, siteId);
   return (
@@ -99,16 +101,48 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Allocate To</h3>
       <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-8">
         <div className="flex-shrink-0">
-          <RadioGroup value={allocateTo} onValueChange={setAllocateTo} className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="department" id="department" />
+              <input
+                type="checkbox"
+                id="department"
+                checked={allocateTo === "department"}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  if (isChecked) {
+                    setAllocateTo("department");
+                    setAllocatedToId(null); // Reset selection when switching
+                  } else {
+                    setAllocateTo("");
+                    setAllocatedToId(null);
+                  }
+                }}
+                className="w-4 h-4 text-[#C72030] border-gray-300"
+                style={{ accentColor: "#C72030" }}
+              />
               <Label htmlFor="department" className="text-sm">Department</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="user" id="user" />
+              <input
+                type="checkbox"
+                id="user"
+                checked={allocateTo === "user"}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  if (isChecked) {
+                    setAllocateTo("user");
+                    setAllocatedToId(null); // Reset selection when switching
+                  } else {
+                    setAllocateTo("");
+                    setAllocatedToId(null);
+                  }
+                }}
+                className="w-4 h-4 text-[#C72030] border-gray-300"
+                style={{ accentColor: "#C72030" }}
+              />
               <Label htmlFor="user" className="text-sm">User</Label>
             </div>
-          </RadioGroup>
+          </div>
         </div>
         {allocateTo && (
           <div className="flex-1 max-w-full lg:max-w-xs">
@@ -133,10 +167,10 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
                     }
                     if (allocateTo === 'department') {
                       const dept = departments.find(d => d.id === Number(selected));
-                      return dept?.department_name || 'Select Department';
+                      return dept?.department_name || prefillSelectedLabel || 'Select Department';
                     } else {
                       const user = users.find(u => u.id === Number(selected));
-                      return user?.full_name || 'Select User';
+                      return user?.full_name || prefillSelectedLabel || 'Select User';
                     }
                   },
                 }}
