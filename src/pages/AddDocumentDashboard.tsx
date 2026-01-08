@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   FileText,
@@ -8,6 +8,18 @@ import {
   Pencil,
   X,
 } from "lucide-react";
+import {
+  getCategories,
+  getAllSites,
+  getFoldersTree,
+  createDocument,
+  fileToBase64,
+  Category,
+  Site,
+  Folder,
+  CreateDocumentPayload,
+  FolderPermission,
+} from "@/services/documentService";
 import {
   FormControl,
   InputLabel,
@@ -69,8 +81,18 @@ const DOCUMENT_FOLDERS = [
   { value: "policies", label: "Policies & SOPs" },
 ];
 
+interface NewDocument {
+  title: string;
+  documentCategory: string;
+  attachment: File | null;
+}
+
 export const AddDocumentDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get("source");
+  const isFolderDisabled = source === "new";
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -80,14 +102,55 @@ export const AddDocumentDashboard = () => {
   const [selectedCommunities, setSelectedCommunities] = useState<
     { id: number; name: string }[]
   >([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
     documentFolder: "",
     title: "",
-    shareWith: "all_tech_park",
+    shareWith: "all",
     shareWithCommunities: "no",
   });
+
+  // Fetch categories and sites on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      console.warn("Starting to fetch data...");
+
+      // Fetch categories
+      try {
+        const categoriesData = await getCategories();
+        console.warn("Categories loaded:", categoriesData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+
+      // Fetch sites
+      try {
+        const sitesData = await getAllSites();
+        console.warn("Sites loaded:", sitesData);
+        setSites(sitesData.sites);
+      } catch (error) {
+        console.error("Error fetching sites:", error);
+      }
+
+      // Fetch folders (may fail, that's okay)
+      try {
+        const foldersData = await getFoldersTree();
+        console.warn("Folders loaded:", foldersData);
+        setFolders(foldersData.folders || []);
+      } catch (error) {
+        console.warn(
+          "Folders endpoint not available (500 error) - continuing without folders"
+        );
+        setFolders([]);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Handle form field changes
   const handleInputChange = (field: string, value: string) => {
@@ -132,6 +195,44 @@ export const AddDocumentDashboard = () => {
     }
   };
 
+  // Get file extension and icon
+  const getFileIcon = (file: File) => {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    const fileType = file.type.toLowerCase();
+
+    // Define icon colors and types
+    if (fileType.includes("pdf") || extension === "pdf") {
+      return { color: "text-red-600", bg: "bg-red-50", label: "PDF" };
+    } else if (
+      fileType.includes("word") ||
+      ["doc", "docx"].includes(extension)
+    ) {
+      return { color: "text-blue-600", bg: "bg-blue-50", label: "DOC" };
+    } else if (
+      fileType.includes("excel") ||
+      fileType.includes("spreadsheet") ||
+      ["xls", "xlsx"].includes(extension)
+    ) {
+      return { color: "text-green-600", bg: "bg-green-50", label: "XLS" };
+    } else if (
+      fileType.includes("powerpoint") ||
+      fileType.includes("presentation") ||
+      ["ppt", "pptx"].includes(extension)
+    ) {
+      return { color: "text-orange-600", bg: "bg-orange-50", label: "PPT" };
+    } else if (fileType.includes("image")) {
+      return { color: "text-purple-600", bg: "bg-purple-50", label: "IMG" };
+    } else if (fileType.includes("text") || extension === "txt") {
+      return { color: "text-gray-600", bg: "bg-gray-50", label: "TXT" };
+    } else {
+      return {
+        color: "text-gray-600",
+        bg: "bg-gray-50",
+        label: extension.toUpperCase().substring(0, 3),
+      };
+    }
+  };
+
   // Handle file upload for attachments
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -148,26 +249,108 @@ export const AddDocumentDashboard = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Validation
-    if (
-      !formData.documentCategory ||
-      !formData.documentFolder ||
-      !formData.title
-    ) {
+    if (!formData.documentCategory || !formData.title) {
       alert("Please fill in all required fields");
+      return;
+    }
+
+    if (!coverImage) {
+      alert("Please upload a document");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement API call to create document
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (isFolderDisabled) {
+        // Convert file to base64 for sessionStorage
+        const attachmentBase64 = coverImage
+          ? await fileToBase64(coverImage)
+          : "";
 
-      alert("Document added successfully!");
-      navigate("/maintenance/documents");
-    } catch (error) {
+        // Return to CreateFolderPage with document data
+        const documentData = {
+          title: formData.title,
+          documentCategory: formData.documentCategory,
+          attachment: attachmentBase64,
+          fileName: coverImage?.name || "",
+          fileSize: coverImage?.size || 0,
+        };
+
+        // Store in sessionStorage and navigate back
+        const existingDocs = sessionStorage.getItem("pendingDocuments");
+        const docs = existingDocs ? JSON.parse(existingDocs) : [];
+        docs.push(documentData);
+        sessionStorage.setItem("pendingDocuments", JSON.stringify(docs));
+
+        // Store folder settings (category and share settings)
+        const folderSettings = {
+          categoryId: formData.documentCategory,
+          shareWith: formData.shareWith,
+          selectedTechParks: selectedTechParks,
+          selectedCommunities: selectedCommunities,
+        };
+        sessionStorage.setItem(
+          "folderSettings",
+          JSON.stringify(folderSettings)
+        );
+
+        navigate("/maintenance/documents/create-folder");
+      } else {
+        // Normal document creation flow
+        const attachmentBase64 = await fileToBase64(coverImage);
+        const contentType = coverImage.type || "application/pdf";
+
+        const permissions: FolderPermission[] = [
+          {
+            access_level: formData.shareWith === "all" ? "all" : "selected",
+            scope_type: "Site",
+            scope_ids:
+              formData.shareWith === "individual" ? selectedTechParks : [],
+          },
+          {
+            access_level:
+              formData.shareWithCommunities === "yes" ? "view" : "none",
+            scope_type: "community",
+            scope_ids:
+              formData.shareWithCommunities === "yes"
+                ? selectedCommunities.map((c) => c.id)
+                : [],
+          },
+        ];
+
+        const payload: CreateDocumentPayload = {
+          document: {
+            title: formData.title,
+            folder_id: formData.documentFolder
+              ? parseInt(formData.documentFolder, 10)
+              : undefined,
+            category_id: parseInt(formData.documentCategory, 10),
+            attachments: [
+              {
+                filename: coverImage.name,
+                content: `data:${contentType};base64,${attachmentBase64}`,
+                content_type: contentType,
+              },
+            ],
+          },
+          permissions,
+        };
+
+        await createDocument(payload);
+        alert("Document added successfully!");
+        navigate("/maintenance/documents");
+      }
+    } catch (error: unknown) {
       console.error("Error submitting document:", error);
-      alert("Failed to add document. Please try again.");
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to add document. Please try again.";
+      alert(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -178,7 +361,11 @@ export const AddDocumentDashboard = () => {
       "Are you sure you want to go back? Any unsaved changes will be lost."
     );
     if (confirmed) {
-      navigate("/maintenance/documents");
+      if (isFolderDisabled) {
+        navigate("/maintenance/documents/create-folder");
+      } else {
+        navigate("/maintenance/documents");
+      }
     }
   };
 
@@ -227,15 +414,29 @@ export const AddDocumentDashboard = () => {
                   }
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="" disabled>
                     Select Document Category
                   </MenuItem>
-                  {DOCUMENT_CATEGORIES.map((category) => (
-                    <MenuItem key={category.value} value={category.value}>
-                      {category.label}
-                    </MenuItem>
-                  ))}
+                  {categories.length === 0 ? (
+                    <MenuItem disabled>Loading categories...</MenuItem>
+                  ) : (
+                    categories.map((category) => (
+                      <MenuItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
+                        {category.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </MuiSelect>
               </FormControl>
 
@@ -251,16 +452,39 @@ export const AddDocumentDashboard = () => {
                     handleInputChange("documentFolder", e.target.value)
                   }
                   displayEmpty
-                  sx={fieldStyles}
+                  disabled={isFolderDisabled}
+                  sx={{
+                    ...fieldStyles,
+                    ...(isFolderDisabled && {
+                      backgroundColor: "#f5f5f5",
+                      "& .MuiOutlinedInput-root": {
+                        ...fieldStyles["& .MuiOutlinedInput-root"],
+                        backgroundColor: "#f5f5f5",
+                      },
+                    }),
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="" disabled>
-                    Select Document Folder
+                    {isFolderDisabled
+                      ? "Folder will be created"
+                      : "Select Document Folder"}
                   </MenuItem>
-                  {DOCUMENT_FOLDERS.map((folder) => (
-                    <MenuItem key={folder.value} value={folder.value}>
-                      {folder.label}
-                    </MenuItem>
-                  ))}
+                  {folders.length === 0 ? (
+                    <MenuItem disabled>Loading folders...</MenuItem>
+                  ) : (
+                    folders.map((folder) => (
+                      <MenuItem key={folder.id} value={folder.id.toString()}>
+                        {folder.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </MuiSelect>
               </FormControl>
 
@@ -472,9 +696,11 @@ export const AddDocumentDashboard = () => {
               <div className="border border-gray-300 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center">
+                    <div
+                      className={`w-12 h-12 ${getFileIcon(coverImage).bg} rounded flex items-center justify-center`}
+                    >
                       <svg
-                        className="w-8 h-8 text-red-600"
+                        className={`w-8 h-8 ${getFileIcon(coverImage).color}`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -486,18 +712,23 @@ export const AddDocumentDashboard = () => {
                         <text
                           x="10"
                           y="14"
-                          fontSize="6"
+                          fontSize="5"
                           fill="white"
                           textAnchor="middle"
                           fontWeight="bold"
                         >
-                          PDF
+                          {getFileIcon(coverImage).label}
                         </text>
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-700 font-medium">
-                      {coverImage.name}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-700 font-medium block truncate">
+                        {coverImage.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {(coverImage.size / 1024).toFixed(2)} KB
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() => setCoverImage(null)}

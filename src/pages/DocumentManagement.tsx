@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Folder } from "lucide-react";
@@ -14,6 +14,7 @@ import {
 import { DocumentActionPanel } from "@/components/document/DocumentActionPanel";
 import { DocumentFilterModal } from "@/components/document/DocumentFilterModal";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
+import { getFoldersList, FolderListItem } from "@/services/documentService";
 
 interface Document {
   id: number;
@@ -145,6 +146,9 @@ export const DocumentManagement = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     createdDate: "",
     createdBy: "",
@@ -152,8 +156,61 @@ export const DocumentManagement = () => {
     status: "",
   });
 
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(mockDocuments.length / itemsPerPage);
+  // Fetch folders data
+  useEffect(() => {
+    const fetchFolders = async () => {
+      setLoading(true);
+      try {
+        const response = await getFoldersList(currentPage);
+
+        // Transform API response to match Document interface
+        const transformedData: Document[] = response.folders
+          .filter((folder) => folder.name) // Filter out null names
+          .map((folder) => ({
+            id: folder.id,
+            folder_title: folder.name || "Untitled",
+            category: folder.document_category_name || "Uncategorized",
+            document_count: folder.total_files,
+            size: formatFileSize(folder.total_file_size),
+            status: folder.active === false ? "Inactive" : "Active",
+            created_by: folder.created_by_full_name || "Unknown",
+            created_date: formatDate(folder.created_at),
+            modified_date: formatDate(folder.updated_at),
+            files_count: folder.total_files,
+            folders_count: folder.childs.length,
+          }));
+
+        setDocuments(transformedData);
+        setTotalPages(response.pagination.total_pages);
+      } catch (error) {
+        console.error("Error fetching folders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFolders();
+  }, [currentPage]);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i)) + " " + sizes[i];
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-GB", options);
+  };
 
   const handleViewDetails = (documentId: number) => {
     navigate(`/maintenance/documents/folder/${documentId}`);
@@ -213,58 +270,72 @@ export const DocumentManagement = () => {
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Documents</h1>
         </div>
 
-        {/* Document Enhanced Table with all view modes */}
-        <DocumentEnhancedTable
-          documents={mockDocuments}
-          columns={columns}
-          onViewDetails={handleViewDetails}
-          onFilterOpen={() => setShowFilterModal(true)}
-          onActionClick={() => setShowActionPanel(true)}
-          renderCell={renderCell}
-        />
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-500">Loading folders...</div>
+          </div>
+        ) : (
+          <>
+            {/* Document Enhanced Table with all view modes */}
+            <DocumentEnhancedTable
+              documents={documents}
+              columns={columns}
+              onViewDetails={handleViewDetails}
+              onFilterOpen={() => setShowFilterModal(true)}
+              onActionClick={() => setShowActionPanel(true)}
+              renderCell={renderCell}
+              renderActions={renderActions}
+            />
 
-        {/* Pagination */}
-        <div className="flex justify-center mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(index + 1)}
-                    isActive={currentPage === index + 1}
-                    className="cursor-pointer"
-                  >
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                        className={
+                          currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                    {[...Array(totalPages)].map((_, index) => (
+                      <PaginationItem key={index}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(index + 1)}
+                          isActive={currentPage === index + 1}
+                          className="cursor-pointer"
+                        >
+                          {index + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
+                          )
+                        }
+                        className={
+                          currentPage === totalPages
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Action Panel Modal */}

@@ -735,6 +735,9 @@ import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
 import CommunicationTemplateListPage from "./pages/master/CommunicationTemplateListPage";
 import AddCommunicationTemplatePage from "./pages/master/AddCommunicationTemplatePage";
 import EditCommunicationTemplatePage from "./pages/master/EditCommunicationTemplatePage";
+import DocumentCategoryListPage from "./pages/master/DocumentCategoryListPage";
+import AddDocumentCategoryPage from "./pages/master/AddDocumentCategoryPage";
+import EditDocumentCategoryPage from "./pages/master/EditDocumentCategoryPage";
 
 // Import Template pages
 import RootCauseAnalysisListPage from "./pages/master/template/RootCauseAnalysisListPage";
@@ -3512,6 +3515,18 @@ function App() {
                   <Route
                     path="/master/communication-template/edit/:id"
                     element={<EditCommunicationTemplatePage />}
+                  />
+                  <Route
+                    path="/master/document-category"
+                    element={<DocumentCategoryListPage />}
+                  />
+                  <Route
+                    path="/master/document-category/add"
+                    element={<AddDocumentCategoryPage />}
+                  />
+                  <Route
+                    path="/master/document-category/edit/:id"
+                    element={<EditDocumentCategoryPage />}
                   />
 
                   {/* Template Routes - Root Cause Analysis */}
