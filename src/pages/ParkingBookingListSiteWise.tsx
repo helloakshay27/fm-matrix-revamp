@@ -455,43 +455,37 @@ const ParkingBookingListSiteWise = () => {
     'floor_wise_occupancy'
   ]);
 
-  // Helper function to generate a label based on date range
+  // Helper function to generate a label based on date range (day-wise)
   const generateDateRangeLabel = (startDate: string, endDate: string): string => {
     if (!startDate || !endDate) return '';
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
-    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
-    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
-    const startYear = start.getFullYear();
-    const endYear = end.getFullYear();
-    
-    // Check if it's the same month and year
-    if (start.getMonth() === end.getMonth() && startYear === endYear) {
-      return `${startMonth} ${startYear}`;
-    }
-    
-    // Check if it's the same year but different months
-    if (startYear === endYear) {
-      return `${startMonth} - ${endMonth} ${startYear}`;
-    }
-    
-    // Different years
-    return `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
+
+    const fmt = (d: Date) => {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = d.toLocaleDateString('en-US', { month: 'short' });
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+
+    // If same day show single date, otherwise show range
+    if (start.toDateString() === end.toDateString()) return fmt(start);
+    return `${fmt(start)} - ${fmt(end)}`;
   };
 
-  // Analytics date range state - default to current month for Range A and last month for Range B
+  // Analytics date range state - default to last 7 days (Range A) and previous 7-day window (Range B)
   const getDefaultAnalyticsDateRange = () => {
     const today = new Date();
-    
-    // Range A: Current month (first day to last day of current month)
-    const rangeAStart = new Date(today.getFullYear(), today.getMonth(), 1); // First day of current month
-    const rangeAEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
-    
-    // Range B: Last month (first day to last day of previous month)
-    const rangeBStart = new Date(today.getFullYear(), today.getMonth() - 1, 1); // First day of last month
-    const rangeBEnd = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of last month
+
+    // Range A: single day = today
+    const rangeAStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const rangeAEnd = new Date(rangeAStart);
+
+    // Range B: previous single day = yesterday
+    const rangeBEnd = new Date(rangeAStart);
+    rangeBEnd.setDate(rangeAStart.getDate() - 1);
+    const rangeBStart = new Date(rangeBEnd);
 
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -523,6 +517,10 @@ const ParkingBookingListSiteWise = () => {
     rangeA: { startDate: string; endDate: string; label: string };
     rangeB: { startDate: string; endDate: string; label: string };
   }>(getDefaultAnalyticsDateRange());
+
+  // Draft state used inside the Analytics filter modal so changes don't trigger API calls
+  // until the user explicitly clicks Apply
+  const [analyticsDraftRange, setAnalyticsDraftRange] = useState(getDefaultAnalyticsDateRange());
 
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
@@ -2642,7 +2640,11 @@ const ParkingBookingListSiteWise = () => {
           <div className="flex justify-end items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => setIsAnalyticsFilterOpen(true)}
+                  onClick={() => {
+                    // Initialize draft from the committed range and open the dialog
+                    setAnalyticsDraftRange(analyticsDateRange);
+                    setIsAnalyticsFilterOpen(true);
+                  }}
               className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
             >
               <Calendar className="w-4 h-4 text-gray-600" />
@@ -2789,7 +2791,7 @@ const ParkingBookingListSiteWise = () => {
       </Tabs>
 
       {/* Analytics Filter Dialog */}
-      <Dialog open={isAnalyticsFilterOpen} onOpenChange={setIsAnalyticsFilterOpen}>
+  <Dialog open={isAnalyticsFilterOpen} onOpenChange={(open) => { if (open) setIsAnalyticsFilterOpen(true); /* ignore close from overlay/escape - close only via Cancel */ }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Filter Parking Analytics</DialogTitle>
@@ -2801,9 +2803,9 @@ const ParkingBookingListSiteWise = () => {
                 <label className="text-sm font-semibold text-gray-700">Range A</label>
                 <Input
                   type="text"
-                  value={analyticsDateRange.rangeA.label}
+                  value={analyticsDraftRange.rangeA.label}
                   onChange={(e) => {
-                    setAnalyticsDateRange(prev => ({
+                    setAnalyticsDraftRange(prev => ({
                       ...prev,
                       rangeA: { ...prev.rangeA, label: e.target.value }
                     }));
@@ -2817,35 +2819,46 @@ const ParkingBookingListSiteWise = () => {
                   <label className="text-xs font-medium text-gray-600">Start Date</label>
                   <Input
                     type="date"
-                    value={analyticsDateRange.rangeA.startDate}
+                    value={analyticsDraftRange.rangeA.startDate}
                     onChange={(e) => {
                       const newStartDate = e.target.value;
-                      setAnalyticsDateRange(prev => {
+                      setAnalyticsDraftRange(prev => {
+                        // If endDate exists and new start is after end, reject and notify
+                        if (prev.rangeA.endDate) {
+                          const end = new Date(prev.rangeA.endDate);
+                          const start = new Date(newStartDate);
+                          if (start.getTime() > end.getTime()) {
+                            toast.info('Start date cannot be after end date');
+                            return prev; // ignore invalid change
+                          }
+                        }
+
                         // Calculate the duration of Range A
                         const rangeAEnd = prev.rangeA.endDate ? new Date(prev.rangeA.endDate) : new Date();
                         const rangeAStart = new Date(newStartDate);
-                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24));
-                        
+                        // Inclusive duration (count both start and end day)
+                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
                         // Calculate Range B: previous period of same duration
                         const rangeBEnd = new Date(rangeAStart);
                         rangeBEnd.setDate(rangeBEnd.getDate() - 1); // Day before Range A starts
-                        
+
                         const rangeBStart = new Date(rangeBEnd);
                         rangeBStart.setDate(rangeBStart.getDate() - durationInDays + 1);
-                        
+
                         const formatDate = (date: Date) => {
                           const year = date.getFullYear();
                           const month = String(date.getMonth() + 1).padStart(2, '0');
                           const day = String(date.getDate()).padStart(2, '0');
                           return `${year}-${month}-${day}`;
                         };
-                        
+
                         const rangeBStartStr = formatDate(rangeBStart);
                         const rangeBEndStr = formatDate(rangeBEnd);
-                        
+
                         return {
-                          rangeA: { 
-                            ...prev.rangeA, 
+                          rangeA: {
+                            ...prev.rangeA,
                             startDate: newStartDate,
                             label: generateDateRangeLabel(newStartDate, prev.rangeA.endDate)
                           },
@@ -2861,7 +2874,7 @@ const ParkingBookingListSiteWise = () => {
                     className="h-10"
                   />
                   <p className="text-xs text-gray-500">
-                    {analyticsDateRange.rangeA.startDate && new Date(analyticsDateRange.rangeA.startDate).toLocaleDateString('en-US', { 
+                    {analyticsDraftRange.rangeA.startDate && new Date(analyticsDraftRange.rangeA.startDate).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
@@ -2872,35 +2885,46 @@ const ParkingBookingListSiteWise = () => {
                   <label className="text-xs font-medium text-gray-600">End Date</label>
                   <Input
                     type="date"
-                    value={analyticsDateRange.rangeA.endDate}
+                    value={analyticsDraftRange.rangeA.endDate}
                     onChange={(e) => {
                       const newEndDate = e.target.value;
-                      setAnalyticsDateRange(prev => {
+                      setAnalyticsDraftRange(prev => {
+                        // If startDate exists and new end is before start, reject and notify
+                        if (prev.rangeA.startDate) {
+                          const start = new Date(prev.rangeA.startDate);
+                          const end = new Date(newEndDate);
+                          if (end.getTime() < start.getTime()) {
+                            toast.info('End date cannot be before start date');
+                            return prev; // ignore invalid change
+                          }
+                        }
+
                         // Calculate the duration of Range A
                         const rangeAStart = prev.rangeA.startDate ? new Date(prev.rangeA.startDate) : new Date();
                         const rangeAEnd = new Date(newEndDate);
-                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24));
-                        
+                        // Inclusive duration (count both start and end day)
+                        const durationInDays = Math.ceil((rangeAEnd.getTime() - rangeAStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
                         // Calculate Range B: previous period of same duration
                         const rangeBEnd = new Date(rangeAStart);
                         rangeBEnd.setDate(rangeBEnd.getDate() - 1); // Day before Range A starts
-                        
+
                         const rangeBStart = new Date(rangeBEnd);
                         rangeBStart.setDate(rangeBStart.getDate() - durationInDays + 1);
-                        
+
                         const formatDate = (date: Date) => {
                           const year = date.getFullYear();
                           const month = String(date.getMonth() + 1).padStart(2, '0');
                           const day = String(date.getDate()).padStart(2, '0');
                           return `${year}-${month}-${day}`;
                         };
-                        
+
                         const rangeBStartStr = formatDate(rangeBStart);
                         const rangeBEndStr = formatDate(rangeBEnd);
-                        
+
                         return {
-                          rangeA: { 
-                            ...prev.rangeA, 
+                          rangeA: {
+                            ...prev.rangeA,
                             endDate: newEndDate,
                             label: generateDateRangeLabel(prev.rangeA.startDate, newEndDate)
                           },
@@ -2916,7 +2940,7 @@ const ParkingBookingListSiteWise = () => {
                     className="h-10"
                   />
                   <p className="text-xs text-gray-500">
-                    {analyticsDateRange.rangeA.endDate && new Date(analyticsDateRange.rangeA.endDate).toLocaleDateString('en-US', { 
+                    {analyticsDraftRange.rangeA.endDate && new Date(analyticsDraftRange.rangeA.endDate).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
@@ -2935,9 +2959,9 @@ const ParkingBookingListSiteWise = () => {
                 <label className="text-sm font-semibold text-gray-700">Range B</label>
                 <Input
                   type="text"
-                  value={analyticsDateRange.rangeB.label}
+                  value={analyticsDraftRange.rangeB.label}
                   onChange={(e) => {
-                    setAnalyticsDateRange(prev => ({
+                    setAnalyticsDraftRange(prev => ({
                       ...prev,
                       rangeB: { ...prev.rangeB, label: e.target.value }
                     }));
@@ -2951,22 +2975,34 @@ const ParkingBookingListSiteWise = () => {
                   <label className="text-xs font-medium text-gray-600">Start Date</label>
                   <Input
                     type="date"
-                    value={analyticsDateRange.rangeB.startDate}
+                    value={analyticsDraftRange.rangeB.startDate}
                     onChange={(e) => {
                       const newStartDate = e.target.value;
-                      setAnalyticsDateRange(prev => ({
-                        ...prev,
-                        rangeB: { 
-                          ...prev.rangeB, 
-                          startDate: newStartDate,
-                          label: generateDateRangeLabel(newStartDate, prev.rangeB.endDate)
+                      setAnalyticsDraftRange(prev => {
+                        // If endDate exists and new start is after end, reject and notify
+                        if (prev.rangeB.endDate) {
+                          const end = new Date(prev.rangeB.endDate);
+                          const start = new Date(newStartDate);
+                          if (start.getTime() > end.getTime()) {
+                            toast.info('Start date cannot be after end date');
+                            return prev; // ignore invalid change
+                          }
                         }
-                      }));
+
+                        return {
+                          ...prev,
+                          rangeB: {
+                            ...prev.rangeB,
+                            startDate: newStartDate,
+                            label: generateDateRangeLabel(newStartDate, prev.rangeB.endDate)
+                          }
+                        };
+                      });
                     }}
                     className="h-10"
                   />
                   <p className="text-xs text-gray-500">
-                    {analyticsDateRange.rangeB.startDate && new Date(analyticsDateRange.rangeB.startDate).toLocaleDateString('en-US', { 
+                    {analyticsDraftRange.rangeB.startDate && new Date(analyticsDraftRange.rangeB.startDate).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
@@ -2977,22 +3013,34 @@ const ParkingBookingListSiteWise = () => {
                   <label className="text-xs font-medium text-gray-600">End Date</label>
                   <Input
                     type="date"
-                    value={analyticsDateRange.rangeB.endDate}
+                    value={analyticsDraftRange.rangeB.endDate}
                     onChange={(e) => {
                       const newEndDate = e.target.value;
-                      setAnalyticsDateRange(prev => ({
-                        ...prev,
-                        rangeB: { 
-                          ...prev.rangeB, 
-                          endDate: newEndDate,
-                          label: generateDateRangeLabel(prev.rangeB.startDate, newEndDate)
+                      setAnalyticsDraftRange(prev => {
+                        // If startDate exists and new end is before start, reject and notify
+                        if (prev.rangeB.startDate) {
+                          const start = new Date(prev.rangeB.startDate);
+                          const end = new Date(newEndDate);
+                          if (end.getTime() < start.getTime()) {
+                            toast.info('End date cannot be before start date');
+                            return prev; // ignore invalid change
+                          }
                         }
-                      }));
+
+                        return {
+                          ...prev,
+                          rangeB: {
+                            ...prev.rangeB,
+                            endDate: newEndDate,
+                            label: generateDateRangeLabel(prev.rangeB.startDate, newEndDate)
+                          }
+                        };
+                      });
                     }}
                     className="h-10"
                   />
                   <p className="text-xs text-gray-500">
-                    {analyticsDateRange.rangeB.endDate && new Date(analyticsDateRange.rangeB.endDate).toLocaleDateString('en-US', { 
+                    {analyticsDraftRange.rangeB.endDate && new Date(analyticsDraftRange.rangeB.endDate).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
@@ -3005,7 +3053,9 @@ const ParkingBookingListSiteWise = () => {
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <Button 
               onClick={() => {
-                handleAnalyticsFilterApply(analyticsDateRange);
+                // Commit draft to active range and trigger analytics reload
+                setAnalyticsDateRange(analyticsDraftRange);
+                handleAnalyticsFilterApply(analyticsDraftRange);
                 setIsAnalyticsFilterOpen(false);
               }}
               className="flex-1 h-11 bg-[#C72030] hover:bg-[#A01020]"
@@ -3014,7 +3064,11 @@ const ParkingBookingListSiteWise = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => setIsAnalyticsFilterOpen(false)}
+              onClick={() => {
+                // Discard draft changes and just close modal
+                setAnalyticsDraftRange(analyticsDateRange);
+                setIsAnalyticsFilterOpen(false);
+              }}
               className="flex-1 h-11"
             >
               Cancel
@@ -3022,7 +3076,7 @@ const ParkingBookingListSiteWise = () => {
             <Button 
               variant="outline" 
               onClick={() => {
-                setAnalyticsDateRange(getDefaultAnalyticsDateRange());
+                setAnalyticsDraftRange(getDefaultAnalyticsDateRange());
               }}
               className="flex-1 h-11"
             >

@@ -53,16 +53,11 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
 
         // Calculate dates if not provided
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setDate(date.getDate() - 7);
-          return date.toISOString().split('T')[0];
-        })();
+        const startDateStr = startDate || endDateStr;
 
-        // Calculate previous period start date (last month)
         const previousStartDate = (() => {
           const date = new Date(startDateStr);
-          date.setMonth(date.getMonth() - 1);
+          date.setDate(date.getDate() - 1);
           return date.toISOString().split('T')[0];
         })();
 
@@ -127,16 +122,11 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
     try {
       // Calculate dates if not provided
       const endDateStr = endDate || new Date().toISOString().split('T')[0];
-      const startDateStr = startDate || (() => {
-        const date = new Date();
-        date.setDate(date.getDate() - 7);
-        return date.toISOString().split('T')[0];
-      })();
+      const startDateStr = startDate || endDateStr;
 
-      // Calculate previous period start date (last month)
       const previousStartDate = (() => {
         const date = new Date(startDateStr);
-        date.setMonth(date.getMonth() - 1);
+        date.setDate(date.getDate() - 1);
         return date.toISOString().split('T')[0];
       })();
 
@@ -170,28 +160,32 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
 
   // Transform API data to chart format
   const getChartData = (): OccupancyData[] => {
-    if (apiData?.data?.current && apiData?.data?.yoy) {
+    if (apiData?.data?.current) {
       const current = apiData.data.current;
-      const yoy = apiData.data.yoy;
-      
+      // If yoy missing, fall back to zeros so compare view still renders both series
+      const yoy = apiData.data.yoy || {
+        two_wheeler: { total_occupied: 0, total_vacant: 0 },
+        four_wheeler: { total_occupied: 0, total_vacant: 0 },
+      };
+
       return [
         {
           category: '2W',
-          lastYearOccupied: yoy.two_wheeler.total_occupied || 0,
-          lastYearVacant: yoy.two_wheeler.total_vacant || 0,
-          thisYearOccupied: current.two_wheeler.total_occupied || 0,
-          thisYearVacant: current.two_wheeler.total_vacant || 0
+          lastYearOccupied: yoy.two_wheeler?.total_occupied || 0,
+          lastYearVacant: yoy.two_wheeler?.total_vacant || 0,
+          thisYearOccupied: current.two_wheeler?.total_occupied || 0,
+          thisYearVacant: current.two_wheeler?.total_vacant || 0,
         },
         {
           category: '4W',
-          lastYearOccupied: yoy.four_wheeler.total_occupied || 0,
-          lastYearVacant: yoy.four_wheeler.total_vacant || 0,
-          thisYearOccupied: current.four_wheeler.total_occupied || 0,
-          thisYearVacant: current.four_wheeler.total_vacant || 0
-        }
+          lastYearOccupied: yoy.four_wheeler?.total_occupied || 0,
+          lastYearVacant: yoy.four_wheeler?.total_vacant || 0,
+          thisYearOccupied: current.four_wheeler?.total_occupied || 0,
+          thisYearVacant: current.four_wheeler?.total_vacant || 0,
+        },
       ];
     }
-    
+
     // Use prop data if available, otherwise use default
     if (propData) return propData;
 
@@ -202,19 +196,39 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
         lastYearOccupied: 38,
         lastYearVacant: 12,
         thisYearOccupied: 42,
-        thisYearVacant: 10
+        thisYearVacant: 10,
       },
       {
         category: '4W',
         lastYearOccupied: 44,
         lastYearVacant: 22,
         thisYearOccupied: 46,
-        thisYearVacant: 24
-      }
+        thisYearVacant: 24,
+      },
     ];
   };
 
   const chartData = getChartData();
+  const hasYoy = Boolean(apiData?.data?.yoy);
+
+  // Compute Y axis ticks dynamically based on data so labels are meaningful and visible
+  const computeYAxisTicks = (data: OccupancyData[]) => {
+    if (!data || data.length === 0) return [0, 15, 30, 45, 60];
+    const values: number[] = [];
+    data.forEach(d => {
+      values.push(d.thisYearOccupied, d.thisYearVacant, d.lastYearOccupied, d.lastYearVacant);
+    });
+    const maxVal = Math.max(...values, 60);
+    // Create 4 steps (5 ticks including 0)
+    const steps = 4;
+    const rawStep = Math.ceil(maxVal / steps);
+    // Round step to nearest 5 for cleaner labels
+    const step = Math.max(5, Math.ceil(rawStep / 5) * 5);
+    const ticks = Array.from({ length: steps + 1 }, (_, i) => i * step);
+    return ticks;
+  };
+
+  const yTicks = computeYAxisTicks(chartData);
 
   // Custom tooltip to show detailed information
   const CustomTooltip = ({ active, payload, label }: {
@@ -226,17 +240,54 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
     }>;
     label?: string;
   }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
-          <p className="font-bold text-gray-800 mb-2">{label}</p>
-          {payload.map((entry, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
+    if (active) {
+      // Prefer reading values from chartData so zero values from backend are displayed
+      const category = typeof label === 'string' ? label : '';
+      const datum = chartData.find(d => d.category === category);
+
+      if (datum) {
+        return (
+          <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
+            <p className="font-bold text-gray-800 mb-2">{category}</p>
+            <div className="space-y-1">
+              {occupancyView === 'yoy' && (
+                <>
+                  <div className="text-sm flex justify-between">
+                    <span style={{ color: CHART_COLORS.lastYearOccupied }}>Last Year Occupied</span>
+                    <span className="font-semibold">{hasYoy ? datum.lastYearOccupied : 'N/A'}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span style={{ color: CHART_COLORS.lastYearVacant }}>Last Year Vacant</span>
+                    <span className="font-semibold">{hasYoy ? datum.lastYearVacant : 'N/A'}</span>
+                  </div>
+                </>
+              )}
+              <div className="text-sm flex justify-between">
+                <span style={{ color: CHART_COLORS.thisYearOccupied }}>This Year Occupied</span>
+                <span className="font-semibold">{datum.thisYearOccupied}</span>
+              </div>
+              <div className="text-sm flex justify-between">
+                <span style={{ color: CHART_COLORS.thisYearVacant }}>This Year Vacant</span>
+                <span className="font-semibold">{datum.thisYearVacant}</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Fallback to payload if chartData doesn't have the category
+      if (payload && payload.length) {
+        return (
+          <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
+            <p className="font-bold text-gray-800 mb-2">{label}</p>
+            {payload.map((entry, index: number) => (
+              <p key={index} style={{ color: entry.color }} className="text-sm">
+                {entry.name}: {entry.value}
+              </p>
+            ))}
+          </div>
+        );
+      }
     }
     return null;
   };
@@ -246,7 +297,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-lg font-bold text-[#1A1A1A]">2W / 4W Occupancy (Stacked)</CardTitle>
+            <CardTitle className="text-lg font-bold text-[#1A1A1A]">2W / 4W Occupancy</CardTitle>
             {loading && <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
           </div>
           <div className="flex items-center gap-2">
@@ -303,10 +354,11 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
                 />
                 <YAxis 
                   tick={{ fill: '#6b7280', fontSize: 12 }}
-                  domain={[0, 60]}
-                  ticks={[0, 15, 30, 45, 60]}
+                  domain={[0, yTicks[yTicks.length - 1]]}
+                  ticks={yTicks}
+                  interval={0}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
                 <Legend 
                   wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
                   iconType="square"

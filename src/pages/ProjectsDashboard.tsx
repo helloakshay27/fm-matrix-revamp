@@ -25,7 +25,6 @@ import {
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cache } from "@/utils/cacheUtils";
-import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
@@ -44,6 +43,13 @@ const columns: ColumnConfig[] = [
   {
     key: "id",
     label: "Project ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "project_code",
+    label: "Project Code",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -131,6 +137,7 @@ const transformedProjects = (projects: any) => {
   return projects.map((project: any) => {
     return {
       id: project.id,
+      project_code: project.project_code,
       title: project.title,
       status: project.status,
       type: project.project_type_name,
