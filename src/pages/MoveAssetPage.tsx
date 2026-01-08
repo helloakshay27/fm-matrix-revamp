@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,16 @@ import { AssetTableDisplay } from "@/components/AssetTableDisplay";
 import { MovementToSection } from "@/components/MovementToSection";
 import { AllocateToSection } from "@/components/AllocateToSection";
 import { toast } from "sonner";
+import { apiClient } from "@/utils/apiClient";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 export const MoveAssetPage: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const location = useLocation();
   const selectedAssets = location.state?.selectedAssets || [];
+  const assetIdFromState = location.state?.assetId;
   const [allocateTo, setAllocateTo] = useState("department");
   const [siteId, setSiteId] = useState<number | null>(null);
   const [buildingId, setBuildingId] = useState<number | null>(null);
@@ -20,8 +24,124 @@ export const MoveAssetPage: React.FC = () => {
   const [floorId, setFloorId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
   const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
+  const [allocationPrefillLabel, setAllocationPrefillLabel] = useState<string>("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [comments, setComments] = useState("");
+  const [employeeCode, setEmployeeCode] = useState<string>("");
+  const [userDepartment, setUserDepartment] = useState<string>("");
+
+  const assetIdForPrefill = useMemo(() => {
+    if (assetIdFromState) return Number(assetIdFromState);
+    if (selectedAssets?.length) return Number(selectedAssets[0]?.id);
+    return null;
+  }, [assetIdFromState, selectedAssets]);
+
+  useEffect(() => {
+    const fetchAssetAllocation = async () => {
+      if (!assetIdForPrefill) return;
+      try {
+        const resp = await apiClient.get(`/pms/assets/${assetIdForPrefill}.json`);
+        const asset = resp?.data?.asset;
+        const allocationTypeRaw = asset?.allocation_type;
+        const allocationIdsRaw = asset?.allocation_ids;
+
+        const normalizedAllocationType = (() => {
+          const raw = String(allocationTypeRaw ?? "").toLowerCase().trim();
+          if (raw === "user" || raw === "users") return "user";
+          if (raw === "department" || raw === "departments") return "department";
+          return raw;
+        })();
+
+        if (normalizedAllocationType === "user" || normalizedAllocationType === "department") {
+          setAllocateTo(normalizedAllocationType);
+        }
+
+        const allocatedToLabel = (() => {
+          const rawAllocatedTo = asset?.allocated_to;
+          if (Array.isArray(rawAllocatedTo) && rawAllocatedTo.length) return String(rawAllocatedTo[0] ?? "");
+          if (typeof rawAllocatedTo === "string") return rawAllocatedTo;
+          return "";
+        })();
+        setAllocationPrefillLabel(allocatedToLabel);
+
+        const parsedAllocatedId = (() => {
+          if (allocationIdsRaw === undefined || allocationIdsRaw === null) return null;
+          if (Array.isArray(allocationIdsRaw)) {
+            const first = allocationIdsRaw[0];
+            return first !== undefined && first !== null && String(first).trim() !== "" ? Number(first) : null;
+          }
+          const rawStr = String(allocationIdsRaw).trim();
+          if (!rawStr) return null;
+
+          // Handle stringified arrays like "[87989]" or "[87989, 123]"
+          if (rawStr.startsWith("[") && rawStr.endsWith("]")) {
+            try {
+              const parsed = JSON.parse(rawStr);
+              if (Array.isArray(parsed)) {
+                const first = parsed[0];
+                return first !== undefined && first !== null && String(first).trim() !== "" ? Number(first) : null;
+              }
+            } catch {
+              // fall through to regex parsing
+            }
+          }
+
+          // Handle comma-separated strings like "87,88" and also bracketed strings like "[87989]"
+          const firstPart = rawStr.split(",")[0]?.trim();
+          const numericMatch = firstPart.match(/-?\d+/);
+          return numericMatch ? Number(numericMatch[0]) : null;
+        })();
+
+        if (parsedAllocatedId !== null && !Number.isNaN(parsedAllocatedId)) {
+          setAllocatedToId(parsedAllocatedId);
+        }
+      } catch (error) {
+        console.error("Error fetching asset details for allocation prefill:", error);
+      }
+    };
+
+    fetchAssetAllocation();
+  }, [assetIdForPrefill]);
+
+  useEffect(() => {
+    const fetchUserDetailsForAllocation = async () => {
+      if (allocateTo !== "user") {
+        setEmployeeCode("");
+        setUserDepartment("");
+        setAllocationPrefillLabel("");
+        return;
+      }
+      if (!allocatedToId) {
+        setEmployeeCode("");
+        setUserDepartment("");
+        return;
+      }
+      try {
+        const resp = await apiClient.get(`/pms/get_fm_user_detail.json?id=${allocatedToId}`);
+        const user = resp?.data?.user || resp?.data;
+        const lockUserPermission = user?.lock_user_permission || {};
+        const fullName =
+          user?.full_name ||
+          [user?.firstname, user?.lastname].filter(Boolean).join(" ") ||
+          "";
+        const empId = lockUserPermission?.employee_id || user?.employee_id || "";
+        const deptName =
+          lockUserPermission?.department?.department_name ||
+          user?.department?.department_name ||
+          user?.department_name ||
+          "";
+        if (fullName) setAllocationPrefillLabel(String(fullName));
+        setEmployeeCode(String(empId || ""));
+        setUserDepartment(String(deptName || ""));
+      } catch (error) {
+        console.error("Error fetching FM user detail:", error);
+        setEmployeeCode("");
+        setUserDepartment("");
+      }
+    };
+
+    fetchUserDetailsForAllocation();
+  }, [allocateTo, allocatedToId]);
   // const handleSubmit = async () => {
   //   // Validation for required fields
   //   if (!selectedAssets.length) {
@@ -229,7 +349,21 @@ export const MoveAssetPage: React.FC = () => {
               setAllocatedToId={setAllocatedToId}
               type="Asset"
               siteId={siteId}
+              prefillSelectedLabel={allocationPrefillLabel}
             />
+
+            {allocateTo === "user" && (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Employee Code</Label>
+                  <Input value={employeeCode} disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input value={userDepartment} disabled />
+                </div>
+              </div>
+            )}
 
             {/* Attachment Section */}
             <div className="mt-6">
