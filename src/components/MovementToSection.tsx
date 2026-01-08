@@ -130,6 +130,26 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
     }
   }, [dispatch]);
 
+  useEffect(() => {
+    if (siteId) return;
+    if (!sites?.length) return;
+
+    const localSelectedSiteId = (() => {
+      const raw = localStorage.getItem("selectedSiteId");
+      if (!raw) return null;
+      const numericMatch = raw.match(/-?\d+/);
+      return numericMatch ? Number(numericMatch[0]) : null;
+    })();
+
+    const nextSiteId =
+      selectedSite?.id ||
+      localSelectedSiteId ||
+      sites[0]?.id ||
+      null;
+
+    if (nextSiteId) setSiteId(nextSiteId);
+  }, [siteId, sites, selectedSite, setSiteId]);
+
   // Handle cascading dropdown changes
   useEffect(() => {
     if (siteId) {
