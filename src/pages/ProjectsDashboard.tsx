@@ -285,11 +285,14 @@ export const ProjectsDashboard = () => {
             10 * 60 * 1000 // Stale up to 10 minutes
           );
 
-          const transformedData = transformedProjects(
-            cachedResult.data.project_managements
-          );
+          // cachedResult has structure: { data: <actual-response>, fromCache: boolean }
+          const actualData = cachedResult?.data || cachedResult;
+          const projectsData = actualData?.project_managements || [];
+          const transformedData = transformedProjects(projectsData);
           setProjects(transformedData);
-          setHasMore(page < (cachedResult.data.pagination?.total_pages || 1));
+
+          const paginationData = actualData?.pagination;
+          setHasMore(page < (paginationData?.total_pages || 1));
           setCurrentPage(page);
         } else {
           // For pagination, fetch fresh data
@@ -297,9 +300,8 @@ export const ProjectsDashboard = () => {
             filterProjects({ token, baseUrl, filters })
           ).unwrap();
 
-          const transformedData = transformedProjects(
-            response.project_managements
-          );
+          const projectsData = response?.data?.project_managements || response?.project_managements || [];
+          const transformedData = transformedProjects(projectsData);
 
           if (isLoadMore) {
             setProjects((prev) => [...prev, ...transformedData]);
@@ -307,7 +309,8 @@ export const ProjectsDashboard = () => {
             setProjects(transformedData);
           }
 
-          setHasMore(page < (response.pagination?.total_pages || 1));
+          const paginationData = response?.data?.pagination || response?.pagination;
+          setHasMore(page < (paginationData?.total_pages || 1));
           setCurrentPage(page);
         }
       } catch (error) {
@@ -327,35 +330,44 @@ export const ProjectsDashboard = () => {
     setAppliedFilters("");
   }, [dispatch, token, baseUrl, selectedFilterOption, debouncedSearchTerm]);
 
-  // Infinite scroll handler
+  // Infinite scroll handler with debouncing
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    let lastLoadedPage = currentPage;
 
-      // Load more when user is 200px from bottom
-      if (
-        scrollTop + clientHeight >= scrollHeight - 200 &&
-        !scrollLoading &&
-        !loading &&
-        hasMore
-      ) {
-        fetchData(currentPage + 1, "", true, debouncedSearchTerm);
-      }
+    const handleScroll = () => {
+      // Clear any existing timeout
+      clearTimeout(scrollTimeout);
+
+      // Debounce the scroll check to avoid excessive calls
+      scrollTimeout = setTimeout(async () => {
+        const scrollElement = document.documentElement;
+        const scrollTop = window.pageYOffset || scrollElement.scrollTop;
+        const scrollHeight = scrollElement.scrollHeight;
+        const clientHeight = window.innerHeight;
+
+        // Load more when user is 500px from bottom
+        const threshold = 500;
+        if (
+          scrollTop + clientHeight >= scrollHeight - threshold &&
+          !scrollLoading &&
+          !loading &&
+          hasMore &&
+          lastLoadedPage === currentPage // Prevent duplicate requests
+        ) {
+          const nextPage = currentPage + 1;
+          lastLoadedPage = nextPage;
+          await fetchData(nextPage, "", true, debouncedSearchTerm);
+        }
+      }, 150); // Debounce for 150ms
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [
-    scrollLoading,
-    loading,
-    hasMore,
-    currentPage,
-    appliedFilters,
-    debouncedSearchTerm,
-  ]);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [currentPage, scrollLoading, loading, hasMore, debouncedSearchTerm, fetchData]);
 
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -1168,6 +1180,8 @@ export const ProjectsDashboard = () => {
         setIsModalOpen={setIsFilterModalOpen}
         onApplyFilters={(filterString) => {
           setAppliedFilters(filterString);
+          setCurrentPage(1);
+          setHasMore(true);
           fetchData(1, filterString, false, debouncedSearchTerm);
         }}
       />
