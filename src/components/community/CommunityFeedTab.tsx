@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Dialog,
     DialogContent,
@@ -25,6 +26,7 @@ import {
     X,
     MessageSquare,
     MoreVertical,
+    FileText,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -57,6 +59,7 @@ interface Comment {
     commentor_profile_image: string | null;
     commentor_site_name: string;
     attachments: CommentAttachment[];
+    reports_count?: number;
 }
 
 interface Like {
@@ -98,6 +101,7 @@ interface Post {
 const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
     const [createPostOpen, setCreatePostOpen] = useState(false);
     const [createPollOpen, setCreatePollOpen] = useState(false);
@@ -466,6 +470,14 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-semibold text-gray-900">{comment.commentor_full_name}</h4>
+                                                {comment.reports_count && comment.reports_count > 0 && (
+                                                    <span
+                                                        className="bg-[rgba(199,32,48,0.5)] text-white text-xs font-bold px-3 py-1 rounded-[4px] flex items-center gap-1 cursor-pointer hover:bg-[#c72030] transition-colors"
+                                                        onClick={() => navigate(`/pulse/community/${communityId}/reports?resourceType=Comment&resourceId=${comment.id}`)}
+                                                    >
+                                                        <FileText size={13} />{comment.reports_count} Report{comment.reports_count > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="text-sm text-gray-500">{formatTimestamp(comment.created_at)}</p>
                                         </div>

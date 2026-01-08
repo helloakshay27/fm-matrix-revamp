@@ -89,8 +89,18 @@ const Communtiy = () => {
     const handleContinue = () => {
         // Save selected community IDs to localStorage
         localStorage.setItem('selectedCommunityIds', JSON.stringify(selectedRows));
-        // Navigate back to add broadcast page
-        navigate('/pulse/notices/add');
+
+        // Check where to redirect based on the 'from' parameter
+        const fromPage = searchParams.get('from');
+        const broadcastId = searchParams.get('id');
+
+        if (fromPage === 'edit' && broadcastId) {
+            // Redirect back to edit page
+            navigate(`/pulse/notices/edit/${broadcastId}`);
+        } else {
+            // Default to add page (from=add or no from parameter)
+            navigate('/pulse/notices/add');
+        }
     }
 
     const renderActions = (item: any) => (

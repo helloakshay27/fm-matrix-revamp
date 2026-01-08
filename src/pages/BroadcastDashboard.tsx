@@ -84,39 +84,6 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-const cardsData = [
-  {
-    title: "Total Notices",
-    value: 0,
-    icon: <Rows4 className="w-5 h-5" color="#C72030" />,
-  },
-  {
-    title: "Important",
-    value: 0,
-    icon: <Star className="w-5 h-5" color="#C72030" />,
-  },
-  {
-    title: "Expiring Soon",
-    value: 0,
-    icon: <CalendarX className="w-5 h-5" color="#C72030" />,
-  },
-  {
-    title: "Active Now",
-    value: 0,
-    icon: <ThumbsUp className="w-5 h-5" color="#C72030" />,
-  },
-  {
-    title: "Inactive",
-    value: 0,
-    icon: <ThumbsDown className="w-5 h-5" color="#C72030" />,
-  },
-  {
-    title: "Expired",
-    value: 0,
-    icon: <CalendarOff className="w-5 h-5" color="#C72030" />,
-  },
-];
-
 export const BroadcastDashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -134,6 +101,14 @@ export const BroadcastDashboard = () => {
     total_pages: 0,
   });
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
+  const [cardData, setCardData] = useState({
+    total_notices: "",
+    important_notices: "",
+    expiring_soon_notices: "",
+    active_notices: "",
+    inactive_notices: "",
+    expired_notices: ""
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,6 +122,14 @@ export const BroadcastDashboard = () => {
           })
         ).unwrap();
         setBroadcasts(response.noticeboards || []);
+        setCardData({
+          total_notices: response.total_notices,
+          important_notices: response.important_notices,
+          expiring_soon_notices: response.expiring_soon_notices,
+          active_notices: response.active_notices,
+          inactive_notices: response.inactive_notices,
+          expired_notices: response.expired_notices
+        })
         setPagination({
           current_page: response.pagination.current_page,
           total_count: response.pagination.total_count,
@@ -358,11 +341,25 @@ export const BroadcastDashboard = () => {
     navigate(`/pulse/notices/edit/${id}`);
   };
 
-  const handleApplyFilter = async (data: { status: string }) => {
-    const params = {
-      "q[publish_eq]": data.status,
-    };
-    const queryString = new URLSearchParams(params).toString();
+  const handleApplyFilter = async (data: {
+    status?: string;
+    created_by?: string;
+    created_at?: string;
+  }) => {
+    const params = new URLSearchParams();
+
+    if (data.status) {
+      params.append("q[publish_eq]", data.status);
+    }
+
+    if (data.created_by) {
+      params.append("q[created_by_eq]", data.created_by);
+    }
+
+    if (data.created_at) {
+      params.append("q[created_at_eq]", data.created_at);
+    }
+
     try {
       const response = await dispatch(
         fetchBroadcasts({
@@ -370,9 +367,10 @@ export const BroadcastDashboard = () => {
           token,
           per_page: 10,
           page: pagination.current_page,
-          params: queryString,
+          params: params.toString() || undefined,
         })
       ).unwrap();
+
       setBroadcasts(response.noticeboards || []);
       setPagination({
         current_page: response.pagination.current_page,
@@ -383,6 +381,7 @@ export const BroadcastDashboard = () => {
       toast.error("Failed to fetch broadcasts");
     }
   };
+
 
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
@@ -532,23 +531,32 @@ export const BroadcastDashboard = () => {
     </div>
   );
 
+  const cardValues = [
+    { title: "Total Notices", value: cardData.total_notices, icon: <Rows4 className="w-5 h-5" color="#C72030" /> },
+    { title: "Important", value: cardData.important_notices, icon: <Star className="w-5 h-5" color="#C72030" /> },
+    { title: "Expiring Soon", value: cardData.expiring_soon_notices, icon: <CalendarX className="w-5 h-5" color="#C72030" /> },
+    { title: "Active Now", value: cardData.active_notices, icon: <ThumbsUp className="w-5 h-5" color="#C72030" /> },
+    { title: "Inactive", value: cardData.inactive_notices, icon: <ThumbsDown className="w-5 h-5" color="#C72030" /> },
+    { title: "Expired", value: cardData.expired_notices, icon: <CalendarOff className="w-5 h-5" color="#C72030" /> },
+  ];
+
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {cardsData.map((_, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {cardValues.map((card, index) => (
           <div key={index}>
             <div
               className={`bg-[#F6F4EE] p-6 rounded-lg shadow-sm flex items-center gap-4`}
             >
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded-[3px]">
-                {cardsData[index].icon}
+                {card.icon}
               </div>
               <div>
                 <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {cardsData[index].value}
+                  {card.value || 0}
                 </div>
                 <div className="text-sm font-medium text-[#1A1A1A]">
-                  {cardsData[index].title}
+                  {card.title}
                 </div>
               </div>
             </div>

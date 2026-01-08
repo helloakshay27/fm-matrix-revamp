@@ -1,7 +1,7 @@
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "../enhanced-table/EnhancedTable";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
@@ -86,6 +86,7 @@ const columns: ColumnConfig[] = [
 
 const CommunityReportsTab = ({ communityId }: CommunityReportsTabProps) => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
 
@@ -93,7 +94,17 @@ const CommunityReportsTab = ({ communityId }: CommunityReportsTabProps) => {
 
     const fetchReports = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/communities/${communityId}/reports.json`, {
+            const resourceType = searchParams.get("resourceType");
+            const resourceId = searchParams.get("resourceId");
+
+            let url = `https://${baseUrl}/communities/${communityId}/reports.json`;
+
+            // Add query parameters if provided
+            if (resourceType && resourceId) {
+                url = `${url}?q[community_reports_resource_type_eq]=${resourceType}&q[community_reports_resource_id_eq]=${resourceId}`;
+            }
+
+            const response = await axios.get(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -106,7 +117,7 @@ const CommunityReportsTab = ({ communityId }: CommunityReportsTabProps) => {
 
     useEffect(() => {
         fetchReports()
-    }, [])
+    }, [searchParams])
 
     const renderActions = (item: any) => (
         <Button

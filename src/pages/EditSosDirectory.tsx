@@ -394,7 +394,6 @@ const EditSosDirectory = () => {
                                         .filter(park => selectedTechParks.includes(park.id))
                                         .map(park => park.name)
                                         .join(", ")}
-                                    .
                                 </span>
                                 <button
                                     type="button"

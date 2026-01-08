@@ -868,6 +868,7 @@ import SOSDirectory from "./pages/SOSDirectory";
 import EditSosDirectory from "./pages/EditSosDirectory";
 import AddSosDirectory from "./pages/AddSosDirectory";
 import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
+import SOSCategorySetupPage from "./pages/SOSCategorySetupPage";
 
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
@@ -882,6 +883,7 @@ import SprintKanban from "./pages/SprintKanban";
 import Communtiy from "./pages/Communtiy";
 import CommunityAdd from "./pages/CommunityAdd";
 import CommunityDetails from "./pages/CommunityDetails";
+import CommunityReportsPage from "./pages/CommunityReportsPage";
 import CommunityEdit from "./pages/CommunityEdit";
 import CuratedServiceDashboard from "./pages/CuratedServiceDashboard";
 import { AddCuratedServicePage } from "./pages/AddCuratedServicePage";
@@ -3754,6 +3756,11 @@ function App() {
                   />
 
                   <Route
+                    path="/pulse/community/:id/reports"
+                    element={<CommunityReportsPage />}
+                  />
+
+                  <Route
                     path="/pulse/community/edit/:id"
                     element={<CommunityEdit />}
                   />
@@ -3763,7 +3770,7 @@ function App() {
                     element={<CommunityUserDetails />}
                   />
                   <Route
-                    path="/pulse/community/:communityId/user/:userId/details"
+                    path="/pulse/community/reports/details/:id"
                     element={<ReportsDetailsPage />}
                   />
 
@@ -3834,10 +3841,10 @@ function App() {
                     element={<EditServiceCategoryPage />}
                   />
 
-  {/* Plus curated Service Routes */}
+                  {/* Plus curated Service Routes */}
                   <Route
                     path="/pulse/curated-services/service"
-                    element={<CuratedServiceDashboard/>}
+                    element={<CuratedServiceDashboard />}
                   />
                   <Route
                     path="/pulse/curated-services/service/create"
@@ -3851,7 +3858,7 @@ function App() {
                   {/*  curated Service  Category Routes */}
                   <Route
                     path="/pulse/curated-services/service-category"
-                    element={<CuratedServiceCategoryDashboard/>}
+                    element={<CuratedServiceCategoryDashboard />}
                   />
                   <Route
                     path="/pulse/curated-services/service-category/create"
@@ -3893,6 +3900,11 @@ function App() {
                   <Route
                     path="/pulse/sos-directory/:id"
                     element={<SosDirectoryDetailsPage />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-category-setup"
+                    element={<SOSCategorySetupPage />}
                   />
                 </Route>
 

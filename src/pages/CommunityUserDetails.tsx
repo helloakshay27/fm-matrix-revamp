@@ -16,6 +16,7 @@ interface UserDetail {
     address: string;
     employee_number: string;
     community_joined: string;
+    reports: any[];
 }
 
 const CommunityUserDetails = () => {
@@ -48,6 +49,15 @@ const CommunityUserDetails = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatReportedDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
     };
 
     if (loading) {
@@ -172,34 +182,40 @@ const CommunityUserDetails = () => {
             </div>
 
             {/* Reports Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-[#F6F4EE] px-6 py-4 flex items-center justify-between border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <AlertCircle size={16} />
+            <div className="space-y-6">
+                {
+                    userDetails.reports.length > 0 && userDetails.reports.map((report: any) => (
+                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                            <div className="bg-[#F6F4EE] px-6 py-4 flex items-center justify-between border-b border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+                                        <AlertCircle size={16} />
+                                    </div>
+                                    <span className="font-semibold text-lg text-gray-800">Reports</span>
+                                </div>
+                                <span className="bg-[#FFF4E6] text-[#F59E0B] px-3 py-1 rounded text-sm font-medium">
+                                    Under Review
+                                </span>
+                            </div>
+                            <div className="p-6 bg-white">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-sm text-gray-500 block mb-2">Report:</label>
+                                        <span
+                                            className="bg-[#e06060] text-white px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
+                                            onClick={() => navigate(`/pulse/community/reports/details/${report.id}`)}
+                                        >
+                                            <File size={16} /> 1 Report
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-gray-500 block">Reported On {formatReportedDate(report.created_at)}</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <span className="font-semibold text-lg text-gray-800">Reports</span>
-                    </div>
-                    <span className="bg-[#FFF4E6] text-[#F59E0B] px-3 py-1 rounded text-sm font-medium">
-                        Under Review
-                    </span>
-                </div>
-                <div className="p-6 bg-white">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm text-gray-500 block mb-2">Report:</label>
-                            <span
-                                className="bg-[#e06060] text-white px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
-                                onClick={() => navigate(`details`)}
-                            >
-                                <File size={16} /> 1 Report
-                            </span>
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-500 block">Reported On Oct 21, 2025</label>
-                        </div>
-                    </div>
-                </div>
+                    ))
+                }
             </div>
         </div>
     );

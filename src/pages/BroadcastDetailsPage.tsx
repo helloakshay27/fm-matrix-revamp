@@ -26,7 +26,7 @@ interface BroadcastDetails {
   shared?: number;
   show_on_home_screen?: boolean;
   visible_after_expire?: boolean;
-  share_with_communities?: boolean;
+  shared_community?: boolean;
 }
 
 export const BroadcastDetailsPage = () => {
@@ -51,7 +51,7 @@ export const BroadcastDetailsPage = () => {
         const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
         setBroadcastDetails(response)
         // Set initial switch states
-        setIsActive(response.status === 'active' || response.status === 'Active');
+        setIsActive(response.active);
         setShowOnHomeScreen(response.show_on_home_screen || false);
         setVisibleAfterExpire(response.visible_after_expire || false);
       } catch (error) {
@@ -104,7 +104,7 @@ export const BroadcastDetailsPage = () => {
       const formData = new FormData();
 
       if (field === 'active') {
-        formData.append('noticeboard[status]', value ? 'active' : 'inactive');
+        formData.append('noticeboard[active]', value ? '1' : '0');
         setIsActive(value);
       } else if (field === 'show_on_home_screen') {
         formData.append('noticeboard[show_on_home_screen]', value.toString());
@@ -300,7 +300,7 @@ export const BroadcastDetailsPage = () => {
             <div className="flex items-center gap-8">
               <span className="text-sm text-gray-500 min-w-[180px]">Share With Communities</span>
               <span className="text-sm font-medium text-gray-900">
-                {broadcastDetails.share_with_communities ? "Yes" : "No"}
+                {broadcastDetails.shared_community ? "Yes" : "No"}
               </span>
             </div>
           </div>

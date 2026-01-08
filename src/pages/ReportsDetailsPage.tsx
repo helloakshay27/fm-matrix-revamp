@@ -16,7 +16,7 @@ interface ReportDetail {
 }
 
 const ReportsDetailsPage = () => {
-    const { reportId } = useParams();
+    const { userId } = useParams();
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -27,14 +27,14 @@ const ReportsDetailsPage = () => {
 
     useEffect(() => {
         fetchReportDetails();
-    }, [reportId]);
+    }, [userId]);
 
     const fetchReportDetails = async () => {
         try {
             setLoading(true);
             // Update API endpoint based on actual backend
             const response = await axios.get(
-                `https://${baseUrl}/api/reports/${reportId}.json`,
+                `https://${baseUrl}/community_members/${userId}.json`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

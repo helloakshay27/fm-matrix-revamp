@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { FileText, Eye, Pencil, Trash2 } from "lucide-react";
+import { FileText, Eye, Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { MemberSelectionPanel } from "./MemberSelectionPanel";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
 interface CommunityDetailsTabProps {
@@ -15,8 +17,8 @@ interface CommunityDetailsTabProps {
 
 const memberColumns: ColumnConfig[] = [
     {
-        key: 'checkbox',
-        label: '',
+        key: 'actions',
+        label: 'Actions',
         sortable: false,
         draggable: false
     },
@@ -27,7 +29,7 @@ const memberColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'name',
+        key: 'user',
         label: 'Name',
         sortable: true,
         draggable: true
@@ -65,6 +67,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
     const navigate = useNavigate();
 
     const [isActive, setIsActive] = useState(true);
+    const [selectedMembers, setSelectedMembers] = useState<Array<{ id: string; name: string }>>([])
     const [communityData, setCommunityData] = useState({
         icon: "",
         name: "",
@@ -74,9 +77,8 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
         created_at: "",
         created_by: ""
     });
-    const [members, setMembers] = useState([]);
-    const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-    const [isDeleting, setIsDeleting] = useState(false);
+
+    const [members, setMembers] = useState<any[]>([]);
 
     const fetchData = async () => {
         try {
@@ -97,104 +99,49 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
         fetchData()
     }, [communityId])
 
-    const handleMemberSelection = (memberId: number, isSelected: boolean) => {
-        setSelectedMembers(prev => {
-            if (isSelected) {
-                return [...prev, memberId];
-            } else {
-                return prev.filter(id => id !== memberId);
-            }
-        });
+    const renderMemberActions = (member: any) => (
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/pulse/community/${communityId}/user/${member.id}`)}>
+            <Eye className="w-4 h-4" />
+        </Button>
+    );
+
+    const renderMemberCell = (member: any, columnKey: string) => {
+        if (columnKey === 'actions') {
+            return renderMemberActions(member);
+        }
+        return member[columnKey] || "-";
+    };
+
+    const handleDeleteMembers = async () => {
+        const memberIds = selectedMembers.map((member) => member.id).join(",");
+        try {
+            // Delete each selected member
+            await axios.get(`https://${baseUrl}/community_members/removed.json?member_ids=[${memberIds}]`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            // Refresh the data after deletion
+            await fetchData();
+
+            toast.success("Members deleted successfully!");
+        } catch (error) {
+            console.error("Error deleting members:", error);
+            toast.error("Failed to delete members. Please try again.");
+            throw error;
+        }
     };
 
     const handleClearSelection = () => {
         setSelectedMembers([]);
     };
 
-    const handleDeleteMembers = async () => {
-        if (selectedMembers.length === 0) {
-            toast.error("Please select members to delete");
-            return;
-        }
-
-        if (!window.confirm(`Are you sure you want to delete ${selectedMembers.length} member(s)? This action cannot be undone.`)) {
-            return;
-        }
-
-        setIsDeleting(true);
-        try {
-            await Promise.all(
-                selectedMembers.map(memberId =>
-                    axios.delete(
-                        `https://${baseUrl}/community_members/${memberId}.json`,
-                        {
-                            headers: {
-                                "Authorization": `Bearer ${token}`
-                            }
-                        }
-                    )
-                )
-            );
-
-            await fetchData();
-            setSelectedMembers([]);
-            toast.success(`${selectedMembers.length} member(s) deleted successfully`);
-        } catch (error) {
-            console.error('Error deleting members:', error);
-            toast.error("Failed to delete member(s). Please try again.");
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const renderMemberCell = (member: any, columnKey: string) => {
-        if (columnKey === 'checkbox') {
-            return (
-                <input
-                    type="checkbox"
-                    checked={selectedMembers.includes(member.id)}
-                    onChange={(e) => handleMemberSelection(member.id, e.target.checked)}
-                    className="w-4 h-4 cursor-pointer"
-                />
-            );
-        }
-        return member[columnKey] || "-";
-    };
+    // Get selected member IDs for easy access
+    const selectedMemberIds = selectedMembers.map((member) => member.id);
 
     return (
         <div className="space-y-6">
-            {/* Member Selection Panel */}
-            {selectedMembers.length > 0 && (
-                <div className="fixed bottom-6 left-6 right-6 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm font-medium text-gray-700">
-                                {selectedMembers.length} member(s) selected
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleClearSelection}
-                                disabled={isDeleting}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={handleDeleteMembers}
-                                disabled={isDeleting}
-                                className="flex items-center gap-2"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Delete ({selectedMembers.length})
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
             {/* Community Details Section */}
             <div className="flex items-center justify-end">
                 <Button
@@ -283,8 +230,43 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                     renderCell={renderMemberCell}
                     hideColumnsButton={true}
                     hideTableSearch={true}
+                    selectable={true}
+                    enableSelection={true}
+                    onSelectItem={(itemId: string, checked: boolean) => {
+                        if (checked) {
+                            const member = members.find((m) => String(m.id) === itemId);
+                            if (member && !selectedMemberIds.includes(itemId)) {
+                                setSelectedMembers([...selectedMembers, { id: itemId, name: member.user || "-" }]);
+                            }
+                        } else {
+                            setSelectedMembers(selectedMembers.filter((member) => member.id !== itemId));
+                        }
+                    }}
+                    onSelectAll={(isSelectAll: boolean) => {
+                        if (isSelectAll) {
+                            setSelectedMembers(members.map((member: any) => ({
+                                id: String(member.id),
+                                name: member.user || "-"
+                            })));
+                        } else {
+                            setSelectedMembers([]);
+                        }
+                    }}
+                    selectedItems={selectedMemberIds}
+                    getItemId={(item: any) => String(item.id)}
                 />
             </div>
+
+            {/* Member Selection Panel */}
+            {selectedMembers.length > 0 && (
+                <MemberSelectionPanel
+                    selectedCount={selectedMembers.length}
+                    selectedMembers={selectedMembers}
+                    selectedMemberIds={selectedMemberIds}
+                    onDeleteMembers={handleDeleteMembers}
+                    onClearSelection={handleClearSelection}
+                />
+            )}
         </div>
     );
 };

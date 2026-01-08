@@ -131,7 +131,7 @@ export const AddBroadcastPage = () => {
     // Check if returning from community selection
     const savedCommunities = localStorage.getItem('selectedCommunityIds');
     if (savedCommunities) {
-      const communityIds = JSON.parse(savedCommunities);
+      const communityIds = JSON.parse(savedCommunities).map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id);
       setSelectedCommunities(communityIds);
 
       if (communityIds.length > 0) {
@@ -182,7 +182,7 @@ export const AddBroadcastPage = () => {
       localStorage.setItem('visibleAfterExpire', formData.visibleAfterExpire);
       localStorage.setItem('shareWith', formData.shareWith);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
-      navigate('/pulse/community?mode=selection');
+      navigate('/pulse/community?mode=selection&from=add');
     }
   };
 
@@ -317,7 +317,7 @@ export const AddBroadcastPage = () => {
       // Add selected community IDs if communities are selected
       if (formData.shareWithCommunities === 'yes' && selectedCommunities.length > 0) {
         selectedCommunities.forEach(id => {
-          formDataToSend.append("community_ids[]", id.toString());
+          formDataToSend.append("noticeboard[community_ids][]", id.toString());
         });
       }
 
@@ -343,7 +343,7 @@ export const AddBroadcastPage = () => {
       localStorage.removeItem('selectedCommunityIds');
 
       toast.success("Notice created successfully");
-      navigate(-1);
+      navigate("/pulse/notices");
     } catch (error: any) {
       console.log(error);
       toast.error(error.message || "Failed to create notice");
@@ -624,7 +624,7 @@ export const AddBroadcastPage = () => {
                     localStorage.setItem('visibleAfterExpire', formData.visibleAfterExpire);
                     localStorage.setItem('shareWith', formData.shareWith);
                     localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
-                    navigate('/pulse/community?mode=selection')
+                    navigate('/pulse/community?mode=selection&from=add')
                   }}
                   className="hover:text-red-700 transition-colors"
                 >
