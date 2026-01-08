@@ -3030,24 +3030,23 @@ export const EditAssetDetailsPage = () => {
         // Only add field if it has BOTH non-empty name AND non-empty value
         if (!isEmpty(field.name) && !isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
-          const original = findOriginal(field.name, sectionKey);
-          const finalId = original?.id;
-          const finalName = original?.field_name || field.name;
+          // Check if this field already exists in the original data
+          const isExisting = (originalExtraFieldsAttributes || []).some((attr: any) => attr.id === field.id);
 
-          if (finalId) {
-            console.log(`Matched original ID: ${finalId} for ${field.name}`);
+          if (isExisting) {
+            console.log(`Updating existing custom field ID: ${field.id} for ${field.name}`);
             addOrReplace({
-              id: finalId,
-              field_name: finalName,
+              id: field.id,
+              field_name: field.name,
               field_value: field.value,
               group_name: sectionKey,
               field_description: "custom_field",
               _destroy: false,
             });
           } else {
-            console.log(`No original match for ${field.name}, creating new.`);
+            console.log(`Creating new custom field: ${field.name}`);
             addOrReplace({
-              field_name: finalName,
+              field_name: field.name,
               field_value: field.value,
               group_name: sectionKey,
               field_description: "custom_field",
