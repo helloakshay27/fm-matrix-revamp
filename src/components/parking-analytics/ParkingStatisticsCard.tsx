@@ -178,16 +178,13 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
 
         // Calculate dates if not provided
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setDate(date.getDate() - 7);
-          return date.toISOString().split('T')[0];
-        })();
+        // Default to single day (today) if not provided
+        const startDateStr = startDate || new Date().toISOString().split('T')[0];
 
-        // Calculate previous period start date (last month)
+        // Previous period is previous day
         const previousStartDate = (() => {
           const date = new Date(startDateStr);
-          date.setMonth(date.getMonth() - 1);
+          date.setDate(date.getDate() - 1);
           return date.toISOString().split('T')[0];
         })();
 
@@ -201,8 +198,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
           compare_yoy: compareYoY.toString(),
         });
 
-        const fullUrl = `${url}?${params.toString()}`;
-        console.log('🔍 Fetching parking summary from:', fullUrl);
+  const fullUrl = `${url}?${params.toString()}`;
 
         const response = await fetch(fullUrl, options);
         
@@ -210,8 +206,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
           throw new Error(`Failed to fetch parking summary: ${response.statusText}`);
         }
 
-        const result = await response.json();
-        console.log('✅ Parking summary data:', result);
+  const result = await response.json();
         setApiData(result);
       } catch (err) {
         console.error('Error fetching parking summary:', err);
@@ -259,15 +254,11 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
     try {
       // Trigger re-fetch by updating a dependency
       const endDateStr = endDate || new Date().toISOString().split('T')[0];
-      const startDateStr = startDate || (() => {
-        const date = new Date();
-        date.setDate(date.getDate() - 7);
-        return date.toISOString().split('T')[0];
-      })();
+      const startDateStr = startDate || endDateStr;
 
       const previousStartDate = (() => {
         const date = new Date(startDateStr);
-        date.setMonth(date.getMonth() - 1);
+        date.setDate(date.getDate() - 1);
         return date.toISOString().split('T')[0];
       })();
 
@@ -303,39 +294,102 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
     return typeof value === "number" ? value.toLocaleString() : value;
   };
 
+  // Compute a human-friendly compare label based on the selected range
+  const getCompareLabel = (start?: string, end?: string) => {
+    try {
+      const startDateObj = start ? new Date(start) : new Date();
+      const endDateObj = end ? new Date(end) : new Date();
+      // inclusive days
+      const diffDays = Math.round((endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      if (diffDays >= 360) return 'Last year';
+      if (diffDays >= 28 && diffDays <= 31) return 'Last month';
+      if (diffDays >= 7 && diffDays <= 8) return 'Last week';
+      if (diffDays === 1) return 'Yesterday';
+
+      const fmt = (d: Date) => {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = d.toLocaleDateString('en-US', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day} ${month} ${year}`;
+      };
+
+      if (startDateObj.toDateString() === endDateObj.toDateString()) return fmt(startDateObj);
+      return `${fmt(startDateObj)} - ${fmt(endDateObj)}`;
+    } catch (err) {
+      return 'Previous period';
+    }
+  };
+
   const getMetricValue = (key: ParkingStatisticsMetricKey) => {
     // Get last year comparison data from API if available
-    const lastYearValue = apiData?.yoy_period?.metrics || apiData?.previous_period?.metrics;
+  const lastYearValue = apiData?.yoy_period?.metrics || apiData?.previous_period?.metrics;
+  // Also pull previous/yoy category splits for 2W/4W if present
+  const prevTwo = apiData?.yoy_period?.two_wheeler || apiData?.previous_period?.two_wheeler;
+  const prevFour = apiData?.yoy_period?.four_wheeler || apiData?.previous_period?.four_wheeler;
     
     switch (key) {
       case "total_slots":
-        return {
+        {
+          const prevSumTotal = (prevTwo?.total ?? null) !== null && (prevFour?.total ?? null) !== null
+            ? (prevTwo?.total || 0) + (prevFour?.total || 0)
+            : undefined;
+          return {
           total: data.total_slots || 0,
           twoWheeler: data.two_wheeler?.total || 0,
           fourWheeler: data.four_wheeler?.total || 0,
-          lastYear: lastYearValue?.total_slots || 0,
+          // Prefer previous 2W+4W sum when available; else API metric
+          lastYear: prevSumTotal ?? lastYearValue?.total_slots ?? 0,
+          prevTwoWheeler: prevTwo?.total,
+          prevFourWheeler: prevFour?.total,
         };
+  }
       case "occupied":
-        return {
+        {
+          const prevOccupiedSum = (prevTwo?.booked ?? null) !== null && (prevFour?.booked ?? null) !== null
+            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0)
+            : undefined;
+          return {
           total: data.occupied || 0,
           twoWheeler: data.two_wheeler?.occupied || 0,
           fourWheeler: data.four_wheeler?.occupied || 0,
-          lastYear: lastYearValue?.occupied || 0,
+          // Prefer previous booked sum when available; else API metric
+          lastYear: prevOccupiedSum ?? lastYearValue?.occupied ?? 0,
+          prevTwoWheeler: prevTwo?.booked,
+          prevFourWheeler: prevFour?.booked,
         };
+  }
       case "vacant":
-        return {
+        {
+          const prevVacantSum = (prevTwo?.available ?? null) !== null && (prevFour?.available ?? null) !== null
+            ? (prevTwo?.available || 0) + (prevFour?.available || 0)
+            : undefined;
+          return {
           total: data.vacant || 0,
           twoWheeler: data.two_wheeler?.vacant || 0,
           fourWheeler: data.four_wheeler?.vacant || 0,
-          lastYear: lastYearValue?.vacant || 0,
+          // Prefer previous available sum when available; else API metric
+          lastYear: prevVacantSum ?? lastYearValue?.vacant ?? 0,
+          prevTwoWheeler: prevTwo?.available,
+          prevFourWheeler: prevFour?.available,
         };
+  }
       case "checked_in":
-        return {
-          total: data.checked_in || 0,
-          twoWheeler: 0,
-          fourWheeler: 0,
-          lastYear: lastYearValue?.checked_in || 0,
-        };
+        {
+          const prevCheckedInSum = (prevTwo?.booked ?? null) !== null && (prevFour?.booked ?? null) !== null
+            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0)
+            : undefined;
+          return {
+            total: data.checked_in || 0,
+            // Use booked counts for checked-in submetrics
+            twoWheeler: data.two_wheeler?.occupied || 0,
+            fourWheeler: data.four_wheeler?.occupied || 0,
+            // Prefer previous 2W+4W booked sum when available; else API metric
+            lastYear: prevCheckedInSum ?? lastYearValue?.checked_in ?? 0,
+            prevTwoWheeler: prevTwo?.booked,
+            prevFourWheeler: prevFour?.booked,
+          };
+        }
       case "checked_out":
         return {
           total: data.checked_out || 0,
@@ -353,6 +407,8 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
             ? Math.round((data.four_wheeler.occupied / data.four_wheeler.total) * 100)
             : 0,
           lastYear: lastYearValue?.utilization_percent || 0,
+          prevTwoWheeler: (prevTwo?.total && prevTwo?.booked) ? Math.round((prevTwo.booked / prevTwo.total) * 100) : undefined,
+          prevFourWheeler: (prevFour?.total && prevFour?.booked) ? Math.round((prevFour.booked / prevFour.total) * 100) : undefined,
         };
       default:
         return { total: 0, twoWheeler: 0, fourWheeler: 0, lastYear: 0 };
@@ -506,17 +562,24 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
                   )}
 
                   {/* Last year comparison - always show if data exists */}
-                  {value.lastYear !== undefined && value.lastYear !== null && (
+                  {/* {value.lastYear !== undefined && value.lastYear !== null && (
                     <div className={`text-xs ${textColor} opacity-90 pt-1`}>
-                      Last year: {metric.key === "utilization" ? `${value.lastYear}%` : value.lastYear}
+                      {`${getCompareLabel(startDate, endDate)}: `}{metric.key === "utilization" ? `${value.lastYear}%` : value.lastYear}
                     </div>
-                  )}
+                  )} */}
+
+                  {/* Previous period split to clarify where comparison came from */}
+                  {/* {value.prevTwoWheeler !== undefined && value.prevFourWheeler !== undefined && (
+                    <div className={`text-[10px] ${textColor} opacity-70 pt-0.5`}>
+                      Prev 2W: {metric.key === 'utilization' ? `${value.prevTwoWheeler}%` : value.prevTwoWheeler} <span className="opacity-50">|</span> Prev 4W: {metric.key === 'utilization' ? `${value.prevFourWheeler}%` : value.prevFourWheeler}
+                    </div>
+                  )} */}
 
                   {/* Percentage change indicator - always show if calculable */}
                   {percentageChange !== null && (
                     <div className={`flex items-center gap-1 text-xs ${textColor} font-medium pt-1`}>
                       <TrendingUp className={`w-3 h-3 ${isPositive ? '' : 'rotate-180'}`} />
-                      <span>{isPositive ? '+' : ''}{percentageChange}% vs last year</span>
+                      <span>{isPositive ? '+' : ''}{percentageChange}% </span>
                     </div>
                   )}
                 </div>

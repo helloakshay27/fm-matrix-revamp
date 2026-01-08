@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Form, useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import {
   ChevronDown,
   ChevronUp,
@@ -272,6 +275,7 @@ export const EditAssetDetailsPage = () => {
     "";
   const navigate = useNavigate();
   const { id } = useParams();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Location data hook
   const {
@@ -5081,6 +5085,8 @@ export const EditAssetDetailsPage = () => {
             description: "The asset has been updated and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
           // Small delay to show the toast before redirect
           setTimeout(() => {
             if (assetId) {
@@ -5136,6 +5142,8 @@ export const EditAssetDetailsPage = () => {
             description: "The asset has been updated and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
           // Small delay to show the toast before redirect
           setTimeout(() => {
             if (assetId) {

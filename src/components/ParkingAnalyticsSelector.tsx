@@ -33,13 +33,6 @@ const parkingAnalyticsOptions = [
     icon: Clock 
   },
   { 
-    id: 'average_duration', 
-    label: 'Auto-Releases by Department', 
-    checked: true, 
-    endpoint: 'average_duration.json',
-    icon: Clock 
-  },
-  { 
     id: 'two_four_occupancy', 
     label: '2W / 4W Occupancy (Stacked)', 
     checked: true, 

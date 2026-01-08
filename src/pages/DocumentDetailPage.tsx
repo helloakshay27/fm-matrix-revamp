@@ -11,6 +11,20 @@ import {
   DocumentAttachment,
 } from "@/services/documentService";
 
+interface DocumentPermission {
+  id: number;
+  permissible_type: string;
+  permissible_id: number;
+  access_to: string | null;
+  access_level: string;
+  access_scope: string;
+  access_ids: string | null;
+  access_records: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
 interface DocumentDetail {
   id: number;
   title: string;
@@ -22,9 +36,7 @@ interface DocumentDetail {
   created_at: string;
   active: boolean | null;
   attachment: DocumentAttachment;
-  // UI fields
-  share_with?: string[];
-  share_with_communities?: boolean;
+  document_permissions?: DocumentPermission[];
 }
 
 export const DocumentDetailPage = () => {
@@ -112,6 +124,47 @@ export const DocumentDetailPage = () => {
     return filename.split(".").pop()?.toUpperCase() || "FILE";
   };
 
+  // Get site permissions (access_level: "selected")
+  const getSitePermissions = () => {
+    const sitePermission = document?.document_permissions?.find(
+      (perm) => perm.access_level === "selected"
+    );
+
+    if (!sitePermission) return null;
+
+    if (sitePermission.access_scope === "all_records") {
+      return "All Sites";
+    }
+
+    if (sitePermission.access_records && sitePermission.access_records.length > 0) {
+      return sitePermission.access_records;
+    }
+
+    return null;
+  };
+
+  // Get community permissions (access_level: "view")
+  const getCommunityPermissions = () => {
+    const communityPermission = document?.document_permissions?.find(
+      (perm) => perm.access_level === "view"
+    );
+
+    if (!communityPermission) return null;
+
+    if (communityPermission.access_scope === "all_records") {
+      return "All Communities";
+    }
+
+    if (communityPermission.access_records && communityPermission.access_records.length > 0) {
+      return communityPermission.access_records;
+    }
+
+    return null;
+  };
+
+  const sitePermissions = getSitePermissions();
+  const communityPermissions = getCommunityPermissions();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -175,9 +228,8 @@ export const DocumentDetailPage = () => {
                 className="data-[state=checked]:bg-green-500"
               />
               <span
-                className={`text-sm font-medium ${
-                  document.active ? "text-green-600" : "text-gray-500"
-                }`}
+                className={`text-sm font-medium ${document.active ? "text-green-600" : "text-gray-500"
+                  }`}
               >
                 {document.active ? "Active" : "Inactive"}
               </span>
@@ -235,26 +287,46 @@ export const DocumentDetailPage = () => {
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-sm text-gray-500 mb-2">Share With</p>
+              <p className="text-sm text-gray-500 mb-2">Site Permissions</p>
               <div className="space-y-1">
-                {document.share_with && document.share_with.length > 0 ? (
-                  document.share_with.map((park, index) => (
-                    <p key={index} className="font-medium text-[#1a1a1a]">
-                      {park}
+                {sitePermissions ? (
+                  typeof sitePermissions === "string" ? (
+                    <p className="font-medium text-[#1a1a1a]">
+                      {sitePermissions}
                     </p>
-                  ))
+                  ) : (
+                    sitePermissions.map((site) => (
+                      <p key={site.id} className="font-medium text-[#1a1a1a]">
+                        {site.name}
+                      </p>
+                    ))
+                  )
                 ) : (
-                  <p className="font-medium text-gray-400">Not shared</p>
+                  <p className="font-medium text-gray-400">No sites selected</p>
                 )}
               </div>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-2">
-                Share With Communities
+                Community Permissions
               </p>
-              <p className="font-medium text-[#1a1a1a]">
-                {document.share_with_communities ? "Yes" : "No"}
-              </p>
+              <div className="space-y-1">
+                {communityPermissions ? (
+                  typeof communityPermissions === "string" ? (
+                    <p className="font-medium text-[#1a1a1a]">
+                      {communityPermissions}
+                    </p>
+                  ) : (
+                    communityPermissions.map((community) => (
+                      <p key={community.id} className="font-medium text-[#1a1a1a]">
+                        {community.name}
+                      </p>
+                    ))
+                  )
+                ) : (
+                  <p className="font-medium text-gray-400">No communities selected</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
