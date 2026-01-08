@@ -137,7 +137,7 @@ export const BroadcastDashboard = () => {
         });
       } catch (error) {
         console.log(error);
-        toast.error("Failed to fetch Broadcasts");
+        toast.error("Failed to fetch Notices");
       }
     };
 
@@ -161,13 +161,13 @@ export const BroadcastDashboard = () => {
         })
       ).unwrap();
 
-      toast.success("Broadcast status updated successfully");
+      toast.success("Notice status updated successfully");
 
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update broadcast status");
+      toast.error("Failed to update notice status");
     } finally {
       setUpdatingStatus((prev) => {
         const newState = { ...prev };
@@ -193,13 +193,13 @@ export const BroadcastDashboard = () => {
         })
       ).unwrap();
 
-      toast.success("Broadcast importance status updated successfully");
+      toast.success("Notice importance status updated successfully");
 
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update broadcast importance status");
+      toast.error("Failed to update notice importance status");
     } finally {
       setUpdatingStatus((prev) => {
         const newState = { ...prev };
@@ -410,7 +410,7 @@ export const BroadcastDashboard = () => {
         total_pages: response.pagination.total_pages,
       });
     } catch (error) {
-      toast.error("Failed to fetch broadcasts");
+      toast.error("Failed to fetch notices");
     }
   };
 
@@ -606,8 +606,8 @@ export const BroadcastDashboard = () => {
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search broadcasts..."
-        emptyMessage="No broadcasts found"
+        searchPlaceholder="Search notices..."
+        emptyMessage="No notices found"
         pagination={true}
         pageSize={10}
         onFilterClick={() => setIsFilterModalOpen(true)}
