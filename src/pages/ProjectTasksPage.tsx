@@ -42,6 +42,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "task_code",
+        label: "Task Code",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "title",
         label: "Task Title",
         sortable: true,

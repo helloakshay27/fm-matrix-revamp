@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Form, useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import {
   ChevronDown,
   ChevronUp,
@@ -262,6 +265,7 @@ const AddAssetPage = () => {
   const currency = (typeof window !== 'undefined' && window.localStorage.getItem('currency')) || 'INR';
   const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Location data hook
   const {
@@ -3692,6 +3696,8 @@ const AddAssetPage = () => {
             description: "The asset has been created and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
           // Small delay to show the toast before redirect
           setTimeout(() => {
             if (assetId) {
@@ -3747,6 +3753,8 @@ const AddAssetPage = () => {
             description: "The asset has been created and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
           // Small delay to show the toast before redirect
           setTimeout(() => {
             if (assetId) {
@@ -4233,6 +4241,8 @@ const AddAssetPage = () => {
             description: "The asset has been created and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
           // Small delay to show the toast before redirect
           setTimeout(() => {
             // window.location.href = "/maintenance/asset";
@@ -4283,6 +4293,8 @@ const AddAssetPage = () => {
             description: "The asset has been created and saved.",
             duration: 3000,
           });
+          // Refresh asset dashboard data
+          dispatch(fetchAssetsData({}));
         })
         .catch((err) => {
           console.error("Error creating asset:", err);

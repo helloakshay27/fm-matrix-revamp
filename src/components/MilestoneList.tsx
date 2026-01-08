@@ -22,6 +22,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "milestone_code",
+        label: "Milestone Code",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "title",
         label: "Milestone Title",
         sortable: true,
