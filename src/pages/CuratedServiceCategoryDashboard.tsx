@@ -207,6 +207,7 @@ const CuratedServiceCategoryDashboard = () => {
           variant="ghost"
           className="p-1"
           onClick={() => navigate(`/pulse/curated-services/service-category/edit/${item.id}`)}
+          disabled={!item.active}
         >
           <Edit className="w-4 h-4" />
         </Button>

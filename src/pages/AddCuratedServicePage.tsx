@@ -58,7 +58,8 @@ export const AddCuratedServicePage = () => {
     order_no: "",
     mobile: "",
     address: "",
-    active: true,
+    email: "",
+    active: 1,
   });
 
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -71,7 +72,7 @@ export const AddCuratedServicePage = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/service_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -86,7 +87,8 @@ export const AddCuratedServicePage = () => {
       }
 
       const data = await response.json();
-      setServiceCategories(data || []);
+      console.log("Fetched service categories:", data);
+      setServiceCategories(data.osr_categories || []);
     } catch (error: any) {
       console.error("Error fetching service categories:", error);
       toast.error("Failed to load service categories", {
@@ -170,6 +172,10 @@ export const AddCuratedServicePage = () => {
       toast.error("Mobile number must be exactly 10 digits");
       return false;
     }
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid email address (e.g., user@example.com)");
+      return false;
+    }
     return true;
   };
 
@@ -184,28 +190,32 @@ export const AddCuratedServicePage = () => {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("plus_service[name]", formData.name);
-      formDataToSend.append("plus_service[description]", formData.description);
-      formDataToSend.append("plus_service[service_category_id]", formData.service_category_id);
-      formDataToSend.append("plus_service[active]", formData.active.toString());
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("osr_categories_id", formData.service_category_id);
+      formDataToSend.append("active", formData.active.toString());
 
-      if (formData.order_no) {
-        formDataToSend.append("plus_service[order_no]", formData.order_no);
-      }
+      // if (formData.order_no) {
+      //   formDataToSend.append("plus_service[order_no]", formData.order_no);
+      // }
 
       if (formData.mobile) {
-        formDataToSend.append("plus_service[mobile]", formData.mobile);
+        formDataToSend.append("mobile", formData.mobile);
+      }
+       if (formData.email) {
+        formDataToSend.append("email", formData.email);
       }
 
+
       if (formData.address) {
-        formDataToSend.append("plus_service[address]", formData.address);
+        formDataToSend.append("address", formData.address);
       }
 
       if (attachment) {
-        formDataToSend.append("plus_service[attachment]", attachment);
+        formDataToSend.append("attachment", attachment);
       }
 
-      const apiUrl = getFullUrl("/plus_services.json");
+      const apiUrl = getFullUrl("/osr_setups/create_osr_sub_category.json");
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -218,11 +228,11 @@ export const AddCuratedServicePage = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success("Plus Service created successfully!");
-      navigate("/pulse/pulse-privilege/plus-service");
+      toast.success("Service created successfully!");
+      navigate("/pulse/curated-services/service");
     } catch (error: any) {
       console.error("Error creating plus service:", error);
-      toast.error(error.message || "Failed to create plus service. Please try again.");
+      toast.error(error.message || "Failed to create service. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -251,9 +261,9 @@ export const AddCuratedServicePage = () => {
         <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE</h1>
       </div>
 
-      <form 
-    //   onSubmit={handleSubmit}
-       className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6">
         {/* Service Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
@@ -308,14 +318,14 @@ export const AddCuratedServicePage = () => {
                   </MenuItem>
                   {serviceCategories.map((category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
-                      {category.service_cat_name}
+                      {category.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
               {/* Order Number */}
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Order Number"
                 type="number"
@@ -331,12 +341,9 @@ export const AddCuratedServicePage = () => {
                 InputProps={{
                   sx: fieldStyles,
                 }}
-              />
-            </div>
+              /> */}
 
-            {/* Second Row - Mobile and Address */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Mobile */}
+                {/* Mobile */}
               <TextField
                 fullWidth
                 label="Mobile"
@@ -360,6 +367,11 @@ export const AddCuratedServicePage = () => {
                 helperText={formData.mobile && formData.mobile.length !== 10 ? '' : ''}
                 error={formData.mobile !== '' && formData.mobile.length !== 10}
               />
+            </div>
+
+            {/* Second Row - Mobile and Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
 
               {/* Address */}
               <TextField
@@ -368,6 +380,23 @@ export const AddCuratedServicePage = () => {
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
                 placeholder="Enter Address"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Email"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="Enter Email"
                 variant="outlined"
                 slotProps={{
                   inputLabel: {

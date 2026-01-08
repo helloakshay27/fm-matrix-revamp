@@ -103,7 +103,12 @@ const CuratedServiceDashboard = () => {
             mobile: item.mobile,
             address: item.address,
             active: item.active === 1,
-            attachment: undefined, // No attachment in API response
+            attachment: item.attachment
+            ? {
+                document_url: item.attachment.document_url,
+                document_content_type: item.attachment.document_content_type,
+              }
+            : undefined, // No attachment in API response
           }))
         : [];
       setPlusServices(servicesList);
@@ -138,19 +143,17 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/plus_services/${itemId}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?id=${itemId}`);
 
       const response = await fetch(apiUrl, {
-        method: "PUT",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify({
-          plus_service: {
-            active: newStatus,
-          },
+         active: newStatus,
         }),
       });
 
@@ -164,7 +167,7 @@ const CuratedServiceDashboard = () => {
         )
       );
 
-      toast.success(`Plus Service ${newStatus ? "activated" : "deactivated"} successfully`);
+      toast.success(`Service ${newStatus ? "activated" : "deactivated"} successfully`);
     } catch (error: any) {
       console.error("Error updating active status:", error);
       toast.error(error.message || "Failed to update active status. Please try again.");
@@ -309,6 +312,7 @@ const CuratedServiceDashboard = () => {
           variant="ghost"
           className="p-1"
           onClick={() => navigate(`/pulse/curated-services/service/edit/${item.id}`)}
+          disabled={!item.active}
         >
           <Edit className="w-4 h-4" />
         </Button>

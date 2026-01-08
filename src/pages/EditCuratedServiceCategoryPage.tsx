@@ -60,7 +60,7 @@ export const EditCuratedServiceCategoryPage = () => {
 
     setFetchLoading(true);
     try {
-      const apiUrl = getFullUrl(`/osr_setups/osr_categories/${id}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/osr_category_detail.json?osr_category_id=${id}`);
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -75,21 +75,23 @@ export const EditCuratedServiceCategoryPage = () => {
       }
 
       const data = await response.json();
-      const categoryInfo = data.service_category || data;
+      const categoryInfo = data.osr_category || data;
 
       setFormData({
-        service_cat_name: categoryInfo.service_cat_name || "",
+        service_cat_name: categoryInfo.name || "",
       });
 
       // Handle existing image
       let imageUrl = "";
-      if (categoryInfo.service_image) {
-        imageUrl = categoryInfo.service_image.document_url || categoryInfo.service_image.url || "";
-      } else if (categoryInfo.service_image_url) {
-        imageUrl = categoryInfo.service_image_url;
-      } else if (categoryInfo.image_url) {
-        imageUrl = categoryInfo.image_url;
-      }
+if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
+      imageUrl = categoryInfo.attachment.document_url;
+    } else if (categoryInfo.service_image) {
+      imageUrl = categoryInfo.service_image.document_url || categoryInfo.service_image.url || "";
+    } else if (categoryInfo.service_image_url) {
+      imageUrl = categoryInfo.service_image_url;
+    } else if (categoryInfo.image_url) {
+      imageUrl = categoryInfo.image_url;
+    }
 
       setExistingImageUrl(imageUrl);
     } catch (error: any) {
@@ -185,12 +187,13 @@ export const EditCuratedServiceCategoryPage = () => {
       if (imageChanged) {
         // Use FormData if image changed
         const formDataToSend = new FormData();
-        formDataToSend.append("service_category[service_cat_name]", formData.service_cat_name);
+        formDataToSend.append("name", formData.service_cat_name);
         
         if (imageFile) {
-          formDataToSend.append("service_category[service_image]", imageFile);
-        } else {
-          formDataToSend.append("service_category[service_image]", "");
+          formDataToSend.append("attachment", imageFile);
+        }
+         else {
+          formDataToSend.append("attachment", "");
         }
 
         requestBody = formDataToSend;
@@ -210,9 +213,9 @@ export const EditCuratedServiceCategoryPage = () => {
         };
       }
 
-      const apiUrl = getFullUrl(`/service_categories/${id}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_category.json?id=${id}`);
       const response = await fetch(apiUrl, {
-        method: "PUT",
+        method: "POST",
         headers: headers,
         body: requestBody,
       });
@@ -222,7 +225,7 @@ export const EditCuratedServiceCategoryPage = () => {
       }
 
       toast.success("Service Category updated successfully!");
-      navigate("/pulse/pulse-privilege/service-category");
+      navigate("/pulse/curated-services/service-category");
     } catch (error: any) {
       console.error("Error updating service category:", error);
       toast.error(error.message || "Failed to update service category. Please try again.");

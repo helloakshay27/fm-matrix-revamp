@@ -60,6 +60,7 @@ export const EditCuratedServicePage = () => {
     order_no: "",
     mobile: "",
     address: "",
+    email: "", 
     active: true,
   });
 
@@ -78,7 +79,7 @@ export const EditCuratedServicePage = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/service_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -93,7 +94,7 @@ export const EditCuratedServicePage = () => {
       }
 
       const data = await response.json();
-      setServiceCategories(data || []);
+      setServiceCategories(data.osr_categories || []);
     } catch (error: any) {
       console.error("Error fetching service categories:", error);
       toast.error("Failed to load service categories", {
@@ -107,13 +108,13 @@ export const EditCuratedServicePage = () => {
   const fetchPlusService = async () => {
     if (!id) {
       toast.error("Service ID is required");
-      navigate("/pulse/pulse-privilege/plus-service");
+      navigate("/pulse/curated-services/service");
       return;
     }
 
     setFetchLoading(true);
     try {
-      const apiUrl = getFullUrl(`/plus_services/${id}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/osr_sub_category_detail.json?osr_sub_category_id=${id}`);
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -128,33 +129,34 @@ export const EditCuratedServicePage = () => {
       }
 
       const data = await response.json();
-      const serviceInfo = data.plus_service || data;
+      const serviceInfo = data.osr_sub_category || data;
 
       setFormData({
-        name: serviceInfo.name || "",
-        description: serviceInfo.description || "",
-        service_category_id: serviceInfo.service_category_id?.toString() || "",
-        order_no: serviceInfo.order_no?.toString() || "",
-        mobile: serviceInfo.mobile || "",
-        address: serviceInfo.address || "",
-        active: serviceInfo.active !== undefined ? serviceInfo.active : true,
-      });
+      name: serviceInfo.name || "",
+      description: serviceInfo.description || "",
+      service_category_id: serviceInfo.osr_categories_id?.toString() || "",
+      order_no: serviceInfo.order_no?.toString() || "",
+      mobile: serviceInfo.mobile || "",
+      address: serviceInfo.address || "",
+      email: serviceInfo.email || "",
+      active: serviceInfo.active !== undefined ? serviceInfo.active : true,
+    });
 
-      // Handle existing image
-      let imageUrl = "";
-      if (serviceInfo.attachment) {
-        imageUrl = serviceInfo.attachment.document_url || serviceInfo.attachment.url || "";
-      } else if (serviceInfo.attachment_url) {
-        imageUrl = serviceInfo.attachment_url;
-      } else if (serviceInfo.image_url) {
-        imageUrl = serviceInfo.image_url;
-      }
+    // Handle existing image
+    let imageUrl = "";
+    if (serviceInfo.attachment && serviceInfo.attachment.document_url) {
+      imageUrl = serviceInfo.attachment.document_url;
+    } else if (serviceInfo.attachment_url) {
+      imageUrl = serviceInfo.attachment_url;
+    } else if (serviceInfo.image_url) {
+      imageUrl = serviceInfo.image_url;
+    }
 
       setExistingImageUrl(imageUrl);
     } catch (error: any) {
       console.error("Error fetching plus service:", error);
       toast.error(error.message || "Failed to load plus service data");
-      navigate("/pulse/pulse-privilege/plus-service");
+      navigate("/pulse/curated-services/service");
     } finally {
       setFetchLoading(false);
     }
@@ -245,6 +247,10 @@ export const EditCuratedServicePage = () => {
       toast.error("Mobile number must be exactly 10 digits");
       return false;
     }
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid email address (e.g., user@example.com)");
+      return false;
+    }
     return true;
   };
 
@@ -259,34 +265,37 @@ export const EditCuratedServicePage = () => {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("plus_service[name]", formData.name);
-      formDataToSend.append("plus_service[description]", formData.description);
-      formDataToSend.append("plus_service[service_category_id]", formData.service_category_id);
-      formDataToSend.append("plus_service[active]", formData?.active?.toString());
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("osr_categories_id", formData.service_category_id);
+      // formDataToSend.append("plus_service[active]", formData?.active?.toString());
 
-      if (formData.order_no) {
-        formDataToSend.append("plus_service[order_no]", formData.order_no);
-      }
+      // if (formData.order_no) {
+      //   formDataToSend.append("plus_service[order_no]", formData.order_no);
+      // }
 
       if (formData.mobile) {
-        formDataToSend.append("plus_service[mobile]", formData.mobile);
+        formDataToSend.append("mobile", formData.mobile);
       }
 
       if (formData.address) {
-        formDataToSend.append("plus_service[address]", formData.address);
+        formDataToSend.append("address", formData.address);
+      }
+       if (formData.email) {
+        formDataToSend.append("email", formData.email);
       }
 
       if (imageChanged) {
         if (attachment) {
-          formDataToSend.append("plus_service[attachment]", attachment);
+          formDataToSend.append("attachment", attachment);
         } else {
-          formDataToSend.append("plus_service[attachment]", "");
+          formDataToSend.append("attachment", "");
         }
       }
 
-      const apiUrl = getFullUrl(`/plus_services/${id}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?id=${id}`);
       const response = await fetch(apiUrl, {
-        method: "PATCH",
+        method: "POST",
         headers: {
           Authorization: getAuthHeader(),
         },
@@ -297,11 +306,11 @@ export const EditCuratedServicePage = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success("Plus Service updated successfully!");
-      navigate("/pulse/pulse-privilege/plus-service");
+      toast.success("Service updated successfully!");
+      navigate("/pulse/curated-services/service");
     } catch (error: any) {
       console.error("Error updating plus service:", error);
-      toast.error(error.message || "Failed to update plus service. Please try again.");
+      toast.error(error.message || "Failed to update service. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -396,14 +405,14 @@ export const EditCuratedServicePage = () => {
                   </MenuItem>
                   {serviceCategories.map((category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
-                      {category.service_cat_name}
+                      {category.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
               {/* Order Number */}
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Order Number"
                 type="number"
@@ -419,13 +428,9 @@ export const EditCuratedServicePage = () => {
                 InputProps={{
                   sx: fieldStyles,
                 }}
-              />
-            </div>
+              /> */}
 
-            {/* Second Row - Mobile and Address */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Mobile */}
-              <TextField
+               <TextField
                 fullWidth
                 label="Mobile"
                 type="tel"
@@ -448,6 +453,12 @@ export const EditCuratedServicePage = () => {
                 helperText={formData.mobile && formData.mobile.length !== 10 ? '' : ''}
                 error={formData.mobile !== '' && formData.mobile.length !== 10}
               />
+            </div>
+
+            {/* Second Row - Mobile and Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mobile */}
+             
 
               {/* Address */}
               <TextField
@@ -466,6 +477,22 @@ export const EditCuratedServicePage = () => {
                   sx: fieldStyles,
                 }}
               />
+              <TextField
+  fullWidth
+  label="Email"
+  value={formData.email}
+  onChange={(e) => handleInputChange("email", e.target.value)}
+  placeholder="Enter Email"
+  variant="outlined"
+  slotProps={{
+    inputLabel: {
+      shrink: true,
+    },
+  }}
+  InputProps={{
+    sx: fieldStyles,
+  }}
+/>
             </div>
 
             {/* Description - Full width */}
