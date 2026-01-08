@@ -427,34 +427,6 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     </button>
                 </div>
 
-                {/* Post Actions */}
-                {/* <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="!text-gray-700 !border-gray-300 rounded-[5px] px-2 hover:bg-gray-50 flex items-center"
-                    >
-                        <Pin size={13} />
-                        Pin
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="!text-gray-700 !border-gray-300 rounded-[5px] px-2 hover:bg-gray-50 flex items-center"
-                    >
-                        <EyeOff size={13} />
-                        {post.blocked ? "Unhide" : "Hide"}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="!text-red-600 !border-red-600 rounded-[5px] px-2 hover:bg-red-50 flex items-center"
-                    >
-                        <Trash2 size={13} />
-                        Delete
-                    </Button>
-                </div> */}
-
                 {/* Comments Section */}
                 {showCommentsForPost === post.id && post.comments && post.comments.length > 0 && (
                     <div className="mt-6 space-y-4">
