@@ -46,6 +46,7 @@ export const EditCuratedServiceCategoryPage = () => {
 
   useEffect(() => {
     if (id) {
+        console.log("calledddd")
       fetchServiceCategory();
     }
   }, [id]);
@@ -53,13 +54,13 @@ export const EditCuratedServiceCategoryPage = () => {
   const fetchServiceCategory = async () => {
     if (!id) {
       toast.error("Service Category ID is required");
-      navigate("/pulse/pulse-privilege/service-category");
+      navigate("/pulse/curated-services/service-category");
       return;
     }
 
     setFetchLoading(true);
     try {
-      const apiUrl = getFullUrl(`/service_categories/${id}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/osr_categories/${id}.json`);
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -94,7 +95,7 @@ export const EditCuratedServiceCategoryPage = () => {
     } catch (error: any) {
       console.error("Error fetching service category:", error);
       toast.error(error.message || "Failed to load service category data");
-      navigate("/pulse/pulse-privilege/service-category");
+    //   navigate("/pulse/pulse-privilege/service-category");
     } finally {
       setFetchLoading(false);
     }

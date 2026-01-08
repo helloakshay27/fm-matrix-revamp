@@ -51,7 +51,7 @@ const CuratedServiceCategoryDashboard = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const apiUrl = getFullUrl("/service_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -66,18 +66,22 @@ const CuratedServiceCategoryDashboard = () => {
       }
 
       const data = await response.json();
-      
-      // Handle different possible response formats
+      // Expecting { osr_categories: [...] }
       let categoriesData: ServiceCategory[] = [];
-      if (Array.isArray(data)) {
-        categoriesData = data;
-      } else if (data.service_categories) {
-        categoriesData = data.service_categories;
-      } else if (Array.isArray(data.data)) {
-        categoriesData = data.data;
+      if (Array.isArray(data.osr_categories)) {
+        categoriesData = data.osr_categories.map((cat: any) => ({
+          id: cat.id,
+          service_cat_name: cat.name,
+          service_image: cat.attachment
+            ? {
+                document_url: cat.attachment.document_url,
+                document_content_type: cat.attachment.document_content_type,
+              }
+            : undefined,
+          active: cat.active === 1,
+        }));
       }
-      
-      // setServiceCategories(categoriesData);
+      setServiceCategories(categoriesData);
     } catch (error: any) {
       console.error("Error fetching service categories:", error);
       toast.error("Failed to load service categories");
@@ -99,17 +103,15 @@ const CuratedServiceCategoryDashboard = () => {
     try {
       setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
 
-      const apiUrl = getFullUrl(`/service_categories/${itemId}.json`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_category.json?id=${itemId}.json`);
       const response = await fetch(apiUrl, {
-        method: "PUT",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify({
-          service_category: {
-            active: newStatus,
-          },
+          active: newStatus,
         }),
       });
 

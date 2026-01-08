@@ -111,11 +111,11 @@ export const AddCuratedServiceCategoryPage = () => {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("service_category[service_cat_name]", formData.service_cat_name);
-      formDataToSend.append("service_category[service_image]", imageFile!);
-      formDataToSend.append("service_category[active]", "true");
+      formDataToSend.append("name", formData.service_cat_name);
+      formDataToSend.append("attachment", imageFile!);
+      formDataToSend.append("active", "1");
 
-      const apiUrl = getFullUrl("/service_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/create_osr_category.json");
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -129,7 +129,7 @@ export const AddCuratedServiceCategoryPage = () => {
       }
 
       toast.success("Service Category created successfully!");
-      navigate("/pulse/pulse-privilege/service-category");
+      navigate("/pulse/curated-services/service-category");
     } catch (error: any) {
       console.error("Error creating service category:", error);
       toast.error(error.message || "Failed to create service category. Please try again.");
@@ -162,7 +162,7 @@ export const AddCuratedServiceCategoryPage = () => {
       </div>
 
       <form 
-    //   onSubmit={handleSubmit} 
+      onSubmit={handleSubmit} 
       className="space-y-6">
         {/* Service Category Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

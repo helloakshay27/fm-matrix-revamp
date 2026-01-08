@@ -18,6 +18,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "email",
+    label: "Email",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "description",
     label: "Description",
     sortable: true,
@@ -56,7 +63,7 @@ const columns: ColumnConfig[] = [
 
 const CuratedServiceDashboard = () => {
   const navigate = useNavigate();
-  const [plusServices, setPlusServices] = useState([]);
+  const [plusServices, setPlusServices] = useState<any[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
   const [loadingData, setLoadingData] = useState(true);
 
@@ -70,7 +77,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/plus_services.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -86,10 +93,20 @@ const CuratedServiceDashboard = () => {
       }
 
       const data = await response.json();
-      console.log("Plus Services API Response:", data);
-
-      const servicesList = data.plus_services || data || [];
-    //   setPlusServices(servicesList);
+      // Expecting { osr_sub_categories: [...] }
+      const servicesList = Array.isArray(data.osr_sub_categories)
+        ? data.osr_sub_categories.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            email: item.email,
+            description: item.description,
+            mobile: item.mobile,
+            address: item.address,
+            active: item.active === 1,
+            attachment: undefined, // No attachment in API response
+          }))
+        : [];
+      setPlusServices(servicesList);
     } catch (error: any) {
       console.error("Error fetching plus services:", error);
       toast.error(`Failed to load plus services: ${error.message}`, {
@@ -261,6 +278,13 @@ const CuratedServiceDashboard = () => {
         return (
           <span className="text-sm text-gray-600">
             {item.description || "-"}
+          </span>
+        );
+
+      case "email":
+        return (
+          <span className="text-sm text-gray-600">
+            {item.email || "-"}
           </span>
         );
 
