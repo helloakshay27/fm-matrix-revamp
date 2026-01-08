@@ -71,6 +71,7 @@ const ReportsDetailsPage = () => {
     const [reportDetails, setReportDetails] = useState<ReportDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [reviewStatus, setReviewStatus] = useState("Under Review");
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     useEffect(() => {
         fetchReportDetails();
@@ -95,6 +96,62 @@ const ReportsDetailsPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const updateReportStatus = async (newStatus: string) => {
+        try {
+            setUpdatingStatus(true);
+            const response = await axios.get(
+                `https://${baseUrl}/communities/${communityId}/update_report_status.json`,
+                {
+                    params: {
+                        report_id: id,
+                        status: newStatus,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.data.success || response.status === 200) {
+                setReviewStatus(newStatus);
+                // Optionally refresh the report details
+                await fetchReportDetails();
+            }
+        } catch (error) {
+            console.error("Error updating report status:", error);
+            // Revert the status on error
+            setReviewStatus(reportDetails?.status || "Under Review");
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = e.target.value;
+        setReviewStatus(newStatus);
+        updateReportStatus(newStatus);
+    };
+
+    const formatStatusDisplay = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            under_review: "Under Review",
+            action_in_progress: "In Progress",
+            resolved: "Resolved",
+            closed: "Closed",
+        };
+        return statusMap[status] || status;
+    };
+
+    const getStatusColor = (status: string): { bg: string; text: string; dot: string } => {
+        const colorMap: Record<string, { bg: string; text: string; dot: string }> = {
+            under_review: { bg: "bg-[rgba(217,202,32,0.24)]", text: "text-[#000]", dot: "bg-yellow-500" },
+            action_in_progress: { bg: "bg-[rgba(59,130,246,0.24)]", text: "text-blue-700", dot: "bg-blue-500" },
+            resolved: { bg: "bg-[rgba(34,197,94,0.24)]", text: "text-green-700", dot: "bg-green-500" },
+            closed: { bg: "bg-[rgba(107,114,128,0.24)]", text: "text-gray-700", dot: "bg-gray-500" },
+        };
+        return colorMap[status] || { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-500" };
     };
 
     const getDateFromTimestamp = (timestamp: string): string => {
@@ -174,8 +231,8 @@ const ReportsDetailsPage = () => {
                         </h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="bg-[#FFF4E6] text-[#F59E0B] px-3 py-1 rounded text-sm font-medium">
-                            {reviewStatus}
+                        <span className={`${getStatusColor(reviewStatus).bg} ${getStatusColor(reviewStatus).text} px-3 py-1 rounded text-sm font-medium`}>
+                            {formatStatusDisplay(reviewStatus)}
                         </span>
                     </div>
                 </div>
@@ -242,14 +299,18 @@ const ReportsDetailsPage = () => {
                                 <span className="text-gray-500 mx-2">:</span>
                                 <select
                                     value={reviewStatus}
-                                    onChange={(e) => setReviewStatus(e.target.value)}
-                                    className="border border-gray-300 rounded px-3 py-2 text-sm font-medium text-gray-900 bg-white cursor-pointer"
+                                    onChange={handleStatusChange}
+                                    disabled={updatingStatus}
+                                    className="border border-gray-300 rounded px-3 py-2 text-sm font-medium text-gray-900 bg-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     <option value="under_review">Under Review</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="rejected">Rejected</option>
-                                    <option value="pending">Pending</option>
+                                    <option value="action_in_progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
                                 </select>
+                                {updatingStatus && (
+                                    <span className="ml-2 text-xs text-gray-500">Updating...</span>
+                                )}
                             </div>
                         </div>
                     </div>

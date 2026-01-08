@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, AlertCircle, File } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, File, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { toast } from "sonner";
 
 interface UserDetail {
     id: number;
@@ -51,6 +52,26 @@ const CommunityUserDetails = () => {
         }
     };
 
+    const formatStatusDisplay = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            under_review: "Under Review",
+            action_in_progress: "In Progress",
+            resolved: "Resolved",
+            closed: "Closed",
+        };
+        return statusMap[status] || status;
+    };
+
+    const getStatusColor = (status: string): { bg: string; text: string } => {
+        const colorMap: Record<string, { bg: string; text: string }> = {
+            under_review: { bg: "bg-[rgba(217,202,32,0.24)]", text: "text-yellow-700" },
+            action_in_progress: { bg: "bg-[rgba(59,130,246,0.24)]", text: "text-blue-700" },
+            resolved: { bg: "bg-[rgba(34,197,94,0.24)]", text: "text-green-700" },
+            closed: { bg: "bg-[rgba(107,114,128,0.24)]", text: "text-gray-700" },
+        };
+        return colorMap[status] || { bg: "bg-gray-100", text: "text-gray-700" };
+    };
+
     const formatReportedDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString("en-US", {
@@ -59,6 +80,20 @@ const CommunityUserDetails = () => {
             year: "numeric",
         });
     };
+
+    const deleteReport = async (reportId: number) => {
+        try {
+            await axios.get(`https://${baseUrl}/communities/${communityId}/remove_report.json?report_id=${reportId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            toast.success("Report deleted successfully");
+            fetchUserDetails();
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     if (loading) {
         return (
@@ -193,9 +228,14 @@ const CommunityUserDetails = () => {
                                     </div>
                                     <span className="font-semibold text-lg text-gray-800">Reports</span>
                                 </div>
-                                <span className="bg-[#FFF4E6] text-[#F59E0B] px-3 py-1 rounded text-sm font-medium">
-                                    Under Review
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`${getStatusColor(report.status).bg} ${getStatusColor(report.status).text} px-3 py-1 rounded text-sm font-medium`}>
+                                        {formatStatusDisplay(report.status)}
+                                    </span>
+                                    <Button variant="ghost" className="p-2" onClick={() => deleteReport(report.id)}>
+                                        <Trash2 size={16} color="#c72030" />
+                                    </Button>
+                                </div>
                             </div>
                             <div className="p-6 bg-white">
                                 <div className="space-y-4">
