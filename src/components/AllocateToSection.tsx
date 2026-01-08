@@ -12,6 +12,7 @@ interface AllocateToSectionProps {
   setAllocatedToId: (value: number | null) => void;
   type?: string; // Optional type parameter for API filtering
   siteId?: number | null; // Optional site ID parameter for API filtering
+  prefillSelectedLabel?: string; // Optional display label when selected id isn't in fetched list
 }
 
 // Custom theme for MUI dropdowns (same as MovementToSection)
@@ -92,6 +93,7 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
   setAllocatedToId,
   type,
   siteId,
+  prefillSelectedLabel,
 }) => {
   const { departments, users, loading } = useAllocationData(type, siteId);
   return (
@@ -165,10 +167,10 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
                     }
                     if (allocateTo === 'department') {
                       const dept = departments.find(d => d.id === Number(selected));
-                      return dept?.department_name || 'Select Department';
+                      return dept?.department_name || prefillSelectedLabel || 'Select Department';
                     } else {
                       const user = users.find(u => u.id === Number(selected));
-                      return user?.full_name || 'Select User';
+                      return user?.full_name || prefillSelectedLabel || 'Select User';
                     }
                   },
                 }}
