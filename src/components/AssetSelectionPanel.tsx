@@ -11,7 +11,7 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
-import { BASE_URL, getAuthHeader } from "@/config/apiConfig";
+import { getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
@@ -61,6 +61,14 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
       return;
     }
 
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl) {
+      toast.error("Configuration Error", {
+        description: "Base URL not set. Please log in again.",
+      });
+      return;
+    }
+
     setIsExporting(true);
 
     try {
@@ -75,7 +83,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
         urlParams.append("q[id_in][]", id);
       });
 
-      const url = `${BASE_URL}/pms/assets/assets_data_report.xlsx?${urlParams.toString()}`;
+      const url = `https://${baseUrl}/pms/assets/assets_data_report.xlsx?${urlParams.toString()}`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -186,10 +194,10 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   //   }
   // };
 
-const waitForPdfReady = async (fileName: string): Promise<Response> => {
+const waitForPdfReady = async (fileName: string, baseUrl: string): Promise<Response> => {
   while (true) {
     const res = await fetch(
-      `${BASE_URL}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
+      `https://${baseUrl}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
       {
         headers: { Authorization: getAuthHeader() },
       }
@@ -224,17 +232,28 @@ const handlePrintQRCode = async () => {
     return;
   }
 
+  const baseUrl = localStorage.getItem("baseUrl");
+  if (!baseUrl) {
+    toast.error("Configuration Error", {
+      description: "Base URL not set. Please log in again.",
+    });
+    return;
+  }
+
   setIsPrintingQR(true);
 
   try {
     // STEP 1: Start PDF generation
-    const response = await fetch(`${BASE_URL}/pms/assets/print_qr_codes`, {
+    const response = await fetch(`https://${baseUrl}/pms/assets/print_qr_codes`, {
       method: "POST",
       headers: {
         Authorization: getAuthHeader(),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ asset_ids: selectedAssetIds }),
+      body: JSON.stringify({ 
+        asset_ids: selectedAssetIds,
+        base_url: baseUrl // Send base URL without https://
+      }),
     });
 
     if (!response.ok) {
@@ -251,7 +270,7 @@ const handlePrintQRCode = async () => {
     });
 
     // STEP 2: ⏳ Wait until PDF is READY
-    const pdfResponse = await waitForPdfReady(file_name);
+    const pdfResponse = await waitForPdfReady(file_name, baseUrl);
 
     // STEP 3: Download PDF (only once, guaranteed ready)
     const blob = await pdfResponse.blob();
