@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter, Loader2 } from 'lucide-react';
 import { UtilityEVConsumptionFilterDialog } from '../components/UtilityEVConsumptionFilterDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from '@/hooks/useDebounce';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -33,8 +32,9 @@ interface FilterData {
 
 const UtilityEVConsumptionDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [evConsumptionData, setEvConsumptionData] = useState<EVConsumptionData[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<FilterData>({});
   const [totalRecords, setTotalRecords] = useState(0);
@@ -42,8 +42,6 @@ const UtilityEVConsumptionDashboard = () => {
   const [pageSize, setPageSize] = useState(15);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const isSearchingRef = useRef(false);
 
   // Column visibility state - updated to match API response
   const [columns, setColumns] = useState([
@@ -151,7 +149,13 @@ const UtilityEVConsumptionDashboard = () => {
   // Fetch EV consumption data from API
   const fetchEVConsumptionData = useCallback(async (filters?: FilterData, search?: string, page: number = 1, size: number = 15) => {
     try {
-      setIsLoading(true);
+      // Use different loading states based on whether it's a search operation
+      const isSearch = search !== undefined && search.trim() !== '';
+      if (isSearch) {
+        setSearchLoading(true);
+      } else {
+        setIsLoading(true);
+      }
       console.log('🚀 Fetching EV consumption data from API with filters:', filters, 'search:', search, 'Page:', page, 'Size:', size);
       
       const url = getFullUrl('/ev_consumptions.json');
@@ -260,50 +264,42 @@ const UtilityEVConsumptionDashboard = () => {
       setTotalPages(1);
     } finally {
       setIsLoading(false);
+      setSearchLoading(false);
     }
-  }, [toast]);
-
-  // Handle search input change
-  const handleSearch = useCallback((query: string) => {
-    isSearchingRef.current = true;
-    setSearchQuery(query);
-  }, []);
-
-  // Effect to handle debounced search
-  useEffect(() => {
-    // Skip if search query hasn't changed
-    if (!isSearchingRef.current && debouncedSearchQuery === searchQuery) {
-      return;
-    }
-
-    // Reset to first page when searching
-    if (isSearchingRef.current || debouncedSearchQuery !== searchQuery) {
-      setCurrentPage(1);
-      isSearchingRef.current = false;
-    }
-
-    // Fetch with the debounced search query
-    fetchEVConsumptionData(appliedFilters, debouncedSearchQuery, 1, pageSize);
-  }, [debouncedSearchQuery]);
+  }, [appliedFilters, toast]);
 
   // Fetch data on component mount and when page/pageSize changes
   useEffect(() => {
-    fetchEVConsumptionData(appliedFilters, debouncedSearchQuery, currentPage, pageSize);
+    fetchEVConsumptionData(appliedFilters, searchTerm, currentPage, pageSize);
   }, [currentPage, pageSize]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on search
+      if (searchTerm) {
+        fetchEVConsumptionData(appliedFilters, searchTerm, 1, pageSize);
+      } else {
+        fetchEVConsumptionData(appliedFilters, undefined, 1, pageSize);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Filter handler functions
   const handleApplyFilters = (filters: FilterData) => {
     console.log('Applying filters:', filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when filters change
-    fetchEVConsumptionData(filters, debouncedSearchQuery, 1, pageSize);
+    fetchEVConsumptionData(filters, searchTerm, 1, pageSize);
   };
 
   const handleResetFilters = () => {
     console.log('Resetting filters');
     setAppliedFilters({});
     setCurrentPage(1); // Reset to first page when filters reset
-    fetchEVConsumptionData({}, debouncedSearchQuery, 1, pageSize);
+    fetchEVConsumptionData({}, searchTerm, 1, pageSize);
   };
 
   // Pagination handlers
@@ -421,7 +417,7 @@ const UtilityEVConsumptionDashboard = () => {
       </div>
 
       {/* Loading State */}
-      {isLoading ? (
+      {isLoading && !searchLoading ? (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">Loading EV consumption data...</span>
@@ -438,8 +434,8 @@ const UtilityEVConsumptionDashboard = () => {
             // enableExport={true}
             handleExport={handleExport}
             exportFileName="ev-consumption-data"
-            searchTerm={searchQuery}
-            onSearchChange={handleSearch}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
             searchPlaceholder="Search by Transaction ID..."
             pagination={false}
             hideColumnsButton={false}

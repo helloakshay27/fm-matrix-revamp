@@ -14,6 +14,7 @@ const UtilitySolarGeneratorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [solarGeneratorData, setSolarGeneratorData] = useState<SolarGenerator[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [filters, setFilters] = useState<SolarGeneratorFilters>({});
   const [totalRecords, setTotalRecords] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,7 +80,13 @@ const UtilitySolarGeneratorDashboard = () => {
   // Fetch solar generator data
   const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters, search?: string, page: number = 1, size: number = 15) => {
     try {
-      setLoading(true);
+      // Use different loading states based on whether it's a search operation
+      const isSearch = search !== undefined && search.trim() !== '';
+      if (isSearch) {
+        setSearchLoading(true);
+      } else {
+        setLoading(true);
+      }
       console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters, 'search:', search, 'Page:', page, 'Size:', size);
       
       const filtersWithSearch = {
@@ -120,6 +127,7 @@ const UtilitySolarGeneratorDashboard = () => {
       setTotalPages(1);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   }, [filters, toast]);
 
@@ -228,7 +236,7 @@ const UtilitySolarGeneratorDashboard = () => {
       </div>
 
       {/* Loading State */}
-      {loading ? (
+      {loading && !searchLoading ? (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">Loading solar generator data...</span>
