@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Search, Copy, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  getDocuments,
+  Document as ApiDocument,
+} from "@/services/documentService";
+import { toast } from "sonner";
 
 interface AddExistingDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDocuments: (documentIds: number[], action: "copy" | "move") => void;
+  onSelectDocuments: (documents: Document[], action: "copy" | "move") => void;
 }
 
 interface Document {
@@ -21,53 +26,6 @@ interface Document {
   created_on: string;
   status: string;
 }
-
-const mockDocuments: Document[] = [
-  {
-    id: 1,
-    title: "Lease Agreement",
-    category: "Lease / Legal",
-    folder: "Lease Agreements",
-    format: "PDF",
-    size: "1.2 MB",
-    created_by: "Rohan Desai",
-    created_on: "2024-01-15",
-    status: "Active",
-  },
-  {
-    id: 2,
-    title: "Fire Safety Drill Report",
-    category: "Safety & Compliance",
-    folder: "Fire Safety Certificates",
-    format: "DOCX",
-    size: "320 KB",
-    created_by: "Priya Kulkarni",
-    created_on: "2024-01-14",
-    status: "Active",
-  },
-  {
-    id: 3,
-    title: "Visitor Pass Template",
-    category: "Templates",
-    folder: "Visitor Pass Templates",
-    format: "PDF",
-    size: "450 KB",
-    created_by: "Admin System",
-    created_on: "2024-01-13",
-    status: "Active",
-  },
-  {
-    id: 4,
-    title: "Maintenance Work Order",
-    category: "Maintenance",
-    folder: "Work Orders",
-    format: "XLSX",
-    size: "780 KB",
-    created_by: "Mahesh Patil",
-    created_on: "2024-01-12",
-    status: "Active",
-  },
-];
 
 const columns: ColumnConfig[] = [
   { key: "title", label: "Title", sortable: true, defaultVisible: true },
@@ -96,12 +54,75 @@ export const AddExistingDocumentModal: React.FC<
   const [searchTerm, setSearchTerm] = useState("");
   const [action, setAction] = useState<"copy" | "move">("copy");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await getDocuments(1);
+
+      // Transform API documents to match our Document interface
+      const transformedDocs: Document[] = response.documents.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        category: doc.document_category_name || "N/A",
+        folder: doc.folder_name || "N/A",
+        format:
+          doc.attachment?.filename.split(".").pop()?.toUpperCase() || "FILE",
+        size: formatFileSize(doc.attachment?.file_size || 0),
+        created_by: doc.created_by_full_name || "Unknown",
+        created_on: formatDate(doc.created_at),
+        status: doc.active ? "Active" : "Inactive",
+      }));
+
+      setDocuments(transformedDocs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch documents when modal opens and reset selection when it closes
+  useEffect(() => {
+    if (isOpen) {
+      fetchDocuments();
+      setSelectedItems([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i)) + " " + sizes[i];
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-GB", options);
+  };
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    const selectedIds = selectedItems.map((id) => parseInt(id, 10));
-    onSelectDocuments(selectedIds, action);
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one document");
+      return;
+    }
+    const selectedDocs = documents.filter((doc) =>
+      selectedItems.includes(doc.id.toString())
+    );
+    onSelectDocuments(selectedDocs, action);
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
@@ -120,7 +141,7 @@ export const AddExistingDocumentModal: React.FC<
     }
   };
 
-  const filteredDocuments = mockDocuments.filter((doc) =>
+  const filteredDocuments = documents.filter((doc) =>
     Object.values(doc).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -175,23 +196,29 @@ export const AddExistingDocumentModal: React.FC<
 
         {/* Table */}
         <div className="flex-1 overflow-auto p-6">
-          <EnhancedTable
-            data={filteredDocuments}
-            columns={columns}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onSelectAll={handleSelectAll}
-            getItemId={(doc) => doc.id.toString()}
-            renderCell={(doc, columnKey) => {
-              const value = doc[columnKey as keyof Document];
-              return <span>{value}</span>;
-            }}
-            enableSearch={true}
-            pagination={true}
-            pageSize={10}
-            hideTableSearch={false}
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-500">Loading documents...</div>
+            </div>
+          ) : (
+            <EnhancedTable
+              data={filteredDocuments}
+              columns={columns}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectItem={handleSelectItem}
+              onSelectAll={handleSelectAll}
+              getItemId={(doc) => doc.id.toString()}
+              renderCell={(doc, columnKey) => {
+                const value = doc[columnKey as keyof Document];
+                return <span>{value}</span>;
+              }}
+              enableSearch={true}
+              pagination={true}
+              pageSize={10}
+              hideTableSearch={false}
+            />
+          )}
         </div>
 
         {/* Footer */}

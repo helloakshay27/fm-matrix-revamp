@@ -18,13 +18,27 @@ export interface SolarGeneratorFilters {
   to_date?: string;
   site_id?: number;
   tower_name?: string;
+  page?: number;
+  per_page?: number;
+}
+
+export interface SolarGeneratorPaginationInfo {
+  current_page: number;
+  per_page: number;
+  total_entries: number;
+  total_pages: number;
+}
+
+export interface SolarGeneratorResponse {
+  pagination: SolarGeneratorPaginationInfo;
+  solar_generators: SolarGenerator[];
 }
 
 class SolarGeneratorAPI {
   /**
    * Fetch solar generator data
    */
-  async getSolarGenerators(filters?: SolarGeneratorFilters): Promise<SolarGenerator[]> {
+  async getSolarGenerators(filters?: SolarGeneratorFilters): Promise<SolarGeneratorResponse> {
     try {
       const params = new URLSearchParams();
       
@@ -50,13 +64,19 @@ class SolarGeneratorAPI {
       if (filters?.tower_name) {
         params.append('q[tower_name_cont]', filters.tower_name);
       }
+      if (filters?.page) {
+        params.append('page', filters.page.toString());
+      }
+      if (filters?.per_page) {
+        params.append('per_page', filters.per_page.toString());
+      }
 
       const queryString = params.toString();
       const endpoint = queryString 
         ? `/solar_generators.json?${queryString}`
         : '/solar_generators.json';
 
-      const response = await apiClient.get<SolarGenerator[]>(endpoint);
+      const response = await apiClient.get<SolarGeneratorResponse>(endpoint);
       return response.data;
     } catch (error) {
       console.error('Error fetching solar generators:', error);
