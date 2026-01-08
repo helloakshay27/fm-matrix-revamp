@@ -407,7 +407,7 @@ const AddSosDirectory = () => {
                                                 <Info size={18} />
                                             </TooltipTrigger>
                                             <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                                                <p>Upload a clear, solid black image (no colors or gradients) to ensure consistent visibility on a white background.</p>
+                                                <p>Upload a clear, solid black image (JPG or PNG only, no colors or gradients) to ensure consistent visibility on a white background.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -418,7 +418,7 @@ const AddSosDirectory = () => {
                                     ref={attachmentInputRef}
                                     onChange={handleFileChange}
                                     className="hidden"
-                                    accept="image/*"
+                                    accept="image/jpeg,image/png"
                                 />
 
                                 <div className="text-center text-gray-500 text-sm">

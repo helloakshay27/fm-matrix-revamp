@@ -177,6 +177,38 @@ export const BroadcastDashboard = () => {
     }
   };
 
+  const handleImportantClick = async (item: any) => {
+    const newStatus = item.is_important ? 0 : 1;
+
+    // Optimistic update
+    setUpdatingStatus((prev) => ({ ...prev, [`important_${item.id}`]: true }));
+
+    try {
+      await dispatch(
+        updateBroadcast({
+          id: item.id,
+          data: { noticeboard: { is_important: newStatus } },
+          baseUrl,
+          token,
+        })
+      ).unwrap();
+
+      toast.success("Broadcast importance status updated successfully");
+
+      // Refresh list to ensure consistency
+      handlePageChange(pagination.current_page);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update broadcast importance status");
+    } finally {
+      setUpdatingStatus((prev) => {
+        const newState = { ...prev };
+        delete newState[`important_${item.id}`];
+        return newState;
+      });
+    }
+  }
+
   const handleShowOnHomeScreenChange = async (item: any, checked: boolean) => {
     const newStatus = checked ? 1 : 0;
 
@@ -505,6 +537,8 @@ export const BroadcastDashboard = () => {
         variant="ghost"
         size="sm"
         className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        onClick={() => handleImportantClick(item)}
+        disabled={updatingStatus[`important_${item.id}`]}
       >
         <Star
           className="w-4 h-4"
