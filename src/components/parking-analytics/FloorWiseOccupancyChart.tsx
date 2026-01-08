@@ -12,6 +12,12 @@ const CHART_COLORS = {
   fourWheeler: '#C4B99D',     // Original primary for 4W (matching openBreached)
 };
 
+// Colors used for last-year bars (lighter shades)
+const LAST_YEAR_COLORS = {
+  twoWheeler: '#DAD6CA',
+  fourWheeler: '#E8E5DD',
+};
+
 interface FloorOccupancyData {
   floor: string;
   twoWheeler: number;
@@ -53,16 +59,12 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
 
         // Calculate dates if not provided
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setDate(date.getDate() - 7);
-          return date.toISOString().split('T')[0];
-        })();
+        const startDateStr = startDate || endDateStr; // single-day default
 
-        // Calculate previous period start date (last month)
+        // Previous period: previous day
         const previousStartDate = (() => {
           const date = new Date(startDateStr);
-          date.setMonth(date.getMonth() - 1);
+          date.setDate(date.getDate() - 1);
           return date.toISOString().split('T')[0];
         })();
 
@@ -126,15 +128,11 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
     setLoading(true);
     try {
       const endDateStr = endDate || new Date().toISOString().split('T')[0];
-      const startDateStr = startDate || (() => {
-        const date = new Date();
-        date.setDate(date.getDate() - 7);
-        return date.toISOString().split('T')[0];
-      })();
+      const startDateStr = startDate || endDateStr;
 
       const previousStartDate = (() => {
         const date = new Date(startDateStr);
-        date.setMonth(date.getMonth() - 1);
+        date.setDate(date.getDate() - 1);
         return date.toISOString().split('T')[0];
       })();
 
@@ -169,23 +167,53 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
   // Transform API data to chart format
   const getChartData = (): FloorOccupancyData[] => {
     if (occupancyView === 'yoy' && apiData?.data?.current_year?.floors && apiData?.data?.previous_year?.floors) {
-      // YoY comparison: merge current and previous year data
-      const currentFloors = apiData.data.current_year.floors;
-      const previousFloors = apiData.data.previous_year.floors;
-      
-      return currentFloors
-        .filter((floor: any) => floor.total_capacity > 0)
-        .map((floor: any, index: number) => {
-          const prevFloor = previousFloors[index] || {};
+      // YoY comparison: merge current and previous year data (union of floors)
+      const currentFloors = apiData.data.current_year.floors || [];
+      const previousFloors = apiData.data.previous_year.floors || [];
+
+      // Normalize helper
+      const normalize = (s: any) => (s ? String(s).trim().toLowerCase().replace(/\s+/g, ' ') : '');
+
+      // Build lookups
+      const currMap = new Map<string, any>();
+      currentFloors.forEach((cf: any) => currMap.set(normalize(cf.floor_name), cf));
+      const prevMap = new Map<string, any>();
+      previousFloors.forEach((pf: any) => prevMap.set(normalize(pf.floor_name), pf));
+
+      // Create ordered union of floor keys: prefer current order, then append previous-only floors
+      const orderedKeys: string[] = [];
+      currentFloors.forEach((cf: any) => {
+        const k = normalize(cf.floor_name);
+        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+      });
+      previousFloors.forEach((pf: any) => {
+        const k = normalize(pf.floor_name);
+        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+      });
+
+      // Build result array using union keys
+      return orderedKeys
+        .map((key) => {
+          const curr = currMap.get(key) || {};
+          const prev = prevMap.get(key) || {};
+          // Determine display name: prefer current floor_name, else previous
+          const displayName = curr.floor_name || prev.floor_name || key;
+
+          // Only include floors that have capacity in either current or previous, otherwise skip
+          const currCapacity = curr.total_capacity ?? 0;
+          const prevCapacity = prev.total_capacity ?? 0;
+          if ((currCapacity + prevCapacity) === 0) return null;
+
           return {
-            floor: floor.floor_name,
-            twoWheeler: floor.two_wheeler.total_occupied || 0,
-            fourWheeler: floor.four_wheeler.total_occupied || 0,
-            lastYearTwoWheeler: prevFloor.two_wheeler?.total_occupied || 0,
-            lastYearFourWheeler: prevFloor.four_wheeler?.total_occupied || 0,
-            percentage: floor.occupancy_pct || 0
-          };
-        });
+            floor: displayName,
+            twoWheeler: curr.two_wheeler?.total_occupied || 0,
+            fourWheeler: curr.four_wheeler?.total_occupied || 0,
+            lastYearTwoWheeler: prev.two_wheeler?.total_occupied || 0,
+            lastYearFourWheeler: prev.four_wheeler?.total_occupied || 0,
+            percentage: curr.occupancy_pct || prev.occupancy_pct || 0
+          } as FloorOccupancyData;
+        })
+        .filter(Boolean) as FloorOccupancyData[];
     } else if (apiData?.data?.current_year?.floors) {
       // Current year only
       const floors = apiData.data.current_year.floors;
@@ -214,6 +242,9 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
 
   const chartData = getChartData();
 
+  // Ensure horizontal scroll when there are many floors: each floor gets a minimum width
+  const minChartWidth = Math.max(chartData.length * 100, 500); // 100px per floor, at least 500px
+
   // Custom tooltip to show floor details with hover effect
   const CustomTooltip = ({ active, payload }: {
     active?: boolean;
@@ -225,18 +256,32 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
     }>;
   }) => {
     if (active && payload && payload.length) {
-      const floorData = payload[0].payload;
+      const floorName = payload[0].payload?.floor || '';
+      const datum = payload[0].payload as FloorOccupancyData;
+      const hasPrev = typeof datum.lastYearTwoWheeler === 'number' || typeof datum.lastYearFourWheeler === 'number';
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-bold text-gray-800 mb-2 text-lg">{floorData.floor}</p>
+          <p className="font-bold text-gray-800 mb-2 text-lg">{floorName}</p>
           <div className="space-y-1">
+            {occupancyView === 'yoy' && (
+              <>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.twoWheeler }}>Last Year 2W:</span>
+                  <span className="text-gray-700 font-semibold">{hasPrev ? datum.lastYearTwoWheeler : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.fourWheeler }}>Last Year 4W:</span>
+                  <span className="text-gray-700 font-semibold">{hasPrev ? datum.lastYearFourWheeler : 'N/A'}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between items-center gap-4">
-              <span className="font-medium text-[#8B7355]">2W:</span>
-              <span className="text-gray-700 font-semibold">{floorData.twoWheeler}</span>
+              <span className="font-medium" style={{ color: CHART_COLORS.twoWheeler }}>This Year 2W:</span>
+              <span className="text-gray-700 font-semibold">{datum.twoWheeler}</span>
             </div>
             <div className="flex justify-between items-center gap-4">
-              <span className="font-medium text-[#C4B99D]">4W:</span>
-              <span className="text-gray-700 font-semibold">{floorData.fourWheeler}</span>
+              <span className="font-medium" style={{ color: CHART_COLORS.fourWheeler }}>This Year 4W:</span>
+              <span className="text-gray-700 font-semibold">{datum.fourWheeler}</span>
             </div>
           </div>
         </div>
@@ -298,8 +343,9 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
             </div>
 
             <div className="w-full overflow-x-auto">
-              <ResponsiveContainer width="100%" height={400} className="min-w-[500px]">
-                <BarChart 
+              <div style={{ minWidth: minChartWidth }}>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart 
                   data={chartData} 
                   margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                   onMouseMove={(state) => {
@@ -380,7 +426,8 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                     </>
                   )}
                 </BarChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Percentage Row */}

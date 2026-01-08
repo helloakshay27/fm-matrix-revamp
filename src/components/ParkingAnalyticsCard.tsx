@@ -69,15 +69,13 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       setError(null);
       try {
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setDate(date.getDate() - 7);
-          return date.toISOString().split('T')[0];
-        })();
+        // Default to a single day (endDate) when startDate is not provided
+        const startDateStr = startDate || endDateStr;
 
+        // Previous period: previous single day (yesterday of startDate)
         const previousStartDate = (() => {
           const date = new Date(startDateStr);
-          date.setMonth(date.getMonth() - 1);
+          date.setDate(date.getDate() - 1);
           return date.toISOString().split('T')[0];
         })();
 
@@ -92,7 +90,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         });
 
         const fullUrl = `${url}?${params.toString()}`;
-        console.log('🔍 Fetching peak hour trends:', fullUrl);
+  // fetching peak hour trends
         const response = await fetch(fullUrl, options);
         
         if (!response.ok) {
@@ -100,7 +98,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         }
 
         const result = await response.json();
-        console.log('✅ Peak hour trends data:', result);
+  // peak hour trends data received
         setApiData(result);
       } catch (err) {
         console.error('Error fetching peak hour trends:', err);
@@ -123,17 +121,14 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       setError(null);
       try {
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setFullYear(date.getFullYear(), 0, 1); // Start of current year
-          return date.toISOString().split('T')[0];
-        })();
+        // Default to a single day (use endDate) when startDate not provided
+        const startDateStr = startDate || endDateStr;
 
-        // Calculate previous year start date (one year before start date)
+        // Previous period: previous single day (yesterday of startDate)
         const previousStartDate = (() => {
-          const date = new Date(startDateStr);
-          date.setFullYear(date.getFullYear() - 1);
-          return date.toISOString().split('T')[0];
+          const s = new Date(startDateStr);
+          s.setDate(s.getDate() - 1);
+          return s.toISOString().split('T')[0];
         })();
 
         const url = getFullUrl('/parking_dashboard/yearly_comparison');
@@ -147,7 +142,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         });
 
         const fullUrl = `${url}?${params.toString()}`;
-        console.log('🔍 Fetching yearly comparison:', fullUrl);
+  // fetching yearly comparison
         const response = await fetch(fullUrl, options);
         
         if (!response.ok) {
@@ -155,7 +150,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         }
 
         const result = await response.json();
-        console.log('✅ Yearly comparison data:', result);
+  // yearly comparison data received
         setApiData(result);
       } catch (err) {
         console.error('Error fetching yearly comparison:', err);
@@ -178,23 +173,20 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       setError(null);
       try {
         const endDateStr = endDate || new Date().toISOString().split('T')[0];
-        const startDateStr = startDate || (() => {
-          const date = new Date();
-          date.setMonth(date.getMonth() - 1);
-          return date.toISOString().split('T')[0];
-        })();
+        // Default to a single day (use endDate) when startDate not provided
+        const startDateStr = startDate || endDateStr;
 
-        // Calculate compare dates (previous year same period)
+        // Compare period is the previous single day
         const compareEndDate = (() => {
-          const date = new Date(endDateStr);
-          date.setFullYear(date.getFullYear() - 1);
-          return date.toISOString().split('T')[0];
+          const d = new Date(endDateStr);
+          d.setDate(d.getDate() - 1);
+          return d.toISOString().split('T')[0];
         })();
 
         const compareStartDate = (() => {
-          const date = new Date(startDateStr);
-          date.setFullYear(date.getFullYear() - 1);
-          return date.toISOString().split('T')[0];
+          const d = new Date(startDateStr);
+          d.setDate(d.getDate() - 1);
+          return d.toISOString().split('T')[0];
         })();
 
         const url = getFullUrl('/parking_dashboard/cancelled_bookings');
@@ -208,7 +200,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         });
 
         const fullUrl = `${url}?${params.toString()}`;
-        console.log('🔍 Fetching cancelled bookings:', fullUrl);
+  // fetching cancelled bookings
         const response = await fetch(fullUrl, options);
         
         if (!response.ok) {
@@ -216,7 +208,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         }
 
         const result = await response.json();
-        console.log('✅ Cancelled bookings data:', result);
+  // cancelled bookings data received
         setApiData(result);
       } catch (err) {
         console.error('Error fetching cancelled bookings:', err);
@@ -237,6 +229,30 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       console.error('Error downloading:', error);
       toast.error('Failed to download');
     }
+  };
+
+  // Derive a human friendly comparison label based on selected date range
+  const getCompareLabel = (start?: string, end?: string) => {
+    if (!start || !end) return 'Comparison';
+
+    const startDateObj = new Date(start);
+    const endDateObj = new Date(end);
+    if (Number.isNaN(startDateObj.getTime()) || Number.isNaN(endDateObj.getTime())) return 'Comparison';
+
+    // inclusive day count
+    const diffMs = endDateObj.getTime() - startDateObj.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+  // Treat very short ranges (1-3 days) as Day Comparison
+  if (days >= 1 && days <= 3) return 'Day Comparison';
+  if (days >= 6 && days <= 8) return 'Week Comparison';
+  if (days >= 28 && days <= 31) return 'Month Comparison';
+  // Treat anything around a year or slightly over as Year Comparison
+  if (days >= 360 && days <= 400) return 'Year Comparison';
+  // If it's more than 400 days, consider it multi-year
+  if (days > 400) return 'Multi-year Comparison';
+
+  return 'Date Range Comparison';
   };
 
   const renderChart = () => {
@@ -305,7 +321,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tickFormatter={formatNumber}
                     label={{ value: 'Bookings', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} cursor={false} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   
                   {occupancyView === 'current' ? (
@@ -347,7 +363,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         );
       }
 
-      case 'bookingPatterns': {
+  case 'bookingPatterns': {
         // Transform API data or use sample data
         const bookingPatternDataAll = apiData?.data ? [
           { 
@@ -382,7 +398,9 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           ? [bookingPatternDataAll[1]] // Only current year
           : bookingPatternDataAll; // Both years
 
-        return (
+  const compareLabel = getCompareLabel(startDate, endDate);
+
+  return (
           <div className="w-full">
             {/* Toggle Buttons */}
             <div className="flex gap-2 mb-4">
@@ -394,7 +412,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Current Year
+                {compareLabel === 'Year Comparison' ? 'Current Year' : 'Current Period'}
               </button>
               <button
                 onClick={() => setOccupancyView('yoy')}
@@ -404,7 +422,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Compare
+                {compareLabel}
               </button>
             </div>
 
@@ -421,7 +439,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                     tickFormatter={formatNumber}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} cursor={false} />
                   <Legend 
                     verticalAlign="bottom" 
                     height={36} 
@@ -589,7 +607,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                     tickFormatter={formatNumber}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} cursor={false} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   
                   {occupancyView === 'current' ? (
@@ -689,7 +707,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tick={{ fontSize: 14, fill: '#6b7280' }}
                     width={80}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} cursor={false} />
                   <Legend 
                     verticalAlign="bottom" 
                     height={36} 
@@ -736,7 +754,23 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-[#1A1A1A]">{title}</h3>
+          {(() => {
+            // Compute a dynamic title when showing bookingPatterns to avoid hard-coded '2-Year Parking Comparison'
+            if (type === 'bookingPatterns') {
+              const label = getCompareLabel(startDate, endDate);
+              const dynamicTitle = label === 'Year Comparison' 
+                ? 'Yearly Parking Comparison' 
+                : label === 'Month Comparison'
+                  ? 'Monthly Parking Comparison'
+                  : label === 'Week Comparison'
+                    ? 'Weekly Parking Comparison'
+                    : label === 'Day Comparison'
+                      ? 'Daily Parking Comparison'
+                      : 'Parking Comparison';
+              return <h3 className="text-lg font-bold text-[#1A1A1A]">{dynamicTitle}</h3>;
+            }
+            return <h3 className="text-lg font-bold text-[#1A1A1A]">{title}</h3>;
+          })()}
           {loading && <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
         </div>
         <div className="flex items-center gap-2">
@@ -748,15 +782,11 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
               try {
                 if (type === 'peakHourTrends') {
                   const endDateStr = endDate || new Date().toISOString().split('T')[0];
-                  const startDateStr = startDate || (() => {
-                    const date = new Date();
-                    date.setDate(date.getDate() - 7);
-                    return date.toISOString().split('T')[0];
-                  })();
+                  const startDateStr = startDate || endDateStr;
 
                   const previousStartDate = (() => {
                     const date = new Date(startDateStr);
-                    date.setMonth(date.getMonth() - 1);
+                    date.setDate(date.getDate() - 1);
                     return date.toISOString().split('T')[0];
                   })();
 
@@ -782,17 +812,12 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   toast.success('Peak hour trends refreshed');
                 } else if (type === 'bookingPatterns') {
                   const endDateStr = endDate || new Date().toISOString().split('T')[0];
-                  const startDateStr = startDate || (() => {
-                    const date = new Date();
-                    date.setFullYear(date.getFullYear(), 0, 1); // Start of current year
-                    return date.toISOString().split('T')[0];
-                  })();
+                  const startDateStr = startDate || endDateStr; // single-day default
 
-                  // Calculate previous year start date (one year before start date)
                   const previousStartDate = (() => {
-                    const date = new Date(startDateStr);
-                    date.setFullYear(date.getFullYear() - 1);
-                    return date.toISOString().split('T')[0];
+                    const d = new Date(startDateStr);
+                    d.setDate(d.getDate() - 1);
+                    return d.toISOString().split('T')[0];
                   })();
 
                   const url = getFullUrl('/parking_dashboard/yearly_comparison');
@@ -817,22 +842,18 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   toast.success('Yearly comparison refreshed');
                 } else if (type === 'occupancyRate') {
                   const endDateStr = endDate || new Date().toISOString().split('T')[0];
-                  const startDateStr = startDate || (() => {
-                    const date = new Date();
-                    date.setMonth(date.getMonth() - 1);
-                    return date.toISOString().split('T')[0];
-                  })();
+                  const startDateStr = startDate || endDateStr;
 
                   const compareEndDate = (() => {
-                    const date = new Date(endDateStr);
-                    date.setFullYear(date.getFullYear() - 1);
-                    return date.toISOString().split('T')[0];
+                    const d = new Date(endDateStr);
+                    d.setDate(d.getDate() - 1);
+                    return d.toISOString().split('T')[0];
                   })();
 
                   const compareStartDate = (() => {
-                    const date = new Date(startDateStr);
-                    date.setFullYear(date.getFullYear() - 1);
-                    return date.toISOString().split('T')[0];
+                    const d = new Date(startDateStr);
+                    d.setDate(d.getDate() - 1);
+                    return d.toISOString().split('T')[0];
                   })();
 
                   const url = getFullUrl('/parking_dashboard/cancelled_bookings');
