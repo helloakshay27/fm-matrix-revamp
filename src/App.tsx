@@ -3770,7 +3770,7 @@ function App() {
                     element={<CommunityUserDetails />}
                   />
                   <Route
-                    path="/pulse/community/reports/details/:id"
+                    path="/pulse/community/:communityId/reports/details/:id"
                     element={<ReportsDetailsPage />}
                   />
 
@@ -3871,7 +3871,7 @@ function App() {
 
                   <Route
                     path="/pulse/amenity"
-                    element={<AmenitySetupDashboard />}
+                    element={<BookingList />}
                   />
 
                   {/* Carpool Routes */}

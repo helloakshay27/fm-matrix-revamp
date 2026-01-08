@@ -20,7 +20,7 @@ interface UserDetail {
 }
 
 const CommunityUserDetails = () => {
-    const { userId } = useParams();
+    const { userId, communityId } = useParams();
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -203,7 +203,7 @@ const CommunityUserDetails = () => {
                                         <label className="text-sm text-gray-500 block mb-2">Report:</label>
                                         <span
                                             className="bg-[#e06060] text-white px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
-                                            onClick={() => navigate(`/pulse/community/reports/details/${report.id}`)}
+                                            onClick={() => navigate(`/pulse/community/${communityId}/reports/details/${report.id}`)}
                                         >
                                             <File size={16} /> 1 Report
                                         </span>

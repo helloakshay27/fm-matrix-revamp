@@ -16,7 +16,7 @@ interface ReportDetail {
 }
 
 const ReportsDetailsPage = () => {
-    const { userId } = useParams();
+    const { id, communityId } = useParams();
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -27,14 +27,14 @@ const ReportsDetailsPage = () => {
 
     useEffect(() => {
         fetchReportDetails();
-    }, [userId]);
+    }, [id, communityId]);
 
     const fetchReportDetails = async () => {
         try {
             setLoading(true);
             // Update API endpoint based on actual backend
             const response = await axios.get(
-                `https://${baseUrl}/community_members/${userId}.json`,
+                `https://${baseUrl}/communities/${communityId}/report_detail.json?report_id=${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
