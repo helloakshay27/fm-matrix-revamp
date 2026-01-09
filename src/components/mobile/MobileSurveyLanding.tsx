@@ -1424,21 +1424,21 @@ export const MobileSurveyLanding: React.FC = () => {
     ) {
       // Fallback to static options if no API options
       return [
-        { rating: 5, emoji: "😄", label: "Amazing", optionId: 5 },
-        { rating: 4, emoji: "😊", label: "Good", optionId: 4 },
-        { rating: 3, emoji: "😐", label: "Okay", optionId: 3 },
-        { rating: 2, emoji: "😟", label: "Bad", optionId: 2 },
-        { rating: 1, emoji: "😞", label: "Terrible", optionId: 1 },
+        { rating: 5, emoji: "😄", label: "Extremely Happy", optionId: 5 },
+        { rating: 4, emoji: "😊", label: "Happy", optionId: 4 },
+        { rating: 3, emoji: "😐", label: "Neutral", optionId: 3 },
+        { rating: 2, emoji: "😟", label: "Not Happy", optionId: 2 },
+        { rating: 1, emoji: "😞", label: "Dissatisfied", optionId: 1 },
       ];
     }
 
     // Map API options to emoji display
     const emojiMapping = [
-      { emoji: "😄", label: "Amazing" },
-      { emoji: "😊", label: "Good" },
-      { emoji: "😐", label: "Okay" },
-      { emoji: "😟", label: "Bad" },
-      { emoji: "😞", label: "Terrible" },
+      { emoji: "😄", label: "Extremely Happy" },
+      { emoji: "😊", label: "Happy" },
+      { emoji: "😐", label: "Neutral" },
+      { emoji: "😟", label: "Not Happy" },
+      { emoji: "😞", label: "Dissatisfied" },
     ];
 
     // Use default order so that the first API option is the highest rating, last is lowest
@@ -1951,7 +1951,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     {surveyData.survey_title}
                   </h1>
                   {!showGenericTags && !isLastStep && (
-                    <span className="text-sm text-white/80 font-medium">
+                    <span className="text-sm text-black/80 font-medium">
                       Question{" "}
                       {Math.min(
                         currentQuestionIndex + 1,

@@ -107,13 +107,6 @@ const mockFolderItems: FolderItem[] = [
 
 const columns: ColumnConfig[] = [
   {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
-  {
     key: "folder_title",
     label: "Title",
     sortable: true,
@@ -218,14 +211,17 @@ export const FolderDetailsPage = () => {
             id: doc.id,
             folder_title: doc.title,
             type: "file" as const,
-            category: response.name || "Uncategorized",
+            category:
+              doc.document_category_name || response.name || "Uncategorized",
             format: doc.file_type?.toUpperCase() || "PDF",
             size: formatFileSize(doc.file_size || 0),
             document_count: 1,
-            status: "Active" as const,
-            created_by: "Unknown",
+            status: doc.active ? ("Active" as const) : ("Inactive" as const),
+            created_by: doc.created_by_full_name || "Unknown",
             created_date: formatDate(doc.created_at),
-            modified_date: formatDate(doc.updated_at),
+            modified_date: doc.updated_at
+              ? formatDate(doc.updated_at)
+              : undefined,
           })),
         ];
 
@@ -314,31 +310,26 @@ export const FolderDetailsPage = () => {
 
   const renderCell = (item: FolderItem, columnKey: string) => {
     switch (columnKey) {
+      case "actions":
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewItem(item.id.toString())}
+            className="p-1 h-8 w-8"
+          >
+            <Eye className="w-4 h-4 text-[#C72030]" />
+          </Button>
+        );
       case "folder_title":
         return (
           <div className="flex items-center gap-2">
-            {item.type === "folder" ? (
-              <FolderIcon className="w-5 h-5 text-[#C72030]" />
-            ) : (
-              <FileText className="w-5 h-5 text-gray-500" />
-            )}
+            <FileText className="w-5 h-5 text-[#C72030]" />
             <span className="font-medium">{item.folder_title}</span>
           </div>
         );
       case "format":
-        return <span>{item.format || "-"}</span>;
-      case "status":
-        return (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              item.status === "Active"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {item.status}
-          </span>
-        );
+        return <span>{item.format || "PDF"}</span>;
       case "document_count":
         return <span className="font-medium">{item.document_count}</span>;
       default:
@@ -369,11 +360,7 @@ export const FolderDetailsPage = () => {
           onClick={() => handleViewItem(item.id.toString())}
         >
           <div className="flex flex-col items-center gap-3">
-            {item.type === "folder" ? (
-              <FolderIcon className="w-12 h-12 text-[#C72030]" />
-            ) : (
-              <FileText className="w-12 h-12 text-gray-500" />
-            )}
+            <FileText className="w-12 h-12 text-[#C72030]" />
             <div className="text-center w-full">
               <p
                 className="text-sm font-medium text-gray-900 truncate"
@@ -381,8 +368,10 @@ export const FolderDetailsPage = () => {
               >
                 {item.folder_title}
               </p>
-              <p className="text-xs text-gray-500 mt-1">{item.size}</p>
-              {item.type === "file" && item.format && (
+              <p className="text-xs text-gray-500 mt-1">
+                Created: {item.created_date}
+              </p>
+              {item.format && (
                 <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
                   {item.format}
                 </span>
