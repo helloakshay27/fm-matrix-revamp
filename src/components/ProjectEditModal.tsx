@@ -309,12 +309,6 @@ const ProjectEditModal = ({
       toast.error("Please select end date");
       return false;
     }
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    if (formData.startDate && formData.startDate < todayStr) {
-      toast.error("Start date cannot be before today");
-      return false;
-    }
     if (
       formData.endDate &&
       formData.startDate &&
