@@ -68,6 +68,7 @@ export const CreateFolderPage = () => {
     { id: number; name: string }[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState<string>("");
 
   // Fetch categories on mount
   useEffect(() => {
@@ -182,7 +183,29 @@ export const CreateFolderPage = () => {
     }
 
     setIsSubmitting(true);
+    setSubmitProgress("Creating folder...");
+
     try {
+      // Show progress for inserting documents
+      if (newDocuments.length > 0) {
+        setSubmitProgress(`Inserting ${newDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      // Show progress for moving documents
+      if (moveDocuments.length > 0) {
+        setSubmitProgress(`Moving ${moveDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      // Show progress for copying documents
+      if (copyDocuments.length > 0) {
+        setSubmitProgress(`Copying ${copyDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      setSubmitProgress("Finalizing...");
+
       // Use base64 attachments directly
       const userId = parseInt(localStorage.getItem("userId") || "0", 10);
       const documentsPayload = newDocuments.map((doc) => ({
@@ -237,6 +260,7 @@ export const CreateFolderPage = () => {
       toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
+      setSubmitProgress("");
     }
   };
 
@@ -434,10 +458,17 @@ export const CreateFolderPage = () => {
           <div className="flex justify-center">
             <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#A01828] text-white px-12 py-3 rounded-md font-medium"
+              className="bg-[#C72030] hover:bg-[#A01828] text-white px-12 py-3 rounded-md font-medium min-w-[200px]"
               disabled={!title || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{submitProgress || "Processing..."}</span>
+                </div>
+              ) : (
+                "Submit"
+              )}
             </Button>
           </div>
         </div>
