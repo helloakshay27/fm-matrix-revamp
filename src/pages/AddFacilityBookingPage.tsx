@@ -665,13 +665,16 @@ export const AddFacilityBookingPage = () => {
           'Content-Type': 'application/json',
         },
       });
+      console.log(response)
 
       console.log('Response received:', response.status, response.data);
 
-      if (response.status === 200 || response.status === 201) {
-        toast.success('Booking created successfully!');
-        navigate(-1);
+      if (response.data.error) {
+        toast.error(response.data.error);
+        return;
       }
+      toast.success('Booking created successfully!');
+      navigate(-1);
     } catch (error: any) {
       console.error('Error creating facility booking:', error);
       if (error.response) {
