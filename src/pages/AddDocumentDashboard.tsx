@@ -289,10 +289,18 @@ export const AddDocumentDashboard = () => {
         docs.push(documentData);
         sessionStorage.setItem("pendingDocuments", JSON.stringify(docs));
 
-        // Store folder settings (category and share settings)
+        // Load existing folder settings to preserve move/copy documents
+        const existingSettings = sessionStorage.getItem("folderSettings");
+        const prevSettings = existingSettings
+          ? JSON.parse(existingSettings)
+          : {};
+
+        // Store folder settings (category and share settings) while preserving move/copy
         const folderSettings = {
+          ...prevSettings, // Preserve existing settings including move/copy/title
           categoryId: formData.documentCategory,
           shareWith: formData.shareWith,
+          shareWithCommunities: formData.shareWithCommunities,
           selectedTechParks: selectedTechParks,
           selectedCommunities: selectedCommunities,
         };
@@ -311,15 +319,15 @@ export const AddDocumentDashboard = () => {
         const permissions: FolderPermission[] = [
           {
             access_level: formData.shareWith === "all" ? "all" : "selected",
-            scope_type: "Site",
-            scope_ids:
+            access_to: "Pms::Site",
+            access_ids:
               formData.shareWith === "individual" ? selectedTechParks : [],
           },
           {
             access_level:
-              formData.shareWithCommunities === "yes" ? "view" : "none",
-            scope_type: "community",
-            scope_ids:
+              formData.shareWithCommunities === "all" ? "all" : "selected",
+            access_to: "Community",
+            access_ids:
               formData.shareWithCommunities === "yes"
                 ? selectedCommunities.map((c) => c.id)
                 : [],
