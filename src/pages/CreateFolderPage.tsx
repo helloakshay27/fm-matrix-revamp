@@ -236,7 +236,7 @@ export const CreateFolderPage = () => {
                 : [],
           },
         ],
-        documents: documentsPayload,
+        attachments: documentsPayload,
         move_document_ids: moveDocuments.map((doc) => doc.id),
         copy_document_ids: copyDocuments.map((doc) => doc.id),
       };
