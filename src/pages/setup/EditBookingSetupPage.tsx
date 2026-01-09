@@ -99,13 +99,14 @@ export const EditBookingSetupPage = () => {
     const [loadingDepartments, setLoadingDepartments] = useState(false);
     const [inventories, setInventories] = useState<any[]>([]);
     const [loadingInventories, setLoadingInventories] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     const [formData, setFormData] = useState({
         facilityName: "",
         isBookable: true,
         isRequest: false,
         active: "",
-        department: "",
+        category: "",
         appKey: "",
         postpaid: false,
         prepaid: false,
@@ -144,6 +145,7 @@ export const EditBookingSetupPage = () => {
             guest: { selected: false, adult: "", child: "" },
             minimumPersonAllowed: "1",
             maximumPersonAllowed: "1",
+            perSlotCharge: "",
         },
         blockDays: [
             {
@@ -178,29 +180,25 @@ export const EditBookingSetupPage = () => {
         },
     ]);
 
-    const fetchDepartments = async () => {
-        if (departments.length > 0) return;
+    const fetchCategories = async () => {
+        if (categories.length > 0) return; // Don't fetch if already loaded
+
         setLoadingDepartments(true);
         try {
-            const response = await fetch(`https://${baseUrl}/pms/departments.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-            const data = await response.json();
-            let departmentsList = [];
-            if (Array.isArray(data)) {
-                departmentsList = data;
-            } else if (data && Array.isArray(data.departments)) {
-                departmentsList = data.departments;
-            } else if (data && data.length !== undefined) {
-                departmentsList = Array.from(data);
-            }
-            setDepartments(departmentsList);
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/facility_categories.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            setCategories(response.data);
         } catch (error) {
             console.error("Error fetching departments:", error);
-            setDepartments([]);
+            setCategories([]);
         } finally {
             setLoadingDepartments(false);
         }
@@ -249,7 +247,7 @@ export const EditBookingSetupPage = () => {
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
                 active: responseData.active,
-                department: responseData.department_id || "",
+                category: responseData.facility_category_id || "",
                 appKey: responseData.app_key,
                 postpaid: responseData.postpaid,
                 prepaid: responseData.prepaid,
@@ -315,6 +313,7 @@ export const EditBookingSetupPage = () => {
                     },
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
+                    perSlotCharge: responseData.facility_charge?.per_slot_charge,
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
                     id: blocking.facility_blocking?.id || blocking.id,
@@ -483,7 +482,7 @@ export const EditBookingSetupPage = () => {
     console.log(formData);
 
     useEffect(() => {
-        fetchDepartments();
+        fetchCategories();
         fetchInventories();
         fetchFacilityBookingDetails();
     }, [id]);
@@ -565,12 +564,12 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
-            // if (formData.department) {
-            //     formDataToSend.append(
-            //         "facility_setup[department_id]",
-            //         formData.department
-            //     );
-            // }
+            if (formData.category) {
+                formDataToSend.append(
+                    "facility_setup[facility_category_id]",
+                    formData.category
+                );
+            }
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
             formDataToSend.append(
                 "facility_setup[postpaid]",
@@ -613,6 +612,10 @@ export const EditBookingSetupPage = () => {
                     formData.chargeSetup.member.child || "0"
                 );
             }
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][per_slot_charge]",
+                formData.chargeSetup.perSlotCharge || "0"
+            );
 
             // Charge Setup - Guest selected boolean
             formDataToSend.append(
@@ -999,30 +1002,28 @@ export const EditBookingSetupPage = () => {
                                     }
                                     variant="outlined"
                                 />
-                                {/* <FormControl>
-                                    <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
+                                <FormControl>
+                                    <InputLabel className="bg-[#F6F7F7]">Category</InputLabel>
                                     <Select
-                                        value={formData.department}
+                                        value={formData.category}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, department: e.target.value })
+                                            setFormData({ ...formData, category: e.target.value })
                                         }
-                                        onFocus={fetchDepartments}
-                                        label="Department"
+                                        onFocus={fetchCategories}
+                                        label="Category"
                                         displayEmpty
                                     >
                                         <MenuItem value="">
-                                            {loadingDepartments
-                                                ? "Loading..."
-                                                : "All"}
+                                            Select Category
                                         </MenuItem>
-                                        {Array.isArray(departments) &&
-                                            departments.map((dept, index) => (
+                                        {Array.isArray(categories) &&
+                                            categories.map((dept, index) => (
                                                 <MenuItem key={index} value={dept.id}>
-                                                    {dept.department_name}
+                                                    {dept.name}
                                                 </MenuItem>
                                             ))}
                                     </Select>
-                                </FormControl> */}
+                                </FormControl>
                             </div>
                             <div className="flex gap-6">
                                 <div className="flex items-center space-x-2">
@@ -1322,6 +1323,30 @@ export const EditBookingSetupPage = () => {
                                         })
                                     }
                                     className="w-32"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.perSlotCharge}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Allow only positive integers (no decimals, no negatives)
+                                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                                            setFormData({
+                                                ...formData,
+                                                chargeSetup: {
+                                                    ...formData.chargeSetup,
+                                                    perSlotCharge: value,
+                                                },
+                                            });
+                                        }
+                                    }}
+                                    className="w-32"
+                                    placeholder="1"
                                 />
                             </div>
                         </div>

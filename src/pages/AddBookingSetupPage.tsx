@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
+import axios from "axios";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -100,7 +101,7 @@ export const AddBookingSetupPage = () => {
     isBookable: true,
     isRequest: false,
     active: "1",
-    department: "",
+    category: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -139,6 +140,7 @@ export const AddBookingSetupPage = () => {
       guest: { selected: false, adult: "", child: "" },
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
+      perSlotCharge: "",
       gst: "0.0",
     },
     blockDays: {
@@ -149,7 +151,8 @@ export const AddBookingSetupPage = () => {
     },
   });
 
-  const [departments, setDepartments] = useState([]);
+  // const [departments, setDepartments] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
 
   const [cancellationRules, setCancellationRules] = useState([
@@ -218,13 +221,13 @@ export const AddBookingSetupPage = () => {
     setAdditionalOpen(!additionalOpen);
   };
 
-  const fetchDepartments = async () => {
-    if (departments.length > 0) return; // Don't fetch if already loaded
+  const fetchCategories = async () => {
+    if (categories.length > 0) return; // Don't fetch if already loaded
 
     setLoadingDepartments(true);
     try {
-      const response = await fetch(
-        `https://${baseUrl}/pms/departments.json`,
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_categories.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -232,23 +235,11 @@ export const AddBookingSetupPage = () => {
           },
         }
       );
-      const data = await response.json();
 
-      // Handle different response structures
-      let departmentsList = [];
-      if (Array.isArray(data)) {
-        departmentsList = data;
-      } else if (Array.isArray(data.departments)) {
-        departmentsList = data.departments;
-      } else if (data && data.length !== undefined) {
-        // Handle case where data might be array-like
-        departmentsList = Array.from(data);
-      }
-
-      setDepartments(departmentsList);
+      setCategories(response.data);
     } catch (error) {
       console.error("Error fetching departments:", error);
-      setDepartments([]);
+      setCategories([]);
     } finally {
       setLoadingDepartments(false);
     }
@@ -284,7 +275,7 @@ export const AddBookingSetupPage = () => {
   };
 
   useEffect(() => {
-    fetchDepartments();
+    fetchCategories();
     fetchInventories();
   }, []);
 
@@ -406,12 +397,12 @@ export const AddBookingSetupPage = () => {
       );
 
       // Find department ID from selected department name
-      // if (formData.department) {
-      //   formDataToSend.append(
-      //     "facility_setup[department_id]",
-      //     formData.department
-      //   );
-      // }
+      if (formData.category) {
+        formDataToSend.append(
+          "facility_setup[facility_category_id]",
+          formData.category
+        );
+      }
 
       formDataToSend.append("facility_setup[app_key]", formData.appKey);
       // formDataToSend.append(
@@ -470,6 +461,11 @@ export const AddBookingSetupPage = () => {
           formData.chargeSetup.guest.child || "0"
         );
       }
+
+      formDataToSend.append(
+        "facility_setup[facility_charge_attributes][per_slot_charge]",
+        formData.chargeSetup.perSlotCharge || "0"
+      );
 
       // Charge Setup - Person limits and GST
       formDataToSend.append(
@@ -772,28 +768,28 @@ export const AddBookingSetupPage = () => {
                     shrink: true,
                   }}
                 />
-                {/* <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
+                <FormControl>
+                  <InputLabel className="bg-[#F6F7F7]">Category</InputLabel>
                   <Select
-                    value={formData.department}
+                    value={formData.category}
                     onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
+                      setFormData({ ...formData, category: e.target.value })
                     }
-                    onFocus={fetchDepartments}
-                    label="Department"
+                    onFocus={fetchCategories}
+                    label="Category"
                     displayEmpty
                   >
                     <MenuItem value="">
-                      {loadingDepartments ? "Loading..." : "All"}
+                      Select Category
                     </MenuItem>
-                    {Array.isArray(departments) &&
-                      departments.map((dept, index) => (
+                    {Array.isArray(categories) &&
+                      categories.map((dept, index) => (
                         <MenuItem key={index} value={dept.id}>
-                          {dept.department_name}
+                          {dept.name}
                         </MenuItem>
                       ))}
                   </Select>
-                </FormControl> */}
+                </FormControl>
               </div>
 
               <div className="flex gap-6 px-1">
@@ -1117,6 +1113,29 @@ export const AddBookingSetupPage = () => {
                         chargeSetup: {
                           ...formData.chargeSetup,
                           maximumPersonAllowed: value,
+                        },
+                      });
+                    }
+                  }}
+                  className="w-32"
+                  placeholder="1"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  value={formData.chargeSetup.perSlotCharge}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only positive integers (no decimals, no negatives)
+                    if (value === '' || /^[1-9]\d*$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          perSlotCharge: value,
                         },
                       });
                     }

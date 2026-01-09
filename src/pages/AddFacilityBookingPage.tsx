@@ -14,6 +14,31 @@ import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
 
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '0.375rem',
+    backgroundColor: 'white',
+    height: {
+      xs: '36px',
+      sm: '45px'
+    },
+    '& fieldset': {
+      borderColor: '#d1d5db',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#3b82f6',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#3b82f6',
+    },
+  },
+};
+
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -35,9 +60,6 @@ export const AddFacilityBookingPage = () => {
   const [guestUsers, setGuestUsers] = useState([]);
   const [guestUsersLoading, setGuestUsersLoading] = useState(false);
   const [guestUsersError, setGuestUsersError] = useState(null);
-  const [selectedGuest, setSelectedGuest] = useState('');
-
-  console.log(occupantUsersState)
 
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
@@ -47,8 +69,8 @@ export const AddFacilityBookingPage = () => {
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('occupant');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [userType, setUserType] = useState('self');
+  const [selectedUser, setSelectedUser] = useState(JSON.parse(localStorage.getItem('user') || '{}').id);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -154,16 +176,9 @@ export const AddFacilityBookingPage = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    if (userType === 'occupant') {
-      dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
-      dispatch(fetchEntities());
-    } else if (userType === 'guest') {
-      fetchGuestUsers();
-    } else {
-      dispatch(fetchFMUsers());
-    }
+    dispatch(fetchFMUsers());
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
-  }, [dispatch, userType]);
+  }, [dispatch]);
 
   // Load all user types when facility is selected for the people table
   useEffect(() => {
@@ -260,25 +275,6 @@ export const AddFacilityBookingPage = () => {
         setSlots(response.data.slots);
         setSelectedSlots([]); // Reset selected slots when new slots are fetched
       }
-
-      // Call amenity booking API for members
-      // if (userType === 'occupant' && userId && facilityId) {
-      //   try {
-      //     const token = localStorage.getItem('token');
-      //     const amenityResponse = await apiClient.get('/club_members/amenity_booking_by_club_plan', {
-      //       params: {
-      //         user_id: userId,
-      //         facility_setup_id: facilityId
-      //       },
-      //       headers: {
-      //         'Authorization': `Bearer ${token}`
-      //       }
-      //     });
-      //     console.log('Amenity Booking by Club Plan Response:', amenityResponse.data);
-      //   } catch (amenityError) {
-      //     console.error('Error fetching amenity booking by club plan:', amenityError);
-      //   }
-      // }
     } catch (error) {
       console.error('Error fetching slots:', error);
       setSlots([]);
@@ -347,24 +343,17 @@ export const AddFacilityBookingPage = () => {
     }
   }, [userType, selectedUser, selectedFacility]);
 
-  // Auto-select slot from URL parameter when slots are loaded
   useEffect(() => {
     if (urlSlotTime && slots.length > 0 && selectedSlots.length === 0) {
-      // Decode the URL slot time (e.g., "9:00AM - 9:15AM")
       const decodedSlotTime = decodeURIComponent(urlSlotTime);
-
-      // Find the slot that matches the clicked time
-      // The slot.ampm format is like "09:00 AM to 09:15 AM"
-      // The URL format is like "9:00AM - 9:15AM"
       const matchingSlot = slots.find(slot => {
-        // Normalize both formats for comparison
         const slotTimeNormalized = slot.ampm
-          .replace(/\s+/g, '') // Remove all spaces
-          .replace('to', '-')  // Replace 'to' with '-'
+          .replace(/\s+/g, '')
+          .replace('to', '-')
           .toLowerCase();
 
         const urlTimeNormalized = decodedSlotTime
-          .replace(/\s+/g, '') // Remove all spaces
+          .replace(/\s+/g, '')
           .toLowerCase();
 
         return slotTimeNormalized === urlTimeNormalized;
@@ -387,53 +376,6 @@ export const AddFacilityBookingPage = () => {
         return [...prev, slotId];
       }
     });
-  };
-
-  // Handle people table changes
-  const handlePeopleTableChange = (index: number, field: 'role' | 'user' | 'level', value: string) => {
-    setPeopleTable(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-
-      // If role is changed and it matches the pre-selected user, auto-select that user
-      if (field === 'role' && selectedUser) {
-        // Check if the selected user exists in the users for this role
-        const roleUsers = getUsersForRole(value);
-        const userExists = roleUsers.some((u: any) => u.id.toString() === selectedUser.toString());
-
-        if (userExists) {
-          updated[index].user = selectedUser;
-        } else {
-          updated[index].user = ''; // Reset user if not found in role users
-        }
-      } else if (field === 'role' && !selectedUser && value === 'guest' && selectedGuest) {
-        // Special case for guest when no selectedUser but selectedGuest exists
-        updated[index].user = selectedGuest;
-      } else if (field === 'role' && !selectedUser) {
-        updated[index].user = ''; // Reset user if no pre-selection
-      }
-
-      return updated;
-    });
-  };
-
-  // Get users based on role
-  const getUsersForRole = (role: string) => {
-    if (!role) return [];
-
-    switch (role) {
-      case 'staff':
-        console.log('Staff users:', fmUsers);
-        return fmUsers || [];
-      case 'member':
-        console.log('Member users:', occupantUsers);
-        return occupantUsers || [];
-      case 'guest':
-        console.log('Guest users:', guestUsers);
-        return guestUsers || [];
-      default:
-        return [];
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -486,35 +428,13 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-      // --- UI-aligned cost calculation (slot-by-slot, with premiums, for all user types) ---
-      const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
-      const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
+      // --- Cost calculation based on per_slot_charge only ---
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-      const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
       const slotsCount = selectedSlots.length;
-      const hasSlots = slotsCount > 0;
-      let totalUserCharge = 0;
-      let totalGuestCharge = 0;
-      if (hasSlots) {
-        selectedSlots.forEach((slotId) => {
-          const slot = slots.find((s) => s.id === slotId);
-          let memberPremium = 0;
-          let guestPremium = 0;
-          if (slot && slot.is_premium && slot.premium_percentage) {
-            memberPremium = userType === 'occupant' ? Math.round((memberRate * slot.premium_percentage) / 100) : 0;
-            guestPremium = (userType === 'guest' || userType === 'fm') ? Math.round((adultGuestCharge * slot.premium_percentage) / 100) : 0;
-          }
-          // Add for each slot
-          totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-          totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-        });
-      } else {
-        // No slots selected, use base charge
-        totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-        totalGuestCharge = numberOfGuests * adultGuestCharge;
-      }
-      const slotTotal = selectedSlots.length * perSlotCharge;
-      const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+
+      // Calculate total based only on per_slot_charge
+      const slotTotal = slotsCount * perSlotCharge;
+      const subtotalBeforeDiscount = slotTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -527,13 +447,8 @@ export const AddFacilityBookingPage = () => {
       const bookedMembersAttributes = peopleTable
         .filter(row => row.role && row.user) // Only include rows with both role and user selected
         .map(row => {
-          // Calculate individual charge based on role
-          let totalCharge = 0;
-          if (row.role === 'staff' || row.role === 'member') {
-            totalCharge = adultMemberCharge;
-          } else if (row.role === 'guest') {
-            totalCharge = adultGuestCharge;
-          }
+          // Set charge to 0 since we're only using per_slot_charge
+          const totalCharge = 0;
 
           return {
             user_id: parseInt(row.user),
@@ -542,63 +457,14 @@ export const AddFacilityBookingPage = () => {
           };
         });
 
-      // Prepare guest premium details for payload (slot-wise breakdown)
-      let guestPremiumDetails: Array<{ slotLabel: string; slotPremiumPercent: number; guestPremium: number; total: number }> = [];
-      if (selectedSlots.length > 0) {
-        selectedSlots.forEach((slotId) => {
-          const slot = slots.find((s) => s.id === slotId);
-          let guestPremium = 0;
-          let slotPremiumPercent = 0;
-          if (slot && slot.is_premium && slot.premium_percentage) {
-            slotPremiumPercent = slot.premium_percentage;
-            guestPremium = (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) * slot.premium_percentage / 100;
-          }
-          guestPremiumDetails.push({
-            slotLabel: slot ? slot.ampm : '',
-            slotPremiumPercent,
-            guestPremium,
-            total: (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) + guestPremium
-          });
-        });
-      }
-
       // Use cost summary calculation (from UI) for payload values
       const costSummary = (() => {
-        const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
-        const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
         const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-        const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
         const slotsCount = selectedSlots.length;
-        const hasSlots = slotsCount > 0;
-        let totalUserCharge = 0;
-        let totalGuestCharge = 0;
-        let slotPremiumDetails = [];
-        if (hasSlots) {
-          selectedSlots.forEach((slotId) => {
-            const slot = slots.find((s) => s.id === slotId);
-            let memberPremium = 0;
-            let guestPremium = 0;
-            let slotPremiumPercent = 0;
-            if (slot && slot.is_premium && slot.premium_percentage) {
-              slotPremiumPercent = slot.premium_percentage;
-              memberPremium = (memberRate * slot.premium_percentage) / 100;
-              guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
-            }
-            slotPremiumDetails.push({
-              slotLabel: slot ? slot.ampm : '',
-              slotPremiumPercent,
-              memberPremium,
-              guestPremium
-            });
-            totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-            totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-          });
-        } else {
-          totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-          totalGuestCharge = numberOfGuests * adultGuestCharge;
-        }
+
+        // Calculate total based only on per_slot_charge
         const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+        const subtotalBeforeDiscount = slotTotal;
         const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
         const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
         const gstPercentage = facilityDetails?.gst || 0;
@@ -607,9 +473,6 @@ export const AddFacilityBookingPage = () => {
         const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
         return {
-          totalUserCharge,
-          totalGuestCharge,
-          slotPremiumDetails,
           slotTotal,
           subtotalBeforeDiscount,
           discountAmount,
@@ -636,9 +499,9 @@ export const AddFacilityBookingPage = () => {
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
-          member_charges: costSummary.totalUserCharge,
-          guest_charges: costSummary.totalGuestCharge,
-          guest_premium_details: guestPremiumDetails,
+          member_charges: 0,
+          guest_charges: 0,
+          guest_premium_details: [],
           discount: costSummary.discountAmount,
           cgst_amount: costSummary.gstAmount,
           sgst_amount: costSummary.sgstAmount,
@@ -673,8 +536,25 @@ export const AddFacilityBookingPage = () => {
         toast.error(response.data.error);
         return;
       }
-      toast.success('Booking created successfully!');
-      navigate(-1);
+
+      // Check if payment method is prepaid
+      if (paymentMethod === 'prepaid') {
+        // Get the booking ID from response
+        const bookingId = response.data.facility_booking?.id || response.data.id;
+        const token = localStorage.getItem('token');
+
+        if (bookingId && token) {
+          toast.success('Booking created successfully! Redirecting to payment gateway...');
+          // Navigate to payment gateway redirection page with booking ID and token
+          navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
+        } else {
+          toast.error('Booking created but payment redirection failed. Please contact support.');
+          navigate(-1);
+        }
+      } else {
+        toast.success('Booking created successfully!');
+        navigate(-1);
+      }
     } catch (error: any) {
       console.error('Error creating facility booking:', error);
       if (error.response) {
@@ -687,31 +567,6 @@ export const AddFacilityBookingPage = () => {
 
   const handleBackToList = () => {
     navigate(-1);
-  };
-
-  const fieldStyles = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '0.375rem',
-      backgroundColor: 'white',
-      height: {
-        xs: '36px',
-        sm: '45px'
-      },
-      '& fieldset': {
-        borderColor: '#d1d5db',
-      },
-      '&:hover fieldset': {
-        borderColor: '#9ca3af',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#3b82f6',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      '&.Mui-focused': {
-        color: '#3b82f6',
-      },
-    },
   };
 
   return (
@@ -741,63 +596,19 @@ export const AddFacilityBookingPage = () => {
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
 
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Members</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="guest" id="guest" />
-              <Label htmlFor="guest">Guest</Label>
+              <RadioGroupItem value="self" id="self" />
+              <Label htmlFor="self">Self</Label>
             </div>
 
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fm" id="fm" />
-              <Label htmlFor="fm">Staff</Label>
+              <RadioGroupItem value="user" id="user" />
+              <Label htmlFor="user">Users</Label>
             </div>
           </RadioGroup>
         </div>
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Client Dropdown - only for occupant users */}
-          {/* {userType === 'occupant' && (
-            <div className="space-y-2">
-              <TextField
-                select
-                label="Client"
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                SelectProps={{ displayEmpty: true }}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                disabled={entitiesLoading}
-                helperText={entitiesError ? "Error loading companies" : ""}
-                error={!!entitiesError}
-              >
-                <MenuItem value="" disabled>
-                  <em>
-                    Select Client
-                  </em>
-                </MenuItem>
-                {entitiesLoading && (
-                  <MenuItem value="" disabled>
-                    Loading companies...
-                  </MenuItem>
-                )}
-                {!entitiesLoading && !entitiesError && entities.length === 0 && (
-                  <MenuItem value="" disabled>
-                    No companies available
-                  </MenuItem>
-                )}
-                {entities.map((entity) => (
-                  <MenuItem key={entity.id} value={entity.id.toString()}>
-                    {entity.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
-          )} */}
 
           {/* User Selection - occupant, fm, or guest users */}
           <div className="space-y-2">
@@ -817,58 +628,14 @@ export const AddFacilityBookingPage = () => {
                 shrink: true
               }}
               sx={fieldStyles}
-              disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
-              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : userType === 'guest' ? (guestUsersError ? "Error loading guest users" : "") : (fmUsersError ? "Error loading users" : "")}
-              error={userType === 'occupant' ? !!occupantUsersError : userType === 'guest' ? !!guestUsersError : !!fmUsersError}
+              disabled={userType === 'self'}
             >
               <MenuItem value="" disabled>
                 <em>
                   Select User
                 </em>
               </MenuItem>
-              {userType === 'occupant' && occupantUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'occupant' && !occupantUsersLoading && !occupantUsersError && occupantUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'occupant' && occupantUsers.map((user) => (
-                <MenuItem key={user.id} value={user.id.toString()}>
-                  {user.name}
-                </MenuItem>
-              ))}
-
-              {userType === 'guest' && guestUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading guest users...
-                </MenuItem>
-              )}
-              {userType === 'guest' && !guestUsersLoading && !guestUsersError && guestUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No guest users available
-                </MenuItem>
-              )}
-              {userType === 'guest' && guestUsers.map((guest) => (
-                <MenuItem key={guest.id} value={guest.id.toString()}>
-                  {guest.firstname} {guest.lastname}
-                </MenuItem>
-              ))}
-
-              {userType === 'fm' && fmUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'fm' && !fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'fm' && fmUsers.map((user) => (
+              {fmUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.full_name}
                 </MenuItem>
@@ -1095,206 +862,20 @@ export const AddFacilityBookingPage = () => {
           )}
         </div>
 
-        {/* Charge Details Table */}
-        {facilityDetails?.facility_charge && (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Charge Details</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#E5E0D3]">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User Type</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Charge</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {facilityDetails.facility_charge.adult_member_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">1</td>
-                      <td className="border border-gray-300 px-4 py-3">Adult Member</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_member_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.child_member_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">2</td>
-                      <td className="border border-gray-300 px-4 py-3">Child Member</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_member_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.adult_guest_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">3</td>
-                      <td className="border border-gray-300 px-4 py-3">Adult Guest</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_guest_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.child_guest_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">4</td>
-                      <td className="border border-gray-300 px-4 py-3">Child Guest</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_guest_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-
-        {/* People Table Section
-        {facilityDetails && peopleTable.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Invited User</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#E5E0D3]">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Role</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Level</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {peopleTable.map((row, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">{row.srNo}</td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.role}
-                          onChange={(e) => handlePeopleTableChange(index, 'role', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                        >
-                          <MenuItem value="">Select Role</MenuItem>
-                          <MenuItem value="staff">Staff</MenuItem>
-                          <MenuItem value="member">Member</MenuItem>
-                          <MenuItem value="guest">Guest</MenuItem>
-                        </TextField>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.user}
-                          onChange={(e) => handlePeopleTableChange(index, 'user', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          disabled={!row.role}
-                          SelectProps={{
-                            displayEmpty: true,
-                          }}
-                        >
-                          <MenuItem value="">
-                            {!row.role 
-                              ? 'Select Role First' 
-                              : (row.role === 'staff' && fmUsersLoading) ||
-                                (row.role === 'member' && occupantUsersLoading) ||
-                                (row.role === 'guest' && guestUsersLoading)
-                              ? 'Loading users...'
-                              : 'Select User'
-                            }
-                          </MenuItem>
-                          {row.role && getUsersForRole(row.role).map((user: any) => (
-                            <MenuItem key={user.id} value={user.id}>
-                              {row.role === 'staff' 
-                                ? user.full_name 
-                                : row.role === 'member' 
-                                  ? user.name 
-                                  : row.role === 'guest' 
-                                    ? `${user.firstname || ''} ${user.lastname || ''}`.trim() 
-                                    : user.name || user.username || `User ${user.id}`
-                              }
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.level}
-                          onChange={(e) => handlePeopleTableChange(index, 'level', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          disabled
-                          // sx={{
-                          //   '& .MuiInputBase-input.Mui-disabled': {
-                          //     WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)',
-                          //     color: 'rgba(0, 0, 0, 0.87)'
-                          //   }
-                          // }}
-                        >
-                          <MenuItem value="primary">Primary</MenuItem>
-                          <MenuItem value="secondary">Secondary</MenuItem>
-                        </TextField>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-         )}  */}
-
         {/* Cost Summary Section */}
         {selectedUser && facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on initially selected user */}
+              {/* Calculate costs based on per_slot_charge only */}
               {(() => {
-                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
-                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
                 const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
-
-                // Use booking rule rate for members if available (even if 0), otherwise use facility charge
-                const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
-
-                // Number of slots selected
                 const slotsCount = selectedSlots.length;
                 const hasSlots = slotsCount > 0;
 
-                // Restore userCharge for use in JSX
-                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                // Prepare slot premium details for display
-                let slotPremiumDetails = [];
-                let totalUserCharge = 0;
-                let totalGuestCharge = 0;
-                if (hasSlots) {
-                  selectedSlots.forEach((slotId) => {
-                    const slot = slots.find((s) => s.id === slotId);
-                    let memberPremium = 0;
-                    let guestPremium = 0;
-                    let slotPremiumPercent = 0;
-                    if (slot && slot.is_premium && slot.premium_percentage) {
-                      slotPremiumPercent = slot.premium_percentage;
-                      memberPremium = (memberRate * slot.premium_percentage) / 100;
-                      guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
-                    }
-                    slotPremiumDetails.push({
-                      slotLabel: slot ? slot.ampm : '',
-                      slotPremiumPercent,
-                      memberPremium,
-                      guestPremium
-                    });
-                    // Add for each slot
-                    totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-                    totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-                  });
-                } else {
-                  // No slots selected, use base charge
-                  totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                  totalGuestCharge = numberOfGuests * adultGuestCharge;
-                }
-
-                const slotTotal = selectedSlots.length * perSlotCharge;
-                const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+                // Calculate total based only on per_slot_charge
+                const slotTotal = slotsCount * perSlotCharge;
+                const subtotalBeforeDiscount = slotTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
 
@@ -1315,125 +896,8 @@ export const AddFacilityBookingPage = () => {
                       </div>
                     )}
 
-                    {/* Member Charge - Always show for occupant users, even if zero */}
-                    {userType === 'occupant' && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex flex-col gap-1 w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-700">Member Charge</span>
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
-                            )}
-                          </div>
-                          {/* Show member premium calculation per slot as a table */}
-                          {hasSlots && (
-                            <div className="flex justify-start">
-                              <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                                <thead>
-                                  <tr className="bg-gray-50">
-                                    <th className="border px-2 py-1 text-left">Slot</th>
-                                    <th className="border px-2 py-1 text-left">Premium %</th>
-                                    <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                    <th className="border px-2 py-1 text-left">Total Charge</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {slotPremiumDetails.map((slot, idx) => {
-                                    const base = memberRate;
-                                    const total = base + slot.memberPremium;
-                                    return (
-                                      <tr key={idx}>
-                                        <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                        <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                        <td className="border px-2 py-1 text-purple-700">₹{slot.memberPremium.toFixed(2)}</td>
-                                        <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                        </div>
-                        <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    {/* Guest Charge */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Guest Charge</span>
-                          <div className="flex items-center gap-1">
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={numberOfGuests}
-                              onChange={(e) => {
-                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                setNumberOfGuests(val > maxPeople ? maxPeople : val);
-                              }}
-                              variant="outlined"
-                              placeholder="No. of guests"
-                              sx={{
-                                width: '100px',
-                                '& .MuiOutlinedInput-root': {
-                                  height: '36px',
-                                  '& input': {
-                                    textAlign: 'right',
-                                    padding: '8px 12px'
-                                  }
-                                }
-                              }}
-                              inputProps={{
-                                min: 0,
-                                step: 1
-                              }}
-                            />
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Show guest premium calculation per slot as a table */}
-                        {hasSlots && (
-                          <div className="flex justify-start">
-                            <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                              <thead>
-                                <tr className="bg-gray-50">
-                                  <th className="border px-2 py-1 text-left">Slot</th>
-                                  <th className="border px-2 py-1 text-left">Premium %</th>
-                                  <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                  <th className="border px-2 py-1 text-left">Total Charge</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {slotPremiumDetails.map((slot, idx) => {
-                                  const base = adultGuestCharge;
-                                  const total = base + slot.guestPremium;
-                                  return (
-                                    <tr key={idx}>
-                                      <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                      <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                      <td className="border px-2 py-1 text-blue-700">₹{slot.guestPremium.toFixed(2)}</td>
-                                      <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
-                    </div>
-
                     {/* Slot Charges */}
-                    {selectedSlots.length > 0 && perSlotCharge > 0 && (
+                    {hasSlots && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-700">Slot Charges</span>

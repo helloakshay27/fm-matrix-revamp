@@ -323,9 +323,13 @@ const modulesByPackage = {
 
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
     {
-      name: "Amenity Setup",
+      name: "Amenity",
       icon: Settings,
-      href: "/settings/vas/booking/setup",
+      href: "/settings/vas/booking",
+      subItems: [
+        { name: "Amenity Setup", href: "/settings/vas/booking/setup" },
+        { name: "Category Setup", href: "/settings/vas/booking/category-setup" },
+      ],
     },
     {
       name: "Sos Category Setup",

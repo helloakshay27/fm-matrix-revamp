@@ -634,6 +634,7 @@ import { AddBookingSetupPage } from "./pages/AddBookingSetupPage";
 
 // Import Add Facility Booking page
 import { AddFacilityBookingPage } from "./pages/AddFacilityBookingPage";
+import { PaymentRedirectPage } from "./pages/PaymentRedirectPage";
 import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
@@ -895,6 +896,7 @@ import { AddCuratedServiceCategoryPage } from "./pages/AddCuratedServiceCategory
 import { EditCuratedServiceCategoryPage } from "./pages/EditCuratedServiceCategoryPage";
 import CommunityUserDetails from "./pages/CommunityUserDetails";
 import ReportsDetailsPage from "./pages/ReportsDetailsPage";
+import AmenityCategorySetup from "./pages/AmenityCategorySetup";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1305,6 +1307,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AddFacilityBookingPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/payment-redirect"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentRedirectPage />
                     </ProtectedRoute>
                   }
                 />
@@ -4017,6 +4028,10 @@ function App() {
                   <Route
                     path="/settings/vas/booking/setup"
                     element={<BookingSetupDashboard />}
+                  />
+                  <Route
+                    path="/settings/vas/booking/category-setup"
+                    element={<AmenityCategorySetup />}
                   />
                   <Route
                     path="/settings/vas/booking/setup/add"
