@@ -46,7 +46,7 @@ export const DurationPicker = ({
     };
 
     useEffect(() => {
-        if (endDate) {
+        if (endDate && !startDate) {
             setIsOpen(true);
         }
     }, [endDate]);
