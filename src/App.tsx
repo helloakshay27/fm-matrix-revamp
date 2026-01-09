@@ -2458,6 +2458,10 @@ function App() {
                     element={<OnlyOfficeEditorPage />}
                   />
                   <Route
+                    path="/documents/editor/:documentId"
+                    element={<OnlyOfficeEditorPage />}
+                  />
+                  <Route
                     path="/maintenance/asset/details/:id"
                     element={<AssetDetailsPage />}
                   />

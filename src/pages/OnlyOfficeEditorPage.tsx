@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
 interface OnlyOfficeConfig {
   document: {
@@ -41,8 +42,9 @@ export const OnlyOfficeEditorPage = () => {
 
     // Load OnlyOffice API script
     const script = document.createElement("script");
-    script.src =
-      "https://office.lockated.com/web-apps/apps/api/documents/api.js";
+    const onlyOfficeBaseUrl =
+      import.meta.env.VITE_ONLYOFFICE_BASE_URL || "https://office.lockated.com";
+    script.src = `${onlyOfficeBaseUrl}/web-apps/apps/api/documents/api.js`;
     script.async = true;
 
     script.onload = () => {
@@ -71,11 +73,16 @@ export const OnlyOfficeEditorPage = () => {
     try {
       console.log("Fetching OnlyOffice config for document:", documentId);
 
-      // Fetch config from backend API
-      const apiUrl = `https://vendors.lockated.com/documents/${documentId}/onlyoffice_config.json`;
+      // Fetch config from backend API using dynamic base URL
+      const baseUrl = API_CONFIG.BASE_URL;
+      const apiUrl = `${baseUrl}/attachfiles/${documentId}/onlyoffice_config.json`;
       console.log("API URL:", apiUrl);
 
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
 
       if (!response.ok) {
         throw new Error(
