@@ -22,7 +22,7 @@ export const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
   const fullUrl = `https://${cleanBaseUrl}${decodeURIComponent(fileUrl)}`;
 
   // Construct OnlyOffice editor URL
-  const editorUrl = `https://office.lockated.com/editor?documentId=${documentId}&filename=${encodeURIComponent(filename)}&fileUrl=${encodeURIComponent(fullUrl)}`;
+  const editorUrl = `https://office.lockated.com/example/editor?fileName=new.docx&userid=uid-1&lang=en&directUrl=false`;
 
   const handleIframeLoad = () => {
     setLoading(false);

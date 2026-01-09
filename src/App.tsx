@@ -810,6 +810,7 @@ import { EditDocumentPage } from "./pages/EditDocumentPage";
 import { FolderDetailsPage } from "./pages/FolderDetailsPage";
 import { DocumentDetailPage } from "./pages/DocumentDetailPage";
 import { CreateFolderPage } from "./pages/CreateFolderPage";
+import { OnlyOfficeEditorPage } from "./pages/OnlyOfficeEditorPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -932,7 +933,8 @@ function App() {
           getCurrency({ baseUrl, token, id })
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
-          Array.isArray(response) && (response[0]?.currency as string | undefined)
+          Array.isArray(response) &&
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1004,16 +1006,16 @@ function App() {
           });
         },
         onDisconnected: () => {
-      console.warn("❌ Chat subscription disconnected");
+          console.warn("❌ Chat subscription disconnected");
           setIsSubscribed(false);
           toast.error("Real-time chat disconnected");
         },
       });
-    console.warn("📋 Subscription object:", sub);
+      console.warn("📋 Subscription object:", sub);
     }, 2000); // Wait 2 seconds for connection to establish
 
     return () => {
-    console.warn("⏰ Clearing subscription timer");
+      console.warn("⏰ Clearing subscription timer");
       clearTimeout(subscriptionTimer);
     };
   }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
@@ -2450,6 +2452,10 @@ function App() {
                   <Route
                     path="/maintenance/documents/details/:id"
                     element={<DocumentDetailPage />}
+                  />
+                  <Route
+                    path="/maintenance/documents/editor/:documentId"
+                    element={<OnlyOfficeEditorPage />}
                   />
                   <Route
                     path="/maintenance/asset/details/:id"
