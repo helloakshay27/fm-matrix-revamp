@@ -54,6 +54,9 @@ export const CreateFolderPage = () => {
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [shareWith, setShareWith] = useState<"all" | "individual">("all");
+  const [shareWithCommunities, setShareWithCommunities] = useState<
+    "yes" | "no"
+  >("no");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExistingDocModal, setShowExistingDocModal] = useState(false);
   const [moveDocuments, setMoveDocuments] = useState<SelectedDocument[]>([]);
@@ -61,6 +64,9 @@ export const CreateFolderPage = () => {
   const [newDocuments, setNewDocuments] = useState<NewDocument[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
+  const [selectedCommunities, setSelectedCommunities] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch categories on mount
@@ -92,18 +98,46 @@ export const CreateFolderPage = () => {
           : "PDF",
         size: doc.fileSize ? formatFileSize(doc.fileSize) : "0 KB",
       }));
-      setNewDocuments(docsWithMetadata);
+      // Append to existing documents instead of replacing
+      setNewDocuments((prev) => [...prev, ...docsWithMetadata]);
       sessionStorage.removeItem("pendingDocuments");
+      toast.success(
+        `${docsWithMetadata.length} document(s) added to insert list`
+      );
     }
 
     if (folderSettings) {
       const settings = JSON.parse(folderSettings);
-      setCategoryId(settings.categoryId || "");
-      setShareWith(settings.shareWith || "all");
-      setSelectedTechParks(settings.selectedTechParks || []);
+      // Only set if not already set (preserve user input)
+      if (!categoryId && settings.categoryId) {
+        setCategoryId(settings.categoryId);
+      }
+      if (settings.shareWith) {
+        setShareWith(settings.shareWith);
+      }
+      if (settings.shareWithCommunities) {
+        setShareWithCommunities(settings.shareWithCommunities);
+      }
+      if (settings.selectedTechParks) {
+        setSelectedTechParks(settings.selectedTechParks);
+      }
+      if (settings.selectedCommunities) {
+        setSelectedCommunities(settings.selectedCommunities);
+      }
+      // Restore move and copy documents
+      if (settings.moveDocuments) {
+        setMoveDocuments(settings.moveDocuments);
+      }
+      if (settings.copyDocuments) {
+        setCopyDocuments(settings.copyDocuments);
+      }
+      // Restore folder title and category
+      if (settings.title) {
+        setTitle(settings.title);
+      }
       sessionStorage.removeItem("folderSettings");
     }
-  }, []);
+  }, []); // Empty dependency array to run only once on mount
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 KB";
@@ -124,6 +158,20 @@ export const CreateFolderPage = () => {
 
   const handleCreateNew = () => {
     setShowAddModal(false);
+
+    // Save current state to sessionStorage before navigating
+    const folderSettings = {
+      title: title,
+      categoryId: categoryId,
+      shareWith: shareWith,
+      shareWithCommunities: shareWithCommunities,
+      selectedTechParks: selectedTechParks,
+      selectedCommunities: selectedCommunities,
+      moveDocuments: moveDocuments,
+      copyDocuments: copyDocuments,
+    };
+    sessionStorage.setItem("folderSettings", JSON.stringify(folderSettings));
+
     navigate("/maintenance/documents/add?source=new");
   };
 
@@ -157,9 +205,12 @@ export const CreateFolderPage = () => {
             access_ids: shareWith === "individual" ? selectedTechParks : [],
           },
           {
-            access_level: "view",
+            access_level: shareWithCommunities === "all" ? "all" : "selected",
             access_to: "Community",
-            access_ids: [],
+            access_ids:
+              shareWithCommunities === "yes"
+                ? selectedCommunities.map((c) => c.id)
+                : [],
           },
         ],
         documents: documentsPayload,
@@ -423,11 +474,15 @@ export const CreateFolderPage = () => {
               const newDocs = selectedDocs.filter(
                 (d) => !existingIds.has(d.id)
               );
+              if (newDocs.length > 0) {
+                toast.success(
+                  `${newDocs.length} document(s) added to move list`
+                );
+              } else {
+                toast.info("Selected documents are already in the move list");
+              }
               return [...prev, ...newDocs];
             });
-            toast.success(
-              `${selectedDocs.length} document(s) added to move list`
-            );
           } else {
             // Append to existing copy documents, avoiding duplicates
             setCopyDocuments((prev) => {
@@ -435,11 +490,15 @@ export const CreateFolderPage = () => {
               const newDocs = selectedDocs.filter(
                 (d) => !existingIds.has(d.id)
               );
+              if (newDocs.length > 0) {
+                toast.success(
+                  `${newDocs.length} document(s) added to copy list`
+                );
+              } else {
+                toast.info("Selected documents are already in the copy list");
+              }
               return [...prev, ...newDocs];
             });
-            toast.success(
-              `${selectedDocs.length} document(s) added to copy list`
-            );
           }
           setShowExistingDocModal(false);
         }}

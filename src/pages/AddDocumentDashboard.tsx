@@ -289,10 +289,18 @@ export const AddDocumentDashboard = () => {
         docs.push(documentData);
         sessionStorage.setItem("pendingDocuments", JSON.stringify(docs));
 
-        // Store folder settings (category and share settings)
+        // Load existing folder settings to preserve move/copy documents
+        const existingSettings = sessionStorage.getItem("folderSettings");
+        const prevSettings = existingSettings
+          ? JSON.parse(existingSettings)
+          : {};
+
+        // Store folder settings (category and share settings) while preserving move/copy
         const folderSettings = {
+          ...prevSettings, // Preserve existing settings including move/copy/title
           categoryId: formData.documentCategory,
           shareWith: formData.shareWith,
+          shareWithCommunities: formData.shareWithCommunities,
           selectedTechParks: selectedTechParks,
           selectedCommunities: selectedCommunities,
         };
