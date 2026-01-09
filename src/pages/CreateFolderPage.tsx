@@ -54,6 +54,9 @@ export const CreateFolderPage = () => {
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [shareWith, setShareWith] = useState<"all" | "individual">("all");
+  const [shareWithCommunities, setShareWithCommunities] = useState<
+    "yes" | "no"
+  >("no");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExistingDocModal, setShowExistingDocModal] = useState(false);
   const [moveDocuments, setMoveDocuments] = useState<SelectedDocument[]>([]);
@@ -61,7 +64,11 @@ export const CreateFolderPage = () => {
   const [newDocuments, setNewDocuments] = useState<NewDocument[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
+  const [selectedCommunities, setSelectedCommunities] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState<string>("");
 
   // Fetch categories on mount
   useEffect(() => {
@@ -92,18 +99,46 @@ export const CreateFolderPage = () => {
           : "PDF",
         size: doc.fileSize ? formatFileSize(doc.fileSize) : "0 KB",
       }));
-      setNewDocuments(docsWithMetadata);
+      // Append to existing documents instead of replacing
+      setNewDocuments((prev) => [...prev, ...docsWithMetadata]);
       sessionStorage.removeItem("pendingDocuments");
+      toast.success(
+        `${docsWithMetadata.length} document(s) added to insert list`
+      );
     }
 
     if (folderSettings) {
       const settings = JSON.parse(folderSettings);
-      setCategoryId(settings.categoryId || "");
-      setShareWith(settings.shareWith || "all");
-      setSelectedTechParks(settings.selectedTechParks || []);
+      // Only set if not already set (preserve user input)
+      if (!categoryId && settings.categoryId) {
+        setCategoryId(settings.categoryId);
+      }
+      if (settings.shareWith) {
+        setShareWith(settings.shareWith);
+      }
+      if (settings.shareWithCommunities) {
+        setShareWithCommunities(settings.shareWithCommunities);
+      }
+      if (settings.selectedTechParks) {
+        setSelectedTechParks(settings.selectedTechParks);
+      }
+      if (settings.selectedCommunities) {
+        setSelectedCommunities(settings.selectedCommunities);
+      }
+      // Restore move and copy documents
+      if (settings.moveDocuments) {
+        setMoveDocuments(settings.moveDocuments);
+      }
+      if (settings.copyDocuments) {
+        setCopyDocuments(settings.copyDocuments);
+      }
+      // Restore folder title and category
+      if (settings.title) {
+        setTitle(settings.title);
+      }
       sessionStorage.removeItem("folderSettings");
     }
-  }, []);
+  }, []); // Empty dependency array to run only once on mount
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 KB";
@@ -124,6 +159,20 @@ export const CreateFolderPage = () => {
 
   const handleCreateNew = () => {
     setShowAddModal(false);
+
+    // Save current state to sessionStorage before navigating
+    const folderSettings = {
+      title: title,
+      categoryId: categoryId,
+      shareWith: shareWith,
+      shareWithCommunities: shareWithCommunities,
+      selectedTechParks: selectedTechParks,
+      selectedCommunities: selectedCommunities,
+      moveDocuments: moveDocuments,
+      copyDocuments: copyDocuments,
+    };
+    sessionStorage.setItem("folderSettings", JSON.stringify(folderSettings));
+
     navigate("/maintenance/documents/add?source=new");
   };
 
@@ -134,13 +183,41 @@ export const CreateFolderPage = () => {
     }
 
     setIsSubmitting(true);
+    setSubmitProgress("Creating folder...");
+
     try {
+      // Show progress for inserting documents
+      if (newDocuments.length > 0) {
+        setSubmitProgress(`Inserting ${newDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      // Show progress for moving documents
+      if (moveDocuments.length > 0) {
+        setSubmitProgress(`Moving ${moveDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      // Show progress for copying documents
+      if (copyDocuments.length > 0) {
+        setSubmitProgress(`Copying ${copyDocuments.length} document(s)...`);
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay for UX
+      }
+
+      setSubmitProgress("Finalizing...");
+
       // Use base64 attachments directly
-      const userId = parseInt(localStorage.getItem("userId") || "0", 10);
       const documentsPayload = newDocuments.map((doc) => ({
-        name: doc.title,
-        attachment: doc.attachment || "",
-        uploaded_by: userId,
+        title: doc.title,
+        attachments: [
+          {
+            filename: doc.fileName || "document.pdf",
+            content_type: doc.format
+              ? `application/${doc.format.toLowerCase()}`
+              : "application/pdf",
+            content: doc.attachment || "",
+          },
+        ],
       }));
 
       const payload: CreateFolderPayload = {
@@ -153,13 +230,16 @@ export const CreateFolderPage = () => {
         permissions: [
           {
             access_level: shareWith === "all" ? "all" : "selected",
-            scope_type: "Site",
-            scope_ids: shareWith === "individual" ? selectedTechParks : [],
+            access_to: "Pms::Site",
+            access_ids: shareWith === "individual" ? selectedTechParks : [],
           },
           {
-            access_level: "view",
-            scope_type: "community",
-            scope_ids: [],
+            access_level: shareWithCommunities === "all" ? "all" : "selected",
+            access_to: "Community",
+            access_ids:
+              shareWithCommunities === "yes"
+                ? selectedCommunities.map((c) => c.id)
+                : [],
           },
         ],
         documents: documentsPayload,
@@ -186,6 +266,7 @@ export const CreateFolderPage = () => {
       toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
+      setSubmitProgress("");
     }
   };
 
@@ -383,10 +464,17 @@ export const CreateFolderPage = () => {
           <div className="flex justify-center">
             <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#A01828] text-white px-12 py-3 rounded-md font-medium"
+              className="bg-[#C72030] hover:bg-[#A01828] text-white px-12 py-3 rounded-md font-medium min-w-[200px]"
               disabled={!title || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{submitProgress || "Processing..."}</span>
+                </div>
+              ) : (
+                "Submit"
+              )}
             </Button>
           </div>
         </div>
@@ -417,15 +505,37 @@ export const CreateFolderPage = () => {
           }));
 
           if (action === "move") {
-            setMoveDocuments(selectedDocs);
-            toast.success(
-              `${selectedDocs.length} document(s) added to move list`
-            );
+            // Append to existing move documents, avoiding duplicates
+            setMoveDocuments((prev) => {
+              const existingIds = new Set(prev.map((d) => d.id));
+              const newDocs = selectedDocs.filter(
+                (d) => !existingIds.has(d.id)
+              );
+              if (newDocs.length > 0) {
+                toast.success(
+                  `${newDocs.length} document(s) added to move list`
+                );
+              } else {
+                toast.info("Selected documents are already in the move list");
+              }
+              return [...prev, ...newDocs];
+            });
           } else {
-            setCopyDocuments(selectedDocs);
-            toast.success(
-              `${selectedDocs.length} document(s) added to copy list`
-            );
+            // Append to existing copy documents, avoiding duplicates
+            setCopyDocuments((prev) => {
+              const existingIds = new Set(prev.map((d) => d.id));
+              const newDocs = selectedDocs.filter(
+                (d) => !existingIds.has(d.id)
+              );
+              if (newDocs.length > 0) {
+                toast.success(
+                  `${newDocs.length} document(s) added to copy list`
+                );
+              } else {
+                toast.info("Selected documents are already in the copy list");
+              }
+              return [...prev, ...newDocs];
+            });
           }
           setShowExistingDocModal(false);
         }}

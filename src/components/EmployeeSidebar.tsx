@@ -85,8 +85,10 @@ const employeeNavigationByModule: Record<string, any> = {
   "Project Task": {
     Projects: {
       icon: Briefcase,
-      href: "/vas/projects",
-      items: [],
+      items: [
+        { name: "Project Overview", href: "/vas/projects" },
+        // { name: "Project Dashboard", href: "/vas/project-dashboard" },
+      ],
     },
     "My Tasks": {
       icon: ListChecks,
@@ -375,6 +377,25 @@ export const EmployeeSidebar: React.FC = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  // Collapse sections when module changes or route changes, unless a section has an active subitem
+  React.useEffect(() => {
+    // Determine which sections should be open based on active route
+    const nextOpen: Record<string, boolean> = {};
+    Object.entries(navigationStructure).forEach(([key, section]: [string, any]) => {
+      const sectionHref = section.href || "";
+      const hasItems = section.items && section.items.length > 0;
+      const sectionHasActiveItem = hasItems
+        ? section.items.some((item: { href: string }) => isActive(item.href))
+        : false;
+      const sectionIsActive = sectionHref ? isActive(sectionHref) : sectionHasActiveItem;
+      if (sectionIsActive) {
+        nextOpen[key] = true;
+      }
+    });
+    setOpenSections(nextOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, currentSection]);
+
   /**
    * Handle navigation within the sidebar
    *
@@ -405,9 +426,8 @@ export const EmployeeSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${
-        isSidebarCollapsed ? "w-12 sm:w-16" : "w-56 sm:w-64"
-      }`}
+      className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${isSidebarCollapsed ? "w-12 sm:w-16" : "w-56 sm:w-64"
+        }`}
     >
       {/* Toggle Button */}
       <button
@@ -443,7 +463,10 @@ export const EmployeeSidebar: React.FC = () => {
               const Icon = section.icon;
               const hasItems = section.items && section.items.length > 0;
               const sectionHref = section.href || "";
-              const isSectionOpen = openSections[key];
+              const sectionHasActiveItem = hasItems
+                ? section.items.some((item: { href: string }) => isActive(item.href))
+                : false;
+              const isSectionOpen = openSections[key] ?? sectionHasActiveItem;
 
               // Direct link (no subitems)
               if (!hasItems && sectionHref) {
@@ -451,11 +474,10 @@ export const EmployeeSidebar: React.FC = () => {
                   <button
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
-                      isActive(sectionHref)
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
                         ? "bg-[#DBC2A9] text-[#1a1a1a]"
                         : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                    }`}
+                      }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     {isActive(sectionHref) && (
@@ -476,9 +498,8 @@ export const EmployeeSidebar: React.FC = () => {
                 <div key={key} className="space-y-0.5 sm:space-y-1">
                   <button
                     onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${
-                      isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
-                    } text-[#1a1a1a]`}
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
+                      } text-[#1a1a1a]`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
@@ -488,9 +509,8 @@ export const EmployeeSidebar: React.FC = () => {
                           {key}
                         </span>
                         <ChevronDown
-                          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${
-                            isSectionOpen ? "transform rotate-180" : ""
-                          }`}
+                          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${isSectionOpen ? "transform rotate-180" : ""
+                            }`}
                         />
                       </>
                     )}
@@ -503,11 +523,10 @@ export const EmployeeSidebar: React.FC = () => {
                         <button
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
-                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${
-                            isActive(item.href)
+                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
                               ? "bg-[#DBC2A9] text-[#1a1a1a]"
                               : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                          }`}
+                            }`}
                         >
                           {isActive(item.href) && (
                             <div className="absolute left-0 top-0 bottom-0 w-0.5 sm:w-1 bg-[#C72030]"></div>

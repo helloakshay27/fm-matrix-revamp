@@ -111,6 +111,16 @@ export const TechParkSelectionModal: React.FC<TechParkSelectionModalProps> = ({
                     onClick={(e) => e.stopPropagation()}
                     className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] rounded"
                   />
+                  {site.attachfile?.document_url && (
+                    <img
+                      src={site.attachfile.document_url}
+                      alt={site.name}
+                      className="w-12 h-12 object-cover rounded border border-gray-200"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {site.name}

@@ -834,6 +834,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
               totalWorkingHours={totalWorkingHours}
               setTotalWorkingHours={setTotalWorkingHours}
               shift={shift}
+              isEdit={true}
             />
           </div>
 

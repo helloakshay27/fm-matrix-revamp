@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Pencil, Trash2, FileText, Download } from "lucide-react";
+import { Pencil, Trash2, FileText, Download, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -10,6 +10,35 @@ import {
   Document,
   DocumentAttachment,
 } from "@/services/documentService";
+import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
+
+interface DocumentPermission {
+  id: number;
+  permissible_type: string;
+  permissible_id: number;
+  access_to: string | null;
+  access_level: string;
+  access_scope: string;
+  access_ids: string | null;
+  access_records: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
+interface DocumentPermission {
+  id: number;
+  permissible_type: string;
+  permissible_id: number;
+  access_to: string | null;
+  access_level: string;
+  access_scope: string;
+  access_ids: string | null;
+  access_records: Array<{
+    id: number;
+    name: string;
+  }>;
+}
 
 interface DocumentDetail {
   id: number;
@@ -22,9 +51,7 @@ interface DocumentDetail {
   created_at: string;
   active: boolean | null;
   attachment: DocumentAttachment;
-  // UI fields
-  share_with?: string[];
-  share_with_communities?: boolean;
+  document_permissions?: DocumentPermission[];
 }
 
 export const DocumentDetailPage = () => {
@@ -32,6 +59,7 @@ export const DocumentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -84,10 +112,46 @@ export const DocumentDetailPage = () => {
   };
 
   const handleDownload = (url: string, filename: string) => {
-    const baseUrl = localStorage.getItem("baseUrl") || "";
-    const fullUrl = `https://${baseUrl}${decodeURIComponent(url)}`;
-    window.open(fullUrl, "_blank");
+    // S3 URL is passed as-is, no need to construct with baseUrl
+    const fullUrl = decodeURIComponent(url);
+
+    // Create a temporary anchor element to trigger download
+    const link = window.document.createElement("a");
+    link.href = fullUrl;
+    link.download = filename;
+    link.target = "_blank";
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
+
     toast.success("Downloading document...");
+  };
+
+  const handleOpenEditor = () => {
+    setShowEditor(true);
+  };
+
+  const handleCloseEditor = () => {
+    setShowEditor(false);
+  };
+
+  const isEditableDocument = (filename: string): boolean => {
+    const ext = filename.split(".").pop()?.toLowerCase() || "";
+    return [
+      "doc",
+      "docx",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+      "pdf",
+      "odt",
+      "ods",
+      "odp",
+      "rtf",
+      "txt",
+      "csv",
+    ].includes(ext);
   };
 
   const formatDate = (dateString: string): string => {
@@ -111,6 +175,59 @@ export const DocumentDetailPage = () => {
   const getFileExtension = (filename: string): string => {
     return filename.split(".").pop()?.toUpperCase() || "FILE";
   };
+
+  // Get site permissions (access_to: "Pms::Site")
+  const getSitePermissions = () => {
+    const sitePermission = document?.document_permissions?.find(
+      (perm) => perm.access_to === "Pms::Site"
+    );
+
+    if (!sitePermission) return null;
+
+    if (
+      sitePermission.access_level === "all" ||
+      sitePermission.access_scope === "all_records"
+    ) {
+      return "All Sites";
+    }
+
+    if (
+      sitePermission.access_records &&
+      sitePermission.access_records.length > 0
+    ) {
+      return sitePermission.access_records;
+    }
+
+    return null;
+  };
+
+  // Get community permissions (access_to: "Community")
+  const getCommunityPermissions = () => {
+    const communityPermission = document?.document_permissions?.find(
+      (perm) => perm.access_to === "Community"
+    );
+
+    if (!communityPermission) return null;
+
+    if (
+      communityPermission.access_level === "all" ||
+      communityPermission.access_scope === "all_records"
+    ) {
+      return "All Communities";
+    }
+
+    if (
+      communityPermission.access_records &&
+      communityPermission.access_records.length > 0
+    ) {
+      return communityPermission.access_records;
+    }
+
+    return null;
+  };
+
+  const sitePermissions = getSitePermissions();
+  const communityPermissions = getCommunityPermissions();
 
   if (loading) {
     return (
@@ -235,26 +352,51 @@ export const DocumentDetailPage = () => {
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-sm text-gray-500 mb-2">Share With</p>
+              <p className="text-sm text-gray-500 mb-2">Site Permissions</p>
               <div className="space-y-1">
-                {document.share_with && document.share_with.length > 0 ? (
-                  document.share_with.map((park, index) => (
-                    <p key={index} className="font-medium text-[#1a1a1a]">
-                      {park}
+                {sitePermissions ? (
+                  typeof sitePermissions === "string" ? (
+                    <p className="font-medium text-[#1a1a1a]">
+                      {sitePermissions}
                     </p>
-                  ))
+                  ) : (
+                    sitePermissions.map((site) => (
+                      <p key={site.id} className="font-medium text-[#1a1a1a]">
+                        {site.name}
+                      </p>
+                    ))
+                  )
                 ) : (
-                  <p className="font-medium text-gray-400">Not shared</p>
+                  <p className="font-medium text-gray-400">No sites selected</p>
                 )}
               </div>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-2">
-                Share With Communities
+                Community Permissions
               </p>
-              <p className="font-medium text-[#1a1a1a]">
-                {document.share_with_communities ? "Yes" : "No"}
-              </p>
+              <div className="space-y-1">
+                {communityPermissions ? (
+                  typeof communityPermissions === "string" ? (
+                    <p className="font-medium text-[#1a1a1a]">
+                      {communityPermissions}
+                    </p>
+                  ) : (
+                    communityPermissions.map((community) => (
+                      <p
+                        key={community.id}
+                        className="font-medium text-[#1a1a1a]"
+                      >
+                        {community.name}
+                      </p>
+                    ))
+                  )
+                ) : (
+                  <p className="font-medium text-gray-400">
+                    No communities selected
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -307,22 +449,45 @@ export const DocumentDetailPage = () => {
                     {formatFileSize(document.attachment.file_size)}
                   </p>
                 </div>
-                <button
-                  onClick={() =>
-                    handleDownload(
-                      document.attachment.url,
-                      document.attachment.filename
-                    )
-                  }
-                  className="absolute top-3 right-3 w-8 h-8 bg-[#C72030] rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Download className="w-4 h-4 text-white" />
-                </button>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 mt-3">
+                  {isEditableDocument(document.attachment.filename) && (
+                    <button
+                      onClick={() => handleOpenEditor()}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() =>
+                      handleDownload(
+                        document.attachment.url,
+                        document.attachment.filename
+                      )
+                    }
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#C72030] hover:bg-[#A01828] text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* OnlyOffice Editor Modal */}
+      {showEditor && document && (
+        <OnlyOfficeEditor
+          attachmentId={document.attachment.id}
+          filename={document.attachment.filename}
+          onClose={handleCloseEditor}
+        />
+      )}
     </div>
   );
 };

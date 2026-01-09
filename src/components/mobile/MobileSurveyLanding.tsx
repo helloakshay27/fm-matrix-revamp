@@ -1424,21 +1424,21 @@ export const MobileSurveyLanding: React.FC = () => {
     ) {
       // Fallback to static options if no API options
       return [
-        { rating: 5, emoji: "😄", label: "Amazing", optionId: 5 },
-        { rating: 4, emoji: "😊", label: "Good", optionId: 4 },
-        { rating: 3, emoji: "😐", label: "Okay", optionId: 3 },
-        { rating: 2, emoji: "😟", label: "Bad", optionId: 2 },
-        { rating: 1, emoji: "😞", label: "Terrible", optionId: 1 },
+        { rating: 5, emoji: "😄", label: "Extremely Happy", optionId: 5 },
+        { rating: 4, emoji: "😊", label: "Happy", optionId: 4 },
+        { rating: 3, emoji: "😐", label: "Neutral", optionId: 3 },
+        { rating: 2, emoji: "😟", label: "Not Happy", optionId: 2 },
+        { rating: 1, emoji: "😞", label: "Dissatisfied", optionId: 1 },
       ];
     }
 
     // Map API options to emoji display
     const emojiMapping = [
-      { emoji: "😄", label: "Amazing" },
-      { emoji: "😊", label: "Good" },
-      { emoji: "😐", label: "Okay" },
-      { emoji: "😟", label: "Bad" },
-      { emoji: "😞", label: "Terrible" },
+      { emoji: "😄", label: "Extremely Happy" },
+      { emoji: "😊", label: "Happy" },
+      { emoji: "😐", label: "Neutral" },
+      { emoji: "😟", label: "Not Happy" },
+      { emoji: "😞", label: "Dissatisfied" },
     ];
 
     // Use default order so that the first API option is the highest rating, last is lowest
@@ -1876,7 +1876,7 @@ export const MobileSurveyLanding: React.FC = () => {
               )}
           </div>
           <div className="flex justify-end">
-            <div className="w-28 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+            <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
               {window.location.origin === "https://oig.gophygital.work" ? (
                 <img
                   src="/Without bkg.svg"
@@ -1951,7 +1951,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     {surveyData.survey_title}
                   </h1>
                   {!showGenericTags && !isLastStep && (
-                    <span className="text-sm text-white/80 font-medium">
+                    <span className="text-sm text-black/80 font-medium">
                       Question{" "}
                       {Math.min(
                         currentQuestionIndex + 1,
@@ -2019,7 +2019,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
                 {/* Show Current Question */}
                 {currentQuestion && !isLastStep && (
-                  <div className="w-full space-y-3 max-w-sm mx-auto">
+                  <div className="w-full space-y-3  mx-auto">
                     <div className="space-y-3">
                       {/* Multiple Choice Question */}
                       {currentQuestion.qtype === "multiple" &&
@@ -2277,9 +2277,8 @@ export const MobileSurveyLanding: React.FC = () => {
                       {(currentQuestion.qtype === "emoji" ||
                         currentQuestion.qtype === "smiley") &&
                         !showGenericTags && (
-                          <div className="w-full mb-8">
-                            <div className="flex justify-between items-center gap-3 sm:gap-4 bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
-                              {" "}
+                          <div className="w-full mb-8 px-1 xs:px-2">
+                            <div className="flex justify-center items-stretch gap-1 xs:gap-1.5 sm:gap-3 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-300 shadow-lg p-2 xs:p-3 sm:p-4">
                               {getEmojiOptions(currentQuestion).map(
                                 (option) => (
                                   <button
@@ -2292,19 +2291,23 @@ export const MobileSurveyLanding: React.FC = () => {
                                         option.label
                                       )
                                     }
-                                    className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${selectedRating === option.rating
-                                      ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
-                                      : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
+                                    className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${selectedRating === option.rating
+                                      ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
+                                      : "bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
                                       }`}
                                   >
-                                    <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
-                                      {option.emoji}
-                                    </span>
-                                    <span
-                                      className={`text-xs sm:text-sm font-semibold text-center leading-tight break-words ${selectedRating === option.rating ? "text-white" : "text-gray-900"}`}
-                                    >
-                                      {option.label}
-                                    </span>
+                                    <div className="flex-1 flex items-center justify-center">
+                                      <span className="text-3xl xs:text-4xl sm:text-5xl">
+                                        {option.emoji}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-center min-h-[28px] xs:min-h-[32px] sm:min-h-[36px]">
+                                      <span
+                                        className={`text-[9px] xs:text-[10px] sm:text-xs font-bold text-center leading-tight px-0.5 xs:px-1 ${selectedRating === option.rating ? "text-white" : "text-gray-900"}`}
+                                      >
+                                        {option.label}
+                                      </span>
+                                    </div>
                                   </button>
                                 )
                               )}

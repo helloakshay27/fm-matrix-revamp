@@ -42,6 +42,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "task_code",
+        label: "Task Code",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "title",
         label: "Task Title",
         sortable: true,
@@ -135,6 +142,13 @@ const columns: ColumnConfig[] = [
     {
         key: "successor",
         label: "Successor",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "completion_percentage",
+        label: "Completion Percentage",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -1214,6 +1228,30 @@ const ProjectTasksPage = () => {
         }
     }
 
+    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+        const percentage = Number(completionPercentage);
+
+        // Validate percentage
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            toast.error("Completion percentage must be between 0 and 100");
+            return;
+        }
+
+        try {
+            await dispatch(editProjectTask({
+                token,
+                baseUrl,
+                id: String(id),
+                data: { completion_percent: percentage }
+            })).unwrap();
+            fetchData();
+            toast.success("Completion percentage updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update completion percentage");
+        }
+    }
+
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
         const renderProgressBar = (
             completed: number,
@@ -1429,6 +1467,30 @@ const ProjectTasksPage = () => {
             }
             case "successor": {
                 return item.successor_task?.length || "0";
+            }
+            case "completion_percentage": {
+                return (
+                    <input
+                        type="number"
+                        defaultValue={item.completion_percent || 0}
+                        className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                        min="0"
+                        max="100"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                const target = e.target as HTMLInputElement;
+                                const value = target.value;
+                                handleCompletionPercentageChange(item.id, value);
+                            }
+                        }}
+                        onBlur={(e) => {
+                            const value = e.target.value;
+                            if (value && value !== String(item.completion_percent)) {
+                                handleCompletionPercentageChange(item.id, value);
+                            }
+                        }}
+                    />
+                )
             }
             default:
                 return item[columnKey] || "-";

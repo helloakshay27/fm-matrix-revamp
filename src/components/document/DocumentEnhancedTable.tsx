@@ -42,6 +42,8 @@ interface DocumentEnhancedTableProps {
   onActionClick: () => void;
   renderCell: (document: Document, columnKey: string) => React.ReactNode;
   renderActions: (document: Document) => React.ReactNode;
+  selectedItems: string[];
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
@@ -52,12 +54,34 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
   onActionClick,
   renderCell,
   renderActions,
+  selectedItems,
+  onSelectionChange,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("title_asc");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  // Create handlers for selection
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      // Add to selection
+      onSelectionChange([...selectedItems, itemId]);
+    } else {
+      // Remove from selection
+      onSelectionChange(selectedItems.filter((id) => id !== itemId));
+    }
+  };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all documents
+      const allIds = documents.map((doc) => doc.id.toString());
+      onSelectionChange(allIds);
+    } else {
+      // Clear all selections
+      onSelectionChange([]);
+    }
+  };
   const handleSortChange = (option: SortOption) => {
     setSortBy(option);
     setShowSortDropdown(false);
@@ -277,6 +301,9 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
             storageKey="document-management-table"
             emptyMessage="No documents found"
             selectable={true}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onSelectAll={handleSelectAll}
             getItemId={(doc) => doc.id.toString()}
             hideTableSearch={true}
             hideTableExport={true}
