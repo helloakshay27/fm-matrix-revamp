@@ -727,7 +727,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
     try {
       const response = await fetch(
-        getFullUrl(`pms/sites/${selectedSiteId}.json`),
+        getFullUrl(`/pms/sites/${selectedSiteId}.json`),
         {
           method: "DELETE",
           headers: {

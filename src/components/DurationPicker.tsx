@@ -24,6 +24,7 @@ export const DurationPicker = ({
     dateWiseHours,
     setTotalWorkingHours,
     shift = {} as any,
+    isEdit = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [taskType, setTaskType] = useState("standard");
@@ -46,7 +47,7 @@ export const DurationPicker = ({
     };
 
     useEffect(() => {
-        if (endDate && !startDate) {
+        if (endDate && !isEdit) {
             setIsOpen(true);
         }
     }, [endDate]);
