@@ -155,13 +155,41 @@ export const EditDocumentPage = () => {
         setLoading(true);
         const document = await getDocumentDetail(parseInt(id, 10));
 
+        // Extract site permissions
+        const sitePermission = document.document_permissions?.find(
+          (perm: any) => perm.access_to === "Pms::Site"
+        );
+        const hasSitePermissions =
+          sitePermission &&
+          sitePermission.access_ids &&
+          sitePermission.access_ids.length > 0;
+
+        // Extract community permissions
+        const communityPermission = document.document_permissions?.find(
+          (perm: any) => perm.access_to === "Community"
+        );
+        const hasCommunityPermissions =
+          communityPermission &&
+          communityPermission.access_ids &&
+          communityPermission.access_ids.length > 0;
+
         setFormData({
           documentCategory: document.category_id?.toString() || "",
           documentFolder: document.folder_id?.toString() || "",
           title: document.title,
-          shareWith: "all",
-          shareWithCommunities: "no",
+          shareWith: hasSitePermissions ? "individual" : "all",
+          shareWithCommunities: hasCommunityPermissions ? "yes" : "no",
         });
+
+        // Set selected tech parks if exists
+        if (hasSitePermissions && sitePermission.access_ids) {
+          setSelectedTechParks(sitePermission.access_ids);
+        }
+
+        // Set selected communities if exists
+        if (hasCommunityPermissions && communityPermission.access_records) {
+          setSelectedCommunities(communityPermission.access_records);
+        }
 
         // Set existing file if attachment exists
         if (document.attachment) {
@@ -275,14 +303,14 @@ export const EditDocumentPage = () => {
       if (formData.shareWith === "individual" && selectedTechParks.length > 0) {
         permissions.push({
           access_level: "selected",
-          scope_type: "Site",
-          scope_ids: selectedTechParks,
+          access_to: "Pms::Site",
+          access_ids: selectedTechParks,
         });
       } else if (formData.shareWith === "all") {
         permissions.push({
           access_level: "all",
-          scope_type: "Site",
-          scope_ids: [],
+          access_to: "Pms::Site",
+          access_ids: [],
         });
       }
 
@@ -292,9 +320,9 @@ export const EditDocumentPage = () => {
         selectedCommunities.length > 0
       ) {
         permissions.push({
-          access_level: "view",
-          scope_type: "community",
-          scope_ids: selectedCommunities.map((c) => c.id),
+          access_level: "selected",
+          access_to: "Community",
+          access_ids: selectedCommunities.map((c) => c.id),
         });
       }
 

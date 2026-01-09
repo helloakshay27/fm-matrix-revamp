@@ -153,13 +153,13 @@ export const CreateFolderPage = () => {
         permissions: [
           {
             access_level: shareWith === "all" ? "all" : "selected",
-            scope_type: "Site",
-            scope_ids: shareWith === "individual" ? selectedTechParks : [],
+            access_to: "Pms::Site",
+            access_ids: shareWith === "individual" ? selectedTechParks : [],
           },
           {
             access_level: "view",
-            scope_type: "community",
-            scope_ids: [],
+            access_to: "Community",
+            access_ids: [],
           },
         ],
         documents: documentsPayload,
@@ -417,12 +417,26 @@ export const CreateFolderPage = () => {
           }));
 
           if (action === "move") {
-            setMoveDocuments(selectedDocs);
+            // Append to existing move documents, avoiding duplicates
+            setMoveDocuments((prev) => {
+              const existingIds = new Set(prev.map((d) => d.id));
+              const newDocs = selectedDocs.filter(
+                (d) => !existingIds.has(d.id)
+              );
+              return [...prev, ...newDocs];
+            });
             toast.success(
               `${selectedDocs.length} document(s) added to move list`
             );
           } else {
-            setCopyDocuments(selectedDocs);
+            // Append to existing copy documents, avoiding duplicates
+            setCopyDocuments((prev) => {
+              const existingIds = new Set(prev.map((d) => d.id));
+              const newDocs = selectedDocs.filter(
+                (d) => !existingIds.has(d.id)
+              );
+              return [...prev, ...newDocs];
+            });
             toast.success(
               `${selectedDocs.length} document(s) added to copy list`
             );

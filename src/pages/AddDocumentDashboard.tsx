@@ -311,15 +311,15 @@ export const AddDocumentDashboard = () => {
         const permissions: FolderPermission[] = [
           {
             access_level: formData.shareWith === "all" ? "all" : "selected",
-            scope_type: "Site",
-            scope_ids:
+            access_to: "Pms::Site",
+            access_ids:
               formData.shareWith === "individual" ? selectedTechParks : [],
           },
           {
             access_level:
-              formData.shareWithCommunities === "yes" ? "view" : "none",
-            scope_type: "community",
-            scope_ids:
+              formData.shareWithCommunities === "all" ? "all" : "selected",
+            access_to: "Community",
+            access_ids:
               formData.shareWithCommunities === "yes"
                 ? selectedCommunities.map((c) => c.id)
                 : [],

@@ -176,15 +176,18 @@ export const DocumentDetailPage = () => {
     return filename.split(".").pop()?.toUpperCase() || "FILE";
   };
 
-  // Get site permissions (access_level: "selected")
+  // Get site permissions (access_to: "Pms::Site")
   const getSitePermissions = () => {
     const sitePermission = document?.document_permissions?.find(
-      (perm) => perm.access_level === "selected"
+      (perm) => perm.access_to === "Pms::Site"
     );
 
     if (!sitePermission) return null;
 
-    if (sitePermission.access_scope === "all_records") {
+    if (
+      sitePermission.access_level === "all" ||
+      sitePermission.access_scope === "all_records"
+    ) {
       return "All Sites";
     }
 
@@ -198,15 +201,18 @@ export const DocumentDetailPage = () => {
     return null;
   };
 
-  // Get community permissions (access_level: "view")
+  // Get community permissions (access_to: "Community")
   const getCommunityPermissions = () => {
     const communityPermission = document?.document_permissions?.find(
-      (perm) => perm.access_level === "view"
+      (perm) => perm.access_to === "Community"
     );
 
     if (!communityPermission) return null;
 
-    if (communityPermission.access_scope === "all_records") {
+    if (
+      communityPermission.access_level === "all" ||
+      communityPermission.access_scope === "all_records"
+    ) {
       return "All Communities";
     }
 
