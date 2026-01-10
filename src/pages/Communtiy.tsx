@@ -97,8 +97,11 @@ const Communtiy = () => {
         if (fromPage === 'edit' && broadcastId) {
             // Redirect back to edit page
             navigate(`/pulse/notices/edit/${broadcastId}`);
+        } else if (fromPage === 'add-event') {
+            // Redirect back to add event page
+            navigate('/pulse/events/add');
         } else {
-            // Default to add page (from=add or no from parameter)
+            // Default to add broadcast page (from=add or no from parameter)
             navigate('/pulse/notices/add');
         }
     }
@@ -192,13 +195,20 @@ const Communtiy = () => {
                         <p className="text-sm text-gray-600">
                             {selectedRows?.length > 0
                                 ? `${selectedRows?.length} ${selectedRows?.length === 1 ? 'community' : 'communities'} selected`
-                                : 'Please select communities to share the broadcast with'}
+                                : 'Please select communities'}
                         </p>
                     </div>
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
-                            onClick={() => navigate('/pulse/notices/add')}
+                            onClick={() => {
+                                const fromPage = searchParams.get('from');
+                                if (fromPage === 'add-event') {
+                                    navigate('/pulse/events/add');
+                                } else {
+                                    navigate('/pulse/notices/add');
+                                }
+                            }}
                             className="border-gray-300"
                         >
                             Cancel

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Calendar, Share2, File, Info, XCircle, ArrowLeft } from "lucide-react";
+import { Calendar, Share2, File, Info, XCircle, ArrowLeft, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
+import axios from "axios";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
@@ -58,6 +59,93 @@ export const AddEventPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
 
+  // Community Selection State
+  const [selectedCommunities, setSelectedCommunities] = useState<number[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Restore form data from localStorage if exists
+    const savedEventName = localStorage.getItem('eventName');
+    const savedEventCategory = localStorage.getItem('eventCategory');
+    const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
+    const savedFromDate = localStorage.getItem('fromDate');
+    const savedToDate = localStorage.getItem('toDate');
+    const savedEventTime = localStorage.getItem('eventTime');
+    const savedEventLocation = localStorage.getItem('eventLocation');
+    const savedMemberCapacity = localStorage.getItem('memberCapacity');
+    const savedPerMemberLimit = localStorage.getItem('perMemberLimit');
+    const savedPulseCategory = localStorage.getItem('pulseCategory');
+    const savedRsvp = localStorage.getItem('rsvp');
+    const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
+    const savedEventDescription = localStorage.getItem('eventDescription');
+    const savedShareWith = localStorage.getItem('shareWith');
+
+    // If any saved data exists, restore it
+    if (savedEventName || savedEventDescription || savedFromDate) {
+      setFormData(prev => ({
+        ...prev,
+        eventName: savedEventName || prev.eventName,
+        eventCategory: savedEventCategory || prev.eventCategory,
+        amountPerPerson: savedAmountPerPerson || prev.amountPerPerson,
+        fromDate: savedFromDate || prev.fromDate,
+        toDate: savedToDate || prev.toDate,
+        eventTime: savedEventTime || prev.eventTime,
+        eventLocation: savedEventLocation || prev.eventLocation,
+        memberCapacity: savedMemberCapacity || prev.memberCapacity,
+        perMemberLimit: savedPerMemberLimit || prev.perMemberLimit,
+        pulseCategory: savedPulseCategory || prev.pulseCategory,
+        rsvp: savedRsvp || prev.rsvp,
+        showOnHomeScreen: savedShowOnHomeScreen || prev.showOnHomeScreen,
+        eventDescription: savedEventDescription || prev.eventDescription,
+        shareWith: savedShareWith || prev.shareWith,
+      }));
+    }
+
+    // Clean up localStorage after restoration
+    localStorage.removeItem('eventName');
+    localStorage.removeItem('eventCategory');
+    localStorage.removeItem('amountPerPerson');
+    localStorage.removeItem('fromDate');
+    localStorage.removeItem('toDate');
+    localStorage.removeItem('eventTime');
+    localStorage.removeItem('eventLocation');
+    localStorage.removeItem('memberCapacity');
+    localStorage.removeItem('perMemberLimit');
+    localStorage.removeItem('pulseCategory');
+    localStorage.removeItem('rsvp');
+    localStorage.removeItem('showOnHomeScreen');
+    localStorage.removeItem('eventDescription');
+    localStorage.removeItem('shareWith');
+
+    // Check if returning from community selection
+    const savedCommunities = localStorage.getItem('selectedCommunityIds');
+    if (savedCommunities) {
+      const communityIds = JSON.parse(savedCommunities).map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id);
+      setSelectedCommunities(communityIds);
+
+      if (communityIds.length > 0) {
+        setFormData(prev => ({ ...prev, shareWithCommunities: 'yes' }));
+      }
+
+      localStorage.removeItem('selectedCommunityIds');
+    }
+
+    fetchCommunities();
+  }, []);
+
+  const fetchCommunities = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/communities.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setCommunities(response.data.communities || []);
+    } catch (error) {
+      console.error("Failed to fetch communities", error);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -78,6 +166,24 @@ export const AddEventPage = () => {
       ...prev,
       [name]: value,
     }));
+    if (name === "shareWithCommunities" && value === "yes") {
+      // Save form data to localStorage before navigation
+      localStorage.setItem('eventName', formData.eventName);
+      localStorage.setItem('eventCategory', formData.eventCategory);
+      localStorage.setItem('amountPerPerson', formData.amountPerPerson);
+      localStorage.setItem('fromDate', formData.fromDate);
+      localStorage.setItem('toDate', formData.toDate);
+      localStorage.setItem('eventTime', formData.eventTime);
+      localStorage.setItem('eventLocation', formData.eventLocation);
+      localStorage.setItem('memberCapacity', formData.memberCapacity);
+      localStorage.setItem('perMemberLimit', formData.perMemberLimit);
+      localStorage.setItem('pulseCategory', formData.pulseCategory);
+      localStorage.setItem('rsvp', formData.rsvp);
+      localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+      localStorage.setItem('eventDescription', formData.eventDescription);
+      localStorage.setItem('shareWith', formData.shareWith);
+      navigate('/pulse/community?mode=selection&from=add-event');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,12 +275,37 @@ export const AddEventPage = () => {
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append("event[is_important]", isActive ? "true" : "false");
+      // formDataToSend.append("event[shared_community]", formData.shareWithCommunities === "yes" ? "1" : "0");
+
+      // Add selected community IDs if communities are selected
+      if (formData.shareWithCommunities === 'yes' && selectedCommunities.length > 0) {
+        selectedCommunities.forEach(id => {
+          formDataToSend.append("event[community_ids][]", id.toString());
+        });
+      }
 
       if (formData.attachment) {
         formDataToSend.append("event[documents][]", formData.attachment);
       }
 
       await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
+
+      // Clean up localStorage after successful submission
+      localStorage.removeItem('eventName');
+      localStorage.removeItem('eventCategory');
+      localStorage.removeItem('amountPerPerson');
+      localStorage.removeItem('fromDate');
+      localStorage.removeItem('toDate');
+      localStorage.removeItem('eventTime');
+      localStorage.removeItem('eventLocation');
+      localStorage.removeItem('memberCapacity');
+      localStorage.removeItem('perMemberLimit');
+      localStorage.removeItem('pulseCategory');
+      localStorage.removeItem('rsvp');
+      localStorage.removeItem('showOnHomeScreen');
+      localStorage.removeItem('eventDescription');
+      localStorage.removeItem('shareWith');
+      localStorage.removeItem('selectedCommunityIds');
 
       toast.success("Event created successfully");
       navigate(-1);
@@ -619,6 +750,41 @@ export const AddEventPage = () => {
                 </RadioGroup>
               </div>
             </div>
+
+            {formData.shareWithCommunities === "yes" && selectedCommunities.length > 0 && (
+              <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+                <span>
+                  {communities
+                    .filter(community => selectedCommunities.includes(community.id))
+                    .map(community => community.name)
+                    .join(", ")}
+                  .
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('eventName', formData.eventName);
+                    localStorage.setItem('eventCategory', formData.eventCategory);
+                    localStorage.setItem('amountPerPerson', formData.amountPerPerson);
+                    localStorage.setItem('fromDate', formData.fromDate);
+                    localStorage.setItem('toDate', formData.toDate);
+                    localStorage.setItem('eventTime', formData.eventTime);
+                    localStorage.setItem('eventLocation', formData.eventLocation);
+                    localStorage.setItem('memberCapacity', formData.memberCapacity);
+                    localStorage.setItem('perMemberLimit', formData.perMemberLimit);
+                    localStorage.setItem('pulseCategory', formData.pulseCategory);
+                    localStorage.setItem('rsvp', formData.rsvp);
+                    localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+                    localStorage.setItem('eventDescription', formData.eventDescription);
+                    localStorage.setItem('shareWith', formData.shareWith);
+                    navigate('/pulse/community?mode=selection&from=add-event')
+                  }}
+                  className="hover:text-red-700 transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
