@@ -34,11 +34,11 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   status = 'Approved',
 }) => {
   return (
-    <div className="h-screen bg-gray-50 flex items-center justify-center py-3 px-3 overflow-hidden">
-      <div className="w-full max-w-xs">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-4 px-4 sm:py-6 sm:px-6">
+      <div className="w-full max-w-xs sm:max-w-sm">
         {/* Ticket header */}
         <div className="relative overflow-hidden rounded-t-md">
-          <div className="bg-[#c72030] text-white px-4 py-7 rounded-t-md">
+      <div className="bg-[#C72030] text-white px-5 py-4 rounded-t-md relative overflow-hidden">
             <div className="flex items-start justify-between">
               <div>
                 <div className="text-xs opacity-90">OTP:</div>
@@ -70,10 +70,10 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
         </div>
 
         {/* Details card */}
-        <div className="bg-[#f6f4f0] border border-gray-200 rounded-b-md p-3 -mt-1">
+        <div className="bg-[#F6F4EE] border border-gray-200 rounded-b-md p-3 -mt-1">
           <div className="flex items-center gap-2">
             <div className="w-16 h-16 rounded-full bg-[#f1f3f4] flex items-center justify-center p-1">
-              <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <svg width="36" height="36" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                 <circle cx="32" cy="20" r="12" fill="#d1d5db" />
                 <path d="M12 54c0-11 10-18 20-18s20 7 20 18v2H12v-2z" fill="#e5e7eb" />
               </svg>
@@ -81,22 +81,22 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
               <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-base font-semibold text-[#111827]">{name}</div>
-                  <div className="text-[12px] text-gray-600">{role}</div>
+          <div className="text-base font-semibold text-[#111827]">{name}</div>
+          <div className="text-sm text-gray-600">{role}</div>
                 </div>
-                <div className={`text-sm font-semibold ${status === 'Approved' ? 'text-green-600' : status === 'Pending' ? 'text-yellow-600' : 'text-red-600'}`}>
+        <div className={`text-sm font-semibold ${status === 'Approved' ? 'text-green-600' : status === 'Pending' ? 'text-yellow-600' : 'text-[#C72030]'}`}>
                   {status}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-700">
+      <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-700">
             <div className="space-y-2">
               <div className="text-xs text-gray-500">Host Name :</div>
-              <div className="font-medium text-[12px]">{host}</div>
-              <div className="text-xs text-gray-500 mt-2">Visit Date :</div>
-              <div className="font-medium text-[12px]">{visitDate}</div>
+        <div className="font-medium text-[12px]">{host}</div>
+        <div className="text-xs text-gray-500 mt-2">Visit Date :</div>
+        <div className="font-medium text-[12px]">{visitDate}</div>
 
               <div className="text-xs text-gray-500 mt-2">Visitor Email ID :</div>
               <div className="font-medium text-[12px]">{email}</div>
@@ -124,14 +124,14 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
           <div className="font-medium text-[12px]">{location}</div>
           <div className="text-[12px] text-gray-500 mt-2">Room: <span className="font-medium text-[11px]">{room}</span></div>
 
-          <div className="mt-3 rounded text-[12px] text-[#b91c1c]">Important : Please present this pass along with a valid government ID at the security desk.</div>
+          <div className="mt-3 rounded text-[12px] text-[#C72030]">Important : Please present this pass along with a valid government ID at the security desk.</div>
         </div>
 
         {/* Consent box */}
-        <div className="mt-2 border border-gray-200 bg-white rounded p-2">
+        <div className="mt-2 border border-gray-200 bg-white  p-2">
           <div className="flex items-center justify-between mb-1">
             <div className="text-[13px] font-semibold leading-tight">Consent - Visitor Agreement</div>
-            <button className="text-[12px] text-[#c72030] bg-white border border-[#efe9e9] px-2 py-1 rounded">View more ▾</button>
+            <button className="text-[12px] text-[#C72030] bg-white border border-[#efe9e9] px-2 py-1 rounded">View more ▾</button>
           </div>
           <div className="text-[12px] text-gray-700">I am visiting Prime Focus Technologies Ltd on a business visit and will be providing my email...</div>
         </div>
