@@ -881,6 +881,7 @@ import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAdd
 import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
+import VisitorPassWeb from "./components/VisitorPassWeb";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1143,6 +1144,10 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
+                 <Route
+                    path="/visitor/web"
+                    element={<VisitorPassWeb />}
+                  />
 
                 <Route
                   path="/login"
@@ -2072,6 +2077,8 @@ function App() {
                     path="/security/visitor"
                     element={<VisitorsDashboard />}
                   />
+
+                 
 
                   <Route
                     path="/security/visitor/employee"
