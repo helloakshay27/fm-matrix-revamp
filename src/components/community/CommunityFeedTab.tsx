@@ -76,6 +76,15 @@ interface Like {
     profile_image: string | null;
 }
 
+interface PollOption {
+    id: number;
+    name: string;
+    total_votes: number;
+    voted: boolean;
+    vote_percentage: number;
+    votes: any[];
+}
+
 interface Post {
     id: number;
     title: string | null;
@@ -96,6 +105,7 @@ interface Post {
     isliked: boolean;
     attachments: Attachment[];
     comments: Comment[];
+    poll_options?: PollOption[];
 }
 
 const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps) => {
@@ -113,7 +123,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [posts, setPosts] = useState<Post[]>([]);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingPost, setEditingPost] = useState<Post | null>(null);
-    const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([])
+    const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+    const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
 
     const fetchPosts = async () => {
         try {
@@ -280,6 +291,81 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
+    // Poll option handlers
+    const handleAddPollOption = () => {
+        setPollOptions(prev => [...prev, '']);
+    };
+
+    const handleRemovePollOption = (index: number) => {
+        if (pollOptions.length > 2) {
+            setPollOptions(prev => prev.filter((_, i) => i !== index));
+        }
+    };
+
+    const handlePollOptionChange = (index: number, value: string) => {
+        setPollOptions(prev => {
+            const newOptions = [...prev];
+            newOptions[index] = value;
+            return newOptions;
+        });
+    };
+
+    const handleCreatePoll = async () => {
+        if (!postContent.trim()) {
+            toast.error('Please enter poll content');
+            return;
+        }
+
+        // Validate poll options - at least 2 non-empty options
+        const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+        if (validOptions.length < 2) {
+            toast.error('Please provide at least 2 poll options');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('body', postContent);
+            formData.append('resource_id', communityId || '');
+            formData.append('resource_type', 'Community');
+
+            // Add poll options
+            validOptions.forEach((option, index) => {
+                formData.append(`poll_options_attributes[${index}][name]`, option);
+            });
+
+            // Add attachments if any
+            if (selectedFiles.length > 0) {
+                selectedFiles.forEach((file) => {
+                    formData.append('attachments[]', file);
+                });
+            }
+
+            const response = await axios.post(
+                `https://${baseUrl}/posts.json`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+                toast.success('Poll created successfully');
+                setCreatePollOpen(false);
+                setPostContent("");
+                setSelectedFiles([]);
+                setPollOptions(['', '']);
+                await fetchPosts(); // Refresh the posts list
+            }
+        } catch (error) {
+            console.error('Error creating poll:', error);
+            toast.error('Failed to create poll. Please try again.');
+        }
+    };
+
     // Helper function to format timestamp
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
@@ -354,6 +440,32 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
                 {/* Post Content */}
                 <p className="text-gray-700 mb-4">{post.body}</p>
+
+                {/* Poll Options - Display if post has poll_options */}
+                {post.poll_options && post.poll_options.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                        {post.poll_options.map((option) => (
+                            <div
+                                key={option.id}
+                                className="relative bg-[#fff] border border-gray-200 rounded-[5px] px-4 py-2 transition-colors overflow-hidden"
+                            >
+                                {/* Progress bar background */}
+                                <div
+                                    className="absolute inset-0 bg-[rgba(196,184,157,0.13)] rounded-[5px]"
+                                    style={{ width: `${option.vote_percentage}%` }}
+                                ></div>
+
+                                <div className="relative flex items-center justify-between">
+                                    <span className="font-normal text-[#1F1F1F]">{option.name}</span>
+                                    <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
+                                        <span>{option.total_votes} votes</span>
+                                        <span className="text-[#C4B89D]">{option.vote_percentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Post Attachments - WhatsApp Style */}
                 {post.attachments && post.attachments.length > 0 && (
@@ -570,13 +682,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     setExistingAttachments([]);
                 }
             }}>
-                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px]">
+                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-semibold text-gray-900">
                             {isEditMode ? 'Edit Post' : 'Create Post'}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-5">
+                    <div className="space-y-5 overflow-y-auto flex-1 pr-2">
                         <div>
                             <label className="block text-sm font-semibold text-gray-900 mb-2">
                                 Add Media
@@ -728,12 +840,20 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             </Dialog>
 
             {/* Create Poll Modal */}
-            <Dialog open={createPollOpen} onOpenChange={setCreatePollOpen}>
-                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px]">
+            <Dialog open={createPollOpen} onOpenChange={(open) => {
+                setCreatePollOpen(open);
+                if (!open) {
+                    // Reset poll state when closing
+                    setPostContent("");
+                    setSelectedFiles([]);
+                    setPollOptions(['', '']);
+                }
+            }}>
+                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-semibold text-gray-900">Create Admin Post</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-5">
+                    <div className="space-y-5 overflow-y-auto flex-1 pr-2">
                         <div>
                             <label className="block text-sm font-semibold text-gray-900 mb-2">
                                 Add Media
@@ -764,12 +884,30 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                                             prev.filter((_, i) => i !== index)
                                                         );
                                                     }}
-                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg"
+                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
                                             </div>
                                         ))}
+                                    </div>
+                                    {/* Add more files button */}
+                                    <div className="mt-4">
+                                        <input
+                                            type="file"
+                                            id="poll-file-upload-more"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                            accept="image/*,video/*"
+                                            multiple
+                                        />
+                                        <label
+                                            htmlFor="poll-file-upload-more"
+                                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Add More Files
+                                        </label>
                                     </div>
                                 </div>
                             ) : (
@@ -789,13 +927,14 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                         className="hidden"
                                         onChange={handleFileChange}
                                         accept="image/*,video/*"
+                                        multiple
                                     />
                                     <label
                                         htmlFor="poll-file-upload"
                                         className="cursor-pointer text-[#9CA3AF]"
                                     >
                                         <p className="text-sm leading-relaxed">
-                                            Choose a file or<br />drag & drop it here
+                                            Choose files or<br />drag & drop them here
                                         </p>
                                     </label>
                                 </div>
@@ -819,18 +958,32 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                 Poll Options
                             </label>
                             <div className="space-y-3">
-                                <Input
-                                    placeholder="Option 1"
-                                    className="bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px]"
-                                />
-                                <Input
-                                    placeholder="Option 2"
-                                    className="bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px]"
-                                />
+                                {pollOptions.map((option, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <Input
+                                            placeholder={`Option ${index + 1}`}
+                                            value={option}
+                                            onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                                            className="bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px] flex-1"
+                                        />
+                                        {pollOptions.length > 2 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleRemovePollOption(index)}
+                                                className="!text-red-600 hover:!bg-red-50 h-10 px-3"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
                                 <Button
                                     variant="outline"
-                                    className="w-auto border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                                    onClick={handleAddPollOption}
+                                    className="w-auto border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px] flex items-center gap-2"
                                 >
+                                    <Plus className="w-4 h-4" />
                                     Add Option
                                 </Button>
                             </div>
@@ -839,14 +992,19 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                         <div className="flex justify-end gap-3 pt-2">
                             <Button
                                 variant="outline"
-                                onClick={() => setCreatePollOpen(false)}
+                                onClick={() => {
+                                    setCreatePollOpen(false);
+                                    setPostContent("");
+                                    setSelectedFiles([]);
+                                    setPollOptions(['', '']);
+                                }}
                                 className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 className="bg-[#c72030] hover:bg-[#b01d2a] text-white rounded-[8px]"
-                                onClick={() => setCreatePollOpen(false)}
+                                onClick={handleCreatePoll}
                             >
                                 Publish Poll
                             </Button>
