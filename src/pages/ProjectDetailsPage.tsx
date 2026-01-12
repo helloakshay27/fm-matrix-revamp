@@ -11,17 +11,13 @@ import ProjectEditModal from "@/components/ProjectEditModal";
 
 const Members = ({ allNames, projectOwner }) => {
     return (
-        <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow-md rounded-[10px] text-[13px] my-3">
-            <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto">
+        <div className="flex flex-col md:flex-row items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow-md rounded-[10px] text-[13px] my-3 gap-3 md:gap-0">
+            <div className="left-name-container w-full md:w-35 flex-shrink-0 pr-0 md:pr-4 py-2 md:my-auto">
                 <span className="text-gray-700">{projectOwner}</span>
             </div>
-            <div className="divider w-px bg-pink-500 self-stretch mx-4"></div>
-            <div className="names-grid-container flex-grow overflow-x-auto">
-                <div
-                    className="
-                  grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
-                "
-                >
+            <div className="hidden md:block divider w-px bg-pink-500 self-stretch mx-4" />
+            <div className="names-grid-container flex-grow w-full overflow-x-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-flow-col md:grid-rows-3 auto-cols-min gap-x-4 gap-y-2 py-2">
                     {allNames.map((name, index) => (
                         <span key={index} className="text-gray-600 whitespace-nowrap">
                             {name}
@@ -61,7 +57,7 @@ const Status = ({ project }) => {
 
     return (
         <div className="overflow-x-auto w-full p-4">
-            <div className="flex items-center gap-4 min-w-[800px]">
+            <div className="flex items-center gap-4 min-w-0 md:min-w-[800px]">
                 {logs.map((log, index) => {
                     const nextLog = logs[index + 1];
                     const currentTime = new Date(log.created_at).getTime();
@@ -243,7 +239,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
                     </div>
 
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`bg-[#C72030] h-[40px] w-full md:w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                         onClick={handleAttachFile}
                         disabled={isUploading}
                     >
@@ -264,7 +260,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`bg-[#C72030] h-[40px] w-full md:w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                         onClick={handleAttachFile}
                         disabled={isUploading}
                     >
@@ -459,7 +455,7 @@ const ProjectDetailsPage = () => {
     }
 
     return (
-        <div className="my-4 m-8">
+        <div className="my-4 m-4 md:m-8">
             <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
@@ -475,14 +471,14 @@ const ProjectDetailsPage = () => {
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-                <div className="flex items-center justify-between my-3 text-[13px]">
-                    <div className="flex items-center gap-3 text-[#323232]">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 my-3 text-[13px]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
                         <span>Created By : {project.created_by_name}</span>
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
+                        <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
                             Created On : {formatToDDMMYYYY_AMPM(project.created_at)}
                         </span>
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
+                        <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
                         <span className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}>
                             <div className="relative" ref={dropdownRef}>
                                 <div
@@ -531,22 +527,15 @@ const ProjectDetailsPage = () => {
                                 </ul>
                             </div>
                         </span>
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-                        <span
-                            className="flex items-center gap-1 cursor-pointer"
-                            onClick={() => setIsEditModalOpen(true)}
-                        >
-                            <PencilIcon size={15} />
-                            <span>Edit Project</span>
-                        </span>
-                        {/* <span className="h-6 w-[1px] border border-gray-300"></span>
-                        <span
-                            className="flex items-center gap-1 cursor-pointer"
-                        >
-                            <Trash2 size={15} />
-                            <span>Delete Project</span>
-                        </span> */}
                     </div>
+                    <button
+                        type="button"
+                        className="flex items-center gap-1 cursor-pointer self-start md:self-auto"
+                        onClick={() => setIsEditModalOpen(true)}
+                    >
+                        <PencilIcon size={15} />
+                        <span>Edit Project</span>
+                    </button>
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
 
@@ -591,26 +580,24 @@ const ProjectDetailsPage = () => {
                             Details
                         </div>
                         {isSecondCollapsed && (
-                            <div className="flex items-center gap-6">
-                                <div className="flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">
-                                        Project Manager:
-                                    </div>
-                                    <div className="text-left text-[12px]">
+                            <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4 mt-2 text-[12px]">
+                                <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+                                    <div className="font-[500]">Project Manager:</div>
+                                    <div className="break-words max-w-[180px]">
                                         {project.project_owner_name}
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">Priority:</div>
-                                    <div className="text-left text-[12px]">
+                                <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+                                    <div className="font-[500]">Priority:</div>
+                                    <div className="break-words max-w-[80px]">
                                         {project.priority?.charAt(0).toUpperCase() + project.priority?.slice(1).toLowerCase() || ''}
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">End Date:</div>
-                                    <div className="text-left text-[12px]">
+                                <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+                                    <div className="font-[500]">End Date:</div>
+                                    <div className="break-words max-w-[140px]">
                                         {project.end_date}
                                     </div>
                                 </div>
@@ -627,8 +614,8 @@ const ProjectDetailsPage = () => {
                         }}
                     >
                         <div className="flex flex-col">
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex items-center md:ml-36 ml-0 flex-col md:flex-row">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Project Manager :
                                     </div>
@@ -636,7 +623,7 @@ const ProjectDetailsPage = () => {
                                         {project.project_owner_name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Priority :
                                     </div>
@@ -648,8 +635,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex items-center md:ml-36 ml-0 flex-col md:flex-row">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Project Type:
                                     </div>
@@ -657,7 +644,7 @@ const ProjectDetailsPage = () => {
                                         {project.project_type_name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <Link to={`/vas/projects/${project.id}/milestones`} className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer">
                                         Milestones :
                                     </Link>
@@ -667,8 +654,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex items-center md:ml-36 ml-0 flex-col md:flex-row">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Start Date :
                                     </div>
@@ -676,7 +663,7 @@ const ProjectDetailsPage = () => {
                                         {project.start_date}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <Link
                                         to={`/vas/tasks?project_id=${project.id}`}
                                         className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
@@ -689,8 +676,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex items-center md:ml-36 ml-0 flex-col md:flex-row">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         End Date :
                                     </div>
@@ -698,7 +685,7 @@ const ProjectDetailsPage = () => {
                                         {project.end_date}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full md:w-1/2 flex items-center justify-start gap-3">
                                     <Link
                                         to={`/vas/issues?project_id=${project.id}`}
                                         className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
@@ -712,12 +699,16 @@ const ProjectDetailsPage = () => {
                     </div>
                 </div>
                 <div>
-                    <div className="flex items-center justify-between my-3">
-                        <div className="flex items-center gap-10">
+                    <div className="my-3">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2">
                             {["Member", "Documents", "Status", "Issues"].map((item, idx) => (
                                 <div
                                     key={item}
-                                    className={`text-[13px] font-[400] ${tab === item ? "selected font-semibold border-b-2 border-[#c72030]" : "cursor-pointer"}`}
+                                    className={`text-[13px] font-[400] ${
+                                        tab === item
+                                            ? "selected font-semibold border-b-2 border-[#c72030]"
+                                            : "cursor-pointer"
+                                    }`}
                                     onClick={() => setTab(item)}
                                 >
                                     {item}
@@ -735,10 +726,16 @@ const ProjectDetailsPage = () => {
                             />
                         )}
                         {tab === "Documents" && (
-                            <Attachments attachments={project.attachments || []} id={project.id} getProjectDetails={getProjectDetails} />
+                            <Attachments
+                                attachments={project.attachments || []}
+                                id={project.id}
+                                getProjectDetails={getProjectDetails}
+                            />
                         )}
                         {tab === "Status" && <Status project={project} />}
-                        {tab === "Issues" && <IssuesListPage preSelectedProjectId={project.id} />}
+                        {tab === "Issues" && (
+                            <IssuesListPage preSelectedProjectId={project.id} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -748,9 +745,13 @@ const ProjectDetailsPage = () => {
                 project={project}
                 onUpdated={async () => {
                     try {
-                        const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
+                        const response = await dispatch(
+                            fetchProjectById({ baseUrl, token, id })
+                        ).unwrap();
                         setProject(response);
                     } catch (error) {
+                        console.error("Failed to refresh project after update:", error);
+                        toast.error("Failed to refresh project after update.");
                     }
                 }}
             />
