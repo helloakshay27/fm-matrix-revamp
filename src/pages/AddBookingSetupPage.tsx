@@ -725,6 +725,7 @@ export const AddBookingSetupPage = () => {
     setFormData({ ...formData, slots: [...formData.slots, newSlot] });
   };
 
+  
   return (
     <ThemeProvider theme={muiTheme}>
       <div className="p-6 bg-white">

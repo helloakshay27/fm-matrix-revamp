@@ -1014,6 +1014,7 @@ const modulesByPackage = {
         icon: Users,
         subItems: [
           { name: "Manual Journals ", href: "/settings/manual-journal" },
+            { name: "Recurring Journals ", href: "/settings/recurring-journal" },
           // {
           //   name: "Escalation Matrix",
           //   href: "/settings/ticket-management/escalation-matrix",

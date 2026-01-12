@@ -93,7 +93,7 @@ interface GroupMembershipData {
   } | null;
 }
 
-export const ManualJournalDashboard = () => {
+export const RecurringJournalDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
@@ -505,7 +505,7 @@ export const ManualJournalDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/manual-journal/add');
+    navigate('/settings/recurring-journal/add');
   };
 
   // Render membership status badge
@@ -563,162 +563,38 @@ export const ManualJournalDashboard = () => {
 
 const columns = [
   { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'journal', label: 'Journal', sortable: true },
-  { key: 'reference_number', label: 'Reference Number', sortable: true },
+  { key: 'profile_name', label: 'Profile Name', sortable: true },
+  { key: 'frequency', label: 'Frequency', sortable: true },
+  { key: 'last_journal_date', label: 'Last Journal Date', sortable: true },
+  { key: 'next_journal_date', label: 'Next Journal Date', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
   { key: 'notes', label: 'Notes', sortable: false },
-  { key: 'amount', label: 'Amount', sortable: true },
-  { key: 'reporting_method', label: 'Reporting Method', sortable: true }
+  { key: 'amount', label: 'Amount', sortable: true }
 ];
 
   
 
   // Render cell content
   const renderCell = (item: GroupMembershipData, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
-            title="View Details"
-            className="p-0"
-          >
-            {/* <Eye className="w-4 h-4" /> */}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
-            title="Edit"
-            className="p-0"
-          >
-            {/* <Edit className="w-4 h-4" /> */}
-          </Button>
-        </div>
-      );
+    // Always show all columns, even if data is missing
+    switch (columnKey) {
+      case 'profile_name':
+        return item.profile_name || <span className="text-gray-400">--</span>;
+      case 'frequency':
+        return item.frequency || <span className="text-gray-400">--</span>;
+      case 'last_journal_date':
+        return item.last_journal_date ? new Date(item.last_journal_date).toLocaleDateString('en-GB') : <span className="text-gray-400">--</span>;
+      case 'next_journal_date':
+        return item.next_journal_date ? new Date(item.next_journal_date).toLocaleDateString('en-GB') : <span className="text-gray-400">--</span>;
+      case 'status':
+        return item.status || <span className="text-gray-400">--</span>;
+      case 'notes':
+        return item.notes || <span className="text-gray-400">--</span>;
+      case 'amount':
+        return item.amount !== undefined && item.amount !== null && item.amount !== '' ? item.amount : <span className="text-gray-400">--</span>;
+      default:
+        return <span className="text-gray-400">--</span>;
     }
-
-    if (columnKey === 'member_count') {
-      return (
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-[#C72030]" />
-          <span className="font-medium">{item.club_members?.length || 0}</span>
-        </div>
-      );
-    }
-
-    if (columnKey === 'member_names') {
-      const names = item.club_members?.map(m => m.user_name).filter(Boolean);
-      if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {names.slice(0, 2).map((name, idx) => (
-            <span key={idx} className="text-sm">{name}</span>
-          ))}
-          {names.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Names',
-                  items: names
-                });
-              }}
-            >
-              +{names.length - 2} more
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    if (columnKey === 'member_emails') {
-      const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
-      if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {emails.slice(0, 2).map((email, idx) => (
-            <span key={idx} className="text-sm">{email}</span>
-          ))}
-          {emails.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Emails',
-                  items: emails
-                });
-              }}
-            >
-              +{emails.length - 2} more
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    if (columnKey === 'member_mobiles') {
-      const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
-      if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {mobiles.slice(0, 2).map((mobile, idx) => (
-            <span key={idx} className="text-sm">{mobile}</span>
-          ))}
-          {mobiles.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Mobiles',
-                  items: mobiles
-                });
-              }}
-            >
-              +{mobiles.length - 2} more
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    if (columnKey === 'site_name') {
-      const siteName = item.club_members?.[0]?.site_name;
-      return siteName || <span className="text-gray-400">-</span>;
-    }
-
-    if (columnKey === 'membershipStatus') {
-      return renderStatusBadge(item.start_date, item.end_date, false);
-    }
-
-    if (columnKey === 'start_date' || columnKey === 'end_date') {
-      const dateValue = item[columnKey];
-      if (!dateValue) return <span className="text-gray-400">-</span>;
-      return new Date(dateValue).toLocaleDateString('en-GB');
-    }
-
-    if (columnKey === 'created_at') {
-      const createdAt = item.club_members?.[0]?.created_at;
-      if (!createdAt) return <span className="text-gray-400">-</span>;
-      return new Date(createdAt).toLocaleDateString('en-GB');
-    }
-
-    if (columnKey === 'referred_by') {
-      return item.referred_by || <span className="text-gray-400">-</span>;
-    }
-
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
-      return <span className="text-gray-400">--</span>;
-    }
-
-    return item[columnKey];
   };
 
   // Custom left actions
@@ -760,9 +636,50 @@ const columns = [
           </div>
         )}
         <EnhancedTable
-          data={memberships || []}
+          data={(memberships || []).map((row) => ({
+            actions: row.id ?? '',
+            profile_name: row.profile_name ?? '',
+            frequency: row.frequency ?? '',
+            last_journal_date: row.last_journal_date ?? '',
+            next_journal_date: row.next_journal_date ?? '',
+            status: row.status ?? '',
+            notes: row.notes ?? '',
+            amount: row.amount ?? '',
+            ...row
+          }))}
           columns={columns}
-          renderCell={renderCell}
+          renderCell={(item, columnKey) => {
+            if (columnKey === 'actions') {
+              return (
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate(`/club-management/recurring-journal/details/${item.id || item.actions}`)}
+                    title="View Details"
+                    className="p-0"
+                  >
+                    {/* <Eye className="w-4 h-4" /> */}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate(`/club-management/recurring-journal/edit/${item.id || item.actions}`)}
+                    title="Edit"
+                    className="p-0"
+                  >
+                    {/* <Edit className="w-4 h-4" /> */}
+                  </Button>
+                </div>
+              );
+            }
+            const value = item[columnKey];
+            if (value === undefined || value === null || value === '') {
+              return <span className="text-gray-400">-</span>;
+            }
+            if (columnKey === 'last_journal_date' || columnKey === 'next_journal_date') {
+              return value ? new Date(value).toLocaleDateString('en-GB') : <span className="text-gray-400">-</span>;
+            }
+            return value;
+          }}
           pagination={false}
           enableExport={true}
           exportFileName="club-group-memberships"
@@ -847,4 +764,4 @@ const columns = [
   );
 };
 
-export default ManualJournalDashboard;
+export default RecurringJournalDashboard;

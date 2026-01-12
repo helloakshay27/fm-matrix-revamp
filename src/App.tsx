@@ -806,6 +806,8 @@ import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboard";
 import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
+import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
+import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1611,6 +1613,16 @@ function App() {
                     path="settings/manual-journal/add"
                     element={<ManualJournalAdd/>}
                   />
+
+                    <Route
+                    path="settings/recurring-journal"
+                    element={<RecurringJournalDashboard />}
+                  />
+                  <Route
+                    path="settings/recurring-journal/add"
+                    element={<RecurringJournalAdd/>}
+                  />
+
 
                   {/* Club Management - Occupant Users */}
                   <Route

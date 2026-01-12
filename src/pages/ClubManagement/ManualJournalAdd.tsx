@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Card from '@mui/material/Card';
+import CardMedia from '@mui/material/CardMedia';
+import AttachFile from '@mui/icons-material/AttachFile';
+import Delete from '@mui/icons-material/Delete';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
@@ -12,6 +23,7 @@ const ManualJournalAdd = () => {
 	const [currency, setCurrency] = useState('INR- Indian Rupee');
 	const [rows, setRows] = useState([{ ...initialRow }]);
 	const [attachments, setAttachments] = useState([]);
+	const fileInputRef = useRef(null);
 
 	const handleRowChange = (idx, field, value) => {
 		const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
@@ -22,7 +34,15 @@ const ManualJournalAdd = () => {
 	const removeRow = (idx) => setRows(rows.filter((_, i) => i !== idx));
 
 	const handleFileChange = (e) => {
-		setAttachments([...e.target.files]);
+		setAttachments(Array.from(e.target.files));
+	};
+
+	const handleFileUpload = () => {
+		if (fileInputRef.current) fileInputRef.current.click();
+	};
+
+	const handleRemoveFile = (index) => {
+		setAttachments(prev => prev.filter((_, i) => i !== index));
 	};
 
 	const handleSubmit = (e) => {
@@ -36,64 +56,179 @@ const ManualJournalAdd = () => {
 					<h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Journal</h2>
 					<form className="space-y-6" onSubmit={handleSubmit}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Date<span className="text-red-500">*</span></label>
-								<input type="date" className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]" value={date} onChange={e => setDate(e.target.value)} required />
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Journal#<span className="text-red-500">*</span></label>
-								<input type="number" className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]" value={journalNo} onChange={e => setJournalNo(e.target.value)} required />
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Reference#</label>
-								<input type="text" className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]" value={reference} onChange={e => setReference(e.target.value)} />
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Notes</label>
-								<textarea className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]" maxLength={500} value={notes} onChange={e => setNotes(e.target.value)} />
-							</div>
+							<TextField
+								label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
+								type="date"
+								value={date}
+								onChange={e => setDate(e.target.value)}
+								variant="outlined"
+								// required
+								InputLabelProps={{ shrink: true }}
+								className="w-full"
+							/>
+							<TextField
+								label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
+								type="number"
+								value={journalNo}
+								onChange={e => setJournalNo(e.target.value)}
+								variant="outlined"
+								// required
+								className="w-full"
+							/>
+							<TextField
+								label="Reference#"
+								value={reference}
+								onChange={e => setReference(e.target.value)}
+								variant="outlined"
+								className="w-full"
+							/>
+							
+						</div>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							
+							<TextField
+								label={<span>Notes<span style={{ color: '#C72030' }}>*</span></span>}
+								value={notes}
+								onChange={e => setNotes(e.target.value)}
+								variant="outlined"
+								fullWidth
+								multiline
+								rows={4}
+								InputLabelProps={{ shrink: true }}
+								inputProps={{ maxLength: 500 }}
+								sx={{
+									mt: 1,
+									"& .MuiOutlinedInput-root": {
+										height: "auto !important",
+										padding: "2px !important",
+										display: "flex",
+									},
+									"& .MuiInputBase-input[aria-hidden='true']": {
+										flex: 0,
+										width: 0,
+										height: 0,
+										padding: "0 !important",
+										margin: 0,
+										display: "none",
+									},
+									"& .MuiInputBase-input": {
+										resize: "none !important",
+									},
+								}}
+								helperText={<span style={{ textAlign: 'right', display: 'block' }}>{`${notes.length}/500 characters`}</span>}
+								error={notes.length > 500}
+							/>
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Reporting Method</label>
 							<div className="flex gap-6">
 								{['Accrual and Cash', 'Accrual Only', 'Cash Only'].map(method => (
 									<label key={method} className="flex items-center gap-1">
-										<input type="radio" name="reportingMethod" value={method} checked={reportingMethod === method} onChange={() => setReportingMethod(method)} />
-										{method}
+										<input type="radio" name="reportingMethod" value={method} checked={reportingMethod === method} onChange={() => setReportingMethod(method)} className="accent-[#C72030]" />
+										<span>{method}</span>
 									</label>
 								))}
 							</div>
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Currency</label>
-							<select className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]" value={currency} onChange={e => setCurrency(e.target.value)}>
-								<option>INR- Indian Rupee</option>
-								{/* Add more currencies as needed */}
-							</select>
+							<FormControl size="small" sx={{ mt: 2, width: 400 }}>
+								<Select
+									value={currency}
+									displayEmpty
+									onChange={e => setCurrency(e.target.value)}
+									inputProps={{ 'aria-label': 'Select Currency' }}
+								>
+									<MenuItem value="INR- Indian Rupee">INR- Indian Rupee</MenuItem>
+									{/* Add more currencies as needed */}
+									<MenuItem value="USD- US Dollar">USD- US Dollar</MenuItem>
+									<MenuItem value="EUR- Euro">EUR- Euro</MenuItem>
+								</Select>
+							</FormControl>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Journal Entries</label>
+							{/* <label className="block text-sm font-medium text-[#1a1a1a] mb-1">Journal Entries</label> */}
 							<div className="overflow-x-auto">
-								<table className="min-w-full border border-[#D5DbDB] rounded-lg">
-									<thead className="bg-gray-100">
-										<tr>
-											<th className="px-2 py-1 text-left text-xs font-medium text-gray-700">Account</th>
-											<th className="px-2 py-1 text-left text-xs font-medium text-gray-700">Description</th>
-											<th className="px-2 py-1 text-left text-xs font-medium text-gray-700">Contact (INR)</th>
-											<th className="px-2 py-1 text-left text-xs font-medium text-gray-700">Debits</th>
-											<th className="px-2 py-1 text-left text-xs font-medium text-gray-700">Credits</th>
-											<th></th>
+								<table className="w-full border-collapse border border-gray-300 rounded-lg">
+									<thead>
+										<tr className="bg-[#E5E0D3]">
+											<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Account</th>
+											<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Description</th>
+											<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Contact (INR)</th>
+											<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Debits</th>
+											<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Credits</th>
+											<th className="border border-gray-300 px-4 py-3"></th>
 										</tr>
 									</thead>
 									<tbody>
 										{rows.map((row, idx) => (
-											<tr key={idx}>
-												<td className="px-2 py-1"><input type="text" className="w-full border border-[#D5DbDB] rounded-lg px-2 py-1" value={row.account} onChange={e => handleRowChange(idx, 'account', e.target.value)} placeholder="Select an account" /></td>
-												<td className="px-2 py-1"><input type="text" className="w-full border border-[#D5DbDB] rounded-lg px-2 py-1" value={row.description} onChange={e => handleRowChange(idx, 'description', e.target.value)} placeholder="Description" /></td>
-												<td className="px-2 py-1"><input type="text" className="w-full border border-[#D5DbDB] rounded-lg px-2 py-1" value={row.contact} onChange={e => handleRowChange(idx, 'contact', e.target.value)} placeholder="Select Contact" /></td>
-												<td className="px-2 py-1"><input type="number" className="w-full border border-[#D5DbDB] rounded-lg px-2 py-1" value={row.debit} onChange={e => handleRowChange(idx, 'debit', e.target.value)} /></td>
-												<td className="px-2 py-1"><input type="number" className="w-full border border-[#D5DbDB] rounded-lg px-2 py-1" value={row.credit} onChange={e => handleRowChange(idx, 'credit', e.target.value)} /></td>
-												<td className="px-2 py-1">
+											<tr key={idx} className="hover:bg-gray-50">
+												<td className="border border-gray-300 px-4 py-3">
+													<FormControl size="small" fullWidth>
+														<Select
+															value={row.account}
+															displayEmpty
+															onChange={e => handleRowChange(idx, 'account', e.target.value)}
+															inputProps={{ 'aria-label': 'Select Account' }}
+														>
+															<MenuItem value=""><em>Select an account</em></MenuItem>
+															{/* Replace with your account options */}
+															<MenuItem value="Account1">Account 1</MenuItem>
+															<MenuItem value="Account2">Account 2</MenuItem>
+														</Select>
+													</FormControl>
+												</td>
+												<td className="border border-gray-300 px-4 py-3">
+													<TextField
+														size="small"
+														variant="outlined"
+														value={row.description}
+														onChange={e => handleRowChange(idx, 'description', e.target.value)}
+														className="w-full"
+														placeholder="Description"
+													/>
+												</td>
+												<td className="border border-gray-300 px-4 py-3">
+													<FormControl size="small" fullWidth>
+														<Select
+															value={row.contact}
+															displayEmpty
+															onChange={e => handleRowChange(idx, 'contact', e.target.value)}
+															inputProps={{ 'aria-label': 'Select Contact' }}
+														>
+															<MenuItem value=""><em>Select Contact</em></MenuItem>
+															{/* Replace with your contact options */}
+															<MenuItem value="Contact1">Contact 1</MenuItem>
+															<MenuItem value="Contact2">Contact 2</MenuItem>
+														</Select>
+													</FormControl>
+												</td>
+												<td className="border border-gray-300 px-4 py-3">
+													<TextField
+														size="small"
+														variant="outlined"
+														type="number"
+														value={row.debit}
+														onChange={e => handleRowChange(idx, 'debit', e.target.value)}
+														className="w-full"
+														placeholder="Debit"
+														inputProps={{ min: 0 }}
+													/>
+												</td>
+												<td className="border border-gray-300 px-4 py-3">
+													<TextField
+														size="small"
+														variant="outlined"
+														type="number"
+														value={row.credit}
+														onChange={e => handleRowChange(idx, 'credit', e.target.value)}
+														className="w-full"
+														placeholder="Credit"
+														inputProps={{ min: 0 }}
+													/>
+												</td>
+												<td className="border border-gray-300 px-4 py-3">
 													{rows.length > 1 && (
 														<button type="button" className="text-red-500" onClick={() => removeRow(idx)}>✕</button>
 													)}
@@ -102,25 +237,154 @@ const ManualJournalAdd = () => {
 										))}
 									</tbody>
 								</table>
-								<button type="button" className="mt-2 px-3 py-1 border border-[#D5DbDB] rounded-lg text-[#1a1a1a] hover:bg-[#f6f4ee]" onClick={addRow}>Add New Row</button>
+								<Button
+									type="button"
+									className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px] mt-2"
+									onClick={addRow}
+								>
+									Add New Row
+								</Button>
+
+								{/* Calculation Summary Box */}
+								<div className="flex justify-end mt-6">
+									<div className="bg-white rounded-lg shadow p-6 min-w-[320px] max-w-[500px] w-[500px]">
+										<div className="flex justify-between mb-2">
+											<span className="font-medium text-gray-700">Sub Total</span>
+										</div>
+										<div className="flex justify-between mb-2">
+											<span className="font-semibold text-lg">Total (₹)</span>
+											<span className="font-semibold text-lg">{rows.reduce((sum, r) => sum + Number(r.debit || 0), 0).toFixed(2)}&nbsp;&nbsp;{rows.reduce((sum, r) => sum + Number(r.credit || 0), 0).toFixed(2)}</span>
+										</div>
+										<div className="flex justify-between mb-2">
+											<span className="text-gray-500">Debits</span>
+											<span className="text-gray-700">{rows.reduce((sum, r) => sum + Number(r.debit || 0), 0).toFixed(2)}</span>
+										</div>
+										<div className="flex justify-between mb-2">
+											<span className="text-gray-500">Credits</span>
+											<span className="text-gray-700">{rows.reduce((sum, r) => sum + Number(r.credit || 0), 0).toFixed(2)}</span>
+										</div>
+										<div className="flex justify-between mt-4">
+											<span className="font-medium text-gray-700">Difference</span>
+											<span className="font-semibold text-red-500">{(rows.reduce((sum, r) => sum + Number(r.debit || 0), 0) - rows.reduce((sum, r) => sum + Number(r.credit || 0), 0)).toFixed(2)}</span>
+										</div>
+									</div>
+								</div>
+
+								
 							</div>
 						</div>
-						<div className="flex flex-col md:flex-row md:items-center gap-4">
-							<div className="flex-1">
-								<label className="block text-sm font-medium text-[#1a1a1a] mb-1">Attachments</label>
-								<input type="file" multiple onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#f6f4ee] file:text-[#1a1a1a] hover:file:bg-[#e5e7eb]" />
-								<div className="text-xs text-gray-400 mt-1">You can upload a maximum of 5 files, 10MB each</div>
-							</div>
-						</div>
-						<div className="flex gap-3 pt-4 justify-end">
-							<Button
-								variant="outline"
-								type="button"
-								onClick={() => window.history.back()}
-								className="min-w-[100px]"
+						<Box
+							sx={{
+								bgcolor: "white",
+								borderRadius: 2,
+								p: 4,
+								mb: 3,
+								boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+							}}
+
+
+						>
+							<Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+								{/* <Box
+									sx={{
+										width: 32,
+										height: 32,
+										borderRadius: "50%",
+										bgcolor: "#dc2626",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										color: "white",
+										fontSize: "16px",
+										fontWeight: "bold",
+									}}
+								>
+									3
+								</Box> */}
+								<Typography
+									variant="h6"
+									sx={{ fontWeight: "bold", textTransform: "uppercase", color: "black" }}
+								>
+									Attachments
+								</Typography>
+							</Box>
+
+							<Box
+								onClick={handleFileUpload}
+								sx={{
+									border: "2px dashed #ccc",
+									borderRadius: 2,
+									p: 4,
+									textAlign: "center",
+									cursor: "pointer",
+									"&:hover": { borderColor: "#999" },
+								}}
 							>
-								Cancel
-							</Button>
+								<AttachFile sx={{ fontSize: 48, color: "#ccc", mb: 2 }} />
+								<Typography variant="body2" color="text.secondary">
+									Choose files | {attachments.length > 0 ? `${attachments.length} file(s) chosen` : "No file chosen"}
+								</Typography>
+							</Box>
+
+							<input
+								type="file"
+								accept="image/*"
+								multiple
+								hidden
+								ref={fileInputRef}
+								onChange={handleFileChange}
+							/>
+
+							{attachments.length > 0 && (
+								<Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 2 }}>
+									{attachments.map((file, index) => (
+										<Card
+											key={index}
+											sx={{
+												width: 150,
+												position: "relative",
+												boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+											}}
+										>
+											<CardMedia
+												component="img"
+												height="100"
+												image={URL.createObjectURL(file)}
+												alt={file.name}
+												sx={{ objectFit: "cover" }}
+											/>
+											<IconButton
+												sx={{
+													position: "absolute",
+													top: 5,
+													right: 5,
+													bgcolor: "rgba(255,255,255,0.7)",
+													"&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+												}}
+												onClick={() => handleRemoveFile(index)}
+											>
+												<Delete color="error" />
+											</IconButton>
+											<Typography
+												variant="caption"
+												sx={{
+													display: "block",
+													textAlign: "center",
+													p: 1,
+													overflow: "hidden",
+													textOverflow: "ellipsis",
+													whiteSpace: "nowrap",
+												}}
+											>
+												{file.name}
+											</Typography>
+										</Card>
+									))}
+								</Box>
+							)}
+						</Box>
+						<div className="flex gap-3 pt-4 justify-center">
+							
 							<Button
 								type="submit"
 								className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
@@ -134,6 +398,14 @@ const ManualJournalAdd = () => {
 								// onClick={handleSaveDraft} // Add your draft handler if needed
 							>
 								Save as Draft
+							</Button>
+							<Button
+								variant="outline"
+								type="button"
+								onClick={() => window.history.back()}
+								className="min-w-[100px]"
+							>
+								Cancel
 							</Button>
 						</div>
 					</form>
