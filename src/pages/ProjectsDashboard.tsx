@@ -83,6 +83,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "completion_percent",
+    label: "Completion Percentage",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "milestones",
     label: "Milestones",
     sortable: true,
@@ -141,6 +148,7 @@ const transformedProjects = (projects: any) => {
       title: project.title,
       status: project.status,
       type: project.project_type_name,
+      completion_percent: project.completion_percent,
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
       milestonesCompleted: project.completed_milestone_count,
@@ -762,6 +770,10 @@ export const ProjectsDashboard = () => {
             </Tooltip>
           </TooltipProvider>
         );
+      case "completion_percent":
+        return item.completion_percent != null
+          ? `${item.completion_percent}%`
+          : "-";
       default:
         return item[columnKey] || "-";
     }

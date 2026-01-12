@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Eye,
-  FileText,
-  Folder as FolderIcon,
-  LayoutGrid,
-  List,
-  ListTree,
-} from "lucide-react";
+import { ArrowLeft, Eye, LayoutGrid, List, ListTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -17,6 +9,7 @@ import {
   getFolderDetails,
   FolderDetailsResponse,
 } from "@/services/documentService";
+import { FileIcon } from "@/components/document/FileIcon";
 
 interface FolderItem {
   id: number;
@@ -324,7 +317,11 @@ export const FolderDetailsPage = () => {
       case "folder_title":
         return (
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#C72030]" />
+            <FileIcon
+              fileName={item.folder_title}
+              isFolder={item.type === "folder"}
+              className="w-5 h-5"
+            />
             <span className="font-medium">{item.folder_title}</span>
           </div>
         );

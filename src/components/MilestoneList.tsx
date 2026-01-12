@@ -1,7 +1,7 @@
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable"
 import { Button } from "./ui/button";
-import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
+import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
@@ -50,8 +50,15 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "tasks",
-        label: "Tasks",
+        key: "owner",
+        label: "Owner",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "completion_percent",
+        label: "Completion Percentage",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -323,6 +330,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             case "start_date":
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";
+            case "completion_percent":
+                return item.completion_percent != null
+                    ? `${item.completion_percent}%`
+                    : "-";
             default:
                 return item[columnKey] || "-";
         }
@@ -469,7 +480,15 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     }
 
     return (
-        <div className="mx-4">
+        <div className="px-6">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="px-0 mb-2"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <EnhancedTable
                 data={data}
                 columns={columns}
