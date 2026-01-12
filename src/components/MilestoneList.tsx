@@ -50,8 +50,15 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "tasks",
-        label: "Tasks",
+        key: "owner",
+        label: "Owner",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "completion_percent",
+        label: "Completion Percentage",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -323,6 +330,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             case "start_date":
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";
+            case "completion_percent":
+                return item.completion_percent != null
+                    ? `${item.completion_percent}%`
+                    : "-";
             default:
                 return item[columnKey] || "-";
         }
