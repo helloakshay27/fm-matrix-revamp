@@ -1226,7 +1226,7 @@ export const ProjectTaskDetails = () => {
   }, [activeTab, taskDetails?.parent_id]);
 
   return (
-    <div className="my-4 m-8">
+    <div className="my-4 m-4 md:m-8">
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
@@ -1241,15 +1241,22 @@ export const ProjectTaskDetails = () => {
           <span>{taskDetails.title}</span>
         </h2>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-        <div className="flex items-center justify-between my-3 text-[12px]">
-          <div className="flex items-center gap-3 text-[#323232]">
-            <span>Created By: {typeof taskDetails?.created_by === 'string' ? taskDetails.created_by : (taskDetails?.created_by as any)?.name}</span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between my-3 text-[12px] gap-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
+            <span>
+              Created By: {typeof taskDetails?.created_by === "string" ? taskDetails.created_by : (taskDetails?.created_by as any)?.name}
+            </span>
+            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
             <span className="flex items-center gap-3">
               Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
             </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}>
+            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+            <span
+              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${
+                STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
+                "bg-gray-400 text-white"
+              }`}
+            >
               <div className="relative" ref={dropdownRef}>
                 <div
                   className="flex items-center gap-1 cursor-pointer px-2 py-1"
@@ -1265,13 +1272,13 @@ export const ProjectTaskDetails = () => {
                   <span className="text-[13px]">{selectedOption}</span>
                   <ChevronDown
                     size={15}
-                    className={`${openDropdown ? "rotate-180" : ""
-                      } transition-transform`}
+                    className={`${openDropdown ? "rotate-180" : ""} transition-transform`}
                   />
                 </div>
                 <ul
-                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
-                    }`}
+                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${
+                    openDropdown ? "block" : "hidden"
+                  }`}
                   role="menu"
                   style={{
                     minWidth: "150px",
@@ -1283,10 +1290,9 @@ export const ProjectTaskDetails = () => {
                   {dropdownOptions.map((option, idx) => (
                     <li key={idx} role="menuitem">
                       <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                          ? "bg-gray-100 font-semibold"
-                          : ""
-                          }`}
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${
+                          selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                        }`}
                         onClick={() => handleOptionSelect(option)}
                       >
                         {option}
@@ -1296,45 +1302,45 @@ export const ProjectTaskDetails = () => {
                 </ul>
               </div>
             </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
             <span className="cursor-pointer flex items-center gap-1">
               <ActiveTimer
                 activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
                 isStarted={(taskDetails as any)?.is_started}
               />
             </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            {
-              taskDetails.todo_converted ? (
-                <span
-                  className="flex items-center gap-1 cursor-pointer"
-                  onClick={() => navigate(`/vas/todo`)}
-                >
-                  <CircleCheckBig size={15} />
-                  <span>Added To Do</span>
-                </span>
-              ) : (
-                <span
-                  className="flex items-center gap-1 cursor-pointer"
-                  onClick={handleAddToDo}
-                >
-                  <CircleCheckBig size={15} />
-                  <span>Add To Do</span>
-                </span>
-              )
-            }
+          </div>
 
-            <span className="h-6 w-[1px] border border-gray-300"></span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
+            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300 md:hidden"></span>
+            {taskDetails.todo_converted ? (
+              <span
+                className="flex items-center gap-1 cursor-pointer"
+                onClick={() => navigate(`/vas/todo`)}
+              >
+                <CircleCheckBig size={15} />
+                <span>Added To Do</span>
+              </span>
+            ) : (
+              <span
+                className="flex items-center gap-1 cursor-pointer"
+                onClick={handleAddToDo}
+              >
+                <CircleCheckBig size={15} />
+                <span>Add To Do</span>
+              </span>
+            )}
+            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
             <span
               className="flex items-center gap-1 cursor-pointer"
               onClick={() => setOpenEditModal(true)}
             >
               <PencilIcon size={15} />
-              {taskDetails.parent_id ? 'Edit Subtask' : 'Edit Task'}
+              {taskDetails.parent_id ? "Edit Subtask" : "Edit Task"}
             </span>
             {!taskDetails.parent_id && (
               <>
-                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
                 <span
                   className="flex items-center gap-1 cursor-pointer"
                   onClick={() => setOpenSubTaskModal(true)}
@@ -1344,7 +1350,6 @@ export const ProjectTaskDetails = () => {
                 </span>
               </>
             )}
-
           </div>
         </div>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
@@ -1381,22 +1386,33 @@ export const ProjectTaskDetails = () => {
 
         {/* Collapsed View Summary */}
         {isSecondCollapsed && (
-          <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
-            <div className="flex items-center justify-start gap-3">
-              <div className="text-right font-[500]">Responsible Person:</div>
-              <div className="text-left">{taskDetails.responsible_person.name || "-"}</div>
+          <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4 mt-4 text-[12px]">
+            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+              <div className="font-[500]">Responsible Person:</div>
+              <div className="break-words max-w-[180px]">
+                {taskDetails?.responsible_person?.name || "-"}
+              </div>
             </div>
-            <div className="flex items-center justify-start gap-3">
-              <div className="text-right font-[500]">Priority:</div>
-              <div className="text-left">{taskDetails.priority || "-"}</div>
+
+            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+              <div className="font-[500]">Priority:</div>
+              <div className="break-words max-w-[100px]">
+                {taskDetails.priority || "-"}
+              </div>
             </div>
-            <div className="flex items-center justify-start gap-3">
-              <div className="text-right font-[500]">End Date:</div>
-              <div className="text-left">{formatToDDMMYYYY(taskDetails.target_date || "")}</div>
+
+            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+              <div className="font-[500]">End Date:</div>
+              <div className="break-words max-w-[140px]">
+                {formatToDDMMYYYY(taskDetails.target_date || "")}
+              </div>
             </div>
-            <div className="flex items-center justify-start gap-3">
-              <div className="text-right font-[500]">Efforts Duration:</div>
-              <div className="text-left">{taskDetails.estimated_hour || 0} hours</div>
+
+            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
+              <div className="font-[500]">Efforts Duration:</div>
+              <div className="break-words max-w-[120px]">
+                {taskDetails.estimated_hour || 0} hours
+              </div>
             </div>
           </div>
         )}
@@ -1407,62 +1423,66 @@ export const ProjectTaskDetails = () => {
           ref={secondContentRef}
         >
           <div className="flex flex-col space-y-4">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails?.responsible_person?.name || "-"}</p>
+                <div className="flex-1 break-words">
+                  <p className="text-sm text-gray-900">
+                    {taskDetails?.responsible_person?.name || "-"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Priority:</p>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 break-words">
                   <p className="text-sm text-gray-900">{taskDetails.priority || "-"}</p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Start Date:</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{formatToDDMMYYYY(taskDetails.expected_start_date || "")}</p>
+                <div className="flex-1 break-words">
+                  <p className="text-sm text-gray-900">
+                    {formatToDDMMYYYY(taskDetails.expected_start_date || "")}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                {/* <div className="min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">Milestone:</p>
+                <div className="min-w-[140px] md:min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">
+                    {taskDetails.parent_id ? "Task" : "Milestone"}:
+                  </p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
-                </div> */}
-
-
-                <div className="min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">{taskDetails.parent_id ? 'Task' : 'Milestone'}:</p>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails.parent_id ? taskDetails.parent_task_title : taskDetails.milestone?.title}</p>
+                <div className="flex-1 break-words">
+                  <p className="text-sm text-gray-900">
+                    {taskDetails.parent_id
+                      ? taskDetails.parent_task_title
+                      : taskDetails.milestone?.title}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">End Date:</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{formatToDDMMYYYY(taskDetails.target_date || "")}</p>
+                <div className="flex-1 break-words">
+                  <p className="text-sm text-gray-900">
+                    {formatToDDMMYYYY(taskDetails.target_date || "")}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Tags:</p>
                 </div>
                 <div className="flex-1">
@@ -1484,22 +1504,24 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Efforts Duration:</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails.estimated_hour || 0} hours</p>
+                <div className="flex-1 break-words">
+                  <p className="text-sm text-gray-900">
+                    {taskDetails.estimated_hour || 0} hours
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Observer:</p>
                 </div>
                 <div className="flex-1">
                   {taskDetails.observers && taskDetails.observers.length > 0 ? (
                     <TooltipProvider>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         {taskDetails.observers.map((observer, idx) => (
                           <Tooltip key={idx}>
                             <TooltipTrigger asChild>
@@ -1521,40 +1543,42 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">
-                    {calculateDuration(taskDetails.expected_start_date, taskDetails.target_date).isOverdue
+                    {calculateDuration(
+                      taskDetails.expected_start_date,
+                      taskDetails.target_date
+                    ).isOverdue
                       ? "Overdued Time:"
                       : "Time Left:"}
                   </p>
                 </div>
-                <div className="flex-1">
-                  <CountdownTimer startDate={taskDetails.expected_start_date} targetDate={taskDetails.target_date} />
+                <div className="flex-1 break-words">
+                  <CountdownTimer
+                    startDate={taskDetails.expected_start_date}
+                    targetDate={taskDetails.target_date}
+                  />
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Workflow Status:</p>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Select
                     value={taskDetails.project_status_id ? String(taskDetails.project_status_id) : "1"}
-                    onValueChange={(value) =>
-                      handleWorkflowChange(value)
-                    }
+                    onValueChange={(value) => handleWorkflowChange(value)}
                   >
-                    <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
+                    <SelectTrigger className="w-full md:w-[180px] h-9 bg-[#C72030] text-white border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {
-                        statuses.map((status: any) => (
-                          <SelectItem key={status.id} value={String(status.id)}>
-                            {status.status}
-                          </SelectItem>
-                        ))
-                      }
+                      {statuses.map((status) => (
+                        <SelectItem key={status.id} value={String(status.id)}>
+                          {status.status}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1569,17 +1593,18 @@ export const ProjectTaskDetails = () => {
       {/* Tabs Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="border-b border-gray-200">
-          <div className="flex overflow-x-auto">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pt-3 md:px-6 md:pt-4">
             {tabs
-              .filter((tabName) => !(tabName.label === 'Subtasks' && taskDetails?.parent_id))
+              .filter((tabName) => !(tabName.label === "Subtasks" && taskDetails?.parent_id))
               .map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
-                    ? "border-[#C72030] text-[#C72030]"
-                    : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                    }`}
+                  className={`text-sm font-medium whitespace-nowrap border-b-2 transition-colors pb-2 ${
+                    activeTab === tab.id
+                      ? "border-[#C72030] text-[#C72030]"
+                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -1587,7 +1612,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-4 md:px-6 pb-6">
           {/* Subtasks Tab */}
           {activeTab === "subtasks" && !taskDetails?.parent_id && (
             <SubtasksTable subtasks={subtasks} fetchData={fetchData} />
@@ -1604,12 +1629,20 @@ export const ProjectTaskDetails = () => {
 
           {/* Comments Tab */}
           {activeTab === "comments" && (
-            <Comments comments={(taskDetails as any)?.comments} taskId={taskId} getTask={fetchData} />
+            <Comments
+              comments={(taskDetails as any)?.comments}
+              taskId={taskId}
+              getTask={fetchData}
+            />
           )}
 
           {/* Attachments Tab */}
           {activeTab === "attachments" && (
-            <Attachments attachments={(taskDetails as any)?.attachments} taskId={taskId} fetchData={fetchData} />
+            <Attachments
+              attachments={(taskDetails as any)?.attachments}
+              taskId={taskId}
+              fetchData={fetchData}
+            />
           )}
 
           {/* Project Drive Tab */}
@@ -1621,12 +1654,16 @@ export const ProjectTaskDetails = () => {
 
           {/* Activity Log Tab */}
           {activeTab === "activity_log" && (
-            <ActivityLog taskStatusLogs={(taskDetails as any)?.task_status_logs} />
+            <ActivityLog
+              taskStatusLogs={(taskDetails as any)?.task_status_logs}
+            />
           )}
 
           {/* Workflow Status Log Tab */}
           {activeTab === "workflow_status_log" && (
-            <WorkflowStatusLog taskStatusLogs={(taskDetails as any)?.workflow_status_logs} />
+            <WorkflowStatusLog
+              taskStatusLogs={(taskDetails as any)?.workflow_status_logs}
+            />
           )}
         </div>
       </div>

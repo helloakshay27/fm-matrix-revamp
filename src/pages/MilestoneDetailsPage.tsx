@@ -460,7 +460,7 @@ export const MilestoneDetailsPage = () => {
 
   return (
     <>
-      <div className="m-4">
+      <div className="m-4 md:m-6">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
@@ -469,7 +469,7 @@ export const MilestoneDetailsPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <div className="px-4 pt-1">
+        <div className="px-0 pt-1 md:px-4">
           {/* Title */}
           <h2 className="text-[15px] p-3 px-0">
             <span className="mr-3">M-0{milestoneDetails.id}</span>
@@ -478,43 +478,58 @@ export const MilestoneDetailsPage = () => {
           <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
           {/* Header Info and Status */}
-          <div className="flex items-center justify-between my-3 text-[12px]">
-            <div className="flex items-center gap-3 text-[#323232] flex-wrap">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between my-3 text-[12px] gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
               <span>Created By: {milestoneDetails.created_by_name}</span>
-              <span className="h-6 w-[1px] border border-gray-300"></span>
+              <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
               <span className="flex items-center gap-3">
                 Created On: {formatToDDMMYYYY_AMPM(milestoneDetails.created_at)}
               </span>
-              <span className="h-6 w-[1px] border border-gray-300"></span>
+              <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
 
               {/* Status Dropdown */}
-              <div className="relative w-[150px]" ref={dropdownRef}>
+              <div className="relative w-full xs:w-[150px] sm:w-[180px] md:w-[150px]" ref={dropdownRef}>
                 <div
-                  className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1"
-                  onClick={() => setOpenDropdown(!openDropdown)}
+                  className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1 border border-gray-300 rounded md:border-none md:rounded-none"
+                  onClick={() =>
+                    (!milestoneDetails.task_managements ||
+                      milestoneDetails.task_managements.length === 0) &&
+                    setOpenDropdown(!openDropdown)
+                  }
                   role="button"
                   aria-haspopup="true"
                   aria-expanded={openDropdown}
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (!milestoneDetails.task_managements ||
+                      milestoneDetails.task_managements.length === 0) &&
+                    setOpenDropdown(!openDropdown)
+                  }
                 >
-                  <span className="text-[13px] font-medium text-[#c72030]">{selectedOption}</span>
+                  <span className="text-[13px] font-medium text-[#c72030] truncate">
+                    {selectedOption}
+                  </span>
                   <ChevronDown
                     size={15}
-                    className={`${!milestoneDetails.task_managements || milestoneDetails.task_managements.length === 0
-                      ? openDropdown
-                        ? "rotate-180"
-                        : ""
-                      : ""
-                      } transition-transform`}
+                    className={`${
+                      !milestoneDetails.task_managements ||
+                      milestoneDetails.task_managements.length === 0
+                        ? openDropdown
+                          ? "rotate-180"
+                          : ""
+                        : "opacity-30"
+                    } transition-transform`}
                   />
                 </div>
 
                 {/* Only show dropdown if no task_managements exist */}
-                {(!milestoneDetails.task_managements || milestoneDetails.task_managements.length === 0) && (
+                {(!milestoneDetails.task_managements ||
+                  milestoneDetails.task_managements.length === 0) && (
                   <ul
-                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
-                      }`}
+                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${
+                      openDropdown ? "block" : "hidden"
+                    }`}
                     role="menu"
                     style={{
                       minWidth: "150px",
@@ -526,8 +541,9 @@ export const MilestoneDetailsPage = () => {
                     {dropdownOptions.map((option, idx) => (
                       <li key={idx} role="menuitem">
                         <button
-                          className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
-                            }`}
+                          className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${
+                            selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                          }`}
                           onClick={() => handleStatusChange(option)}
                         >
                           {option}
@@ -537,9 +553,14 @@ export const MilestoneDetailsPage = () => {
                   </ul>
                 )}
               </div>
+            </div>
 
-              <span className="h-6 w-[1px] border border-gray-300"></span>
-              <span className="cursor-pointer flex items-center gap-1" onClick={() => setEditModalOpen(true)}>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
+              <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+              <span
+                className="cursor-pointer flex items-center gap-1"
+                onClick={() => setEditModalOpen(true)}
+              >
                 <Pencil className="mx-1" size={15} /> Edit Milestone
               </span>
             </div>
@@ -553,46 +574,56 @@ export const MilestoneDetailsPage = () => {
               <ChevronDownCircle
                 color="#E95420"
                 size={30}
-                className={`${isDetailsCollapsed ? "rotate-180" : "rotate-0"
-                  } transition-transform cursor-pointer`}
+                className={`${
+                  isDetailsCollapsed ? "rotate-180" : "rotate-0"
+                } transition-transform cursor-pointer`}
                 onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
               />
               Details
             </div>
             <div
-              className={`mt-3 transition-all duration-300 ease-in-out overflow-hidden ${isDetailsCollapsed ? "max-h-0" : "max-h-[500px]"
-                }`}
+              className={`mt-3 transition-all duration-300 ease-in-out overflow-hidden ${
+                isDetailsCollapsed ? "max-h-0" : "max-h-[500px]"
+              }`}
             >
-              <div className="flex flex-col">
-                <div className="w-1/2 flex items-center justify-start gap-3 ml-36">
-                  <div className="text-right text-[12px] font-[500]">Responsible Person:</div>
-                  <div className="text-left text-[12px]">{milestoneDetails.owner_name}</div>
-                </div>
-
-                <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                <div className="w-1/2 flex items-center justify-start gap-3 ml-36">
-                  <div className="text-right text-[12px] font-[500]">Duration:</div>
-                  <CountdownTimer
-                    startDate={milestoneDetails.start_date}
-                    targetDate={milestoneDetails.end_date}
-                  />
-                </div>
-
-                <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                <div className="w-1/2 flex items-center justify-start gap-3 ml-36">
-                  <div className="text-right text-[12px] font-[500]">Start Date:</div>
-                  <div className="text-left text-[12px]">
-                    {milestoneDetails?.start_date?.split("T")[0]}
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="flex items-start">
+                  <div className="min-w-[140px] md:min-w-[200px] text-right md:text-right text-[12px] font-[500]">
+                    Responsible Person:
+                  </div>
+                  <div className="flex-1 ml-2 text-left text-[12px] break-words">
+                    {milestoneDetails.owner_name || "-"}
                   </div>
                 </div>
 
-                <span className="border h-[1px] inline-block w-full my-4"></span>
+                <div className="flex items-start">
+                  <div className="min-w-[140px] md:min-w-[200px] text-right md:text-right text-[12px] font-[500]">
+                    Duration:
+                  </div>
+                  <div className="flex-1 ml-2 text-left text-[12px] break-words">
+                    <CountdownTimer
+                      startDate={milestoneDetails.start_date}
+                      targetDate={milestoneDetails.end_date}
+                    />
+                  </div>
+                </div>
 
-                <div className="w-1/2 flex items-center justify-start gap-3 ml-36">
-                  <div className="text-right text-[12px] font-[500]">End Date:</div>
-                  <div className="text-left text-[12px]">{milestoneDetails?.end_date?.split("T")[0]}</div>
+                <div className="flex items-start">
+                  <div className="min-w-[140px] md:min-w-[200px] text-right md:text-right text-[12px] font-[500]">
+                    Start Date:
+                  </div>
+                  <div className="flex-1 ml-2 text-left text-[12px] break-words">
+                    {milestoneDetails?.start_date?.split("T")[0] || "-"}
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="min-w-[140px] md:min-w-[200px] text-right md:text-right text-[12px] font-[500]">
+                    End Date:
+                  </div>
+                  <div className="flex-1 ml-2 text-left text-[12px] break-words">
+                    {milestoneDetails?.end_date?.split("T")[0] || "-"}
+                  </div>
                 </div>
               </div>
             </div>
