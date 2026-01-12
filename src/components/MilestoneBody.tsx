@@ -711,7 +711,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 },
               }
             );
-            return response.data;
+            return response.data.reverse();
           },
           2 * 60 * 1000, // Fresh: 2 minutes
           10 * 60 * 1000 // Stale: 10 minutes
