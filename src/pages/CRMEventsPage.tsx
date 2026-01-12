@@ -1,23 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus, Pencil } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
 import { fetchEvents } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
 
 export const CRMEventsPage = () => {
   const dispatch = useAppDispatch();
@@ -31,19 +24,16 @@ export const CRMEventsPage = () => {
   const [events, setEvents] = useState([])
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    unit: '',
-    dateRange: {
-      from: undefined,
-      to: undefined,
-    },
     status: '',
+    created_at: '',
+    created_by: '',
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
-  const [openFilterDialog, setOpenFilterDialog] = useState(false);
+  const [openFilterModal, setOpenFilterModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,23 +80,34 @@ export const CRMEventsPage = () => {
     { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   ];
 
-  // Handle filter dialog
-  const handleOpenFilterDialog = () => {
-    setOpenFilterDialog(true);
+  // Handle filter modal
+  const handleOpenFilterModal = () => {
+    setOpenFilterModal(true);
   };
 
-  const handleCloseFilterDialog = () => {
-    setOpenFilterDialog(false);
-  };
+  const handleApplyFilters = async (filterData: { status?: string; created_at?: string; created_by?: string }) => {
+    // Update local filters state
+    setFilters({
+      status: filterData.status || '',
+      created_at: filterData.created_at || '',
+      created_by: filterData.created_by || '',
+    });
 
-  const handleApplyFilters = async () => {
-    const formatedStartDate = filters.dateRange.from ? format(new Date(filters.dateRange.from), "MM/dd/yyyy") : null;
-    const formatedEndDate = filters.dateRange.to ? format(new Date(filters.dateRange.to), "MM/dd/yyyy") : null;
+    // Build filter params for API
+    const filterParams: any = {};
 
-    const filterParams = {
-      "q[publish_in]": filters.status,
-      ...(formatedStartDate && formatedEndDate && { "q[date_range]": `${formatedStartDate} - ${formatedEndDate}` }),
-    };
+    if (filterData.status) {
+      filterParams["q[publish_in]"] = filterData.status;
+    }
+
+    if (filterData.created_at) {
+      const formattedDate = format(new Date(filterData.created_at), "MM/dd/yyyy");
+      filterParams["q[date_range]"] = `${formattedDate} - ${formattedDate}`;
+    }
+
+    if (filterData.created_by) {
+      filterParams["q[created_by]"] = filterData.created_by;
+    }
 
     const queryString = new URLSearchParams(filterParams).toString();
 
@@ -135,18 +136,6 @@ export const CRMEventsPage = () => {
       console.log(error);
       toast.error('Failed to fetch data');
     }
-    setOpenFilterDialog(false);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      unit: '',
-      dateRange: {
-        from: undefined,
-        to: undefined,
-      },
-      status: '',
-    });
   };
 
   const handleAdd = () => {
@@ -343,7 +332,6 @@ export const CRMEventsPage = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-blue-600"
         onClick={() => handleView(item.id)}
       >
         <Eye className="h-4 w-4" />
@@ -351,94 +339,23 @@ export const CRMEventsPage = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-green-600"
         onClick={() => handleEdit(item.id)}
       >
-        <Pencil className="h-4 w-4" />
+        <Edit className="h-4 w-4" />
       </Button>
     </div>
   );
 
-  const getDateRangeLabel = () => {
-    const { from, to } = filters.dateRange;
-    if (from && to) {
-      return `${format(from, 'MM/dd/yyyy')} - ${format(to, 'MM/dd/yyyy')}`;
-    } else if (from) {
-      return `${format(from, 'MM/dd/yyyy')} - ...`;
-    } else {
-      return 'Select Date Range';
-    }
-  };
+
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Filter Dialog */}
-      <Dialog open={openFilterDialog} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Filter Events</DialogTitle>
-        <DialogContent>
-          <div className="flex flex-col gap-4 mt-4">
-
-            {/* Date Range Picker */}
-            <FormControl fullWidth>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !filters.dateRange?.from && 'text-gray-400'
-                    )}
-                    style={{ border: "1px solid #ccc", padding: "25px 15px", borderRadius: "3px" }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {getDateRangeLabel()}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start" style={{ zIndex: 9999 }}>
-                  <Calendar
-                    mode="range"
-                    selected={filters.dateRange}
-                    onSelect={(range) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        dateRange: {
-                          from: range?.from,
-                          to: range?.to,
-                        },
-                      }))
-                    }
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </FormControl>
-
-            {/* Status Filter */}
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filters.status}
-                onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
-                label="Status"
-              >
-                <MenuItem value="Select" disabled>Select Status</MenuItem>
-                <MenuItem value="1">Published</MenuItem>
-                <MenuItem value="2">Disabled</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleResetFilters} color="secondary">
-            Reset
-          </Button>
-          <Button onClick={() => handleApplyFilters()} color="primary">
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Filter Modal */}
+      <CRMEventsFilterModal
+        open={openFilterModal}
+        onOpenChange={setOpenFilterModal}
+        onApply={handleApplyFilters}
+      />
 
       {/* Enhanced Table */}
       <EnhancedTable
@@ -465,7 +382,7 @@ export const CRMEventsPage = () => {
             </Button>
           </div>
         }
-        onFilterClick={handleOpenFilterDialog}
+        onFilterClick={handleOpenFilterModal}
       />
 
       <div className="flex justify-center mt-6">
