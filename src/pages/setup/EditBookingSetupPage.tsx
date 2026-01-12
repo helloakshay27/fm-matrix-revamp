@@ -125,7 +125,26 @@ export const EditBookingSetupPage = () => {
         description: "",
         termsConditions: "",
         cancellationText: "",
-        amenities: {} as Record<number, boolean>,
+        amenities: {
+            tv: { name: "TV", selected: false, tag_id: null },
+            whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
+            casting: { name: "Casting", selected: false, tag_id: null },
+            smartPenForTV: {
+                name: "Smart Pen for TV",
+                selected: false,
+                tag_id: null,
+            },
+            wirelessCharging: {
+                name: "Wireless Charging",
+                selected: false,
+                tag_id: null,
+            },
+            meetingRoomInventory: {
+                name: "Meeting Room Inventory",
+                selected: false,
+                tag_id: null,
+            },
+        },
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
@@ -266,11 +285,38 @@ export const EditBookingSetupPage = () => {
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
-                amenities: responseData.facility_setup_accessories?.reduce((acc, item) => {
-                    const accessory = item.facility_setup_accessory;
-                    acc[accessory.pms_inventory_id] = true;
-                    return acc;
-                }, {}) || {},
+                amenities: {
+                    tv: {
+                        name: "TV",
+                        selected: responseData.amenity_info[0].selected,
+                        tag_id: responseData.amenity_info[0].tag_id
+                    },
+                    whiteboard: {
+                        name: "Whiteboard",
+                        selected: responseData.amenity_info[1].selected,
+                        tag_id: responseData.amenity_info[1].tag_id
+                    },
+                    casting: {
+                        name: "Casting",
+                        selected: responseData.amenity_info[2].selected,
+                        tag_id: responseData.amenity_info[2].tag_id
+                    },
+                    smartPenForTV: {
+                        name: "Smart Pen for TV",
+                        selected: responseData.amenity_info[3].selected,
+                        tag_id: responseData.amenity_info[3].tag_id
+                    },
+                    wirelessCharging: {
+                        name: "Wireless Charging",
+                        selected: responseData.amenity_info[4].selected,
+                        tag_id: responseData.amenity_info[4].tag_id
+                    },
+                    meetingRoomInventory: {
+                        name: "Meeting Room Inventory",
+                        selected: responseData.amenity_info[5].selected,
+                        tag_id: responseData.amenity_info[5].tag_id
+                    },
+                },
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
@@ -812,23 +858,22 @@ export const EditBookingSetupPage = () => {
                 formDataToSend.append(`image_remove[]`, id);
             });
 
-            // Facility Setup Accessories
-            const selectedAccessories = Object.entries(formData.amenities)
-                .filter(([_, isSelected]) => isSelected)
-                .map(([inventoryId]) => parseInt(inventoryId));
-
-            console.log('=== Selected Accessories (Edit) ===');
-            console.log('formData.amenities:', formData.amenities);
-            console.log('selectedAccessories IDs:', selectedAccessories);
-            console.log('Total accessories selected:', selectedAccessories.length);
-            console.log('====================================');
-
-            selectedAccessories.forEach((inventoryId, index) => {
-                formDataToSend.append(
-                    `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
-                    inventoryId.toString()
-                );
-                console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+            let index = 0;
+            Object.keys(formData.amenities).forEach((key) => {
+                const amenity = formData.amenities[key];
+                if (amenity.tag_id && !amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
+                    index++;
+                } else if (amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
+                    if (amenity.tag_id) {
+                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    }
+                    index++;
+                }
             });
 
             // Facility Slots
@@ -2483,47 +2528,40 @@ export const EditBookingSetupPage = () => {
                         </div>
 
                         <div className="space-y-4" id="additional">
-                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Tv className="w-4 h-4" />
                                     </div>
-                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
+                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                                    {loadingInventories ? (
-                                        <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
-                                    ) : inventories.length === 0 ? (
-                                        <div className="col-span-full text-center text-gray-500">No inventories available</div>
-                                    ) : (
-                                        inventories.map((inventory) => {
-                                            const isSelected = formData.amenities[inventory.id] || false;
-
-                                            return (
-                                                <div key={inventory.id} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={`inventory-${inventory.id}`}
-                                                        checked={isSelected}
-                                                        onCheckedChange={(checked) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                amenities: {
-                                                                    ...formData.amenities,
-                                                                    [inventory.id]: !!checked,
-                                                                },
-                                                            })
-                                                        }
-                                                    />
-                                                    <label htmlFor={`inventory-${inventory.id}`} className="cursor-pointer">
-                                                        {inventory.name}
-                                                    </label>
-                                                </div>
-                                            );
-                                        })
-                                    )}
+                                    {Object.keys(formData.amenities).map((key) => (
+                                        <div key={key} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={key}
+                                                checked={formData.amenities[key].selected}
+                                                onCheckedChange={(checked) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        amenities: {
+                                                            ...formData.amenities,
+                                                            [key]: {
+                                                                ...formData.amenities[key],
+                                                                selected: !!checked,
+                                                            },
+                                                        },
+                                                    })
+                                                }
+                                            />
+                                            <label htmlFor={key}>
+                                                {formData.amenities[key].name}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div> */}
+                            </div>
                             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">

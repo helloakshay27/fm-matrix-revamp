@@ -120,7 +120,14 @@ export const AddBookingSetupPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {} as Record<number, boolean>,
+    amenities: {
+      tv: false,
+      whiteboard: false,
+      casting: false,
+      smartPenForTV: false,
+      wirelessCharging: false,
+      meetingRoomInventory: false,
+    },
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -560,23 +567,33 @@ export const AddBookingSetupPage = () => {
         );
       });
 
-      // Facility Setup Accessories
-      const selectedAccessories = Object.entries(formData.amenities)
-        .filter(([_, isSelected]) => isSelected)
-        .map(([inventoryId]) => parseInt(inventoryId));
+      const amenities = [];
+      if (formData.amenities.tv) amenities.push("TV");
+      if (formData.amenities.whiteboard) amenities.push("Whiteboard");
+      if (formData.amenities.casting) amenities.push("Casting");
+      if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
+      if (formData.amenities.wirelessCharging)
+        amenities.push("Wireless Charging");
+      if (formData.amenities.meetingRoomInventory)
+        amenities.push("Meeting Room Inventory");
 
-      console.log('=== Selected Accessories ===');
-      console.log('formData.amenities:', formData.amenities);
-      console.log('selectedAccessories IDs:', selectedAccessories);
-      console.log('Total accessories selected:', selectedAccessories.length);
-      console.log('===========================');
-
-      selectedAccessories.forEach((inventoryId, index) => {
+      amenities.forEach((name, index) => {
         formDataToSend.append(
-          `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
-          inventoryId.toString()
+          `facility_setup[generic_tags_attributes][${index}][tag_type]`,
+          "amenity_things"
         );
-        console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][category_name]`,
+          name
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][_destroy]`,
+          "0"
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][selected]`,
+          "1"
+        );
       });
 
       // Facility Slots
@@ -2232,6 +2249,113 @@ export const AddBookingSetupPage = () => {
                   )}
                 </div>
               </div> */}
+
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Tv className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tv"
+                      checked={formData.amenities.tv}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: { ...formData.amenities, tv: !!checked },
+                        })
+                      }
+                    />
+                    <label htmlFor="tv">TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="whiteboard"
+                      checked={formData.amenities.whiteboard}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            whiteboard: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="whiteboard">Whiteboard</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="casting"
+                      checked={formData.amenities.casting}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            casting: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="casting">Casting</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smartPenForTV"
+                      checked={formData.amenities.smartPenForTV}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            smartPenForTV: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="wirelessCharging"
+                      checked={formData.amenities.wirelessCharging}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            wirelessCharging: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="wirelessCharging">Wireless Charging</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="meetingRoomInventory"
+                      checked={formData.amenities.meetingRoomInventory}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            meetingRoomInventory: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="meetingRoomInventory">
+                      Meeting Room Inventory
+                    </label>
+                  </div>
+                </div>
+              </div>
 
               <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">

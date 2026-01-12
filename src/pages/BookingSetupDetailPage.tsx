@@ -143,7 +143,14 @@ export const BookingSetupDetailPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {} as Record<string, boolean>,
+    amenities: {
+      tv: false,
+      whiteboard: false,
+      casting: false,
+      smartPenForTV: false,
+      wirelessCharging: false,
+      meetingRoomInventory: false,
+    },
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -365,11 +372,14 @@ export const BookingSetupDetailPage = () => {
         description: response.description,
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
-        amenities: response.facility_setup_accessories?.reduce((acc, item) => {
-          const accessory = item.facility_setup_accessory;
-          acc[accessory.pms_inventory_id] = true; // Mark this inventory ID as selected
-          return acc;
-        }, {}) || {},
+        amenities: {
+          tv: response.amenity_info[0].selected,
+          whiteboard: response.amenity_info[1].selected,
+          casting: response.amenity_info[2].selected,
+          smartPenForTV: response.amenity_info[3].selected,
+          wirelessCharging: response.amenity_info[4].selected,
+          meetingRoomInventory: response.amenity_info[5].selected,
+        },
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
         sharedContentInfo: response.shared_content,
@@ -1395,37 +1405,66 @@ export const BookingSetupDetailPage = () => {
               )}
             </div>
             <div className="space-y-4" id="additional">
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                  {loadingInventories ? (
-                    <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
-                  ) : inventories.length === 0 ? (
-                    <div className="col-span-full text-center text-gray-500">No inventories available</div>
-                  ) : (
-                    inventories.map((inventory) => {
-                      const isSelected = formData.amenities[inventory.id] || false;
-                      return (
-                        <div key={inventory.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`inventory-${inventory.id}`}
-                            checked={isSelected}
-                            disabled
-                          />
-                          <label htmlFor={`inventory-${inventory.id}`}>
-                            {inventory.name}
-                          </label>
-                        </div>
-                      );
-                    })
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tv"
+                      checked={formData.amenities.tv}
+                      disabled
+                    />
+                    <label htmlFor="tv">TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="whiteboard"
+                      checked={formData.amenities.whiteboard}
+                      disabled
+                    />
+                    <label htmlFor="whiteboard">Whiteboard</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="casting"
+                      checked={formData.amenities.casting}
+                      disabled
+                    />
+                    <label htmlFor="casting">Casting</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smartPenForTV"
+                      checked={formData.amenities.smartPenForTV}
+                      disabled
+                    />
+                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="wirelessCharging"
+                      checked={formData.amenities.wirelessCharging}
+                      disabled
+                    />
+                    <label htmlFor="wirelessCharging">Wireless Charging</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="meetingRoomInventory"
+                      checked={formData.amenities.meetingRoomInventory}
+                      disabled
+                    />
+                    <label htmlFor="meetingRoomInventory">
+                      Meeting Room Inventory
+                    </label>
+                  </div>
                 </div>
-              </div> */}
+              </div>
 
               <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
