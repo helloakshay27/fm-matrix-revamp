@@ -1565,12 +1565,12 @@ export const ProjectTaskDetails = () => {
                 <div className="min-w-[140px] md:min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Workflow Status:</p>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Select
                     value={taskDetails.project_status_id ? String(taskDetails.project_status_id) : "1"}
                     onValueChange={(value) => handleWorkflowChange(value)}
                   >
-                    <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
+                    <SelectTrigger className="w-full md:w-[180px] h-9 bg-[#C72030] text-white border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
