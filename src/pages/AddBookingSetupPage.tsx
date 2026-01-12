@@ -678,8 +678,6 @@ export const AddBookingSetupPage = () => {
         formData.sharedContentInfo || ""
       );
 
-
-      console.log("Form Data to be sent:", formDataToSend);
       const response = await fetch(
         `https://${baseUrl}/pms/admin/facility_setups.json`,
         {
@@ -2197,7 +2195,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             <div className="space-y-4" id="additional">
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
@@ -2233,9 +2231,9 @@ export const AddBookingSetupPage = () => {
                     ))
                   )}
                 </div>
-              </div>
+              </div> */}
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Armchair className="w-4 h-4" />
@@ -2272,10 +2270,10 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
+              </div>
 
               {/* Floor Info */}
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <LampFloor className="w-4 h-4" />
@@ -2312,9 +2310,9 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Share2 className="w-4 h-4" />
@@ -2335,9 +2333,9 @@ export const AddBookingSetupPage = () => {
                     className="min-h-[100px]"
                   />
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <BookKey className="w-4 h-4" />
@@ -2355,7 +2353,7 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                   />
                 </div>
-              </div> */}
+              </div>
             </div>
           </div>
 

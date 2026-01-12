@@ -2483,7 +2483,7 @@ export const EditBookingSetupPage = () => {
                         </div>
 
                         <div className="space-y-4" id="additional">
-                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Tv className="w-4 h-4" />
@@ -2523,8 +2523,8 @@ export const EditBookingSetupPage = () => {
                                         })
                                     )}
                                 </div>
-                            </div>
-                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                            </div> */}
+                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Armchair className="w-4 h-4" />
@@ -2650,7 +2650,7 @@ export const EditBookingSetupPage = () => {
                                         variant="outlined"
                                     />
                                 </div>
-                            </div> */}
+                            </div>
                         </div>
                     </div>
 
