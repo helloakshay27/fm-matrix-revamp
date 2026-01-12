@@ -1912,7 +1912,7 @@ export const Dashboard = () => {
       case "tickets":
         // Handle individual ticket analytics components based on endpoint
         switch (analytic.endpoint) {
-          case "ticket_status":
+          case "ticket_status": {
             // Ticket Status Overview
             const statusData =
               data &&
@@ -1928,8 +1928,9 @@ export const Dashboard = () => {
                 closedTickets={statusData.closed || 0}
               />
             );
+          }
 
-          case "tickets_proactive_reactive":
+          case "tickets_proactive_reactive": {
             // Proactive/Reactive tickets breakdown
             // The data has already been transformed by transformTicketData
             // It now has the flat structure: proactiveOpen, proactiveClosed, reactiveOpen, reactiveClosed
@@ -1969,8 +1970,9 @@ export const Dashboard = () => {
                 }
               />
             );
+          }
 
-          case "tickets_categorywise":
+          case "tickets_categorywise": {
             // Category-wise Proactive/Reactive
             const categoryData = Array.isArray(data) ? data : [];
 
@@ -1983,9 +1985,10 @@ export const Dashboard = () => {
                 }}
               />
             );
+          }
 
           case "tickets_unit_categorywise":
-          case "unit_categorywise":
+          case "unit_categorywise": {
             // Unit Category-wise tickets
             const unitCategoryData =
               data && typeof data === "object" ? data : null;
@@ -1999,8 +2002,9 @@ export const Dashboard = () => {
                 }}
               />
             );
+          }
 
-          case "ticket_aging_matrix":
+          case "ticket_aging_matrix": {
             // Ticket Aging Matrix - use rawData, not transformed data
             const agingRawData =
               rawData && typeof rawData === "object" ? rawData : null;
@@ -2062,6 +2066,7 @@ export const Dashboard = () => {
                 }}
               />
             );
+          }
 
           case "tickets_response_tat":
           case "response_tat":
@@ -2099,20 +2104,25 @@ export const Dashboard = () => {
               />
             );
         }
-      case "tasks":
+      case "tasks": {
         // Map endpoint names to TaskAnalyticsCard type values
         const getTaskAnalyticsType = (endpoint: string) => {
           switch (endpoint) {
-            case "technical_checklist":
+            case "technical_checklist": {
               return "technical";
-            case "non_technical_checklist":
+            }
+            case "non_technical_checklist": {
               return "nonTechnical";
-            case "top_ten_checklist":
+            }
+            case "top_ten_checklist": {
               return "topTen";
-            case "site_wise_checklist":
+            }
+            case "site_wise_checklist": {
               return "siteWise";
-            default:
+            }
+            default: {
               return "technical";
+            }
           }
         };
 
@@ -2131,6 +2141,7 @@ export const Dashboard = () => {
             }
           />
         );
+      }
       case "amc":
         // Handle individual AMC analytics components
         switch (analytic.endpoint) {
@@ -2274,7 +2285,7 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
         }
-      case "inventory":
+      case "inventory": {
         // Map endpoint names to InventoryAnalyticsCard type values
         const getInventoryAnalyticsType = (endpoint: string) => {
           switch (endpoint) {
@@ -2310,6 +2321,7 @@ export const Dashboard = () => {
             }
           />
         );
+      }
       case "schedule":
         return (
           <ScheduleAnalyticsCard
@@ -3166,6 +3178,20 @@ export const Dashboard = () => {
     }
   };
 
+  const effectiveLayouts = React.useMemo(() => {
+    try {
+      return (layouts || []).map((l) => {
+        const analytic = selectedAnalytics.find((a) => a.id === l.i);
+        if (analytic && /snapshot/i.test(analytic.endpoint)) {
+          return { ...l, h: 3, minH: 2 } as GridLayout.Layout;
+        }
+        return l;
+      });
+    } catch (e) {
+      return layouts;
+    }
+  }, [layouts, selectedAnalytics]);
+
   return (
     <>
       <style>
@@ -3384,12 +3410,12 @@ export const Dashboard = () => {
                   <div className="relative w-full">
                     <ResponsiveGridLayout
                       className="layout"
-                      layouts={{ lg: layouts }}
+                      layouts={{ lg: effectiveLayouts }}
                       onLayoutChange={(layout) => handleLayoutChange(layout)}
                       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                       cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-                      rowHeight={60}
-                      margin={[20, 20]}
+                      rowHeight={48}
+                      margin={[12, 12]}
                       resizeHandles={["se"]}
                       containerPadding={[0, 0]}
                       compactType="vertical"
