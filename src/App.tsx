@@ -935,7 +935,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1144,10 +1144,10 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
-                 <Route
-                    path="/visitor/web"
-                    element={<VisitorPassWeb />}
-                  />
+                <Route
+                  path="/visitor/web"
+                  element={<VisitorPassWeb />}
+                />
 
                 <Route
                   path="/login"
@@ -2078,7 +2078,7 @@ function App() {
                     element={<VisitorsDashboard />}
                   />
 
-                 
+
 
                   <Route
                     path="/security/visitor/employee"
@@ -2717,7 +2717,7 @@ function App() {
 
                   <Route path="/vas/todo" element={<Todo />} />
 
-                  <Route path="/vas/documents" element={<ProjectDocuments />} />
+                  <Route path="/vas/documents" element={<DocumentManagement />} />
 
                   <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
