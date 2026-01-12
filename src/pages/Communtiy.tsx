@@ -6,6 +6,8 @@ import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
+import { CommunityFilterModal } from "@/components/CommunityFilterModal"
+import { toast } from "sonner"
 
 const columns: ColumnConfig[] = [
     {
@@ -61,14 +63,24 @@ const Communtiy = () => {
     const [communities, setCommunities] = useState([])
     const [loading, setLoading] = useState(false)
     const [selectedRows, setSelectedRows] = useState<number[]>([])
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+    const [filters, setFilters] = useState({
+        status: '',
+        created_at: '',
+        created_by: '',
+    })
 
     // Check if we're in selection mode
     const isSelectionMode = searchParams.get('mode') === 'selection';
 
-    const fetchCommunities = async () => {
+    const fetchCommunities = async (filterParams?: string) => {
         setLoading(true)
         try {
-            const response = await axios.get(`https://${baseUrl}/communities.json`, {
+            const url = filterParams
+                ? `https://${baseUrl}/communities.json?${filterParams}`
+                : `https://${baseUrl}/communities.json`
+
+            const response = await axios.get(url, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -77,6 +89,7 @@ const Communtiy = () => {
             setCommunities(response.data.communities)
         } catch (error) {
             console.log(error)
+            toast.error('Failed to fetch communities')
         } finally {
             setLoading(false)
         }
@@ -85,6 +98,37 @@ const Communtiy = () => {
     useEffect(() => {
         fetchCommunities()
     }, [])
+
+    const handleApplyFilter = async (filterData: { status?: string; created_at?: string; created_by?: string }) => {
+        // Update local filters state
+        setFilters({
+            status: filterData.status || '',
+            created_at: filterData.created_at || '',
+            created_by: filterData.created_by || '',
+        })
+
+        // Build filter params for API
+        const params = new URLSearchParams()
+
+        if (filterData.status) {
+            params.append('q[active_eq]', filterData.status)
+        }
+
+        if (filterData.created_at) {
+            params.append('q[created_at_eq]', filterData.created_at)
+        }
+
+        if (filterData.created_by) {
+            params.append('q[created_by_eq]', filterData.created_by)
+        }
+
+        try {
+            await fetchCommunities(params.toString())
+        } catch (error) {
+            console.log(error)
+            toast.error('Failed to apply filters')
+        }
+    }
 
     const handleContinue = () => {
         // Save selected community IDs to localStorage
@@ -145,6 +189,8 @@ const Communtiy = () => {
                 return <img src={item.icon} alt="" className="h-14 w-14 object-fit" />
             case "title":
                 return <div className="w-60">{item.name}</div>;
+            case "description":
+                return <div className="w-60 truncate">{item.description}</div>;
             case "status":
                 return <div className="flex items-center gap-2">
                     <Switch
@@ -230,7 +276,7 @@ const Communtiy = () => {
                 renderActions={!isSelectionMode ? renderActions : undefined}
                 renderCell={renderCell}
                 leftActions={leftActions}
-                onFilterClick={() => { }}
+                onFilterClick={() => setIsFilterModalOpen(true)}
                 loading={loading}
                 selectable={isSelectionMode}
                 enableSelection={isSelectionMode}
@@ -238,6 +284,13 @@ const Communtiy = () => {
                 onSelectItem={handleCommunitySelection}
                 onSelectAll={handleSelectAll}
                 getItemId={(item: any) => String(item.id)}
+            />
+
+            {/* Filter Modal */}
+            <CommunityFilterModal
+                open={isFilterModalOpen}
+                onOpenChange={setIsFilterModalOpen}
+                onApply={handleApplyFilter}
             />
         </div>
     )

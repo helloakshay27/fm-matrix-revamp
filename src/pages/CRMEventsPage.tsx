@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Edit } from 'lucide-react';
+import { Plus, Edit, Calendar, IndianRupee, CalendarCheck, AlertCircle, CalendarClock, FileCheck, CalendarRange } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
@@ -34,6 +34,16 @@ export const CRMEventsPage = () => {
     total_pages: 0,
   });
   const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [cardData, setCardData] = useState({
+    total_events: "",
+    upcoming_events: "",
+    past_events: "",
+    complementary_events: "",
+    paid_events: "",
+    requestable_events: "",
+    pending_requests: "",
+    total_registrations: ""
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +63,16 @@ export const CRMEventsPage = () => {
           created_at: event.created_at,
         }));
         setEvents(mappedEvents);
+        setCardData({
+          total_events: response.total_events || "0",
+          upcoming_events: response.upcoming_events || "0",
+          past_events: response.past_events || "0",
+          complementary_events: response.complementary_events || "0",
+          paid_events: response.paid_events || "0",
+          requestable_events: response.requestable_events || "0",
+          pending_requests: response.pending_requests || "0",
+          total_registrations: response.total_registrations || "0"
+        });
         setPagination({
           current_page: response.pagination.current_page,
           total_count: response.pagination.total_count,
@@ -348,8 +368,42 @@ export const CRMEventsPage = () => {
 
 
 
+  const cardValues = [
+    { title: "Total Events", value: cardData.total_events, icon: <Calendar className="w-5 h-5" color="#C72030" /> },
+    { title: "Upcoming Events", value: cardData.upcoming_events, icon: <CalendarRange className="w-5 h-5" color="#C72030" /> },
+    { title: "Past Events", value: cardData.past_events, icon: <CalendarClock className="w-5 h-5" color="#C72030" /> },
+    { title: "Complementary Events", value: cardData.complementary_events, icon: <CalendarCheck className="w-5 h-5" color="#C72030" /> },
+    { title: "Paid Events", value: cardData.paid_events, icon: <IndianRupee className="w-5 h-5" color="#C72030" /> },
+    { title: "Requestable Events", value: cardData.requestable_events, icon: <FileCheck className="w-5 h-5" color="#C72030" /> },
+    { title: "Pending Requests", value: cardData.pending_requests, icon: <AlertCircle className="w-5 h-5" color="#C72030" /> },
+    { title: "Total Registrations", value: cardData.total_registrations, icon: <FileCheck className="w-5 h-5" color="#C72030" /> },
+  ];
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6">
+      {/* Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cardValues.map((card, index) => (
+          <div key={index}>
+            <div
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-sm flex items-center gap-4`}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded-[3px]">
+                {card.icon}
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {card.value || 0}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  {card.title}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Filter Modal */}
       <CRMEventsFilterModal
         open={openFilterModal}

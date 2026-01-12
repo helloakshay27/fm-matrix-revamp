@@ -391,10 +391,9 @@ export const AddEventPage = () => {
                     }}
                   >
                     <MenuItem value="" disabled>Select event category...</MenuItem>
-                    <MenuItem value="sports">Sports</MenuItem>
-                    <MenuItem value="cultural">Cultural</MenuItem>
-                    <MenuItem value="social">Social</MenuItem>
-                    <MenuItem value="workshop">Workshop</MenuItem>
+                    <MenuItem value="play">Play</MenuItem>
+                    <MenuItem value="panasche">Panasche</MenuItem>
+                    <MenuItem value="persuit">Persuit</MenuItem>
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -588,9 +587,9 @@ export const AddEventPage = () => {
                     label={<span className="text-sm text-gray-600">Play</span>}
                   />
                   <FormControlLabel
-                    value="panache"
+                    value="panasche"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Panache</span>}
+                    label={<span className="text-sm text-gray-600">Panasche</span>}
                   />
                   <FormControlLabel
                     value="persuit"

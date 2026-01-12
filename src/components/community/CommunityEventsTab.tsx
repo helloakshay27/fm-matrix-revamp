@@ -33,6 +33,10 @@ interface Notice {
     created_at: string;
     expire_time: string;
     is_starred: boolean;
+    active: boolean;
+    is_important: boolean;
+    show_on_home_screen: boolean;
+    flag_expire: boolean;
 }
 
 interface Event {
@@ -44,6 +48,7 @@ interface Event {
     location: string;
     created_by: string;
     is_starred: boolean;
+    from_time: string;
 }
 
 // Mock data for Documents
@@ -149,7 +154,7 @@ const eventColumns: ColumnConfig[] = [
         draggable: false
     },
     {
-        key: 'title',
+        key: 'event_name',
         label: 'Title',
         sortable: true,
         draggable: true
@@ -167,7 +172,7 @@ const eventColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'location',
+        key: 'event_at',
         label: 'Location',
         sortable: true,
         draggable: true
@@ -440,14 +445,6 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         }
     };
 
-    const handleEventStarToggle = (eventId: number) => {
-        setEvents(events.map(event =>
-            event.id === eventId
-                ? { ...event, is_starred: !event.is_starred }
-                : event
-        ));
-    };
-
     const renderDocumentActions = (document: Document) => (
         <Button variant="ghost" size="sm">
             <Eye className="w-4 h-4" />
@@ -479,20 +476,9 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
     );
 
     const renderEventActions = (event: Event) => (
-        <div className="flex items-center gap-1">
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEventStarToggle(event.id)}
-            >
-                <Star
-                    className={`w-4 h-4 ${event.is_starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`}
-                />
-            </Button>
-            <Button variant="ghost" size="sm">
-                <Eye className="w-4 h-4" />
-            </Button>
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/pulse/events/details/${event.id}`)}>
+            <Eye className="w-4 h-4" />
+        </Button>
     );
 
     const renderDocumentCell = (document: Document, columnKey: string) => {
@@ -568,6 +554,20 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
     const renderEventCell = (event: Event, columnKey: string) => {
         if (columnKey === 'action') {
             return renderEventActions(event);
+        }
+        if (columnKey === 'event_date') {
+            return new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            }).format(new Date(event.from_time));
+        }
+        if (columnKey === 'event_time') {
+            return new Intl.DateTimeFormat("en-GB", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            }).format(new Date(event.from_time));
         }
         return event[columnKey as keyof Event] || "-";
     };
