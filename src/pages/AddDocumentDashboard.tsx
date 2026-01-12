@@ -704,7 +704,7 @@ export const AddDocumentDashboard = () => {
                 <label>
                   <input
                     type="file"
-                    accept=".pdf,.doc,.docx,image/*"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,.ppt,.pptx"
                     onChange={handleCoverImageUpload}
                     className="hidden"
                   />

@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Filter, Download, Upload, FileText, Eye } from "lucide-react";
+import { Filter, Eye, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { BookingsFilterDialog } from "@/components/BookingsFilterDialog";
 import { SpaceManagementImportDialog } from "@/components/SpaceManagementImportDialog";
 import { SpaceManagementRosterExportDialog } from "@/components/SpaceManagementRosterExportDialog";
 import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportDialog";
 import { EditBookingDialog } from "@/components/EditBookingDialog";
 import { CancelBookingDialog } from "@/components/CancelBookingDialog";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 export const SpaceManagementBookingsDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -17,119 +29,228 @@ export const SpaceManagementBookingsDashboard = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  interface BookingRow {
+    id: string;
+    employeeId: string;
+    employeeName: string;
+    employeeEmail: string;
+    scheduleDate: string;
+    day: string;
+    category: string;
+    building: string;
+    floor: string;
+    designation: string;
+    department: string;
+    slotsAndSeat: string;
+    status: string;
+    createdOn: string;
+  }
+  type ApiBooking = Record<string, unknown>;
+
+  const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [bookingData, setBookingData] = useState([{
-    id: "142179",
-    employeeId: "73974",
-    employeeName: "HO Occupant 2",
-    employeeEmail: "hooccupant2@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "",
-    slotsAndSeat: "10:00 AM to 08:00 PM - HR 1",
-    status: "Cancelled",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "142150",
-    employeeId: "71905",
-    employeeName: "Prashant P",
-    employeeEmail: "889853791@gmail.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "",
-    slotsAndSeat: "10:00 AM to 08:00 PM - S7",
-    status: "Cancelled",
-    createdOn: "15/02/2023, 5:43 PM"
-  }, {
-    id: "142219",
-    employeeId: "71903",
-    employeeName: "Bilal Shaikh",
-    employeeEmail: "bilal.shaikh@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "Sr. Flutter developer",
-    department: "Tech",
-    slotsAndSeat: "10:00 AM to 08:00 PM - S4",
-    status: "Confirmed",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "142094",
-    employeeId: "73975",
-    employeeName: "HO Occupant 3",
-    employeeEmail: "hooccupant3@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "Technology",
-    slotsAndSeat: "10:00 AM to 08:00 PM - Technology",
-    status: "Confirmed",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "305213",
-    employeeId: "71902",
-    employeeName: "Abdul G",
-    employeeEmail: "abdul.g@locatard.com",
-    scheduleDate: "7 February 2025",
-    day: "Friday",
-    category: "Meeting Room",
-    building: "Urbanwrk",
-    floor: "1st Floor",
-    designation: "Project Manager",
-    department: "Operations",
-    slotsAndSeat: "04:45 PM to 05:45 PM - Meeting Room 100",
-    status: "Pending",
-    createdOn: "7/02/2025, 4:45 PM"
-  }]);
-  const handleFilterApply = (filters: any) => {
-    console.log('Applied filters:', filters);
+  const [bookingData, setBookingData] = useState<BookingRow[]>([]);
+
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loadingBookings, setLoadingBookings] = useState<boolean>(false);
+  const [errorBookings, setErrorBookings] = useState<string | null>(null);
+
+  // Fetch bookings from external API on mount
+  useEffect(() => {
+    const fetchBookings = async (pageNumber: number) => {
+      setLoadingBookings(true);
+      setErrorBookings(null);
+      try {
+        const url = 'https://fm-uat-api.lockated.com/pms/admin/seat_bookings.json';
+
+        // Try to read token from localStorage under common keys, fall back to demo token
+        let token = '';
+        try {
+          token = (
+            localStorage.getItem('token') ||
+            localStorage.getItem('accessToken') ||
+            localStorage.getItem('access_token') ||
+            localStorage.getItem('authToken') ||
+            ''
+          );
+        } catch (e) {
+          token = '';
+        }
+
+        if (!token) {
+          token = 'SaIVkU1mrRwyCeqMxNqPGb0c-GtpOqt3xSuUi58HP4E';
+        }
+
+        const params = new URLSearchParams();
+        params.set('page', String(pageNumber));
+
+        const response = await fetch(`${url}?${params.toString()}`, {
+          method: 'GET',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Failed to fetch seat bookings: ${response.status} ${text}`);
+        }
+
+        const result = await response.json();
+
+        // API returns { pagination: {...}, seat_bookings: [...] }
+        const items = result?.seat_bookings || result?.seatBookings || result?.seat_bookings || [];
+
+        const mapped: BookingRow[] = Array.isArray(items)
+          ? items.map((it: ApiBooking) => ({
+              id: it['id'] ? String(it['id']) : '',
+              employeeId: it['user_id'] ? String(it['user_id']) : String(it['employee_id'] || it['employeeId'] || ''),
+              employeeName: String(it['user_name'] || it['employee_name'] || it['userName'] || it['name'] || ''),
+              employeeEmail: String(it['user_email'] || it['employeeEmail'] || it['email'] || ''),
+              scheduleDate: String(it['booking_date'] || it['schedule_date'] || it['from_date'] || it['to_date'] || ''),
+              day: String(it['booking_day'] || it['day'] || ''),
+              category: String(it['category'] || it['event'] || ''),
+              building: String(it['building'] || it['site_name'] || it['site'] || ''),
+              floor: String(it['floor'] || it['floor_name'] || ''),
+              designation: String(it['designation'] || ''),
+              department: String(it['department'] || it['dept'] || ''),
+              slotsAndSeat: String(it['slots'] || it['slots_and_seat'] || it['slot'] || it['time'] || ''),
+              status: String(it['status'] || it['booking_status'] || ''),
+              createdOn: String(it['created_at'] || it['createdAt'] || ''),
+            }))
+          : [];
+
+        setBookingData(mapped);
+
+        // pagination
+        const pagination = result?.pagination;
+        if (pagination) {
+          setPage(pagination.current_page || pageNumber);
+          setTotalPages(pagination.total_pages || 1);
+        } else {
+          setTotalPages(1);
+        }
+      } catch (err) {
+        // keep message for user, avoid leaking internal error objects to console in prod
+        setErrorBookings((err as Error)?.message || 'Failed to fetch bookings');
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    fetchBookings(page);
+  }, [page]);
+  const handleFilterApply = (filters: Record<string, unknown>) => {
+    // apply filters server-side if needed; currently placeholder
+    setIsFilterOpen(false);
   };
-  const handleEditBooking = (booking: any) => {
+  const handleEditBooking = (booking: BookingRow) => {
     setSelectedBooking(booking);
     setIsEditOpen(true);
   };
   const handleViewBooking = (bookingId: string) => {
-    console.log('Navigating to booking details for ID:', bookingId);
     navigate(`/vas/space-management/bookings/details/${bookingId}`);
   };
-  const handleCancelBooking = (booking: any) => {
-    console.log('Opening cancel dialog for booking:', booking.id);
+  const handleCancelBooking = (booking: BookingRow) => {
     setSelectedBooking(booking);
     setIsCancelOpen(true);
   };
   const handleConfirmCancel = (bookingId: string, reason: string) => {
-    console.log('Cancelling booking:', bookingId, 'Reason:', reason);
+    console.warn('Cancelling booking:', bookingId, 'Reason:', reason);
 
     // Update the booking status to Cancelled
-    const updatedBookings = bookingData.map(booking => {
-      if (booking.id === bookingId) {
-        return {
-          ...booking,
-          status: "Cancelled"
-        };
-      }
-      return booking;
-    });
+    const updatedBookings = bookingData.map(booking => booking.id === bookingId ? { ...booking, status: 'Cancelled' } : booking);
     setBookingData(updatedBookings);
-    console.log('Booking cancelled successfully');
+    console.warn('Booking cancelled successfully');
   };
 
-  // Filter bookings based on search term
-  const filteredBookingData = bookingData.filter(booking => booking.id.toLowerCase().includes(searchTerm.toLowerCase()) || booking.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) || booking.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) || booking.employeeEmail.toLowerCase().includes(searchTerm.toLowerCase()) || booking.building.toLowerCase().includes(searchTerm.toLowerCase()) || booking.category.toLowerCase().includes(searchTerm.toLowerCase()) || booking.status.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter bookings based on search term (safe coercion to string)
+  const safe = (v: unknown) => (v === undefined || v === null) ? '' : String(v).toLowerCase();
+  const q = searchTerm.toLowerCase();
+  const filteredBookingData = bookingData.filter(booking =>
+    safe(booking.id).includes(q) ||
+    safe(booking.employeeId).includes(q) ||
+    safe(booking.employeeName).includes(q) ||
+    safe(booking.employeeEmail).includes(q) ||
+    safe(booking.building).includes(q) ||
+    safe(booking.category).includes(q) ||
+    safe(booking.status).includes(q)
+  );
+
+  // Columns config for EnhancedTable
+  const columns: ColumnConfig[] = [
+    { key: 'actions', label: 'Actions' },
+    { key: 'id', label: 'ID' },
+    { key: 'employeeId', label: 'Employee ID' },
+    { key: 'employeeName', label: 'Employee Name' },
+    { key: 'employeeEmail', label: 'Employee Email' },
+    { key: 'scheduleDate', label: 'Schedule Date' },
+    { key: 'day', label: 'Day' },
+    { key: 'category', label: 'Category' },
+    { key: 'building', label: 'Building' },
+    { key: 'floor', label: 'Floor' },
+    { key: 'designation', label: 'Designation' },
+    { key: 'department', label: 'Department' },
+    { key: 'slots', label: 'Slots & Seat No.' },
+    { key: 'status', label: 'Status' },
+    { key: 'createdOn', label: 'Created On' },
+    { key: 'cancel', label: 'Cancel' },
+  ];
+
+  
+
+  const renderCell = (item: BookingRow, columnKey: string) => {
+    switch (columnKey) {
+      case 'actions':
+        return (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleViewBooking(item.id)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          </div>
+        );
+      case 'id':
+        return <span className="font-medium">{item.id}</span>;
+      case 'employeeId':
+        return item.employeeId || '-';
+      case 'employeeName':
+        return <span className="text-[#1a1a1a]">{item.employeeName || '-'}</span>;
+      case 'employeeEmail':
+        return <span className="text-[#1a1a1a]">{item.employeeEmail || '-'}</span>;
+      case 'scheduleDate':
+        return item.scheduleDate || '-';
+      case 'day':
+        return item.day || '-';
+      case 'category':
+        return item.category || '-';
+      case 'building':
+        return item.building || '-';
+      case 'floor':
+        return item.floor || '-';
+      case 'designation':
+        return item.designation || '-';
+      case 'department':
+        return item.department || '-';
+      case 'slots':
+        return item.slotsAndSeat || '-';
+      case 'status':
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-medium ${item.status === 'Cancelled' ? 'bg-red-100 text-red-800' : item.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+            {item.status || '-'}
+          </span>
+        );
+      case 'createdOn':
+        return item.createdOn || '-';
+      case 'cancel':
+        return (
+          <Button size="sm" onClick={() => handleCancelBooking(item)} className="bg-[#C72030] hover:bg-[#B01E2A] text-white" disabled={item.status === 'Cancelled'}>
+            {item.status === 'Cancelled' ? 'Cancelled' : 'Cancel'}
+          </Button>
+        );
+      default:
+        return '-';
+    }
+  };
+
   return <div className="p-6 min-h-screen bg-white">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -140,101 +261,65 @@ export const SpaceManagementBookingsDashboard = () => {
         
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">SEAT BOOKING LIST</h1>
         
-        {/* Action Buttons */}
-        <div className="flex gap-3 mb-6">
-          <Button onClick={() => setIsImportOpen(true)} style={{
-          backgroundColor: '#C72030',
-          color: 'white'
-        }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button onClick={() => setIsExportOpen(true)} style={{
-          backgroundColor: '#C72030',
-          color: 'white'
-        }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
-          <Button onClick={() => setIsRosterExportOpen(true)} style={{
-          backgroundColor: '#C72030',
-          color: 'white'
-        }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-            <FileText className="w-4 h-4" />
-            Roster Export
-          </Button>
-          <Button onClick={() => setIsFilterOpen(true)} style={{
-          backgroundColor: '#C72030',
-          color: 'white'
-        }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-            <Filter className="w-4 h-4" />
-            Filters
-          </Button>
-        </div>
+       
 
         {/* Table */}
-        <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                  <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Employee ID</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Employee Name</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Employee Email</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Schedule Date</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Day</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Building</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Floor</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Designation</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Department</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Slots & Seat No.</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Created On</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Cancel</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBookingData.length === 0 ? <TableRow>
-                    <TableCell colSpan={16} className="text-center py-8 text-gray-500">
-                      No bookings found matching your search.
-                    </TableCell>
-                  </TableRow> : filteredBookingData.map((booking, index) => <TableRow key={booking.id}>
-                      <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => handleViewBooking(booking.id)} className="hover:bg-gray-100">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell>{booking.id}</TableCell>
-                      <TableCell>{booking.employeeId}</TableCell>
-                      <TableCell className="text-blue-600">{booking.employeeName}</TableCell>
-                      <TableCell className="text-blue-600">{booking.employeeEmail}</TableCell>
-                      <TableCell>{booking.scheduleDate}</TableCell>
-                      <TableCell>{booking.day}</TableCell>
-                      <TableCell>{booking.category}</TableCell>
-                      <TableCell>{booking.building}</TableCell>
-                      <TableCell>{booking.floor}</TableCell>
-                      <TableCell>{booking.designation}</TableCell>
-                      <TableCell>{booking.department}</TableCell>
-                      <TableCell>{booking.slotsAndSeat}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                          {booking.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{booking.createdOn}</TableCell>
-                      <TableCell>
-                        <Button size="sm" onClick={() => handleCancelBooking(booking)} className="bg-[#C72030] hover:bg-[#B01E2A] text-white" disabled={booking.status === 'Cancelled'}>
-                          {booking.status === 'Cancelled' ? 'Cancelled' : 'Cancel'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>)}
-              </TableBody>
-            </Table>
+            <EnhancedTable
+              loading={loadingBookings}
+              data={bookingData}
+              columns={columns}
+              renderCell={renderCell}
+              pagination={false}
+              enableSearch={true}
+              searchTerm={searchTerm}
+              onSearchChange={(q: string) => setSearchTerm(q)}
+              onFilterClick={() => setIsFilterOpen(true)}
+              getItemId={(item: BookingRow) => item.id}
+              storageKey="seat-bookings-table"
+            />
           </div>
-        </div>
+        
+        {errorBookings && (
+          <div className="py-4 text-center text-red-600">{errorBookings}</div>
+        )}
+
+        {/* Pagination controls (matching ParkingDashboard style) */}
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => { if (page > 1) setPage(page - 1); }}
+                    className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink className="cursor-pointer" onClick={() => setPage(p)} isActive={page === p}>
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                {totalPages > 10 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => { if (page < totalPages) setPage(page + 1); }}
+                    className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
 
         {/* Dialogs */}
         <BookingsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />

@@ -70,8 +70,8 @@ const MilestoneCard = ({ milestone, toggleTaskCard, hasVisibleTasks, isExpanded 
 
     useEffect(() => {
         setTasks({
-            total: milestone?.task_managements.length,
-            completed: milestone?.task_managements.filter((task) => task.status === "completed").length
+            total: milestone?.task_managements?.length || 0,
+            completed: milestone?.task_managements?.filter((task) => task.status === "completed").length || 0
         })
     }, [])
 
@@ -223,7 +223,7 @@ const MilestoneCard = ({ milestone, toggleTaskCard, hasVisibleTasks, isExpanded 
                             />
                         </svg>
                         <span className={`ml-1 ${hasVisibleTasks ? 'text-[#DA2400]' : 'text-[#323232]'}`}>
-                            {milestone?.task_managements.length}
+                            {milestone?.task_managements?.length}
                         </span>
                     </span>
                     <div className="flex items-center">

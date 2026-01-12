@@ -14,6 +14,7 @@ interface SortableColumnHeaderProps {
   sortDirection?: SortDirection;
   onSort?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
@@ -23,7 +24,8 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
   draggable = true,
   sortDirection,
   onSort,
-  className
+  className,
+  style: externalStyle
 }) => {
   const {
     attributes,
@@ -37,6 +39,7 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    ...externalStyle, // Merge external styles
   };
 
   const handleClick = () => {
@@ -58,24 +61,24 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
       {...attributes}
     >
       <div className="flex items-center justify-left w-full">
-        <div 
+        <div
           className="flex items-center gap-1 select-none"
           onClick={handleClick}
         >
           <span>{children}</span>
           {sortable && (
             <div className="flex flex-col ml-1">
-              <ChevronUp 
+              <ChevronUp
                 className={cn(
                   "w-3 h-3 -mb-1",
                   sortDirection === 'asc' ? "text-gray-900" : "text-gray-300"
-                )} 
+                )}
               />
-              <ChevronDown 
+              <ChevronDown
                 className={cn(
                   "w-3 h-3",
                   sortDirection === 'desc' ? "text-gray-900" : "text-gray-300"
-                )} 
+                )}
               />
             </div>
           )}

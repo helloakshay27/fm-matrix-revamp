@@ -199,6 +199,14 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           compare_to_date: compareEndDate,
         });
 
+        // Attach selected site id from localStorage if available
+        try {
+          const selectedSiteId = localStorage.getItem('selectedSiteId');
+          if (selectedSiteId) params.append('site_id', selectedSiteId);
+        } catch (e) {
+          // ignore localStorage errors in SSR or restricted contexts
+        }
+
         const fullUrl = `${url}?${params.toString()}`;
   // fetching cancelled bookings
         const response = await fetch(fullUrl, options);
@@ -221,6 +229,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
 
     fetchCancelledBookings();
   }, [type, startDate, endDate]);
+
+  
 
   const handleDownload = async () => {
     try {
@@ -281,6 +291,27 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           { time: '18:00', lastYear: 75, thisYear: 78 },
         ];
 
+        const compareLabel = getCompareLabel(startDate, endDate);
+
+        const mapLabel = (label: string) => {
+          switch (label) {
+            case 'Day Comparison':
+              return { current: 'This Day', compare: 'Last Day' };
+            case 'Week Comparison':
+              return { current: 'This Week', compare: 'Last Week' };
+            case 'Month Comparison':
+              return { current: 'This Month', compare: 'Last Month' };
+            case 'Year Comparison':
+              return { current: 'This Year', compare: 'Last Year' };
+            case 'Multi-year Comparison':
+              return { current: 'This Period', compare: 'Previous Period' };
+            default:
+              return { current: 'This Period', compare: 'Previous Period' };
+          }
+        };
+
+        const seriesLabels = mapLabel(compareLabel);
+
         return (
           <div className="w-full">
             {/* Toggle Buttons */}
@@ -293,7 +324,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Current Year
+                {seriesLabels.current}
               </button>
               <button
                 onClick={() => setOccupancyView('yoy')}
@@ -303,7 +334,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Compare
+                {seriesLabels.compare}
               </button>
             </div>
 
@@ -328,7 +359,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     <Line 
                       type="monotone" 
                       dataKey="thisYear" 
-                      name="This Year" 
+                      name={seriesLabels.current} 
                       stroke="#C4B99D" 
                       strokeWidth={2}
                       dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
@@ -339,7 +370,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                       <Line 
                         type="monotone" 
                         dataKey="lastYear" 
-                        name="Last Year" 
+                        name={seriesLabels.compare} 
                         stroke="#DAD6CA" 
                         strokeWidth={2}
                         strokeDasharray="5 5"
@@ -348,7 +379,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                       <Line 
                         type="monotone" 
                         dataKey="thisYear" 
-                        name="This Year" 
+                        name={seriesLabels.current} 
                         stroke="#C4B99D" 
                         strokeWidth={2}
                         dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
@@ -865,6 +896,14 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     compare_from_date: compareStartDate,
                     compare_to_date: compareEndDate,
                   });
+
+                  // Attach selected site id from localStorage if available
+                  try {
+                    const selectedSiteId = localStorage.getItem('selectedSiteId');
+                    if (selectedSiteId) params.append('site_id', selectedSiteId);
+                  } catch (e) {
+                    // ignore localStorage errors in SSR or restricted contexts
+                  }
 
                   const fullUrl = `${url}?${params.toString()}`;
                   const response = await fetch(fullUrl, options);

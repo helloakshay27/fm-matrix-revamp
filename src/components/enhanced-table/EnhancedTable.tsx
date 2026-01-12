@@ -208,6 +208,12 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Collapsible state - track which rows are expanded
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
+  // Column width state - track widths for resizable columns
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
+
   // Debounce the search input to avoid excessive API calls
   const debouncedSearchInput = useDebounce(searchInput, 800);
 
@@ -306,6 +312,21 @@ export function EnhancedTable<T extends Record<string, any>>({
     return null;
   };
 
+  // Get saved column widths from localStorage
+  const getSavedColumnWidths = () => {
+    if (storageKey) {
+      const savedWidths = localStorage.getItem(`${storageKey}-column-widths`);
+      if (savedWidths) {
+        try {
+          return JSON.parse(savedWidths);
+        } catch (e) {
+          console.error('Error parsing saved column widths:', e);
+        }
+      }
+    }
+    return {};
+  };
+
   const {
     sortedData: baseSortedData,
     sortState,
@@ -322,6 +343,14 @@ export function EnhancedTable<T extends Record<string, any>>({
     initialColumnVisibility: getSavedColumnVisibility()
   });
 
+  // Initialize column widths from localStorage
+  useEffect(() => {
+    const savedWidths = getSavedColumnWidths();
+    if (Object.keys(savedWidths).length > 0) {
+      setColumnWidths(savedWidths);
+    }
+  }, [storageKey]);
+
   // Wrap resetToDefaults to handle localStorage
   const handleResetToDefaults = () => {
     resetToDefaults();
@@ -329,6 +358,7 @@ export function EnhancedTable<T extends Record<string, any>>({
       // Remove all stored column state
       localStorage.removeItem(`${storageKey}-columns`);
       localStorage.removeItem(`${storageKey}-column-order`);
+      localStorage.removeItem(`${storageKey}-column-widths`);
 
       // Set default column visibility state
       const defaultVisibility = columns.reduce((acc, column) => ({
@@ -340,6 +370,9 @@ export function EnhancedTable<T extends Record<string, any>>({
       // Set default column order
       const defaultOrder = columns.map(column => column.key);
       localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(defaultOrder));
+
+      // Reset column widths
+      setColumnWidths({});
     }
   };
 
@@ -484,6 +517,52 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
     setExpandedRows(newExpandedRows);
   };
+
+  // Column resize handlers
+  const handleResizeStart = (columnKey: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnKey);
+    setStartX(e.clientX);
+    setStartWidth(columnWidths[columnKey] || 128); // Default min-w-32 = 128px
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingColumn) return;
+    const diff = e.clientX - startX;
+    const newWidth = Math.max(80, startWidth + diff); // Minimum 80px
+    setColumnWidths(prev => ({
+      ...prev,
+      [resizingColumn]: newWidth
+    }));
+  };
+
+  const handleResizeEnd = () => {
+    if (resizingColumn && storageKey) {
+      const updatedWidths = {
+        ...columnWidths,
+        [resizingColumn]: columnWidths[resizingColumn]
+      };
+      localStorage.setItem(`${storageKey}-column-widths`, JSON.stringify(updatedWidths));
+    }
+    setResizingColumn(null);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  // Add mouse event listeners for column resizing
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [resizingColumn, startX, startWidth, columnWidths]);
 
   // Custom search input render function
   const renderCustomSearchInput = () => {
@@ -743,8 +822,18 @@ export function EnhancedTable<T extends Record<string, any>>({
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => column.sortable !== false && handleSort(column.key)}
                         className="bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0"
+                        style={{
+                          width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                          minWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                          position: 'relative'
+                        }}
                       >
                         {column.label}
+                        <div
+                          className="column-resize-handle"
+                          onMouseDown={(e) => handleResizeStart(column.key, e)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       </SortableColumnHeader>
                     ))}
                   </SortableContext>
@@ -945,7 +1034,15 @@ export function EnhancedTable<T extends Record<string, any>>({
                           const renderedRow = renderRow ? renderRow(item) : item;
                           const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                           return (
-                            <TableCell key={column.key} className="p-4 text-left min-w-32">
+                            <TableCell
+                              key={column.key}
+                              className="p-4 text-left min-w-32"
+                              style={{
+                                width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                                minWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                                maxWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined
+                              }}
+                            >
                               {cellContent}
                             </TableCell>
                           );

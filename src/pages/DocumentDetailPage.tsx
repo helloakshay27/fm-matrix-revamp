@@ -483,9 +483,8 @@ export const DocumentDetailPage = () => {
       {/* OnlyOffice Editor Modal */}
       {showEditor && document && (
         <OnlyOfficeEditor
-          documentId={document.id}
+          attachmentId={document.attachment.id}
           filename={document.attachment.filename}
-          fileUrl={document.attachment.url}
           onClose={handleCloseEditor}
         />
       )}

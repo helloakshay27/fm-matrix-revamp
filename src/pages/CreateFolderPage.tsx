@@ -207,11 +207,17 @@ export const CreateFolderPage = () => {
       setSubmitProgress("Finalizing...");
 
       // Use base64 attachments directly
-      const userId = parseInt(localStorage.getItem("userId") || "0", 10);
       const documentsPayload = newDocuments.map((doc) => ({
-        name: doc.title,
-        attachment: doc.attachment || "",
-        uploaded_by: userId,
+        title: doc.title,
+        attachments: [
+          {
+            filename: doc.fileName || "document.pdf",
+            content_type: doc.format
+              ? `application/${doc.format.toLowerCase()}`
+              : "application/pdf",
+            content: doc.attachment || "",
+          },
+        ],
       }));
 
       const payload: CreateFolderPayload = {
@@ -236,7 +242,7 @@ export const CreateFolderPage = () => {
                 : [],
           },
         ],
-        attachments: documentsPayload,
+        documents: documentsPayload,
         move_document_ids: moveDocuments.map((doc) => doc.id),
         copy_document_ids: copyDocuments.map((doc) => doc.id),
       };
