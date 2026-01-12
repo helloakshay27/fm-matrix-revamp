@@ -47,12 +47,12 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
               </div>
 
               <div className="ml-3">
-                <div className="w-16 h-16 bg-white rounded-sm flex items-center justify-center overflow-hidden">
-                  {/* QR image (encodes passId and otp) */}
+                <div className="w-24 h-24 bg-transparent rounded-sm flex items-center justify-center overflow-hidden">
+                  {/* QR image (encodes passId and otp) - slightly larger */}
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${passId}|${otp}`)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`}
                     alt="QR code"
-                    className="w-12 h-12 object-cover"
+                    className="w-20 h-20 object-cover"
                   />
                 </div>
               </div>
