@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { TextField } from "@mui/material";
+import { TextField, RadioGroup, FormControlLabel, Radio } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { FileText, File, Info, XCircle, ArrowLeft } from "lucide-react";
@@ -26,6 +26,7 @@ const CommunityAdd = () => {
         communityName: "",
         description: "",
         coverImage: null as File | null,
+        category: "play",
     });
 
     const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
@@ -90,11 +91,11 @@ const CommunityAdd = () => {
         if (!validateForm()) return;
         setIsSubmitting(true);
         try {
-            // TODO: Implement API call
             const formDataToSend = new FormData();
             formDataToSend.append("community[name]", formData.communityName);
             formDataToSend.append("community[description]", formData.description);
             formDataToSend.append("community[status]", "true");
+            formDataToSend.append("community[category]", formData.category);
 
             if (formData.coverImage) {
                 formDataToSend.append("community[attachment]", formData.coverImage);
@@ -146,27 +147,88 @@ const CommunityAdd = () => {
                     </div>
 
                     <div className="p-6 bg-white">
-                        {/* Community Name */}
-                        <div className="mb-6 grid grid-cols-3 gap-4">
-                            <TextField
-                                label={<>Community Name<span className="text-[#C72030]">*</span></>}
-                                id="communityName"
-                                name="communityName"
-                                value={formData.communityName}
-                                onChange={handleInputChange}
-                                placeholder="Enter Community Name"
-                                fullWidth
-                                InputLabelProps={{ shrink: true }}
-                                size="small"
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        backgroundColor: '#FAFAFA',
-                                        '&.Mui-focused fieldset': {
-                                            borderColor: '#C72030',
+                        {/* Community Name + Pulse Category */}
+                        <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            {/* Community Name */}
+                            <div className="flex-1">
+                                <TextField
+                                    label={
+                                        <>
+                                            Community Name<span className="text-[#C72030]">*</span>
+                                        </>
+                                    }
+                                    id="communityName"
+                                    name="communityName"
+                                    value={formData.communityName}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter Community Name"
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            backgroundColor: "#FAFAFA",
+                                            "&.Mui-focused fieldset": {
+                                                borderColor: "#C72030",
+                                            },
                                         },
-                                    },
-                                }}
-                            />
+                                    }}
+                                />
+                            </div>
+
+                            {/* Pulse Category */}
+                            <div className="flex items-center lg:ml-10 gap-3">
+                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                    Pulse Category:
+                                </span>
+                                <RadioGroup
+                                    row
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleInputChange}
+                                    className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                                >
+                                    <FormControlLabel
+                                        value="play"
+                                        control={
+                                            <Radio
+                                                size="small"
+                                                sx={{
+                                                    color: "#C72030",
+                                                    "&.Mui-checked": { color: "#C72030" },
+                                                }}
+                                            />
+                                        }
+                                        label={<span className="text-sm text-gray-900">Play</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="panasche"
+                                        control={
+                                            <Radio
+                                                size="small"
+                                                sx={{
+                                                    color: "#C72030",
+                                                    "&.Mui-checked": { color: "#C72030" },
+                                                }}
+                                            />
+                                        }
+                                        label={<span className="text-sm text-gray-900">Panasche</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="persuit"
+                                        control={
+                                            <Radio
+                                                size="small"
+                                                sx={{
+                                                    color: "#C72030",
+                                                    "&.Mui-checked": { color: "#C72030" },
+                                                }}
+                                            />
+                                        }
+                                        label={<span className="text-sm text-gray-900">Persuit</span>}
+                                    />
+                                </RadioGroup>
+                            </div>
                         </div>
 
                         {/* Description */}
