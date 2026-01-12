@@ -1480,6 +1480,7 @@ const ProjectTasksPage = () => {
                         onChange={(e) =>
                             handleStatusChange(item.id, e.target.value as string)
                         }
+                        // disabled
                         disableUnderline
                         renderValue={(value) => (
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1496,6 +1497,14 @@ const ProjectTasksPage = () => {
                                 alignItems: "center",
                                 gap: "8px",
                             },
+                            // "&.Mui-disabled": {
+                            //     color: "#000",
+                            // },
+                            // // For the selected value text
+                            // "&.Mui-disabled .MuiSelect-select": {
+                            //     color: "#000",
+                            //     WebkitTextFillColor: "#000",
+                            // },
                         }}
                     >
                         {statusOptions.map((opt) => {
