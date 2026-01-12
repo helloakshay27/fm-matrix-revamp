@@ -230,6 +230,40 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
 
   const yTicks = computeYAxisTicks(chartData);
 
+  // Derive friendly compare label from selected date range (same logic used elsewhere)
+  const getCompareLabel = (start?: string, end?: string) => {
+    if (!start || !end) return 'Comparison';
+    try {
+      const startDateObj = new Date(start);
+      const endDateObj = new Date(end);
+      if (Number.isNaN(startDateObj.getTime()) || Number.isNaN(endDateObj.getTime())) return 'Comparison';
+      const diffMs = endDateObj.getTime() - startDateObj.getTime();
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      if (days >= 1 && days <= 3) return 'Day Comparison';
+      if (days >= 6 && days <= 8) return 'Week Comparison';
+      if (days >= 28 && days <= 31) return 'Month Comparison';
+      if (days >= 360 && days <= 400) return 'Year Comparison';
+      if (days > 400) return 'Multi-year Comparison';
+      return 'Date Range Comparison';
+    } catch (err) {
+      return 'Comparison';
+    }
+  };
+
+  const mapLabel = (label: string) => {
+    switch (label) {
+      case 'Day Comparison': return { current: 'This Day', compare: 'Last Day' };
+      case 'Week Comparison': return { current: 'This Week', compare: 'Last Week' };
+      case 'Month Comparison': return { current: 'This Month', compare: 'Last Month' };
+      case 'Year Comparison': return { current: 'This Year', compare: 'Last Year' };
+      case 'Multi-year Comparison': return { current: 'This Period', compare: 'Previous Period' };
+      default: return { current: 'This Period', compare: 'Previous Period' };
+    }
+  };
+
+  const compareLabel = getCompareLabel(startDate, endDate);
+  const seriesLabels = mapLabel(compareLabel);
+
   // Custom tooltip to show detailed information
   const CustomTooltip = ({ active, payload, label }: {
     active?: boolean;
@@ -245,7 +279,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
       const category = typeof label === 'string' ? label : '';
       const datum = chartData.find(d => d.category === category);
 
-      if (datum) {
+    if (datum) {
         return (
           <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
             <p className="font-bold text-gray-800 mb-2">{category}</p>
@@ -253,22 +287,22 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
               {occupancyView === 'yoy' && (
                 <>
                   <div className="text-sm flex justify-between">
-                    <span style={{ color: CHART_COLORS.lastYearOccupied }}>Last Year Occupied</span>
-                    <span className="font-semibold">{hasYoy ? datum.lastYearOccupied : 'N/A'}</span>
+          <span style={{ color: CHART_COLORS.lastYearOccupied }}>{seriesLabels.compare} Occupied</span>
+          <span className="font-semibold">{hasYoy ? datum.lastYearOccupied : 'N/A'}</span>
                   </div>
                   <div className="text-sm flex justify-between">
-                    <span style={{ color: CHART_COLORS.lastYearVacant }}>Last Year Vacant</span>
-                    <span className="font-semibold">{hasYoy ? datum.lastYearVacant : 'N/A'}</span>
+          <span style={{ color: CHART_COLORS.lastYearVacant }}>{seriesLabels.compare} Vacant</span>
+          <span className="font-semibold">{hasYoy ? datum.lastYearVacant : 'N/A'}</span>
                   </div>
                 </>
               )}
               <div className="text-sm flex justify-between">
-                <span style={{ color: CHART_COLORS.thisYearOccupied }}>This Year Occupied</span>
-                <span className="font-semibold">{datum.thisYearOccupied}</span>
+        <span style={{ color: CHART_COLORS.thisYearOccupied }}>{seriesLabels.current} Occupied</span>
+        <span className="font-semibold">{datum.thisYearOccupied}</span>
               </div>
               <div className="text-sm flex justify-between">
-                <span style={{ color: CHART_COLORS.thisYearVacant }}>This Year Vacant</span>
-                <span className="font-semibold">{datum.thisYearVacant}</span>
+        <span style={{ color: CHART_COLORS.thisYearVacant }}>{seriesLabels.current} Vacant</span>
+        <span className="font-semibold">{datum.thisYearVacant}</span>
               </div>
             </div>
           </div>
@@ -319,25 +353,25 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
             {/* Toggle Buttons */}
             <div className="flex gap-2 mb-4">
               <button
-                onClick={() => setOccupancyView('current')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  occupancyView === 'current'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Current Year
-              </button>
-              <button
-                onClick={() => setOccupancyView('yoy')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  occupancyView === 'yoy'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Compare
-              </button>
+                  onClick={() => setOccupancyView('current')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    occupancyView === 'current'
+                      ? 'bg-[#f2eee9] text-[#bf213e]'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {seriesLabels.current}
+                </button>
+                <button
+                  onClick={() => setOccupancyView('yoy')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    occupancyView === 'yoy'
+                      ? 'bg-[#f2eee9] text-[#bf213e]'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {seriesLabels.compare}
+                </button>
             </div>
 
             <div className="w-full overflow-x-auto">
@@ -364,10 +398,10 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
                   iconType="square"
                   formatter={(value) => {
                     const labels: { [key: string]: string } = {
-                      'lastYearOccupied': 'Last Year Occupied',
-                      'lastYearVacant': 'Last Year Vacant',
-                      'thisYearOccupied': 'This Year Occupied',
-                      'thisYearVacant': 'This Year Vacant'
+                      'lastYearOccupied': `${seriesLabels.compare} Occupied`,
+                      'lastYearVacant': `${seriesLabels.compare} Vacant`,
+                      'thisYearOccupied': `${seriesLabels.current} Occupied`,
+                      'thisYearVacant': `${seriesLabels.current} Vacant`
                     };
                     return <span style={{ color: '#6b7280', fontSize: '14px' }}>{labels[value] || value}</span>;
                   }}

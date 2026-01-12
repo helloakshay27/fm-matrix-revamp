@@ -202,6 +202,7 @@ export const GatePassOutwardsDetailPage = () => {
       quantity: mat.gate_pass_qty ?? '--',
       description: mat.other_material_description || mat.remarks || '--',
       updates: idx, // Store index for updates column
+      attachments: idx, // Store index for attachments column
     })) || [];
 
   // Conditionally include 'updates' column only if returnable
@@ -212,6 +213,7 @@ export const GatePassOutwardsDetailPage = () => {
     { key: "unit", label: "Unit", sortable: false, defaultVisible: true },
     { key: "quantity", label: "Quantity", sortable: false, defaultVisible: true },
     { key: "description", label: "Description", sortable: false, defaultVisible: true },
+    { key: "attachments", label: "Attachments", sortable: false, defaultVisible: true },
     // Only show 'updates' column if returnable
     ...(gatePassData.returnable === true
       ? [{ key: "updates", label: "Updates", sortable: false, defaultVisible: true }]
@@ -220,6 +222,100 @@ export const GatePassOutwardsDetailPage = () => {
 
     // Render cell for EnhancedTable, especially for Updates column
     const renderCell = (item: any, columnKey: string) => {
+      if (columnKey === "attachments") {
+        const idx = item.attachments;
+        const mat = gatePassData?.gate_pass_materials?.[idx];
+        const attachments = handoverView[idx]?.attachments || [];
+        
+        if (handoverView[idx] && attachments.length > 0) {
+          return (
+            <div className="flex items-center gap-2 flex-wrap">
+              {attachments.map((attachment: any, attIdx: number) => {
+                const url = attachment.document || attachment.url || `${API_CONFIG.BASE_URL}/attachments/${attachment.id}`;
+                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                const isPdf = /\.pdf$/i.test(url);
+                const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                const isWord = /\.(doc|docx)$/i.test(url);
+                const isDownloadable = isPdf || isExcel || isWord;
+
+                return (
+                  <div key={attachment.id} className="relative inline-block">
+                    {isImage ? (
+                      <img
+                        src={url}
+                        alt={attachment.document_name || `Doc_${attachment.id}`}
+                        className="w-8 h-8 object-cover rounded border cursor-pointer hover:opacity-80"
+                        onClick={() => {
+                          setSelectedDoc({
+                            url,
+                            name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`,
+                            type: 'image'
+                          });
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ) : isPdf ? (
+                      <div
+                        className="w-8 h-8 flex items-center justify-center border rounded text-red-600 bg-white cursor-pointer hover:bg-gray-50"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.target = '_blank';
+                          link.rel = 'noopener noreferrer';
+                          link.click();
+                        }}
+                        title={attachment.document_name || attachment.document_file_name || 'PDF Document'}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </div>
+                    ) : isExcel ? (
+                      <div
+                        className="w-8 h-8 flex items-center justify-center border rounded text-green-600 bg-white cursor-pointer hover:bg-gray-50"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                          link.click();
+                        }}
+                        title={attachment.document_name || attachment.document_file_name || 'Excel Document'}
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </div>
+                    ) : isWord ? (
+                      <div
+                        className="w-8 h-8 flex items-center justify-center border rounded text-blue-600 bg-white cursor-pointer hover:bg-gray-50"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                          link.click();
+                        }}
+                        title={attachment.document_name || attachment.document_file_name || 'Word Document'}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-8 h-8 flex items-center justify-center border rounded text-gray-600 bg-white cursor-pointer hover:bg-gray-50"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                          link.click();
+                        }}
+                        title={attachment.document_name || attachment.document_file_name || 'Document'}
+                      >
+                        <File className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+        return <span className="text-gray-400">--</span>;
+      }
       // Only show receive/handover buttons if returnable
       if (columnKey === "updates" && gatePassData.returnable === true) {
         const idx = item.updates;
@@ -439,7 +535,8 @@ export const GatePassOutwardsDetailPage = () => {
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
-                          <TableHead className={`font-semibold text-gray-900 py-3 px-4${gatePassData.returnable === true ? ' border-r' : ''}`} style={{ borderColor: '#fff' }}>Description</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Description</TableHead>
+                          <TableHead className={`font-semibold text-gray-900 py-3 px-4${gatePassData.returnable === true ? ' border-r' : ''}`} style={{ borderColor: '#fff' }}>Attachments</TableHead>
                           {gatePassData.returnable === true && (
                             <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Updates</TableHead>
                           )}
@@ -448,7 +545,7 @@ export const GatePassOutwardsDetailPage = () => {
                       <TableBody>
                         {loading ? (
                           <TableRow>
-                            <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8">
+                            <TableCell colSpan={gatePassData.returnable === true ? 8 : 7} className="text-center py-8">
                               <div className="flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                                 <span className="ml-2">Loading...</span>
@@ -456,43 +553,136 @@ export const GatePassOutwardsDetailPage = () => {
                             </TableCell>
                           </TableRow>
                         ) : tableData && tableData.length > 0 ? (
-                          tableData.map((item, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                              <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
-                              <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
-                              <TableCell className="py-3 px-4">{item.itemName}</TableCell>
-                              <TableCell className="py-3 px-4">{item.unit}</TableCell>
-                              <TableCell className="py-3 px-4">{item.quantity}</TableCell>
-                              <TableCell className="py-3 px-4">{item.description}</TableCell>
-                              {gatePassData.returnable === true && (
+                          tableData.map((item, index) => {
+                            const idx = item.attachments;
+                            const attachments = handoverView[idx]?.attachments || [];
+                            
+                            return (
+                              <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                                <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
+                                <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
+                                <TableCell className="py-3 px-4">{item.itemName}</TableCell>
+                                <TableCell className="py-3 px-4">{item.unit}</TableCell>
+                                <TableCell className="py-3 px-4">{item.quantity}</TableCell>
+                                <TableCell className="py-3 px-4">{item.description}</TableCell>
                                 <TableCell className="py-3 px-4">
-                                  {handoverView[item.updates] ? (
-                                    <Button
-                                      size="sm"
-                                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                                      onClick={() => {
-                                        setSelectedItemIndex(item.updates);
-                                        setIsReceiveModalOpen(true);
-                                      }}
-                                    >
-                                      View Handover
-                                    </Button>
+                                  {handoverView[idx] && attachments.length > 0 ? (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {attachments.map((attachment: any) => {
+                                        const url = attachment.document || attachment.url || `${API_CONFIG.BASE_URL}/attachments/${attachment.id}`;
+                                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                                        const isPdf = /\.pdf$/i.test(url);
+                                        const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                                        const isWord = /\.(doc|docx)$/i.test(url);
+
+                                        return (
+                                          <div key={attachment.id} className="relative inline-block">
+                                            {isImage ? (
+                                              <img
+                                                src={url}
+                                                alt={attachment.document_name || `Doc_${attachment.id}`}
+                                                className="w-8 h-8 object-cover rounded border cursor-pointer hover:opacity-80"
+                                                onClick={() => {
+                                                  setSelectedDoc({
+                                                    url,
+                                                    name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`,
+                                                    type: 'image'
+                                                  });
+                                                  setIsModalOpen(true);
+                                                }}
+                                              />
+                                            ) : isPdf ? (
+                                              <div
+                                                className="w-8 h-8 flex items-center justify-center border rounded text-red-600 bg-white cursor-pointer hover:bg-gray-50"
+                                                onClick={() => {
+                                                  const link = document.createElement('a');
+                                                  link.href = url;
+                                                  link.target = '_blank';
+                                                  link.rel = 'noopener noreferrer';
+                                                  link.click();
+                                                }}
+                                                title={attachment.document_name || attachment.document_file_name || 'PDF Document'}
+                                              >
+                                                <FileText className="w-4 h-4" />
+                                              </div>
+                                            ) : isExcel ? (
+                                              <div
+                                                className="w-8 h-8 flex items-center justify-center border rounded text-green-600 bg-white cursor-pointer hover:bg-gray-50"
+                                                onClick={() => {
+                                                  const link = document.createElement('a');
+                                                  link.href = url;
+                                                  link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                                                  link.click();
+                                                }}
+                                                title={attachment.document_name || attachment.document_file_name || 'Excel Document'}
+                                              >
+                                                <FileSpreadsheet className="w-4 h-4" />
+                                              </div>
+                                            ) : isWord ? (
+                                              <div
+                                                className="w-8 h-8 flex items-center justify-center border rounded text-blue-600 bg-white cursor-pointer hover:bg-gray-50"
+                                                onClick={() => {
+                                                  const link = document.createElement('a');
+                                                  link.href = url;
+                                                  link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                                                  link.click();
+                                                }}
+                                                title={attachment.document_name || attachment.document_file_name || 'Word Document'}
+                                              >
+                                                <FileText className="w-4 h-4" />
+                                              </div>
+                                            ) : (
+                                              <div
+                                                className="w-8 h-8 flex items-center justify-center border rounded text-gray-600 bg-white cursor-pointer hover:bg-gray-50"
+                                                onClick={() => {
+                                                  const link = document.createElement('a');
+                                                  link.href = url;
+                                                  link.download = attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`;
+                                                  link.click();
+                                                }}
+                                                title={attachment.document_name || attachment.document_file_name || 'Document'}
+                                              >
+                                                <File className="w-4 h-4" />
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   ) : (
-                                    <Button
-                                      size="sm"
-                                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                                      onClick={() => handleReceiveClick(item.updates)}
-                                    >
-                                      Receive
-                                    </Button>
+                                    <span className="text-gray-400">--</span>
                                   )}
                                 </TableCell>
-                              )}
-                            </TableRow>
-                          ))
+                                {gatePassData.returnable === true && (
+                                  <TableCell className="py-3 px-4">
+                                    {handoverView[item.updates] ? (
+                                      <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                        onClick={() => {
+                                          setSelectedItemIndex(item.updates);
+                                          setIsReceiveModalOpen(true);
+                                        }}
+                                      >
+                                        View Handover
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                        onClick={() => handleReceiveClick(item.updates)}
+                                      >
+                                        Receive
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            );
+                          })
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={gatePassData.returnable === true ? 8 : 7} className="text-center py-8 text-gray-500">
                               No items found
                             </TableCell>
                           </TableRow>

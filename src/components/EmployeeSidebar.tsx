@@ -87,7 +87,7 @@ const employeeNavigationByModule: Record<string, any> = {
       icon: Briefcase,
       items: [
         { name: "Project Overview", href: "/vas/projects" },
-        // { name: "Project Dashboard", href: "/vas/project-dashboard" },
+        { name: "Project Dashboard", href: "/vas/project-dashboard" },
       ],
     },
     "My Tasks": {

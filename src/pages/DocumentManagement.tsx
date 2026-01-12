@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Folder } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Pagination,
@@ -14,8 +14,10 @@ import {
 import { DocumentActionPanel } from "@/components/document/DocumentActionPanel";
 import { DocumentFilterModal } from "@/components/document/DocumentFilterModal";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
+import { DocumentSelectionPanel } from "@/components/document/DocumentSelectionPanel";
 import { getFoldersList, FolderListItem } from "@/services/documentService";
 import { toast } from "sonner";
+import { FileIcon } from "@/components/document/FileIcon";
 
 interface Document {
   id: number;
@@ -85,13 +87,6 @@ const mockDocuments: Document[] = [
 
 const columns: ColumnConfig[] = [
   {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
-  {
     key: "folder_title",
     label: "Folder Title",
     sortable: true,
@@ -135,7 +130,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "created_date",
-    label: "Created Date",
+    label: "Created",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -144,18 +139,18 @@ const columns: ColumnConfig[] = [
 
 const documentColumns: ColumnConfig[] = [
   {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
-  {
     key: "folder_title",
     label: "Title",
     sortable: true,
     hideable: true,
     draggable: true,
+  },
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
   },
   {
     key: "category",
@@ -198,6 +193,7 @@ export const DocumentManagement = () => {
   const navigate = useNavigate();
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,7 +271,11 @@ export const DocumentManagement = () => {
       case "folder_title":
         return (
           <div className="flex items-center gap-2">
-            <Folder className="w-5 h-5 text-[#C72030]" />
+            <FileIcon
+              fileName={document.folder_title}
+              isFolder={true}
+              className="w-5 h-5"
+            />
             <span className="font-medium">{document.folder_title}</span>
           </div>
         );
@@ -316,6 +316,39 @@ export const DocumentManagement = () => {
     setShowFilterModal(false);
   };
 
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
+
+  const handleUpdate = () => {
+    if (selectedItems.length === 0) {
+      toast.error("No folders selected");
+      return;
+    }
+
+    // Get the selected documents
+    const selectedDocs = documents.filter((doc) =>
+      selectedItems.includes(doc.id.toString())
+    );
+
+    // For now, navigate to the first selected folder's edit page
+    if (selectedDocs.length === 1) {
+      navigate(`/maintenance/documents/folder/${selectedDocs[0].id}/edit`);
+    } else {
+      toast.info("Bulk update coming soon");
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedItems.length === 0) {
+      toast.error("No folders selected");
+      return;
+    }
+
+    // Add confirmation and delete logic
+    toast.info(`Delete ${selectedItems.length} folder(s) - Coming soon`);
+  };
+
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-[1400px] mx-auto space-y-6">
@@ -340,6 +373,8 @@ export const DocumentManagement = () => {
               onActionClick={() => setShowActionPanel(true)}
               renderCell={renderCell}
               renderActions={renderActions}
+              selectedItems={selectedItems}
+              onSelectionChange={setSelectedItems}
             />
 
             {/* Pagination */}
@@ -413,6 +448,19 @@ export const DocumentManagement = () => {
         filters={filters}
         onApplyFilters={handleApplyFilters}
       />
+
+      {/* Document Selection Panel */}
+      {selectedItems.length > 0 && (
+        <DocumentSelectionPanel
+          selectedItems={selectedItems}
+          selectedDocuments={documents.filter((doc) =>
+            selectedItems.includes(doc.id.toString())
+          )}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+          onClearSelection={handleClearSelection}
+        />
+      )}
     </div>
   );
 };

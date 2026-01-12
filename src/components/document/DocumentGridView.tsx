@@ -1,5 +1,5 @@
 import React from "react";
-import { Folder } from "lucide-react";
+import { FileIcon } from "./FileIcon";
 
 interface Document {
   id: number;
@@ -35,7 +35,11 @@ export const DocumentGridView: React.FC<DocumentGridViewProps> = ({
           {/* Top Section with Icon and Title */}
           <div className="flex items-start gap-3 mb-3">
             <div className="w-12 h-12 bg-[#E5E0D3] rounded flex items-center justify-center flex-shrink-0">
-              <Folder className="w-6 h-6 text-[#C72030]" />
+              <FileIcon
+                fileName={doc.folder_title}
+                isFolder={true}
+                className="w-6 h-6"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-[#1A1A1A] text-base leading-tight mb-1">
