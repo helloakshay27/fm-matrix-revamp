@@ -885,6 +885,9 @@ import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
 import MilestoneMobileView from "./pages/MilestoneMobileView";
 import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
+import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
+import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
+import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -4181,11 +4184,11 @@ function App() {
                 <Route path="/qr-test" element={<QRTestPage />} />
 
                 <Route path="/mobile-projects" element={<ProjectsMobileView />} />
-                <Route path="/mobile-projects/:id" element={<ProjectDetailsPage />} />
                 <Route path="/mobile-projects/:id/milestones" element={<MilestoneMobileView />} />
-                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsPage />} />
                 <Route path="/mobile-projects/:id/milestones/:mid/tasks" element={<ProjectTasksMobileView />} />
-                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetails />} />
+                <Route path="/mobile-projects/:id" element={<ProjectDetailsMobile />} />
+                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsMobile />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetailsMobile />} />
 
                 {/* Mail Inbound Routes */}
               </Routes>
