@@ -769,9 +769,6 @@ const ProjectTasksPage = () => {
                 filters["q[project_management_id_eq]"] = urlProjectId;
             }
 
-            // Create cache key based on context - include both projectId and urlProjectId to prevent cache issues
-            const cacheKey = `tasks_${isMilestoneContext ? 'milestone_' + mid : taskType}_${selectedFilterOption}_${projectId}_${urlProjectId}_${page}`;
-
             let response;
 
             // Handle URL-based context
@@ -779,17 +776,9 @@ const ProjectTasksPage = () => {
                 // In milestone context - show all tasks for that milestone
                 filters["q[milestone_id_eq]"] = mid;
 
-                const cachedResult = await cache.getOrFetch(
-                    cacheKey,
-                    async () => {
-                        return await dispatch(
-                            filterTasks({ token, baseUrl, params: filters })
-                        ).unwrap();
-                    },
-                    1 * 60 * 1000, // Fresh for 1 minute
-                    5 * 60 * 1000  // Stale up to 5 minutes
-                );
-                response = cachedResult.data;
+                response = await dispatch(
+                    filterTasks({ token, baseUrl, params: filters })
+                ).unwrap();
             } else {
                 // Standalone tasks view - distinguish between all tasks and my tasks
                 if (taskType === "my") {
@@ -800,35 +789,19 @@ const ProjectTasksPage = () => {
                         params.append("status", selectedFilterOption);
                     }
 
-                    const cachedResult = await cache.getOrFetch(
-                        cacheKey,
-                        async () => {
-                            return await fetch(
-                                `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            ).then(res => res.json());
-                        },
-                        1 * 60 * 1000, // Fresh for 1 minute
-                        5 * 60 * 1000  // Stale up to 5 minutes
-                    );
-                    response = cachedResult.data;
+                    response = await fetch(
+                        `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    ).then(res => res.json());
                 } else {
                     // All Tasks - use filter endpoint
-                    const cachedResult = await cache.getOrFetch(
-                        cacheKey,
-                        async () => {
-                            return await dispatch(
-                                filterTasks({ token, baseUrl, params: filters })
-                            ).unwrap();
-                        },
-                        1 * 60 * 1000, // Fresh for 1 minute
-                        5 * 60 * 1000  // Stale up to 5 minutes
-                    );
-                    response = cachedResult.data;
+                    response = await dispatch(
+                        filterTasks({ token, baseUrl, params: filters })
+                    ).unwrap();
                 }
             }
 
@@ -1082,9 +1055,6 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(createProjectTask({ token, baseUrl, data: payload })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
             toast.success("Task created successfully");
             await fetchData();
         } catch (error) {
@@ -1185,9 +1155,6 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
             fetchData();
             toast.success("Task status changed successfully");
         } catch (error) {
@@ -1199,9 +1166,6 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
             fetchData();
             toast.success("Task status changed successfully");
         } catch (error) {
@@ -1212,9 +1176,6 @@ const ProjectTasksPage = () => {
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
-
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
 
             fetchData();
             toast.success("Task updated successfully");
@@ -1237,9 +1198,6 @@ const ProjectTasksPage = () => {
                     task.id === tid ? { ...task, is_started: false } : task
                 )
             );
-
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
 
             const commentPayload = {
                 comment: {
@@ -1287,9 +1245,6 @@ const ProjectTasksPage = () => {
                     task.id === tid ? { ...task, status: 'completed', is_started: false } : task
                 )
             );
-
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
 
             const commentPayload = {
                 comment: {
@@ -1382,8 +1337,8 @@ const ProjectTasksPage = () => {
                     id: String(id),
                     data: { completion_percent: percentage }
                 })).unwrap();
-                fetchData();
                 toast.success("Completion percentage updated successfully");
+                fetchData();
             } catch (error) {
                 console.log(error);
                 toast.error("Failed to update completion percentage");
@@ -1421,14 +1376,12 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
+            fetchData();
 
             toast.success('Completion percentage updated with overdue reason');
             setIsOverdueModalOpen(false);
             setOverdueTaskId(null);
             setPendingCompletionPercentage(0);
-            fetchData();
         } catch (error) {
             console.log(error);
             toast.error('Failed to update completion percentage');
