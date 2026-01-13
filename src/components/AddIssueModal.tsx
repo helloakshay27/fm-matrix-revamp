@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
-import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { createIssue, fetchIssues } from "@/store/slices/issueSlice";
 import { fetchMilestones } from "@/store/slices/projectMilestoneSlice";
 import { fetchKanbanProjects } from "@/store/slices/projectManagementSlice";
@@ -616,10 +615,10 @@ const AddIssueModal = ({
         toast.error("End Date is required");
         return;
       }
-      if (!comments.trim()) {
-        toast.error("Comment is required");
-        return;
-      }
+      // if (!comments.trim()) {
+      //   toast.error("Comment is required");
+      //   return;
+      // }
 
       setIsSubmitting(true);
       isSubmittingRef.current = true;
@@ -1195,7 +1194,7 @@ const AddIssueModal = ({
             </Box>
 
             {/* Comment */}
-            <Box sx={{ mb: 2 }}>
+            {/* <Box sx={{ mb: 2 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -1206,7 +1205,7 @@ const AddIssueModal = ({
                 required
                 variant="outlined"
               />
-            </Box>
+            </Box> */}
 
             {/* Attachments */}
             <Box sx={{ mb: 2 }}>

@@ -91,22 +91,8 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "milestones",
-    label: "Milestones",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "milestoneCompletionPercent",
     label: "Milestone Completion %",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "tasks",
-    label: "Tasks",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -119,15 +105,29 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "subtasks",
-    label: "Subtasks",
+    key: "subtaskCompletionPercent",
+    label: "Subtask Completion %",
     sortable: true,
     draggable: true,
     defaultVisible: true,
   },
   {
-    key: "subtaskCompletionPercent",
-    label: "Subtask Completion %",
+    key: "milestones",
+    label: "Milestones",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tasks",
+    label: "Tasks",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "subtasks",
+    label: "Subtasks",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -894,7 +894,7 @@ export const ProjectsDashboard = () => {
       case "completion_percent":
         return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
           <div
-            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
             style={{ width: `${item.completion_percent}%` }}
           ></div>
           <span className="relative z-10 text-xs font-semibold text-gray-800">
@@ -904,7 +904,7 @@ export const ProjectsDashboard = () => {
       case "milestoneCompletionPercent":
         return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
           <div
-            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
             style={{ width: `${item.milestoneCompletionPercent}%` }}
           ></div>
           <span className="relative z-10 text-xs font-semibold text-gray-800">
@@ -914,7 +914,7 @@ export const ProjectsDashboard = () => {
       case "taskCompletionPercent":
         return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
           <div
-            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
             style={{ width: `${item.taskCompletionPercent}%` }}
           ></div>
           <span className="relative z-10 text-xs font-semibold text-gray-800">
