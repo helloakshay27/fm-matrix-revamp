@@ -1308,9 +1308,17 @@ const ProjectTasksPage = () => {
         }
 
         // Check if task is overdue using the target_date
-        const isTaskOverdue = task.target_date && new Date(task.target_date) < new Date();
+        const isTaskOverdue = (date: string | Date) => {
+            const d = new Date(date);
+            const today = new Date();
 
-        if (isTaskOverdue) {
+            d.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            return d < today;
+        };
+
+        if (isTaskOverdue(new Date(task.target_date))) {
             // Show overdue reason modal
             setOverdueTaskId(id);
             setPendingCompletionPercentage(percentage);
