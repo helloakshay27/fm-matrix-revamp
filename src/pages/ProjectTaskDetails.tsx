@@ -1252,10 +1252,9 @@ export const ProjectTaskDetails = () => {
             </span>
             <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
             <span
-              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${
-                STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
+              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
                 "bg-gray-400 text-white"
-              }`}
+                }`}
             >
               <div className="relative" ref={dropdownRef}>
                 <div
@@ -1276,9 +1275,8 @@ export const ProjectTaskDetails = () => {
                   />
                 </div>
                 <ul
-                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${
-                    openDropdown ? "block" : "hidden"
-                  }`}
+                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                    }`}
                   role="menu"
                   style={{
                     minWidth: "150px",
@@ -1290,9 +1288,8 @@ export const ProjectTaskDetails = () => {
                   {dropdownOptions.map((option, idx) => (
                     <li key={idx} role="menuitem">
                       <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${
-                          selectedOption === option ? "bg-gray-100 font-semibold" : ""
-                        }`}
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                          }`}
                         onClick={() => handleOptionSelect(option)}
                       >
                         {option}
@@ -1600,11 +1597,10 @@ export const ProjectTaskDetails = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`text-sm font-medium whitespace-nowrap border-b-2 transition-colors pb-2 ${
-                    activeTab === tab.id
+                  className={`text-sm font-medium whitespace-nowrap border-b-2 transition-colors pb-2 ${activeTab === tab.id
                       ? "border-[#C72030] text-[#C72030]"
                       : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>

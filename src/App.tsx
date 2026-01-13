@@ -4177,6 +4177,13 @@ function App() {
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
 
+                <Route path="/mobile-projects" element={<ProjectsDashboard />} />
+                <Route path="/mobile-projects/:id" element={<ProjectDetailsPage />} />
+                <Route path="/mobile-projects/:id/milestones" element={<ProjectMilestones />} />
+                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsPage />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks" element={<ProjectTasksPage />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetails />} />
+
                 {/* Mail Inbound Routes */}
               </Routes>
               <Toaster />

@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { MenuItem, Select, TextField, FormControl } from "@mui/material";
 import { useLayout } from "@/contexts/LayoutContext";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
+import { useSearchParams } from "react-router-dom";
 
 interface Dependency {
   title?: string;
@@ -164,8 +166,39 @@ function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
 
 export const MilestoneDetailsPage = () => {
   const { setCurrentSection } = useLayout();
+  const [searchParams] = useSearchParams();
 
   const view = localStorage.getItem("selectedView");
+  const urlToken = searchParams.get("token");
+  const urlOrgId = searchParams.get("org_id");
+  const urlUserId = searchParams.get("user_id");
+
+  // Initialize mobile token, org_id, and user_id from URL if available
+  useEffect(() => {
+    if (urlToken) {
+      sessionStorage.setItem("mobile_token", urlToken);
+      localStorage.setItem("token", urlToken);
+    }
+    if (urlOrgId) {
+      sessionStorage.setItem("org_id", urlOrgId);
+    }
+    if (urlUserId) {
+      sessionStorage.setItem("user_id", urlUserId);
+    }
+  }, [urlToken, urlOrgId, urlUserId]);
+
+  // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+  const token =
+    sessionStorage.getItem("mobile_token") ||
+    localStorage.getItem("token");
+
+  // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+  let baseUrl = localStorage.getItem("baseUrl");
+
+  // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+  if (!baseUrl && urlToken) {
+    console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+  }
 
   useEffect(() => {
     setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
@@ -174,8 +207,6 @@ export const MilestoneDetailsPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { id, mid } = useParams<{ id: string; mid: string }>();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
 
   const [milestoneDetails, setMilestoneDetails] = useState<MilestoneData>({});
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
@@ -210,12 +241,21 @@ export const MilestoneDetailsPage = () => {
 
   const getOwners = async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // Use baseClient for mobile flow (when baseUrl not available)
+      // Use direct axios call for web flow
+      const response = baseUrl
+        ? await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
+        : await baseClient.get(
+          `/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
       setOwners(response.data.users);
     } catch (error) {
       console.log(error);
@@ -512,46 +552,43 @@ export const MilestoneDetailsPage = () => {
                   </span>
                   <ChevronDown
                     size={15}
-                    className={`${
-                      !milestoneDetails.task_managements ||
-                      milestoneDetails.task_managements.length === 0
+                    className={`${!milestoneDetails.task_managements ||
+                        milestoneDetails.task_managements.length === 0
                         ? openDropdown
                           ? "rotate-180"
                           : ""
                         : "opacity-30"
-                    } transition-transform`}
+                      } transition-transform`}
                   />
                 </div>
 
                 {/* Only show dropdown if no task_managements exist */}
                 {(!milestoneDetails.task_managements ||
                   milestoneDetails.task_managements.length === 0) && (
-                  <ul
-                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${
-                      openDropdown ? "block" : "hidden"
-                    }`}
-                    role="menu"
-                    style={{
-                      minWidth: "150px",
-                      maxHeight: "400px",
-                      overflowY: "auto",
-                      zIndex: 1000,
-                    }}
-                  >
-                    {dropdownOptions.map((option, idx) => (
-                      <li key={idx} role="menuitem">
-                        <button
-                          className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${
-                            selectedOption === option ? "bg-gray-100 font-semibold" : ""
-                          }`}
-                          onClick={() => handleStatusChange(option)}
-                        >
-                          {option}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                    <ul
+                      className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                        }`}
+                      role="menu"
+                      style={{
+                        minWidth: "150px",
+                        maxHeight: "400px",
+                        overflowY: "auto",
+                        zIndex: 1000,
+                      }}
+                    >
+                      {dropdownOptions.map((option, idx) => (
+                        <li key={idx} role="menuitem">
+                          <button
+                            className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                              }`}
+                            onClick={() => handleStatusChange(option)}
+                          >
+                            {option}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
               </div>
             </div>
 
@@ -574,17 +611,15 @@ export const MilestoneDetailsPage = () => {
               <ChevronDownCircle
                 color="#E95420"
                 size={30}
-                className={`${
-                  isDetailsCollapsed ? "rotate-180" : "rotate-0"
-                } transition-transform cursor-pointer`}
+                className={`${isDetailsCollapsed ? "rotate-180" : "rotate-0"
+                  } transition-transform cursor-pointer`}
                 onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
               />
               Details
             </div>
             <div
-              className={`mt-3 transition-all duration-300 ease-in-out overflow-hidden ${
-                isDetailsCollapsed ? "max-h-0" : "max-h-[500px]"
-              }`}
+              className={`mt-3 transition-all duration-300 ease-in-out overflow-hidden ${isDetailsCollapsed ? "max-h-0" : "max-h-[500px]"
+                }`}
             >
               <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="flex items-start">

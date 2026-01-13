@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 
 // Interfaces
 interface ProjectTeam {
@@ -29,7 +30,7 @@ const initialState: ProjectTeamsState = {
 
 // Helper to get headers
 const getHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('mobile_token') || localStorage.getItem('token');
     return {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -43,9 +44,13 @@ export const fetchProjectTeams = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = getBaseUrl();
-            const response = await axios.get(`https://${baseUrl}/project_teams.json`, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_teams.json`, {
+                    headers: getHeaders()
+                })
+                : await baseClient.get(`/project_teams.json`, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to get project teams');
@@ -62,9 +67,13 @@ export const createProjectTeam = createAsyncThunk(
             // The previous code passed 'data' directly, we'll assume the caller formats it or we wrap it.
             const payload = data.project_team ? data : { project_team: data };
 
-            const response = await axios.post(`https://${baseUrl}/project_teams.json`, payload, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/project_teams.json`, payload, {
+                    headers: getHeaders()
+                })
+                : await baseClient.post(`/project_teams.json`, payload, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to create project team');
@@ -79,9 +88,13 @@ export const updateProjectTeam = createAsyncThunk(
             const baseUrl = getBaseUrl();
             const payload = data.project_team ? data : { project_team: data };
 
-            const response = await axios.put(`https://${baseUrl}/project_teams/${id}.json`, payload, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/project_teams/${id}.json`, payload, {
+                    headers: getHeaders()
+                })
+                : await baseClient.put(`/project_teams/${id}.json`, payload, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to update project team');
