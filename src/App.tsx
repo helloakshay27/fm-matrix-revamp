@@ -883,6 +883,11 @@ import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
 import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
+import MilestoneMobileView from "./pages/MilestoneMobileView";
+import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
+import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
+import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
+import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1146,7 +1151,7 @@ function App() {
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
                 <Route
-                  path="/visitor/web"
+                  path="/visitor/gatepass/:token"
                   element={<VisitorPassWeb />}
                 />
 
@@ -4179,11 +4184,11 @@ function App() {
                 <Route path="/qr-test" element={<QRTestPage />} />
 
                 <Route path="/mobile-projects" element={<ProjectsMobileView />} />
-                <Route path="/mobile-projects/:id" element={<ProjectDetailsPage />} />
-                <Route path="/mobile-projects/:id/milestones" element={<ProjectMilestones />} />
-                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsPage />} />
-                <Route path="/mobile-projects/:id/milestones/:mid/tasks" element={<ProjectTasksPage />} />
-                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetails />} />
+                <Route path="/mobile-projects/:id/milestones" element={<MilestoneMobileView />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks" element={<ProjectTasksMobileView />} />
+                <Route path="/mobile-projects/:id" element={<ProjectDetailsMobile />} />
+                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsMobile />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetailsMobile />} />
 
                 {/* Mail Inbound Routes */}
               </Routes>

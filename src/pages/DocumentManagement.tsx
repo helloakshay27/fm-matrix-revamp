@@ -226,7 +226,7 @@ export const DocumentManagement = () => {
             created_date: formatDate(folder.created_at),
             modified_date: formatDate(folder.updated_at),
             files_count: folder.total_files,
-            folders_count: folder.childs.length,
+            folders_count: (folder.childs || []).length,
           }));
 
         setDocuments(transformedData);
