@@ -10,12 +10,23 @@ import {
   ChevronDown,
   Eye,
   X,
+  MoreVertical,
+  FileText,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { DocumentGridView } from "./DocumentGridView";
 import { DocumentTreeView } from "./DocumentTreeView";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FileIcon } from "./FileIcon";
 
 interface Document {
   id: number;
@@ -29,6 +40,8 @@ interface Document {
   modified_date?: string;
   files_count?: number;
   folders_count?: number;
+  format?: string;
+  preview_url?: string;
 }
 
 type ViewMode = "grid" | "table" | "tree";
@@ -57,6 +70,9 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
   selectedItems,
   onSelectionChange,
 }) => {
+  // Check if this is a file list view (folder details page)
+  const isFileListView = window.location.pathname.includes("/folder/");
+
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("title_asc");
@@ -91,6 +107,92 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
     setSearchQuery("");
   };
 
+  // Custom File Grid View for file list pages
+  const FileGridView = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
+      {sortedDocuments.map((item) => (
+        <div
+          key={item.id}
+          className="border border-gray-200 rounded-lg overflow-hidden hover:border-[#C72030] hover:shadow-md transition-all bg-white relative group"
+        >
+          {/* Three-dot menu */}
+          <div className="absolute top-2 right-2 z-10">
+            {renderActions(item)}
+          </div>
+
+          {/* Checkbox */}
+          <div className="absolute top-2 left-2 z-10">
+            <input
+              type="checkbox"
+              checked={selectedItems.includes(item.id.toString())}
+              onChange={(e) => {
+                e.stopPropagation();
+                handleSelectItem(item.id.toString(), e.target.checked);
+              }}
+              className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] border-gray-300 rounded cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          {/* Image preview area - click to preview */}
+          <div
+            className="aspect-square bg-gray-100 flex items-center justify-center cursor-pointer overflow-hidden"
+            onClick={() => onViewDetails(item.id)}
+          >
+            {item.format &&
+            ["JPG", "JPEG", "PNG", "GIF", "WEBP", "BMP"].includes(
+              item.format.toUpperCase()
+            ) &&
+            item.preview_url ? (
+              <img
+                src={item.preview_url}
+                alt={item.folder_title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to icon if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const icon = document.createElement("div");
+                    icon.className = "w-16 h-16";
+                    parent.appendChild(icon);
+                  }
+                }}
+              />
+            ) : (
+              <FileIcon
+                fileName={
+                  item.format
+                    ? `file.${item.format.toLowerCase()}`
+                    : item.folder_title
+                }
+                isFolder={false}
+                className="w-16 h-16"
+              />
+            )}
+          </div>
+
+          {/* File info */}
+          <div className="p-3">
+            <p
+              className="text-sm font-medium text-gray-900 truncate"
+              title={item.folder_title}
+            >
+              {item.folder_title}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">{item.created_date}</p>
+            {item.size && (
+              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
+                {item.size}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   // Filter documents based on search query
   const filteredDocuments = documents.filter(
     (doc) =>
@@ -123,17 +225,19 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
     <div className="space-y-4">
       {/* Action Bar */}
       <div className="flex items-center justify-between gap-3  p-4 rounded-lg shadow-sm  ">
-        {/* Left: Action Button */}
-        <Button
-          onClick={onActionClick}
-          className="bg-[#C72030] hover:bg-[#A01828] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Action
-        </Button>
+        {/* Left: Action Button - Only show when NOT in file list view */}
+        {!isFileListView && (
+          <Button
+            onClick={onActionClick}
+            className="bg-[#C72030] hover:bg-[#A01828] text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Action
+          </Button>
+        )}
 
         {/* Right: Search, Filter, Sort, View Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           {/* Search */}
           <div className="relative min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -268,28 +372,34 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
             >
               <List className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setViewMode("tree")}
-              className={`p-2 border-l border-[#C72030] transition-colors ${
-                viewMode === "tree"
-                  ? "bg-[#C72030] text-white"
-                  : "text-[#C72030] hover:bg-red-50"
-              }`}
-              title="Tree View"
-            >
-              <FolderTree className="w-4 h-4" />
-            </button>
+            {/* Only show tree view when NOT in file list view */}
+            {!isFileListView && (
+              <button
+                onClick={() => setViewMode("tree")}
+                className={`p-2 border-l border-[#C72030] transition-colors ${
+                  viewMode === "tree"
+                    ? "bg-[#C72030] text-white"
+                    : "text-[#C72030] hover:bg-red-50"
+                }`}
+                title="Tree View"
+              >
+                <FolderTree className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content Area */}
-      {viewMode === "grid" && (
-        <DocumentGridView
-          documents={sortedDocuments}
-          onViewDetails={onViewDetails}
-        />
-      )}
+      {viewMode === "grid" &&
+        (isFileListView ? (
+          <FileGridView />
+        ) : (
+          <DocumentGridView
+            documents={sortedDocuments}
+            onViewDetails={onViewDetails}
+          />
+        ))}
 
       {viewMode === "table" && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -311,7 +421,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
         </div>
       )}
 
-      {viewMode === "tree" && (
+      {viewMode === "tree" && !isFileListView && (
         <DocumentTreeView
           documents={sortedDocuments}
           onViewDetails={onViewDetails}

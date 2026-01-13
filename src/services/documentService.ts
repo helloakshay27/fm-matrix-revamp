@@ -93,6 +93,14 @@ export interface FolderDocument {
   updated_at: string;
   file_size?: number;
   file_type?: string;
+  document_category_name?: string;
+  created_by_full_name?: string;
+  active?: boolean;
+  attachment?: {
+    file_type?: string;
+    file_size?: number;
+    preview_url?: string;
+  };
 }
 
 export interface FolderListItem {
