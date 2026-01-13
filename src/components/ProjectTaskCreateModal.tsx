@@ -518,7 +518,7 @@ const TaskForm = ({
             value={
               users?.find(
                 (user: any) => user?.id === formData.responsiblePerson
-              )?.role || ""
+              )?.role_name || ""
             }
             InputProps={{ readOnly: true }}
             variant="outlined"

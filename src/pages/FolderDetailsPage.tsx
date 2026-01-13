@@ -3,8 +3,6 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   Eye,
-  LayoutGrid,
-  List,
   MoreVertical,
   FileText,
   Trash2,
@@ -39,6 +37,7 @@ interface FolderItem {
   created_by: string;
   created_date: string;
   modified_date?: string;
+  preview_url?: string;
 }
 
 const mockFolderItems: FolderItem[] = [
@@ -178,9 +177,6 @@ export const FolderDetailsPage = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   // Check if this is a file list view (not folder list)
   const isFileListView = location.pathname.includes("/folder/");
@@ -236,6 +232,7 @@ export const FolderDetailsPage = () => {
             modified_date: doc.updated_at
               ? formatDate(doc.updated_at)
               : undefined,
+            preview_url: doc.attachment?.preview_url,
           })),
         ];
 
@@ -285,8 +282,17 @@ export const FolderDetailsPage = () => {
   };
 
   const handlePreview = (itemId: string) => {
-    // TODO: Implement document preview
-    console.log("Preview document:", itemId);
+    const item = folderItems.find((i) => i.id.toString() === itemId);
+    if (item) {
+      // Get the document from folderData to access preview_url
+      const doc = folderData?.documents?.find(
+        (d) => d.id.toString() === itemId
+      );
+      if (doc?.attachment?.preview_url) {
+        // Open preview in new window
+        window.open(doc.attachment.preview_url, "_blank");
+      }
+    }
   };
 
   const handleOpenDetail = (itemId: string) => {
@@ -312,11 +318,9 @@ export const FolderDetailsPage = () => {
   const handleUpdate = (itemId?: string) => {
     if (itemId) {
       // Update single item
-      console.log("Update item:", itemId);
       // TODO: Implement update functionality
     } else {
       // Update multiple selected items
-      console.log("Update items:", selectedItems);
       // TODO: Implement bulk update functionality
     }
   };
@@ -328,7 +332,6 @@ export const FolderDetailsPage = () => {
         `Are you sure you want to delete ${itemsToDelete.length} item(s)?`
       )
     ) {
-      console.log("Delete items:", itemsToDelete);
       // TODO: Implement delete functionality
       if (!itemId) {
         setSelectedItems([]);
@@ -416,129 +419,6 @@ export const FolderDetailsPage = () => {
     );
   };
 
-  // Grid View Component
-  const GridView = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
-      {folderItems.map((item) => (
-        <div
-          key={item.id}
-          className="border border-gray-200 rounded-lg overflow-hidden hover:border-[#C72030] hover:shadow-md transition-all bg-white relative group"
-        >
-          {/* Three-dot menu */}
-          <div className="absolute top-2 right-2 z-10">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <MoreVertical className="w-4 h-4 text-gray-600" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => handlePreview(item.id.toString())}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleOpenDetail(item.id.toString())}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Open in Detail
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleUpdate(item.id.toString())}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Update
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleDelete(item.id.toString())}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Checkbox */}
-          <div className="absolute top-2 left-2 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes(item.id.toString())}
-              onChange={(e) => {
-                e.stopPropagation();
-                handleSelectItem(item.id.toString(), e.target.checked);
-              }}
-              className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] border-gray-300 rounded cursor-pointer"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-
-          {/* Image preview area - click to preview */}
-          <div
-            className="aspect-square bg-gray-100 flex items-center justify-center cursor-pointer"
-            onClick={() => handlePreview(item.id.toString())}
-          >
-            <FileIcon
-              fileName={item.folder_title}
-              isFolder={false}
-              className="w-16 h-16"
-            />
-          </div>
-
-          {/* File info */}
-          <div className="p-3">
-            <p
-              className="text-sm font-medium text-gray-900 truncate"
-              title={item.folder_title}
-            >
-              {item.folder_title}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">{item.created_date}</p>
-            {item.format && (
-              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
-                {item.format}
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // View Mode Switcher Component
-  const ViewModeSwitcher = () => (
-    <div className="absolute top-4 right-6 z-10 flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-gray-200">
-      <button
-        onClick={() => setViewMode("grid")}
-        className={`p-2 rounded transition-colors ${
-          viewMode === "grid"
-            ? "bg-[#C72030] text-white"
-            : "text-gray-600 hover:bg-gray-100"
-        }`}
-        title="Grid View"
-      >
-        <LayoutGrid className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => setViewMode("table")}
-        className={`p-2 rounded transition-colors ${
-          viewMode === "table"
-            ? "bg-[#C72030] text-white"
-            : "text-gray-600 hover:bg-gray-100"
-        }`}
-        title="Table View"
-      >
-        <List className="w-4 h-4" />
-      </button>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -561,30 +441,23 @@ export const FolderDetailsPage = () => {
       <div className="max-w-[1400px] mx-auto p-6">
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
-          {/* View Mode Switcher - Only show in file list view */}
-          {isFileListView && <ViewModeSwitcher />}
-
           {/* Render View based on mode */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="text-gray-500">Loading folder contents...</div>
             </div>
           ) : (
-            <>
-              {viewMode === "table" && (
-                <DocumentEnhancedTable
-                  documents={folderItems}
-                  columns={columns}
-                  renderCell={renderCell}
-                  renderActions={renderActions}
-                  onViewDetails={(itemId) => handleViewItem(itemId.toString())}
-                  onFilterOpen={() => {}}
-                  onActionClick={() => {}}
-                />
-              )}
-
-              {viewMode === "grid" && <GridView />}
-            </>
+            <DocumentEnhancedTable
+              documents={folderItems}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              onViewDetails={(itemId) => handleViewItem(itemId.toString())}
+              onFilterOpen={() => {}}
+              onActionClick={() => {}}
+              selectedItems={selectedItems}
+              onSelectionChange={setSelectedItems}
+            />
           )}
 
           {/* Selection Action Panel */}
