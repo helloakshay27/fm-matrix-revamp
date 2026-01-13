@@ -59,6 +59,10 @@ export const CreateFolderPage = () => {
   >("no");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExistingDocModal, setShowExistingDocModal] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [selectedDocsForAction, setSelectedDocsForAction] = useState<
+    SelectedDocument[]
+  >([]);
   const [moveDocuments, setMoveDocuments] = useState<SelectedDocument[]>([]);
   const [copyDocuments, setCopyDocuments] = useState<SelectedDocument[]>([]);
   const [newDocuments, setNewDocuments] = useState<NewDocument[]>([]);
@@ -149,12 +153,52 @@ export const CreateFolderPage = () => {
   };
 
   const handleAddClick = () => {
-    setShowAddModal(true);
+    // Directly open existing document modal
+    setShowExistingDocModal(true);
   };
 
   const handleAddExisting = () => {
     setShowAddModal(false);
     setShowExistingDocModal(true);
+  };
+
+  const handleDocumentsSelected = (docs: SelectedDocument[]) => {
+    // Store selected documents and show action panel
+    setSelectedDocsForAction(docs);
+    setShowExistingDocModal(false);
+    setShowActionPanel(true);
+  };
+
+  const handleActionSelected = (action: "copy" | "move") => {
+    if (action === "move") {
+      setMoveDocuments((prev) => {
+        const existingIds = new Set(prev.map((d) => d.id));
+        const newDocs = selectedDocsForAction.filter(
+          (d) => !existingIds.has(d.id)
+        );
+        if (newDocs.length > 0) {
+          toast.success(`${newDocs.length} document(s) added to move list`);
+        } else {
+          toast.info("Selected documents are already in the move list");
+        }
+        return [...prev, ...newDocs];
+      });
+    } else {
+      setCopyDocuments((prev) => {
+        const existingIds = new Set(prev.map((d) => d.id));
+        const newDocs = selectedDocsForAction.filter(
+          (d) => !existingIds.has(d.id)
+        );
+        if (newDocs.length > 0) {
+          toast.success(`${newDocs.length} document(s) added to copy list`);
+        } else {
+          toast.info("Selected documents are already in the copy list");
+        }
+        return [...prev, ...newDocs];
+      });
+    }
+    setShowActionPanel(false);
+    setSelectedDocsForAction([]);
   };
 
   const handleCreateNew = () => {
@@ -331,7 +375,8 @@ export const CreateFolderPage = () => {
 
             <Button
               onClick={handleAddClick}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!title}
             >
               <Plus className="w-4 h-4 mr-2" /> Add
             </Button>
@@ -492,7 +537,7 @@ export const CreateFolderPage = () => {
       <AddExistingDocumentModal
         isOpen={showExistingDocModal}
         onClose={() => setShowExistingDocModal(false)}
-        onSelectDocuments={(docs, action) => {
+        onSelectDocuments={(docs) => {
           // Transform to SelectedDocument format
           const selectedDocs: SelectedDocument[] = docs.map((doc) => ({
             id: doc.id,
@@ -503,41 +548,22 @@ export const CreateFolderPage = () => {
             size: doc.size,
             created_by: doc.created_by,
           }));
+          handleDocumentsSelected(selectedDocs);
+        }}
+      />
 
-          if (action === "move") {
-            // Append to existing move documents, avoiding duplicates
-            setMoveDocuments((prev) => {
-              const existingIds = new Set(prev.map((d) => d.id));
-              const newDocs = selectedDocs.filter(
-                (d) => !existingIds.has(d.id)
-              );
-              if (newDocs.length > 0) {
-                toast.success(
-                  `${newDocs.length} document(s) added to move list`
-                );
-              } else {
-                toast.info("Selected documents are already in the move list");
-              }
-              return [...prev, ...newDocs];
-            });
-          } else {
-            // Append to existing copy documents, avoiding duplicates
-            setCopyDocuments((prev) => {
-              const existingIds = new Set(prev.map((d) => d.id));
-              const newDocs = selectedDocs.filter(
-                (d) => !existingIds.has(d.id)
-              );
-              if (newDocs.length > 0) {
-                toast.success(
-                  `${newDocs.length} document(s) added to copy list`
-                );
-              } else {
-                toast.info("Selected documents are already in the copy list");
-              }
-              return [...prev, ...newDocs];
-            });
-          }
-          setShowExistingDocModal(false);
+      {/* Action Selection Panel for Copy/Move */}
+      <AddDocumentModal
+        isOpen={showActionPanel}
+        onClose={() => {
+          setShowActionPanel(false);
+          setSelectedDocsForAction([]);
+        }}
+        onAddExisting={() => handleActionSelected("copy")}
+        onCreateNew={() => handleActionSelected("move")}
+        customLabels={{
+          addExisting: "Copy",
+          createNew: "Move",
         }}
       />
     </div>
