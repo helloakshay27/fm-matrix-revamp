@@ -253,17 +253,43 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     };
 
     const renderCell = (item: any, columnKey: string) => {
-        const renderProgressBar = (completed: number, total: number, color: string) => {
+        const renderProgressBar = (
+            completed: number,
+            total: number,
+            color: string,
+            type?: string
+        ) => {
             const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <div className="flex items-center gap-2">
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    // onClick={() =>
+                    //     type === "issues"
+                    //         ? navigate(`/vas/issues?project_id=${item.id}`)
+                    //         : type === "tasks"
+                    //             ? navigate(`/vas/tasks?project_id=${item.id}`)
+                    //             : type === "subtasks"
+                    //                 ? navigate(`/vas/tasks?subtasks=true&project_id=${item.id}`)
+                    //                 : type === "milestones"
+                    //                     ? navigate(`/vas/projects/${item.id}/milestones`)
+                    //                     : null
+                    // }
+                >
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {completed}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
                         <div
-                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(progress)}%
+                        </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {total}
+                    </span>
                 </div>
             );
         };
