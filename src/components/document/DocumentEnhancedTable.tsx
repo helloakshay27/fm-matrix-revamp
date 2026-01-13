@@ -57,6 +57,8 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
   selectedItems,
   onSelectionChange,
 }) => {
+  const isFileListView = location.pathname.includes("/folder/");
+
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("title_asc");

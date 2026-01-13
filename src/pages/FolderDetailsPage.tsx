@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Eye, LayoutGrid, List, ListTree } from "lucide-react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import {
+  ArrowLeft,
+  Eye,
+  LayoutGrid,
+  List,
+  MoreVertical,
+  FileText,
+  Trash2,
+  Edit,
+  FolderIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { AssetSelectionPanel } from "@/components/AssetSelectionPanel";
@@ -159,10 +175,15 @@ const columns: ColumnConfig[] = [
 
 export const FolderDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"table" | "grid" | "tree">("table");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  // Check if this is a file list view (not folder list)
+  const isFileListView = location.pathname.includes("/folder/");
   const [folderData, setFolderData] = useState<FolderDetailsResponse | null>(
     null
   );
@@ -183,8 +204,8 @@ export const FolderDetailsPage = () => {
 
         // Transform child folders and documents to FolderItem[]
         const items: FolderItem[] = [
-          // Add child folders
-          ...response.childs.map((child) => ({
+          // Add child folders (if they exist)
+          ...(response.childs || []).map((child) => ({
             id: child.id,
             folder_title: child.name,
             type: "folder" as const,
@@ -200,14 +221,14 @@ export const FolderDetailsPage = () => {
             }),
           })),
           // Add documents
-          ...response.documents.map((doc) => ({
+          ...(response.documents || []).map((doc) => ({
             id: doc.id,
             folder_title: doc.title,
             type: "file" as const,
             category:
               doc.document_category_name || response.name || "Uncategorized",
-            format: doc.file_type?.toUpperCase() || "PDF",
-            size: formatFileSize(doc.file_size || 0),
+            format: doc.attachment?.file_type?.toUpperCase() || "PDF",
+            size: formatFileSize(doc.attachment?.file_size || 0),
             document_count: 1,
             status: doc.active ? ("Active" as const) : ("Inactive" as const),
             created_by: doc.created_by_full_name || "Unknown",
@@ -218,7 +239,11 @@ export const FolderDetailsPage = () => {
           })),
         ];
 
-        setFolderItems(items);
+        // Filter to only show files if in file list view
+        const filteredItems = isFileListView
+          ? items.filter((item) => item.type === "file")
+          : items;
+        setFolderItems(filteredItems);
       } catch (error) {
         console.error("Error fetching folder details:", error);
       } finally {
@@ -227,7 +252,7 @@ export const FolderDetailsPage = () => {
     };
 
     fetchFolderDetails();
-  }, [id]);
+  }, [id, isFileListView]);
 
   // Helper function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -254,8 +279,18 @@ export const FolderDetailsPage = () => {
     if (item?.type === "folder") {
       navigate(`/maintenance/documents/folder/${itemId}`);
     } else {
-      navigate(`/maintenance/documents/details/${itemId}`);
+      // Open preview for files
+      handlePreview(itemId);
     }
+  };
+
+  const handlePreview = (itemId: string) => {
+    // TODO: Implement document preview
+    console.log("Preview document:", itemId);
+  };
+
+  const handleOpenDetail = (itemId: string) => {
+    navigate(`/maintenance/documents/details/${itemId}`);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -274,18 +309,30 @@ export const FolderDetailsPage = () => {
     }
   };
 
-  const handleUpdate = () => {
-    // TODO: Implement update functionality
+  const handleUpdate = (itemId?: string) => {
+    if (itemId) {
+      // Update single item
+      console.log("Update item:", itemId);
+      // TODO: Implement update functionality
+    } else {
+      // Update multiple selected items
+      console.log("Update items:", selectedItems);
+      // TODO: Implement bulk update functionality
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = (itemId?: string) => {
+    const itemsToDelete = itemId ? [itemId] : selectedItems;
     if (
       window.confirm(
-        `Are you sure you want to delete ${selectedItems.length} item(s)?`
+        `Are you sure you want to delete ${itemsToDelete.length} item(s)?`
       )
     ) {
+      console.log("Delete items:", itemsToDelete);
       // TODO: Implement delete functionality
-      setSelectedItems([]);
+      if (!itemId) {
+        setSelectedItems([]);
+      }
     }
   };
 
@@ -336,14 +383,36 @@ export const FolderDetailsPage = () => {
 
   const renderActions = (item: FolderItem) => {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleViewItem(item.id.toString())}
-        className="p-1 h-8 w-8"
-      >
-        <Eye className="w-4 h-4 text-[#C72030]" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
+            <MoreVertical className="w-4 h-4 text-gray-600" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => handlePreview(item.id.toString())}>
+            <Eye className="w-4 h-4 mr-2" />
+            Preview
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleOpenDetail(item.id.toString())}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Open in Detail
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleUpdate(item.id.toString())}>
+            <Edit className="w-4 h-4 mr-2" />
+            Update
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDelete(item.id.toString())}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
 
@@ -353,137 +422,122 @@ export const FolderDetailsPage = () => {
       {folderItems.map((item) => (
         <div
           key={item.id}
-          className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] hover:shadow-md transition-all cursor-pointer bg-white"
-          onClick={() => handleViewItem(item.id.toString())}
+          className="border border-gray-200 rounded-lg overflow-hidden hover:border-[#C72030] hover:shadow-md transition-all bg-white relative group"
         >
-          <div className="flex flex-col items-center gap-3">
-            <FileText className="w-12 h-12 text-[#C72030]" />
-            <div className="text-center w-full">
-              <p
-                className="text-sm font-medium text-gray-900 truncate"
-                title={item.folder_title}
-              >
-                {item.folder_title}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Created: {item.created_date}
-              </p>
-              {item.format && (
-                <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
-                  {item.format}
-                </span>
-              )}
-            </div>
+          {/* Three-dot menu */}
+          <div className="absolute top-2 right-2 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <MoreVertical className="w-4 h-4 text-gray-600" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => handlePreview(item.id.toString())}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleOpenDetail(item.id.toString())}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Open in Detail
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleUpdate(item.id.toString())}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Update
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDelete(item.id.toString())}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          {/* Selection Checkbox */}
-          <div
-            className="mt-3 flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
+
+          {/* Checkbox */}
+          <div className="absolute top-2 left-2 z-10">
             <input
               type="checkbox"
               checked={selectedItems.includes(item.id.toString())}
-              onChange={(e) =>
-                handleSelectItem(item.id.toString(), e.target.checked)
-              }
+              onChange={(e) => {
+                e.stopPropagation();
+                handleSelectItem(item.id.toString(), e.target.checked);
+              }}
               className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] border-gray-300 rounded cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
             />
+          </div>
+
+          {/* Image preview area - click to preview */}
+          <div
+            className="aspect-square bg-gray-100 flex items-center justify-center cursor-pointer"
+            onClick={() => handlePreview(item.id.toString())}
+          >
+            <FileIcon
+              fileName={item.folder_title}
+              isFolder={false}
+              className="w-16 h-16"
+            />
+          </div>
+
+          {/* File info */}
+          <div className="p-3">
+            <p
+              className="text-sm font-medium text-gray-900 truncate"
+              title={item.folder_title}
+            >
+              {item.folder_title}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">{item.created_date}</p>
+            {item.format && (
+              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
+                {item.format}
+              </span>
+            )}
           </div>
         </div>
       ))}
     </div>
   );
 
-  // Tree View Component
-  const TreeView = () => {
-    const folders = folderItems.filter((item) => item.type === "folder");
-    const files = folderItems.filter((item) => item.type === "file");
-
-    return (
-      <div className="p-6 space-y-4">
-        {/* Folders Section */}
-        {folders.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <FolderIcon className="w-4 h-4" />
-              Folders ({folders.length})
-            </h3>
-            <div className="space-y-2 ml-4 border-l-2 border-gray-200 pl-4">
-              {folders.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-[#C72030] hover:shadow-sm transition-all cursor-pointer"
-                  onClick={() => handleViewItem(item.id.toString())}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.includes(item.id.toString())}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleSelectItem(item.id.toString(), e.target.checked);
-                    }}
-                    className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] border-gray-300 rounded cursor-pointer"
-                  />
-                  <FolderIcon className="w-5 h-5 text-[#C72030] flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.folder_title}
-                    </p>
-                    <p className="text-xs text-gray-500">{item.size}</p>
-                  </div>
-                  <Eye className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Files Section */}
-        {files.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Files ({files.length})
-            </h3>
-            <div className="space-y-2 ml-4 border-l-2 border-gray-200 pl-4">
-              {files.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-[#C72030] hover:shadow-sm transition-all cursor-pointer"
-                  onClick={() => handleViewItem(item.id.toString())}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.includes(item.id.toString())}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleSelectItem(item.id.toString(), e.target.checked);
-                    }}
-                    className="w-4 h-4 text-[#C72030] focus:ring-[#C72030] border-gray-300 rounded cursor-pointer"
-                  />
-                  <FileText className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.folder_title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {item.format && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-xs text-gray-600 rounded">
-                          {item.format}
-                        </span>
-                      )}
-                      <span className="text-xs text-gray-500">{item.size}</span>
-                    </div>
-                  </div>
-                  <Eye className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  // View Mode Switcher Component
+  const ViewModeSwitcher = () => (
+    <div className="absolute top-4 right-6 z-10 flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-gray-200">
+      <button
+        onClick={() => setViewMode("grid")}
+        className={`p-2 rounded transition-colors ${
+          viewMode === "grid"
+            ? "bg-[#C72030] text-white"
+            : "text-gray-600 hover:bg-gray-100"
+        }`}
+        title="Grid View"
+      >
+        <LayoutGrid className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => setViewMode("table")}
+        className={`p-2 rounded transition-colors ${
+          viewMode === "table"
+            ? "bg-[#C72030] text-white"
+            : "text-gray-600 hover:bg-gray-100"
+        }`}
+        title="Table View"
+      >
+        <List className="w-4 h-4" />
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -507,7 +561,8 @@ export const FolderDetailsPage = () => {
       <div className="max-w-[1400px] mx-auto p-6">
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
-          {/* View Mode Switcher */}
+          {/* View Mode Switcher - Only show in file list view */}
+          {isFileListView && <ViewModeSwitcher />}
 
           {/* Render View based on mode */}
           {loading ? (
@@ -529,23 +584,47 @@ export const FolderDetailsPage = () => {
               )}
 
               {viewMode === "grid" && <GridView />}
-
-              {viewMode === "tree" && <TreeView />}
             </>
           )}
 
-          {/* Asset Selection Panel - matches asset dashboard pattern */}
+          {/* Selection Action Panel */}
           {selectedItems.length > 0 && (
-            <AssetSelectionPanel
-              selectedCount={selectedItems.length}
-              selectedAssets={selectedItemObjects}
-              selectedAssetIds={selectedItems}
-              onMoveAsset={handleUpdate}
-              onDisposeAsset={handleDelete}
-              onPrintQRCode={() => {}}
-              onCheckIn={() => {}}
-              onClearSelection={handleClearSelection}
-            />
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 flex items-center gap-4 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-[#1a1a1a]">
+                  {selectedItems.length} selected
+                </span>
+                <div className="h-6 w-px bg-gray-300" />
+              </div>
+
+              {/* Update Button */}
+              <button
+                onClick={() => handleUpdate()}
+                className="flex items-center gap-2 px-4 py-2 bg-[#FFF5F5] hover:bg-[#FFE5E5] rounded-lg transition-colors"
+              >
+                <Edit className="w-4 h-4 text-[#C72030]" />
+                <span className="text-sm font-medium text-[#C72030]">
+                  Update
+                </span>
+              </button>
+
+              {/* Delete Button */}
+              <button
+                onClick={() => handleDelete()}
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4 text-red-600" />
+                <span className="text-sm font-medium text-red-600">Delete</span>
+              </button>
+
+              {/* Clear Selection */}
+              <button
+                onClick={handleClearSelection}
+                className="ml-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Clear
+              </button>
+            </div>
           )}
         </div>
       </div>
