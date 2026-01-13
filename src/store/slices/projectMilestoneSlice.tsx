@@ -28,15 +28,22 @@ export const createMilestone = createAsyncThunk(
 
 export const fetchMilestones = createAsyncThunk(
     "fetchMilestones",
-    async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
+    async ({ token, baseUrl, id, orderBy, orderDirection }: { token: string, baseUrl: string, id: string, orderBy?: string, orderDirection?: string }, { rejectWithValue }) => {
         try {
+            let url = `https://${baseUrl || ''}/milestones.json?q[project_management_id_eq]=${id}`;
+
+            // Add sorting parameters if provided
+            if (orderBy && orderDirection) {
+                url += `&order_by=${orderBy}&order_direction=${orderDirection}`;
+            }
+
             const response = baseUrl
-                ? await axios.get(`https://${baseUrl}/milestones.json?q[project_management_id_eq]=${id}`, {
+                ? await axios.get(url, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
                 })
-                : await baseClient.get(`/milestones.json?q[project_management_id_eq]=${id}`, {
+                : await baseClient.get(`/milestones.json?q[project_management_id_eq]=${id}${orderBy && orderDirection ? `&order_by=${orderBy}&order_direction=${orderDirection}` : ''}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }

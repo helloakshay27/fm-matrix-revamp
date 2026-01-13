@@ -189,6 +189,26 @@ const STATUS_OPTIONS = [
     }
 ]
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+    id: "id",
+    task_code: "task_code",
+    title: "title",
+    status: "status",
+    workflowStatus: "project_status_id",
+    responsible: "responsible_person_id",
+    expected_start_date: "expected_start_date",
+    target_date: "target_date",
+    duration: "target_date",
+    efforts_duration: "estimated_hour",
+    subtasks: "total_sub_tasks",
+    issues: "total_issues",
+    priority: "priority",
+    predecessor: "predecessor_task",
+    successor: "successor_task",
+    completion_percentage: "completion_percent",
+};
+
 // Utility function to calculate duration between two dates (matching task_management)
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
     // If end date is missing, return N/A
@@ -461,6 +481,10 @@ const ProjectTasksPage = () => {
         total_count: 0,
     })
     const [loading, setLoading] = useState(false)
+
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
 
     // Import modal state
     const [showActionPanel, setShowActionPanel] = useState(false);
@@ -750,7 +774,7 @@ const ProjectTasksPage = () => {
     };
 
 
-    const fetchData = useCallback(async (page: number = 1) => {
+    const fetchData = useCallback(async (page: number = 1, orderBy: string | null = sortColumn, orderDirection: "asc" | "desc" | null = sortDirection) => {
         try {
             setLoading(true);
             const searchParams = new URLSearchParams(location.search);
@@ -767,6 +791,13 @@ const ProjectTasksPage = () => {
 
             if (urlProjectId) {
                 filters["q[project_management_id_eq]"] = urlProjectId;
+            }
+
+            // Add sorting parameters if provided
+            if (orderBy && orderDirection) {
+                const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+                filters["order_by"] = backendFieldName;
+                filters["order_direction"] = orderDirection;
             }
 
             let response;
@@ -787,6 +818,13 @@ const ProjectTasksPage = () => {
                     params.append("page", page.toString());
                     if (selectedFilterOption !== "all") {
                         params.append("status", selectedFilterOption);
+                    }
+
+                    // Add sorting parameters for my tasks
+                    if (orderBy && orderDirection) {
+                        const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+                        params.append("order_by", backendFieldName);
+                        params.append("order_direction", orderDirection);
                     }
 
                     response = await fetch(
@@ -819,7 +857,7 @@ const ProjectTasksPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search]);
+    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search, sortColumn, sortDirection]);
 
     const getUsers = useCallback(async () => {
         try {
@@ -1155,7 +1193,7 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
 
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1166,7 +1204,7 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
 
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1177,12 +1215,30 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
 
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task updated successfully");
         } catch (error) {
             console.log(error)
         }
     }
+
+    // Handle column sort
+    const handleColumnSort = (columnKey: string) => {
+        let newDirection: "asc" | "desc" | null;
+
+        // Cycle through: asc -> desc -> null -> asc
+        if (sortColumn === columnKey) {
+            newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+        } else {
+            newDirection = "asc";
+        }
+
+        setSortColumn(newDirection ? columnKey : null);
+        setSortDirection(newDirection);
+
+        // Fetch with new sort
+        fetchData(1, newDirection ? columnKey : null, newDirection);
+    };
 
     const handlePauseTaskSubmit = async (reason: string, tid: number) => {
         if (!tid) return;
@@ -2066,6 +2122,7 @@ const ProjectTasksPage = () => {
                 leftActions={leftActions}
                 rightActions={rightActions}
                 storageKey="projects-table"
+                onSort={handleColumnSort}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 canAddRow={true}
                 loading={loading}

@@ -90,6 +90,7 @@ interface EnhancedTableProps<T> {
   renderRow?: (item: T) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
+  onSort?: (columnKey: string) => void;
   storageKey?: string;
   className?: string;
   emptyMessage?: string;
@@ -146,6 +147,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   renderRow,
   renderActions,
   onRowClick,
+  onSort,
   storageKey,
   className,
   emptyMessage = "No data available",
@@ -820,7 +822,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                         sortable={column.sortable !== false}
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => column.sortable !== false && handleSort(column.key)}
+                        onSort={() => {
+                          // Use external onSort if provided, otherwise use internal sorting
+                          if (column.sortable !== false) {
+                            if (onSort) {
+                              onSort(column.key);
+                            } else {
+                              handleSort(column.key);
+                            }
+                          }
+                        }}
                         className="bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0"
                         style={{
                           width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
