@@ -572,8 +572,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentAnswer = answerOverride || answers[currentQuestion.id];
       if (!currentAnswer) {
         console.error(
-          "No current answer found for question:",
-          currentQuestion.id
+          `No answer found for question ${currentQuestion.id}`
         );
         return;
       }
@@ -606,131 +605,101 @@ export const MobileSurveyLanding: React.FC = () => {
       // Include additional fields based on question type and available data
       switch (currentQuestion.qtype) {
         case "multiple":
-          if (
-            currentAnswer.selectedOptions &&
-            currentAnswer.selectedOptions.length > 0
-          ) {
-            surveyResponseItem.option_id = currentAnswer.selectedOptions[0].id;
+          if (currentAnswer.selectedOptions && currentAnswer.selectedOptions.length > 0) {
+            surveyResponseItem.option_id =
+              currentAnswer.selectedOptions[0].id;
+            surveyResponseItem.label =
+              currentAnswer.selectedOptions[0].qname;
+            surveyResponseItem.ans_descr =
+              currentAnswer.selectedOptions[0].qname;
           }
-          // New fields for multiple choice
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "multiple_choice";
           break;
-        case "emoji":
-        case "smiley":
+
+        case "rating": {
           if (currentAnswer.rating !== undefined) {
             surveyResponseItem.rating = currentAnswer.rating;
-            surveyResponseItem.level_id = currentAnswer.rating; // New field: level_id
+            surveyResponseItem.level_id = currentAnswer.rating;
+          }
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "star_rating";
+
+          // Add label and ans_descr for rating
+          const ratingLabel =
+            currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
+          if (ratingLabel) {
+            surveyResponseItem.label = ratingLabel;
+            surveyResponseItem.ans_descr = ratingLabel;
+          }
+
+          // Map rating to option_id
+          if (currentQuestion.snag_quest_options && currentAnswer.rating) {
+            const ratingToOption = Array.from(
+              { length: currentQuestion.snag_quest_options.length },
+              (_, index) => ({
+                rating: index + 1,
+                optionIndex: index,
+              })
+            );
+            const selectedMapping = ratingToOption.find(
+              (opt) => opt.rating === currentAnswer.rating
+            );
+            if (selectedMapping) {
+              surveyResponseItem.option_id =
+                currentQuestion.snag_quest_options[selectedMapping.optionIndex]
+                  .id;
+            }
+          }
+          break;
+        }
+
+        case "emoji":
+        case "smiley": {
+          if (currentAnswer.rating !== undefined) {
+            surveyResponseItem.rating = currentAnswer.rating;
+            surveyResponseItem.level_id = currentAnswer.rating;
           }
           if (currentAnswer.emoji) {
             surveyResponseItem.emoji = currentAnswer.emoji;
           }
           if (currentAnswer.label) {
             surveyResponseItem.label = currentAnswer.label;
-            surveyResponseItem.ans_descr = currentAnswer.label; // dynamic label from API
+            surveyResponseItem.ans_descr = currentAnswer.label;
           }
-          // New fields for emoji/smiley
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "emoji_selection";
 
-          // For emoji/smiley questions, find and add option_id from API response
-          if (currentAnswer.rating !== undefined) {
-            // Find the corresponding option from API response based on rating
-            const questionData = surveyData.snag_checklist.snag_questions.find(
-              (q) => q.id === currentQuestion.id
+          // Map emoji rating to option_id
+          if (currentQuestion.snag_quest_options && currentAnswer.rating) {
+            const ratingToOption = Array.from(
+              { length: currentQuestion.snag_quest_options.length },
+              (_, index) => ({
+                rating: currentQuestion.snag_quest_options!.length - index,
+                optionIndex: index,
+              })
             );
-            if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure (default order: first option = highest rating)
-              const ratingToOptionMapping = Array.from(
-                { length: questionData.snag_quest_options.length },
-                (_, index) => ({
-                  rating: questionData.snag_quest_options.length - index, // Highest rating first
-                  optionIndex: index,
-                })
-              );
-              const mapping = ratingToOptionMapping.find(
-                (opt) => opt.rating === currentAnswer.rating
-              );
-              if (
-                mapping &&
-                questionData.snag_quest_options[mapping.optionIndex]
-              ) {
-                surveyResponseItem.option_id =
-                  questionData.snag_quest_options[mapping.optionIndex].id;
-              }
-            }
-          }
-          break;
-
-        case "rating": {
-          if (currentAnswer.rating !== undefined) {
-            surveyResponseItem.rating = currentAnswer.rating;
-            surveyResponseItem.level_id = currentAnswer.rating; // New field: level_id
-          }
-          // New fields for rating
-          surveyResponseItem.answer_type = currentQuestion.qtype;
-          surveyResponseItem.answer_mode = "star_rating";
-          // Use label from answer data or fetch dynamically from API options
-          const ratingLabel = currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
-          if (ratingLabel) {
-            surveyResponseItem.label = ratingLabel;
-            surveyResponseItem.ans_descr = ratingLabel; // dynamic label from API
-          }
-
-          // Add option_id mapping for rating questions from API response
-          if (currentAnswer.optionId) {
-            // Use stored option_id from negative flow
-            surveyResponseItem.option_id = currentAnswer.optionId;
-          } else if (currentAnswer.rating !== undefined) {
-            // Fallback to mapping for positive responses
-            const questionData = surveyData.snag_checklist.snag_questions.find(
-              (q) => q.id === currentQuestion.id
+            const selectedMapping = ratingToOption.find(
+              (opt) => opt.rating === currentAnswer.rating
             );
-            if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure (ascending order: rating 1 = first option)
-              const ratingToOptionMapping = Array.from(
-                { length: questionData.snag_quest_options.length },
-                (_, index) => ({
-                  rating: index + 1, // Rating matches option order: 1, 2, 3, 4, 5
-                  optionIndex: index,
-                })
-              );
-              const mapping = ratingToOptionMapping.find(
-                (opt) => opt.rating === currentAnswer.rating
-              );
-              if (
-                mapping &&
-                questionData.snag_quest_options[mapping.optionIndex]
-              ) {
-                surveyResponseItem.option_id =
-                  questionData.snag_quest_options[mapping.optionIndex].id;
-              }
+            if (selectedMapping) {
+              surveyResponseItem.option_id =
+                currentQuestion.snag_quest_options[selectedMapping.optionIndex]
+                  .id;
             }
           }
           break;
         }
 
+        case "input_box":
         case "input":
         case "text":
         case "description":
           if (currentAnswer.value && currentAnswer.value.toString().trim()) {
-            surveyResponseItem.response_text = currentAnswer.value
-              .toString()
-              .trim();
+            surveyResponseItem.response_text = currentAnswer.value.toString();
+            surveyResponseItem.ans_descr = currentAnswer.value.toString();
           }
-          // New fields for text-based inputs
           surveyResponseItem.answer_type = currentQuestion.qtype;
-          surveyResponseItem.answer_mode = "text_input";
-          break;
-
-        case "input_box":
-          // New type: input_box
-          if (currentAnswer.value && currentAnswer.value.toString().trim()) {
-            surveyResponseItem.ans_descr = currentAnswer.value
-              .toString()
-              .trim();
-          }
-          surveyResponseItem.answer_type = "input_box";
           surveyResponseItem.answer_mode = "text_input";
           break;
       }
@@ -741,7 +710,7 @@ export const MobileSurveyLanding: React.FC = () => {
       if (currentAnswer.comments && currentAnswer.comments.trim()) {
         surveyResponseItem.comments = currentAnswer.comments.trim();
         console.log(
-          "Setting comments in payload:",
+          "Setting comments for single question:",
           currentAnswer.comments.trim()
         );
       } else {
@@ -762,6 +731,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: true,
+          rating: currentAnswer.rating || 5,
         },
       });
     } catch (error) {
@@ -769,6 +739,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: false,
+          rating: 5,
         },
       });
     } finally {
@@ -936,6 +907,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: true,
+          rating: answerData.rating || 1,
         },
       });
     } catch (error) {
@@ -943,6 +915,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: false,
+          rating: 1,
         },
       });
     } finally {
@@ -1399,9 +1372,16 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
+      // Calculate minimum rating from all answers for thank you page
+      const allRatings = Object.values(answers)
+        .map(answer => answer.rating)
+        .filter((rating): rating is number => rating !== undefined);
+      const minRating = allRatings.length > 0 ? Math.min(...allRatings) : 5;
+
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: true,
+          rating: minRating,
         },
       });
     } catch (error) {
@@ -1409,6 +1389,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: false,
+          rating: 5,
         },
       });
     } finally {
@@ -1785,9 +1766,16 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
+      // Calculate minimum rating from all answers for thank you page
+      const allFormRatings = Object.values(answers)
+        .map(answer => answer.rating)
+        .filter((rating): rating is number => rating !== undefined);
+      const minFormRating = allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
+
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: true,
+          rating: minFormRating,
         },
       });
     } catch (error) {
@@ -1795,6 +1783,7 @@ export const MobileSurveyLanding: React.FC = () => {
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: false,
+          rating: 5,
         },
       });
     } finally {
@@ -1889,12 +1878,19 @@ export const MobileSurveyLanding: React.FC = () => {
                   alt="PSIPL Logo"
                   className="w-full h-full object-contain"
                 />
+              ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+                <img
+                  src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+                  alt="FM Matrix Logo"
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <img
                   src="/gophygital-logo-min.jpg"
                   alt="gophygital Logo"
                   className="w-full h-full object-contain"
                 />
+
               )}
             </div>
           </div>
