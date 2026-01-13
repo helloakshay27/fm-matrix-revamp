@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
 import { ArrowLeft, Edit, Trash2, CheckCircle, Clock, AlertTriangle, Tag, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const STATUS_COLORS = {
@@ -31,9 +31,18 @@ const ProjectTaskDetailsPage = () => {
     const { tid } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const [searchParams] = useSearchParams();
+    const urlToken = searchParams.get("token");
+
+    useEffect(() => {
+        if (urlToken) {
+            sessionStorage.setItem("mobile_token", urlToken);
+            localStorage.setItem("token", urlToken);
+        }
+    }, [urlToken]);
 
     const baseUrl = localStorage.getItem("baseUrl");
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
 
     const [task, setTask] = useState({
         id: "",

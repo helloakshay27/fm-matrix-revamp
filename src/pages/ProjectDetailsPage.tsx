@@ -569,7 +569,7 @@ const ProjectDetailsPage = () => {
                 </div>
 
                 <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                    <div className="font-[600] text-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#c72030"
@@ -577,28 +577,28 @@ const ProjectDetailsPage = () => {
                                 className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
                                 onClick={toggleSecondCollapse}
                             />
-                            Details
+                            <span>Details</span>
                         </div>
                         {isSecondCollapsed && (
-                            <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4 mt-2 text-[12px]">
+                            <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4 mt-1 sm:mt-0 text-[12px]">
                                 <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
                                     <div className="font-[500]">Project Manager:</div>
-                                    <div className="break-words max-w-[180px]">
-                                        {project.project_owner_name}
+                                    <div className="break-words max-w-[220px]">
+                                        {project.project_owner_name || "-"}
                                     </div>
                                 </div>
 
                                 <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
                                     <div className="font-[500]">Priority:</div>
-                                    <div className="break-words max-w-[80px]">
-                                        {project.priority?.charAt(0).toUpperCase() + project.priority?.slice(1).toLowerCase() || ''}
+                                    <div className="break-words max-w-[100px]">
+                                        {project.priority || "-"}
                                     </div>
                                 </div>
 
                                 <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
                                     <div className="font-[500]">End Date:</div>
-                                    <div className="break-words max-w-[140px]">
-                                        {project.end_date}
+                                    <div className="break-words max-w-[160px]">
+                                        {project.end_date || "-"}
                                     </div>
                                 </div>
                             </div>

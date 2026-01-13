@@ -23,8 +23,9 @@ import {
   Plus,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { cache } from "@/utils/cacheUtils";
+import { baseClient } from "@/utils/withoutTokenBase";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
@@ -204,19 +205,52 @@ const statusOptions = [
 
 export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const view = localStorage.getItem("selectedView");
+  const urlToken = searchParams.get("token");
+  const urlOrgId = searchParams.get("org_id");
+  const urlUserId = searchParams.get("user_id");
+
+  // Initialize mobile token, org_id, and user_id from URL if available
+  useEffect(() => {
+    if (urlToken) {
+      sessionStorage.setItem("mobile_token", urlToken);
+      // Store token in localStorage for other pages to use
+      localStorage.setItem("token", urlToken);
+      console.log("✅ Mobile token stored in sessionStorage and localStorage");
+    }
+    if (urlOrgId) {
+      sessionStorage.setItem("org_id", urlOrgId);
+      console.log("✅ org_id stored in sessionStorage:", urlOrgId);
+    }
+    if (urlUserId) {
+      sessionStorage.setItem("user_id", urlUserId);
+      console.log("✅ user_id stored in sessionStorage:", urlUserId);
+    }
+  }, [urlToken, urlOrgId, urlUserId]);
+
+  // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+  const token =
+    sessionStorage.getItem("mobile_token") ||
+    localStorage.getItem("token");
+
+  // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+  let baseUrl = localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
+
+  // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+  if (!baseUrl && urlToken) {
+    console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    // After baseClient resolves it, it will be stored in localStorage automatically
+  }
 
   useEffect(() => {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
     );
   }, [setCurrentSection]);
-
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
 
   const { teams } = useAppSelector((state) => state.projectTeams);
   const { projectTags: tags } = useAppSelector((state) => state.projectTags);
@@ -248,6 +282,28 @@ export const ProjectsDashboard = () => {
   const viewDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to safely get user ID from sessionStorage or localStorage
+  const getUserId = useCallback(() => {
+    // First, check if user_id was passed in URL (mobile flow)
+    const sessionUserId = sessionStorage.getItem("user_id");
+    if (sessionUserId) {
+      return sessionUserId;
+    }
+
+    // Fall back to localStorage (web flow)
+    try {
+      const userString = localStorage.getItem("user");
+      if (userString) {
+        const userData = JSON.parse(userString);
+        return userData.id || null;
+      }
+    } catch (error) {
+      console.error("Error parsing user data from localStorage:", error);
+    }
+
+    return null;
+  }, []);
+
   const fetchData = useCallback(
     async (
       page = 1,
@@ -255,6 +311,12 @@ export const ProjectsDashboard = () => {
       isLoadMore = false,
       searchQuery = ""
     ) => {
+      // Guard: don't proceed if token is not available
+      if (!token) {
+        console.warn("⚠️ fetchData called without token");
+        return;
+      }
+
       try {
         if (!hasMore && isLoadMore) return;
 
@@ -281,7 +343,7 @@ export const ProjectsDashboard = () => {
 
         filters +=
           (filters ? "&" : "") +
-          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
+          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${getUserId()}&page=${page}`;
 
         // Create cache key based on filters and page
         const cacheKey = `projects_${filters}_${page}`;
@@ -339,11 +401,13 @@ export const ProjectsDashboard = () => {
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-    setHasMore(true);
-    fetchData(1, "", false, debouncedSearchTerm);
-    setAppliedFilters("");
-  }, [dispatch, token, baseUrl, selectedFilterOption, debouncedSearchTerm]);
+    if (token) {
+      setCurrentPage(1);
+      setHasMore(true);
+      fetchData(1, "", false, debouncedSearchTerm);
+      setAppliedFilters("");
+    }
+  }, [token, selectedFilterOption, debouncedSearchTerm]);
 
   // Infinite scroll handler with debouncing
   useEffect(() => {
@@ -407,14 +471,25 @@ export const ProjectsDashboard = () => {
 
   const getOwners = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Use baseClient for mobile flow (when baseUrl not available)
+      // Use direct axios call for web flow
+      const response = baseUrl
+        ? await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        : await baseClient.get(
+          `/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
       setOwners(response.data.users);
     } catch (error) {
       console.log(error);
@@ -465,11 +540,13 @@ export const ProjectsDashboard = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    getOwners();
-    getTeams();
-    getProjectTypes();
-    getTags();
-  }, []);
+    if (token) {
+      getOwners();
+      getTeams();
+      getProjectTypes();
+      getTags();
+    }
+  }, [token, getOwners, getTeams, getProjectTypes, getTags]);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -506,15 +583,26 @@ export const ProjectsDashboard = () => {
 
   const handleSampleDownload = async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/assets/project_import.xlsx`,
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Use baseClient for mobile flow (when baseUrl not available)
+      const response = baseUrl
+        ? await axios.get(
+          `https://${baseUrl}/assets/project_import.xlsx`,
+          {
+            responseType: 'blob',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        : await baseClient.get(
+          `/assets/project_import.xlsx`,
+          {
+            responseType: 'blob',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
       // Create a download link and trigger it
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -537,11 +625,20 @@ export const ProjectsDashboard = () => {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const response = await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      })
+
+      // Use baseClient for mobile flow (when baseUrl not available)
+      const response = baseUrl
+        ? await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        })
+        : await baseClient.post(`/project_managements/import.json`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
+
       if (response.data.failed && response.data.failed.length > 0) {
         response.data.failed.forEach((item: { row: number; errors: string[] }) => {
           const errorMessages = item.errors.join(', ');
@@ -566,7 +663,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/vas/projects/details/${item.id}`)}
+        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/details/${item.id}`) : navigate(`/mobile-projects/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -574,7 +671,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}
+        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${item.id}/milestones`) : navigate(`/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`)}
       >
         <LogOut className="w-4 h-4" />
       </Button>

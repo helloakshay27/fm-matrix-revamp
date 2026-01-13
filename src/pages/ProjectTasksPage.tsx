@@ -23,8 +23,10 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useLayout } from "@/contexts/LayoutContext";
 import clsx from "clsx";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import { useSearchParams } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -399,8 +401,39 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
+    const [searchParams] = useSearchParams();
 
     const view = localStorage.getItem("selectedView");
+    const urlToken = searchParams.get("token");
+    const urlOrgId = searchParams.get("org_id");
+    const urlUserId = searchParams.get("user_id");
+
+    // Initialize mobile token, org_id, and user_id from URL if available
+    useEffect(() => {
+        if (urlToken) {
+            sessionStorage.setItem("mobile_token", urlToken);
+            localStorage.setItem("token", urlToken);
+        }
+        if (urlOrgId) {
+            sessionStorage.setItem("org_id", urlOrgId);
+        }
+        if (urlUserId) {
+            sessionStorage.setItem("user_id", urlUserId);
+        }
+    }, [urlToken, urlOrgId, urlUserId]);
+
+    // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+    const token =
+        sessionStorage.getItem("mobile_token") ||
+        localStorage.getItem("token");
+
+    // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+    let baseUrl = localStorage.getItem("baseUrl");
+
+    // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+    if (!baseUrl && urlToken) {
+        console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    }
 
     useEffect(() => {
         setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
@@ -410,9 +443,6 @@ const ProjectTasksPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
-
-    const baseUrl = localStorage.getItem("baseUrl");
-    const token = localStorage.getItem("token");
 
     const [tasks, setTasks] = useState([])
     const [users, setUsers] = useState([])
@@ -511,11 +541,17 @@ const ProjectTasksPage = () => {
 
     const getStatuses = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                : await baseClient.get(`/project_statuses.json?q[active_eq]=true`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
             setStatuses(response.data)
         } catch (error) {
             console.log(error)
@@ -530,11 +566,17 @@ const ProjectTasksPage = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const response = await axios.get(`https://${baseUrl}/project_managements.json`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = baseUrl
+                    ? await axios.get(`https://${baseUrl}/project_managements.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                    : await baseClient.get(`/project_managements.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
                 if (response.data && Array.isArray(response.data.project_managements)) {
                     setProjectOptions(
                         response.data.project_managements.map((project: any) => ({
@@ -808,11 +850,17 @@ const ProjectTasksPage = () => {
 
     const getUsers = useCallback(async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                : await baseClient.get(`/pms/users/get_escalate_to_users.json?type=Task`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
             setUsers(response.data.users);
         } catch (error) {
             console.log(error);
@@ -1110,7 +1158,9 @@ const ProjectTasksPage = () => {
     };
 
     const handleView = (id) => {
-        if (location.pathname.startsWith("/vas/tasks")) {
+        if (location.pathname.startsWith("/mobile-projects")) {
+            navigate(`${id}`);
+        } else if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
         } else {
             navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
@@ -1308,9 +1358,17 @@ const ProjectTasksPage = () => {
         }
 
         // Check if task is overdue using the target_date
-        const isTaskOverdue = task.target_date && new Date(task.target_date) < new Date();
+        const isTaskOverdue = (date: string | Date) => {
+            const d = new Date(date);
+            const today = new Date();
 
-        if (isTaskOverdue) {
+            d.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            return d < today;
+        };
+
+        if (isTaskOverdue(new Date(task.target_date))) {
             // Show overdue reason modal
             setOverdueTaskId(id);
             setPendingCompletionPercentage(percentage);
