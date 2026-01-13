@@ -165,9 +165,7 @@ const ProjectCard = ({ project }) => {
                             ></div>
                             <div className="absolute w-full text-[10px] text-center text-black font-medium">
                                 {project.total_milestone_count > 0
-                                    ? Math.round(
-                                        (project.completed_milestone_count / project.total_milestone_count) * 100
-                                    ) + "%"
+                                    ? ((project.completed_milestone_count / project.total_milestone_count) * 100).toFixed(2) + "%"
                                     : "0%"}
                             </div>
                         </div>
@@ -191,9 +189,9 @@ const ProjectCard = ({ project }) => {
                             ></div>
                             <div className="absolute w-full text-[10px] text-center text-black font-medium">
                                 {project.total_task_management_count > 0
-                                    ? Math.round(
+                                    ? (
                                         (project.completed_task_management_count / project.total_task_management_count) * 100
-                                    ) + "%"
+                                    ).toFixed(2) + "%"
                                     : "0%"}
                             </div>
                         </div>
@@ -216,7 +214,7 @@ const ProjectCard = ({ project }) => {
                             ></div>
                             <div className="absolute w-full text-[10px] text-center text-black font-medium">
                                 {project.total_issues_count > 0
-                                    ? Math.round((project.completed_issues_count / project.total_issues_count) * 100) + "%"
+                                    ? ((project.completed_issues_count / project.total_issues_count) * 100).toFixed(2) + "%"
                                     : "0%"}
                             </div>
                         </div>
