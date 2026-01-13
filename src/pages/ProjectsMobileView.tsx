@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react";
 import { Download, Eye, LogOut, Search } from "lucide-react";
 import axios from "axios";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 const ProjectsMobileView = () => {
+    const navigate = useNavigate();
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -231,7 +232,7 @@ const ProjectsMobileView = () => {
                                     </p>
 
                                     <div className="flex items-center gap-4">
-                                        <Button variant="ghost" className="p-0">
+                                        <Button variant="ghost" className="p-0" onClick={() => navigate(`/mobile-projects/${project.id}`)}>
                                             <Eye className="w-4 h-4" />
                                         </Button>
                                         <Button variant="ghost" className="p-0">
