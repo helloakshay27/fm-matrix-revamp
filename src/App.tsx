@@ -882,6 +882,7 @@ import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
 import VisitorPassWeb from "./components/VisitorPassWeb";
+import ProjectsMobileView from "./pages/ProjectsMobileView";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -4177,7 +4178,7 @@ function App() {
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
 
-                <Route path="/mobile-projects" element={<ProjectsDashboard />} />
+                <Route path="/mobile-projects" element={<ProjectsMobileView />} />
                 <Route path="/mobile-projects/:id" element={<ProjectDetailsPage />} />
                 <Route path="/mobile-projects/:id/milestones" element={<ProjectMilestones />} />
                 <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsPage />} />

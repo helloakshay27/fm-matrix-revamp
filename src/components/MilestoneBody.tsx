@@ -527,10 +527,10 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                 <div class="gantt-progress-bar">
                                     <div
                                         class="gantt-progress-bar-fill"
-                                        style="width: ${isValidPercentage ? progressPercentage : 0}%"
+                                        style="width: ${task.completionPercent}%"
                                     ></div>
                                     <div class="gantt-progress-bar-label">
-                                        ${isValidPercentage ? progressPercentage + "%" : "0%"}
+                                        ${task.completionPercent}%
                                     </div>
                                 </div>
                                 <span>${task.totalTasks}</span>
@@ -786,6 +786,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
             progress: 0.0,
             totalTasks: item.total_tasks,
             completedTasks: item.completed_tasks,
+            completionPercent: item.completion_percent,
             status: item.status,
             depends: item.depends_on_id
               ? `milestone-${item.depends_on_id}`
