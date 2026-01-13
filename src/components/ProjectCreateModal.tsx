@@ -7,7 +7,6 @@ import {
   Select,
   Slide,
   TextField,
-  Typography,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { X } from "lucide-react";
@@ -24,7 +23,6 @@ import AddMilestoneForm from "./AddMilestoneForm";
 import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
 import MuiMultiSelect from "./MuiMultiSelect";
-import { Mention, MentionsInput } from "react-mentions";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -99,87 +97,6 @@ const calculateDuration = (startDate: string, endDate: string): string => {
       ) + 1;
     return `${days}d : 0h : 0m`;
   }
-};
-
-const mentionStyles = {
-  control: {
-    fontSize: 14,
-    backgroundColor: "white",
-    minHeight: 40,
-  },
-  highlighter: {
-    overflow: "hidden",
-  },
-  input: {
-    margin: 0,
-    padding: "8px 14px",
-    outline: "none",
-    border: "1px solid rgba(0, 0, 0, 0.23)",
-    borderRadius: "4px",
-  },
-  suggestions: {
-    list: {
-      backgroundColor: "white",
-      border: "1px solid #ccc",
-      fontSize: 14,
-      zIndex: 100,
-      maxHeight: "150px",
-      overflowY: "auto" as const,
-      borderRadius: "4px",
-    },
-    item: {
-      padding: "5px 10px",
-      borderBottom: "1px solid #eee",
-      cursor: "pointer",
-    },
-    itemFocused: {
-      backgroundColor: "#01569E",
-      color: "white",
-      fontWeight: "bold",
-    },
-  },
-};
-
-const descriptionMentionStyles = {
-  control: {
-    fontSize: 14,
-    backgroundColor: "white",
-    minHeight: 100,
-  },
-  highlighter: {
-    overflow: "hidden",
-    padding: "8px 14px",
-    border: "1px solid transparent",
-  },
-  input: {
-    margin: 0,
-    padding: "8px 14px",
-    outline: "none",
-    border: "1px solid rgba(0, 0, 0, 0.23)",
-    borderRadius: "4px",
-    minHeight: 100,
-  },
-  suggestions: {
-    list: {
-      backgroundColor: "white",
-      border: "1px solid #ccc",
-      fontSize: 14,
-      zIndex: 100,
-      maxHeight: "150px",
-      overflowY: "auto" as const,
-      borderRadius: "4px",
-    },
-    item: {
-      padding: "5px 10px",
-      borderBottom: "1px solid #eee",
-      cursor: "pointer",
-    },
-    itemFocused: {
-      backgroundColor: "#01569E",
-      color: "white",
-      fontWeight: "bold",
-    },
-  },
 };
 
 const ProjectCreateModal = ({
@@ -393,22 +310,6 @@ const ProjectCreateModal = ({
     }
   };
 
-  const mentionData =
-    owners.length > 0
-      ? owners.map((user: any) => ({
-        id: user.id?.toString() || user.user_id?.toString(),
-        display: user.full_name || user.name || "Unknown User",
-      }))
-      : [];
-
-  const tagData =
-    tags.length > 0
-      ? tags.map((tag: any) => ({
-        id: tag.id?.toString(),
-        display: tag.name,
-      }))
-      : [];
-
   return (
     <Dialog
       open={openDialog}
@@ -448,33 +349,22 @@ const ProjectCreateModal = ({
               <form onSubmit={handleSubmit}>
                 <div className="max-w-[90%] mx-auto pr-3">
                   <div className="mt-4 space-y-2">
-                    <div>
-                      <Typography variant="subtitle2" className="mb-2 font-medium">
-                        Title <span className="text-red-500">*</span>
-                      </Typography>
-                      <MentionsInput
-                        value={formData.title}
-                        onChange={(e, newValue) => setFormData({ ...formData, title: newValue })}
-                        placeholder="Type @ to mention users. Type # to mention tags"
-                        style={mentionStyles}
-                        className="mentions-title"
-                      >
-                        <Mention
-                          trigger="@"
-                          data={mentionData}
-                          markup="@[__display__](__id__)"
-                          displayTransform={(id, display) => `@${display} `}
-                          appendSpaceOnAdd
-                        />
-                        <Mention
-                          trigger="#"
-                          data={tagData}
-                          markup="#[__display__](__id__)"
-                          displayTransform={(id, display) => `#${display} `}
-                          appendSpaceOnAdd
-                        />
-                      </MentionsInput>
-                    </div>
+                    <TextField
+                      label={
+                        <>
+                          Project Title<span className="text-[#c72030]">*</span>
+                        </>
+                      }
+                      name="title"
+                      placeholder="Enter Project Title"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.title}
+                      onChange={handleChange}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                   </div>
 
                   <div className="flex justify-between my-4">
@@ -507,36 +397,43 @@ const ProjectCreateModal = ({
                   </div>
 
                   <div className="mt-4 space-y-2 h-[100px]">
-                    <div>
-                      <Typography variant="subtitle2" className="font-medium">
-                        Description
-                      </Typography>
-                      <MentionsInput
-                        value={formData.description}
-                        onChange={(e, newValue) => setFormData({ ...formData, description: newValue })}
-                        placeholder="Type @ to mention users. Type # to mention tags"
-                        style={descriptionMentionStyles}
-                        className="mentions-description"
-                      >
-                        <Mention
-                          trigger="@"
-                          data={mentionData}
-                          markup="@[__display__](__id__)"
-                          displayTransform={(id, display) => `@${display} `}
-                          appendSpaceOnAdd
-                        />
-                        <Mention
-                          trigger="#"
-                          data={tagData}
-                          markup="#[__display__](__id__)"
-                          displayTransform={(id, display) => `#${display} `}
-                          appendSpaceOnAdd
-                        />
-                      </MentionsInput>
-                    </div>
+                    <TextField
+                      label={
+                        <>
+                          Description<span className="text-[#c72030]">*</span>
+                        </>
+                      }
+                      name="description"
+                      placeholder=""
+                      fullWidth
+                      variant="outlined"
+                      multiline
+                      minRows={2}
+                      value={formData.description}
+                      onChange={handleChange}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
+                    />
                   </div>
 
-                  <div className="flex items-start gap-4 mt-6">
+                  <div className="flex items-start gap-4 mt-3">
                     <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
                       <InputLabel shrink>
                         Select Owner<span className="text-[#c72030]">*</span>
