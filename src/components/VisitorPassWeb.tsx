@@ -293,68 +293,68 @@ I acknowledge and agree that this obligation of confidentiality applies both dur
           <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-700">
             {/* Row 1: Host Name (left) / Visitor Pass ID (right) */}
             <div className="min-w-0">
-              <div className="text-xs text-gray-500">Host Name :</div>
+              <div className="text-xs text-gray-500">Host Name:</div>
               <div className="font-medium text-[12px]">{host}</div>
             </div>
 
             <div className="pl-10">
-              <div className="text-xs text-gray-500">Visitor Pass ID :</div>
+              <div className="text-xs text-gray-500">Visitor Pass ID:</div>
               <div className="font-medium text-[12px]">{passId}</div>
             </div>
 
             {/* Row 2: Visitor Number (left) / Purpose (right) */}
             <div>
-              <div className="text-xs text-gray-500">Visitor Number :</div>
+              <div className="text-xs text-gray-500">Visitor Number:</div>
               <div className="font-medium text-[12px]">{room}</div>
             </div>
 
             <div className="pl-10">
-              <div className="text-xs text-gray-500">Purpose :</div>
+              <div className="text-xs text-gray-500">Purpose:</div>
               <div className="font-medium text-[12px]">{purpose}</div>
             </div>
 
             {/* Row 3: Visit Date / Expected Time */}
             <div>
-              <div className="text-xs text-gray-500">Visit Date :</div>
+              <div className="text-xs text-gray-500">Visit Date:</div>
               <div className="font-medium text-[12px]">{visitDate}</div>
             </div>
 
             <div className="pl-10">
-              <div className="text-xs text-gray-500">Expected Time :</div>
+              <div className="text-xs text-gray-500">Expected Time:</div>
               <div className="font-medium text-[12px]">{timeSlot}</div>
             </div>
 
             {/* Row 4: Visitor Email ID / Additional Visitor */}
             <div>
-              <div className="text-xs text-gray-500">Visitor Email ID :</div>
+              <div className="text-xs text-gray-500">Visitor Email ID:</div>
               <div className="font-medium text-[12px] break-words whitespace-normal">{email}</div>
             </div>
 
             <div className="pl-10">
-              <div className="text-xs text-gray-500">Additional Visitor :</div>
+              <div className="text-xs text-gray-500">Additional Visitor:</div>
               <div className="font-medium text-[12px]">{additionalVisitors}</div>
             </div>
 
             {/* Row 5: Coming From / To */}
             <div>
-              <div className="text-xs text-gray-500">Coming From :</div>
+              <div className="text-xs text-gray-500">Coming From:</div>
               <div className="font-medium text-[12px]">{location}</div>
             </div>
 
             <div className="pl-10">
-              <div className="text-xs text-gray-500">To :</div>
+              <div className="text-xs text-gray-500">To:</div>
               <div className="font-medium text-[12px]">{data?.visit_to ?? "-"}</div>
             </div>
 
             {/* Row 6: Assets carried on the left */}
             <div className="col-span-2 sm:col-span-1">
-              <div className="text-xs text-gray-500">Assets carried :</div>
+              <div className="text-xs text-gray-500">Assets carried:</div>
               <div className="font-medium text-[12px]">{assets}</div>
             </div>
             <div />
           </div>
           <div className="mt-3 rounded text-[12px] text-[#C72030]">
-            Important : Please present this pass along with a valid government
+            Important: Please present this pass along with a valid government
             ID at the security desk.
           </div>
         </div>

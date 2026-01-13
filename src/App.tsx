@@ -888,6 +888,7 @@ import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
 import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
+import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1153,6 +1154,10 @@ function App() {
                 <Route
                   path="/visitor/gatepass/:token"
                   element={<VisitorPassWeb />}
+                />
+                <Route
+                  path="/visitor/sharing-form"
+                  element={<VisitorSharingFormWeb />}
                 />
 
                 <Route
