@@ -1,11 +1,15 @@
 import React, { useEffect, useRef } from "react";
-import { X, Plus, FolderPlus } from "lucide-react";
+import { X, Plus, FolderPlus, Copy, MoveRight } from "lucide-react";
 
 interface AddDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddExisting: () => void;
   onCreateNew: () => void;
+  customLabels?: {
+    addExisting?: string;
+    createNew?: string;
+  };
 }
 
 export const AddDocumentModal: React.FC<AddDocumentModalProps> = ({
@@ -13,6 +17,7 @@ export const AddDocumentModal: React.FC<AddDocumentModalProps> = ({
   onClose,
   onAddExisting,
   onCreateNew,
+  customLabels,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -70,10 +75,14 @@ export const AddDocumentModal: React.FC<AddDocumentModalProps> = ({
             className="flex flex-col items-center gap-1 px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors group"
           >
             <div className="w-10 h-10 rounded-lg bg-[#FFF5F5] flex items-center justify-center group-hover:bg-[#FFE5E5] transition-colors">
-              <Plus className="w-5 h-5 text-[#C72030]" />
+              {customLabels?.addExisting === "Copy" ? (
+                <Copy className="w-5 h-5 text-[#C72030]" />
+              ) : (
+                <Plus className="w-5 h-5 text-[#C72030]" />
+              )}
             </div>
             <span className="text-xs text-gray-700 whitespace-nowrap">
-              Add Document
+              {customLabels?.addExisting || "Add Document"}
             </span>
           </button>
 
@@ -86,10 +95,14 @@ export const AddDocumentModal: React.FC<AddDocumentModalProps> = ({
             className="flex flex-col items-center gap-1 px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors group"
           >
             <div className="w-10 h-10 rounded-lg bg-[#FFF5F5] flex items-center justify-center group-hover:bg-[#FFE5E5] transition-colors">
-              <FolderPlus className="w-5 h-5 text-[#C72030]" />
+              {customLabels?.createNew === "Move" ? (
+                <MoveRight className="w-5 h-5 text-[#C72030]" />
+              ) : (
+                <FolderPlus className="w-5 h-5 text-[#C72030]" />
+              )}
             </div>
             <span className="text-xs text-gray-700 whitespace-nowrap">
-              Create New Document
+              {customLabels?.createNew || "Create New Document"}
             </span>
           </button>
 

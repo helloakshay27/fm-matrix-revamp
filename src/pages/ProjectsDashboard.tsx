@@ -85,7 +85,28 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "completion_percent",
-    label: "Completion Percentage",
+    label: "Project Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "milestoneCompletionPercent",
+    label: "Milestone Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "taskCompletionPercent",
+    label: "Task Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "subtaskCompletionPercent",
+    label: "Subtask Completion %",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -153,10 +174,13 @@ const transformedProjects = (projects: any) => {
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
       milestonesCompleted: project.completed_milestone_count,
+      milestoneCompletionPercent: project.avg_milestone_completion_percent || 0,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
+      taskCompletionPercent: project.avg_task_management_completion_percent || 0,
       subtasks: project.total_sub_task_management_count || 0,
       subtasksCompleted: project.completed_sub_task_management_count || 0,
+      subtaskCompletionPercent: project.avg_sub_task_management_completion_percent || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -729,7 +753,7 @@ export const ProjectsDashboard = () => {
               style={{ width: `${progress}%` }}
             ></div>
             <span className="relative z-10 text-xs font-semibold text-gray-800">
-              {Math.round(progress)}%
+              {progress.toFixed(2)}%
             </span>
           </div>
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
@@ -870,11 +894,41 @@ export const ProjectsDashboard = () => {
       case "completion_percent":
         return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
           <div
-            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
             style={{ width: `${item.completion_percent}%` }}
           ></div>
           <span className="relative z-10 text-xs font-semibold text-gray-800">
             {Math.round(item.completion_percent)}%
+          </span>
+        </div>
+      case "milestoneCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
+            style={{ width: `${item.milestoneCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.milestoneCompletionPercent)}%
+          </span>
+        </div>
+      case "taskCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
+            style={{ width: `${item.taskCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.taskCompletionPercent)}%
+          </span>
+        </div>
+      case "subtaskCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            style={{ width: `${item.subtaskCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.subtaskCompletionPercent)}%
           </span>
         </div>
       default:
