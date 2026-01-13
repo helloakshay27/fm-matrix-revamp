@@ -23,7 +23,9 @@ import {
   fetchUserAvailability,
 } from "@/store/slices/projectTasksSlice";
 import {
+  Checkbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -37,6 +39,7 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
+import { RecurringTaskModal } from "./RecurringTaskModal";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -72,6 +75,7 @@ const TaskForm = ({
   setStartDate,
   endDate,
   setEndDate,
+  setIsModalOpen,
 }) => {
   console.log(users)
   const { data: userAvailabilityData } = useAppSelector(
@@ -524,7 +528,22 @@ const TaskForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={formData.isRecurring}
+            onChange={(e) => {
+              setFormData({ ...formData, isRecurring: e.target.checked });
+              if (e.target.checked) {
+                setIsModalOpen(true);
+              }
+            }}
+          />
+        }
+        label="Recurring Task"
+      />
+
+      <div className="grid grid-cols-2 gap-3 my-3">
         <div>
           <label className="block text-xs text-gray-700 mb-1">
             Target Date<span className="text-red-500">*</span>
@@ -794,6 +813,9 @@ const ProjectTaskCreateModal = ({
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [dateWiseHours, setDateWiseHours] = useState([]);
   const [startDate, setStartDate] = useState(null);
+  const [recurringData, setRecurringData] = useState(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [endDate, setEndDate] = useState(() => {
     const targetDate = prefillData?.target_date;
     if (!targetDate) return null;
@@ -841,6 +863,7 @@ const ProjectTaskCreateModal = ({
     priority: "",
     observer: [],
     tags: selectedTags || [],
+    isRecurring: false
   });
 
   console.log(members)
@@ -947,6 +970,7 @@ const ProjectTaskCreateModal = ({
         priority: taskData.priority || "",
         observer: mappedObservers,
         tags: mappedTags,
+        isRecurring: false,
       });
       setStartDate({
         date: new Date(taskData.expected_start_date).getDate(),
@@ -1056,6 +1080,7 @@ const ProjectTaskCreateModal = ({
         priority: "",
         observer: [],
         tags: [],
+        isRecurring: false,
       });
       setPrevTags([]);
       setPrevObservers([]);
@@ -1120,6 +1145,10 @@ const ProjectTaskCreateModal = ({
     }
   };
 
+  const handleSave = (data) => {
+    console.log('Recurring task settings:', data);
+  };
+
   return (
     <form
       className="pb-20 overflow-y-auto text-[12px]"
@@ -1156,6 +1185,7 @@ const ProjectTaskCreateModal = ({
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
+            setIsModalOpen={setIsModalOpen}
           />
         ))}
 
@@ -1188,8 +1218,16 @@ const ProjectTaskCreateModal = ({
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
+            setIsModalOpen={setIsModalOpen}
           />
         )}
+
+        <RecurringTaskModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSave}
+          initialData={recurringData}
+        />
 
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white text-[12px]">
           <button

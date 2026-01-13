@@ -1,16 +1,23 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 import createApiSlice from "../api/apiSlice";
 
 export const fetchProjectTasks = createAsyncThunk(
     "fetchProjectTasks",
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json?q[milestone_id_eq]=${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/task_managements.json?q[milestone_id_eq]=${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/task_managements.json?q[milestone_id_eq]=${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to fetch project tasks'
@@ -26,15 +33,21 @@ export const fetchKanbanTasksOfProject = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const url = id
-                ? `https://${baseUrl}/task_managements/kanban.json?q[project_management_id_eq]=${id}`
-                : `https://${baseUrl}/task_managements/kanban.json`;
+            const endpoint = id
+                ? `/task_managements/kanban.json?q[project_management_id_eq]=${id}`
+                : `/task_managements/kanban.json`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}${endpoint}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+                : await baseClient.get(endpoint, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
             return response.data;
         } catch (error) {
@@ -49,11 +62,17 @@ export const createProjectTask = createAsyncThunk(
     "createProjectTask",
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`https://${baseUrl}/task_managements.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/task_managements.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.post(`/task_managements.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             return rejectWithValue(error)
@@ -65,11 +84,17 @@ export const editProjectTask = createAsyncThunk(
     "editProjectTask",
     async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/task_managements/${id}.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/task_managements/${id}.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.put(`/task_managements/${id}.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error
@@ -82,11 +107,17 @@ export const updateTaskStatus = createAsyncThunk(
     "updateTaskStatus",
     async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/task_managements/${id}/update_status.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/task_managements/${id}/update_status.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.put(`/task_managements/${id}/update_status.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error
@@ -97,11 +128,17 @@ export const updateTaskStatus = createAsyncThunk(
 
 export const fetchProjectTasksById = createAsyncThunk('fetchProjectTasksById', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`https://${baseUrl}/task_managements/${id}.json`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
+        const response = baseUrl
+            ? await axios.get(`https://${baseUrl}/task_managements/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            : await baseClient.get(`/task_managements/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
         return response.data;
     }
     catch (error) {
@@ -114,12 +151,19 @@ export const filterTasks = createAsyncThunk(
     async ({ token, baseUrl, params }: { token: string, baseUrl: string, params: any }, { rejectWithValue }) => {
         console.log(params)
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                params
-            })
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/task_managements.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    params
+                })
+                : await baseClient.get(`/task_managements.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    params
+                })
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to filter tasks'
@@ -130,11 +174,17 @@ export const filterTasks = createAsyncThunk(
 
 export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`https://${baseUrl}/users/${id}/daily_task_load_report.json`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
+        const response = baseUrl
+            ? await axios.get(`https://${baseUrl}/users/${id}/daily_task_load_report.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            : await baseClient.get(`/users/${id}/daily_task_load_report.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
         return response.data;
     }
     catch (error) {
@@ -145,11 +195,17 @@ export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', a
 
 export const fetchTargetDateTasks = createAsyncThunk('fetchTargetDateTasks', async ({ baseUrl, token, id, date }: { baseUrl: string, token: string, id: string, date: string }, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`https://${baseUrl}/task_managements/filtered_tasks.json?allocation_date=${date}&responsible_person_id=${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        });
+        const response = baseUrl
+            ? await axios.get(`https://${baseUrl}/task_managements/filtered_tasks.json?allocation_date=${date}&responsible_person_id=${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            : await baseClient.get(`/task_managements/filtered_tasks.json?allocation_date=${date}&responsible_person_id=${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
 
         return response.data;
     } catch (error) {
@@ -161,11 +217,17 @@ export const createTaskDependency = createAsyncThunk(
     'createTaskDependency',
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`https://${baseUrl}/task_dependencies.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/task_dependencies.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.post(`/task_dependencies.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to create dependency'
@@ -178,11 +240,17 @@ export const updateTaskDependency = createAsyncThunk(
     'updateTaskDependency',
     async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/task_dependencies/${id}.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/task_dependencies/${id}.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.put(`/task_dependencies/${id}.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to update dependency'
@@ -195,11 +263,17 @@ export const deleteTaskDependency = createAsyncThunk(
     'deleteTaskDependency',
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`https://${baseUrl}/task_dependencies/${id}.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.delete(`https://${baseUrl}/task_dependencies/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.delete(`/task_dependencies/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to delete dependency'
