@@ -96,6 +96,20 @@ const statusOptions = [
     { value: "overdue", label: "Overdue" },
 ]
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+    id: "id",
+    milestone_code: "milestone_code",
+    title: "title",
+    status: "status",
+    owner: "owner_name",
+    completion_percent: "completion_percent",
+    tasks: "total_tasks",
+    issues: "total_issues",
+    start_date: "start_date",
+    end_date: "end_date",
+};
+
 const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const { id } = useParams()
     const [searchParams] = useSearchParams();
@@ -143,7 +157,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [sortColumn, setSortColumn] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [loading, setLoading] = useState(false)
 
     const statusColorMap = {
         open: { dot: "bg-blue-500" },
@@ -153,12 +170,24 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         overdue: { dot: "bg-red-500" },
     };
 
-    const getMilestones = async () => {
+    const getMilestones = async (
+        orderBy: string | null = sortColumn,
+        orderDirection: "asc" | "desc" | null = sortDirection
+    ) => {
+        setLoading(true)
         try {
-            const response = await dispatch(fetchMilestones({ token, baseUrl, id })).unwrap();
+            const response = await dispatch(fetchMilestones({
+                token,
+                baseUrl,
+                id,
+                orderBy: orderBy ? (COLUMN_TO_BACKEND_MAP[orderBy] || orderBy) : undefined,
+                orderDirection: orderDirection || undefined
+            })).unwrap();
             setData(response)
         } catch (error) {
             console.log(error)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -198,7 +227,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 id: String(milestoneId),
                 payload: { milestone: { status } }
             })).unwrap();
-            getMilestones();
+            getMilestones(sortColumn, sortDirection);
             toast.success("Milestone status updated successfully");
         } catch (error) {
             console.log(error);
@@ -206,10 +235,28 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         }
     }
 
+    // Handle column sort
+    const handleColumnSort = (columnKey: string) => {
+        let newDirection: "asc" | "desc" | null;
+
+        // Cycle through: asc -> desc -> null -> asc
+        if (sortColumn === columnKey) {
+            newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+        } else {
+            newDirection = "asc";
+        }
+
+        setSortColumn(newDirection ? columnKey : null);
+        setSortDirection(newDirection);
+
+        // Fetch with new sort
+        getMilestones(newDirection ? columnKey : null, newDirection);
+    };
+
     useEffect(() => {
-        getMilestones();
+        getMilestones(sortColumn, sortDirection);
         getOwners();
-    }, [])
+    }, [sortColumn, sortDirection])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -583,7 +630,9 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 renderCell={renderCell}
                 leftActions={leftActions}
                 rightActions={rightActions}
-                storageKey="projects-table"
+                storageKey="milestone-table"
+                onSort={handleColumnSort}
+                loading={loading}
                 // onFilterClick={() => { }}
                 canAddRow={true}
                 readonlyColumns={["id", "tasks"]}
