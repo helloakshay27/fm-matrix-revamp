@@ -162,6 +162,27 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+  id: "id",
+  project_code: "project_code",
+  title: "title",
+  status: "status",
+  type: "project_type_name",
+  manager: "project_owner_name",
+  completion_percent: "completion_percent",
+  milestoneCompletionPercent: "avg_milestone_completion_percent",
+  taskCompletionPercent: "avg_task_management_completion_percent",
+  subtaskCompletionPercent: "avg_sub_task_management_completion_percent",
+  milestones: "total_milestone_count",
+  tasks: "total_task_management_count",
+  subtasks: "total_sub_task_management_count",
+  issues: "total_issues_count",
+  start_date: "start_date",
+  end_date: "end_date",
+  priority: "priority",
+};
+
 const transformedProjects = (projects: any) => {
   return projects.map((project: any) => {
     return {
@@ -298,6 +319,8 @@ export const ProjectsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false)
@@ -333,7 +356,9 @@ export const ProjectsDashboard = () => {
       page = 1,
       filterString = "",
       isLoadMore = false,
-      searchQuery = ""
+      searchQuery = "",
+      orderBy = sortColumn,
+      orderDirection = sortDirection
     ) => {
       // Guard: don't proceed if token is not available
       if (!token) {
@@ -363,6 +388,12 @@ export const ProjectsDashboard = () => {
         if (searchQuery && searchQuery.trim() !== "") {
           const searchFilter = `q[title_or_project_type_name_or_project_owner_name_cont]=${encodeURIComponent(searchQuery.trim())}`;
           filters += (filters ? "&" : "") + searchFilter + "&";
+        }
+
+        // Add sorting parameters
+        if (orderBy && orderDirection) {
+          const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+          filters += (filters ? "&" : "") + `order_by=${backendFieldName}&order_direction=${orderDirection}`;
         }
 
         filters +=
@@ -421,7 +452,7 @@ export const ProjectsDashboard = () => {
         setScrollLoading(false);
       }
     },
-    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl]
+    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl, sortColumn, sortDirection]
   );
 
   useEffect(() => {
@@ -712,13 +743,33 @@ export const ProjectsDashboard = () => {
           payload: { project_management: { status } },
         })
       ).unwrap();
-      fetchData(1, "", false, debouncedSearchTerm);
+      fetchData(1, "", false, debouncedSearchTerm, sortColumn, sortDirection);
       setCurrentPage(1);
       setHasMore(true);
       toast.success("Project status changed successfully");
     } catch (error) {
       console.log(error);
     }
+  };
+
+  // Handle column sort
+  const handleColumnSort = (columnKey: string) => {
+    let newDirection: "asc" | "desc" | null;
+
+    // Cycle through: asc -> desc -> null -> asc
+    if (sortColumn === columnKey) {
+      newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+    } else {
+      newDirection = "asc";
+    }
+
+    setSortColumn(newDirection ? columnKey : null);
+    setSortDirection(newDirection);
+
+    // Reset to page 1 and fetch with new sort
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchData(1, "", false, debouncedSearchTerm, newDirection ? columnKey : null, newDirection);
   };
 
   const renderCell = (item: any, columnKey: string) => {
@@ -1275,6 +1326,7 @@ export const ProjectsDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="projects-table"
+        onSort={handleColumnSort}
         onFilterClick={() => setIsFilterModalOpen(true)}
         canAddRow={true}
         readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
