@@ -178,7 +178,7 @@ export const MobileSurveyThankYou: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-xs p-2 text-gray-700 font-medium">
-          {state?.rating && state.rating < 3
+          {state?.rating && state.rating < 4
             ? "We regret the inconvenience and assure you that washroom services will be improved."
             : "Helping us to improve!"}
         </p>
