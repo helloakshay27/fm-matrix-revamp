@@ -1,16 +1,24 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import axios from "axios"
+import { baseClient } from "@/utils/withoutTokenBase"
 import createApiSlice from "../api/apiSlice"
 
 export const fetchProjects = createAsyncThunk(
     'fetchProjects',
     async ({ token, baseUrl }: { token: string, baseUrl: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/project_managements.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            // Use baseClient for mobile flow (when baseUrl not available)
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_managements.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/project_managements.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
 
             return response.data
         } catch (error) {
@@ -23,11 +31,18 @@ export const createProject = createAsyncThunk(
     'createProject',
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`https://${baseUrl}/project_managements.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            // Use baseClient for mobile flow (when baseUrl not available)
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/project_managements.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.post(`/project_managements.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to create project'
@@ -43,14 +58,25 @@ export const fetchKanbanProjects = createAsyncThunk('fetchKanbanProjects', async
             'q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]',
             JSON.parse(localStorage.getItem('user')).id
         );
-        const response = await axios.get(
-            `https://${baseUrl}/project_managements/project_kanban.json?${params.toString()}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+
+        // Use baseClient for mobile flow (when baseUrl not available)
+        const response = baseUrl
+            ? await axios.get(
+                `https://${baseUrl}/project_managements/project_kanban.json?${params.toString()}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+            : await baseClient.get(
+                `/project_managements/project_kanban.json?${params.toString()}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
         return response.data;
     } catch (error) {
@@ -63,11 +89,18 @@ export const fetchProjectById = createAsyncThunk(
     'fetchProjectById',
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            // Use baseClient for mobile flow (when baseUrl not available)
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/project_managements/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to get project'
@@ -80,11 +113,18 @@ export const changeProjectStatus = createAsyncThunk(
     'changeProjectStatus',
     async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/project_managements/${id}.json`, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            // Use baseClient for mobile flow (when baseUrl not available)
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/project_managements/${id}.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.put(`/project_managements/${id}.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to change project status'
@@ -127,14 +167,25 @@ export const filterProjects = createAsyncThunk(
     async ({ baseUrl, token, filters }: { baseUrl: string, token: string, filters: any }, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams(filters).toString();
-            const response = await axios.get(
-                `https://${baseUrl}/project_managements.json?${params}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+
+            // Use baseClient for mobile flow (when baseUrl not available)
+            const response = baseUrl
+                ? await axios.get(
+                    `https://${baseUrl}/project_managements.json?${params}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                )
+                : await baseClient.get(
+                    `/project_managements.json?${params}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
             return response.data;
         } catch (error) {

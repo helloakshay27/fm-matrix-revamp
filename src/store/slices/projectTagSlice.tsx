@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 
 interface ProjectTag {
     id: number;
@@ -23,7 +24,7 @@ const initialState: ProjectTagState = {
 };
 
 const getHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('mobile_token') || localStorage.getItem('token');
     return {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -37,9 +38,13 @@ export const fetchProjectsTags = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = getBaseUrl();
-            const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/company_tags.json`, {
+                    headers: getHeaders()
+                })
+                : await baseClient.get(`/company_tags.json`, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to get tags');
@@ -53,9 +58,13 @@ export const createProjectsTags = createAsyncThunk(
         try {
             const baseUrl = getBaseUrl();
             const payload = data.company_tag ? data : { company_tag: data };
-            const response = await axios.post(`https://${baseUrl}/company_tags.json`, payload, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/company_tags.json`, payload, {
+                    headers: getHeaders()
+                })
+                : await baseClient.post(`/company_tags.json`, payload, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to create tags');
@@ -69,9 +78,13 @@ export const updateProjectsTags = createAsyncThunk(
         try {
             const baseUrl = getBaseUrl();
             const payload = data.company_tag ? data : { company_tag: data };
-            const response = await axios.put(`https://${baseUrl}/company_tags/${id}.json`, payload, {
-                headers: getHeaders()
-            });
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/company_tags/${id}.json`, payload, {
+                    headers: getHeaders()
+                })
+                : await baseClient.put(`/company_tags/${id}.json`, payload, {
+                    headers: getHeaders()
+                });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || error.message || 'Failed to update tags');

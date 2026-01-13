@@ -1,16 +1,23 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 import createApiSlice from "../api/apiSlice";
 
 export const createMilestone = createAsyncThunk(
     "createMilestone",
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`https://${baseUrl}/milestones.json`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.post(`https://${baseUrl}/milestones.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.post(`/milestones.json`, data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to create milestone'
@@ -23,11 +30,17 @@ export const fetchMilestones = createAsyncThunk(
     "fetchMilestones",
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/milestones.json?q[project_management_id_eq]=${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/milestones.json?q[project_management_id_eq]=${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/milestones.json?q[project_management_id_eq]=${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to fetch milestones'
@@ -40,11 +53,17 @@ export const fetchMilestoneById = createAsyncThunk(
     "fetchMilestoneById",
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/milestones/${id}.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/milestones/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/milestones/${id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             return rejectWithValue(error)
@@ -56,11 +75,17 @@ export const updateMilestoneStatus = createAsyncThunk(
     "updateMilestoneStatus",
     async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://${baseUrl}/milestones/${id}.json`, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.put(`https://${baseUrl}/milestones/${id}.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.put(`/milestones/${id}.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to update milestone status'
@@ -73,11 +98,17 @@ export const fetchDependentMilestones = createAsyncThunk(
     "fetchDependentMilestones",
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/milestones/${id}/dependent_milestones.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/milestones/${id}/dependent_milestones.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                : await baseClient.get(`/milestones/${id}/dependent_milestones.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
             return response.data
         } catch (error) {
             const message = error.response?.data?.error || error.error || 'Failed to fetch dependent milestones'
