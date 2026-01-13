@@ -1,9 +1,59 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react";
-import { Download, Eye, Search } from "lucide-react";
+import { Download, Eye, Search, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
+// Overdue Reason Modal Component
+const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for the overdue task');
+            return;
+        }
+        onSubmit(reason);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Task Overdue</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">This task is overdue. Please provide a reason for the overdue status.</p>
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Enter reason..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    rows={4}
+                />
+                <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-500 hover:bg-blue-600">
+                        {isLoading ? 'Submitting...' : 'Submit'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ProjectTasksMobileView = () => {
     const navigate = useNavigate();
@@ -55,6 +105,12 @@ const ProjectTasksMobileView = () => {
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Overdue Modal State
+    const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+    const [overdueTaskId, setOverdueTaskId] = useState<number | null>(null);
+    const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
+    const [isOverdueLoading, setIsOverdueLoading] = useState(false);
 
     // Fetch tasks from API
     const fetchTasks = useCallback(async (page = 1, search = "") => {
@@ -122,6 +178,98 @@ const ProjectTasksMobileView = () => {
             fetchTasks(1, searchTerm);
         }
     }, [storedToken, mid, searchTerm, fetchTasks]);
+
+    // Check if task is overdue
+    const isTaskOverdue = (date: string | Date) => {
+        const now = new Date();
+        const taskDate = typeof date === 'string' ? new Date(date) : date;
+        taskDate.setHours(23, 59, 59, 999);
+        return now > taskDate;
+    };
+
+    // Handle completion percentage change
+    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+        const percentage = Number(completionPercentage);
+
+        // Validate percentage
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            toast.error('Please enter a valid percentage (0-100)');
+            return;
+        }
+
+        // Find the task to check if it's overdue
+        const task = tasks.find(t => t.id === id);
+        if (!task) {
+            toast.error('Task not found');
+            return;
+        }
+
+        // Check if task is overdue
+        if (isTaskOverdue(new Date(task.endDate))) {
+            setOverdueTaskId(id);
+            setPendingCompletionPercentage(percentage);
+            setIsOverdueModalOpen(true);
+        } else {
+            await updateTaskCompletion(id, percentage, null);
+        }
+    };
+
+    // Update task completion
+    const updateTaskCompletion = async (id: number, percentage: number, overdueReason: string | null) => {
+        try {
+            const payload: any = {
+                task_management: {
+                    completion_percentage: percentage,
+                }
+            };
+
+            if (overdueReason) {
+                payload.task_management.overdue_reason = overdueReason;
+            }
+
+            const response = baseUrl
+                ? await axios.patch(
+                    `https://${baseUrl}/task_managements/${id}.json`,
+                    payload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${storedToken}`,
+                        },
+                    }
+                )
+                : null;
+
+            if (response) {
+                toast.success('Task completion updated successfully');
+                // Update local state
+                setTasks((prev) =>
+                    prev.map((task) =>
+                        task.id === id ? { ...task, completionPercent: percentage } : task
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Error updating task completion:', error);
+            toast.error('Failed to update task completion');
+        }
+    };
+
+    // Handle overdue reason submission
+    const handleOverdueReasonSubmit = async (reason: string) => {
+        if (!overdueTaskId) return;
+
+        setIsOverdueLoading(true);
+        try {
+            await updateTaskCompletion(overdueTaskId, pendingCompletionPercentage, reason);
+            setIsOverdueModalOpen(false);
+            setOverdueTaskId(null);
+            setPendingCompletionPercentage(0);
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsOverdueLoading(false);
+        }
+    };
 
     // Transform status to match card display
     const transformStatus = (status: string): string => {
@@ -216,9 +364,20 @@ const ProjectTasksMobileView = () => {
 
                                 {/* Completion and Dates */}
                                 <div className="mb-4 pb-4 border-b border-gray-200">
-                                    <p className="text-sm text-gray-700 mb-2">
-                                        <span className="font-semibold">Progress :</span> {task.completionPercent || 0}%
-                                    </p>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm text-gray-700">
+                                            <span className="font-semibold">Progress :</span> {task.completionPercent || 0}%
+                                        </span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={task.completionPercent || 0}
+                                            onChange={(e) => handleCompletionPercentageChange(task.id, e.target.value)}
+                                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="0"
+                                        />
+                                    </div>
                                     <div className="flex gap-2 text-xs text-gray-600">
                                         <span>{task.startDate ? new Date(task.startDate).toLocaleDateString("en-GB") : "-"}</span>
                                         <span>→</span>
@@ -253,6 +412,18 @@ const ProjectTasksMobileView = () => {
                     </div>
                 )}
             </div>
+
+            {/* Overdue Reason Modal */}
+            <OverdueReasonModal
+                isOpen={isOverdueModalOpen}
+                onClose={() => {
+                    setIsOverdueModalOpen(false);
+                    setOverdueTaskId(null);
+                    setPendingCompletionPercentage(0);
+                }}
+                onSubmit={handleOverdueReasonSubmit}
+                isLoading={isOverdueLoading}
+            />
         </div>
     )
 }

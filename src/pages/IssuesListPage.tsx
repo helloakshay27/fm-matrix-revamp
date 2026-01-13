@@ -247,7 +247,7 @@ const IssuesListPage = ({
             project_id: issue.project_management_id || issue.project_id || "",
             milestone_id: issue.milestone_id || "",
             task_id: issue.task_management_id || issue.task_id || "",
-            comment: issue.comments[issue.comments.length - 1].body || "",
+            comment: issue.comments[issue.comments.length - 1]?.body || "",
         };
     };
 
