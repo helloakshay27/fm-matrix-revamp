@@ -1946,16 +1946,6 @@ export const MobileSurveyLanding: React.FC = () => {
                   <h1 className="text-xl font-bold text-black/100 mb-2">
                     {surveyData.survey_title}
                   </h1>
-                  {!showGenericTags && !isLastStep && (
-                    <span className="text-sm text-black/80 font-medium">
-                      Question{" "}
-                      {Math.min(
-                        currentQuestionIndex + 1,
-                        surveyData.snag_checklist.questions_count
-                      )}
-                      /{surveyData.snag_checklist.questions_count}
-                    </span>
-                  )}
                 </div>
 
                 {/* Show Final Description Step */}
