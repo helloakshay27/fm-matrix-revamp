@@ -1015,6 +1015,7 @@ const modulesByPackage = {
         subItems: [
           { name: "Manual Journals ", href: "/settings/manual-journal" },
             { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+             { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
           // {
           //   name: "Escalation Matrix",
           //   href: "/settings/ticket-management/escalation-matrix",

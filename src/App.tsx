@@ -808,6 +808,7 @@ import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboar
 import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
+import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1606,21 +1607,25 @@ function App() {
                   />
 
                    <Route
-                    path="settings/manual-journal"
+                    path="/settings/manual-journal"
                     element={<ManualJournalDashboard />}
                   />
                   <Route
-                    path="settings/manual-journal/add"
+                    path="/settings/manual-journal/add"
                     element={<ManualJournalAdd/>}
                   />
 
                     <Route
-                    path="settings/recurring-journal"
+                    path="/settings/recurring-journal"
                     element={<RecurringJournalDashboard />}
                   />
                   <Route
-                    path="settings/recurring-journal/add"
+                    path="/settings/recurring-journal/add"
                     element={<RecurringJournalAdd/>}
+                  />
+                  <Route
+                    path="/settings/chart-journal"
+                    element={<ChartOfAccountsDashboard/>}
                   />
 
 

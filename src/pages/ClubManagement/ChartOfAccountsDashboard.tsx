@@ -1,29 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import AddChartofAccountModal from './AddChartofAccountModal';
 import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
-// Example usage of Input for your form fields:
-// <Input
-//   label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="date"
-//   value={date}
-//   onChange={e => setDate(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="number"
-//   value={journalNo}
-//   onChange={e => setJournalNo(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label="Reference#"
-//   value={reference}
-//   onChange={e => setReference(e.target.value)}
-//   className="w-full"
-// />
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -117,7 +94,7 @@ interface GroupMembershipData {
   } | null;
 }
 
-export const ManualJournalDashboard = () => {
+export const ChartOfAccountsDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
@@ -132,8 +109,7 @@ export const ManualJournalDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
-  const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
+  const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
@@ -528,8 +504,14 @@ export const ManualJournalDashboard = () => {
   };
 
   // Handle membership type selection and navigation
-  const handleAddMembership = () => {
-    navigate('/settings/manual-journal/add');
+  const handleAddAccount = () => {
+    setIsAddAccountOpen(true);
+  };
+
+  const handleSaveAccount = (data: any) => {
+    // TODO: Implement save logic (API call)
+    setIsAddAccountOpen(false);
+    toast.success('Account created successfully!');
   };
 
   // Render membership status badge
@@ -569,34 +551,14 @@ export const ManualJournalDashboard = () => {
   };
 
   // Define columns for EnhancedTable
-  // const columns = [
-  //   { key: 'actions', label: 'Actions', sortable: false },
-  //   { key: 'id', label: 'Group ID', sortable: true },
-  //   { key: 'membership_plan_id', label: 'Plan ID', sortable: true },
-  //   { key: 'member_count', label: 'Members', sortable: false },
-  //   { key: 'member_names', label: 'Member Names', sortable: false },
-  //   { key: 'member_emails', label: 'Emails', sortable: false },
-  //   { key: 'member_mobiles', label: 'Mobiles', sortable: false },
-  //   { key: 'site_name', label: 'Site Name', sortable: true },
-  //   { key: 'start_date', label: 'Start Date', sortable: true },
-  //   { key: 'end_date', label: 'End Date', sortable: true },
-  //   { key: 'referred_by', label: 'Referred By', sortable: true },
-  //   { key: 'membershipStatus', label: 'Status', sortable: false },
-  //   { key: 'created_at', label: 'Created On', sortable: true }
-  // ];
-
-const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'journal', label: 'Journal', sortable: true },
-  { key: 'reference_number', label: 'Reference Number', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
-  { key: 'notes', label: 'Notes', sortable: false },
-  { key: 'amount', label: 'Amount', sortable: true },
-  { key: 'reporting_method', label: 'Reporting Method', sortable: true }
-];
-
-  
+  const columns = [
+    { key: 'actions', label: 'Action', sortable: false },
+    { key: 'account_name', label: 'Account Name', sortable: true },
+    { key: 'account_code', label: 'Account Code', sortable: true },
+    { key: 'account_type', label: 'Account Type', sortable: true },
+    { key: 'documents', label: 'Documents', sortable: false },
+    { key: 'parent_account_name', label: 'Parent Account Name', sortable: true },
+  ];
 
   // Render cell content
   const renderCell = (item: GroupMembershipData, columnKey: string) => {
@@ -750,13 +712,14 @@ const columns = [
     <div className="flex gap-3">
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleAddMembership}
+        onClick={handleAddAccount}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
     </div>
   );
+      
 
   // Custom right actions
   const renderRightActions = () => (
@@ -867,8 +830,16 @@ const columns = [
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Account Modal */}
+      <AddChartofAccountModal
+        open={isAddAccountOpen}
+        // onClose={() => setIsAddAccountOpen(false)}
+          onOpenChange={setIsAddAccountOpen}
+        onSave={handleSaveAccount}
+      />
     </div>
   );
 };
 
-export default ManualJournalDashboard;
+export default ChartOfAccountsDashboard;
