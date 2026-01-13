@@ -170,7 +170,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const status = data?.vstatus ?? "null";
   const qrCodeUrl =
     data?.qr_code_url ??
-    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
 
   const fullConsent = `I hereby acknowledge that I am visiting Prime Focus Technologies Ltd on a business visit and that, as part of the personal verification process, I will be required to provide my email address, phone number, and government-issued identification details.
 
@@ -220,12 +220,12 @@ I acknowledge and agree that this obligation of confidentiality applies both dur
               </div>
 
               <div className="ml-3 flex-shrink-0">
-                <div className="w-24 h-24 bg-transparent rounded-sm flex items-center justify-center overflow-hidden">
+                <div className="w-28 h-28 bg-transparent rounded-sm flex items-center justify-center overflow-hidden">
                   {/* QR image from API (falls back to generated if missing) */}
                   <img
                     src={qrCodeUrl}
                     alt="QR code"
-                    className="w-20 h-20 object-cover"
+                    className="w-28 h-28 object-cover"
                   />
                 </div>
               </div>
@@ -291,51 +291,67 @@ I acknowledge and agree that this obligation of confidentiality applies both dur
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-700">
+            {/* Row 1: Host Name (left) / Visitor Pass ID (right) */}
             <div className="min-w-0">
               <div className="text-xs text-gray-500">Host Name :</div>
               <div className="font-medium text-[12px]">{host}</div>
             </div>
 
-            <div>
+            <div className="pl-10">
               <div className="text-xs text-gray-500">Visitor Pass ID :</div>
               <div className="font-medium text-[12px]">{passId}</div>
             </div>
 
-            <div className="col-span-2 text-[12px] text-gray-500 mt-0 mb-0 py-0">
-              Visitor Number: <span className="font-medium text-[11px] text-black">{room}</span>
+            {/* Row 2: Visitor Number (left) / Purpose (right) */}
+            <div>
+              <div className="text-xs text-gray-500">Visitor Number :</div>
+              <div className="font-medium text-[12px]">{room}</div>
             </div>
 
-            <div className="space-y-2 min-w-0">
-              <div className="text-xs text-gray-500 mt-2">Visit Date :</div>
+            <div className="pl-10">
+              <div className="text-xs text-gray-500">Purpose :</div>
+              <div className="font-medium text-[12px]">{purpose}</div>
+            </div>
+
+            {/* Row 3: Visit Date / Expected Time */}
+            <div>
+              <div className="text-xs text-gray-500">Visit Date :</div>
               <div className="font-medium text-[12px]">{visitDate}</div>
+            </div>
 
-              <div className="text-xs text-gray-500 mt-2">
-                Visitor Email ID :
-              </div>
-              <div className="font-medium text-[12px] break-words whitespace-normal">
-                {email}
-              </div>
+            <div className="pl-10">
+              <div className="text-xs text-gray-500">Expected Time :</div>
+              <div className="font-medium text-[12px]">{timeSlot}</div>
+            </div>
 
-              <div className="text-xs text-gray-500 mt-2">Assets carried :</div>
-              <div className="font-medium text-[12px]">{assets}</div>
+            {/* Row 4: Visitor Email ID / Additional Visitor */}
+            <div>
+              <div className="text-xs text-gray-500">Visitor Email ID :</div>
+              <div className="font-medium text-[12px] break-words whitespace-normal">{email}</div>
+            </div>
 
-              <div className="mt-3 text-[12px] text-gray-500">Coming From :</div>
+            <div className="pl-10">
+              <div className="text-xs text-gray-500">Additional Visitor :</div>
+              <div className="font-medium text-[12px]">{additionalVisitors}</div>
+            </div>
+
+            {/* Row 5: Coming From / To */}
+            <div>
+              <div className="text-xs text-gray-500">Coming From :</div>
               <div className="font-medium text-[12px]">{location}</div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-xs text-gray-500 mt-2">Expected Time :</div>
-              <div className="font-medium text-[12px]">{timeSlot}</div>
-
-              <div className="text-xs text-gray-500 mt-2">Purpose :</div>
-              <div className="font-medium text-[12px]">{purpose}</div>
-
-              <div className="text-xs text-gray-500 mt-2">Additional Visitor :</div>
-              <div className="font-medium text-[12px]">{additionalVisitors}</div>
-
-              <div className="text-xs text-gray-500 mt-2">To :</div>
+            <div className="pl-10">
+              <div className="text-xs text-gray-500">To :</div>
               <div className="font-medium text-[12px]">{data?.visit_to ?? "-"}</div>
             </div>
+
+            {/* Row 6: Assets carried on the left */}
+            <div className="col-span-2 sm:col-span-1">
+              <div className="text-xs text-gray-500">Assets carried :</div>
+              <div className="font-medium text-[12px]">{assets}</div>
+            </div>
+            <div />
           </div>
           <div className="mt-3 rounded text-[12px] text-[#C72030]">
             Important : Please present this pass along with a valid government
