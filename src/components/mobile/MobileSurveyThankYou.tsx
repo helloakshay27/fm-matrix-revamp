@@ -52,7 +52,6 @@ export const MobileSurveyThankYou: React.FC = () => {
           `survey_mappings/${mappingId}/survey.json`
         );
         const data = response.data;
-        console.log("Survey data fetched for thank you page:", data);
         setSurveyData(data);
       } catch (error) {
         console.error("Failed to fetch survey data for thank you page:", error);
@@ -120,7 +119,7 @@ export const MobileSurveyThankYou: React.FC = () => {
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{
-        backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
+        backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.[0]?.url || "/9019830 1.png"
           })`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -129,31 +128,33 @@ export const MobileSurveyThankYou: React.FC = () => {
       }}
     >
       {/* Logo */}
-      <div className="absolute top-4  mt-10 right-4">
-        <div className="flex justify-between">
-          <div className="flex justify-end item-end">
-            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-              {window.location.origin === "https://oig.gophygital.work" ? (
-                <img
-                  src="/Without bkg.svg"
-                  alt="OIG Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : window.location.origin === "https://web.gophygital.work" ? (
-                <img
-                  src="/PSIPL-logo (1).png"
-                  alt="PSIPL Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="gophygital Logo"
-                  className="w-full h-full object-contain"
-                />
-              )}
-            </div>
-          </div>
+      <div className="absolute top-8 right-6">
+        <div className="w-32 h-32 sm:w-48 sm:h-32 flex items-center justify-center overflow-hidden bg-white/90 rounded-lg shadow-md p-2">
+          {window.location.origin === "https://oig.gophygital.work" ? (
+            <img
+              src="/Without bkg.svg"
+              alt="OIG Logo"
+              className="w-full h-full object-contain"
+            />
+          ) : window.location.origin === "https://web.gophygital.work" ? (
+            <img
+              src="/PSIPL-logo (1).png"
+              alt="PSIPL Logo"
+              className="w-full h-full object-contain"
+            />
+          ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
+            <img
+              src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+              alt="FM Matrix Logo"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <img
+              src="/gophygital-logo-min.jpg"
+              alt="gophygital Logo"
+              className="w-full h-full object-contain"
+            />
+          )}
         </div>
       </div>
 
@@ -176,7 +177,9 @@ export const MobileSurveyThankYou: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-xs p-2 text-gray-700 font-medium">
-          Helping us to improve!
+          {state?.rating && state.rating < 3
+            ? "We regret the inconvenience and assure you that washroom services will be improved."
+            : "Helping us to improve!"}
         </p>
       </div>
     </div>

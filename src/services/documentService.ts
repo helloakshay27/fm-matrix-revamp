@@ -353,22 +353,50 @@ export const createDocument = async (
 };
 
 /**
+ * Document filter interface for Ransack queries
+ */
+export interface DocumentFilters {
+  title?: string;
+  folderName?: string;
+  categoryName?: string;
+  createdBy?: string;
+  fileName?: string;
+  fileType?: string;
+  createdDateFrom?: string;
+  createdDateTo?: string;
+  status?: string;
+}
+
+/**
  * Fetch all folders list
  */
 export const getFoldersList = async (
-  page: number = 1
+  page: number = 1,
+  filters?: DocumentFilters
 ): Promise<FoldersListResponse> => {
   const baseUrl = getBaseUrl();
   const token = getToken();
+
+  // Build Ransack query parameters
+  const queryParams: any = { page };
+
+  if (filters) {
+    if (filters.title) queryParams['q[name_cont]'] = filters.title;
+    if (filters.folderName) queryParams['q[name_cont]'] = filters.folderName;
+    if (filters.categoryName) queryParams['q[document_category_name_cont]'] = filters.categoryName;
+    if (filters.createdBy) queryParams['q[created_by_full_name_cont]'] = filters.createdBy;
+    if (filters.createdDateFrom) queryParams['q[created_at_gteq]'] = filters.createdDateFrom;
+    if (filters.createdDateTo) queryParams['q[created_at_lteq]'] = filters.createdDateTo;
+    if (filters.status === 'active') queryParams['q[active_eq]'] = 'true';
+    if (filters.status === 'inactive') queryParams['q[active_eq]'] = 'false';
+  }
 
   const response = await axios.get(`https://${baseUrl}/folders.json`, {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    params: {
-      page,
-    },
+    params: queryParams,
   });
 
   return response.data;

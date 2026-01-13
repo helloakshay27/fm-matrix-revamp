@@ -199,9 +199,14 @@ export const DocumentManagement = () => {
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
-    createdDate: "",
+    title: "",
+    folderName: "",
+    categoryName: "",
     createdBy: "",
-    category: "",
+    fileName: "",
+    fileType: "",
+    createdDateFrom: "",
+    createdDateTo: "",
     status: "",
   });
 
@@ -210,7 +215,7 @@ export const DocumentManagement = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getFoldersList(currentPage);
+        const response = await getFoldersList(currentPage, filters);
 
         // Transform API response to match Document interface
         const transformedData: Document[] = response.folders
@@ -240,7 +245,7 @@ export const DocumentManagement = () => {
     };
 
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   // Helper function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -282,11 +287,10 @@ export const DocumentManagement = () => {
       case "status":
         return (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              document.status === "Active"
+            className={`px-3 py-1 rounded-full text-xs font-medium ${document.status === "Active"
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
-            }`}
+              }`}
           >
             {document.status}
           </span>
