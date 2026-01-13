@@ -1,13 +1,14 @@
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react";
-import { Download, Eye, LogOut, Search } from "lucide-react";
+import { Download, Eye, Search } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-const ProjectsMobileView = () => {
+const ProjectTasksMobileView = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { id, mid } = useParams();
     const [searchTerm, setSearchTerm] = useState("");
 
     // Extract token, org_id, and user_id from URL
@@ -50,77 +51,77 @@ const ProjectsMobileView = () => {
     const baseUrl = localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
     const storedToken = sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
 
-    const [projects, setProjects] = useState([]);
+    const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Fetch projects from API
-    const fetchProjects = useCallback(async (page = 1, search = "") => {
-        if (!storedToken) {
-            console.warn("⚠️ No token available");
+    // Fetch tasks from API
+    const fetchTasks = useCallback(async (page = 1, search = "") => {
+        if (!storedToken || !mid) {
+            console.warn("⚠️ No token or milestone ID available");
             return;
         }
 
         try {
             setLoading(true);
 
-            let filters = `page=${page}`;
+            let filters = `q[milestone_id_eq]=${mid}&page=${page}`;
 
             // Add search query if provided
             if (search && search.trim() !== "") {
-                filters += `&q[title_or_project_code_or_project_owner_name_cont]=${encodeURIComponent(search.trim())}`;
+                filters += `&q[title_or_task_code_or_responsible_person_name_cont]=${encodeURIComponent(search.trim())}`;
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/project_managements.json?${filters}`,
+                `https://${baseUrl}/task_managements.json?${filters}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${storedToken}`,
                     },
                 }
             );
 
-            const projectsData = response.data?.project_managements || [];
-            const transformedData = projectsData.map((project: any) => ({
-                id: project.id,
-                projectCode: project.project_code,
-                title: project.title,
-                status: project.status,
-                projectType: project.project_type_name,
-                manager: project.project_owner_name,
-                completionPercent: project.completion_percent,
-                startDate: project.start_date,
-                endDate: project.end_date,
-                priority: project.priority,
-                totalMilestones: project.total_milestone_count,
-                totalTasks: project.total_task_management_count,
-                totalSubtasks: project.total_sub_task_management_count,
-                totalIssues: project.total_issues_count,
+            const tasksData = response.data?.task_managements || [];
+            const transformedData = tasksData.map((task: any) => ({
+                id: task.id,
+                taskCode: task.task_code,
+                title: task.title,
+                status: task.status,
+                projectStatus: task.project_status_name,
+                responsible: task.responsible_person_name,
+                completionPercent: task.completion_percentage,
+                startDate: task.expected_start_date,
+                endDate: task.target_date,
+                priority: task.priority,
+                totalSubtasks: task.total_sub_task_count,
+                totalIssues: task.total_issues_count,
+                duration: task.duration,
+                estimatedHours: task.estimated_hour,
             }));
 
-            setProjects(transformedData);
+            setTasks(transformedData);
 
             const paginationData = response.data?.pagination;
             setHasMore(page < (paginationData?.total_pages || 1));
             setCurrentPage(page);
 
         } catch (error) {
-            console.error("Error fetching projects:", error);
-            toast.error("Failed to load projects");
+            console.error("Error fetching tasks:", error);
+            toast.error("Failed to load tasks");
         } finally {
             setLoading(false);
         }
-    }, [baseUrl, storedToken]);
+    }, [baseUrl, storedToken, mid]);
 
-    // Fetch projects on mount and when search term changes
+    // Fetch tasks on mount and when search term changes
     useEffect(() => {
-        if (storedToken) {
+        if (storedToken && mid) {
             setCurrentPage(1);
             setHasMore(true);
-            fetchProjects(1, searchTerm);
+            fetchTasks(1, searchTerm);
         }
-    }, [storedToken, searchTerm, fetchProjects]);
+    }, [storedToken, mid, searchTerm, fetchTasks]);
 
     // Transform status to match card display
     const transformStatus = (status: string): string => {
@@ -155,14 +156,14 @@ const ProjectsMobileView = () => {
         <div className="min-h-screen bg-gray-50 p-4">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Projects</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">Tasks</h1>
 
                 {/* Search Bar */}
                 <div className="relative">
                     <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search by Permit No."
+                        placeholder="Search tasks..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -170,26 +171,26 @@ const ProjectsMobileView = () => {
                 </div>
             </div>
 
-            {/* Permits List */}
+            {/* Tasks List */}
             <div className="space-y-4">
-                {loading && projects.length === 0 ? (
+                {loading && tasks.length === 0 ? (
                     <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     </div>
-                ) : projects.length > 0 ? (
-                    projects.map((project) => {
-                        const statusColor = getStatusColor(project.status);
-                        const displayStatus = transformStatus(project.status);
+                ) : tasks.length > 0 ? (
+                    tasks.map((task) => {
+                        const statusColor = getStatusColor(task.status);
+                        const displayStatus = transformStatus(task.status);
                         return (
                             <div
-                                key={project.id}
+                                key={task.id}
                                 className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                             >
                                 {/* Header with ID and Status */}
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
                                         <span className="bg-pink-200 text-pink-700 px-3 py-1 rounded-full font-semibold text-sm">
-                                            #{project.id}
+                                            #{task.id}
                                         </span>
                                     </div>
                                     <span className={`${statusColor.bg} ${statusColor.text} px-4 py-1 rounded-lg font-semibold text-sm`}>
@@ -197,46 +198,49 @@ const ProjectsMobileView = () => {
                                     </span>
                                 </div>
 
-                                {/* Title and Project Code */}
+                                {/* Title and Task Code */}
                                 <div className="mb-4">
-                                    <h2 className="text-lg font-bold text-gray-900">{project.title}</h2>
-                                    <p className="text-sm text-gray-500">Project Code : {project.projectCode || "-"}</p>
+                                    <h2 className="text-lg font-bold text-gray-900">{task.title}</h2>
+                                    <p className="text-sm text-gray-500">Task Code : {task.taskCode || "-"}</p>
                                 </div>
 
-                                {/* Project Type and Manager */}
+                                {/* Responsible and Priority */}
                                 <div className="mb-4">
                                     <p className="text-sm text-gray-700 mb-1">
-                                        <span className="font-semibold">Type :</span> {project.projectType || "-"}
+                                        <span className="font-semibold">Responsible :</span> {task.responsible || "-"}
                                     </p>
                                     <p className="text-sm text-gray-700">
-                                        <span className="font-semibold">Manager :</span> {project.manager}
+                                        <span className="font-semibold">Priority :</span> {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : "-"}
                                     </p>
                                 </div>
 
                                 {/* Completion and Dates */}
                                 <div className="mb-4 pb-4 border-b border-gray-200">
                                     <p className="text-sm text-gray-700 mb-2">
-                                        <span className="font-semibold">Progress :</span> {project.completionPercent || 0}%
+                                        <span className="font-semibold">Progress :</span> {task.completionPercent || 0}%
                                     </p>
                                     <div className="flex gap-2 text-xs text-gray-600">
-                                        <span>{project.startDate ? new Date(project.startDate).toLocaleDateString("en-GB") : "-"}</span>
+                                        <span>{task.startDate ? new Date(task.startDate).toLocaleDateString("en-GB") : "-"}</span>
                                         <span>→</span>
-                                        <span>{project.endDate ? new Date(project.endDate).toLocaleDateString("en-GB") : "-"}</span>
+                                        <span>{task.endDate ? new Date(task.endDate).toLocaleDateString("en-GB") : "-"}</span>
                                     </div>
                                 </div>
 
-                                {/* Stats and Download */}
+                                {/* Stats and Actions */}
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-700">
-                                        <span className="font-semibold">Manager :</span> {project.manager}
-                                    </p>
+                                    <div className="flex gap-3 text-xs text-gray-600">
+                                        <span>📋 {task.totalSubtasks || 0}</span>
+                                        <span>⚠️ {task.totalIssues || 0}</span>
+                                        <span>⏱️ {task.estimatedHours || 0}h</span>
+                                    </div>
 
                                     <div className="flex items-center gap-4">
-                                        <Button variant="ghost" className="p-0" onClick={() => navigate(`/mobile-projects/${project.id}`)}>
+                                        <Button
+                                            variant="ghost"
+                                            className="p-0"
+                                            onClick={() => navigate(`/mobile-projects/${id}/milestone/${mid}/task/${task.id}?token=${token}&org_id=${orgId}&user_id=${userId}`)}
+                                        >
                                             <Eye className="w-4 h-4" />
-                                        </Button>
-                                        <Button variant="ghost" className="p-0" onClick={() => navigate(`/mobile-projects/${project.id}/milestones`)}>
-                                            <LogOut className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </div>
@@ -245,7 +249,7 @@ const ProjectsMobileView = () => {
                     })
                 ) : (
                     <div className="text-center py-8">
-                        <p className="text-gray-500">No projects found</p>
+                        <p className="text-gray-500">No tasks found</p>
                     </div>
                 )}
             </div>
@@ -253,4 +257,4 @@ const ProjectsMobileView = () => {
     )
 }
 
-export default ProjectsMobileView
+export default ProjectTasksMobileView
