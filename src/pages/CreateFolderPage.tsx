@@ -153,8 +153,8 @@ export const CreateFolderPage = () => {
   };
 
   const handleAddClick = () => {
-    // Directly open existing document modal
-    setShowExistingDocModal(true);
+    // Show action panel to choose between Add Document and Create New
+    setShowAddModal(true);
   };
 
   const handleAddExisting = () => {
