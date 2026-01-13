@@ -157,10 +157,10 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const passId = data?.pass_number ? String(data.id) : "null";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
-    : (data?.pass_start_date ?? "23 Dec 2025");
+    : (data?.pass_start_date ?? "null");
   const timeSlot = data?.expected_at
     ? new Date(data.expected_at).toLocaleTimeString()
-    : "5:30 PM to 6:30 PM";
+    : "null";
   const email = data?.guest_email ?? "null"; // guest_number often contains mobile; keep as a fallback
   const purpose = data?.visit_purpose ?? "null";
   const assets = joinAssets(data?.assets) ?? "null";
