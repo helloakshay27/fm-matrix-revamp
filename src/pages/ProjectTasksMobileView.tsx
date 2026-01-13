@@ -238,7 +238,7 @@ const ProjectTasksMobileView = () => {
                                         <Button
                                             variant="ghost"
                                             className="p-0"
-                                            onClick={() => navigate(`/mobile-projects/${id}/milestone/${mid}/task/${task.id}?token=${token}&org_id=${orgId}&user_id=${userId}`)}
+                                            onClick={() => navigate(`/mobile-projects/${id}/milestones/${mid}/tasks/${task.id}`)}
                                         >
                                             <Eye className="w-4 h-4" />
                                         </Button>
