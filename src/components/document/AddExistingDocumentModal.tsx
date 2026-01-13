@@ -12,7 +12,7 @@ import { toast } from "sonner";
 interface AddExistingDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDocuments: (documents: Document[], action: "copy" | "move") => void;
+  onSelectDocuments: (documents: Document[]) => void;
 }
 
 interface Document {
@@ -52,7 +52,6 @@ export const AddExistingDocumentModal: React.FC<
   AddExistingDocumentModalProps
 > = ({ isOpen, onClose, onSelectDocuments }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [action, setAction] = useState<"copy" | "move">("copy");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
@@ -122,7 +121,7 @@ export const AddExistingDocumentModal: React.FC<
     const selectedDocs = documents.filter((doc) =>
       selectedItems.includes(doc.id.toString())
     );
-    onSelectDocuments(selectedDocs, action);
+    onSelectDocuments(selectedDocs);
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
@@ -163,35 +162,9 @@ export const AddExistingDocumentModal: React.FC<
           </button>
         </div>
 
-        {/* Search and Action Selection */}
+        {/* Search Section */}
         <div className="border-b border-gray-200 p-6 space-y-4">
-          {/* Search Bar */}
-
-          {/* Copy/Move Radio Buttons */}
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="action"
-                value="copy"
-                checked={action === "copy"}
-                onChange={(e) => setAction(e.target.value as "copy")}
-                className="w-4 h-4 text-[#C72030] focus:ring-[#C72030]"
-              />
-              <span className="text-sm font-medium text-gray-700">Copy</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="action"
-                value="move"
-                checked={action === "move"}
-                onChange={(e) => setAction(e.target.value as "move")}
-                className="w-4 h-4 text-[#C72030] focus:ring-[#C72030]"
-              />
-              <span className="text-sm font-medium text-gray-700">Move</span>
-            </label>
-          </div>
+          {/* Search Bar - placeholder for future implementation */}
         </div>
 
         {/* Table */}

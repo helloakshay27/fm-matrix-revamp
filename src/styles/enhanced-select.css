@@ -95,6 +95,71 @@
   }
 }
 
+/* ===========================================
+   COLUMN RESIZE HANDLE STYLING
+   =========================================== */
+
+/* Resize handle - positioned at the right edge of each column header */
+.column-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  background: transparent;
+  z-index: 10;
+  transition: background-color 0.2s ease;
+}
+
+/* Hover effect for resize handle */
+.column-resize-handle:hover {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(25, 118, 210, 0.3) 50%,
+    transparent
+  );
+}
+
+/* Active/dragging state */
+.column-resize-handle:active {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(25, 118, 210, 0.5) 50%,
+    transparent
+  );
+}
+
+/* Visual indicator line on hover */
+.column-resize-handle::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.column-resize-handle:hover::after {
+  background-color: rgba(25, 118, 210, 0.6);
+}
+
+.column-resize-handle:active::after {
+  background-color: rgba(25, 118, 210, 0.9);
+}
+
+/* Prevent text selection during resize */
+body.resizing-column {
+  user-select: none !important;
+  cursor: col-resize !important;
+}
+
 /* Table Row Hover Effect */
 /* tr:hover td {
   background-color: rgba(196, 184, 157, 0.1) !important;

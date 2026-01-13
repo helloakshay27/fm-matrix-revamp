@@ -897,6 +897,8 @@ import { EditCuratedServiceCategoryPage } from "./pages/EditCuratedServiceCatego
 import CommunityUserDetails from "./pages/CommunityUserDetails";
 import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 import AmenityCategorySetup from "./pages/AmenityCategorySetup";
+import VisitorPassWeb from "./components/VisitorPassWeb";
+import ProjectsMobileView from "./pages/ProjectsMobileView";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -950,7 +952,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1159,6 +1161,10 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
+                <Route
+                  path="/visitor/web"
+                  element={<VisitorPassWeb />}
+                />
 
                 <Route
                   path="/login"
@@ -2098,6 +2104,8 @@ function App() {
                     element={<VisitorsDashboard />}
                   />
 
+
+
                   <Route
                     path="/security/visitor/employee"
                     element={<VisitorsDashboardEmployee />}
@@ -2736,7 +2744,7 @@ function App() {
 
                   <Route path="/vas/todo" element={<Todo />} />
 
-                  <Route path="/vas/documents" element={<ProjectDocuments />} />
+                  <Route path="/vas/documents" element={<DocumentManagement />} />
 
                   <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
@@ -4267,6 +4275,13 @@ function App() {
                 />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
+
+                <Route path="/mobile-projects" element={<ProjectsMobileView />} />
+                <Route path="/mobile-projects/:id" element={<ProjectDetailsPage />} />
+                <Route path="/mobile-projects/:id/milestones" element={<ProjectMilestones />} />
+                <Route path="/mobile-projects/:id/milestones/:mid" element={<MilestoneDetailsPage />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks" element={<ProjectTasksPage />} />
+                <Route path="/mobile-projects/:id/milestones/:mid/tasks/:taskId" element={<ProjectTaskDetails />} />
 
                 {/* Mail Inbound Routes */}
               </Routes>

@@ -425,7 +425,7 @@ const ParkingBookingListSiteWise = () => {
   // Column visibility state
   const [columns, setColumns] = useState([
     { key: 'sr_no', label: 'Sr No.', visible: true },
-    // { key: 'id', label: 'ID', visible: true },
+  { key: 'id', label: 'Parking ID', visible: true },
     { key: 'employee_name', label: 'Employee Name', visible: true },
     { key: 'employee_email', label: 'Employee Email ID', visible: true },
     { key: 'schedule_date', label: 'Schedule Date', visible: true },
@@ -1930,7 +1930,7 @@ const ParkingBookingListSiteWise = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               {isColumnVisible('sr_no') && <TableHead className="font-semibold">Sr No.</TableHead>}
-              {/* {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>} */}
+              {isColumnVisible('id') && <TableHead className="font-semibold">Parking ID</TableHead>}
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
               {isColumnVisible('employee_email') && <TableHead className="font-semibold">Employee Email ID</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
@@ -1975,7 +1975,7 @@ const ParkingBookingListSiteWise = () => {
               paginatedData.map((row, index) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
                   {isColumnVisible('sr_no') && <TableCell className="font-medium">{(currentApiPage - 1) * apiPagination.per_page + index + 1}</TableCell>}
-                  {/* {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>} */}
+                  {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>}
                   {isColumnVisible('employee_name') && (
                     <TableCell>{row.employee_name}</TableCell>
                   )}

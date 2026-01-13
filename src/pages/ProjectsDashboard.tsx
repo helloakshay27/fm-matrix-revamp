@@ -23,8 +23,9 @@ import {
   Plus,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { cache } from "@/utils/cacheUtils";
+import { baseClient } from "@/utils/withoutTokenBase";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
@@ -83,6 +84,34 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "completion_percent",
+    label: "Project Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "milestoneCompletionPercent",
+    label: "Milestone Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "taskCompletionPercent",
+    label: "Task Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "subtaskCompletionPercent",
+    label: "Subtask Completion %",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "milestones",
     label: "Milestones",
     sortable: true,
@@ -133,6 +162,27 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+  id: "id",
+  project_code: "project_code",
+  title: "title",
+  status: "status",
+  type: "project_type_name",
+  manager: "project_owner_name",
+  completion_percent: "completion_percent",
+  milestoneCompletionPercent: "avg_milestone_completion_percent",
+  taskCompletionPercent: "avg_task_management_completion_percent",
+  subtaskCompletionPercent: "avg_sub_task_management_completion_percent",
+  milestones: "total_milestone_count",
+  tasks: "total_task_management_count",
+  subtasks: "total_sub_task_management_count",
+  issues: "total_issues_count",
+  start_date: "start_date",
+  end_date: "end_date",
+  priority: "priority",
+};
+
 const transformedProjects = (projects: any) => {
   return projects.map((project: any) => {
     return {
@@ -141,13 +191,17 @@ const transformedProjects = (projects: any) => {
       title: project.title,
       status: project.status,
       type: project.project_type_name,
+      completion_percent: project.completion_percent,
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
       milestonesCompleted: project.completed_milestone_count,
+      milestoneCompletionPercent: project.avg_milestone_completion_percent || 0,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
+      taskCompletionPercent: project.avg_task_management_completion_percent || 0,
       subtasks: project.total_sub_task_management_count || 0,
       subtasksCompleted: project.completed_sub_task_management_count || 0,
+      subtaskCompletionPercent: project.avg_sub_task_management_completion_percent || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -196,19 +250,52 @@ const statusOptions = [
 
 export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const view = localStorage.getItem("selectedView");
+  const urlToken = searchParams.get("token");
+  const urlOrgId = searchParams.get("org_id");
+  const urlUserId = searchParams.get("user_id");
+
+  // Initialize mobile token, org_id, and user_id from URL if available
+  useEffect(() => {
+    if (urlToken) {
+      sessionStorage.setItem("mobile_token", urlToken);
+      // Store token in localStorage for other pages to use
+      localStorage.setItem("token", urlToken);
+      console.log("✅ Mobile token stored in sessionStorage and localStorage");
+    }
+    if (urlOrgId) {
+      sessionStorage.setItem("org_id", urlOrgId);
+      console.log("✅ org_id stored in sessionStorage:", urlOrgId);
+    }
+    if (urlUserId) {
+      sessionStorage.setItem("user_id", urlUserId);
+      console.log("✅ user_id stored in sessionStorage:", urlUserId);
+    }
+  }, [urlToken, urlOrgId, urlUserId]);
+
+  // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+  const token =
+    sessionStorage.getItem("mobile_token") ||
+    localStorage.getItem("token");
+
+  // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+  let baseUrl = localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
+
+  // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+  if (!baseUrl && urlToken) {
+    console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    // After baseClient resolves it, it will be stored in localStorage automatically
+  }
 
   useEffect(() => {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
     );
   }, [setCurrentSection]);
-
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
 
   const { teams } = useAppSelector((state) => state.projectTeams);
   const { projectTags: tags } = useAppSelector((state) => state.projectTags);
@@ -232,6 +319,8 @@ export const ProjectsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false)
@@ -240,13 +329,43 @@ export const ProjectsDashboard = () => {
   const viewDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to safely get user ID from sessionStorage or localStorage
+  const getUserId = useCallback(() => {
+    // First, check if user_id was passed in URL (mobile flow)
+    const sessionUserId = sessionStorage.getItem("user_id");
+    if (sessionUserId) {
+      return sessionUserId;
+    }
+
+    // Fall back to localStorage (web flow)
+    try {
+      const userString = localStorage.getItem("user");
+      if (userString) {
+        const userData = JSON.parse(userString);
+        return userData.id || null;
+      }
+    } catch (error) {
+      console.error("Error parsing user data from localStorage:", error);
+    }
+
+    return null;
+  }, []);
+
   const fetchData = useCallback(
     async (
       page = 1,
       filterString = "",
       isLoadMore = false,
-      searchQuery = ""
+      searchQuery = "",
+      orderBy = sortColumn,
+      orderDirection = sortDirection
     ) => {
+      // Guard: don't proceed if token is not available
+      if (!token) {
+        console.warn("⚠️ fetchData called without token");
+        return;
+      }
+
       try {
         if (!hasMore && isLoadMore) return;
 
@@ -271,9 +390,15 @@ export const ProjectsDashboard = () => {
           filters += (filters ? "&" : "") + searchFilter + "&";
         }
 
+        // Add sorting parameters
+        if (orderBy && orderDirection) {
+          const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+          filters += (filters ? "&" : "") + `order_by=${backendFieldName}&order_direction=${orderDirection}`;
+        }
+
         filters +=
           (filters ? "&" : "") +
-          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
+          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${getUserId()}&page=${page}`;
 
         // Create cache key based on filters and page
         const cacheKey = `projects_${filters}_${page}`;
@@ -327,15 +452,17 @@ export const ProjectsDashboard = () => {
         setScrollLoading(false);
       }
     },
-    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl]
+    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl, sortColumn, sortDirection]
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-    setHasMore(true);
-    fetchData(1, "", false, debouncedSearchTerm);
-    setAppliedFilters("");
-  }, [dispatch, token, baseUrl, selectedFilterOption, debouncedSearchTerm]);
+    if (token) {
+      setCurrentPage(1);
+      setHasMore(true);
+      fetchData(1, "", false, debouncedSearchTerm);
+      setAppliedFilters("");
+    }
+  }, [token, selectedFilterOption, debouncedSearchTerm]);
 
   // Infinite scroll handler with debouncing
   useEffect(() => {
@@ -399,14 +526,25 @@ export const ProjectsDashboard = () => {
 
   const getOwners = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Use baseClient for mobile flow (when baseUrl not available)
+      // Use direct axios call for web flow
+      const response = baseUrl
+        ? await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        : await baseClient.get(
+          `/pms/users/get_escalate_to_users.json?type=Task`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
       setOwners(response.data.users);
     } catch (error) {
       console.log(error);
@@ -457,11 +595,13 @@ export const ProjectsDashboard = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    getOwners();
-    getTeams();
-    getProjectTypes();
-    getTags();
-  }, []);
+    if (token) {
+      getOwners();
+      getTeams();
+      getProjectTypes();
+      getTags();
+    }
+  }, [token, getOwners, getTeams, getProjectTypes, getTags]);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -498,15 +638,26 @@ export const ProjectsDashboard = () => {
 
   const handleSampleDownload = async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/assets/project_import.xlsx`,
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Use baseClient for mobile flow (when baseUrl not available)
+      const response = baseUrl
+        ? await axios.get(
+          `https://${baseUrl}/assets/project_import.xlsx`,
+          {
+            responseType: 'blob',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        : await baseClient.get(
+          `/assets/project_import.xlsx`,
+          {
+            responseType: 'blob',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
       // Create a download link and trigger it
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -529,11 +680,20 @@ export const ProjectsDashboard = () => {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const response = await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      })
+
+      // Use baseClient for mobile flow (when baseUrl not available)
+      const response = baseUrl
+        ? await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        })
+        : await baseClient.post(`/project_managements/import.json`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
+
       if (response.data.failed && response.data.failed.length > 0) {
         response.data.failed.forEach((item: { row: number; errors: string[] }) => {
           const errorMessages = item.errors.join(', ');
@@ -558,7 +718,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/vas/projects/details/${item.id}`)}
+        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/details/${item.id}`) : navigate(`/mobile-projects/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -566,7 +726,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}
+        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${item.id}/milestones`) : navigate(`/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`)}
       >
         <LogOut className="w-4 h-4" />
       </Button>
@@ -583,13 +743,33 @@ export const ProjectsDashboard = () => {
           payload: { project_management: { status } },
         })
       ).unwrap();
-      fetchData(1, "", false, debouncedSearchTerm);
+      fetchData(1, "", false, debouncedSearchTerm, sortColumn, sortDirection);
       setCurrentPage(1);
       setHasMore(true);
       toast.success("Project status changed successfully");
     } catch (error) {
       console.log(error);
     }
+  };
+
+  // Handle column sort
+  const handleColumnSort = (columnKey: string) => {
+    let newDirection: "asc" | "desc" | null;
+
+    // Cycle through: asc -> desc -> null -> asc
+    if (sortColumn === columnKey) {
+      newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+    } else {
+      newDirection = "asc";
+    }
+
+    setSortColumn(newDirection ? columnKey : null);
+    setSortDirection(newDirection);
+
+    // Reset to page 1 and fetch with new sort
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchData(1, "", false, debouncedSearchTerm, newDirection ? columnKey : null, newDirection);
   };
 
   const renderCell = (item: any, columnKey: string) => {
@@ -624,7 +804,7 @@ export const ProjectsDashboard = () => {
               style={{ width: `${progress}%` }}
             ></div>
             <span className="relative z-10 text-xs font-semibold text-gray-800">
-              {Math.round(progress)}%
+              {progress.toFixed(2)}%
             </span>
           </div>
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
@@ -762,6 +942,46 @@ export const ProjectsDashboard = () => {
             </Tooltip>
           </TooltipProvider>
         );
+      case "completion_percent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
+            style={{ width: `${item.completion_percent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.completion_percent)}%
+          </span>
+        </div>
+      case "milestoneCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
+            style={{ width: `${item.milestoneCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.milestoneCompletionPercent)}%
+          </span>
+        </div>
+      case "taskCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
+            style={{ width: `${item.taskCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.taskCompletionPercent)}%
+          </span>
+        </div>
+      case "subtaskCompletionPercent":
+        return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+          <div
+            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+            style={{ width: `${item.subtaskCompletionPercent}%` }}
+          ></div>
+          <span className="relative z-10 text-xs font-semibold text-gray-800">
+            {Math.round(item.subtaskCompletionPercent)}%
+          </span>
+        </div>
       default:
         return item[columnKey] || "-";
     }
@@ -1106,6 +1326,7 @@ export const ProjectsDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="projects-table"
+        onSort={handleColumnSort}
         onFilterClick={() => setIsFilterModalOpen(true)}
         canAddRow={true}
         readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}

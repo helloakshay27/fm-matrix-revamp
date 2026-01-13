@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Folder } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Pagination,
@@ -17,6 +17,7 @@ import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTab
 import { DocumentSelectionPanel } from "@/components/document/DocumentSelectionPanel";
 import { getFoldersList, FolderListItem } from "@/services/documentService";
 import { toast } from "sonner";
+import { FileIcon } from "@/components/document/FileIcon";
 
 interface Document {
   id: number;
@@ -138,18 +139,18 @@ const columns: ColumnConfig[] = [
 
 const documentColumns: ColumnConfig[] = [
   {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
-  {
     key: "folder_title",
     label: "Title",
     sortable: true,
     hideable: true,
     draggable: true,
+  },
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
   },
   {
     key: "category",
@@ -225,7 +226,7 @@ export const DocumentManagement = () => {
             created_date: formatDate(folder.created_at),
             modified_date: formatDate(folder.updated_at),
             files_count: folder.total_files,
-            folders_count: folder.childs.length,
+            folders_count: (folder.childs || []).length,
           }));
 
         setDocuments(transformedData);
@@ -270,7 +271,11 @@ export const DocumentManagement = () => {
       case "folder_title":
         return (
           <div className="flex items-center gap-2">
-            <Folder className="w-5 h-5 text-[#C72030]" />
+            <FileIcon
+              fileName={document.folder_title}
+              isFolder={true}
+              className="w-5 h-5"
+            />
             <span className="font-medium">{document.folder_title}</span>
           </div>
         );

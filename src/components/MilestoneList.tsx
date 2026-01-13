@@ -1,7 +1,7 @@
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable"
 import { Button } from "./ui/button";
-import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
+import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
 import { CommonImportModal } from "./CommonImportModal";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
+import { useSearchParams } from "react-router-dom";
 
 const columns: ColumnConfig[] = [
     {
@@ -45,6 +47,13 @@ const columns: ColumnConfig[] = [
     {
         key: "owner",
         label: "Owner",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "completion_percent",
+        label: "Completion Percentage",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -87,13 +96,59 @@ const statusOptions = [
     { value: "overdue", label: "Overdue" },
 ]
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+    id: "id",
+    milestone_code: "milestone_code",
+    title: "title",
+    status: "status",
+    owner: "owner_name",
+    completion_percent: "completion_percent",
+    tasks: "total_tasks",
+    issues: "total_issues",
+    start_date: "start_date",
+    end_date: "end_date",
+};
+
 const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const { id } = useParams()
+    const [searchParams] = useSearchParams();
+
+    // ========== MOBILE TOKEN HANDLING ==========
+    // Extract token, org_id, and user_id from URL (mobile flow)
+    const urlToken = searchParams.get("token");
+    const urlOrgId = searchParams.get("org_id");
+    const urlUserId = searchParams.get("user_id");
+
+    // Initialize mobile token, org_id, and user_id from URL if available
+    useEffect(() => {
+        if (urlToken) {
+            sessionStorage.setItem("mobile_token", urlToken);
+            localStorage.setItem("token", urlToken);
+        }
+        if (urlOrgId) {
+            sessionStorage.setItem("org_id", urlOrgId);
+        }
+        if (urlUserId) {
+            sessionStorage.setItem("user_id", urlUserId);
+        }
+    }, [urlToken, urlOrgId, urlUserId]);
+
+    // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+    const token =
+        sessionStorage.getItem("mobile_token") ||
+        localStorage.getItem("token");
+
+    // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+    let baseUrl = localStorage.getItem("baseUrl");
+
+    // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+    if (!baseUrl && urlToken) {
+        console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    }
 
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
 
     const [isOpen, setIsOpen] = useState(false);
     const [data, setData] = useState([])
@@ -102,7 +157,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [sortColumn, setSortColumn] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [loading, setLoading] = useState(false)
 
     const statusColorMap = {
         open: { dot: "bg-blue-500" },
@@ -112,19 +170,49 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         overdue: { dot: "bg-red-500" },
     };
 
-    const getMilestones = async () => {
+    const getMilestones = async (
+        orderBy: string | null = sortColumn,
+        orderDirection: "asc" | "desc" | null = sortDirection
+    ) => {
+        setLoading(true)
         try {
-            const response = await dispatch(fetchMilestones({ token, baseUrl, id })).unwrap();
+            const response = await dispatch(fetchMilestones({
+                token,
+                baseUrl,
+                id,
+                orderBy: orderBy ? (COLUMN_TO_BACKEND_MAP[orderBy] || orderBy) : undefined,
+                orderDirection: orderDirection || undefined
+            })).unwrap();
             setData(response)
         } catch (error) {
             console.log(error)
+        } finally {
+            setLoading(false)
         }
     }
 
     const getOwners = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users);
+            // Use baseClient for mobile flow (when baseUrl not available)
+            // Use direct axios call for web flow
+            const response = baseUrl
+                ? await axios.get(
+                    `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                )
+                : await baseClient.get(
+                    `/pms/users/get_escalate_to_users.json?type=Task`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+            setOwners(response.data.users);
         } catch (error) {
             console.log(error)
             toast.error(error)
@@ -139,7 +227,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 id: String(milestoneId),
                 payload: { milestone: { status } }
             })).unwrap();
-            getMilestones();
+            getMilestones(sortColumn, sortDirection);
             toast.success("Milestone status updated successfully");
         } catch (error) {
             console.log(error);
@@ -147,10 +235,28 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         }
     }
 
+    // Handle column sort
+    const handleColumnSort = (columnKey: string) => {
+        let newDirection: "asc" | "desc" | null;
+
+        // Cycle through: asc -> desc -> null -> asc
+        if (sortColumn === columnKey) {
+            newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+        } else {
+            newDirection = "asc";
+        }
+
+        setSortColumn(newDirection ? columnKey : null);
+        setSortDirection(newDirection);
+
+        // Fetch with new sort
+        getMilestones(newDirection ? columnKey : null, newDirection);
+    };
+
     useEffect(() => {
-        getMilestones();
+        getMilestones(sortColumn, sortDirection);
         getOwners();
-    }, [])
+    }, [sortColumn, sortDirection])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -246,17 +352,43 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     };
 
     const renderCell = (item: any, columnKey: string) => {
-        const renderProgressBar = (completed: number, total: number, color: string) => {
+        const renderProgressBar = (
+            completed: number,
+            total: number,
+            color: string,
+            type?: string
+        ) => {
             const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <div className="flex items-center gap-2">
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                    className="flex items-center gap-2 cursor-pointer"
+                // onClick={() =>
+                //     type === "issues"
+                //         ? navigate(`/vas/issues?project_id=${item.id}`)
+                //         : type === "tasks"
+                //             ? navigate(`/vas/tasks?project_id=${item.id}`)
+                //             : type === "subtasks"
+                //                 ? navigate(`/vas/tasks?subtasks=true&project_id=${item.id}`)
+                //                 : type === "milestones"
+                //                     ? navigate(`/vas/projects/${item.id}/milestones`)
+                //                     : null
+                // }
+                >
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {completed}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
                         <div
-                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(progress)}%
+                        </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {total}
+                    </span>
                 </div>
             );
         };
@@ -323,6 +455,19 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             case "start_date":
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";
+            case "completion_percent":
+                // return item.completion_percent != null
+                //     ? `${item.completion_percent}%`
+                //     : "-";
+                return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+                    <div
+                        className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+                        style={{ width: `${item.completion_percent}%` }}
+                    ></div>
+                    <span className="relative z-10 text-xs font-semibold text-gray-800">
+                        {Math.round(item.completion_percent)}%
+                    </span>
+                </div>
             default:
                 return item[columnKey] || "-";
         }
@@ -405,7 +550,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
+                onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${id}/milestones/${item.id}`) : navigate(`/mobile-projects/${id}/milestones/${item.id}`)}
             >
                 <Eye className="w-4 h-4" />
             </Button>
@@ -413,7 +558,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}/tasks`)}
+                onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${id}/milestones/${item.id}/tasks`) : navigate(`/mobile-projects/${id}/milestones/${item.id}/tasks`)}
             >
                 <LogOut className="w-4 h-4" />
             </Button>
@@ -469,7 +614,15 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     }
 
     return (
-        <div className="mx-4">
+        <div className="px-6">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="px-0 mb-2"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <EnhancedTable
                 data={data}
                 columns={columns}
@@ -477,7 +630,9 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 renderCell={renderCell}
                 leftActions={leftActions}
                 rightActions={rightActions}
-                storageKey="projects-table"
+                storageKey="milestone-table"
+                onSort={handleColumnSort}
+                loading={loading}
                 // onFilterClick={() => { }}
                 canAddRow={true}
                 readonlyColumns={["id", "tasks"]}

@@ -10,7 +10,7 @@ import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
-import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -23,8 +23,10 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useLayout } from "@/contexts/LayoutContext";
 import clsx from "clsx";
 import axios from "axios";
+import { baseClient } from "@/utils/withoutTokenBase";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import { useSearchParams } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -187,6 +189,26 @@ const STATUS_OPTIONS = [
     }
 ]
 
+// Map frontend column keys to backend field names
+const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
+    id: "id",
+    task_code: "task_code",
+    title: "title",
+    status: "status",
+    workflowStatus: "project_status_id",
+    responsible: "responsible_person_id",
+    expected_start_date: "expected_start_date",
+    target_date: "target_date",
+    duration: "target_date",
+    efforts_duration: "estimated_hour",
+    subtasks: "total_sub_tasks",
+    issues: "total_issues",
+    priority: "priority",
+    predecessor: "predecessor_task",
+    successor: "successor_task",
+    completion_percentage: "completion_percent",
+};
+
 // Utility function to calculate duration between two dates (matching task_management)
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
     // If end date is missing, return N/A
@@ -340,10 +362,98 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
     );
 };
 
+// Overdue Reason Modal Component
+const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for the overdue task');
+            return;
+        }
+        onSubmit(reason);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Overdue</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for overdue..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Submit'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
+    const [searchParams] = useSearchParams();
 
     const view = localStorage.getItem("selectedView");
+    const urlToken = searchParams.get("token");
+    const urlOrgId = searchParams.get("org_id");
+    const urlUserId = searchParams.get("user_id");
+
+    // Initialize mobile token, org_id, and user_id from URL if available
+    useEffect(() => {
+        if (urlToken) {
+            sessionStorage.setItem("mobile_token", urlToken);
+            localStorage.setItem("token", urlToken);
+        }
+        if (urlOrgId) {
+            sessionStorage.setItem("org_id", urlOrgId);
+        }
+        if (urlUserId) {
+            sessionStorage.setItem("user_id", urlUserId);
+        }
+    }, [urlToken, urlOrgId, urlUserId]);
+
+    // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
+    const token =
+        sessionStorage.getItem("mobile_token") ||
+        localStorage.getItem("token");
+
+    // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
+    let baseUrl = localStorage.getItem("baseUrl");
+
+    // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
+    if (!baseUrl && urlToken) {
+        console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    }
 
     useEffect(() => {
         setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
@@ -353,9 +463,6 @@ const ProjectTasksPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
-
-    const baseUrl = localStorage.getItem("baseUrl");
-    const token = localStorage.getItem("token");
 
     const [tasks, setTasks] = useState([])
     const [users, setUsers] = useState([])
@@ -374,6 +481,10 @@ const ProjectTasksPage = () => {
         total_count: 0,
     })
     const [loading, setLoading] = useState(false)
+
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
 
     // Import modal state
     const [showActionPanel, setShowActionPanel] = useState(false);
@@ -409,6 +520,12 @@ const ProjectTasksPage = () => {
     const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
     const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
+
+    // Overdue Reason Modal State
+    const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+    const [overdueTaskId, setOverdueTaskId] = useState<number | null>(null);
+    const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
+    const [isOverdueLoading, setIsOverdueLoading] = useState(false);
 
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -448,11 +565,17 @@ const ProjectTasksPage = () => {
 
     const getStatuses = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                : await baseClient.get(`/project_statuses.json?q[active_eq]=true`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
             setStatuses(response.data)
         } catch (error) {
             console.log(error)
@@ -467,11 +590,17 @@ const ProjectTasksPage = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const response = await axios.get(`https://${baseUrl}/project_managements.json`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = baseUrl
+                    ? await axios.get(`https://${baseUrl}/project_managements.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                    : await baseClient.get(`/project_managements.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
                 if (response.data && Array.isArray(response.data.project_managements)) {
                     setProjectOptions(
                         response.data.project_managements.map((project: any) => ({
@@ -645,7 +774,7 @@ const ProjectTasksPage = () => {
     };
 
 
-    const fetchData = useCallback(async (page: number = 1) => {
+    const fetchData = useCallback(async (page: number = 1, orderBy: string | null = sortColumn, orderDirection: "asc" | "desc" | null = sortDirection) => {
         try {
             setLoading(true);
             const searchParams = new URLSearchParams(location.search);
@@ -664,8 +793,12 @@ const ProjectTasksPage = () => {
                 filters["q[project_management_id_eq]"] = urlProjectId;
             }
 
-            // Create cache key based on context - include both projectId and urlProjectId to prevent cache issues
-            const cacheKey = `tasks_${isMilestoneContext ? 'milestone_' + mid : taskType}_${selectedFilterOption}_${projectId}_${urlProjectId}_${page}`;
+            // Add sorting parameters if provided
+            if (orderBy && orderDirection) {
+                const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+                filters["order_by"] = backendFieldName;
+                filters["order_direction"] = orderDirection;
+            }
 
             let response;
 
@@ -674,17 +807,9 @@ const ProjectTasksPage = () => {
                 // In milestone context - show all tasks for that milestone
                 filters["q[milestone_id_eq]"] = mid;
 
-                const cachedResult = await cache.getOrFetch(
-                    cacheKey,
-                    async () => {
-                        return await dispatch(
-                            filterTasks({ token, baseUrl, params: filters })
-                        ).unwrap();
-                    },
-                    1 * 60 * 1000, // Fresh for 1 minute
-                    5 * 60 * 1000  // Stale up to 5 minutes
-                );
-                response = cachedResult.data;
+                response = await dispatch(
+                    filterTasks({ token, baseUrl, params: filters })
+                ).unwrap();
             } else {
                 // Standalone tasks view - distinguish between all tasks and my tasks
                 if (taskType === "my") {
@@ -695,35 +820,26 @@ const ProjectTasksPage = () => {
                         params.append("status", selectedFilterOption);
                     }
 
-                    const cachedResult = await cache.getOrFetch(
-                        cacheKey,
-                        async () => {
-                            return await fetch(
-                                `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            ).then(res => res.json());
-                        },
-                        1 * 60 * 1000, // Fresh for 1 minute
-                        5 * 60 * 1000  // Stale up to 5 minutes
-                    );
-                    response = cachedResult.data;
+                    // Add sorting parameters for my tasks
+                    if (orderBy && orderDirection) {
+                        const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
+                        params.append("order_by", backendFieldName);
+                        params.append("order_direction", orderDirection);
+                    }
+
+                    response = await fetch(
+                        `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    ).then(res => res.json());
                 } else {
                     // All Tasks - use filter endpoint
-                    const cachedResult = await cache.getOrFetch(
-                        cacheKey,
-                        async () => {
-                            return await dispatch(
-                                filterTasks({ token, baseUrl, params: filters })
-                            ).unwrap();
-                        },
-                        1 * 60 * 1000, // Fresh for 1 minute
-                        5 * 60 * 1000  // Stale up to 5 minutes
-                    );
-                    response = cachedResult.data;
+                    response = await dispatch(
+                        filterTasks({ token, baseUrl, params: filters })
+                    ).unwrap();
                 }
             }
 
@@ -741,15 +857,21 @@ const ProjectTasksPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search]);
+    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search, sortColumn, sortDirection]);
 
     const getUsers = useCallback(async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                : await baseClient.get(`/pms/users/get_escalate_to_users.json?type=Task`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
             setUsers(response.data.users);
         } catch (error) {
             console.log(error);
@@ -971,9 +1093,6 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(createProjectTask({ token, baseUrl, data: payload })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
             toast.success("Task created successfully");
             await fetchData();
         } catch (error) {
@@ -1047,7 +1166,9 @@ const ProjectTasksPage = () => {
     };
 
     const handleView = (id) => {
-        if (location.pathname.startsWith("/vas/tasks")) {
+        if (location.pathname.startsWith("/mobile-projects")) {
+            navigate(`${id}`);
+        } else if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
         } else {
             navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
@@ -1072,10 +1193,7 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1086,10 +1204,7 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1100,15 +1215,30 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
 
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
-
-            fetchData();
+            fetchData(1, sortColumn, sortDirection);
             toast.success("Task updated successfully");
         } catch (error) {
             console.log(error)
         }
     }
+
+    // Handle column sort
+    const handleColumnSort = (columnKey: string) => {
+        let newDirection: "asc" | "desc" | null;
+
+        // Cycle through: asc -> desc -> null -> asc
+        if (sortColumn === columnKey) {
+            newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+        } else {
+            newDirection = "asc";
+        }
+
+        setSortColumn(newDirection ? columnKey : null);
+        setSortDirection(newDirection);
+
+        // Fetch with new sort
+        fetchData(1, newDirection ? columnKey : null, newDirection);
+    };
 
     const handlePauseTaskSubmit = async (reason: string, tid: number) => {
         if (!tid) return;
@@ -1124,9 +1254,6 @@ const ProjectTasksPage = () => {
                     task.id === tid ? { ...task, is_started: false } : task
                 )
             );
-
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
 
             const commentPayload = {
                 comment: {
@@ -1174,9 +1301,6 @@ const ProjectTasksPage = () => {
                     task.id === tid ? { ...task, status: 'completed', is_started: false } : task
                 )
             );
-
-            // Invalidate task caches to force refresh
-            cache.invalidatePattern('tasks_*');
 
             const commentPayload = {
                 comment: {
@@ -1237,18 +1361,88 @@ const ProjectTasksPage = () => {
             return;
         }
 
+        // Find the task to check if it's overdue
+        const task = tasks.find(t => t.id === id);
+        if (!task) {
+            toast.error("Task not found");
+            return;
+        }
+
+        // Check if task is overdue using the target_date
+        const isTaskOverdue = (date: string | Date) => {
+            const d = new Date(date);
+            const today = new Date();
+
+            d.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            return d < today;
+        };
+
+        if (isTaskOverdue(new Date(task.target_date))) {
+            // Show overdue reason modal
+            setOverdueTaskId(id);
+            setPendingCompletionPercentage(percentage);
+            setIsOverdueModalOpen(true);
+        } else {
+            // Directly save the percentage if not overdue
+            try {
+                await dispatch(editProjectTask({
+                    token,
+                    baseUrl,
+                    id: String(id),
+                    data: { completion_percent: percentage }
+                })).unwrap();
+                toast.success("Completion percentage updated successfully");
+                fetchData();
+            } catch (error) {
+                console.log(error);
+                toast.error("Failed to update completion percentage");
+            }
+        }
+    }
+
+    const handleOverdueReasonSubmit = async (reason: string) => {
+        if (!overdueTaskId) return;
+
+        setIsOverdueLoading(true);
         try {
+            // Update the completion percentage
             await dispatch(editProjectTask({
                 token,
                 baseUrl,
-                id: String(id),
-                data: { completion_percent: percentage }
+                id: String(overdueTaskId),
+                data: { completion_percent: pendingCompletionPercentage }
             })).unwrap();
+
+            // Save the overdue reason as a comment
+            const commentPayload = {
+                comment: {
+                    body: `Overdue reason: ${reason}`,
+                    commentable_id: overdueTaskId,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             fetchData();
-            toast.success("Completion percentage updated successfully");
+
+            toast.success('Completion percentage updated with overdue reason');
+            setIsOverdueModalOpen(false);
+            setOverdueTaskId(null);
+            setPendingCompletionPercentage(0);
         } catch (error) {
             console.log(error);
-            toast.error("Failed to update completion percentage");
+            toast.error('Failed to update completion percentage');
+        } finally {
+            setIsOverdueLoading(false);
         }
     }
 
@@ -1353,6 +1547,7 @@ const ProjectTasksPage = () => {
                         onChange={(e) =>
                             handleStatusChange(item.id, e.target.value as string)
                         }
+                        // disabled
                         disableUnderline
                         renderValue={(value) => (
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1369,6 +1564,14 @@ const ProjectTasksPage = () => {
                                 alignItems: "center",
                                 gap: "8px",
                             },
+                            // "&.Mui-disabled": {
+                            //     color: "#000",
+                            // },
+                            // // For the selected value text
+                            // "&.Mui-disabled .MuiSelect-select": {
+                            //     color: "#000",
+                            //     WebkitTextFillColor: "#000",
+                            // },
                         }}
                     >
                         {statusOptions.map((opt) => {
@@ -1469,28 +1672,40 @@ const ProjectTasksPage = () => {
                 return item.successor_task?.length || "0";
             }
             case "completion_percentage": {
-                return (
-                    <input
-                        type="number"
-                        defaultValue={item.completion_percent || 0}
-                        className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
-                        min="0"
-                        max="100"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                const target = e.target as HTMLInputElement;
-                                const value = target.value;
-                                handleCompletionPercentageChange(item.id, value);
-                            }
-                        }}
-                        onBlur={(e) => {
-                            const value = e.target.value;
-                            if (value && value !== String(item.completion_percent)) {
-                                handleCompletionPercentageChange(item.id, value);
-                            }
-                        }}
-                    />
-                )
+                const loggedInUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+                if (item.responsible_person_id === loggedInUserId) {
+                    return (
+                        <input
+                            type="number"
+                            defaultValue={item.completion_percent || 0}
+                            className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                            min={0}
+                            max={100}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    const value = (e.target as HTMLInputElement).value;
+                                    handleCompletionPercentageChange(item.id, value);
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value !== String(item.completion_percent)) {
+                                    handleCompletionPercentageChange(item.id, value);
+                                }
+                            }}
+                        />
+                    );
+                }
+
+                return <input
+                    type="number"
+                    defaultValue={item.completion_percent || 0}
+                    className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                    min={0}
+                    max={100}
+                    readOnly
+                />
             }
             default:
                 return item[columnKey] || "-";
@@ -1714,6 +1929,18 @@ const ProjectTasksPage = () => {
     if (selectedView === "Kanban") {
         return (
             <div className="p-6">
+                {
+                    location.pathname.includes("projects") && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate(-1)}
+                            className="px-0 mb-2"
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back
+                        </Button>
+                    )
+                }
                 <div className="flex items-center justify-between">
                     <Button
                         className="bg-[#C72030] hover:bg-[#A01020] text-white"
@@ -1791,36 +2018,6 @@ const ProjectTasksPage = () => {
                                 </div>
                             )}
                         </div>
-                        {/* <div className="relative" ref={statusDropdownRef}>
-                            <button
-                                onClick={() => setOpenStatusOptions(!openStatusOptions)}
-                                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
-                            >
-                                <span className="text-[#C72030] font-medium flex items-center gap-2">
-                                    {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
-                                </span>
-                                <ChevronDown className="w-4 h-4 text-gray-600" />
-                            </button>
-
-                            {openStatusOptions && (
-                                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
-                                    <div className="py-2">
-                                        {STATUS_OPTIONS.map((option) => (
-                                            <button
-                                                key={option.value}
-                                                onClick={() => {
-                                                    setSelectedFilterOption(option.value);
-                                                    setOpenStatusOptions(false);
-                                                }}
-                                                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
-                                            >
-                                                <span className="text-gray-700">{option.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div> */}
                     </div>
                 </div>
 
@@ -1905,6 +2102,18 @@ const ProjectTasksPage = () => {
 
     return (
         <div className="p-6">
+            {
+                location.pathname.includes("projects") && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className="px-0 mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                )
+            }
             <EnhancedTable
                 data={tasks}
                 columns={columns}
@@ -1913,6 +2122,7 @@ const ProjectTasksPage = () => {
                 leftActions={leftActions}
                 rightActions={rightActions}
                 storageKey="projects-table"
+                onSort={handleColumnSort}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 canAddRow={true}
                 loading={loading}
@@ -2253,6 +2463,18 @@ const ProjectTasksPage = () => {
                 onEndTask={handleEndTaskSubmit}
                 isLoading={isPauseLoading}
                 taskId={pauseTaskId}
+            />
+
+            {/* Overdue Reason Modal */}
+            <OverdueReasonModal
+                isOpen={isOverdueModalOpen}
+                onClose={() => {
+                    setIsOverdueModalOpen(false);
+                    setOverdueTaskId(null);
+                    setPendingCompletionPercentage(0);
+                }}
+                onSubmit={handleOverdueReasonSubmit}
+                isLoading={isOverdueLoading}
             />
 
             {showActionPanel && (

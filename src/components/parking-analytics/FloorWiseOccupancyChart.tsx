@@ -242,6 +242,40 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
 
   const chartData = getChartData();
 
+  // Derive friendly compare label from selected date range
+  const getCompareLabel = (start?: string, end?: string) => {
+    if (!start || !end) return 'Comparison';
+    try {
+      const startDateObj = new Date(start);
+      const endDateObj = new Date(end);
+      if (Number.isNaN(startDateObj.getTime()) || Number.isNaN(endDateObj.getTime())) return 'Comparison';
+      const diffMs = endDateObj.getTime() - startDateObj.getTime();
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      if (days >= 1 && days <= 3) return 'Day Comparison';
+      if (days >= 6 && days <= 8) return 'Week Comparison';
+      if (days >= 28 && days <= 31) return 'Month Comparison';
+      if (days >= 360 && days <= 400) return 'Year Comparison';
+      if (days > 400) return 'Multi-year Comparison';
+      return 'Date Range Comparison';
+    } catch (err) {
+      return 'Comparison';
+    }
+  };
+
+  const mapLabel = (label: string) => {
+    switch (label) {
+      case 'Day Comparison': return { current: 'This Day', compare: 'Last Day' };
+      case 'Week Comparison': return { current: 'This Week', compare: 'Last Week' };
+      case 'Month Comparison': return { current: 'This Month', compare: 'Last Month' };
+      case 'Year Comparison': return { current: 'This Year', compare: 'Last Year' };
+      case 'Multi-year Comparison': return { current: 'This Period', compare: 'Previous Period' };
+      default: return { current: 'This Period', compare: 'Previous Period' };
+    }
+  };
+
+  const compareLabel = getCompareLabel(startDate, endDate);
+  const seriesLabels = mapLabel(compareLabel);
+
   // Ensure horizontal scroll when there are many floors: each floor gets a minimum width
   const minChartWidth = Math.max(chartData.length * 100, 500); // 100px per floor, at least 500px
 
@@ -266,12 +300,12 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
             {occupancyView === 'yoy' && (
               <>
                 <div className="flex justify-between items-center gap-4">
-                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.twoWheeler }}>Last Year 2W:</span>
-                  <span className="text-gray-700 font-semibold">{hasPrev ? datum.lastYearTwoWheeler : 'N/A'}</span>
+                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.twoWheeler }}>{seriesLabels.compare} 2W:</span>
+                  <span className="text-gray-700 font-semibold">{(datum.lastYearTwoWheeler ?? 0)}</span>
                 </div>
                 <div className="flex justify-between items-center gap-4">
-                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.fourWheeler }}>Last Year 4W:</span>
-                  <span className="text-gray-700 font-semibold">{hasPrev ? datum.lastYearFourWheeler : 'N/A'}</span>
+                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.fourWheeler }}>{seriesLabels.compare} 4W:</span>
+                  <span className="text-gray-700 font-semibold">{(datum.lastYearFourWheeler ?? 0)}</span>
                 </div>
               </>
             )}
@@ -328,7 +362,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Current Year
+                {seriesLabels.current}
               </button>
               <button
                 onClick={() => setOccupancyView('yoy')}
@@ -338,7 +372,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Compare
+                {seriesLabels.compare}
               </button>
             </div>
 
@@ -373,7 +407,14 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                     wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
                     iconType="square"
                     formatter={(value) => {
-                      return <span style={{ color: '#6b7280', fontSize: '14px' }}>{value}</span>;
+                      // Map bar names to friendly labels where appropriate
+                      const labels: { [key: string]: string } = {
+                        'lastYearTwoWheeler': `${seriesLabels.compare} 2W`,
+                        'lastYearFourWheeler': `${seriesLabels.compare} 4W`,
+                        'twoWheeler': `${seriesLabels.current} 2W`,
+                        'fourWheeler': `${seriesLabels.current} 4W`,
+                      };
+                      return <span style={{ color: '#6b7280', fontSize: '14px' }}>{labels[value] || value}</span>;
                     }}
                   />
                   {occupancyView === 'current' ? (
@@ -382,14 +423,14 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                         dataKey="twoWheeler" 
                         stackId="stack"
                         fill={CHART_COLORS.twoWheeler}
-                        name="2W"
+                        name="twoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
                       <Bar 
                         dataKey="fourWheeler" 
                         stackId="stack"
                         fill={CHART_COLORS.fourWheeler}
-                        name="4W"
+                        name="fourWheeler"
                         radius={[4, 4, 0, 0]}
                       />
                     </>
@@ -399,28 +440,28 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                         dataKey="lastYearTwoWheeler" 
                         stackId="lastYear"
                         fill="#DAD6CA"
-                        name="Last Year 2W"
+                        name="lastYearTwoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
                       <Bar 
                         dataKey="lastYearFourWheeler" 
                         stackId="lastYear"
                         fill="#E8E5DD"
-                        name="Last Year 4W"
+                        name="lastYearFourWheeler"
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
                         dataKey="twoWheeler" 
                         stackId="thisYear"
                         fill={CHART_COLORS.twoWheeler}
-                        name="This Year 2W"
+                        name="twoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
                       <Bar 
                         dataKey="fourWheeler" 
                         stackId="thisYear"
                         fill={CHART_COLORS.fourWheeler}
-                        name="This Year 4W"
+                        name="fourWheeler"
                         radius={[4, 4, 0, 0]}
                       />
                     </>

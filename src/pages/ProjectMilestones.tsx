@@ -22,7 +22,7 @@ const ProjectMilestones = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const [selectedView, setSelectedView] = useState<"Kanban" | "Gantt" | "List">("Gantt");
+    const [selectedView, setSelectedView] = useState<"Kanban" | "Gantt" | "List">("List");
     const [isOpen, setIsOpen] = useState(false);
     const [openDialog, setOpenDialog] = useState(false)
     const [owners, setOwners] = useState([])
