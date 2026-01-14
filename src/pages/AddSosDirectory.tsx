@@ -419,7 +419,7 @@ const AddSosDirectory = () => {
                     <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-5 gap-8">
                         <div>
                             <Label className="text-sm font-bold text-gray-700 mb-4 block">
-                                Upload Cover Image <span className="text-red-500">*</span>
+                                Upload Light Mode Image <span className="text-red-500">*</span>
                             </Label>
 
                             {imagePreview ? (
@@ -480,7 +480,7 @@ const AddSosDirectory = () => {
 
                         <div>
                             <Label className="text-sm font-bold text-gray-700 mb-4 block">
-                                Upload Dark Image <span className="text-red-500">*</span>
+                                Upload Dark Mode Image <span className="text-red-500">*</span>
                             </Label>
 
                             {darkImagePreview ? (

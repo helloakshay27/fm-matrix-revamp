@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@mui/material";
 import axios from "axios";
 import { FileText, Loader2, File, Pencil, ArrowLeft } from "lucide-react";
@@ -223,7 +224,9 @@ const SosDirectoryDetailsPage = () => {
 
                 <div className="p-8 grid grid-cols-1 md:grid-cols-5 gap-8">
                     <div>
-                        <h3 className="text-base font-bold text-gray-900 mb-4">Uploaded Cover Image</h3>
+                        <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                            Light Mode Image
+                        </Label>
 
                         <div
                             className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
@@ -243,7 +246,9 @@ const SosDirectoryDetailsPage = () => {
                     </div>
 
                     <div>
-                        <h3 className="text-base font-bold text-gray-900 mb-4">Uploaded Dark Image</h3>
+                        <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                            Dark Mode Image
+                        </Label>
 
                         <div
                             className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
