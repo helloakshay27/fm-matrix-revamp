@@ -149,7 +149,7 @@ const AmenityCategorySetup = () => {
                 );
             case 'description':
                 return (
-                    <span className="line-clamp-2" title={item.description}>
+                    <span className="line-clamp-2 max-w-[200px] truncate" title={item.description}>
                         {item.description || '-'}
                     </span>
                 );
