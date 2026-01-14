@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 type Visitor = {
   id: number;
@@ -13,6 +13,29 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [ndaAgree, setNdaAgree] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = React.useRef<number | null>(null);
+
+  const showToast = (msg: string, duration = 3000) => {
+    // clear any existing timer
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    setToastVisible(true);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastVisible(false);
+      toastTimerRef.current = null;
+    }, duration);
+  };
+
+  // cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   // Step 1 fields (primary visitor)
   const [contact, setContact] = useState("9876543210");
@@ -24,12 +47,21 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [company, setCompany] = useState("Acme Corp");
   const [location, setLocation] = useState("Head Office");
   const [personToMeet, setPersonToMeet] = useState<"myself" | "other">("myself");
+  // default pre-defined person to meet
+  const [personToMeetName, setPersonToMeetName] = useState<string>("Host");
+  // guest type (Once / Frequent) with default
+  const [guestType, setGuestType] = useState<'Once' | 'Frequent'>('Once');
+  // optional time range
+  const [fromTime, setFromTime] = useState<string>('');
+  const [toTime, setToTime] = useState<string>('');
 
   // Step 2 state
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [toLocation, setToLocation] = useState("");
   const [primaryVehicle, setPrimaryVehicle] = useState<"car" | "bike" | null>(null);
   const [primaryVehicleNumber, setPrimaryVehicleNumber] = useState("");
+  const [primaryVehicleError, setPrimaryVehicleError] = useState(false);
+  const [visitorErrors, setVisitorErrors] = useState<Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>>({});
 
   // Step 3 state
   type Asset = {
@@ -43,6 +75,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [carryingAsset, setCarryingAsset] = useState<boolean>(false);
   const [assetsByVisitor, setAssetsByVisitor] = useState<Record<number, Asset[]>>({});
   const [expandedVisitors, setExpandedVisitors] = useState<Record<number, boolean>>({ 0: true });
+  const [assetCategoryErrors, setAssetCategoryErrors] = useState<Record<number, boolean>>({});
 
   // Delete primary visitor: clear primary fields and assets
   const removePrimaryVisitor = () => {
@@ -54,7 +87,8 @@ const VisitorSharingFormWeb: React.FC = () => {
     setPurpose("");
     setCompany("");
     setLocation("");
-    setPersonToMeet("myself");
+  setPersonToMeet("myself");
+  setPersonToMeetName("");
     setToLocation("");
     setPrimaryVehicle(null);
     setPrimaryVehicleNumber("");
@@ -72,11 +106,75 @@ const VisitorSharingFormWeb: React.FC = () => {
   const updateVisitor = (id: number, patch: Partial<Visitor>) =>
     setVisitors((v) => v.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
+  // Next navigation with validations for specific steps
+  const handleNext = () => {
+    // Step 2: require Contact Number and Vehicle Number for each additional visitor
+    // Step 1: require profile photo upload
+    if (step === 1) {
+      const missingPhoto = !profilePhoto;
+      setProfilePhotoError(missingPhoto);
+      if (missingPhoto) {
+        showToast("Please upload a profile photo to continue.");
+        return;
+      }
+    }
+
+    if (step === 2) {
+      const errs: Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }> = {};
+      let hasErrors = false;
+      visitors.forEach((vis) => {
+        const contactMissing = !(vis.contact || '').trim();
+        const nameMissing = !(vis.name || '').trim();
+        // Vehicle number is mandatory only if a vehicle type is selected for the visitor
+        const vehicleRequired = !!vis.vehicle;
+        const vehicleMissing = vehicleRequired && !(vis.vehicleNumber || '').trim();
+        if (contactMissing || nameMissing || vehicleMissing) hasErrors = true;
+        errs[vis.id] = { contact: contactMissing, name: nameMissing, vehicleNumber: vehicleMissing };
+      });
+      // Primary vehicle number is mandatory only if a primary vehicle is selected
+      const primaryMissing = !!primaryVehicle && !primaryVehicleNumber.trim();
+      setVisitorErrors(errs);
+      setPrimaryVehicleError(primaryMissing);
+      if (hasErrors || primaryMissing) {
+        showToast("Please fill all required visitor fields before proceeding.");
+        return;
+      }
+    }
+
+    // NDA gating (step 5 -> step 6)
+    if (step === 5 && !ndaAgree) {
+      showToast("Please agree to the NDA to continue.");
+      return;
+    }
+
+    // Step 3: require Asset Category selection for primary and all additional visitors
+    if (step === 3) {
+      let hasAssetErrors = false;
+      const nextErrors: Record<number, boolean> = {};
+      // Validate primary visitor (id: 0) and any visitor entries that exist
+      const allVisitors = [0, ...visitors.map((v) => v.id)];
+      allVisitors.forEach((id) => {
+        const list = assetsByVisitor[id] || [];
+        const category = list[0]?.category || '';
+        const missing = !category.trim();
+        nextErrors[id] = missing;
+        if (missing) hasAssetErrors = true;
+      });
+      setAssetCategoryErrors(nextErrors);
+      if (hasAssetErrors) {
+        showToast("Please select asset category for all visitors.");
+        return;
+      }
+    }
+
+    setStep((s) => (s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1)));
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-3">
-      <div className="w-full max-w-xs sm:max-w-sm pb-28">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
+  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-14">
         {/* Header */}
-        <div className="bg-gray-100 rounded p-3 mb-3">
+        <div className="bg-[#D5DBDB66] rounded p-3 mb-3">
           <h2 className="text-lg font-semibold">
             {step === 1
               ? "1. Visitor Registration"
@@ -102,27 +200,60 @@ const VisitorSharingFormWeb: React.FC = () => {
                 />
               ))}
             </div>
+            {/* Toast */}
+            {toastVisible && toastMessage && (
+              <div className="fixed left-1/2 transform -translate-x-1/2 bottom-20 z-50 w-[90%] sm:w-auto max-w-md">
+                <div className="mx-auto bg-[#111827] text-white text-sm px-4 py-3 rounded shadow-lg text-center">{toastMessage}</div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Step 1 */}
         {step === 1 && (
           <div className="bg-white rounded p-2 shadow-sm">
-           
-            <div className="mt-2 border-2 border-dashed border-red-300 rounded p-3">
+            {/* Profile photo upload (required) */}
+            <div className={`mt-2 border-2 border-dashed rounded p-3 ${profilePhotoError ? 'border-[#C72030]' : 'border-gray-200'}`}>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white">
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 7a2 2 0 0 1 2-2h2l1-2h6l1 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <div className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {/* Camera body */}
+                      <path d="M3 7a2 2 0 0 1 2-2h2l1-2h6l1 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      {/* Centered lens */}
+                      <circle cx="12" cy="12" r="3" stroke="#9CA3AF" strokeWidth="1.5" />
+                    </svg>
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="font-medium">Profile Photo <span className="text-[#C72030]">*</span></div>
                   <div className="mt-2">
-                    <button disabled className="bg-[#C72030]/60 text-white px-4 py-2 rounded shadow cursor-not-allowed">Upload Photo</button>
+                    <label className="inline-block">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setProfilePhoto(String(reader.result));
+                              setProfilePhotoError(false);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <span className="bg-[#C72030] text-white px-4 py-2 rounded shadow cursor-pointer inline-block">Upload Photo</span>
+                    </label>
                   </div>
                   <div className="text-xs text-gray-400 mt-2">This photo will appear on your gate pass</div>
+                  {profilePhotoError && (
+                    <div className="text-xs text-[#C72030] mt-2">Please upload a profile photo to continue.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -130,7 +261,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             <div className="mt-4 space-y-3 text-sm px-2 bg-[#D9D9D940] p-2">
                {/* Pre-filled banner */}
             <div className="mb-3 px-1">
-              <div className="flex items-center gap-2 rounded border border-gray-200 bg-[#e7dfd6] px-3 py-2">
+              <div className="flex items-center gap-2 rounded border border-gray-200 bg-[#C4AE9D59] px-3 py-2">
                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#C72030]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -141,14 +272,17 @@ const VisitorSharingFormWeb: React.FC = () => {
             </div>
               <div>
                 <div className="text-xs text-gray-600 flex items-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2v2M16.24 3.76l-1.42 1.42M20 12h-2M19.07 19.07l-1.42-1.42M12 20v-2M7.76 20.24l1.42-1.42M4 12h2M4.93 4.93l1.42 1.42" stroke="#6B7280" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <path d="M12.6635 13.997V12.664C12.6635 11.957 12.3826 11.2789 11.8827 10.7789C11.3827 10.2789 10.7046 9.99805 9.99751 9.99805H5.99852C5.29145 9.99805 4.61334 10.2789 4.11337 10.7789C3.6134 11.2789 3.33252 11.957 3.33252 12.664V13.997" stroke="#344153" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7.99803 7.33199C9.47042 7.33199 10.664 6.13839 10.664 4.666C10.664 3.19361 9.47042 2 7.99803 2C6.52564 2 5.33203 3.19361 5.33203 4.666C5.33203 6.13839 6.52564 7.33199 7.99803 7.33199Z" stroke="#344153" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                   Guest Type
                 </div>
-                <div className="mt-2 flex gap-2">
-                  <button disabled className="flex-1 bg-white border border-gray-200 py-2 rounded opacity-60 cursor-not-allowed">Once</button>
-                  <button disabled className="flex-1 bg-white border border-gray-200 py-2 rounded opacity-60 cursor-not-allowed">Frequent</button>
+                <div className="mt-2">
+                  <select value={guestType} onChange={(e) => setGuestType(e.target.value as 'Once' | 'Frequent')} disabled className="mt-1 w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm cursor-not-allowed">
+                    <option value="Once">Once</option>
+                    <option value="Frequent">Frequent</option>
+                  </select>
                 </div>
               </div>
 
@@ -178,6 +312,17 @@ const VisitorSharingFormWeb: React.FC = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <div className="text-xs text-gray-600">From</div>
+                  <input value={fromTime} onChange={(e) => setFromTime(e.target.value)} placeholder="HH:MM" className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-600">To</div>
+                  <input value={toTime} onChange={(e) => setToTime(e.target.value)} placeholder="HH:MM" className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" />
+                </div>
+              </div>
+
               <div>
                 <div className="text-xs text-gray-600">Purpose</div>
                 <input value={purpose} readOnly disabled className="mt-1 w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm cursor-not-allowed" placeholder="Meeting" />
@@ -194,16 +339,15 @@ const VisitorSharingFormWeb: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="text-xs text-gray-600">Person to meet</div>
-                <div className="flex items-center gap-2 ml-auto text-sm text-gray-700">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" checked={personToMeet === 'myself'} disabled className="form-radio cursor-not-allowed" />
-                    <span>Myself</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" checked={personToMeet === 'other'} disabled className="form-radio cursor-not-allowed" />
-                    <span>Other</span>
-                  </label>
+                <div className="w-full">
+                  <div className="text-xs text-gray-600">Person to meet</div>
+                  <input
+                    value={personToMeetName}
+                    readOnly
+                    disabled
+                    placeholder="Enter person to meet"
+                    className="mt-1 w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm cursor-not-allowed"
+                  />
                 </div>
               </div>
             </div>
@@ -416,12 +560,28 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="p-3 space-y-3">
                     <div>
                       <div className="text-xs text-gray-600">Contact Number <span className="text-[#C72030]">*</span></div>
-                      <input value={visitor.contact} onChange={(e) => updateVisitor(visitor.id, { contact: e.target.value })} className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Enter number" />
+                      <input
+                        value={visitor.contact}
+                        onChange={(e) => updateVisitor(visitor.id, { contact: e.target.value })}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.contact ? 'border-[#C72030]' : 'border-gray-200'}`}
+                        placeholder="Enter number"
+                      />
+                      {visitorErrors[visitor.id]?.contact && (
+                        <div className="text-xs text-[#C72030] mt-1">Contact number is required</div>
+                      )}
                     </div>
 
                     <div>
-                      <div className="text-xs text-gray-600">Name</div>
-                      <input value={visitor.name} onChange={(e) => updateVisitor(visitor.id, { name: e.target.value })} className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Enter full name" />
+                      <div className="text-xs text-gray-600">Name <span className="text-[#C72030]">*</span></div>
+                      <input
+                        value={visitor.name}
+                        onChange={(e) => updateVisitor(visitor.id, { name: e.target.value })}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.name ? 'border-[#C72030]' : 'border-gray-200'}`}
+                        placeholder="Enter full name"
+                      />
+                      {visitorErrors[visitor.id]?.name && (
+                        <div className="text-xs text-[#C72030] mt-1">Name is required</div>
+                      )}
                     </div>
 
                     <div>
@@ -458,8 +618,16 @@ const VisitorSharingFormWeb: React.FC = () => {
                     </div>
 
                     <div>
-                      <div className="text-xs text-gray-600">Vehicle Number</div>
-                      <input value={visitor.vehicleNumber} onChange={(e) => updateVisitor(visitor.id, { vehicleNumber: e.target.value })} className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Enter Vehicle Registration No." />
+                      <div className="text-xs text-gray-600">Vehicle Number <span className="text-[#C72030]">*</span></div>
+                      <input
+                        value={visitor.vehicleNumber}
+                        onChange={(e) => updateVisitor(visitor.id, { vehicleNumber: e.target.value })}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.vehicleNumber ? 'border-[#C72030]' : 'border-gray-200'}`}
+                        placeholder="Enter Vehicle Registration No."
+                      />
+                      {visitorErrors[visitor.id]?.vehicleNumber && (
+                        <div className="text-xs text-[#C72030] mt-1">Vehicle number is required</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -507,8 +675,16 @@ const VisitorSharingFormWeb: React.FC = () => {
               </div>
 
               <div className="mt-3">
-                <div className="text-xs text-gray-600">Vehicle Number</div>
-                <input value={primaryVehicleNumber} onChange={(e) => setPrimaryVehicleNumber(e.target.value)} placeholder="Enter Vehicle Registration No." className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm" />
+                <div className="text-xs text-gray-600">Vehicle Number <span className="text-[#C72030]">*</span></div>
+                <input
+                  value={primaryVehicleNumber}
+                  onChange={(e) => setPrimaryVehicleNumber(e.target.value)}
+                  placeholder="Enter Vehicle Registration No."
+                  className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${primaryVehicleError ? 'border-[#C72030]' : 'border-gray-200'}`}
+                />
+                {primaryVehicleError && (
+                  <div className="text-xs text-[#C72030] mt-1">Primary vehicle number is required</div>
+                )}
               </div>
             </div>
           </div>
@@ -590,6 +766,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     [v.id]: (s[v.id] || []).map((x, idx) => idx === 0 ? { ...x, category: c } : x),
                                   }));
                                 }
+                                // clear error for this visitor once category is chosen
+                                setAssetCategoryErrors((e) => ({ ...e, [v.id]: false }));
                               }}
                             >
                               {c}
@@ -597,6 +775,9 @@ const VisitorSharingFormWeb: React.FC = () => {
                           );
                         })}
                       </div>
+                      {assetCategoryErrors[v.id] && (
+                        <div className="text-xs text-[#C72030] mt-1">Asset Category is required</div>
+                      )}
 
                       {(assetsByVisitor[v.id] || []).map((a) => (
                         <div key={a.id} className="border border-gray-100 rounded p-3">
@@ -783,11 +964,22 @@ const VisitorSharingFormWeb: React.FC = () => {
   <div className="sticky bottom-0 flex justify-center p-4 bg-white z-30">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
             {step > 1 && (
-              <button onClick={() => setStep((s) => Math.max(1, s - 1))} className="w-1/2 bg-white border border-gray-200 py-3 rounded">Back</button>
+              <button
+                onClick={() => {
+                  // Clear validation errors when navigating back
+                  setVisitorErrors({});
+                  setPrimaryVehicleError(false);
+                  setAssetCategoryErrors({});
+                  setStep((s) => Math.max(1, s - 1));
+                }}
+                className="w-1/2 bg-white border border-gray-200 py-3 rounded"
+              >
+                Back
+              </button>
             )}
             {step < 6 && (
               <button
-                onClick={() => setStep((s) => s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1))}
+                onClick={handleNext}
                 disabled={step === 5 && !ndaAgree}
     className={`flex-1 py-3 font-semibold rounded ${step === 5 && !ndaAgree ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-[#C72030] text-white'}`}
               >
