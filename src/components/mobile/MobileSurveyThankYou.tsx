@@ -119,17 +119,18 @@ export const MobileSurveyThankYou: React.FC = () => {
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{
-        backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.[0]?.url || "/9019830 1.png"
-          })`,
+        backgroundImage: `url(${
+          surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
+          "/9019830 1.png"
+        })`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         filter: "brightness(0.85)",
       }}
     >
-      {/* Logo */}
       <div className="absolute top-8 right-6">
-        <div className="w-32 h-32 sm:w-48 sm:h-32 flex items-center justify-center overflow-hidden bg-white/90 rounded-lg shadow-md p-2">
+        <div className="w-32 h-32 sm:w-48 sm:h-32 flex items-center justify-center overflow-hidden   p-2">
           {window.location.origin === "https://oig.gophygital.work" ? (
             <img
               src="/Without bkg.svg"
@@ -164,7 +165,7 @@ export const MobileSurveyThankYou: React.FC = () => {
         <div className="p-3">
           <h1
             className="text-lg sm:text-lg font-work-sans font-semibold text-black"
-          // style={{ fontFamily: "cursive" }}
+            // style={{ fontFamily: "cursive" }}
           >
             Thank you
           </h1>
@@ -177,7 +178,7 @@ export const MobileSurveyThankYou: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-xs p-2 text-gray-700 font-medium">
-          {state?.rating && state.rating < 3
+          {state?.rating && state.rating < 4
             ? "We regret the inconvenience and assure you that washroom services will be improved."
             : "Helping us to improve!"}
         </p>

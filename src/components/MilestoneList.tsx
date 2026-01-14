@@ -456,16 +456,21 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";
             case "completion_percent":
-                // return item.completion_percent != null
-                //     ? `${item.completion_percent}%`
-                //     : "-";
-                return <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
-                    <div
-                        className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
-                        style={{ width: `${item.completion_percent}%` }}
-                    ></div>
-                    <span className="relative z-10 text-xs font-semibold text-gray-800">
-                        {Math.round(item.completion_percent)}%
+                return <div className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {item.completed_tasks}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+                        <div
+                            className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+                            style={{ width: `${item.completion_percent}%` }}
+                        ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(item.completion_percent)}%
+                        </span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {item.total_tasks}
                     </span>
                 </div>
             default:
