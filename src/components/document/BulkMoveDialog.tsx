@@ -136,9 +136,8 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
       return (
         <div key={folder.id} className="select-none">
           <div
-            className={`flex items-center gap-2 py-2 px-3 hover:bg-gray-50 rounded transition-colors ${
-              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-            }`}
+            className={`flex items-center gap-2 py-2 px-3 hover:bg-gray-50 rounded transition-colors ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
             style={{ paddingLeft: `${level * 20 + 12}px` }}
           >
             {hasChildren && (
@@ -169,9 +168,8 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
 
             <label
               htmlFor={`folder-${folder.id}`}
-              className={`text-sm flex-1 ${
-                isDisabled ? "cursor-not-allowed" : "cursor-pointer"
-              }`}
+              className={`text-sm flex-1 ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                }`}
             >
               {folder.name}
             </label>
@@ -187,66 +185,81 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
+          <DialogTitle className="text-xl font-semibold text-[#1a1a1a]">
             {operationType === "move" ? "Move" : "Copy"} Documents
           </DialogTitle>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-2">
             Select{" "}
             {operationType === "move"
               ? "a destination"
               : "one or more destination"}{" "}
             folder
             {operationType === "copy" ? "s" : ""} for{" "}
-            {selectedDocumentIds.length} document
+            <span className="font-semibold text-[#C72030]">
+              {selectedDocumentIds.length}
+            </span>{" "}
+            document
             {selectedDocumentIds.length !== 1 ? "s" : ""}
           </p>
         </DialogHeader>
 
-        {/* Search Bar */}
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search folders..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
-          />
-        </div>
+        <div className="flex flex-col flex-1 overflow-hidden px-6 py-4">
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search folders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm"
+            />
+          </div>
 
-        {/* Folder Tree */}
-        <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg mt-4 p-2 min-h-[300px] max-h-[400px]">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500">Loading folders...</div>
+          {/* Folder Tree with Fixed Height and Scroll */}
+          <div className="flex-1 overflow-hidden border border-gray-200 rounded-lg bg-gray-50">
+            <div className="h-full overflow-y-auto p-3">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-gray-500 text-sm">Loading folders...</div>
+                </div>
+              ) : folders.length === 0 ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-gray-500 text-sm">No folders available</div>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {renderFolderTree(folders)}
+                </div>
+              )}
             </div>
-          ) : folders.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500">No folders available</div>
+          </div>
+
+          {/* Selected Count */}
+          {selectedFolderIds.length > 0 && (
+            <div className="mt-4 px-3 py-2 bg-[#F6F4EE] rounded-lg">
+              <p className="text-sm font-medium text-[#1a1a1a]">
+                {selectedFolderIds.length} folder
+                {selectedFolderIds.length !== 1 ? "s" : ""} selected
+              </p>
             </div>
-          ) : (
-            renderFolderTree(folders)
           )}
         </div>
 
-        {/* Selected Count */}
-        {selectedFolderIds.length > 0 && (
-          <div className="mt-3 text-sm text-gray-600">
-            {selectedFolderIds.length} folder
-            {selectedFolderIds.length !== 1 ? "s" : ""} selected
-          </div>
-        )}
-
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-200">
-          <Button variant="outline" onClick={handleClose}>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="min-w-[100px]"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleConfirm}
-            className="bg-[#C72030] hover:bg-[#A01828] text-white"
+            className="bg-[#C72030] hover:bg-[#A01828] text-white min-w-[140px]"
             disabled={selectedFolderIds.length === 0}
           >
             {operationType === "move" ? "Move" : "Copy"} Documents

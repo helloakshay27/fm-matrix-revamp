@@ -32,18 +32,19 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
     if (type === 'purposeWise' && dateRange) {
       fetchHostWiseData();
     }
-  }, [type, dateRange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, dateRange?.startDate, dateRange?.endDate]);
 
   const fetchHostWiseData = async () => {
     if (!dateRange) return;
-    
+
     setIsLoading(true);
     try {
       const fromDate = `${dateRange.startDate.getDate()}/${dateRange.startDate.getMonth() + 1}/${dateRange.startDate.getFullYear()}`;
       const toDate = `${dateRange.endDate.getDate()}/${dateRange.endDate.getMonth() + 1}/${dateRange.endDate.getFullYear()}`;
-      
+
       const response = await visitorHostWiseAPI.getHostWiseVisitors(fromDate, toDate);
-      
+
       // Transform the API response to chart data
       const chartData = Object.entries(response.host_wise_guest_count.visitorsByHost).map(([host, count]) => ({
         purpose: host || 'Unknown Host',
@@ -70,11 +71,11 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
 
   const handleDownload = async () => {
     if (!dateRange) return;
-    
+
     setIsDownloading(true);
     try {
       const { visitorDownloadAPI } = await import('@/services/visitorDownloadAPI');
-      
+
       switch (type) {
         case 'purposeWise':
           await visitorDownloadAPI.downloadComparisonData(dateRange.startDate, dateRange.endDate);
@@ -115,50 +116,50 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
             ) : (
               <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
                 {purposeData.length > 0 ? (
-                <BarChart 
-                  data={purposeData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                  <XAxis 
-                    dataKey="purpose" 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={80} 
-                    tick={{
+                  <BarChart
+                    data={purposeData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                    <XAxis
+                      dataKey="purpose"
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      tick={{
+                        fill: '#374151',
+                        fontSize: 10
+                      }}
+                      className="text-xs"
+                    />
+                    <YAxis tick={{
                       fill: '#374151',
                       fontSize: 10
-                    }} 
-                    className="text-xs" 
-                  />
-                  <YAxis tick={{
-                    fill: '#374151',
-                    fontSize: 10
-                  }} />
-                  <Tooltip 
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                            <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                            <div className="space-y-1">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[#C72030] font-medium">Count:</span>
-                                <span className="text-gray-700">{payload[0]?.value || 0}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-[#C72030] font-medium">Percentage:</span>
-                                <span className="text-gray-700">{payload[0]?.payload?.percentage || 0}%</span>
+                    }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                              <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                              <div className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[#C72030] font-medium">Count:</span>
+                                  <span className="text-gray-700">{payload[0]?.value || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[#C72030] font-medium">Percentage:</span>
+                                  <span className="text-gray-700">{payload[0]?.payload?.percentage || 0}%</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#C72030" name="Count" />
-                </BarChart>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="count" fill="#C72030" name="Count" />
+                  </BarChart>
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center py-8 text-gray-500">
@@ -230,7 +231,7 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
             <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-6">
               {statusData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div 
+                  <div
                     className="w-4 h-4 rounded-sm"
                     style={{ backgroundColor: item.color }}
                   />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Pencil, Trash2, FileText, Download, Edit2 } from "lucide-react";
+import { Pencil, Trash2, FileText, Download, Edit2, Copy, Move } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -9,8 +9,10 @@ import {
   deleteDocument,
   Document,
   DocumentAttachment,
+  bulkMoveCopyDocuments,
 } from "@/services/documentService";
 import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
+import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
 
 interface DocumentPermission {
   id: number;
@@ -60,6 +62,12 @@ export const DocumentDetailPage = () => {
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [operationType, setOperationType] = useState<"move" | "copy">("move");
+  const hostname = window.location.hostname;
+
+  const isPulseSite = hostname.includes("pulse.lockated.com");
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -133,6 +141,77 @@ export const DocumentDetailPage = () => {
 
   const handleCloseEditor = () => {
     setShowEditor(false);
+  };
+
+  const handleMove = () => {
+    if (!document) {
+      toast.error("Document not loaded");
+      return;
+    }
+    setOperationType("move");
+    setShowMoveDialog(true);
+  };
+
+  const handleCopy = () => {
+    if (!document) {
+      toast.error("Document not loaded");
+      return;
+    }
+    setOperationType("copy");
+    setShowCopyDialog(true);
+  };
+
+  const handleBulkMoveConfirm = async (targetFolderIds: number[]) => {
+    if (!id || !document) return;
+
+    try {
+      const payload: {
+        move?: {
+          from_folder_id: number;
+          to_folder_ids: number[];
+          document_ids: number[];
+        };
+        copy?: {
+          from_folder_id: number;
+          to_folder_ids: number[];
+          document_ids: number[];
+        };
+      } = {};
+
+      if (operationType === "move") {
+        payload.move = {
+          from_folder_id: document.folder_id,
+          to_folder_ids: targetFolderIds,
+          document_ids: [parseInt(id)],
+        };
+      } else {
+        payload.copy = {
+          from_folder_id: document.folder_id,
+          to_folder_ids: targetFolderIds,
+          document_ids: [parseInt(id)],
+        };
+      }
+
+      await bulkMoveCopyDocuments(payload);
+
+      toast.success(
+        `Successfully ${operationType === "move" ? "moved" : "copied"} document`
+      );
+
+      setShowMoveDialog(false);
+      setShowCopyDialog(false);
+
+      // If moved, navigate back to documents list
+      if (operationType === "move") {
+        navigate("/maintenance/documents");
+      }
+    } catch (error) {
+      console.error(
+        `Error ${operationType === "move" ? "moving" : "copying"} document:`,
+        error
+      );
+      toast.error(`Failed to ${operationType} document`);
+    }
   };
 
   const isEditableDocument = (filename: string): boolean => {
@@ -254,10 +333,27 @@ export const DocumentDetailPage = () => {
             Document &gt; Document Detail
           </div>
           <div className="flex items-center gap-3">
+            {/* Move Button */}
+            <button
+              onClick={handleMove}
+              className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+              title="Move Document"
+            >
+              <Move className="w-5 h-5 text-[#C72030]" />
+            </button>
+            {/* Copy Button */}
+            <button
+              onClick={handleCopy}
+              className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+              title="Copy Document"
+            >
+              <Copy className="w-5 h-5 text-[#C72030]" />
+            </button>
             {/* Edit Button */}
             <button
               onClick={handleEdit}
               className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+              title="Edit Document"
             >
               <Pencil className="w-5 h-5 text-[#C72030]" />
             </button>
@@ -265,6 +361,7 @@ export const DocumentDetailPage = () => {
             <button
               onClick={handleDelete}
               className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+              title="Delete Document"
             >
               <Trash2 className="w-5 h-5 text-[#C72030]" />
             </button>
@@ -292,9 +389,8 @@ export const DocumentDetailPage = () => {
                 className="data-[state=checked]:bg-green-500"
               />
               <span
-                className={`text-sm font-medium ${
-                  document.active ? "text-green-600" : "text-gray-500"
-                }`}
+                className={`text-sm font-medium ${document.active ? "text-green-600" : "text-gray-500"
+                  }`}
               >
                 {document.active ? "Active" : "Inactive"}
               </span>
@@ -451,16 +547,24 @@ export const DocumentDetailPage = () => {
                 </div>
 
                 {/* Action Buttons */}
+
+
+
                 <div className="flex items-center gap-2 mt-3">
-                  {isEditableDocument(document.attachment.filename) && (
-                    <button
-                      onClick={() => handleOpenEditor()}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Edit
-                    </button>
-                  )}
+
+
+                  {!isPulseSite &&
+                    isEditableDocument(document.attachment.filename) && (
+                      <button
+                        onClick={handleOpenEditor}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit
+                      </button>
+                    )}
+
+
                   <button
                     onClick={() =>
                       handleDownload(
@@ -488,6 +592,26 @@ export const DocumentDetailPage = () => {
           onClose={handleCloseEditor}
         />
       )}
+
+      {/* Bulk Move Dialog */}
+      <BulkMoveDialog
+        isOpen={showMoveDialog}
+        onClose={() => setShowMoveDialog(false)}
+        operationType="move"
+        selectedDocumentIds={document ? [document.id] : []}
+        sourceFolderId={document?.folder_id}
+        onConfirm={handleBulkMoveConfirm}
+      />
+
+      {/* Bulk Copy Dialog */}
+      <BulkMoveDialog
+        isOpen={showCopyDialog}
+        onClose={() => setShowCopyDialog(false)}
+        operationType="copy"
+        selectedDocumentIds={document ? [document.id] : []}
+        sourceFolderId={document?.folder_id}
+        onConfirm={handleBulkMoveConfirm}
+      />
     </div>
   );
 };

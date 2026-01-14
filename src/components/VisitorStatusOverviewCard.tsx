@@ -29,11 +29,12 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
     if (dateRange) {
       fetchVisitorSummary();
     }
-  }, [dateRange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange?.startDate, dateRange?.endDate]);
 
   const fetchVisitorSummary = async () => {
     if (!dateRange) return;
-    
+
     setIsLoading(true);
     try {
       // Format dates as DD/MM/YYYY to match API expectation
@@ -46,9 +47,9 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
 
       const fromDate = formatDate(dateRange.startDate);
       const toDate = formatDate(dateRange.endDate);
-      
+
       const response = await visitorSummaryAPI.getVisitorSummary(fromDate, toDate);
-      
+
       if (response.success) {
         setVisitorData({
           totalVisitors: response.summary.totalVisitors,
