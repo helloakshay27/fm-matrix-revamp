@@ -552,7 +552,7 @@ export const FolderDetailsPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto p-6">
+      <div className="w-full p-6">
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
           {/* Render View based on mode */}
