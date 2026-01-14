@@ -264,7 +264,7 @@ export const EditBookingSetupPage = () => {
                 ...prev,
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
-                isRequest: responseData.fac_type === "request",
+                isRequest: responseData.fac_type === "requestable",
                 active: responseData.active,
                 category: responseData.facility_category_id || "",
                 appKey: responseData.app_key,
@@ -606,7 +606,7 @@ export const EditBookingSetupPage = () => {
             // Basic Facility Info
             formDataToSend.append(
                 "facility_setup[fac_type]",
-                formData.isBookable ? "bookable" : "request"
+                formData.isBookable ? "bookable" : "requestable"
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
@@ -664,21 +664,21 @@ export const EditBookingSetupPage = () => {
             );
 
             // Charge Setup - Guest selected boolean
-            formDataToSend.append(
-                "facility_setup[facility_charge_attributes][guest]",
-                formData.chargeSetup.guest.selected ? "true" : "false"
-            );
-            // Guest charges (pass if selected or if any value exists)
-            if (formData.chargeSetup.guest.selected || formData.chargeSetup.guest.adult || formData.chargeSetup.guest.child) {
-                formDataToSend.append(
-                    "facility_setup[facility_charge_attributes][adult_guest_charge]",
-                    formData.chargeSetup.guest.adult || "0"
-                );
-                formDataToSend.append(
-                    "facility_setup[facility_charge_attributes][child_guest_charge]",
-                    formData.chargeSetup.guest.child || "0"
-                );
-            }
+            // formDataToSend.append(
+            //     "facility_setup[facility_charge_attributes][guest]",
+            //     formData.chargeSetup.guest.selected ? "true" : "false"
+            // );
+            // // Guest charges (pass if selected or if any value exists)
+            // if (formData.chargeSetup.guest.selected || formData.chargeSetup.guest.adult || formData.chargeSetup.guest.child) {
+            //     formDataToSend.append(
+            //         "facility_setup[facility_charge_attributes][adult_guest_charge]",
+            //         formData.chargeSetup.guest.adult || "0"
+            //     );
+            //     formDataToSend.append(
+            //         "facility_setup[facility_charge_attributes][child_guest_charge]",
+            //         formData.chargeSetup.guest.child || "0"
+            //     );
+            // }
 
             // Charge Setup - Person limits and GST
             formDataToSend.append(
@@ -758,10 +758,10 @@ export const EditBookingSetupPage = () => {
                 "facility_setup[multi_slot]",
                 formData.allowMultipleSlots ? "1" : "0"
             )
-            formDataToSend.append(
-                "facility_setup[max_slots]",
-                formData.maximumSlots
-            )
+            // formDataToSend.append(
+            //     "facility_setup[max_slots]",
+            //     formData.maximumSlots
+            // )
             formDataToSend.append(
                 "facility_setup[booking_limit]", formData.facilityBookedTimes
             )
@@ -1229,7 +1229,7 @@ export const EditBookingSetupPage = () => {
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    {/* <tr>
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 <Checkbox
@@ -1328,7 +1328,7 @@ export const EditBookingSetupPage = () => {
                                                 />
                                             </div>
                                         </td>
-                                    </tr>
+                                    </tr> */}
                                 </tbody>
                             </table>
                         </div>
@@ -1418,7 +1418,7 @@ export const EditBookingSetupPage = () => {
                                 <div>End Time</div>
                                 <div>Concurrent Slots</div>
                                 <div>Slot by</div>
-                                {/* <div>Wrap Time</div> */}
+                                <div>Wrap Time</div>
                             </div>
                             {formData.slots.map((slot, index) => (
                                 <div key={index} className="grid grid-cols-7 gap-2 mb-2">
@@ -1593,7 +1593,7 @@ export const EditBookingSetupPage = () => {
                                             <MenuItem value={270}>4 and a half hours</MenuItem>
                                         </Select>
                                     </FormControl>
-                                    {/* <TextField
+                                    <TextField
                                         size="small"
                                         onChange={(e) => {
                                             const newSlots = [...formData.slots];
@@ -1602,7 +1602,7 @@ export const EditBookingSetupPage = () => {
                                         }}
                                         value={slot.wrapTime}
                                         variant="outlined"
-                                    /> */}
+                                    />
                                 </div>
                             ))}
                             <div className="space-y-4 mt-4">
@@ -2054,7 +2054,7 @@ export const EditBookingSetupPage = () => {
                                             setFormData({ ...formData, payOnFacility: !!checked })
                                         }
                                     />
-                                    <label htmlFor="payOnFacility">Pay on Facility</label>
+                                    <label htmlFor="payOnFacility">Pay at Facility</label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
