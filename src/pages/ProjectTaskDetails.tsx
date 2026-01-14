@@ -1,7 +1,16 @@
 import { useEffect, useState, forwardRef, useRef, Fragment } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, PencilIcon, Plus, Trash2, X, ChevronDownCircle, CircleCheckBig } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  PencilIcon,
+  Plus,
+  Trash2,
+  X,
+  ChevronDownCircle,
+  CircleCheckBig,
+} from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Mention, MentionsInput } from "react-mentions";
@@ -18,10 +27,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, FormControl, MenuItem, Slide, Select as MuiSelect } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  FormControl,
+  MenuItem,
+  Slide,
+  Select as MuiSelect,
+} from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
-import { updateTaskStatus, fetchProjectTasksById, editProjectTask } from "@/store/slices/projectTasksSlice";
+import {
+  updateTaskStatus,
+  fetchProjectTasksById,
+  editProjectTask,
+} from "@/store/slices/projectTasksSlice";
 import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import SubtasksTable from "@/components/SubtasksTable";
 import AddSubtaskModal from "@/components/AddSubtaskModal";
@@ -58,7 +78,10 @@ const sortCommentsDesc = (arr: any[] | undefined) => {
 };
 
 // Calculate duration with overdue detection
-const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
+const calculateDuration = (
+  start: string | undefined,
+  end: string | undefined
+): { text: string; isOverdue: boolean } => {
   if (!start || !end) return { text: "N/A", isOverdue: false };
 
   const now = new Date();
@@ -141,15 +164,24 @@ export const ActiveTimer = ({ activeTimeTillNow, isStarted }) => {
 
   return (
     <div className="text-left text-[12px] text-green-600 font-medium">
-      {String(time.hours).padStart(2, '0')}h {String(time.minutes).padStart(2, '0')}m{' '}
-      {String(time.seconds).padStart(2, '0')}s
+      {String(time.hours).padStart(2, "0")}h{" "}
+      {String(time.minutes).padStart(2, "0")}m{" "}
+      {String(time.seconds).padStart(2, "0")}s
     </div>
   );
 };
 
 // Countdown Timer Component
-const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
-  const [countdown, setCountdown] = useState(calculateDuration(startDate, targetDate));
+const CountdownTimer = ({
+  startDate,
+  targetDate,
+}: {
+  startDate?: string;
+  targetDate?: string;
+}) => {
+  const [countdown, setCountdown] = useState(
+    calculateDuration(startDate, targetDate)
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -160,11 +192,21 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
   }, [targetDate, startDate]);
 
   const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
-  return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
+  return (
+    <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>
+  );
 };
 
 // Comments Component
-const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: string; getTask?: () => void }) => {
+const Comments = ({
+  comments,
+  taskId,
+  getTask,
+}: {
+  comments?: any[];
+  taskId?: string;
+  getTask?: () => void;
+}) => {
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -176,7 +218,9 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
   const textareaRef = useRef<any>(null);
 
   // Local comments state so we can optimistically prepend new comments and show newest-first
-  const [localComments, setLocalComments] = useState<any[]>(sortCommentsDesc(comments || []));
+  const [localComments, setLocalComments] = useState<any[]>(
+    sortCommentsDesc(comments || [])
+  );
 
   // Mock data for mentions - replace with actual API calls if needed
   const [mentionUsers, setMentionUsers] = useState<any[]>([]);
@@ -189,49 +233,54 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
 
   const fetchMentionUsers = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      })
+      );
       setMentionUsers(response.data.users || []);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const fetchMentionTags = async () => {
     try {
       const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       setMentionTags(response.data || []);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchMentionUsers();
     fetchMentionTags();
-  }, [])
+  }, []);
 
-  const mentionData = mentionUsers.length > 0
-    ? mentionUsers.map((user: any) => ({
-      id: user.id?.toString() || user.user_id?.toString(),
-      display: user.full_name || user.name || "Unknown User",
-    }))
-    : [];
+  const mentionData =
+    mentionUsers.length > 0
+      ? mentionUsers.map((user: any) => ({
+        id: user.id?.toString() || user.user_id?.toString(),
+        display: user.full_name || user.name || "Unknown User",
+      }))
+      : [];
 
-  const tagData = mentionTags.length > 0
-    ? mentionTags.map((tag: any) => ({
-      id: tag.id?.toString(),
-      display: tag.name,
-    }))
-    : [];
+  const tagData =
+    mentionTags.length > 0
+      ? mentionTags.map((tag: any) => ({
+        id: tag.id?.toString(),
+        display: tag.name,
+      }))
+      : [];
 
   const handleAddComment = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -252,14 +301,20 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
       };
 
       // Create comment on server and use response (if any) to prepend locally
-      const resp = await axios.post(`https://${baseUrl}/comments.json`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const resp = await axios.post(
+        `https://${baseUrl}/comments.json`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      const newComment = resp?.data?.comment || resp?.data || {
+      const newComment = resp?.data?.comment ||
+        resp?.data || {
         id: Date.now().toString(),
         body: comment,
-        commentor_full_name: `${currentUser?.firstname || ''} ${currentUser?.lastname || ''}`.trim(),
+        commentor_full_name:
+          `${currentUser?.firstname || ""} ${currentUser?.lastname || ""}`.trim(),
         created_at: new Date().toISOString(),
       };
 
@@ -271,7 +326,9 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
       if (getTask) {
         getTask();
       } else if (taskId) {
-        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        await dispatch(
+          fetchProjectTasksById({ baseUrl, token, id: taskId })
+        ).unwrap();
       }
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -298,12 +355,18 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
       };
 
       // Update comment on server and use response to update local list
-      const resp = await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const resp = await axios.put(
+        `https://${baseUrl}/comments/${editingCommentId}.json`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const updated = resp?.data?.comment || resp?.data;
-      setLocalComments((prev) => prev.map((c) => (c.id === editingCommentId ? updated : c)));
+      setLocalComments((prev) =>
+        prev.map((c) => (c.id === editingCommentId ? updated : c))
+      );
 
       toast.success("Comment updated successfully");
       setEditingCommentId(null);
@@ -312,7 +375,9 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
       if (getTask) {
         getTask();
       } else if (taskId) {
-        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        await dispatch(
+          fetchProjectTasksById({ baseUrl, token, id: taskId })
+        ).unwrap();
       }
     } catch (error) {
       console.error("Error updating comment:", error);
@@ -334,7 +399,9 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
       if (getTask) {
         getTask();
       } else if (taskId) {
-        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        await dispatch(
+          fetchProjectTasksById({ baseUrl, token, id: taskId })
+        ).unwrap();
       }
     } catch (error) {
       console.error("Error deleting comment:", error);
@@ -541,10 +608,16 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
                 {cmt.updated_at && cmt.updated_at !== cmt.created_at && (
                   <span className="text-gray-500 italic">(edited)</span>
                 )}
-                <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
+                <span
+                  className="cursor-pointer"
+                  onClick={() => handleEdit(cmt)}
+                >
                   Edit
                 </span>
-                <span className="cursor-pointer" onClick={() => handleDelete(cmt.id)}>
+                <span
+                  className="cursor-pointer"
+                  onClick={() => handleDelete(cmt.id)}
+                >
                   Delete
                 </span>
               </div>
@@ -557,7 +630,15 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
 };
 
 // Attachments Component
-const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; taskId?: string, fetchData: () => void }) => {
+const Attachments = ({
+  attachments,
+  taskId,
+  fetchData,
+}: {
+  attachments?: any[];
+  taskId?: string;
+  fetchData: () => void;
+}) => {
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const baseUrl = localStorage.getItem("baseUrl");
@@ -573,11 +654,15 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const selectedFiles = Array.from(event.target.files || []);
     if (!selectedFiles.length) return;
 
-    const oversizedFiles = selectedFiles.filter((file) => file.size > 10 * 1024 * 1024);
+    const oversizedFiles = selectedFiles.filter(
+      (file) => file.size > 10 * 1024 * 1024
+    );
     if (oversizedFiles.length > 0) {
       const fileNames = oversizedFiles.map((file) => file.name).join(", ");
       toast.error(`File(s) too large: ${fileNames}. Max allowed size is 10MB.`);
@@ -591,11 +676,15 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
         formData.append("task_management[attachments][]", file);
       });
 
-      await axios.put(`https://${baseUrl}/task_managements/${taskId}.json`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       toast.success("File(s) uploaded successfully");
       fetchData();
@@ -610,16 +699,21 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
   const handleDeleteFile = async (fileId: string) => {
     setIsSubmitting(true);
     try {
-      await axios.delete(`https://${baseUrl}/task_managements/${taskId}/remove_attachemnts/${fileId}.json`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.delete(
+        `https://${baseUrl}/task_managements/${taskId}/remove_attachemnts/${fileId}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       toast.success("File removed successfully.");
       setFiles(files.filter((f) => f.id !== fileId));
       if (taskId) {
-        const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        const taskResponse = await dispatch(
+          fetchProjectTasksById({ baseUrl, token, id: taskId })
+        ).unwrap();
         setFiles(taskResponse?.attachments || []);
       }
     } catch (error: any) {
@@ -639,7 +733,14 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
               const fileName = file.document_file_name || file.file_name;
               const fileUrl = file.document_url || file.file_url;
               const fileExt = fileName?.split(".").pop()?.toLowerCase();
-              const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt || "");
+              const isImage = [
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "bmp",
+                "webp",
+              ].includes(fileExt || "");
               const isPdf = fileExt === "pdf";
               const isWord = ["doc", "docx"].includes(fileExt || "");
               const isExcel = ["xls", "xlsx"].includes(fileExt || "");
@@ -657,7 +758,11 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
                   />
                   <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                     {isImage ? (
-                      <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                      <img
+                        src={fileUrl}
+                        alt={fileName}
+                        className="object-contain h-full"
+                      />
                     ) : isPdf ? (
                       <span className="text-red-600 font-bold">PDF</span>
                     ) : isWord ? (
@@ -689,19 +794,23 @@ const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; 
             onClick={handleAttachFile}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Uploading..." : "Attach Files"} <span className="text-[10px]">( Max 10 MB )</span>
+            {isSubmitting ? "Uploading..." : "Attach Files"}{" "}
+            <span className="text-[10px]">( Max 10 MB )</span>
           </button>
         </>
       ) : (
         <div className="text-[14px] mt-2">
           <span>No Documents Attached</span>
-          <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+          <div className="text-[#C2C2C2]">
+            Drop or attach relevant documents here
+          </div>
           <button
             className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
             onClick={handleAttachFile}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Uploading..." : "Attach Files"} <span className="text-[10px]">( Max 10 MB )</span>
+            {isSubmitting ? "Uploading..." : "Attach Files"}{" "}
+            <span className="text-[10px]">( Max 10 MB )</span>
           </button>
         </div>
       )}
@@ -776,7 +885,8 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
   }));
 
   const sortedActivities = [...activities].sort(
-    (a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
+    (a, b) =>
+      new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
   );
 
   return (
@@ -787,7 +897,8 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
             <div className="flex flex-col gap-2 min-w-[150px]">
               <span>
                 <i>
-                  {activity.person} <span className="text-[#C72030]">{activity.action}</span>{" "}
+                  {activity.person}{" "}
+                  <span className="text-[#C72030]">{activity.action}</span>{" "}
                   {activity.item}
                 </i>
               </span>
@@ -861,7 +972,8 @@ const WorkflowStatusLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
   }));
 
   const sortedActivities = [...activities].sort(
-    (a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
+    (a, b) =>
+      new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
   );
 
   return (
@@ -872,7 +984,8 @@ const WorkflowStatusLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
             <div className="flex flex-col gap-2 min-w-[150px]">
               <span>
                 <i>
-                  {activity.person} <span className="text-[#C72030]">{activity.action}</span>{" "}
+                  {activity.person}{" "}
+                  <span className="text-[#C72030]">{activity.action}</span>{" "}
                   {activity.item}
                 </i>
               </span>
@@ -958,8 +1071,8 @@ function formatToDDMMYYYY_AMPM(dateString) {
 
 const STATUS_COLORS = {
   active: "bg-[#E4636A] text-white",
-  "in_progress": "bg-[#08AEEA] text-white",
-  "on_hold": "bg-[#7BD2B5] text-black",
+  in_progress: "bg-[#08AEEA] text-white",
+  on_hold: "bg-[#7BD2B5] text-black",
   overdue: "bg-[#FF2733] text-white",
   completed: "bg-[#83D17A] text-black",
 };
@@ -992,12 +1105,17 @@ export const ProjectTaskDetails = () => {
   const view = localStorage.getItem("selectedView");
 
   useEffect(() => {
-    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    setCurrentSection(
+      view === "admin" ? "Value Added Services" : "Project Task"
+    );
   }, [setCurrentSection]);
 
-
   const navigate = useNavigate();
-  const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
+  const { id, mid, taskId } = useParams<{
+    id: string;
+    mid: string;
+    taskId: string;
+  }>();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -1015,7 +1133,7 @@ export const ProjectTaskDetails = () => {
   const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
   const [addingTodo, setAddingTodo] = useState(false);
-  const [statuses, setStatuses] = useState([])
+  const [statuses, setStatuses] = useState([]);
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1023,20 +1141,23 @@ export const ProjectTaskDetails = () => {
   const getStatuses = async () => {
     try {
       const response = await dispatch(fetchProjectStatuses()).unwrap();
-      setStatuses(response)
+      setStatuses(response);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
-    getStatuses()
-  }, [])
+    getStatuses();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpenDropdown(false);
       }
     };
@@ -1063,7 +1184,9 @@ export const ProjectTaskDetails = () => {
 
       // Fetch details for each dependent task
       const taskPromises = dependencyIds.map((depId) =>
-        dispatch(fetchProjectTasksById({ baseUrl, token, id: depId.toString() }))
+        dispatch(
+          fetchProjectTasksById({ baseUrl, token, id: depId.toString() })
+        )
           .unwrap()
           .catch(() => null)
       );
@@ -1079,7 +1202,9 @@ export const ProjectTaskDetails = () => {
 
   const fetchData = async () => {
     try {
-      const response = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+      const response = await dispatch(
+        fetchProjectTasksById({ baseUrl, token, id: taskId })
+      ).unwrap();
       setTaskDetails(response);
       setSelectedOption(mapStatusToDisplay(response.status) || "Open");
       setSubtasks(response.sub_tasks_managements || []);
@@ -1087,7 +1212,8 @@ export const ProjectTaskDetails = () => {
       // Fetch dependent tasks
       await fetchDependentTasks(response);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to load task details";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to load task details";
       toast.error(errorMessage);
     }
   };
@@ -1118,7 +1244,13 @@ export const ProjectTaskDetails = () => {
     { id: "workflow_status_log", label: "Workflow Status Log" },
   ];
 
-  const dropdownOptions = ["Open", "In Progress", "On Hold", "Overdue", "Completed"];
+  const dropdownOptions = [
+    "Open",
+    "In Progress",
+    "On Hold",
+    "Overdue",
+    "Completed",
+  ];
 
   const handleAddToDo = async () => {
     if (addingTodo) return;
@@ -1128,18 +1260,18 @@ export const ProjectTaskDetails = () => {
         todo: {
           title: taskDetails.title,
           task_management_id: taskDetails.id,
-          status: 'open',
+          status: "open",
           target_date: taskDetails.target_date,
         },
       };
 
       await axios.post(`https://${baseUrl}/todos.json`, payload, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      toast.success('To-Do added successfully.');
+      toast.success("To-Do added successfully.");
       fetchData();
     } catch (error) {
       console.log(error);
@@ -1162,7 +1294,7 @@ export const ProjectTaskDetails = () => {
         token,
         id: taskId,
         data: {
-          status: mapDisplayToApiStatus(option)
+          status: mapDisplayToApiStatus(option),
         },
       })
     ).unwrap();
@@ -1173,13 +1305,20 @@ export const ProjectTaskDetails = () => {
 
   const handleWorkflowChange = async (newStatusId: string) => {
     try {
-      await dispatch(editProjectTask({ token, baseUrl, id: String(taskId), data: { project_status_id: newStatusId } })).unwrap();
+      await dispatch(
+        editProjectTask({
+          token,
+          baseUrl,
+          id: String(taskId),
+          data: { project_status_id: newStatusId },
+        })
+      ).unwrap();
       fetchData();
       toast.success("Task status changed successfully");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const handleOpenEditModal = () => {
     setOpenEditModal(true);
@@ -1220,18 +1359,14 @@ export const ProjectTaskDetails = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'subtasks' && taskDetails?.parent_id) {
-      setActiveTab('dependency');
+    if (activeTab === "subtasks" && taskDetails?.parent_id) {
+      setActiveTab("dependency");
     }
   }, [activeTab, taskDetails?.parent_id]);
 
   return (
-    <div className="my-4 m-4 md:m-8">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="p-0"
-      >
+    <div className="my-4 m-8">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
@@ -1241,20 +1376,21 @@ export const ProjectTaskDetails = () => {
           <span>{taskDetails.title}</span>
         </h2>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between my-3 text-[12px] gap-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
+        <div className="flex items-center justify-between my-3 text-[12px]">
+          <div className="flex items-center gap-3 text-[#323232]">
             <span>
-              Created By: {typeof taskDetails?.created_by === "string" ? taskDetails.created_by : (taskDetails?.created_by as any)?.name}
+              Created By:{" "}
+              {typeof taskDetails?.created_by === "string"
+                ? taskDetails.created_by
+                : (taskDetails?.created_by as any)?.name}
             </span>
-            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
             <span className="flex items-center gap-3">
               Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
             </span>
-            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
             <span
-              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
-                "bg-gray-400 text-white"
-                }`}
+              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
             >
               <div className="relative" ref={dropdownRef}>
                 <div
@@ -1271,7 +1407,8 @@ export const ProjectTaskDetails = () => {
                   <span className="text-[13px]">{selectedOption}</span>
                   <ChevronDown
                     size={15}
-                    className={`${openDropdown ? "rotate-180" : ""} transition-transform`}
+                    className={`${openDropdown ? "rotate-180" : ""
+                      } transition-transform`}
                   />
                 </div>
                 <ul
@@ -1288,7 +1425,9 @@ export const ProjectTaskDetails = () => {
                   {dropdownOptions.map((option, idx) => (
                     <li key={idx} role="menuitem">
                       <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                          ? "bg-gray-100 font-semibold"
+                          : ""
                           }`}
                         onClick={() => handleOptionSelect(option)}
                       >
@@ -1299,17 +1438,14 @@ export const ProjectTaskDetails = () => {
                 </ul>
               </div>
             </span>
-            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
             <span className="cursor-pointer flex items-center gap-1">
               <ActiveTimer
                 activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
                 isStarted={(taskDetails as any)?.is_started}
               />
             </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#323232]">
-            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300 md:hidden"></span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
             {taskDetails.todo_converted ? (
               <span
                 className="flex items-center gap-1 cursor-pointer"
@@ -1327,7 +1463,7 @@ export const ProjectTaskDetails = () => {
                 <span>Add To Do</span>
               </span>
             )}
-            <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
             <span
               className="flex items-center gap-1 cursor-pointer"
               onClick={() => setOpenEditModal(true)}
@@ -1337,7 +1473,7 @@ export const ProjectTaskDetails = () => {
             </span>
             {!taskDetails.parent_id && (
               <>
-                <span className="hidden md:inline-block h-6 w-[1px] border border-gray-300"></span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
                 <span
                   className="flex items-center gap-1 cursor-pointer"
                   onClick={() => setOpenSubTaskModal(true)}
@@ -1361,7 +1497,9 @@ export const ProjectTaskDetails = () => {
             className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
             onClick={toggleFirstCollapse}
           />
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Description</h3>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Description
+          </h3>
         </div>
 
         <div className="mt-4 overflow-hidden" ref={firstContentRef}>
@@ -1378,36 +1516,33 @@ export const ProjectTaskDetails = () => {
             className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
             onClick={toggleSecondCollapse}
           />
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Details</h3>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Details
+          </h3>
         </div>
 
         {/* Collapsed View Summary */}
         {isSecondCollapsed && (
-          <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4 mt-4 text-[12px]">
-            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
-              <div className="font-[500]">Responsible Person:</div>
-              <div className="break-words max-w-[180px]">
-                {taskDetails?.responsible_person?.name || "-"}
+          <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
+            <div className="flex items-center justify-start gap-3">
+              <div className="text-right font-[500]">Responsible Person:</div>
+              <div className="text-left">
+                {taskDetails.responsible_person.name || "-"}
               </div>
             </div>
-
-            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
-              <div className="font-[500]">Priority:</div>
-              <div className="break-words max-w-[100px]">
-                {taskDetails.priority || "-"}
-              </div>
+            <div className="flex items-center justify-start gap-3">
+              <div className="text-right font-[500]">Priority:</div>
+              <div className="text-left">{taskDetails.priority || "-"}</div>
             </div>
-
-            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
-              <div className="font-[500]">End Date:</div>
-              <div className="break-words max-w-[140px]">
+            <div className="flex items-center justify-start gap-3">
+              <div className="text-right font-[500]">End Date:</div>
+              <div className="text-left">
                 {formatToDDMMYYYY(taskDetails.target_date || "")}
               </div>
             </div>
-
-            <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-2">
-              <div className="font-[500]">Efforts Duration:</div>
-              <div className="break-words max-w-[120px]">
+            <div className="flex items-center justify-start gap-3">
+              <div className="text-right font-[500]">Efforts Duration:</div>
+              <div className="text-left">
                 {taskDetails.estimated_hour || 0} hours
               </div>
             </div>
@@ -1420,12 +1555,14 @@ export const ProjectTaskDetails = () => {
           ref={secondContentRef}
         >
           <div className="flex flex-col space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
+                <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">
+                    Responsible Person:
+                  </p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <p className="text-sm text-gray-900">
                     {taskDetails?.responsible_person?.name || "-"}
                   </p>
@@ -1433,19 +1570,23 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Priority:</p>
                 </div>
-                <div className="flex-1 break-words">
-                  <p className="text-sm text-gray-900">{taskDetails.priority || "-"}</p>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">
+                    {taskDetails.priority || "-"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">Start Date:</p>
+                <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">
+                    Start Date:
+                  </p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <p className="text-sm text-gray-900">
                     {formatToDDMMYYYY(taskDetails.expected_start_date || "")}
                   </p>
@@ -1453,12 +1594,19 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                {/* <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">Milestone:</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
+                </div> */}
+
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">
-                    {taskDetails.parent_id ? "Task" : "Milestone"}:
+                    {taskDetails.parent_id ? "Task" : "Milestones"}:
                   </p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <p className="text-sm text-gray-900">
                     {taskDetails.parent_id
                       ? taskDetails.parent_task_title
@@ -1468,10 +1616,10 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">End Date:</p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <p className="text-sm text-gray-900">
                     {formatToDDMMYYYY(taskDetails.target_date || "")}
                   </p>
@@ -1479,12 +1627,13 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Tags:</p>
                 </div>
                 <div className="flex-1">
                   <div className="flex gap-1 flex-wrap">
-                    {taskDetails.task_tags && taskDetails.task_tags.length > 0 ? (
+                    {taskDetails.task_tags &&
+                      taskDetails.task_tags.length > 0 ? (
                       taskDetails.task_tags.map((tag, index) => (
                         <span
                           key={index}
@@ -1501,10 +1650,12 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">Efforts Duration:</p>
+                <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">
+                    Efforts Duration:
+                  </p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <p className="text-sm text-gray-900">
                     {taskDetails.estimated_hour || 0} hours
                   </p>
@@ -1512,13 +1663,13 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Observer:</p>
                 </div>
                 <div className="flex-1">
                   {taskDetails.observers && taskDetails.observers.length > 0 ? (
                     <TooltipProvider>
-                      <div className="flex gap-1 flex-wrap">
+                      <div className="flex gap-1">
                         {taskDetails.observers.map((observer, idx) => (
                           <Tooltip key={idx}>
                             <TooltipTrigger asChild>
@@ -1540,7 +1691,7 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
+                <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">
                     {calculateDuration(
                       taskDetails.expected_start_date,
@@ -1550,7 +1701,7 @@ export const ProjectTaskDetails = () => {
                       : "Time Left:"}
                   </p>
                 </div>
-                <div className="flex-1 break-words">
+                <div className="flex-1">
                   <CountdownTimer
                     startDate={taskDetails.expected_start_date}
                     targetDate={taskDetails.target_date}
@@ -1559,19 +1710,25 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[140px] md:min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">Workflow Status:</p>
+                <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">
+                    Workflow Status:
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1">
                   <Select
-                    value={taskDetails.project_status_id ? String(taskDetails.project_status_id) : "1"}
+                    value={
+                      taskDetails.project_status_id
+                        ? String(taskDetails.project_status_id)
+                        : "1"
+                    }
                     onValueChange={(value) => handleWorkflowChange(value)}
                   >
-                    <SelectTrigger className="w-full md:w-[180px] h-9 bg-[#C72030] text-white border-none">
+                    <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {statuses.map((status) => (
+                      {statuses.map((status: any) => (
                         <SelectItem key={status.id} value={String(status.id)}>
                           {status.status}
                         </SelectItem>
@@ -1585,21 +1742,28 @@ export const ProjectTaskDetails = () => {
         </div>
       </div>
 
-      <AddSubtaskModal openTaskModal={openSubTaskModal} setOpenTaskModal={setOpenSubTaskModal} fetchData={fetchData} />
+      <AddSubtaskModal
+        openTaskModal={openSubTaskModal}
+        setOpenTaskModal={setOpenSubTaskModal}
+        fetchData={fetchData}
+      />
 
       {/* Tabs Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="border-b border-gray-200">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pt-3 md:px-6 md:pt-4">
+          <div className="flex overflow-x-auto">
             {tabs
-              .filter((tabName) => !(tabName.label === "Subtasks" && taskDetails?.parent_id))
+              .filter(
+                (tabName) =>
+                  !(tabName.label === "Subtasks" && taskDetails?.parent_id)
+              )
               .map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`text-sm font-medium whitespace-nowrap border-b-2 transition-colors pb-2 ${activeTab === tab.id
-                      ? "border-[#C72030] text-[#C72030]"
-                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
+                    ? "border-[#C72030] text-[#C72030]"
+                    : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
                     }`}
                 >
                   {tab.label}
@@ -1608,7 +1772,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </div>
 
-        <div className="px-4 md:px-6 pb-6">
+        <div className="px-6 pb-6">
           {/* Subtasks Tab */}
           {activeTab === "subtasks" && !taskDetails?.parent_id && (
             <SubtasksTable subtasks={subtasks} fetchData={fetchData} />
@@ -1673,17 +1837,24 @@ export const ProjectTaskDetails = () => {
       >
         <DialogContent
           className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-          style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+          style={{
+            margin: 0,
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
           sx={{
             padding: "0 !important",
             "& .MuiDialogContent-root": {
               padding: "0 !important",
               overflow: "auto",
-            }
+            },
           }}
         >
           <div className="sticky top-0 bg-white z-10">
-            <h3 className="text-[14px] font-medium text-center mt-8">Edit Project Task</h3>
+            <h3 className="text-[14px] font-medium text-center mt-8">
+              Edit Project Task
+            </h3>
             <X
               className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
               onClick={handleCloseEditModal}
@@ -1699,7 +1870,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 };
 

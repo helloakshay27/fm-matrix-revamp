@@ -22,8 +22,12 @@ import { AssetSelectionPanel } from "@/components/AssetSelectionPanel";
 import {
   getFolderDetails,
   FolderDetailsResponse,
+  bulkMoveCopyDocuments,
 } from "@/services/documentService";
 import { FileIcon } from "@/components/document/FileIcon";
+import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
+import { DocumentSelectionPanel } from "@/components/document/DocumentSelectionPanel";
+import { toast } from "sonner";
 
 interface FolderItem {
   id: number;
@@ -177,6 +181,9 @@ export const FolderDetailsPage = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [operationType, setOperationType] = useState<"move" | "copy">("move");
 
   // Check if this is a file list view (not folder list)
   const isFileListView = location.pathname.includes("/folder/");
@@ -343,6 +350,113 @@ export const FolderDetailsPage = () => {
     setSelectedItems([]);
   };
 
+  const handleMove = () => {
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one document");
+      return;
+    }
+    setOperationType("move");
+    setShowMoveDialog(true);
+  };
+
+  const handleCopy = () => {
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one document");
+      return;
+    }
+    setOperationType("copy");
+    setShowCopyDialog(true);
+  };
+
+  const handleBulkMoveConfirm = async (targetFolderIds: number[]) => {
+    if (!id) return;
+
+    const documentIds = selectedItems
+      .map((itemId) => {
+        const item = folderItems.find((i) => i.id.toString() === itemId);
+        return item?.type === "file" ? parseInt(itemId) : null;
+      })
+      .filter((docId): docId is number => docId !== null);
+
+    if (documentIds.length === 0) {
+      toast.error("No documents selected for move operation");
+      return;
+    }
+
+    try {
+      const payload: any = {};
+
+      if (operationType === "move") {
+        payload.move = {
+          from_folder_id: parseInt(id),
+          to_folder_ids: targetFolderIds,
+          document_ids: documentIds,
+        };
+      } else {
+        payload.copy = {
+          from_folder_id: parseInt(id),
+          to_folder_ids: targetFolderIds,
+          document_ids: documentIds,
+        };
+      }
+
+      await bulkMoveCopyDocuments(payload);
+
+      toast.success(
+        `Successfully ${operationType === "move" ? "moved" : "copied"} ${documentIds.length} document${documentIds.length !== 1 ? "s" : ""}`
+      );
+
+      // Refresh folder contents
+      const response = await getFolderDetails(parseInt(id));
+      setFolderData(response);
+
+      // Transform data
+      const items: FolderItem[] = [
+        ...response.childs.map((child) => ({
+          id: child.id,
+          folder_title: child.name,
+          type: "folder" as const,
+          category: response.name || "Uncategorized",
+          size: "0 B",
+          document_count: 0,
+          status: "Active" as const,
+          created_by: "Unknown",
+          created_date: new Date().toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+        })),
+        ...response.documents.map((doc) => ({
+          id: doc.id,
+          folder_title: doc.title,
+          type: "file" as const,
+          category: response.name || "Uncategorized",
+          format: doc.file_type?.toUpperCase() || "PDF",
+          size: formatFileSize(doc.file_size || 0),
+          document_count: 1,
+          status: "Active" as const,
+          created_by: "Unknown",
+          created_date: formatDate(doc.created_at),
+          modified_date: doc.updated_at
+            ? formatDate(doc.updated_at)
+            : undefined,
+        })),
+      ];
+
+      setFolderItems(items);
+      setSelectedItems([]);
+      setShowMoveDialog(false);
+      setShowCopyDialog(false);
+    } catch (error) {
+      console.error(
+        `Error ${operationType === "move" ? "moving" : "copying"} documents:`,
+        error
+      );
+      toast.error(`Failed to ${operationType} documents`);
+    }
+  };
+
   // Convert selected items for AssetSelectionPanel
   const selectedItemObjects = folderItems
     .filter((item) => selectedItems.includes(item.id.toString()))
@@ -460,47 +574,53 @@ export const FolderDetailsPage = () => {
             />
           )}
 
-          {/* Selection Action Panel */}
-          {selectedItems.length > 0 && (
-            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 flex items-center gap-4 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-[#1a1a1a]">
-                  {selectedItems.length} selected
-                </span>
-                <div className="h-6 w-px bg-gray-300" />
-              </div>
-
-              {/* Update Button */}
-              <button
-                onClick={() => handleUpdate()}
-                className="flex items-center gap-2 px-4 py-2 bg-[#FFF5F5] hover:bg-[#FFE5E5] rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4 text-[#C72030]" />
-                <span className="text-sm font-medium text-[#C72030]">
-                  Update
-                </span>
-              </button>
-
-              {/* Delete Button */}
-              <button
-                onClick={() => handleDelete()}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4 text-red-600" />
-                <span className="text-sm font-medium text-red-600">Delete</span>
-              </button>
-
-              {/* Clear Selection */}
-              <button
-                onClick={handleClearSelection}
-                className="ml-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-          )}
+          {/* Document Selection Panel */}
+          <DocumentSelectionPanel
+            selectedItems={selectedItems}
+            selectedDocuments={folderItems
+              .filter((item) => selectedItems.includes(item.id.toString()))
+              .map((item) => ({
+                id: item.id,
+                folder_title: item.folder_title,
+              }))}
+            onUpdate={() => handleUpdate()}
+            onDelete={() => handleDelete()}
+            onMove={handleMove}
+            onCopy={handleCopy}
+            onClearSelection={handleClearSelection}
+          />
         </div>
       </div>
+
+      {/* Bulk Move Dialog */}
+      <BulkMoveDialog
+        isOpen={showMoveDialog}
+        onClose={() => setShowMoveDialog(false)}
+        operationType="move"
+        selectedDocumentIds={selectedItems
+          .map((itemId) => {
+            const item = folderItems.find((i) => i.id.toString() === itemId);
+            return item?.type === "file" ? item.id : null;
+          })
+          .filter((docId): docId is number => docId !== null)}
+        sourceFolderId={id ? parseInt(id) : undefined}
+        onConfirm={handleBulkMoveConfirm}
+      />
+
+      {/* Bulk Copy Dialog */}
+      <BulkMoveDialog
+        isOpen={showCopyDialog}
+        onClose={() => setShowCopyDialog(false)}
+        operationType="copy"
+        selectedDocumentIds={selectedItems
+          .map((itemId) => {
+            const item = folderItems.find((i) => i.id.toString() === itemId);
+            return item?.type === "file" ? item.id : null;
+          })
+          .filter((docId): docId is number => docId !== null)}
+        sourceFolderId={id ? parseInt(id) : undefined}
+        onConfirm={handleBulkMoveConfirm}
+      />
     </div>
   );
 };

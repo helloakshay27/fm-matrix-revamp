@@ -1495,7 +1495,7 @@ const ProjectTasksPage = () => {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <span className="w-[200px] truncate">{item.title}</span>
+                                    <span className="w-full truncate">{item.title}</span>
                                 </TooltipTrigger>
                                 <TooltipContent className="rounded-[5px]">
                                     <p>{item.title}</p>
