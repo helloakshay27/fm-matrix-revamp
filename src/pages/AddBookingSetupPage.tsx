@@ -395,7 +395,7 @@ export const AddBookingSetupPage = () => {
       // Basic Facility Info
       formDataToSend.append(
         "facility_setup[fac_type]",
-        formData.isBookable ? "bookable" : "request"
+        formData.isBookable ? "bookable" : "requestable"
       );
       formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
       formDataToSend.append(
@@ -454,20 +454,20 @@ export const AddBookingSetupPage = () => {
       }
 
       // Charge Setup - Guest charges and boolean
-      formDataToSend.append(
-        "facility_setup[facility_charge_attributes][guest]",
-        formData.chargeSetup.guest.selected ? "true" : "false"
-      );
-      if (formData.chargeSetup.guest.selected) {
-        formDataToSend.append(
-          "facility_setup[facility_charge_attributes][adult_guest_charge]",
-          formData.chargeSetup.guest.adult || "0"
-        );
-        formDataToSend.append(
-          "facility_setup[facility_charge_attributes][child_guest_charge]",
-          formData.chargeSetup.guest.child || "0"
-        );
-      }
+      // formDataToSend.append(
+      //   "facility_setup[facility_charge_attributes][guest]",
+      //   formData.chargeSetup.guest.selected ? "true" : "false"
+      // );
+      // if (formData.chargeSetup.guest.selected) {
+      //   formDataToSend.append(
+      //     "facility_setup[facility_charge_attributes][adult_guest_charge]",
+      //     formData.chargeSetup.guest.adult || "0"
+      //   );
+      //   formDataToSend.append(
+      //     "facility_setup[facility_charge_attributes][child_guest_charge]",
+      //     formData.chargeSetup.guest.child || "0"
+      //   );
+      // }
 
       formDataToSend.append(
         "facility_setup[facility_charge_attributes][per_slot_charge]",
@@ -971,7 +971,7 @@ export const AddBookingSetupPage = () => {
                       </div>
                     </td>
                   </tr>
-                  <tr>
+                  {/* <tr>
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Checkbox
@@ -1076,7 +1076,7 @@ export const AddBookingSetupPage = () => {
                         />
                       </div>
                     </td>
-                  </tr>
+                  </tr> */}
                 </tbody>
               </table>
             </div>
@@ -1186,7 +1186,7 @@ export const AddBookingSetupPage = () => {
                 <div>End Time</div>
                 <div>Concurrent Slots</div>
                 <div>Slot by</div>
-                {/* <div>Wrap Time</div> */}
+                <div>Wrap Time</div>
                 <div>Action</div>
               </div>
 
@@ -1396,7 +1396,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
 
-                  {/* <TextField
+                  <TextField
                     size="small"
                     value={slot.wrapTime}
                     onChange={(e) => {
@@ -1409,7 +1409,7 @@ export const AddBookingSetupPage = () => {
                       }
                     }}
                     variant="outlined"
-                  /> */}
+                  />
 
                   <Button
                     size="sm"
@@ -1733,7 +1733,7 @@ export const AddBookingSetupPage = () => {
                       setFormData({ ...formData, payOnFacility: !!checked })
                     }
                   />
-                  <label htmlFor="payOnFacility">Pay on Facility</label>
+                  <label htmlFor="payOnFacility">Pay at Facility</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
