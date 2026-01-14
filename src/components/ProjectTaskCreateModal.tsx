@@ -518,6 +518,8 @@ const TaskForm = ({
             value={
               users?.find(
                 (user: any) => user?.id === formData.responsiblePerson
+              )?.role || users?.find(
+                (user: any) => user?.id === formData.responsiblePerson
               )?.role_name || ""
             }
             InputProps={{ readOnly: true }}
@@ -1010,6 +1012,8 @@ const ProjectTaskCreateModal = ({
         estimated_hour: totalWorkingHours,
         task_allocation_times_attributes: dateWiseHours,
         ...(opportunityId && { opportunity_id: opportunityId }),
+        ...(data.isRecurring && { is_recurring: data.isRecurring }),
+        ...(data.isRecurring && data.cronExpression && { cron_expression: data.cronExpression }),
       },
     };
   };
@@ -1132,7 +1136,7 @@ const ProjectTaskCreateModal = ({
       }
       toast.dismiss();
       toast.success("Task created successfully");
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.log(error);
       const errors = error.response.data;
@@ -1147,6 +1151,15 @@ const ProjectTaskCreateModal = ({
 
   const handleSave = (data) => {
     console.log('Recurring task settings:', data);
+    setRecurringData(data);
+    // Store cron expression in formData and keep recurring task checked
+    setFormData(prev => ({
+      ...prev,
+      isRecurring: true,
+      cronExpression: data.cronExpression
+    }));
+    // Close the modal (checkbox remains checked)
+    setIsModalOpen(false);
   };
 
   return (
@@ -1224,7 +1237,11 @@ const ProjectTaskCreateModal = ({
 
         <RecurringTaskModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            // Uncheck the recurring task checkbox when modal is closed without saving
+            setFormData({ ...formData, isRecurring: false });
+          }}
           onSave={handleSave}
           initialData={recurringData}
         />
