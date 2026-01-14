@@ -647,10 +647,10 @@ export const AddBookingSetupPage = () => {
         "facility_setup[multi_slot]",
         formData.allowMultipleSlots ? "1" : "0"
       )
-      formDataToSend.append(
-        "facility_setup[max_slots]",
-        formData.maximumSlots
-      )
+      // formDataToSend.append(
+      //   "facility_setup[max_slots]",
+      //   formData.maximumSlots
+      // )
       formDataToSend.append(
         "facility_setup[booking_limit]", formData.facilityBookedTimes
       )
