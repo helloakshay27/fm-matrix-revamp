@@ -12,10 +12,15 @@ interface DocumentFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   filters: {
-    createdDate: string;
-    createdBy: string;
-    category: string;
-    status: string;
+    title?: string;
+    folderName?: string;
+    categoryName?: string;
+    createdBy?: string;
+    fileName?: string;
+    fileType?: string;
+    createdDateFrom?: string;
+    createdDateTo?: string;
+    status?: string;
   };
   onApplyFilters: (filters: any) => void;
 }
@@ -66,9 +71,14 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
 
   const handleReset = () => {
     const resetFilters = {
-      createdDate: "",
+      title: "",
+      folderName: "",
+      categoryName: "",
       createdBy: "",
-      category: "",
+      fileName: "",
+      fileType: "",
+      createdDateFrom: "",
+      createdDateTo: "",
       status: "",
     };
     setLocalFilters(resetFilters);
@@ -100,86 +110,146 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Created Date */}
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel>Created Date</InputLabel>
-              <MuiSelect
-                value={localFilters.createdDate}
+            {/* Title Search */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Document Title
+              </label>
+              <input
+                type="text"
+                placeholder="Search by title..."
+                value={localFilters.title || ''}
                 onChange={(e) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    createdDate: e.target.value,
-                  })
+                  setLocalFilters({ ...localFilters, title: e.target.value })
                 }
-                label="Created Date"
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  <em>Select Created Date</em>
-                </MenuItem>
-                <MenuItem value="today">Today</MenuItem>
-                <MenuItem value="last_7_days">Last 7 Days</MenuItem>
-                <MenuItem value="last_30_days">Last 30 Days</MenuItem>
-                <MenuItem value="last_90_days">Last 90 Days</MenuItem>
-                <MenuItem value="custom">Custom Range</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
+
+            {/* Folder Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Folder Name
+              </label>
+              <input
+                type="text"
+                placeholder="Search by folder name..."
+                value={localFilters.folderName || ''}
+                onChange={(e) =>
+                  setLocalFilters({ ...localFilters, folderName: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
+
+            {/* Category Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category Name
+              </label>
+              <input
+                type="text"
+                placeholder="Search by category..."
+                value={localFilters.categoryName || ''}
+                onChange={(e) =>
+                  setLocalFilters({ ...localFilters, categoryName: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
 
             {/* Created By */}
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel>Created By</InputLabel>
-              <MuiSelect
-                value={localFilters.createdBy}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Created By
+              </label>
+              <input
+                type="text"
+                placeholder="Search by creator name..."
+                value={localFilters.createdBy || ''}
                 onChange={(e) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    createdBy: e.target.value,
-                  })
+                  setLocalFilters({ ...localFilters, createdBy: e.target.value })
                 }
-                label="Created By"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
+
+            {/* File Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                File Name
+              </label>
+              <input
+                type="text"
+                placeholder="Search by file name..."
+                value={localFilters.fileName || ''}
+                onChange={(e) =>
+                  setLocalFilters({ ...localFilters, fileName: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
+
+            {/* File Type */}
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel>File Type</InputLabel>
+              <MuiSelect
+                value={localFilters.fileType || ''}
+                onChange={(e) =>
+                  setLocalFilters({ ...localFilters, fileType: e.target.value })
+                }
+                label="File Type"
                 MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
-                  <em>Enter Created By</em>
+                  <em>All Types</em>
                 </MenuItem>
-                <MenuItem value="john_doe">John Doe</MenuItem>
-                <MenuItem value="rohan_desai">Rohan Desai</MenuItem>
-                <MenuItem value="priya_kulkarni">Priya Kulkarni</MenuItem>
-                <MenuItem value="admin_system">Admin System</MenuItem>
-                <MenuItem value="mahesh_patil">Mahesh Patil</MenuItem>
+                <MenuItem value="application/pdf">PDF</MenuItem>
+                <MenuItem value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word (DOCX)</MenuItem>
+                <MenuItem value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel (XLSX)</MenuItem>
+                <MenuItem value="application/vnd.openxmlformats-officedocument.presentationml.presentation">PowerPoint (PPTX)</MenuItem>
+                <MenuItem value="image/jpeg">JPEG Image</MenuItem>
+                <MenuItem value="image/png">PNG Image</MenuItem>
               </MuiSelect>
             </FormControl>
 
-            {/* Category */}
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel>Category</InputLabel>
-              <MuiSelect
-                value={localFilters.category}
+            {/* Created Date From */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Created From
+              </label>
+              <input
+                type="date"
+                value={localFilters.createdDateFrom || ''}
                 onChange={(e) =>
-                  setLocalFilters({ ...localFilters, category: e.target.value })
+                  setLocalFilters({ ...localFilters, createdDateFrom: e.target.value })
                 }
-                label="Category"
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  <em>Select Category</em>
-                </MenuItem>
-                <MenuItem value="tenant">Tenant / Legal</MenuItem>
-                <MenuItem value="lease">Lease / Legal</MenuItem>
-                <MenuItem value="identity">Identity / Verification</MenuItem>
-                <MenuItem value="safety">Safety & Compliance</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="templates">Templates</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
+
+            {/* Created Date To */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Created To
+              </label>
+              <input
+                type="date"
+                value={localFilters.createdDateTo || ''}
+                onChange={(e) =>
+                  setLocalFilters({ ...localFilters, createdDateTo: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              />
+            </div>
 
             {/* Status */}
             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
               <InputLabel>Status</InputLabel>
               <MuiSelect
-                value={localFilters.status}
+                value={localFilters.status || ''}
                 onChange={(e) =>
                   setLocalFilters({ ...localFilters, status: e.target.value })
                 }
@@ -187,7 +257,7 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
                 MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
-                  <em>Select Status</em>
+                  <em>All Status</em>
                 </MenuItem>
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
