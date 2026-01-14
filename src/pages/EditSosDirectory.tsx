@@ -23,18 +23,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 const EditSosDirectory = () => {
     const { id } = useParams();
     const attachmentInputRef = useRef<HTMLInputElement>(null);
+    const darkImageInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<{
         title: string;
         category: string;
         contact_number: string;
         shareWith: string;
         image: File | null;
+        darkImage: File | null;
     }>({
         title: "",
         category: "",
         contact_number: "",
         shareWith: "all",
         image: null,
+        darkImage: null,
     });
 
     const baseUrl = localStorage.getItem('baseUrl');
@@ -46,6 +49,7 @@ const EditSosDirectory = () => {
     const type = searchParams.get("type");
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [darkImagePreview, setDarkImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -95,10 +99,14 @@ const EditSosDirectory = () => {
                 contact_number: dirData.contact_number || "",
                 shareWith: dirData.share_with || "all",
                 image: null,
+                darkImage: null,
             });
 
-            if (dirData.document_url) {
-                setImagePreview(dirData.document_url);
+            if (dirData.sos_directory_lite_url) {
+                setImagePreview(dirData.sos_directory_lite_url);
+            }
+            if (dirData.sos_directory_dark_url) {
+                setDarkImagePreview(dirData.sos_directory_dark_url);
             }
 
             if (dirData.share_with === 'individual' && dirData.shared_sos_directories) {
@@ -160,8 +168,27 @@ const EditSosDirectory = () => {
         }
     };
 
+    const handleDarkImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData((prev) => ({
+                ...prev,
+                darkImage: file,
+            }));
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setDarkImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const triggerFileInput = () => {
         attachmentInputRef.current?.click();
+    };
+
+    const triggerDarkImageInput = () => {
+        darkImageInputRef.current?.click();
     };
 
     const handleRemoveImage = (e: React.MouseEvent) => {
@@ -173,6 +200,18 @@ const EditSosDirectory = () => {
         setImagePreview(null);
         if (attachmentInputRef.current) {
             attachmentInputRef.current.value = "";
+        }
+    };
+
+    const handleRemoveDarkImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setFormData((prev) => ({
+            ...prev,
+            darkImage: null,
+        }));
+        setDarkImagePreview(null);
+        if (darkImageInputRef.current) {
+            darkImageInputRef.current.value = "";
         }
     };
 
@@ -226,7 +265,10 @@ const EditSosDirectory = () => {
             submitData.append('site_ids[]', id);
         });
         if (formData.image) {
-            submitData.append('attachment', formData.image);
+            submitData.append('sos_directory_lite', formData.image);
+        }
+        if (formData.darkImage) {
+            submitData.append('sos_directory_dark', formData.darkImage);
         }
 
         try {
@@ -415,65 +457,128 @@ const EditSosDirectory = () => {
                         </div>
                         <span className="font-semibold text-lg text-gray-800">Attachment</span>
                     </div>
-                    <div className="p-6 bg-white">
-                        <Label className="text-sm font-bold text-gray-700 mb-4 block">
-                            Upload Cover Image <span className="text-red-500">*</span>
-                        </Label>
+                    <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-5 gap-8">
+                        <div>
+                            <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                                Upload Cover Image <span className="text-red-500">*</span>
+                            </Label>
 
-                        {imagePreview ? (
-                            <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
-                                <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
-                                    {formData.image?.name || "Current Image"}
-                                </span>
-                                <button
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
-                                >
-                                    <XCircle size={20} />
-                                </button>
-                                <img
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    className="w-20 h-20 object-contain mt-6"
-                                />
-                            </div>
-                        ) : (
-                            <div
-                                onClick={triggerFileInput}
-                                className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                            >
-                                <div className="absolute top-2 right-2 text-gray-400">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Info size={18} />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                                                <p>Upload a clear, solid black image (no colors or gradients) to ensure consistent visibility on a white background.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                            {imagePreview ? (
+                                <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                                    <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                                        {formData.image?.name || "Current Image"}
+                                    </span>
+                                    <button
+                                        onClick={handleRemoveImage}
+                                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                                    >
+                                        <XCircle size={20} />
+                                    </button>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        className="w-20 h-20 object-contain mt-6"
+                                    />
                                 </div>
-
-                                <input
-                                    type="file"
-                                    ref={attachmentInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    accept="image/*"
-                                />
-
-                                <div className="text-center text-gray-500 text-sm">
-                                    Choose a file or<br />drag & drop it here
-                                </div>
-                                <Button
-                                    type="button"
-                                    className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
+                            ) : (
+                                <div
+                                    onClick={triggerFileInput}
+                                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                                 >
-                                    Browse
-                                </Button>
-                            </div>
-                        )}
+                                    <div className="absolute top-2 right-2 text-gray-400">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info size={18} />
+                                                </TooltipTrigger>
+                                                <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
+                                                    <p>Upload a clear, solid black image (no colors or gradients) to ensure consistent visibility on a white background.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        ref={attachmentInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
+
+                                    <div className="text-center text-gray-500 text-sm">
+                                        Choose a file or<br />drag & drop it here
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
+                                    >
+                                        Browse
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                                Upload Dark Image <span className="text-red-500">*</span>
+                            </Label>
+
+                            {darkImagePreview ? (
+                                <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                                    <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                                        {formData.darkImage?.name || "Current Dark Image"}
+                                    </span>
+                                    <button
+                                        onClick={handleRemoveDarkImage}
+                                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                                    >
+                                        <XCircle size={20} />
+                                    </button>
+                                    <img
+                                        src={darkImagePreview}
+                                        alt="Dark Preview"
+                                        className="w-20 h-20 object-contain mt-6"
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    onClick={triggerDarkImageInput}
+                                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                >
+                                    <div className="absolute top-2 right-2 text-gray-400">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info size={18} />
+                                                </TooltipTrigger>
+                                                <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
+                                                    <p>Upload a clear, solid white image (no colors or gradients) to ensure consistent visibility on a dark background.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        ref={darkImageInputRef}
+                                        onChange={handleDarkImageChange}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
+
+                                    <div className="text-center text-gray-500 text-sm">
+                                        Choose a file or<br />drag & drop it here
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
+                                    >
+                                        Browse
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

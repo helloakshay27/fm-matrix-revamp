@@ -90,7 +90,7 @@ const ExternalSosDirectory = ({
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case "image":
-                return <img src={item.document_url} alt="" className="h-14 w-14 object-fit" />
+                return <img src={item.sos_directory_lite_url} alt="" className="h-14 w-14 object-fit" />
             case "title":
                 return <div className="w-60">{item.title}</div>;
             case "category":

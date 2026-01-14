@@ -35,6 +35,7 @@ const SosDirectoryDetailsPage = () => {
     const [data, setData] = useState<SosDirectory | null>(null);
     const [status, setStatus] = useState(true);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [darkImagePreview, setDarkImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         fetchDetails();
@@ -49,8 +50,11 @@ const SosDirectoryDetailsPage = () => {
 
             setData(dirData);
             setStatus(dirData.status === true || dirData.status === "true");
-            if (dirData.document_url) {
-                setImagePreview(dirData.document_url);
+            if (dirData.sos_directory_lite_url) {
+                setImagePreview(dirData.sos_directory_lite_url);
+            }
+            if (dirData.sos_directory_dark_url) {
+                setDarkImagePreview(dirData.sos_directory_dark_url);
             }
         } catch (error) {
             console.error("Error fetching details:", error);
@@ -217,23 +221,45 @@ const SosDirectoryDetailsPage = () => {
                     <span className="font-semibold text-lg text-gray-800">Attachment</span>
                 </div>
 
-                <div className="p-8">
-                    <h3 className="text-base font-bold text-gray-900 mb-4">Upload Cover Image</h3>
+                <div className="p-8 grid grid-cols-1 md:grid-cols-5 gap-8">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900 mb-4">Uploaded Cover Image</h3>
 
-                    <div
-                        className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
-                    >
-                        {imagePreview ? (
-                            <>
-                                <img
-                                    src={imagePreview}
-                                    alt="Directory Cover"
-                                    className="w-20 h-20 object-contain"
-                                />
-                            </>
-                        ) : (
-                            <span className="text-gray-400 text-sm">No Image</span>
-                        )}
+                        <div
+                            className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+                        >
+                            {imagePreview ? (
+                                <>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Directory Cover"
+                                        className="w-20 h-20 object-contain"
+                                    />
+                                </>
+                            ) : (
+                                <span className="text-gray-400 text-sm">No Image</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900 mb-4">Uploaded Dark Image</h3>
+
+                        <div
+                            className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+                        >
+                            {darkImagePreview ? (
+                                <>
+                                    <img
+                                        src={darkImagePreview}
+                                        alt="Directory Dark Cover"
+                                        className="w-20 h-20 object-contain"
+                                    />
+                                </>
+                            ) : (
+                                <span className="text-gray-400 text-sm">No Image</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
