@@ -290,6 +290,9 @@ export const AddBookingSetupPage = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
       return false;
+    } else if (!formData.category) {
+      toast.error("Please select Category");
+      return false;
     } else if (!formData.facilityBookedTimes) {
       toast.error("Please enter how many times facility can be booked per day");
       return false;
@@ -310,29 +313,29 @@ export const AddBookingSetupPage = () => {
       const endHour = parseInt(slot.endTime.hour);
 
       if (slot.startTime.hour !== "00") {
-        if (
-          slot.breakTimeStart.hour === "00" ||
-          slot.breakTimeEnd.hour === "00" ||
-          slot.endTime.hour === "00"
-        ) {
-          toast.error(
-            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
-          );
-          return false;
-        }
+        // if (
+        //   slot.breakTimeStart.hour === "00" ||
+        //   slot.breakTimeEnd.hour === "00" ||
+        //   slot.endTime.hour === "00"
+        // ) {
+        //   toast.error(
+        //     `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+        //   );
+        //   return false;
+        // }
 
-        if (breakStartHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
-        if (breakEndHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
+        // if (breakStartHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
+        // if (breakEndHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
         if (endHour < startHour) {
           toast.error(
             `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`
@@ -430,7 +433,7 @@ export const AddBookingSetupPage = () => {
       );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-      formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
+      // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
       // formDataToSend.append(
       //   "facility_setup[facility_charge_attributes][per_slot_charge]",
       //   formData.perSlotCharge
@@ -784,7 +787,7 @@ export const AddBookingSetupPage = () => {
                   }}
                 />
                 <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Category</InputLabel>
+                  <InputLabel className="bg-[#F6F7F7]">Category<span className="text-red-500">*</span></InputLabel>
                   <Select
                     value={formData.category}
                     onChange={(e) =>
@@ -1746,7 +1749,7 @@ export const AddBookingSetupPage = () => {
                   <label htmlFor="complimentary">Complimentary</label>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField
                   label="SGST(%)"
                   value={formData.sgstPercentage}
@@ -1770,7 +1773,7 @@ export const AddBookingSetupPage = () => {
                   }}
                   variant="outlined"
                 />
-                <TextField
+                {/* <TextField
                   label="IGST(%)"
                   value={formData.igstPercentage}
                   onChange={(e) => {
@@ -1780,7 +1783,7 @@ export const AddBookingSetupPage = () => {
                     }
                   }}
                   variant="outlined"
-                />
+                /> */}
               </div>
             </div>
           </div>

@@ -124,7 +124,7 @@ export const BookingSetupDetailPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    department: "",
+    facility_name: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -329,19 +329,16 @@ export const BookingSetupDetailPage = () => {
   }
 
   const fetchFacilityBookingDetails = async () => {
-    console.log('🔍 fetchFacilityBookingDetails CALLED');
     try {
-      console.log('🚀 Fetching facility booking details...');
       const response = await dispatch(
         facilityBookingSetupDetails({ baseUrl, token, id })
       ).unwrap();
-      console.log('✅ API Response received:', response);
-      console.log('📦 facility_blockings from response:', response?.facility_blockings);
+      console.log(response.cover_image?.document)
       setFormData({
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
-        isRequest: response.fac_type === "request" ? true : false,
-        department: response.department_id ?? "",
+        isRequest: response.fac_type === "requestable" ? true : false,
+        facility_name: response.facility_name ?? "",
         appKey: response.app_key,
         postpaid: response.postpaid,
         prepaid: response.prepaid,
@@ -408,18 +405,6 @@ export const BookingSetupDetailPage = () => {
         })) || [],
       });
 
-      console.log('=== Block Days Debug ===');
-      console.log('Raw facility_blockings from API:', response?.facility_blockings);
-      console.log('Total facility_blockings count:', response?.facility_blockings?.length);
-      console.log('Mapped blockDays:', response?.facility_blockings?.map((blocking: any) => ({
-        id: blocking.facility_blocking?.id,
-        startDate: blocking.facility_blocking?.ondate,
-        dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
-        blockReason: blocking.facility_blocking?.reason,
-        selectedSlots: blocking.facility_blocking?.block_slot,
-      })));
-      console.log('======================');
-
       // Fetch slots for ALL block days (so we can display them in the UI)
       response?.facility_blockings?.forEach((blocking: any, index: number) => {
         const ondate = blocking.facility_blocking?.ondate;
@@ -446,12 +431,12 @@ export const BookingSetupDetailPage = () => {
       setCancellationRules([...transformedRules]);
 
       const slots = response.facility_slots.map(slot => (
-        slot?.facility_slot?.slot_times.map(time => ({
-          id: time.slot_time.id,
-          isPremium: time.slot_time.is_premium,
-          premium_percentage: time.slot_time.premium_percentage || 0,
-          startTime: { hour: time.slot_time.start_hour, minute: time.slot_time.start_minute },
-          endTime: { hour: time.slot_time.end_hour, minute: time.slot_time.end_minute },
+        slot?.facility_slot?.setup_slot_times?.map(time => ({
+          id: time.setup_slot_time.id,
+          isPremium: time.setup_slot_time.is_premium,
+          premium_percentage: time.setup_slot_time.premium_percentage || 0,
+          startTime: { hour: time.setup_slot_time.start_hour, minute: time.setup_slot_time.start_minute },
+          endTime: { hour: time.setup_slot_time.end_hour, minute: time.setup_slot_time.end_minute },
         }))
       ));
       setSlotsConfigured(slots);
@@ -466,9 +451,8 @@ export const BookingSetupDetailPage = () => {
       });
       setIsPremiumSlots(premiumMap);
       setPremiumPercentage(percentageMap);
-
       // setCancellationRules(response.cancellation_rules)
-      setSelectedFile(response?.cover_image?.document);
+      setSelectedFile(response.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
       );
@@ -540,7 +524,7 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
-  console.log(slotsConfigured)
+  console.log(selectedFile)
 
   const handleSlotCheckboxChange = (slotId: string) => {
     setIsPremiumSlots(prev => ({
@@ -670,13 +654,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
                 </span>
               </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Department</span>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Category Type</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
+                  {formData.facility_name || "-"}
                 </span>
-              </div> */}
+              </div>
             </div>
           </div>
 
@@ -699,13 +683,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.chargeSetup.member.adult || "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Adult Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.guest.adult || "-"}
                 </span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Member Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -713,13 +697,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.chargeSetup.member.child || "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.guest.child || "-"}
                 </span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Minimum Person Allowed</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -869,107 +853,119 @@ export const BookingSetupDetailPage = () => {
               {slotsConfigured[0]?.map((slot, idx) => {
                 const slotKey = `${slot.id}-${idx}`;
                 return (
-                  <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
-                    if (selectedSlots[slotKey]) {
-                      setPopoverOpen(prev => ({
-                        ...prev,
-                        [slotKey]: open
-                      }));
-                    }
-                  }}>
-                    <PopoverTrigger asChild>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isPremiumSlots[slotKey] || false}
-                          onChange={() => {
-                            handleSlotCheckboxChange(slotKey);
-                            if (isPremiumSlots[slotKey]) {
-                              // Unchecking: close modal
-                              setPopoverOpen(prev => ({ ...prev, [slotKey]: false }));
-                            } else {
-                              // Checking: open modal
-                              setPopoverOpen(prev => ({ ...prev, [slotKey]: true }));
-                            }
-                          }}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                        />
-                        <Label
-                          className="cursor-pointer text-sm font-medium"
-                        >
-                          {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
-                          {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
-                            <span className="ml-2 text-xs text-gray-600">
-                              ({premiumPercentage[slotKey]}%)
-                            </span>
-                          )}
-                        </Label>
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm">Set Premium Percentage</h4>
-                          <p className="text-xs text-gray-500">
-                            {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`premium-${slotKey}`} className="text-sm">
-                            Premium Percentage (%)
-                          </Label>
-                          <TextField
-                            id={`premium-${slotKey}`}
-                            type="number"
-                            placeholder="Enter percentage"
-                            value={premiumPercentage[slotKey] || ""}
-                            onKeyDown={(e) => {
-                              if (e.key === "-" || e.key === "Subtract") {
-                                e.preventDefault();
-                              }
-                            }}
-                            onChange={(e) => {
-                              let val = e.target.value;
-                              // Block any input that starts with a dash
-                              if (val.startsWith("-")) return;
-                              // Remove all dashes explicitly (for cases like --4555)
-                              val = val.replace(/-/g, "");
-                              // Only allow numbers and dot, no other chars
-                              val = val.replace(/[^\d.]/g, "");
-                              // Prevent multiple dots
-                              val = val.replace(/(\..*)\./g, '$1');
-                              // If empty, set as is
-                              if (val === "") {
-                                setPremiumPercentage(prev => ({ ...prev, [slotKey]: "" }));
-                                return;
-                              }
-                              // If not a valid number, do not update
-                              if (isNaN(Number(val))) return;
-                              // Restrict to 0-100 and clamp immediately
-                              let num = parseFloat(val);
-                              if (num < 0) num = 0;
-                              if (num > 100) num = 100;
-                              // Only allow up to 100 in the UI
-                              setPremiumPercentage(prev => ({
-                                ...prev,
-                                [slotKey]: num.toString()
-                              }));
-                            }}
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                            inputProps={{ min: "0", max: "100", step: "0.01" }}
-                          />
-                        </div>
-                        <Button
-                          onClick={() => handleSendData(slotKey)}
-                          className="w-full bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <Label
+                      className="cursor-pointer text-sm font-medium"
+                    >
+                      {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                      {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
+                        <span className="ml-2 text-xs text-gray-600">
+                          ({premiumPercentage[slotKey]}%)
+                        </span>
+                      )}
+                    </Label>
+                  </div>
+                  // <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
+                  //   if (selectedSlots[slotKey]) {
+                  //     setPopoverOpen(prev => ({
+                  //       ...prev,
+                  //       [slotKey]: open
+                  //     }));
+                  //   }
+                  // }}>
+                  //   <PopoverTrigger asChild>
+                  //     <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  //       <input
+                  //         type="checkbox"
+                  //         checked={isPremiumSlots[slotKey] || false}
+                  //         onChange={() => {
+                  //           handleSlotCheckboxChange(slotKey);
+                  //           if (isPremiumSlots[slotKey]) {
+                  //             // Unchecking: close modal
+                  //             setPopoverOpen(prev => ({ ...prev, [slotKey]: false }));
+                  //           } else {
+                  //             // Checking: open modal
+                  //             setPopoverOpen(prev => ({ ...prev, [slotKey]: true }));
+                  //           }
+                  //         }}
+                  //         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  //       />
+                  //       <Label
+                  //         className="cursor-pointer text-sm font-medium"
+                  //       >
+                  //         {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                  //         {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
+                  //           <span className="ml-2 text-xs text-gray-600">
+                  //             ({premiumPercentage[slotKey]}%)
+                  //           </span>
+                  //         )}
+                  //       </Label>
+                  //     </div>
+                  //   </PopoverTrigger>
+                  //   <PopoverContent className="w-80">
+                  //     <div className="space-y-4">
+                  //       <div className="space-y-2">
+                  //         <h4 className="font-medium text-sm">Set Premium Percentage</h4>
+                  //         <p className="text-xs text-gray-500">
+                  //           {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                  //         </p>
+                  //       </div>
+                  //       <div className="space-y-2">
+                  //         <Label htmlFor={`premium-${slotKey}`} className="text-sm">
+                  //           Premium Percentage (%)
+                  //         </Label>
+                  //         <TextField
+                  //           id={`premium-${slotKey}`}
+                  //           type="number"
+                  //           placeholder="Enter percentage"
+                  //           value={premiumPercentage[slotKey] || ""}
+                  //           onKeyDown={(e) => {
+                  //             if (e.key === "-" || e.key === "Subtract") {
+                  //               e.preventDefault();
+                  //             }
+                  //           }}
+                  //           onChange={(e) => {
+                  //             let val = e.target.value;
+                  //             // Block any input that starts with a dash
+                  //             if (val.startsWith("-")) return;
+                  //             // Remove all dashes explicitly (for cases like --4555)
+                  //             val = val.replace(/-/g, "");
+                  //             // Only allow numbers and dot, no other chars
+                  //             val = val.replace(/[^\d.]/g, "");
+                  //             // Prevent multiple dots
+                  //             val = val.replace(/(\..*)\./g, '$1');
+                  //             // If empty, set as is
+                  //             if (val === "") {
+                  //               setPremiumPercentage(prev => ({ ...prev, [slotKey]: "" }));
+                  //               return;
+                  //             }
+                  //             // If not a valid number, do not update
+                  //             if (isNaN(Number(val))) return;
+                  //             // Restrict to 0-100 and clamp immediately
+                  //             let num = parseFloat(val);
+                  //             if (num < 0) num = 0;
+                  //             if (num > 100) num = 100;
+                  //             // Only allow up to 100 in the UI
+                  //             setPremiumPercentage(prev => ({
+                  //               ...prev,
+                  //               [slotKey]: num.toString()
+                  //             }));
+                  //           }}
+                  //           variant="outlined"
+                  //           size="small"
+                  //           fullWidth
+                  //           inputProps={{ min: "0", max: "100", step: "0.01" }}
+                  //         />
+                  //       </div>
+                  //       <Button
+                  //         onClick={() => handleSendData(slotKey)}
+                  //         className="w-full bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                  //       >
+                  //         Save
+                  //       </Button>
+                  //     </div>
+                  //   </PopoverContent>
+                  // </Popover>
                 );
               })}
             </div>
@@ -1116,13 +1112,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.gstPercentage || "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">IGST (%)</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.igstPercentage || "-"}
                 </span>
-              </div>
+              </div> */}
               {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
                 <span className="text-gray-500 mx-2">:</span>

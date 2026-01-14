@@ -635,7 +635,7 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-            formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
+            // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
             // formDataToSend.append(
             //     "facility_setup[facility_charge_attributes][per_slot_charge]",
             // formData.perSlotChasrge
@@ -2067,7 +2067,7 @@ export const EditBookingSetupPage = () => {
                                     <label htmlFor="complimentary">Complimentary</label>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <TextField
                                     label="SGST(%)"
                                     value={formData.sgstPercentage}
@@ -2090,7 +2090,7 @@ export const EditBookingSetupPage = () => {
                                     }
                                     variant="outlined"
                                 />
-                                <TextField
+                                {/* <TextField
                                     label="IGST(%)"
                                     value={formData.igstPercentage}
                                     onChange={(e) =>
@@ -2100,7 +2100,7 @@ export const EditBookingSetupPage = () => {
                                         })
                                     }
                                     variant="outlined"
-                                />
+                                /> */}
                             </div>
                             {/* <TextField
                                 label="Per Slot Charge"
