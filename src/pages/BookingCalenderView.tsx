@@ -304,7 +304,7 @@ const BookingCalenderView = () => {
                             className="text-[14px]"
                         />
                         <FormControlLabel
-                            value="requestable"
+                            value="request"
                             control={<Radio size="small" color="error" />}
                             label="Request"
                             className="text-[14px]"

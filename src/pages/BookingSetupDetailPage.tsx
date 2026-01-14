@@ -337,7 +337,7 @@ export const BookingSetupDetailPage = () => {
       setFormData({
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
-        isRequest: response.fac_type === "requestable" ? true : false,
+        isRequest: response.fac_type === "request" ? true : false,
         facility_name: response.facility_name ?? "",
         appKey: response.app_key,
         postpaid: response.postpaid,

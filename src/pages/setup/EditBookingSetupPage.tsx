@@ -264,7 +264,7 @@ export const EditBookingSetupPage = () => {
                 ...prev,
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
-                isRequest: responseData.fac_type === "requestable",
+                isRequest: responseData.fac_type === "request",
                 active: responseData.active,
                 category: responseData.facility_category_id || "",
                 appKey: responseData.app_key,
@@ -606,7 +606,7 @@ export const EditBookingSetupPage = () => {
             // Basic Facility Info
             formDataToSend.append(
                 "facility_setup[fac_type]",
-                formData.isBookable ? "bookable" : "requestable"
+                formData.isBookable ? "bookable" : "request"
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);

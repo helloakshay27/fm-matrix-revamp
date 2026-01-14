@@ -398,7 +398,7 @@ export const AddBookingSetupPage = () => {
       // Basic Facility Info
       formDataToSend.append(
         "facility_setup[fac_type]",
-        formData.isBookable ? "bookable" : "requestable"
+        formData.isBookable ? "bookable" : "request"
       );
       formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
       formDataToSend.append(
