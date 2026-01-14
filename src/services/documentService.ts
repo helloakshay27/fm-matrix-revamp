@@ -381,14 +381,18 @@ export const getFoldersList = async (
   const queryParams: any = { page };
 
   if (filters) {
-    if (filters.title) queryParams['q[name_cont]'] = filters.title;
-    if (filters.folderName) queryParams['q[name_cont]'] = filters.folderName;
-    if (filters.categoryName) queryParams['q[document_category_name_cont]'] = filters.categoryName;
-    if (filters.createdBy) queryParams['q[created_by_full_name_cont]'] = filters.createdBy;
-    if (filters.createdDateFrom) queryParams['q[created_at_gteq]'] = filters.createdDateFrom;
-    if (filters.createdDateTo) queryParams['q[created_at_lteq]'] = filters.createdDateTo;
-    if (filters.status === 'active') queryParams['q[active_eq]'] = 'true';
-    if (filters.status === 'inactive') queryParams['q[active_eq]'] = 'false';
+    if (filters.title) queryParams["q[name_cont]"] = filters.title;
+    if (filters.folderName) queryParams["q[name_cont]"] = filters.folderName;
+    if (filters.categoryName)
+      queryParams["q[document_category_name_cont]"] = filters.categoryName;
+    if (filters.createdBy)
+      queryParams["q[created_by_full_name_cont]"] = filters.createdBy;
+    if (filters.createdDateFrom)
+      queryParams["q[created_at_gteq]"] = filters.createdDateFrom;
+    if (filters.createdDateTo)
+      queryParams["q[created_at_lteq]"] = filters.createdDateTo;
+    if (filters.status === "active") queryParams["q[active_eq]"] = "true";
+    if (filters.status === "inactive") queryParams["q[active_eq]"] = "false";
   }
 
   const response = await axios.get(`https://${baseUrl}/folders.json`, {
@@ -539,4 +543,44 @@ export const fileToBase64 = (file: File): Promise<string> => {
     };
     reader.onerror = (error) => reject(error);
   });
+};
+
+export interface BulkMoveOperation {
+  from_folder_id: number;
+  to_folder_ids: number[];
+  document_ids: number[];
+}
+
+export interface BulkCopyOperation {
+  from_folder_id: number;
+  to_folder_ids: number[];
+  document_ids: number[];
+}
+
+export interface BulkMoveCopyPayload {
+  move?: BulkMoveOperation;
+  copy?: BulkCopyOperation;
+}
+
+/**
+ * Bulk move and/or copy documents between folders
+ */
+export const bulkMoveCopyDocuments = async (
+  payload: BulkMoveCopyPayload
+): Promise<{ success: boolean; message: string }> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.post(
+    `https://${baseUrl}/folders/bulk_move_copy_documents.json`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
 };
