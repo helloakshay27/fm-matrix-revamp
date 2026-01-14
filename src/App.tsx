@@ -1156,9 +1156,10 @@ function App() {
                   element={<VisitorPassWeb />}
                 />
                 <Route
-                  path="/visitor/sharing-form"
+                  path="/visitors/fill_form/:id"
                   element={<VisitorSharingFormWeb />}
                 />
+           
               
 
                 <Route
