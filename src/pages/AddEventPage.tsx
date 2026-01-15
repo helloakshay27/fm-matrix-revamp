@@ -26,6 +26,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
 
 export const AddEventPage = () => {
@@ -39,7 +46,7 @@ export const AddEventPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     eventName: "",
-    eventCategory: "",
+    eventType: "",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -59,6 +66,12 @@ export const AddEventPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
 
+  // Tech Park Modal State
+  const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
+  const [techParks, setTechParks] = useState<any[]>([]);
+  const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
+  const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
+
   // Community Selection State
   const [selectedCommunities, setSelectedCommunities] = useState<number[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
@@ -66,7 +79,7 @@ export const AddEventPage = () => {
   useEffect(() => {
     // Restore form data from localStorage if exists
     const savedEventName = localStorage.getItem('eventName');
-    const savedEventCategory = localStorage.getItem('eventCategory');
+    const savedEventType = localStorage.getItem('eventType');
     const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
     const savedFromDate = localStorage.getItem('fromDate');
     const savedToDate = localStorage.getItem('toDate');
@@ -79,13 +92,14 @@ export const AddEventPage = () => {
     const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
     const savedEventDescription = localStorage.getItem('eventDescription');
     const savedShareWith = localStorage.getItem('shareWith');
+    const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
       setFormData(prev => ({
         ...prev,
         eventName: savedEventName || prev.eventName,
-        eventCategory: savedEventCategory || prev.eventCategory,
+        eventType: savedEventType || prev.eventType,
         amountPerPerson: savedAmountPerPerson || prev.amountPerPerson,
         fromDate: savedFromDate || prev.fromDate,
         toDate: savedToDate || prev.toDate,
@@ -101,9 +115,19 @@ export const AddEventPage = () => {
       }));
     }
 
+    // Restore selected tech parks
+    if (savedSelectedTechParks) {
+      try {
+        const parsedTechParks = JSON.parse(savedSelectedTechParks);
+        setSelectedTechParks(parsedTechParks);
+      } catch (error) {
+        console.error('Error parsing saved tech parks:', error);
+      }
+    }
+
     // Clean up localStorage after restoration
     localStorage.removeItem('eventName');
-    localStorage.removeItem('eventCategory');
+    localStorage.removeItem('eventType');
     localStorage.removeItem('amountPerPerson');
     localStorage.removeItem('fromDate');
     localStorage.removeItem('toDate');
@@ -116,6 +140,7 @@ export const AddEventPage = () => {
     localStorage.removeItem('showOnHomeScreen');
     localStorage.removeItem('eventDescription');
     localStorage.removeItem('shareWith');
+    localStorage.removeItem('selectedTechParks');
 
     // Check if returning from community selection
     const savedCommunities = localStorage.getItem('selectedCommunityIds');
@@ -131,7 +156,27 @@ export const AddEventPage = () => {
     }
 
     fetchCommunities();
+    fetchTechParks();
   }, []);
+
+  const fetchTechParks = async () => {
+    if (techParks.length > 0) return;
+
+    setIsLoadingTechParks(true);
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/sites/allowed_sites.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setTechParks(response.data.sites || []);
+    } catch (error) {
+      console.error("Failed to fetch tech parks", error);
+      toast.error("Failed to load tech parks");
+    } finally {
+      setIsLoadingTechParks(false);
+    }
+  };
 
   const fetchCommunities = async () => {
     try {
@@ -166,10 +211,13 @@ export const AddEventPage = () => {
       ...prev,
       [name]: value,
     }));
+    if (name === "shareWith" && value === "individual") {
+      setIsTechParkModalOpen(true);
+    }
     if (name === "shareWithCommunities" && value === "yes") {
       // Save form data to localStorage before navigation
       localStorage.setItem('eventName', formData.eventName);
-      localStorage.setItem('eventCategory', formData.eventCategory);
+      localStorage.setItem('eventType', formData.eventType);
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
@@ -182,6 +230,7 @@ export const AddEventPage = () => {
       localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
+      localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
       navigate('/pulse/community?mode=selection&from=add-event');
     }
   };
@@ -227,10 +276,6 @@ export const AddEventPage = () => {
       toast.error("Event Name is required");
       return false;
     }
-    if (!formData.eventCategory) {
-      toast.error("Event Category is required");
-      return false;
-    }
     if (!formData.fromDate) {
       toast.error("From Date is required");
       return false;
@@ -255,6 +300,10 @@ export const AddEventPage = () => {
       toast.error("Event Description is required");
       return false;
     }
+    if (formData.shareWith === 'individual' && selectedTechParks.length === 0) {
+      toast.error("Please select at least one Tech Park");
+      return false;
+    }
     return true;
   };
 
@@ -265,17 +314,27 @@ export const AddEventPage = () => {
       const formDataToSend = new FormData();
 
       formDataToSend.append('event[event_name]', formData.eventName);
-      formDataToSend.append("event[event_at]", formData.eventLocation);
+      formDataToSend.append("event[amount_per_member]", formData.amountPerPerson);
       formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventTime}`);
       formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventTime}`);
-      formDataToSend.append("event[description]", formData.eventDescription);
-      formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
+      formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
+      formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
+      formDataToSend.append("event[event_category]", formData.pulseCategory);
+      formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
+      formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
+      formDataToSend.append("event[description]", formData.eventDescription);
       formDataToSend.append('event[of_phase]', 'pms');
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
-      formDataToSend.append("event[is_important]", isActive ? "true" : "false");
-      // formDataToSend.append("event[shared_community]", formData.shareWithCommunities === "yes" ? "1" : "0");
+      formDataToSend.append('event[share_with]', formData.shareWith);
+      formDataToSend.append('event[is_paid]', formData.eventType);
+
+      if (formData.shareWith === 'individual') {
+        selectedTechParks.forEach(id => {
+          formDataToSend.append("event[pms_site_ids][]", id.toString());
+        });
+      }
 
       // Add selected community IDs if communities are selected
       if (formData.shareWithCommunities === 'yes' && selectedCommunities.length > 0) {
@@ -292,7 +351,7 @@ export const AddEventPage = () => {
 
       // Clean up localStorage after successful submission
       localStorage.removeItem('eventName');
-      localStorage.removeItem('eventCategory');
+      localStorage.removeItem('eventType');
       localStorage.removeItem('amountPerPerson');
       localStorage.removeItem('fromDate');
       localStorage.removeItem('toDate');
@@ -305,10 +364,11 @@ export const AddEventPage = () => {
       localStorage.removeItem('showOnHomeScreen');
       localStorage.removeItem('eventDescription');
       localStorage.removeItem('shareWith');
+      localStorage.removeItem('selectedTechParks');
       localStorage.removeItem('selectedCommunityIds');
 
       toast.success("Event created successfully");
-      navigate(-1);
+      navigate(`/pulse/events`);
     } catch (error: any) {
       console.log(error);
       toast.error(error.message || "Failed to create event");
@@ -321,7 +381,7 @@ export const AddEventPage = () => {
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
       <Button
         variant="ghost"
-        onClick={() => navigate(-1)}
+        onClick={() => navigate(`/pulse/events`)}
         className="p-0 mb-4 hover:bg-transparent"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -376,12 +436,12 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <FormControl fullWidth size="small">
-                  <InputLabel shrink>Event Category<span className="text-[#C72030]">*</span></InputLabel>
+                  <InputLabel shrink>Event Type<span className="text-[#C72030]">*</span></InputLabel>
                   <MuiSelect
-                    name="eventCategory"
-                    value={formData.eventCategory}
-                    onChange={(e) => handleSelectChange("eventCategory", e.target.value)}
-                    label="Event Category*"
+                    name="eventType"
+                    value={formData.eventType}
+                    onChange={(e) => handleSelectChange("eventType", e.target.value)}
+                    label="Event Type*"
                     displayEmpty
                     sx={{
                       backgroundColor: '#FAFAFA',
@@ -390,10 +450,9 @@ export const AddEventPage = () => {
                       },
                     }}
                   >
-                    <MenuItem value="" disabled>Select event category...</MenuItem>
-                    <MenuItem value="play">Play</MenuItem>
-                    <MenuItem value="panasche">Panasche</MenuItem>
-                    <MenuItem value="persuit">Persuit</MenuItem>
+                    <MenuItem value="" disabled>Select event type...</MenuItem>
+                    <MenuItem value="1">Paid</MenuItem>
+                    <MenuItem value="0">Complimentary</MenuItem>
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -700,7 +759,7 @@ export const AddEventPage = () => {
             <span className="font-semibold text-lg text-gray-800">Share</span>
           </div>
           <div className="p-6 bg-white">
-            <div className="flex flex-col md:flex-row md:items-center gap-8">
+            <div className="flex flex-col md:flex-row md:items-center gap-8 mb-3">
               <div className="flex items-center gap-4">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Share With:
@@ -750,6 +809,25 @@ export const AddEventPage = () => {
               </div>
             </div>
 
+            {formData.shareWith === "individual" && selectedTechParks.length > 0 && (
+              <div className="mt-0 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+                <span>
+                  {techParks
+                    .filter(park => selectedTechParks.includes(park.id))
+                    .map(park => park.name)
+                    .join(", ")}
+                  .
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsTechParkModalOpen(true)}
+                  className="hover:text-red-700 transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            )}
+
             {formData.shareWithCommunities === "yes" && selectedCommunities.length > 0 && (
               <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
                 <span>
@@ -763,7 +841,7 @@ export const AddEventPage = () => {
                   type="button"
                   onClick={() => {
                     localStorage.setItem('eventName', formData.eventName);
-                    localStorage.setItem('eventCategory', formData.eventCategory);
+                    localStorage.setItem('eventType', formData.eventType);
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);
@@ -873,7 +951,7 @@ export const AddEventPage = () => {
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
           <Button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/pulse/events`)}
             variant="outline"
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
           >
@@ -881,6 +959,54 @@ export const AddEventPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Tech Park Selection Modal */}
+      <Dialog open={isTechParkModalOpen} onOpenChange={(open) => {
+        setIsTechParkModalOpen(open);
+        if (!open && selectedTechParks.length === 0) {
+          setFormData(prev => ({ ...prev, shareWith: "all" }));
+        }
+      }}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-bold">Select Tech Park</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-4 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {isLoadingTechParks ? (
+              <div className="text-center py-4">Loading...</div>
+            ) : techParks.length > 0 ? (
+              techParks.map((park) => (
+                <div key={park.id} className="flex items-start space-x-4 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                  <Checkbox
+                    checked={selectedTechParks.includes(park.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTechParks(prev => [...prev, park.id]);
+                      } else {
+                        setSelectedTechParks(prev => prev.filter(id => id !== park.id));
+                      }
+                    }}
+                    className="mt-1 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                  />
+                  <div className="flex gap-3">
+                    <img
+                      src={park.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
+                      alt={park.name}
+                      className="w-16 h-16 rounded-md object-cover bg-gray-200"
+                    />
+                    <div>
+                      <h4 className="font-medium text-gray-900">{park.name}</h4>
+                      <p className="text-sm text-[#F47521]">{park.tower_name || "Tower Name"}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-500">No Tech Parks found</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

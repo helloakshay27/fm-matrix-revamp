@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Eye, Pencil } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -68,6 +68,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
 
     const [isActive, setIsActive] = useState(true);
     const [selectedMembers, setSelectedMembers] = useState<Array<{ id: string; name: string }>>([])
+    const [isToggling, setIsToggling] = useState<number | null>(null)
     const [communityData, setCommunityData] = useState({
         icon: "",
         name: "",
@@ -87,6 +88,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                     "Authorization": `Bearer ${token}`
                 }
             })
+            setIsActive(response.data.active)
             setCommunityData(response.data)
             setCommunityName(response.data.name)
             setMembers(response.data.all_members || [])
@@ -137,6 +139,33 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
         setSelectedMembers([]);
     };
 
+    const handleStatusChange = async (id: number, currentActive: boolean) => {
+        const newActive = !currentActive;
+        setIsToggling(id);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('community[active]', newActive ? 'true' : 'false');
+
+            await axios.put(
+                `https://${baseUrl}/communities/${id}.json`,
+                formDataToSend,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+            setIsActive(newActive);
+            toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.error || "Failed to update community status");
+        } finally {
+            setIsToggling(null);
+        }
+    };
+
     // Get selected member IDs for easy access
     const selectedMemberIds = selectedMembers.map((member) => member.id);
 
@@ -164,8 +193,16 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                         <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                         <Switch
                             checked={isActive}
-                            onCheckedChange={setIsActive}
-                            className="data-[state=checked]:bg-green-500"
+                            onChange={() => handleStatusChange(Number(id), isActive)}
+                            disabled={isToggling === Number(id)}
+                            sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#C72030',
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#C72030',
+                                },
+                            }}
                         />
                     </div>
                 </div>

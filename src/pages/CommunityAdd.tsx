@@ -148,9 +148,9 @@ const CommunityAdd = () => {
 
                     <div className="p-6 bg-white">
                         {/* Community Name + Pulse Category */}
-                        <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="mb-6 flex items-center gap-4">
                             {/* Community Name */}
-                            <div className="flex-1">
+                            <div className="w-[350px]">
                                 <TextField
                                     label={
                                         <>
@@ -177,7 +177,7 @@ const CommunityAdd = () => {
                             </div>
 
                             {/* Pulse Category */}
-                            <div className="flex items-center lg:ml-10 gap-3">
+                            <div className="flex items-center ml-4 gap-3">
                                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     Pulse Category:
                                 </span>
@@ -186,7 +186,7 @@ const CommunityAdd = () => {
                                     name="category"
                                     value={formData.category}
                                     onChange={handleInputChange}
-                                    className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                                    className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
                                 >
                                     <FormControlLabel
                                         value="play"
@@ -329,7 +329,7 @@ const CommunityAdd = () => {
                                     type="file"
                                     ref={coverImageInputRef}
                                     onChange={handleCoverImageChange}
-                                    accept="image/*"
+                                    accept="image/*, .jpg, .jpeg, .png"
                                     className="hidden"
                                 />
 

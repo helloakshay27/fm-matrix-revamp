@@ -103,6 +103,7 @@ export const EditBookingSetupPage = () => {
 
     const [formData, setFormData] = useState({
         facilityName: "",
+        location: "",
         isBookable: true,
         isRequest: false,
         active: "",
@@ -263,6 +264,7 @@ export const EditBookingSetupPage = () => {
             setFormData(prev => ({
                 ...prev,
                 facilityName: responseData.fac_name,
+                location: responseData.location,
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
                 active: responseData.active,
@@ -584,6 +586,9 @@ export const EditBookingSetupPage = () => {
         if (!formData.facilityName) {
             toast.error("Please enter Facility Name");
             return false;
+        } else if (!formData.location) {
+            toast.error("Please enter Location");
+            return false;
         } else if (!formData.active) {
             toast.error("Please select Active");
             return false;
@@ -609,6 +614,7 @@ export const EditBookingSetupPage = () => {
                 formData.isBookable ? "bookable" : "request"
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
+            formDataToSend.append("facility_setup[location]", formData.location);
             formDataToSend.append("facility_setup[active]", formData.active);
             if (formData.category) {
                 formDataToSend.append(
@@ -1069,6 +1075,27 @@ export const EditBookingSetupPage = () => {
                                             ))}
                                     </Select>
                                 </FormControl>
+
+                                <TextField
+                                    label="Location"
+                                    placeholder="Enter Location"
+                                    value={formData.location}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Only allow letters and spaces, no numbers
+                                        if (/^[a-zA-Z\s]*$/.test(value)) {
+                                            setFormData({ ...formData, location: value });
+                                        }
+                                    }}
+                                    variant="outlined"
+                                    required
+                                    InputLabelProps={{
+                                        classes: {
+                                            asterisk: "text-red-500", // Tailwind class for red color
+                                        },
+                                        shrink: true,
+                                    }}
+                                />
                             </div>
                             <div className="flex gap-6">
                                 <div className="flex items-center space-x-2">
