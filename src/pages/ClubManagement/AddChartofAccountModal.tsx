@@ -3,6 +3,7 @@ import React from "react";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 // import { Button } from "./ui/button";
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -183,12 +184,10 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                             // required
                             />
                             <div className="flex items-center gap-2 pb-5">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isSubAccount || false}
-                                    onChange={e => setFormData(prev => ({ ...prev, isSubAccount: e.target.checked }))}
+                                <Checkbox
                                     id="isSubAccount"
-                                    style={{ accentColor: '#C72030', transform: 'scale(1.2)', cursor: 'pointer', }}
+                                    checked={formData.isSubAccount || false}
+                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSubAccount: !!checked }))}
                                 />
                                 <label htmlFor="isSubAccount" className="text-sm">Make this a sub-account</label>
                                 <span className="text-xs text-gray-400 ml-1" title="A sub-account is nested under a parent account">?</span>
@@ -276,12 +275,10 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                             />
 
                             <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.addToWatchlist || false}
-                                    onChange={e => setFormData(prev => ({ ...prev, addToWatchlist: e.target.checked }))}
+                                <Checkbox
                                     id="addToWatchlist"
-                                    style={{ accentColor: '#C72030', transform: 'scale(1.2)', cursor: 'pointer', }}
+                                    checked={formData.addToWatchlist || false}
+                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, addToWatchlist: !!checked }))}
                                 />
                                 <label htmlFor="addToWatchlist" className="text-sm">Add to the watchlist on my dashboard</label>
                             </div>

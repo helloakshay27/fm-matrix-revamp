@@ -809,6 +809,7 @@ import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
 import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
+import TaxSetup from "./pages/ClubManagement/TaxSetup";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1626,6 +1627,10 @@ function App() {
                   <Route
                     path="/settings/chart-journal"
                     element={<ChartOfAccountsDashboard/>}
+                  />
+                   <Route
+                    path="/settings/tax-setup"
+                    element={<TaxSetup/>}
                   />
 
 

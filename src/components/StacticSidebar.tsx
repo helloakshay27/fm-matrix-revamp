@@ -1016,6 +1016,7 @@ const modulesByPackage = {
           { name: "Manual Journals ", href: "/settings/manual-journal" },
             { name: "Recurring Journals ", href: "/settings/recurring-journal" },
              { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+             { name: "Tax Setup ", href: "/settings/tax-setup" },
           // {
           //   name: "Escalation Matrix",
           //   href: "/settings/ticket-management/escalation-matrix",
