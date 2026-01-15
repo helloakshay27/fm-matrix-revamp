@@ -796,7 +796,7 @@ import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
 import ClubGroupMembershipDashboard from "./pages/ClubManagement/ClubGroupMembershipDashboard";
-import ClubGroupMembershipDetails from "./pages/ClubManagement/ClubGroupMembershipDetails"; 
+import ClubGroupMembershipDetails from "./pages/ClubManagement/ClubGroupMembershipDetails";
 import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
@@ -810,6 +810,10 @@ import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJourn
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
 import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
 import TaxSetup from "./pages/ClubManagement/TaxSetup";
+import ChargeSetupDashboard from "./pages/ClubManagement/ChargeSetupDashboard";
+import ChargeSetupAdd from "./pages/ClubManagement/ChargeSetupAdd";
+import BillCyclesDashboard from "./pages/ClubManagement/BillCyclesDashboard";
+import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1607,32 +1611,48 @@ function App() {
                     element={<ViewFMUserPage />}
                   />
 
-                   <Route
+                  <Route
                     path="/settings/manual-journal"
                     element={<ManualJournalDashboard />}
                   />
                   <Route
                     path="/settings/manual-journal/add"
-                    element={<ManualJournalAdd/>}
+                    element={<ManualJournalAdd />}
                   />
 
-                    <Route
+                  <Route
                     path="/settings/recurring-journal"
                     element={<RecurringJournalDashboard />}
                   />
                   <Route
                     path="/settings/recurring-journal/add"
-                    element={<RecurringJournalAdd/>}
+                    element={<RecurringJournalAdd />}
                   />
                   <Route
                     path="/settings/chart-journal"
-                    element={<ChartOfAccountsDashboard/>}
+                    element={<ChartOfAccountsDashboard />}
                   />
-                   <Route
+                  <Route
                     path="/settings/tax-setup"
-                    element={<TaxSetup/>}
+                    element={<TaxSetup />}
                   />
-
+                  <Route
+                    path="/settings/charge-setup"
+                    element={<ChargeSetupDashboard />}
+                  />
+                  <Route
+                    path="/settings/charge-setup/add"
+                    element={<ChargeSetupAdd />}
+                  />
+                  <Route
+                    path="/settings/bill-cycles"
+                    element={<BillCyclesDashboard />}
+                  />
+ 
+                  <Route
+                    path="/settings/bill-cycles/add"
+                    element={<BillCyclesAdd />}
+                  />
 
                   {/* Club Management - Occupant Users */}
                   <Route

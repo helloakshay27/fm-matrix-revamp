@@ -1027,6 +1027,17 @@ const modulesByPackage = {
           // },
         ],
       },
+
+      //   {
+      //   name: "Configuration",
+      //   icon: Settings,
+      //   subItems: [
+        
+      //        { name: "Charges ", href: "/settings/charge-setup" },
+      //        { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+        
+      //   ],
+      // },
   ],
 };
 
