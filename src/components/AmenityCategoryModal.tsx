@@ -44,9 +44,9 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
                 description: record.description || '',
                 fac_type: record.fac_type || '',
             });
-            setCoverImagePreview(record.cover_image.document || null);
-            setIconDarkPreview(record.icon_dark.document || null);
-            setIconLightPreview(record.icon_light.document || null);
+            setCoverImagePreview(record.cover_image?.document || null);
+            setIconDarkPreview(record.icon_dark?.document || null);
+            setIconLightPreview(record.icon_light?.document || null);
         }
     }, [isEditing, record]);
 
