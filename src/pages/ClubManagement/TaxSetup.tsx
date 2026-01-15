@@ -115,7 +115,7 @@ const TaxSetup: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GST Info</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6">
                         <div>
                             {/* <label className="block text-sm font-semibold text-red-700 mb-2">
                                 GSTIN <span className="text-xs text-gray-500">(Maximum 15 digits)</span>
@@ -216,7 +216,7 @@ const TaxSetup: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Direct Filing Settings</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6">
                         <div>
                             <TextField
                                 label={<span>GSTIN Username <span className="text-red-600">*</span></span>}
@@ -292,7 +292,7 @@ const TaxSetup: React.FC = () => {
 						   Save
 					   </button>
 				   </div> */}
-                <div className="flex gap-3 pt-5 mt-5 justify-center">
+                <div className="flex gap-3 pt-5 mt-5 mb-5 justify-center">
 
                     <Button
                         type="submit"
