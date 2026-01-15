@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { CommunityFilterModal } from "@/components/CommunityFilterModal"
 import { toast } from "sonner"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 const columns: ColumnConfig[] = [
     {
@@ -65,6 +66,12 @@ const Communtiy = () => {
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [selectedRows, setSelectedRows] = useState<number[]>([])
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        total_count: 0,
+        total_pages: 0,
+    });
+    const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({
         status: '',
         created_at: '',
@@ -74,20 +81,38 @@ const Communtiy = () => {
     // Check if we're in selection mode
     const isSelectionMode = searchParams.get('mode') === 'selection';
 
-    const fetchCommunities = async (filterParams?: string) => {
+    const fetchCommunities = async (page: number, currentFilters: any, currentSearch: string) => {
         setLoading(true)
         try {
-            const url = filterParams
-                ? `https://${baseUrl}/communities.json?${filterParams}`
-                : `https://${baseUrl}/communities.json`
+            const params = new URLSearchParams()
+            params.append('page', String(page))
+            params.append('per_page', '10')
 
-            const response = await axios.get(url, {
+            if (currentFilters.status) {
+                params.append('q[active_eq]', currentFilters.status)
+            }
+            if (currentFilters.created_at) {
+                params.append('q[created_at_eq]', currentFilters.created_at)
+            }
+            if (currentFilters.created_by) {
+                params.append('q[created_by_eq]', currentFilters.created_by)
+            }
+            if (currentSearch) {
+                params.append('q[name_cont]', currentSearch)
+            }
+
+            const response = await axios.get(`https://${baseUrl}/communities.json?${params.toString()}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
 
             setCommunities(response.data.communities)
+            setPagination({
+                current_page: response.data.pagination.current_page,
+                total_count: response.data.pagination.total_count,
+                total_pages: response.data.pagination.total_pages
+            })
         } catch (error) {
             console.log(error)
             toast.error('Failed to fetch communities')
@@ -97,38 +122,17 @@ const Communtiy = () => {
     }
 
     useEffect(() => {
-        fetchCommunities()
-    }, [])
+        fetchCommunities(1, filters, searchTerm)
+    }, [searchTerm])
 
     const handleApplyFilter = async (filterData: { status?: string; created_at?: string; created_by?: string }) => {
-        // Update local filters state
-        setFilters({
+        const newFilters = {
             status: filterData.status || '',
             created_at: filterData.created_at || '',
             created_by: filterData.created_by || '',
-        })
-
-        // Build filter params for API
-        const params = new URLSearchParams()
-
-        if (filterData.status) {
-            params.append('q[active_eq]', filterData.status)
-        }
-
-        if (filterData.created_at) {
-            params.append('q[created_at_eq]', filterData.created_at)
-        }
-
-        if (filterData.created_by) {
-            params.append('q[created_by_eq]', filterData.created_by)
-        }
-
-        try {
-            await fetchCommunities(params.toString())
-        } catch (error) {
-            console.log(error)
-            toast.error('Failed to apply filters')
-        }
+        };
+        setFilters(newFilters);
+        fetchCommunities(1, newFilters, searchTerm);
     }
 
     const handleContinue = () => {
@@ -216,6 +220,120 @@ const Communtiy = () => {
         } finally {
             setIsToggling(null);
         }
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchCommunities(page, filters, searchTerm);
+    };
+
+    const renderPaginationItems = () => {
+        if (!pagination.total_pages || pagination.total_pages <= 0) {
+            return null;
+        }
+        const items = [];
+        const totalPages = pagination.total_pages;
+        const currentPage = pagination.current_page;
+        const showEllipsis = totalPages > 7;
+
+        if (showEllipsis) {
+            items.push(
+                <PaginationItem key={1} className='cursor-pointer'>
+                    <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={currentPage === 1}
+                    >
+                        1
+                    </PaginationLink>
+                </PaginationItem>
+            );
+
+            if (currentPage > 4) {
+                items.push(
+                    <PaginationItem key="ellipsis1" >
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+                    items.push(
+                        <PaginationItem key={i} className='cursor-pointer'>
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage > 3 && currentPage < totalPages - 2) {
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    items.push(
+                        <PaginationItem key={i} className='cursor-pointer'>
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage < totalPages - 3) {
+                items.push(
+                    <PaginationItem key="ellipsis2">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+                    if (!items.find((item) => item.key === i.toString())) {
+                        items.push(
+                            <PaginationItem key={i} className='cursor-pointer'>
+                                <PaginationLink
+                                    onClick={() => handlePageChange(i)}
+                                    isActive={currentPage === i}
+                                >
+                                    {i}
+                                </PaginationLink>
+                            </PaginationItem>
+                        );
+                    }
+                }
+            }
+
+            if (totalPages > 1) {
+                items.push(
+                    <PaginationItem key={totalPages} className='cursor-pointer'>
+                        <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={currentPage === totalPages}
+                        >
+                            {totalPages}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        } else {
+            for (let i = 1; i <= totalPages; i++) {
+                items.push(
+                    <PaginationItem key={i} className='cursor-pointer'>
+                        <PaginationLink
+                            onClick={() => handlePageChange(i)}
+                            isActive={currentPage === i}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        }
+
+        return items;
     };
 
     const renderCell = (item: any, columnKey: string) => {
@@ -339,7 +457,33 @@ const Communtiy = () => {
                 onSelectItem={handleCommunitySelection}
                 onSelectAll={handleSelectAll}
                 getItemId={(item: any) => String(item.id)}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                enableSearch={true}
+                disableClientSearch={true}
+                searchPlaceholder="Search communities..."
+                storageKey="communities-table"
             />
+
+            <div className="flex justify-center mt-6">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                        </PaginationItem>
+                        {renderPaginationItems()}
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
 
             {/* Filter Modal */}
             <CommunityFilterModal
