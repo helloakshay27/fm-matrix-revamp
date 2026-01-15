@@ -356,7 +356,7 @@ export const DocumentManagement = () => {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Documents</h1>

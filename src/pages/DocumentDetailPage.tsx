@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Pencil, Trash2, FileText, Download, Edit2, Copy, Move } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  FileText,
+  Download,
+  Edit2,
+  Copy,
+  Move,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -10,6 +18,7 @@ import {
   Document,
   DocumentAttachment,
   bulkMoveCopyDocuments,
+  updateDocumentStatus,
 } from "@/services/documentService";
 import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
 import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
@@ -110,13 +119,19 @@ export const DocumentDetailPage = () => {
     }
   };
 
-  const handleToggleStatus = (checked: boolean) => {
-    if (!document) return;
-    setDocument({ ...document, active: checked });
-    toast.success(
-      `Document ${checked ? "activated" : "deactivated"} successfully`
-    );
-    // TODO: Implement status update API call
+  const handleToggleStatus = async (checked: boolean) => {
+    if (!document || !id) return;
+
+    try {
+      await updateDocumentStatus(parseInt(id), checked);
+      setDocument({ ...document, active: checked });
+      toast.success(
+        `Document ${checked ? "activated" : "deactivated"} successfully`
+      );
+    } catch (error) {
+      console.error("Error updating document status:", error);
+      toast.error("Failed to update document status");
+    }
   };
 
   const handleDownload = (url: string, filename: string) => {
@@ -370,7 +385,7 @@ export const DocumentDetailPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         {/* Document Title Section */}
         <div className="bg-[#F6F4EE] border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between">
@@ -389,8 +404,9 @@ export const DocumentDetailPage = () => {
                 className="data-[state=checked]:bg-green-500"
               />
               <span
-                className={`text-sm font-medium ${document.active ? "text-green-600" : "text-gray-500"
-                  }`}
+                className={`text-sm font-medium ${
+                  document.active ? "text-green-600" : "text-gray-500"
+                }`}
               >
                 {document.active ? "Active" : "Inactive"}
               </span>
@@ -548,11 +564,7 @@ export const DocumentDetailPage = () => {
 
                 {/* Action Buttons */}
 
-
-
                 <div className="flex items-center gap-2 mt-3">
-
-
                   {!isPulseSite &&
                     isEditableDocument(document.attachment.filename) && (
                       <button
@@ -563,7 +575,6 @@ export const DocumentDetailPage = () => {
                         Edit
                       </button>
                     )}
-
 
                   <button
                     onClick={() =>

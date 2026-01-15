@@ -27,6 +27,9 @@ import { PulseSidebar } from "./PulseSidebar";
 import { PulseDynamicHeader } from "./PulseDynamicHeader";
 import { ZycusSidebar } from "./ZycusSidebar";
 import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
+import { ActionSidebar } from "./ActionSidebar";
+import { ActionHeader } from "./ActionHeader";
+import { useActionLayout } from "../contexts/ActionLayoutContext";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -39,6 +42,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     currentSection,
     setCurrentSection,
   } = useLayout();
+  const { isActionSidebarVisible } = useActionLayout();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
@@ -168,7 +172,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 298
     ) {
-      return <Sidebar />;
+      return <ActionSidebar />;
     }
 
     // Use company ID-based layout
@@ -181,7 +185,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <StacticSidebar />;
       case "default":
       default:
-        return <Sidebar />;
+        return <ActionSidebar />;
     }
   };
 
@@ -226,7 +230,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 298
     ) {
-      return <DynamicHeader />;
+      return <ActionHeader />;
     }
 
     // Use company ID-based layout
@@ -239,7 +243,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <StaticDynamicHeader />;
       case "default":
       default:
-        return <DynamicHeader />;
+        return <ActionHeader />;
     }
   };
 
@@ -319,6 +323,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {renderSidebar()}
       {renderDynamicHeader()}
 
+      {/* Action-based navigation - only shown when action context is active */}
+
       <main
         className={`${
           // For employee users, only add left margin if on Project Task module
@@ -328,10 +334,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 ? "ml-16"
                 : "ml-64"
               : "ml-0" // No margin for other modules
-            : isSidebarCollapsed
-              ? "ml-16"
-              : "ml-64"
-        } ${isEmployeeUser && isLocalhost ? "pt-16" : "pt-28"} transition-all duration-300`}
+            : // For action sidebar, add extra top padding and adjust left margin
+              isActionSidebarVisible
+              ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
+              : isSidebarCollapsed
+                ? "ml-16"
+                : "ml-64"
+        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
