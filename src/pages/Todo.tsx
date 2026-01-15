@@ -104,7 +104,11 @@ export default function Todo() {
 
     const toggleTodo = async (id) => {
         const updatedTodos = todos.map((todo) =>
-            todo.id === id ? { ...todo, status: todo.status === 'open' ? 'completed' : 'open' } : todo
+            todo.id === id ? {
+                ...todo,
+                status: todo.status === 'open' ? 'completed' : 'open',
+                updated_at: todo.status === 'open' ? new Date().toISOString() : todo.updated_at
+            } : todo
         );
 
         setTodos(updatedTodos);
@@ -233,6 +237,8 @@ export default function Todo() {
     const pendingTodos = todos.filter((t) => t.status !== 'completed');
     const completedTodos = todos.filter((t) => t.status === 'completed');
 
+    console.log(completedTodos)
+
     // ------------------------------
     // DATE GROUPING
     // ------------------------------
@@ -246,6 +252,24 @@ export default function Todo() {
 
     // fallback group if any todo has no target date
     const noDateTodos = pendingTodos.filter((t) => !t.target_date);
+
+    // ------------------------------------
+    // COMPLETED GROUPING
+    // ------------------------------------
+    const groupedCompletedTodos = completedTodos.reduce((acc: { [key: string]: any[] }, todo: any) => {
+        const date = todo.updated_at ? todo.updated_at.split('T')[0] : 'No Date';
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(todo);
+        return acc;
+    }, {});
+
+    const sortedCompletedDates = Object.keys(groupedCompletedTodos).sort((a, b) => {
+        if (a === 'No Date') return 1;
+        if (b === 'No Date') return -1;
+        return new Date(b).getTime() - new Date(a).getTime();
+    });
 
     return (
         <div className="p-6">
@@ -377,7 +401,7 @@ export default function Todo() {
                             </span>
                         </div>
 
-                        <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-2 min-h-96 overflow-auto">
+                        <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-6 min-h-96 overflow-auto">
                             {completedTodos.length === 0 ? (
                                 <div className="flex items-center justify-center h-full">
                                     <p className="text-muted-foreground text-center">
@@ -385,12 +409,23 @@ export default function Todo() {
                                     </p>
                                 </div>
                             ) : (
-                                completedTodos.map((todo) => (
-                                    <CompletedTodoItem
-                                        key={todo.id}
-                                        todo={todo}
-                                        toggleTodo={toggleTodo}
-                                    />
+                                sortedCompletedDates.map((date) => (
+                                    <div key={date}>
+                                        <h3 className={`text-sm font-semibold mb-2 ${date === today ? 'text-green-600' : 'text-gray-500'}`}>
+                                            {date === today ? 'Completed Today' :
+                                                date === 'No Date' ? 'Date Unknown' :
+                                                    new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {groupedCompletedTodos[date].map((todo) => (
+                                                <CompletedTodoItem
+                                                    key={todo.id}
+                                                    todo={todo}
+                                                    toggleTodo={toggleTodo}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
                                 ))
                             )}
                         </div>
