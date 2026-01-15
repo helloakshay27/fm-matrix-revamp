@@ -197,8 +197,10 @@ const CommunityEdit = () => {
           </div>
 
           <div className="p-6 bg-white">
-            <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex-1">
+            {/* Community Name + Pulse Category */}
+            <div className="mb-6 flex items-center gap-4">
+              {/* Community Name */}
+              <div className="w-[350px]">
                 <TextField
                   label={
                     <>
@@ -225,7 +227,7 @@ const CommunityEdit = () => {
               </div>
 
               {/* Pulse Category */}
-              <div className="flex items-center lg:ml-10 gap-3">
+              <div className="flex items-center ml-4 gap-3">
                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                   Pulse Category:
                 </span>
