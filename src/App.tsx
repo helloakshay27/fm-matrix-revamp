@@ -968,7 +968,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -3832,10 +3832,7 @@ function App() {
                       element={<BannerDetailsPage />}
                     />
                     <Route path="/pulse/events" element={<CRMEventsPage />} />
-                    <Route
-                      path="/pulse/events/add"
-                      element={<AddEventPage />}
-                    />
+                    <Route path="/pulse/events/add" element={<AddEventPage />} />
                     <Route
                       path="/pulse/events/details/:id"
                       element={<CRMEventDetailsPage />}
@@ -3860,6 +3857,40 @@ function App() {
                     <Route
                       path="/pulse/notices/details/:id"
                       element={<BroadcastDetailsPage />}
+                    />
+
+                    <Route
+                      path="/pulse/community"
+                      element={<Communtiy />}
+                    />
+
+                    <Route
+                      path="/pulse/community/add"
+                      element={<CommunityAdd />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:id"
+                      element={<CommunityDetails />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:id/reports"
+                      element={<CommunityReportsPage />}
+                    />
+
+                    <Route
+                      path="/pulse/community/edit/:id"
+                      element={<CommunityEdit />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:communityId/user/:userId"
+                      element={<CommunityUserDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/:communityId/reports/details/:id"
+                      element={<ReportsDetailsPage />}
                     />
 
                     <Route
@@ -3930,7 +3961,7 @@ function App() {
                     />
                     <Route
                       path="/pulse/amenity"
-                      element={<AmenitySetupDashboard />}
+                      element={<BookingList />}
                     />
 
                     {/* Carpool Routes */}
@@ -3962,6 +3993,11 @@ function App() {
                     <Route
                       path="/pulse/sos-directory/:id"
                       element={<SosDirectoryDetailsPage />}
+                    />
+
+                    <Route
+                      path="/pulse/sos-category-setup"
+                      element={<SOSCategorySetupPage />}
                     />
                   </Route>
 
@@ -4058,6 +4094,10 @@ function App() {
                     <Route
                       path="/settings/vas/booking/setup"
                       element={<BookingSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/category-setup"
+                      element={<AmenityCategorySetup />}
                     />
                     <Route
                       path="/settings/vas/booking/setup/add"
