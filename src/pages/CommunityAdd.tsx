@@ -329,7 +329,7 @@ const CommunityAdd = () => {
                                     type="file"
                                     ref={coverImageInputRef}
                                     onChange={handleCoverImageChange}
-                                    accept="image/*"
+                                    accept="image/*, .jpg, .jpeg, .png"
                                     className="hidden"
                                 />
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { TextField } from "@mui/material";
+import { TextField, RadioGroup, FormControlLabel, Radio, Switch } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { FileText, File, Info, XCircle, ArrowLeft } from "lucide-react";
@@ -24,9 +24,11 @@ const CommunityEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [isToggling, setIsToggling] = useState<number | null>(null)
   const [formData, setFormData] = useState({
     communityName: "",
     description: "",
+    category: "play",
     coverImage: null as File | null,
   });
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
@@ -45,10 +47,11 @@ const CommunityEdit = () => {
         setFormData({
           communityName: community?.name || "",
           description: community?.description || "",
+          category: community?.category || "play",
           coverImage: null,
         });
         setIsActive(Boolean(community?.status));
-        setCoverImagePreview(community?.cover_image_url || community?.cover_image || null);
+        setCoverImagePreview(community?.icon || community?.cover_image || null);
       } catch (error: any) {
         toast.error(error?.response?.data?.error || error?.message || "Failed to load community");
       } finally {
@@ -108,6 +111,7 @@ const CommunityEdit = () => {
       const fd = new FormData();
       fd.append("community[name]", formData.communityName);
       fd.append("community[description]", formData.description);
+      fd.append("community[category]", formData.category);
       if (formData.coverImage) {
         fd.append("community[attachment]", formData.coverImage);
       }
@@ -122,6 +126,33 @@ const CommunityEdit = () => {
       toast.error(error?.response?.data?.error || error?.message || "Failed to update community");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (id: number, currentActive: boolean) => {
+    const newActive = !currentActive;
+    setIsToggling(id);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('community[active]', newActive ? 'true' : 'false');
+
+      await axios.put(
+        `https://${baseUrl}/communities/${id}.json`,
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      );
+
+      setIsActive(newActive);
+      toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to update community status");
+    } finally {
+      setIsToggling(null);
     }
   };
 
@@ -141,33 +172,111 @@ const CommunityEdit = () => {
               </div>
               <span className="font-semibold text-lg text-gray-800">Details</span>
             </div>
-          </div>
-
-          <div className="p-6 bg-white">
-            <div className="mb-6 grid grid-cols-3 gap-4">
-              <TextField
-                label={
-                  <>
-                    Community Name<span className="text-[#C72030]">*</span>
-                  </>
-                }
-                id="communityName"
-                name="communityName"
-                value={formData.communityName}
-                onChange={handleInputChange}
-                placeholder="Enter Community Name"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                size="small"
+            <div className="flex items-center">
+              <Switch
+                checked={isActive}
+                onChange={() => handleStatusChange(Number(id), isActive)}
+                disabled={isToggling === Number(id)}
                 sx={{
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#FAFAFA",
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#C72030",
-                    },
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#04A231',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#04A231',
+                  },
+                  '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                    color: '#C72030',
+                  },
+                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                    backgroundColor: 'rgba(199, 32, 48, 0.5)',
                   },
                 }}
               />
+              <span className="ml-2 text-sm font-semibold">{isActive ? 'Active' : 'Inactive'}</span>
+            </div>
+          </div>
+
+          <div className="p-6 bg-white">
+            <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1">
+                <TextField
+                  label={
+                    <>
+                      Community Name<span className="text-[#C72030]">*</span>
+                    </>
+                  }
+                  id="communityName"
+                  name="communityName"
+                  value={formData.communityName}
+                  onChange={handleInputChange}
+                  placeholder="Enter Community Name"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              {/* Pulse Category */}
+              <div className="flex items-center lg:ml-10 gap-3">
+                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  Pulse Category:
+                </span>
+                <RadioGroup
+                  row
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                >
+                  <FormControlLabel
+                    value="play"
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: "#C72030",
+                          "&.Mui-checked": { color: "#C72030" },
+                        }}
+                      />
+                    }
+                    label={<span className="text-sm text-gray-900">Play</span>}
+                  />
+                  <FormControlLabel
+                    value="panasche"
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: "#C72030",
+                          "&.Mui-checked": { color: "#C72030" },
+                        }}
+                      />
+                    }
+                    label={<span className="text-sm text-gray-900">Panasche</span>}
+                  />
+                  <FormControlLabel
+                    value="persuit"
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: "#C72030",
+                          "&.Mui-checked": { color: "#C72030" },
+                        }}
+                      />
+                    }
+                    label={<span className="text-sm text-gray-900">Persuit</span>}
+                  />
+                </RadioGroup>
+              </div>
             </div>
 
             <div>
@@ -239,7 +348,7 @@ const CommunityEdit = () => {
                   type="file"
                   ref={coverImageInputRef}
                   onChange={handleCoverImageChange}
-                  accept="image/*"
+                  accept="image/*, .jpg, .jpeg, .png"
                   className="hidden"
                 />
 

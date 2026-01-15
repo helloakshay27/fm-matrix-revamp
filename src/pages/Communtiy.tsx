@@ -1,6 +1,6 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@mui/material"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
@@ -18,7 +18,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: 'title',
-        label: 'Title',
+        label: 'Community Name',
         sortable: true,
         draggable: true
     },
@@ -37,7 +37,7 @@ const columns: ColumnConfig[] = [
     {
         key: 'status',
         label: 'Status',
-        sortable: true,
+        sortable: false,
         draggable: true
     },
     {
@@ -62,6 +62,7 @@ const Communtiy = () => {
 
     const [communities, setCommunities] = useState([])
     const [loading, setLoading] = useState(false)
+    const [isToggling, setIsToggling] = useState<number | null>(null)
     const [selectedRows, setSelectedRows] = useState<number[]>([])
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
     const [filters, setFilters] = useState({
@@ -144,6 +145,9 @@ const Communtiy = () => {
         } else if (fromPage === 'add-event') {
             // Redirect back to add event page
             navigate('/pulse/events/add');
+        } else if (fromPage === 'edit-event' && broadcastId) {
+            // Redirect back to edit event page
+            navigate(`/pulse/events/edit/${broadcastId}`);
         } else {
             // Default to add broadcast page (from=add or no from parameter)
             navigate('/pulse/notices/add');
@@ -183,6 +187,37 @@ const Communtiy = () => {
         </>
     );
 
+    const handleStatusChange = async (id: number, currentActive: boolean) => {
+        const newActive = !currentActive;
+        setIsToggling(id);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('community[active]', newActive ? 'true' : 'false');
+
+            await axios.put(
+                `https://${baseUrl}/communities/${id}.json`,
+                formDataToSend,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+            setCommunities((prev: any[]) =>
+                prev.map((item: any) =>
+                    item.id === id ? { ...item, active: newActive } : item
+                )
+            );
+            toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.error || "Failed to update community status");
+        } finally {
+            setIsToggling(null);
+        }
+    };
+
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case "images":
@@ -195,7 +230,23 @@ const Communtiy = () => {
                 return <div className="flex items-center gap-2">
                     <Switch
                         checked={!!item.active}
-                    // onCheckedChange={() => handleStatusChange(item.id, item.active)} 
+                        onChange={() => handleStatusChange(item.id, item.active)}
+                        disabled={isToggling === item.id}
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
                     />
                     {item.active ? "Active" : "Inactive"}
                 </div>
@@ -234,6 +285,7 @@ const Communtiy = () => {
 
     return (
         <div className="p-6 space-y-4">
+            <h1 className="font-medium text-[16px] text-[rgba(26,26,26,0.5)] mb-4">Community</h1>
             {isSelectionMode && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
                     <div>
@@ -249,8 +301,11 @@ const Communtiy = () => {
                             variant="outline"
                             onClick={() => {
                                 const fromPage = searchParams.get('from');
+                                const broadcastId = searchParams.get('id');
                                 if (fromPage === 'add-event') {
                                     navigate('/pulse/events/add');
+                                } else if (fromPage === 'edit-event' && broadcastId) {
+                                    navigate(`/pulse/events/edit/${broadcastId}`);
                                 } else {
                                     navigate('/pulse/notices/add');
                                 }
