@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  Globe,
   Bell,
   User,
   LogOut,
@@ -46,6 +47,7 @@ import { toast } from "sonner";
 
 // Employee modules/packages
 const employeeModules = [
+  { name: "Company Hub", icon: Globe },
   { name: "Dashboard", icon: Home },
   { name: "Project Task", icon: FolderKanban },
   { name: "Ticket", icon: Ticket },
@@ -121,16 +123,49 @@ export const EmployeeHeader: React.FC = () => {
       : employeeModules.slice(0, 10).map((m) => m.name);
   });
 
-  const MAX_VISIBLE_MODULES = 10;
-  // Get displayed modules in the order they appear in visibleModules array
-  const displayedModules = visibleModules
+  const MAX_VISIBLE_MODULES = 9;
+
+  // Ensure "Company Hub" and "Dashboard" are always the first modules
+  const orderedVisibleModules = [...visibleModules];
+
+  // Helper to force module to specific position
+  const prioritizeModule = (moduleName: string, targetIndex: number) => {
+    const currentIndex = orderedVisibleModules.indexOf(moduleName);
+
+    // If it's already in the list, remove it first
+    if (currentIndex > -1) {
+      orderedVisibleModules.splice(currentIndex, 1);
+    }
+
+    // If it exists in available modules, insert at target position
+    if (employeeModules.some((m) => m.name === moduleName)) {
+      // If adding "Dashboard" at index 1, make sure we don't displace "Company Hub" at index 0 if it was just added
+      // Actually splice works fine. e.g. [A, B, C]. splice(0, 0, Hub) -> [Hub, A, B, C]. splice(1, 0, Dashboard) -> [Hub, Dashboard, A, B, C]
+      orderedVisibleModules.splice(targetIndex, 0, moduleName);
+    }
+  };
+
+  // Prioritize "Company Hub" to index 0
+  prioritizeModule("Company Hub", 0);
+
+  // Prioritize "Dashboard" to index 1 (after Company Hub)
+  prioritizeModule("Dashboard", 1);
+
+  // Get displayed modules in the order they appear in orderedVisibleModules array
+  const displayedModules = orderedVisibleModules
     .slice(0, MAX_VISIBLE_MODULES)
     .map((name) => employeeModules.find((m) => m.name === name))
     .filter((m) => m !== undefined);
-  // Hidden modules are those NOT in the visibleModules list
-  const hiddenModules = employeeModules.filter(
-    (m) => !visibleModules.includes(m.name)
-  );
+
+  // Hidden modules includes both:
+  // 1. Modules that are in visibleModules list but overflow beyond MAX_VISIBLE_MODULES
+  // 2. Modules that are NOT in the visibleModules list (e.g. disabled modules)
+  const hiddenModules = [
+    ...orderedVisibleModules
+      .slice(MAX_VISIBLE_MODULES)
+      .map((name) => employeeModules.find((m) => m.name === name)),
+    ...employeeModules.filter((m) => !orderedVisibleModules.includes(m.name)),
+  ].filter((m) => m !== undefined);
   // Get user data
   const user = getUser() || {
     id: 0,
@@ -217,6 +252,9 @@ export const EmployeeHeader: React.FC = () => {
 
     // Navigate to the module's default page
     switch (moduleName) {
+      case "Company Hub":
+        navigate("/employee/company-hub");
+        break;
       case "Dashboard":
         navigate("/employee/dashboard");
         break;

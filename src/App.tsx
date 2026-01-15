@@ -340,6 +340,15 @@ import { EmployeeDashboard } from "./pages/EmployeeDashboard";
 import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
+import CompanyHub from "./pages/CompanyHub";
+import BusinessPlan from "./pages/BusinessPlan";
+import OurGroup from "./pages/OurGroup";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import DocumentDrive from "./pages/DocumentDrive";
+import HRPolicies from "./pages/HRPolicies";
+import Directory from "./pages/Directory";
+import EmployeeFAQ from "./pages/EmployeeFAQ";
 
 // Import Check In Margin page
 import { CheckInMarginDashboard } from "./pages/setup/CheckInMarginDashboard";
@@ -1427,6 +1436,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <PlaceFnbOrder />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee/company-hub"
+                    element={
+                      <ProtectedRoute>
+                        <CompanyHub />
                       </ProtectedRoute>
                     }
                   />
@@ -3702,6 +3719,8 @@ function App() {
                     element={<JobSheetPage />}
                   />
 
+                  <Route path="/product-details" element={<ProductDetails />} />
+
                   <Route path="*" element={<NotFound />} />
                 </Route>
 
@@ -4115,6 +4134,15 @@ function App() {
                 />
                 <Route path="/mobile/lmc" element={<MobileLMCPage />} />
                 <Route path="/vi-business-card" element={<ViBusinessCard />} />
+
+                {/* Quick Links Routes */}
+                <Route path="/business-plan" element={<BusinessPlan />} />
+                <Route path="/our-group" element={<OurGroup />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/document-drive" element={<DocumentDrive />} />
+                <Route path="/hr-policies" element={<HRPolicies />} />
+                <Route path="/directory" element={<Directory />} />
+                <Route path="/eployee-faq" element={<EmployeeFAQ />} />
 
                 {/* Mobile Routes */}
                 <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
