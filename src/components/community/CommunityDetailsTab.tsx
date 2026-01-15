@@ -210,11 +210,11 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                 <div className="p-6 bg-white">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {/* Community Image */}
-                        <div>
+                        <div className="bg-gray-100">
                             <img
                                 src={communityData.icon}
                                 alt={communityData.name}
-                                className="w-full h-64 object-cover rounded-lg"
+                                className="w-full h-64 object-contain rounded-lg"
                             />
                         </div>
 

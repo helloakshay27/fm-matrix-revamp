@@ -53,7 +53,7 @@ export const BroadcastDetailsPage = () => {
         // Set initial switch states
         setIsActive(response.active);
         setShowOnHomeScreen(response.show_on_home_screen || false);
-        setVisibleAfterExpire(response.visible_after_expire || false);
+        setVisibleAfterExpire(response.flag_expire || false);
       } catch (error) {
         console.log(error)
         toast.error("Failed to fetch broadcast details")
