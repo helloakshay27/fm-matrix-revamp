@@ -752,7 +752,7 @@ export const EmployeeDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="pt-12 pb-8 px-6 max-w-[1400px] mx-auto">
+      <main className="pt-12 pb-8 px-6 w-full mx-auto">
         {/* Welcome Section with Edit Button */}
         <div className="mb-6 flex items-start justify-between">
           <div>
