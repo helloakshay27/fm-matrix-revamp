@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Close } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
+import { CloudUpload, Delete } from '@mui/icons-material';
 
 interface AmenityCategoryModalProps {
     isOpen: boolean;
@@ -29,6 +29,12 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
         description: '',
         fac_type: '',
     });
+    const [coverImage, setCoverImage] = useState<File | null>(null);
+    const [iconDark, setIconDark] = useState<File | null>(null);
+    const [iconLight, setIconLight] = useState<File | null>(null);
+    const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+    const [iconDarkPreview, setIconDarkPreview] = useState<string | null>(null);
+    const [iconLightPreview, setIconLightPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -38,6 +44,9 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
                 description: record.description || '',
                 fac_type: record.fac_type || '',
             });
+            setCoverImagePreview(record.cover_image.document || null);
+            setIconDarkPreview(record.icon_dark.document || null);
+            setIconLightPreview(record.icon_light.document || null);
         }
     }, [isEditing, record]);
 
@@ -49,12 +58,47 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
         }));
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'icon' | 'icon_light') => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (type === 'cover') {
+                setCoverImage(file);
+                setCoverImagePreview(URL.createObjectURL(file));
+            } else if (type === 'icon') {
+                setIconDark(file);
+                setIconDarkPreview(URL.createObjectURL(file));
+            } else {
+                setIconLight(file);
+                setIconLightPreview(URL.createObjectURL(file));
+            }
+        }
+    };
+
+    const removeFile = (type: 'cover' | 'icon' | 'icon_light') => {
+        if (type === 'cover') {
+            setCoverImage(null);
+            setCoverImagePreview(null);
+        } else if (type === 'icon') {
+            setIconDark(null);
+            setIconDarkPreview(null);
+        } else {
+            setIconLight(null);
+            setIconLightPreview(null);
+        }
+    };
+
     const handleClose = () => {
         setFormData({
             name: '',
             description: '',
             fac_type: '',
         });
+        setCoverImage(null);
+        setIconDark(null);
+        setIconLight(null);
+        setCoverImagePreview(null);
+        setIconDarkPreview(null);
+        setIconLightPreview(null);
         onClose();
     };
 
@@ -71,8 +115,18 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
 
         payload.append('facility_category[name]', formData.name);
         payload.append('facility_category[description]', formData.description);
-        payload.append('facility_category[active]', "1");
+        payload.append('facility_category[active]', record?.active === false ? "0" : "1");
         payload.append('facility_category[fac_type]', formData.fac_type);
+
+        if (coverImage) {
+            payload.append('cover_image', coverImage);
+        }
+        if (iconDark) {
+            payload.append('icon_dark', iconDark);
+        }
+        if (iconLight) {
+            payload.append('icon_light', iconLight);
+        }
 
         try {
             if (isEditing && record) {
@@ -181,6 +235,127 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
                             <MenuItem value="requestable">Requestable</MenuItem>
                         </Select>
                     </FormControl>
+
+                    <Box sx={{ mt: 3, p: 2, border: '1px dashed #ccc', borderRadius: 2 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 'bold', color: '#666' }}>
+                            Attachments
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {/* Cover Image Upload - Full Width */}
+                            <Box>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: '#888' }}>
+                                    Cover Image
+                                </Typography>
+                                <Box sx={{
+                                    position: 'relative',
+                                    height: 120,
+                                    bgcolor: '#f8f8f8',
+                                    borderRadius: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid #eee',
+                                    overflow: 'hidden'
+                                }}>
+                                    {coverImagePreview ? (
+                                        <>
+                                            <img src={coverImagePreview} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => removeFile('cover')}
+                                                sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: '#fff' } }}
+                                            >
+                                                <Delete fontSize="small" color="error" />
+                                            </IconButton>
+                                        </>
+                                    ) : (
+                                        <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 'cover')} />
+                                            <CloudUpload sx={{ color: '#aaa', fontSize: 32 }} />
+                                            <Typography variant="caption" sx={{ color: '#aaa' }}>Upload Cover Image</Typography>
+                                        </label>
+                                    )}
+                                </Box>
+                            </Box>
+
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                {/* Icon Dark Upload */}
+                                <Box>
+                                    <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: '#888' }}>
+                                        Icon Dark
+                                    </Typography>
+                                    <Box sx={{
+                                        position: 'relative',
+                                        height: 100,
+                                        bgcolor: '#f8f8f8',
+                                        borderRadius: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid #eee',
+                                        overflow: 'hidden'
+                                    }}>
+                                        {iconDarkPreview ? (
+                                            <>
+                                                <img src={iconDarkPreview} alt="Icon Dark" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '8px' }} />
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => removeFile('icon')}
+                                                    sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: '#fff' } }}
+                                                >
+                                                    <Delete fontSize="small" color="error" />
+                                                </IconButton>
+                                            </>
+                                        ) : (
+                                            <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 'icon')} />
+                                                <CloudUpload sx={{ color: '#aaa', fontSize: 24 }} />
+                                                <Typography variant="caption" sx={{ color: '#aaa', fontSize: '10px' }}>Upload Dark</Typography>
+                                            </label>
+                                        )}
+                                    </Box>
+                                </Box>
+
+                                {/* Icon Light Upload */}
+                                <Box>
+                                    <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: '#888' }}>
+                                        Icon Light
+                                    </Typography>
+                                    <Box sx={{
+                                        position: 'relative',
+                                        height: 100,
+                                        bgcolor: '#f8f8f8',
+                                        borderRadius: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid #eee',
+                                        overflow: 'hidden'
+                                    }}>
+                                        {iconLightPreview ? (
+                                            <>
+                                                <img src={iconLightPreview} alt="Icon Light" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '8px' }} />
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => removeFile('icon_light')}
+                                                    sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: '#fff' } }}
+                                                >
+                                                    <Delete fontSize="small" color="error" />
+                                                </IconButton>
+                                            </>
+                                        ) : (
+                                            <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 'icon_light')} />
+                                                <CloudUpload sx={{ color: '#aaa', fontSize: 24 }} />
+                                                <Typography variant="caption" sx={{ color: '#aaa', fontSize: '10px' }}>Upload Light</Typography>
+                                            </label>
+                                        )}
+                                    </Box>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Box>
 
                     <div className="pt-4">
                         <Button
