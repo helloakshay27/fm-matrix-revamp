@@ -130,6 +130,15 @@ const modulesByPackage = {
       icon: Heart,
       href: "/pulse/esr-csr",
     },
+    {
+      name: "CRM",
+      icon: Users,
+      subItems: [
+        { name: "Customers", href: "/crm/customers" },
+        // { name: "FM Users", href: "/crm/fm-users" },
+        // { name: "Occupant Users", href: "/crm/occupant-users" },
+      ],
+    },
   ],
 
   Master: [
