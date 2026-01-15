@@ -77,7 +77,11 @@ export const CRMEventsPage = () => {
           created_by: event.created_by || 'Unknown',
           from_time: event.from_time,
           to_time: event.to_time,
+          is_paid: event.is_paid,
           event_type: event.shared === 0 ? "General" : "Personal",
+          event_location: event.event_at,
+          amount: event.amount_per_member,
+          member_capacity: event.capacity,
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
@@ -109,16 +113,24 @@ export const CRMEventsPage = () => {
   }, [])
 
   const columns = [
-    { key: 'event_name', label: 'Title', sortable: true, defaultVisible: true },
-    { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
-    { key: 'created_by', label: 'Created By', sortable: true, defaultVisible: true },
-    { key: 'from_time', label: 'Start Date', sortable: true, defaultVisible: true },
-    { key: 'to_time', label: 'End Date', sortable: true, defaultVisible: true },
-    { key: 'event_type', label: 'Event Type', sortable: true, defaultVisible: true },
+    { key: 'event_name', label: 'Event Name', sortable: true, defaultVisible: true },
+    { key: 'event_date', label: 'Event Date', sortable: true, defaultVisible: true },
+    { key: 'event_time', label: 'Event Time', sortable: true, defaultVisible: true },
+    { key: 'event_category', label: 'Event Category', sortable: true, defaultVisible: true },
     { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
-    { key: 'is_expired', label: 'Expired', sortable: true, defaultVisible: true },
-    { key: 'attachments', label: 'Attachments', sortable: true, defaultVisible: true },
-    { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+    { key: 'event_location', label: 'Event Location', sortable: true, defaultVisible: true },
+    // { key: 'pulse_category', label: 'Pulse Category', sortable: true, defaultVisible: true },
+    // { key: 'requestable', label: 'Requestable', sortable: true, defaultVisible: true },
+    // { key: 'approval_pending', label: 'Approval Pending', sortable: true, defaultVisible: true },
+    { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
+    { key: 'member_capacity', label: 'Member Capacity', sortable: true, defaultVisible: true },
+    // { key: 'seat_remaining', label: 'Seat Remaining', sortable: true, defaultVisible: true },
+    // { key: 'member_per_limit', label: 'Member Per Limit', sortable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Event Created On', sortable: true, defaultVisible: true },
+    { key: 'created_by', label: 'Event Created By', sortable: true, defaultVisible: true },
+    // { key: 'interested_count', label: 'Interested', sortable: true, defaultVisible: true },
+    // { key: 'registered_count', label: 'Registered', sortable: true, defaultVisible: true },
+    // { key: 'waitlist_count', label: 'Waitlist', sortable: true, defaultVisible: true },
   ];
 
   // Handle filter modal
@@ -142,7 +154,7 @@ export const CRMEventsPage = () => {
     }
 
     if (filterData.created_at) {
-      const formattedDate = format(new Date(filterData.created_at), "dd-MM-yyyy");
+      const formattedDate = format(new Date(filterData.created_at), "yyyy-MM-dd");
       filterParams["q[created_at_eq]"] = formattedDate;
     }
 
@@ -154,6 +166,7 @@ export const CRMEventsPage = () => {
 
     try {
       const response = await dispatch(fetchEvents({ baseUrl, token, params: queryString, page: pagination.current_page, per_page: 10 })).unwrap();
+      console.log(response.classifieds)
       const mappedEvents = response.classifieds.map(event => ({
         id: event.id,
         event_name: event.event_name,
@@ -162,6 +175,7 @@ export const CRMEventsPage = () => {
         from_time: event.from_time,
         to_time: event.to_time,
         event_type: event.shared === 0 ? "General" : "Personal",
+        amount: event.amount_per_member,
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -194,13 +208,27 @@ export const CRMEventsPage = () => {
   // Render cell content
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
-      case 'status':
-        return (
-          <Badge className="bg-green-600 text-white">{item.status}</Badge>
-        );
+      case 'event_date':
+        return new Intl.DateTimeFormat("en-GB", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(new Date(item.from_time));
+      case 'event_time':
+        return new Intl.DateTimeFormat("en-GB", {
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        }).format(new Date(item.from_time));
+      case "event_category":
+        return item.is_paid ? "Paid" : "Complimentary";
       case 'event_type':
         return (
           <span>{item.event_type}</span>
+        );
+      case 'amount':
+        return (
+          <span>{item.amount}</span>
         );
       case 'is_expired':
         return item.is_expired ? (
@@ -210,10 +238,13 @@ export const CRMEventsPage = () => {
         );
       case 'attachments':
         return item.attachments.length > 0 ? (
-          <img
-            style={{ width: "100%", height: "50px" }}
-            src={item.attachments[0].document}
-          />
+          <div className='bg-gray-100'>
+            <img
+              style={{ width: "100%", height: "50px" }}
+              className='object-contain'
+              src={item.attachments[0].document}
+            />
+          </div>
         ) : (
           'None'
         );
