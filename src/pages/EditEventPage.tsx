@@ -45,7 +45,7 @@ export const EditEventPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     eventName: "",
-    eventCategory: "",
+    eventType: "",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -88,7 +88,7 @@ export const EditEventPage = () => {
         setFormData(prev => ({
           ...prev,
           eventName: savedEventName,
-          eventCategory: localStorage.getItem('eventCategory') || prev.eventCategory,
+          eventType: localStorage.getItem('eventType') || prev.eventType,
           amountPerPerson: localStorage.getItem('amountPerPerson') || prev.amountPerPerson,
           fromDate: localStorage.getItem('fromDate') || prev.fromDate,
           toDate: localStorage.getItem('toDate') || prev.toDate,
@@ -115,7 +115,7 @@ export const EditEventPage = () => {
 
         // Cleanup localStorage
         [
-          'eventName', 'eventCategory', 'amountPerPerson', 'fromDate', 'toDate',
+          'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
           'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
           'pulseCategory', 'rsvp', 'showOnHomeScreen', 'eventDescription', 'shareWith',
           'selectedTechParks'
@@ -164,6 +164,7 @@ export const EditEventPage = () => {
             amountPerPerson: event.amount_per_member || "",
             perMemberLimit: event.per_member_limit || "",
             pulseCategory: event.event_category || "play",
+            eventType: event.is_paid ? "1" : "0",
             showOnHomeScreen: event.show_on_home === true ? "yes" : "no",
             shareWith: event.share_with || "all",
             shareWithCommunities: (event.community_ids && event.community_ids.length > 0) ? "yes" : "no",
@@ -252,7 +253,7 @@ export const EditEventPage = () => {
     if (name === "shareWithCommunities" && value === "yes") {
       // Save form data to localStorage before navigation
       localStorage.setItem('eventName', formData.eventName);
-      localStorage.setItem('eventCategory', formData.eventCategory);
+      localStorage.setItem('eventType', formData.eventType);
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
@@ -369,7 +370,8 @@ export const EditEventPage = () => {
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
-      formDataToSend.append("event[pulse_category]", formData.eventCategory);
+      formDataToSend.append("event[event_category]", formData.pulseCategory);
+      formDataToSend.append("event[is_paid]", formData.eventType);
       formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
       formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
       formDataToSend.append("event[description]", formData.eventDescription);
@@ -398,7 +400,7 @@ export const EditEventPage = () => {
 
       // Clean up localStorage after successful submission
       [
-        'eventName', 'eventCategory', 'amountPerPerson', 'fromDate', 'toDate',
+        'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
         'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
         'pulseCategory', 'rsvp', 'showOnHomeScreen', 'eventDescription', 'shareWith',
         'selectedTechParks', 'selectedCommunityIds'
@@ -470,14 +472,14 @@ export const EditEventPage = () => {
                 />
               </div>
 
-              {/* <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5">
                 <FormControl fullWidth size="small">
-                  <InputLabel shrink>Event Category<span className="text-[#C72030]">*</span></InputLabel>
+                  <InputLabel shrink>Event Type<span className="text-[#C72030]">*</span></InputLabel>
                   <MuiSelect
-                    name="eventCategory"
-                    value={formData.eventCategory}
-                    onChange={(e) => handleSelectChange("eventCategory", e.target.value)}
-                    label="Event Category*"
+                    name="eventType"
+                    value={formData.eventType}
+                    onChange={(e) => handleSelectChange("eventType", e.target.value)}
+                    label="Event Type*"
                     displayEmpty
                     sx={{
                       backgroundColor: '#FAFAFA',
@@ -486,13 +488,12 @@ export const EditEventPage = () => {
                       },
                     }}
                   >
-                    <MenuItem value="" disabled>Select event category...</MenuItem>
-                    <MenuItem value="play">Play</MenuItem>
-                    <MenuItem value="panasche">Panasche</MenuItem>
-                    <MenuItem value="persuit">Persuit</MenuItem>
+                    <MenuItem value="" disabled>Select event type...</MenuItem>
+                    <MenuItem value="1">Paid</MenuItem>
+                    <MenuItem value="0">Complimentary</MenuItem>
                   </MuiSelect>
                 </FormControl>
-              </div> */}
+              </div>
 
               <div className="flex flex-col gap-1.5">
                 <TextField
@@ -517,28 +518,7 @@ export const EditEventPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <TextField
-                  label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
-                  id="perMemberLimit"
-                  name="perMemberLimit"
-                  type="number"
-                  value={formData.perMemberLimit}
-                  onChange={handleInputChange}
-                  placeholder="Enter Limit"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
-                    },
-                  }}
-                />
-              </div>
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -644,6 +624,29 @@ export const EditEventPage = () => {
                   value={formData.memberCapacity}
                   onChange={handleInputChange}
                   placeholder="Enter Capacity"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                  }}
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
+                  id="perMemberLimit"
+                  name="perMemberLimit"
+                  type="number"
+                  value={formData.perMemberLimit}
+                  onChange={handleInputChange}
+                  placeholder="Enter Limit"
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
@@ -850,7 +853,7 @@ export const EditEventPage = () => {
                   type="button"
                   onClick={() => {
                     localStorage.setItem('eventName', formData.eventName);
-                    localStorage.setItem('eventCategory', formData.eventCategory);
+                    localStorage.setItem('eventType', formData.eventType);
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);

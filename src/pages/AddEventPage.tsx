@@ -46,7 +46,7 @@ export const AddEventPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     eventName: "",
-    eventCategory: "",
+    eventType: "",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -79,7 +79,7 @@ export const AddEventPage = () => {
   useEffect(() => {
     // Restore form data from localStorage if exists
     const savedEventName = localStorage.getItem('eventName');
-    const savedEventCategory = localStorage.getItem('eventCategory');
+    const savedEventType = localStorage.getItem('eventType');
     const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
     const savedFromDate = localStorage.getItem('fromDate');
     const savedToDate = localStorage.getItem('toDate');
@@ -99,7 +99,7 @@ export const AddEventPage = () => {
       setFormData(prev => ({
         ...prev,
         eventName: savedEventName || prev.eventName,
-        eventCategory: savedEventCategory || prev.eventCategory,
+        eventType: savedEventType || prev.eventType,
         amountPerPerson: savedAmountPerPerson || prev.amountPerPerson,
         fromDate: savedFromDate || prev.fromDate,
         toDate: savedToDate || prev.toDate,
@@ -127,7 +127,7 @@ export const AddEventPage = () => {
 
     // Clean up localStorage after restoration
     localStorage.removeItem('eventName');
-    localStorage.removeItem('eventCategory');
+    localStorage.removeItem('eventType');
     localStorage.removeItem('amountPerPerson');
     localStorage.removeItem('fromDate');
     localStorage.removeItem('toDate');
@@ -217,7 +217,7 @@ export const AddEventPage = () => {
     if (name === "shareWithCommunities" && value === "yes") {
       // Save form data to localStorage before navigation
       localStorage.setItem('eventName', formData.eventName);
-      localStorage.setItem('eventCategory', formData.eventCategory);
+      localStorage.setItem('eventType', formData.eventType);
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
@@ -328,6 +328,7 @@ export const AddEventPage = () => {
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append('event[share_with]', formData.shareWith);
+      formDataToSend.append('event[is_paid]', formData.eventType);
 
       if (formData.shareWith === 'individual') {
         selectedTechParks.forEach(id => {
@@ -350,7 +351,7 @@ export const AddEventPage = () => {
 
       // Clean up localStorage after successful submission
       localStorage.removeItem('eventName');
-      // localStorage.removeItem('eventCategory');
+      localStorage.removeItem('eventType');
       localStorage.removeItem('amountPerPerson');
       localStorage.removeItem('fromDate');
       localStorage.removeItem('toDate');
@@ -433,14 +434,14 @@ export const AddEventPage = () => {
                 />
               </div>
 
-              {/* <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5">
                 <FormControl fullWidth size="small">
-                  <InputLabel shrink>Event Category<span className="text-[#C72030]">*</span></InputLabel>
+                  <InputLabel shrink>Event Type<span className="text-[#C72030]">*</span></InputLabel>
                   <MuiSelect
-                    name="eventCategory"
-                    value={formData.eventCategory}
-                    onChange={(e) => handleSelectChange("eventCategory", e.target.value)}
-                    label="Event Category*"
+                    name="eventType"
+                    value={formData.eventType}
+                    onChange={(e) => handleSelectChange("eventType", e.target.value)}
+                    label="Event Type*"
                     displayEmpty
                     sx={{
                       backgroundColor: '#FAFAFA',
@@ -449,13 +450,12 @@ export const AddEventPage = () => {
                       },
                     }}
                   >
-                    <MenuItem value="" disabled>Select event category...</MenuItem>
-                    <MenuItem value="play">Play</MenuItem>
-                    <MenuItem value="panasche">Panasche</MenuItem>
-                    <MenuItem value="persuit">Persuit</MenuItem>
+                    <MenuItem value="" disabled>Select event type...</MenuItem>
+                    <MenuItem value="1">Paid</MenuItem>
+                    <MenuItem value="0">Complimentary</MenuItem>
                   </MuiSelect>
                 </FormControl>
-              </div> */}
+              </div>
 
               <div className="flex flex-col gap-1.5">
                 <TextField
@@ -466,29 +466,6 @@ export const AddEventPage = () => {
                   value={formData.amountPerPerson}
                   onChange={handleInputChange}
                   placeholder="Enter Amount"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
-                    },
-                  }}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <TextField
-                  label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
-                  id="perMemberLimit"
-                  name="perMemberLimit"
-                  type="number"
-                  value={formData.perMemberLimit}
-                  onChange={handleInputChange}
-                  placeholder="Enter Limit"
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
@@ -609,6 +586,29 @@ export const AddEventPage = () => {
                   value={formData.memberCapacity}
                   onChange={handleInputChange}
                   placeholder="Enter Capacity"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
+                  id="perMemberLimit"
+                  name="perMemberLimit"
+                  type="number"
+                  value={formData.perMemberLimit}
+                  onChange={handleInputChange}
+                  placeholder="Enter Limit"
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
@@ -841,7 +841,7 @@ export const AddEventPage = () => {
                   type="button"
                   onClick={() => {
                     localStorage.setItem('eventName', formData.eventName);
-                    localStorage.setItem('eventCategory', formData.eventCategory);
+                    localStorage.setItem('eventType', formData.eventType);
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);
