@@ -6,6 +6,7 @@ import { createConversation, createGroup } from "@/store/slices/channelSlice";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { Skeleton } from "./ui/skeleton";
 
 const NewConversationModal = ({
   modalRef,
@@ -24,13 +25,17 @@ const NewConversationModal = ({
   const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
 
   const [activeTab, setActiveTab] = useState("direct");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>(
+    currentUserId ? [currentUserId] : []
+  );
   const [groupName, setGroupName] = useState("");
+  const [userLoading, setUserLoading] = useState(false)
   const [escalateUsers, setEscalateUsers] = useState<any[]>([]);
 
   // Fetch escalate users
   useEffect(() => {
     const fetchEscalateUsers = async () => {
+      setUserLoading(true);
       try {
         const response = await axios.get(
           `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
@@ -43,6 +48,8 @@ const NewConversationModal = ({
         setEscalateUsers(response.data.users || []);
       } catch (error) {
         console.log("Error fetching escalate users:", error);
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchEscalateUsers();
@@ -90,8 +97,13 @@ const NewConversationModal = ({
   };
 
   const handleCreateGroup = async () => {
-    if (!groupName || selectedUsers.length < 2) {
-      toast.error("Enter a group name and select at least 2 members.");
+    if (!groupName.trim()) {
+      toast.error("Please enter a group name.");
+      return;
+    }
+
+    if (selectedUsers.length < 2) {
+      toast.error("Please select at least 2 members.");
       return;
     }
 
@@ -196,7 +208,17 @@ const NewConversationModal = ({
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
-            {availableUsers.length > 0 ? (
+            {userLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 rounded-xl">
+                  <Skeleton className="w-9 h-9 rounded-full" />
+                  <div className="flex flex-col gap-2 flex-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))
+            ) : availableUsers.length > 0 ? (
               availableUsers.map((user) => (
                 <div
                   key={user.id}
@@ -261,11 +283,21 @@ const NewConversationModal = ({
 
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-0">
-              {escalateUsers.filter((user) =>
+              {userLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2 rounded-xl">
+                    <Skeleton className="w-4 h-4 rounded" />
+                    <Skeleton className="w-9 h-9 rounded-full" />
+                    <Skeleton className="h-4 flex-1" />
+                  </div>
+                ))
+              ) : escalateUsers.filter((user) =>
+                user.id !== currentUserId &&
                 user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
               ).length > 0 ? (
                 escalateUsers
                   .filter((user) =>
+                    user.id !== currentUserId &&
                     user.full_name
                       .toLowerCase()
                       .includes(searchQuery.toLowerCase())

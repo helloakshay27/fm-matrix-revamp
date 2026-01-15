@@ -534,8 +534,8 @@ const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedU
                         {selectedDayName}
                     </span>
                     <span>
-                        {selectedDate?.date || "10"}{" "}
-                        {monthNames[selectedDate?.month || 9]}
+                        {selectedDate?.date}{" "}
+                        {monthNames[selectedDate?.month]}
                     </span>
                 </div>
                 <div className="font-semibold">
