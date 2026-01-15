@@ -12,6 +12,27 @@ import { fetchEvents } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
 
+const formatDateWithTimezone = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  const millis = String(date.getMilliseconds()).padStart(3, "0");
+
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
+  const offsetMinutes = pad(Math.abs(offset) % 60);
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${millis}${sign}${offsetHours}:${offsetMinutes}`;
+};
+
+
 export const CRMEventsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -64,14 +85,14 @@ export const CRMEventsPage = () => {
         }));
         setEvents(mappedEvents);
         setCardData({
-          total_events: response.total_events || "0",
-          upcoming_events: response.upcoming_events || "0",
-          past_events: response.past_events || "0",
-          complementary_events: response.complementary_events || "0",
-          paid_events: response.paid_events || "0",
-          requestable_events: response.requestable_events || "0",
-          pending_requests: response.pending_requests || "0",
-          total_registrations: response.total_registrations || "0"
+          total_events: response.dashboard.total_events || "0",
+          upcoming_events: response.dashboard.upcoming_events || "0",
+          past_events: response.dashboard.past_events || "0",
+          complementary_events: response.dashboard.complementary_events || "0",
+          paid_events: response.dashboard.paid_events || "0",
+          requestable_events: response.dashboard.requestable_events || "0",
+          pending_requests: response.dashboard.pending_requests || "0",
+          total_registrations: response.dashboard.total_registrations || "0"
         });
         setPagination({
           current_page: response.pagination.current_page,
@@ -121,8 +142,8 @@ export const CRMEventsPage = () => {
     }
 
     if (filterData.created_at) {
-      const formattedDate = format(new Date(filterData.created_at), "MM/dd/yyyy");
-      filterParams["q[date_range]"] = `${formattedDate} - ${formattedDate}`;
+      const formattedDate = format(new Date(filterData.created_at), "dd-MM-yyyy");
+      filterParams["q[created_at_eq]"] = formattedDate;
     }
 
     if (filterData.created_by) {
@@ -421,8 +442,6 @@ export const CRMEventsPage = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search events..."
-        pagination={true}
-        pageSize={10}
         enableSearch={true}
         loading={loading}
         leftActions={
