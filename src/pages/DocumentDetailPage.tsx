@@ -18,6 +18,7 @@ import {
   Document,
   DocumentAttachment,
   bulkMoveCopyDocuments,
+  updateDocumentStatus,
 } from "@/services/documentService";
 import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
 import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
@@ -118,13 +119,19 @@ export const DocumentDetailPage = () => {
     }
   };
 
-  const handleToggleStatus = (checked: boolean) => {
-    if (!document) return;
-    setDocument({ ...document, active: checked });
-    toast.success(
-      `Document ${checked ? "activated" : "deactivated"} successfully`
-    );
-    // TODO: Implement status update API call
+  const handleToggleStatus = async (checked: boolean) => {
+    if (!document || !id) return;
+
+    try {
+      await updateDocumentStatus(parseInt(id), checked);
+      setDocument({ ...document, active: checked });
+      toast.success(
+        `Document ${checked ? "activated" : "deactivated"} successfully`
+      );
+    } catch (error) {
+      console.error("Error updating document status:", error);
+      toast.error("Failed to update document status");
+    }
   };
 
   const handleDownload = (url: string, filename: string) => {

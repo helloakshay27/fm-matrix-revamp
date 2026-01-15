@@ -584,3 +584,59 @@ export const bulkMoveCopyDocuments = async (
 
   return response.data;
 };
+
+/**
+ * Update document active status
+ */
+export const updateDocumentStatus = async (
+  documentId: number,
+  active: boolean
+): Promise<Document> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.patch(
+    `https://${baseUrl}/documents/${documentId}`,
+    {
+      document: {
+        active: active,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Update folder active status
+ */
+export const updateFolderStatus = async (
+  folderId: number,
+  active: boolean
+): Promise<FolderDetailsResponse> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.patch(
+    `https://${baseUrl}/folders/${folderId}`,
+    {
+      folder: {
+        active: active,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
