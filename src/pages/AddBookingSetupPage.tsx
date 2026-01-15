@@ -100,6 +100,7 @@ export const AddBookingSetupPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
+    location: "",
     active: "1",
     category: "",
     appKey: "",
@@ -293,6 +294,9 @@ export const AddBookingSetupPage = () => {
     } else if (!formData.category) {
       toast.error("Please select Category");
       return false;
+    } else if (!formData.location) {
+      toast.error("Please enter Location");
+      return false;
     } else if (!formData.facilityBookedTimes) {
       toast.error("Please enter how many times facility can be booked per day");
       return false;
@@ -401,6 +405,7 @@ export const AddBookingSetupPage = () => {
         formData.isBookable ? "bookable" : "request"
       );
       formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
+      formDataToSend.append("facility_setup[location]", formData.location);
       formDataToSend.append(
         "facility_setup[active]",
         formData.active
@@ -808,6 +813,27 @@ export const AddBookingSetupPage = () => {
                       ))}
                   </Select>
                 </FormControl>
+
+                <TextField
+                  label="Location"
+                  placeholder="Enter Location"
+                  value={formData.location}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Only allow letters and spaces, no numbers
+                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                      setFormData({ ...formData, location: value });
+                    }
+                  }}
+                  variant="outlined"
+                  required
+                  InputLabelProps={{
+                    classes: {
+                      asterisk: "text-red-500", // Tailwind class for red color
+                    },
+                    shrink: true,
+                  }}
+                />
               </div>
 
               <div className="flex gap-6 px-1">
