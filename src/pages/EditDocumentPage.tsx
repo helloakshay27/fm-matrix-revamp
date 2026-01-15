@@ -371,7 +371,7 @@ export const EditDocumentPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+      <div className="w-full mx-auto p-6 space-y-6">
         {/* Document Details Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
