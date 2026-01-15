@@ -344,7 +344,7 @@ export const CreateFolderPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto p-6">
+      <div className="w-full mx-auto p-6">
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           {/* Folder Details Section */}
           <div className="mb-8">

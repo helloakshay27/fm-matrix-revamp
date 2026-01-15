@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../node_modules/@mui/utils/esm/ownerDocument/ownerDocument.js", "../../node_modules/@mui/utils/esm/ownerWindow/ownerWindow.js"],
-  "sourcesContent": ["export default function ownerDocument(node) {\n  return node && node.ownerDocument || document;\n}", "import ownerDocument from \"../ownerDocument/index.js\";\nexport default function ownerWindow(node) {\n  const doc = ownerDocument(node);\n  return doc.defaultView || window;\n}"],
-  "mappings": ";AAAe,SAAR,cAA+B,MAAM;AAC1C,SAAO,QAAQ,KAAK,iBAAiB;AACvC;;;ACDe,SAAR,YAA6B,MAAM;AACxC,QAAM,MAAM,cAAc,IAAI;AAC9B,SAAO,IAAI,eAAe;AAC5B;",
-  "names": []
-}

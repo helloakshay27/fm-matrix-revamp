@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { VisitorAnalyticsCard } from './VisitorAnalyticsCard';
@@ -81,7 +81,7 @@ export const VisitorAnalyticsContent = () => {
     const today = new Date();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(today.getFullYear() - 1);
-    
+
     return {
       start: oneYearAgo.toISOString().split('T')[0],
       end: today.toISOString().split('T')[0]
@@ -93,7 +93,7 @@ export const VisitorAnalyticsContent = () => {
     const defaultDates = getDefaultDates();
     const formattedStartDate = new Date(defaultDates.start).toLocaleDateString('en-GB');
     const formattedEndDate = new Date(defaultDates.end).toLocaleDateString('en-GB');
-    
+
     setDateRange({
       startDate: formattedStartDate,
       endDate: formattedEndDate
@@ -202,19 +202,28 @@ export const VisitorAnalyticsContent = () => {
     }
 
     return [
-      { 
-        name: 'Support Staff', 
-        value: visitorComparisonData.comparison.supportStaffVisitors, 
-        color: '#22C55E' 
+      {
+        name: 'Support Staff',
+        value: visitorComparisonData.comparison.supportStaffVisitors,
+        color: '#22C55E'
       },
-      { 
-        name: 'Guest Visitors', 
-        value: visitorComparisonData.comparison.guestVisitors, 
-        color: '#00B4D8' 
+      {
+        name: 'Guest Visitors',
+        value: visitorComparisonData.comparison.guestVisitors,
+        color: '#00B4D8'
       }
     ];
   };
 
+  // Memoize the commonDateRange to prevent unnecessary re-renders and API calls
+  const commonDateRange = useMemo(() => {
+    if (!dateRange.startDate) return undefined;
+
+    return {
+      startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+      endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+    };
+  }, [dateRange.startDate, dateRange.endDate]);
 
   // Render card function
   const renderCard = (item: { id: string; type: string }) => {
@@ -222,11 +231,6 @@ export const VisitorAnalyticsContent = () => {
     if (!visibleSections.includes(item.type)) {
       return null;
     }
-
-    const commonDateRange = dateRange.startDate ? {
-      startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-      endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-    } : undefined;
 
     switch (item.type) {
       case 'overview':
@@ -258,27 +262,27 @@ export const VisitorAnalyticsContent = () => {
         );
       case 'summary':
         return null; // Visitor Summary card commented out
-        /*
-        return (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
-                <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="text-xl font-bold text-purple-600">92%</div>
-                <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
-              </div>
-              <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                <div className="text-xl font-bold text-indigo-600">35</div>
-                <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
-              </div>
+      /*
+      return (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200">
+          <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
+              <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-xl font-bold text-purple-600">92%</div>
+              <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
+            </div>
+            <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <div className="text-xl font-bold text-indigo-600">35</div>
+              <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
             </div>
           </div>
-        );
-        */
+        </div>
+      );
+      */
       default:
         return null;
     }
