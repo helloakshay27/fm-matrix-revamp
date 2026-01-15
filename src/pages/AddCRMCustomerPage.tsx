@@ -151,7 +151,7 @@ export const AddCRMCustomerPage = () => {
           .filter((d) => d.domain.trim() !== "")
           .map((domain) => ({
             domain: domain.domain,
-            ext_customer_code: formData.customerCode,
+            entity_code: formData.customerCode,
           })),
       },
     };
