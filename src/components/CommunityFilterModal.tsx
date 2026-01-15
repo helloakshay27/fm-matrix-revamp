@@ -61,7 +61,7 @@ export const CommunityFilterModal = ({ open, onOpenChange, onApply }: CommunityF
     const fetchFmUsers = async () => {
         setLoadingUsers(true);
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
