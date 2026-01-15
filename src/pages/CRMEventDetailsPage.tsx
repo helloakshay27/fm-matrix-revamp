@@ -26,8 +26,8 @@ export const CRMEventDetailsPage = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-white border">
-          <TabsTrigger value="details" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Community Details</TabsTrigger>
-          <TabsTrigger value="feed" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Community Feed</TabsTrigger>
+          <TabsTrigger value="details" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Event Details</TabsTrigger>
+          <TabsTrigger value="feed" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Participants Details</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">

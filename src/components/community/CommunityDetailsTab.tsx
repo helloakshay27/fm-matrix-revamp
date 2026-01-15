@@ -189,39 +189,44 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                         <span className="font-semibold text-lg text-gray-800">Community Details</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                         <Switch
                             checked={isActive}
                             onChange={() => handleStatusChange(Number(id), isActive)}
                             disabled={isToggling === Number(id)}
                             sx={{
                                 '& .MuiSwitch-switchBase.Mui-checked': {
-                                    color: '#C72030',
+                                    color: '#04A231',
                                 },
                                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                    backgroundColor: '#C72030',
+                                    backgroundColor: '#04A231',
+                                },
+                                '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                    color: '#C72030',
+                                },
+                                '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: 'rgba(199, 32, 48, 0.5)',
                                 },
                             }}
                         />
+                        <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                     </div>
                 </div>
 
                 <div className="p-6 bg-white">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {/* Community Image */}
-                        <div className="bg-gray-100">
+                        <div className="bg-gray-100 h-72">
                             <img
                                 src={communityData.icon}
                                 alt={communityData.name}
-                                className="w-full h-64 object-contain rounded-lg"
+                                className="w-full h-full object-contain rounded-lg"
                             />
                         </div>
 
                         {/* Description */}
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">
+                            <h3 className="text-sm font-medium text-[rgba(26,26,26,0.5)] mb-2">Description</h3>
+                            <p className="text-[16px] text-[#222222] leading-relaxed">
                                 {communityData.description}
                             </p>
                         </div>

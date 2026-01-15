@@ -56,6 +56,7 @@ export const EditEventPage = () => {
     pulseCategory: "play",
     rsvp: "yes",
     showOnHomeScreen: "no",
+    approvalRequired: "no",
     eventDescription: "",
     shareWith: "all",
     shareWithCommunities: "no",
@@ -99,6 +100,7 @@ export const EditEventPage = () => {
           pulseCategory: localStorage.getItem('pulseCategory') || prev.pulseCategory,
           rsvp: localStorage.getItem('rsvp') || prev.rsvp,
           showOnHomeScreen: localStorage.getItem('showOnHomeScreen') || prev.showOnHomeScreen,
+          approvalRequired: localStorage.getItem('approvalRequired') || prev.approvalRequired,
           eventDescription: localStorage.getItem('eventDescription') || prev.eventDescription,
           shareWith: localStorage.getItem('shareWith') || prev.shareWith,
         }));
@@ -117,7 +119,7 @@ export const EditEventPage = () => {
         [
           'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
           'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
-          'pulseCategory', 'rsvp', 'showOnHomeScreen', 'eventDescription', 'shareWith',
+          'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
           'selectedTechParks'
         ].forEach(key => localStorage.removeItem(key));
 
@@ -136,8 +138,10 @@ export const EditEventPage = () => {
         try {
           const event = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
           setIsActive(event.is_important === true || event.is_important === 1);
-          if (event.documents) {
-            setExistingAttachments(event.documents);
+          if (event.documents && event.documents.length > 0) {
+            setExistingAttachments([event.documents[event.documents.length - 1]]);
+          } else {
+            setExistingAttachments([]);
           }
         } catch (e) {
           console.error("Failed to fetch auxiliary details", e);
@@ -166,8 +170,9 @@ export const EditEventPage = () => {
             pulseCategory: event.event_category || "play",
             eventType: event.is_paid ? "1" : "0",
             showOnHomeScreen: event.show_on_home === true ? "yes" : "no",
+            approvalRequired: event.approval_required === true ? "yes" : "no",
             shareWith: event.share_with || "all",
-            shareWithCommunities: (event.community_ids && event.community_ids.length > 0) ? "yes" : "no",
+            shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
           }));
 
           if (event.site_ids) {
@@ -176,12 +181,14 @@ export const EditEventPage = () => {
 
           setIsActive(event.is_important === true || event.is_important === 1);
 
-          if (event.community_ids) {
-            setSelectedCommunities(event.community_ids);
+          if (event.community_events) {
+            setSelectedCommunities(event.community_events.map((ce: any) => ce.community_id));
           }
 
-          if (event.documents) {
-            setExistingAttachments(event.documents);
+          if (event.documents && event.documents.length > 0) {
+            setExistingAttachments([event.documents[event.documents.length - 1]]);
+          } else {
+            setExistingAttachments([]);
           }
         } catch (error) {
           console.error("Failed to fetch event details", error);
@@ -264,6 +271,7 @@ export const EditEventPage = () => {
       localStorage.setItem('pulseCategory', formData.pulseCategory);
       localStorage.setItem('rsvp', formData.rsvp);
       localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+      localStorage.setItem('approvalRequired', formData.approvalRequired);
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
@@ -374,6 +382,7 @@ export const EditEventPage = () => {
       formDataToSend.append("event[is_paid]", formData.eventType);
       formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
       formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
+      formDataToSend.append("event[approval_required]", formData.approvalRequired === "yes" ? "1" : "0");
       formDataToSend.append("event[description]", formData.eventDescription);
       formDataToSend.append('event[of_phase]', 'pms');
       formDataToSend.append('event[of_atype]', 'Pms::Site');
@@ -402,7 +411,7 @@ export const EditEventPage = () => {
       [
         'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
         'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
-        'pulseCategory', 'rsvp', 'showOnHomeScreen', 'eventDescription', 'shareWith',
+        'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
         'selectedTechParks', 'selectedCommunityIds'
       ].forEach(key => localStorage.removeItem(key));
 
@@ -637,7 +646,7 @@ export const EditEventPage = () => {
                   }}
                 />
               </div>
-              
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
@@ -662,7 +671,7 @@ export const EditEventPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-3 mb-4">
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Pulse Category:
@@ -695,7 +704,7 @@ export const EditEventPage = () => {
                 </RadioGroup>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-4">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
                   RSVP:
                 </Label>
@@ -728,6 +737,30 @@ export const EditEventPage = () => {
                   name="showOnHomeScreen"
                   value={formData.showOnHomeScreen}
                   onChange={(e) => handleRadioChange("showOnHomeScreen", e.target.value)}
+                  sx={{ gap: 0 }}
+                >
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    label={<span className="text-sm text-gray-600">Yes</span>}
+                  />
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    label={<span className="text-sm text-gray-600">No</span>}
+                  />
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                  Approval Required:
+                </Label>
+                <RadioGroup
+                  row
+                  name="approvalRequired"
+                  value={formData.approvalRequired}
+                  onChange={(e) => handleRadioChange("approvalRequired", e.target.value)}
                   sx={{ gap: 0 }}
                 >
                   <FormControlLabel
@@ -822,13 +855,12 @@ export const EditEventPage = () => {
             </div>
 
             {formData.shareWith === "individual" && selectedTechParks.length > 0 && (
-              <div className="mt-0 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+              <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
                 <span>
                   {techParks
                     .filter(park => selectedTechParks.includes(park.id))
                     .map(park => park.name)
                     .join(", ")}
-                  .
                 </span>
                 <button
                   type="button"
@@ -847,7 +879,6 @@ export const EditEventPage = () => {
                     .filter(community => selectedCommunities.includes(community.id))
                     .map(community => community.name)
                     .join(", ")}
-                  .
                 </span>
                 <button
                   type="button"
@@ -864,8 +895,10 @@ export const EditEventPage = () => {
                     localStorage.setItem('pulseCategory', formData.pulseCategory);
                     localStorage.setItem('rsvp', formData.rsvp);
                     localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+                    localStorage.setItem('approvalRequired', formData.approvalRequired);
                     localStorage.setItem('eventDescription', formData.eventDescription);
                     localStorage.setItem('shareWith', formData.shareWith);
+                    localStorage.setItem('shareWithCommunities', formData.shareWithCommunities);
                     navigate(`/pulse/community?mode=selection&from=edit-event&id=${id}`)
                   }}
                   className="hover:text-red-700 transition-colors"

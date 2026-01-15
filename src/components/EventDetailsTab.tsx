@@ -32,7 +32,7 @@ interface Event {
     event_category?: string;
     interested_count?: number;
     uninterested_count?: number;
-    total_registration?: number;
+    total_registed_count?: number;
     remaining_seats?: number;
     created_at?: string;
     sharedwith?: {
@@ -144,7 +144,7 @@ export const EventDetailsTab = () => {
                             <img
                                 src={(eventData.documents && eventData.documents.length > 0) ? eventData.documents[0].document : "https://images.unsplash.com/photo-1540747913346-19e3adbb17c3?q=80&w=1600&auto=format&fit=crop"}
                                 alt="Event Banner"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                             />
                         </div>
 
@@ -158,7 +158,7 @@ export const EventDetailsTab = () => {
                     </div>
 
                     {/* Attributes Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-y-6">
                         <DetailItem label="Event Name" value={eventData.event_name} />
                         <DetailItem label="Event Category" value={eventData.isPaid ? "Paid" : "Complimentary"} />
                         <DetailItem label="Pulse Category" value={eventData.event_category || "Play"} />
@@ -181,7 +181,7 @@ export const EventDetailsTab = () => {
                         />
 
                         <DetailItem label="Event Location" value={eventData.event_at} />
-                        <DetailItem label="Total Registration" value={eventData.total_registration ?? 0} />
+                        <DetailItem label="Total Registration" value={eventData.total_registed_count ?? 0} />
                         <DetailItem label="Requestable" value={eventData.rsvp_action === "1" ? "Yes" : "No"} />
 
                         <DetailItem label="Amount" value={eventData.amount_per_member ? `₹${eventData.amount_per_member}` : "Free"} />
@@ -236,7 +236,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | number })
             {label}
         </span>
         <span className="text-sm font-medium text-gray-900">
-            {value || "-"}
+            {value ?? "-"}
         </span>
     </div>
 );

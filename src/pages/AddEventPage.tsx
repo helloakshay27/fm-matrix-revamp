@@ -58,6 +58,7 @@ export const AddEventPage = () => {
     rsvp: "yes",
     showOnHomeScreen: "no",
     eventDescription: "",
+    approvalRequired: "no",
     shareWith: "all",
     shareWithCommunities: "no",
     attachment: null as File | null,
@@ -90,6 +91,7 @@ export const AddEventPage = () => {
     const savedPulseCategory = localStorage.getItem('pulseCategory');
     const savedRsvp = localStorage.getItem('rsvp');
     const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
+    const savedApprovalRequired = localStorage.getItem('approvalRequired');
     const savedEventDescription = localStorage.getItem('eventDescription');
     const savedShareWith = localStorage.getItem('shareWith');
     const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
@@ -110,6 +112,7 @@ export const AddEventPage = () => {
         pulseCategory: savedPulseCategory || prev.pulseCategory,
         rsvp: savedRsvp || prev.rsvp,
         showOnHomeScreen: savedShowOnHomeScreen || prev.showOnHomeScreen,
+        approvalRequired: savedApprovalRequired || prev.approvalRequired,
         eventDescription: savedEventDescription || prev.eventDescription,
         shareWith: savedShareWith || prev.shareWith,
       }));
@@ -138,6 +141,7 @@ export const AddEventPage = () => {
     localStorage.removeItem('pulseCategory');
     localStorage.removeItem('rsvp');
     localStorage.removeItem('showOnHomeScreen');
+    localStorage.removeItem('approvalRequired');
     localStorage.removeItem('eventDescription');
     localStorage.removeItem('shareWith');
     localStorage.removeItem('selectedTechParks');
@@ -228,6 +232,7 @@ export const AddEventPage = () => {
       localStorage.setItem('pulseCategory', formData.pulseCategory);
       localStorage.setItem('rsvp', formData.rsvp);
       localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+      localStorage.setItem('approvalRequired', formData.approvalRequired);
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
@@ -323,6 +328,7 @@ export const AddEventPage = () => {
       formDataToSend.append("event[event_category]", formData.pulseCategory);
       formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
       formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
+      formDataToSend.append("event[approval_required]", formData.approvalRequired === "yes" ? "1" : "0");
       formDataToSend.append("event[description]", formData.eventDescription);
       formDataToSend.append('event[of_phase]', 'pms');
       formDataToSend.append('event[of_atype]', 'Pms::Site');
@@ -362,6 +368,7 @@ export const AddEventPage = () => {
       localStorage.removeItem('pulseCategory');
       localStorage.removeItem('rsvp');
       localStorage.removeItem('showOnHomeScreen');
+      localStorage.removeItem('approvalRequired');
       localStorage.removeItem('eventDescription');
       localStorage.removeItem('shareWith');
       localStorage.removeItem('selectedTechParks');
@@ -625,7 +632,7 @@ export const AddEventPage = () => {
             </div>
 
             {/* Radio Groups Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 mb-4">
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
                   Pulse Category:
@@ -658,7 +665,7 @@ export const AddEventPage = () => {
                 </RadioGroup>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-4">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
                   RSVP:
                 </Label>
@@ -691,6 +698,30 @@ export const AddEventPage = () => {
                   name="showOnHomeScreen"
                   value={formData.showOnHomeScreen}
                   onChange={(e) => handleRadioChange("showOnHomeScreen", e.target.value)}
+                  sx={{ gap: 0 }}
+                >
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    label={<span className="text-sm text-gray-600">Yes</span>}
+                  />
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    label={<span className="text-sm text-gray-600">No</span>}
+                  />
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                  Approval Required:
+                </Label>
+                <RadioGroup
+                  row
+                  name="approvalRequired"
+                  value={formData.approvalRequired}
+                  onChange={(e) => handleRadioChange("approvalRequired", e.target.value)}
                   sx={{ gap: 0 }}
                 >
                   <FormControlLabel
@@ -852,6 +883,7 @@ export const AddEventPage = () => {
                     localStorage.setItem('pulseCategory', formData.pulseCategory);
                     localStorage.setItem('rsvp', formData.rsvp);
                     localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+                    localStorage.setItem('approvalRequired', formData.approvalRequired);
                     localStorage.setItem('eventDescription', formData.eventDescription);
                     localStorage.setItem('shareWith', formData.shareWith);
                     navigate('/pulse/community?mode=selection&from=add-event')

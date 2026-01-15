@@ -7,6 +7,8 @@ import { useState } from 'react'
 const EventParticipantsTab = () => {
     const [activeTab, setActiveTab] = useState("waitingList");
 
+
+
     return (
         <div className=" bg-white min-h-screen">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
