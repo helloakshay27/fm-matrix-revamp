@@ -110,7 +110,7 @@ export const BroadcastDetailsPage = () => {
         formData.append('noticeboard[show_on_home_screen]', value.toString());
         setShowOnHomeScreen(value);
       } else if (field === 'visible_after_expire') {
-        formData.append('noticeboard[flag_expire]', value.toString());
+        formData.append('noticeboard[flag_expire]', value ? '1' : '0');
         setVisibleAfterExpire(value);
       }
 
