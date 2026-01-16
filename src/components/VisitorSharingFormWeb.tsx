@@ -15,6 +15,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoChanged, setProfilePhotoChanged] = useState<boolean>(false);
   const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
@@ -135,6 +136,14 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [assetCategoryErrors, setAssetCategoryErrors] = useState<
     Record<number, boolean>
   >({});
+
+  // DEBUG: log assets state when it changes to help diagnose prefill visibility
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug("[state] assetsByVisitor:", assetsByVisitor);
+    // eslint-disable-next-line no-console
+    console.debug("[state] carryingAsset:", carryingAsset, "expandedVisitors:", expandedVisitors);
+  }, [assetsByVisitor, carryingAsset, expandedVisitors]);
 
   // Prefill Step 1 from host API (image upload intentionally excluded)
   useEffect(() => {
@@ -263,6 +272,84 @@ const VisitorSharingFormWeb: React.FC = () => {
           }));
         }
 
+          // Map primary assets (always) from host response so Step 3 shows prefilled assets
+          try {
+            const maybeAssetsPrimary = (data as unknown as { assets?: unknown }).assets;
+            if (Array.isArray(maybeAssetsPrimary) && maybeAssetsPrimary.length) {
+              const canonicalizeCategory = (raw: unknown) => {
+                if (!raw) return "";
+                const s = String(raw).trim();
+                const lower = s.toLowerCase();
+                const known = [
+                  "it",
+                  "mechanical",
+                  "electrical",
+                  "furniture",
+                  "other",
+                  "tool",
+                  "electronics",
+                ];
+                const found = known.find((k) => lower.includes(k));
+                if (found) return found === "it" ? "IT" : found[0].toUpperCase() + found.slice(1);
+                return s;
+              };
+              const primaryArr: Asset[] = [];
+              for (let ai = 0; ai < maybeAssetsPrimary.length; ai++) {
+                const a = maybeAssetsPrimary[ai] as Record<string, unknown> | undefined;
+                if (!a) continue;
+                const docs = Array.isArray(a.documents) ? (a.documents as unknown[]) : [];
+                const attachments = docs.map((d) => {
+                  const dd = d as Record<string, unknown> | undefined;
+                  return {
+                    name: typeof dd?.name === "string" ? dd!.name : undefined,
+                    url:
+                      typeof dd?.document_url === "string"
+                        ? dd!.document_url
+                        : typeof dd?.url === "string"
+                          ? dd!.url
+                          : typeof dd?.file_url === "string"
+                            ? dd!.file_url
+                            : undefined,
+                  };
+                });
+                primaryArr.push({
+                  id: typeof a.id === "number" ? a.id : ai,
+                  category: canonicalizeCategory(a.asset_category_name || a.asset_category || ""),
+                  name: typeof a.asset_name === "string" ? a.asset_name : "",
+                  serial: typeof a.serial_model_number === "string" ? a.serial_model_number : "",
+                  notes: typeof a.notes === "string" ? a.notes : "",
+                  attachments,
+                });
+              }
+              if (primaryArr.length) {
+                // Merge with any existing primary assets so we don't drop File objects
+                setAssetsByVisitor((s) => {
+                  const prev = Array.isArray(s[0]) ? s[0] : [];
+                  const merged = primaryArr.map((a, idx) => {
+                    const prevA = prev[idx];
+                    if (prevA && Array.isArray(prevA.attachments) && Array.isArray(a.attachments)) {
+                      const mergedAttachments = a.attachments!.map((att, ai) => {
+                        const prevAtt = prevA.attachments![ai];
+                        const file = prevAtt && (prevAtt as { file?: File }).file;
+                        return file ? { ...att, file } : att;
+                      });
+                      return { ...a, attachments: mergedAttachments };
+                    }
+                    return a;
+                  });
+                  return { ...s, 0: merged };
+                });
+                setCarryingAsset(true);
+                setExpandedVisitors((s) => ({ ...s, 0: true }));
+                // debug
+                // eslint-disable-next-line no-console
+                console.debug("[prefill-primary] primaryArr:", primaryArr);
+              }
+            }
+          } catch (err) {
+            // best-effort
+          }
+
         if (
           Array.isArray(data.additional_visitors) &&
           data.additional_visitors.length
@@ -383,47 +470,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             const maybeAssets = (data as unknown as { assets?: unknown })
               .assets;
             if (Array.isArray(maybeAssets) && maybeAssets.length) {
-              const primaryArr: Asset[] = [];
-              for (let ai = 0; ai < maybeAssets.length; ai++) {
-                const a = maybeAssets[ai] as
-                  | Record<string, unknown>
-                  | undefined;
-                if (!a) continue;
-                const docs = Array.isArray(a.documents)
-                  ? (a.documents as unknown[])
-                  : [];
-                const attachments = docs.map((d) => {
-                  const dd = d as Record<string, unknown> | undefined;
-                  return {
-                    name: typeof dd?.name === "string" ? dd!.name : undefined,
-                    url:
-                      typeof dd?.document_url === "string"
-                        ? dd!.document_url
-                        : typeof dd?.url === "string"
-                          ? dd!.url
-                          : typeof dd?.file_url === "string"
-                            ? dd!.file_url
-                            : undefined,
-                  };
-                });
-                primaryArr.push({
-                  id: typeof a.id === "number" ? a.id : ai,
-                  category:
-                    typeof a.asset_category_name === "string"
-                      ? a.asset_category_name
-                      : typeof a.asset_category === "string"
-                        ? a.asset_category
-                        : "",
-                  name: typeof a.asset_name === "string" ? a.asset_name : "",
-                  serial:
-                    typeof a.serial_model_number === "string"
-                      ? a.serial_model_number
-                      : "",
-                  notes: typeof a.notes === "string" ? a.notes : "",
-                  attachments,
-                });
-              }
-              if (primaryArr.length) assetsMap[0] = primaryArr;
+              // additional visitor assets handled below
             }
 
             const maybeAdditional = (
@@ -485,9 +532,50 @@ const VisitorSharingFormWeb: React.FC = () => {
             }
 
             if (Object.keys(assetsMap).length) {
-              setAssetsByVisitor((s) => ({ ...s, ...assetsMap }));
+              // merge incoming assets with existing state to preserve File objects
+              setAssetsByVisitor((s) => {
+                const next = { ...s };
+                Object.keys(assetsMap).forEach((k) => {
+                  const id = Number(k);
+                  if (Number.isNaN(id)) return;
+                  const incoming = assetsMap[id] || [];
+                  const prev = Array.isArray(s[id]) ? s[id] : [];
+                  const merged = incoming.map((a, idx) => {
+                    const prevA = prev[idx];
+                    if (
+                      prevA &&
+                      Array.isArray(prevA.attachments) &&
+                      Array.isArray(a.attachments)
+                    ) {
+                      const mergedAttachments = a.attachments!.map((att, ai) => {
+                        const prevAtt = prevA.attachments![ai];
+                        const file = prevAtt && (prevAtt as { file?: File }).file;
+                        return file ? { ...att, file } : att;
+                      });
+                      return { ...a, attachments: mergedAttachments };
+                    }
+                    return a;
+                  });
+                  next[id] = merged;
+                });
+                return next;
+              });
               // mark carryingAsset true when any assets were prefilled
               setCarryingAsset(true);
+              // expand visitor sections that have prefilled assets so users see them
+              setExpandedVisitors((s) => {
+                const next = { ...s };
+                Object.keys(assetsMap).forEach((k) => {
+                  const id = Number(k);
+                  if (!Number.isNaN(id)) next[id] = true;
+                });
+                return next;
+              });
+              // DEBUG: output prefilled assets and expansion state
+              // eslint-disable-next-line no-console
+              console.debug("[prefill] assetsMap:", assetsMap);
+              // eslint-disable-next-line no-console
+              console.debug("[prefill] carryingAsset=true, expandedVisitors (will update):", Object.keys(assetsMap).map(k => Number(k)));
             }
           } catch (err) {
             // swallow mapping errors; prefill is best-effort
@@ -661,11 +749,13 @@ const VisitorSharingFormWeb: React.FC = () => {
     additionalVisitors = [],
     carryingAssetFlag = false,
   imageBase64 = null,
+  includeImage = false,
   }: {
     primaryVisitor: VisitorPayload;
     additionalVisitors?: VisitorPayload[];
     carryingAssetFlag?: boolean;
   imageBase64?: string | null;
+  includeImage?: boolean;
   }) => {
     const formData = new FormData();
 
@@ -680,12 +770,14 @@ const VisitorSharingFormWeb: React.FC = () => {
 
     // include profile photo when provided on Step 1
     // priority: base64 string (from uploaded File or prefetched URL) -> fallback URL
-    if (imageBase64) {
-      // server expects raw base64 (without data: prefix)
-      formData.append("gatekeeper[image_base64]", imageBase64);
-    } else if (profilePhoto && typeof profilePhoto === "string") {
-      // final fallback: if the prefilled photo is a URL, send it as image_url
-      formData.append("gatekeeper[image]", profilePhoto);
+    if (includeImage) {
+      if (imageBase64) {
+        // server expects raw base64 (without data: prefix)
+        formData.append("gatekeeper[image]", imageBase64);
+      } else if (profilePhoto && typeof profilePhoto === "string") {
+        // final fallback: if the prefilled photo is a URL, send it as image
+        formData.append("gatekeeper[image]", profilePhoto);
+      }
     }
 
     if (primaryVisitor.guest_type)
@@ -763,40 +855,27 @@ const VisitorSharingFormWeb: React.FC = () => {
         );
       if (a.notes)
         formData.append(`gatekeeper[assets][${idx}][notes]`, a.notes);
-      // Collect files from `documents` (File) and `attachments` (may contain .file)
-      const docFiles: File[] = [];
-      (a.documents || []).forEach((d) => {
-        if (d instanceof File) docFiles.push(d);
-      });
+      // Append attachments and documents explicitly per-item so we don't lose
+      // attachments when some items have File objects and others only URLs.
+      // For each attachment: if file exists append as File, otherwise append url as documents_urls[].
       (a.attachments || []).forEach((att) => {
-        if (att && att.file) docFiles.push(att.file);
+        if (att && (att as { file?: File }).file) {
+          formData.append(`gatekeeper[assets][${idx}][documents][]`, (att as { file?: File }).file as File);
+        } else if (att && typeof att.url === "string") {
+          formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, att.url);
+        }
       });
-
-      // Append file objects first (expected by server)
-      docFiles.forEach((f) =>
-        formData.append(`gatekeeper[assets][${idx}][documents][]`, f)
-      );
-
-      // If no file objects but prefilling provided URLs, send them as fallback keys
-      if (docFiles.length === 0) {
-        (a.documents || []).forEach((d) => {
+      // Also include any File objects present in a.documents (legacy shape)
+      (a.documents || []).forEach((d) => {
+        if (d instanceof File) {
+          formData.append(`gatekeeper[assets][${idx}][documents][]`, d);
+        } else {
           const maybe = d as unknown as { url?: string };
           if (maybe && typeof maybe.url === "string") {
-            formData.append(
-              `gatekeeper[assets][${idx}][documents_urls][]`,
-              maybe.url
-            );
+            formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, maybe.url);
           }
-        });
-        (a.attachments || []).forEach((att) => {
-          if (att && typeof att.url === "string") {
-            formData.append(
-              `gatekeeper[assets][${idx}][documents_urls][]`,
-              att.url
-            );
-          }
-        });
-      }
+        }
+      });
     });
 
     if (primaryVisitor.identity) {
@@ -928,22 +1007,27 @@ const VisitorSharingFormWeb: React.FC = () => {
             `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][notes]`,
             a.notes
           );
-        // handle documents and attachments for additional visitor asset
-        const docFilesAdd: File[] = [];
-        (a.documents || []).forEach((d) => {
-          if (d instanceof File) docFilesAdd.push(d);
-        });
+        // Append per-attachment/file for additional visitor asset
         (a.attachments || []).forEach((att) => {
-          if (att && att.file) docFilesAdd.push(att.file);
+          if (att && (att as { file?: File }).file) {
+            formData.append(
+              `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
+              (att as { file?: File }).file as File
+            );
+          } else if (att && typeof att.url === "string") {
+            formData.append(
+              `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents_urls][]`,
+              att.url
+            );
+          }
         });
-        docFilesAdd.forEach((f) =>
-          formData.append(
-            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
-            f
-          )
-        );
-        if (docFilesAdd.length === 0) {
-          (a.documents || []).forEach((d) => {
+        (a.documents || []).forEach((d) => {
+          if (d instanceof File) {
+            formData.append(
+              `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
+              d
+            );
+          } else {
             const maybe = d as unknown as { url?: string };
             if (maybe && typeof maybe.url === "string") {
               formData.append(
@@ -951,16 +1035,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                 maybe.url
               );
             }
-          });
-          (a.attachments || []).forEach((att) => {
-            if (att && typeof att.url === "string") {
-              formData.append(
-                `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents_urls][]`,
-                att.url
-              );
-            }
-          });
-        }
+          }
+        });
       });
 
       if (v.identity) {
@@ -1023,11 +1099,21 @@ const VisitorSharingFormWeb: React.FC = () => {
         pass_start_date: passStartDate || undefined,
         pass_end_date: passEndDate || undefined,
         pass_days: passDays || [],
+        // Preserve attachments objects (name/url/file) so the FormData builder
+        // can either append File objects or send documents_urls fallback when
+        // the File is no longer available (e.g. after a previous submit).
         assets: (assetsByVisitor[0] || []).map((a) => ({
           asset_category_name: a.category,
           asset_name: a.name,
           serial_model_number: a.serial,
           notes: a.notes,
+          // keep original attachments array (may contain { name, url, file })
+          attachments: (a.attachments || []).map((att) => ({
+            name: att.name,
+            url: att.url,
+            file: (att as { file?: File })?.file,
+          })),
+          // convenience documents array with File objects (if present)
           documents: (a.attachments || [])
             .map((att) => att.file)
             .filter(Boolean),
@@ -1066,6 +1152,11 @@ const VisitorSharingFormWeb: React.FC = () => {
           asset_name: a.name,
           serial_model_number: a.serial,
           notes: a.notes,
+          attachments: (a.attachments || []).map((att) => ({
+            name: att.name,
+            url: att.url,
+            file: (att as { file?: File })?.file,
+          })),
           documents: (a.attachments || [])
             .map((att) => att.file)
             .filter(Boolean),
@@ -1120,11 +1211,31 @@ const VisitorSharingFormWeb: React.FC = () => {
         imageBase64 = null;
       }
 
+      // Summarize attachments (hasFile, url) to help debug missing/empty attachments
+      const summarize = (map: Record<number, Asset[]>) => {
+        const out: Record<string, unknown> = {};
+        Object.keys(map).forEach((k) => {
+          out[k] = (map[Number(k)] || []).map((a) => ({
+            id: a.id,
+            name: a.name,
+            attachments: (a.attachments || []).map((att) => ({
+              name: att && typeof att.name === 'string' ? att.name : null,
+              hasFile: !!(att && (att as { file?: File }).file),
+              url: att && typeof att.url === 'string' ? att.url : null,
+            })),
+          }));
+        });
+        return out;
+      };
+      // eslint-disable-next-line no-console
+      console.debug('[submitToApi] attachments summary:', summarize(assetsByVisitor));
+
       const fd = buildVisitorFormData({
         primaryVisitor,
         additionalVisitors,
         carryingAssetFlag: carryingAsset,
         imageBase64,
+        includeImage: profilePhotoChanged,
       });
 
       // Debug: inspect FormData entries to verify files and keys before sending
@@ -1285,6 +1396,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                             const reader = new FileReader();
                             reader.onload = () => {
                               setProfilePhoto(String(reader.result));
+                              setProfilePhotoFile(file);
+                              setProfilePhotoChanged(true);
                               setProfilePhotoError(false);
                             };
                             reader.readAsDataURL(file);
@@ -1308,7 +1421,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm px-2 bg-[#D9D9D940] p-2">
+            <div className="mt-4 space-y-2 text-sm  bg-[#D9D9D940] p-2">
               {/* Pre-filled banner */}
               <div className="mb-3 px-1">
                 <div className="flex items-center gap-2 rounded border border-gray-200 bg-[#C4AE9D59] px-3 py-2">
