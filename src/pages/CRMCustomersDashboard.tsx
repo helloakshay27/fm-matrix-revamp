@@ -53,6 +53,13 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
+  {
+    key: "domains",
+    label: "Domains",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
   // {
   //   key: "plant_code",
   //   label: "Plant Code",
@@ -142,17 +149,20 @@ const CRMCustomersDashboard = () => {
             customer_type: item.customer_type,
             email: item.email,
             mobile: item.mobile,
+            domains: item.domains || [],
             // plant_code: item.plant_code,
             company_code: item.company_code,
             lease_start_date: lease?.lease_start_date,
             lease_end_date: lease?.lease_end_date,
             free_parking: lease?.free_parking,
             paid_parking: lease?.paid_parking,
-            created_at: item?.created_at && format(item.created_at, 'dd-MM-yyyy'),
-            updated_at: item?.updated_at && format(item.updated_at, 'dd-MM-yyyy'),
+            created_at:
+              item?.created_at && format(item.created_at, "dd-MM-yyyy"),
+            updated_at:
+              item?.updated_at && format(item.updated_at, "dd-MM-yyyy"),
             color_code: item.color_code,
-          }
-        })
+          };
+        });
         setCustomers(transformedData.reverse());
       } catch (error) {
         console.log(error);
@@ -163,17 +173,22 @@ const CRMCustomersDashboard = () => {
     fetchCustomers();
   }, []);
 
-  console.log(customers)
+  console.log(customers);
 
   const handleExport = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/entities/export.xlsx`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        responseType: "blob",
+      const response = await axios.get(
+        `https://${baseUrl}/entities/export.xlsx`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+      const blob = new Blob([response.data], {
+        type: "application/vnd.ms-excel",
       });
-      const blob = new Blob([response.data], { type: "application/vnd.ms-excel" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -202,13 +217,34 @@ const CRMCustomersDashboard = () => {
           </div>
         );
 
+      case "domains":
+        if (!item.domains || item.domains.length === 0) {
+          return "-";
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.domains.map((domain: any, index: number) => (
+              <span
+                key={domain.id || index}
+                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+              >
+                {domain.domain}
+              </span>
+            ))}
+          </div>
+        );
+
       default:
         return item[columnKey] || "-";
     }
   };
 
   const renderActions = (item: any) => (
-    <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/customers/${item.id}`)}>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => navigate(`/crm/customers/${item.id}`)}
+    >
       <Eye className="w-4 h-4" />
     </Button>
   );
