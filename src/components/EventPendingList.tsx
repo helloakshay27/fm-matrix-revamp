@@ -205,7 +205,7 @@ const EventPendingList = () => {
                                 variant="outline"
                                 className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count < eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Deny
@@ -213,7 +213,7 @@ const EventPendingList = () => {
                             <Button
                                 className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count < eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Approve
