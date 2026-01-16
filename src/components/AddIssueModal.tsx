@@ -27,6 +27,8 @@ import { TaskDatePicker } from "@/components/TaskDatePicker";
 import TasksOfDate from "@/components/TasksOfDate";
 import { CustomCalender } from "@/components/CustomCalender";
 import { DurationPicker } from "@/components/DurationPicker";
+import MuiMultiSelect from "./MuiMultiSelect";
+import { AddTagModal } from "./AddTagModal";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
@@ -199,6 +201,11 @@ const AddIssueModal = ({
   const [attachments, setAttachments] = useState([]);
   const [users, setUsers] = useState<{ id: string; full_name: string }[]>([]);
 
+  // Tag state
+  const [tags, setTags] = useState([]);
+  const [mentionTags, setMentionTags] = useState<any[]>([]);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+
   // Date picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -310,6 +317,30 @@ const AddIssueModal = ({
     },
     [baseUrl, token]
   );
+
+  // Fetch mention tags
+  const fetchMentionTags = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMentionTags(response.data || []);
+    } catch (error) {
+      console.log("Error fetching mention tags:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMentionTags();
+  }, [baseUrl, token]);
+
+  const handleMultiSelectChange = (field: string, values: any) => {
+    if (field === "tags") {
+      setTags(values);
+    }
+  };
 
   // Expand/collapse calendar when showDatePicker changes
   useEffect(() => {
@@ -678,6 +709,11 @@ const AddIssueModal = ({
       });
       attachments.forEach((file: any) => {
         formData.append("issue[attachments][]", file);
+      });
+
+      // Append tags
+      tags.forEach((tagId: any) => {
+        formData.append("issue[task_tag_ids][]", tagId.value);
       });
 
       try {
@@ -1193,6 +1229,26 @@ const AddIssueModal = ({
               </FormControl>
             </Box>
 
+            <Box className="mb-4">
+              <Box
+                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                onClick={() => setIsTagModalOpen(true)}
+              >
+                <i>Create new tag</i>
+              </Box>
+              <MuiMultiSelect
+                label="Tags"
+                options={mentionTags.map((tag) => ({
+                  value: tag.id,
+                  label: tag.name,
+                  id: tag.id,
+                }))}
+                value={tags}
+                onChange={(values) => handleMultiSelectChange("tags", values)}
+                placeholder="Select Tags"
+              />
+            </Box>
+
             {/* Comment */}
             {/* <Box sx={{ mb: 2 }}>
               <TextField
@@ -1247,6 +1303,11 @@ const AddIssueModal = ({
           </Box>
         </form>
       </DialogContent>
+      <AddTagModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        onTagCreated={() => fetchMentionTags()}
+      />
     </Dialog>
   );
 };
