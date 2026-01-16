@@ -107,7 +107,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     visitor_enabled: false,
     govt_id_enabled: false,
     visitor_host_mandatory: false,
-  attachfile: null,
+    attachfile: null,
   });
 
   // Filtered dropdown options based on selections
@@ -119,7 +119,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   >([]);
 
   // Local preview for site image (single)
-  const [siteImagePreviewUrl, setSiteImagePreviewUrl] = useState<string | null>(null);
+  const [siteImagePreviewUrl, setSiteImagePreviewUrl] = useState<string | null>(
+    null
+  );
 
   // Fetch dropdown data on component mount (moved below after declaration)
 
@@ -253,7 +255,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const fetchDropdownData = React.useCallback(async () => {
     setIsLoadingDropdowns(true);
     try {
-  console.warn("Starting to fetch dropdown data...");
+      console.warn("Starting to fetch dropdown data...");
 
       // Fetch companies
       const companiesResponse = await fetch(
@@ -269,7 +271,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let companiesData: CompanyOption[] = [];
       if (companiesResponse.ok) {
         const companiesResult = await companiesResponse.json();
-  console.warn("Companies API response:", companiesResult);
+        console.warn("Companies API response:", companiesResult);
 
         if (
           companiesResult &&
@@ -307,7 +309,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let headquartersData: HeadquarterOption[] = [];
       if (headquartersResponse.ok) {
         const headquartersResult = await headquartersResponse.json();
-  console.warn("headquarters API response:", headquartersResult);
+        console.warn("headquarters API response:", headquartersResult);
 
         if (Array.isArray(headquartersResult)) {
           headquartersData = headquartersResult;
@@ -343,7 +345,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let regionsData: RegionOption[] = [];
       if (regionsResponse.ok) {
         const regionsResult = await regionsResponse.json();
-  console.warn("Regions API response:", regionsResult);
+        console.warn("Regions API response:", regionsResult);
 
         if (Array.isArray(regionsResult)) {
           regionsData = regionsResult;
@@ -365,7 +367,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         toast.error("Failed to fetch regions");
       }
 
-  console.warn("Fetched dropdown data counts:", {
+      console.warn("Fetched dropdown data counts:", {
         companies: companiesData?.length || 0,
         headquarters: headquartersData?.length || 0,
         regions: regionsData?.length || 0,
@@ -373,7 +375,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       });
 
       // Log sample data to check structure
-  console.warn("Sample data:", {
+      console.warn("Sample data:", {
         firstCompany: companiesData?.[0],
         firstHeadquarter: headquartersData?.[0],
         firstRegion: regionsData?.[0],
@@ -417,12 +419,14 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     if (field === "company_id") {
       if (value && Number(value) > 0) {
         try {
-          const apiUrl = getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+          const apiUrl = getFullUrl(
+            `/headquarters.json?q[company_setup_id_eq]=${value}`
+          );
           const response = await fetch(apiUrl, {
             headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': getAuthHeader(),
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: getAuthHeader(),
             },
           });
           if (response.ok) {
@@ -600,7 +604,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={isLoading || isLoadingDropdowns || !formData.company_id}
+                    disabled={
+                      isLoading || isLoadingDropdowns || !formData.company_id
+                    }
                   >
                     <MenuItem value="">
                       <em>
@@ -756,16 +762,23 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
 
                 {/* Single image upload */}
                 <div className="space-y-2 mb-2">
-                  <span className="text-sm font-medium text-[#C72030] ">Site Image</span>
+                  <span className="text-sm font-medium text-[#C72030] ">
+                    Site Image
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
-                      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                      const file =
+                        e.target.files && e.target.files[0]
+                          ? e.target.files[0]
+                          : null;
                       // enforce single image and 5MB max similar to AddCompanyModal
                       if (file) {
                         if (file.size > 10 * 1024 * 1024) {
-                          toast.error("Image file size should be less than 10MB");
+                          toast.error(
+                            "Image file size should be less than 10MB"
+                          );
                           return;
                         }
                         // cleanup previous preview
@@ -778,7 +791,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                         // clear input so same file can be selected again
                         e.currentTarget.value = "";
                       } else {
-                        if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                        if (siteImagePreviewUrl)
+                          URL.revokeObjectURL(siteImagePreviewUrl);
                         setSiteImagePreviewUrl(null);
                         setFormData((prev) => ({ ...prev, attachfile: null }));
                       }
@@ -805,9 +819,13 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                              if (siteImagePreviewUrl)
+                                URL.revokeObjectURL(siteImagePreviewUrl);
                               setSiteImagePreviewUrl(null);
-                              setFormData((prev) => ({ ...prev, attachfile: null }));
+                              setFormData((prev) => ({
+                                ...prev,
+                                attachfile: null,
+                              }));
                             }}
                             className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
                             aria-label="Remove image"

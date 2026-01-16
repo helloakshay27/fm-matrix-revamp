@@ -150,7 +150,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-
+console.log("auth :",getFullUrl, getAuthHeader());
   // State management
   const [organizations, setOrganizations] = useState<OrganizationItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -401,7 +401,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
           response.status,
           await response.text()
         );
-        toast.error("Failed to fetch countries");
+        // toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
     } catch (error) {

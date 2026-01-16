@@ -187,12 +187,7 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
         <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-6">
             <FormControl fullWidth variant="outlined">
-              <InputLabel
-                shrink
-                sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
-              >
-                Company *
-              </InputLabel>
+              <InputLabel shrink>Company *</InputLabel>
               <MuiSelect
                 value={formData.company_setup_id}
                 onChange={(e) => handleInputChange('company_setup_id', e.target.value)}
@@ -233,12 +228,7 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
             </FormControl>
 
             <FormControl fullWidth variant="outlined">
-              <InputLabel
-                shrink
-                sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
-              >
-                Country *
-              </InputLabel>
+              <InputLabel shrink>Country *</InputLabel>
               <MuiSelect
                 value={formData.country_id}
                 onChange={(e) => handleInputChange('country_id', e.target.value)}
@@ -286,7 +276,7 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
               onChange={handleLogoChange}
               accept="image/*"
               disabled={isSubmitting}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {formData.logo && (
               <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1 mt-2">
@@ -294,16 +284,15 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
                 {formData.logo.name}
               </div>
             )}
-           
           </div>
         </div>
         
         {/* Action Buttons */}
-    <div className="flex justify-center space-x-3 pt-6 border-t">
+        <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={handleClose}
-      className="px-6 py-2 text-[#BD2828] border-[#BD2828] hover:text-[#a52121] hover:border-[#a52121]"
+            className="px-6 py-2"
             disabled={isSubmitting}
           >
             Cancel
@@ -311,7 +300,7 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !canEdit}
-      className="bg-[#ede9e4] text-[#BD2828] hover:bg-[#e6e1db] px-6 py-2 shadow-none"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
           >
             {isSubmitting ? 'Updating...' : 'Update Country'}
           </Button>

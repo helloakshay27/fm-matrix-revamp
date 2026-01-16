@@ -132,7 +132,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     // }
 
     setErrors(newErrors);
-    console.log("Validation errors:", newErrors,Object.keys(newErrors),errors)
+    console.log("Validation errors:", newErrors, Object.keys(newErrors), errors)
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted errors");
       return;
@@ -283,12 +283,11 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       logo: null,
       powered_by_logo: null,
     });
-  setErrors({});
-  // Revoke and clear previews
-  logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
-  poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
-  setLogoPreviewUrls([]);
-  setPoweredByPreviewUrls([]);
+    // Revoke and clear previews
+    logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setLogoPreviewUrls([]);
+    setPoweredByPreviewUrls([]);
   };
 
   const handleClose = () => {
@@ -324,10 +323,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 label="Organization Name"
                 placeholder="Enter organization name"
                 value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
-                }}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{
@@ -337,8 +335,6 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 InputProps={{ sx: fieldStyles }}
                 required
                 disabled={isSubmitting}
-                error={!!errors.name}
-                helperText={errors.name}
               />
 
               <FormControl fullWidth variant="outlined">

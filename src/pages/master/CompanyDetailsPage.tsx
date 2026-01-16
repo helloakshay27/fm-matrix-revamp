@@ -284,7 +284,7 @@ export const CompanyDetailsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Building className="w-5 h-5 text-[#C72030]" />
-                Basic Information  
+                Basic Information
               </h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -566,20 +566,20 @@ export const CompanyDetailsPage: React.FC = () => {
                       )} */}
                     </div>
                   )}
-              
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bill To Email
-                      </label>
-                      
-                      {company.bill_to_address.email && (
-                        <p className="text-sm  flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {company.bill_to_address.email}
-                        </p>
-                      )}
-                    </div>
-                 
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bill To Email
+                    </label>
+
+                    {company.bill_to_address.email && (
+                      <p className="text-sm  flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {company.bill_to_address.email}
+                      </p>
+                    )}
+                  </div>
+
                   {company.postal_address && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -597,18 +597,18 @@ export const CompanyDetailsPage: React.FC = () => {
                     </div>
                   )}
 
-                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                         Postal Email
-                      </label>
-                      
-                      {company.postal_address.email && (
-                        <p className="text-sm  flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {company.postal_address.email}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Postal Email
+                    </label>
+
+                    {company.postal_address.email && (
+                      <p className="text-sm  flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {company.postal_address.email}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -722,8 +722,6 @@ export const CompanyDetailsPage: React.FC = () => {
             )}
           </div>
 
-         
-
           {/* Right Column - Meta Information */}
           <div className="space-y-6">
             {/* Solution Information */}
@@ -763,35 +761,37 @@ export const CompanyDetailsPage: React.FC = () => {
                 <ImageIcon className="w-5 h-5 text-[#C72030]" />
                 Company Logo & Company Banner
               </h2>
- {/* Company Logo and Banner */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-sm font-medium  mb-2">Company Logo</h3>
-              {company && company.company_logo && company.company_logo.document_url ? (
-                <img
-                  src={company.company_logo.document_url}
-                  alt="Company Logo"
-                  className="w-40 h-40 object-contain border rounded shadow bg-white"
-                />
-              ) : (
-                <div className="text-gray-400">No logo available</div>
-              )}
-            </div>
-            <div>
-              <h3 className="text-sm font-medium  mb-2">Company Banner</h3>
-              {company && company.company_banner && company.company_banner.document_url ? (
-                <img
-                  src={company.company_banner.document_url}
-                  alt="Company Banner"
-                  className="w-full max-w-lg h-40 object-contain border rounded shadow bg-white"
-                />
-              ) : (
-                <div className="text-gray-400">No banner available</div>
-              )}
-            </div>
-          </div>
-
-
+              {/* Company Logo and Banner */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-sm font-medium  mb-2">Company Logo</h3>
+                  {company &&
+                  company.company_logo &&
+                  company.company_logo.document_url ? (
+                    <img
+                      src={company.company_logo.document_url}
+                      alt="Company Logo"
+                      className="w-40 h-40 object-contain border rounded shadow bg-white"
+                    />
+                  ) : (
+                    <div className="text-gray-400">No logo available</div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium  mb-2">Company Banner</h3>
+                  {company &&
+                  company.company_banner &&
+                  company.company_banner.document_url ? (
+                    <img
+                      src={company.company_banner.document_url}
+                      alt="Company Banner"
+                      className="w-full max-w-lg h-40 object-contain border rounded shadow bg-white"
+                    />
+                  ) : (
+                    <div className="text-gray-400">No banner available</div>
+                  )}
+                </div>
+              </div>
 
               {/* <div className="space-y-2">
                 {[
