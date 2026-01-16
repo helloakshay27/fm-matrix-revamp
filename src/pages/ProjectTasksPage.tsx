@@ -1361,6 +1361,11 @@ const ProjectTasksPage = () => {
             return;
         }
 
+        if (percentage < 100) {
+            toast.error("Completion percentage must be less than 100");
+            return;
+        }
+
         // Find the task to check if it's overdue
         const task = tasks.find(t => t.id === id);
         if (!task) {
@@ -1685,12 +1690,20 @@ const ProjectTasksPage = () => {
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                     const value = (e.target as HTMLInputElement).value;
+                                    if (value < item.completion_percent) {
+                                        toast.error("Completion percentage must be greater than or equal to the current completion percentage");
+                                        return;
+                                    }
                                     handleCompletionPercentageChange(item.id, value);
                                 }
                             }}
                             onBlur={(e) => {
                                 const value = e.target.value;
                                 if (value !== String(item.completion_percent)) {
+                                    if (value < item.completion_percent) {
+                                        toast.error("Completion percentage must be greater than or equal to the current completion percentage");
+                                        return;
+                                    }
                                     handleCompletionPercentageChange(item.id, value);
                                 }
                             }}

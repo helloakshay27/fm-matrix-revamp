@@ -820,6 +820,7 @@ import { EditDocumentPage } from "./pages/EditDocumentPage";
 import { FolderDetailsPage } from "./pages/FolderDetailsPage";
 import { DocumentDetailPage } from "./pages/DocumentDetailPage";
 import { CreateFolderPage } from "./pages/CreateFolderPage";
+import { EditFolderPage } from "./pages/EditFolderPage";
 import { OnlyOfficeEditorPage } from "./pages/OnlyOfficeEditorPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
@@ -2525,6 +2526,10 @@ function App() {
                       element={<CreateFolderPage />}
                     />
                     <Route
+                      path="/maintenance/documents/folder/edit/:id"
+                      element={<EditFolderPage />}
+                    />
+                    <Route
                       path="/maintenance/documents/folder/:id"
                       element={<FolderDetailsPage />}
                     />
@@ -3565,6 +3570,11 @@ function App() {
                       element={<BookingSetupDetailPage />}
                     />
 
+                    <Route
+                      path="/payment-redirect"
+                      element={<PaymentRedirectPage />}
+                    />
+
                     {/* Master Location Routes */}
                     <Route
                       path="/master/location/building"
@@ -3927,6 +3937,10 @@ function App() {
                     <Route
                       path="/pulse/documents/create-folder"
                       element={<CreateFolderPage />}
+                    />
+                    <Route
+                      path="/pulse/documents/folder/edit/:id"
+                      element={<EditFolderPage />}
                     />
                     <Route
                       path="/pulse/documents/folder/:id"

@@ -23,6 +23,8 @@ import {
   getFolderDetails,
   FolderDetailsResponse,
   bulkMoveCopyDocuments,
+  deleteDocument,
+  deleteFolder,
 } from "@/services/documentService";
 import { FileIcon } from "@/components/document/FileIcon";
 import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
@@ -325,24 +327,117 @@ export const FolderDetailsPage = () => {
   const handleUpdate = (itemId?: string) => {
     if (itemId) {
       // Update single item
-      // TODO: Implement update functionality
+      const item = folderItems.find((i) => i.id.toString() === itemId);
+      if (item?.type === "folder") {
+        navigate(`/maintenance/documents/folder/edit/${itemId}`);
+      } else {
+        navigate(`/maintenance/documents/edit/${itemId}`);
+      }
     } else {
       // Update multiple selected items
-      // TODO: Implement bulk update functionality
+      if (selectedItems.length === 0) {
+        toast.error("Please select at least one item to update");
+        return;
+      }
+      if (selectedItems.length === 1) {
+        const item = folderItems.find(
+          (i) => i.id.toString() === selectedItems[0]
+        );
+        if (item?.type === "folder") {
+          navigate(`/maintenance/documents/folder/edit/${selectedItems[0]}`);
+        } else {
+          navigate(`/maintenance/documents/edit/${selectedItems[0]}`);
+        }
+      } else {
+        toast.info("Please select only one item to update");
+      }
     }
   };
 
-  const handleDelete = (itemId?: string) => {
+  const handleDelete = async (itemId?: string) => {
     const itemsToDelete = itemId ? [itemId] : selectedItems;
+
+    if (itemsToDelete.length === 0) {
+      toast.error("Please select at least one item to delete");
+      return;
+    }
+
     if (
-      window.confirm(
-        `Are you sure you want to delete ${itemsToDelete.length} item(s)?`
+      !window.confirm(
+        `Are you sure you want to delete ${itemsToDelete.length} item(s)? This action cannot be undone.`
       )
     ) {
-      // TODO: Implement delete functionality
+      return;
+    }
+
+    try {
+      // Delete each item
+      const deletePromises = itemsToDelete.map(async (id) => {
+        const item = folderItems.find((i) => i.id.toString() === id);
+        if (item?.type === "folder") {
+          await deleteFolder(parseInt(id));
+        } else {
+          await deleteDocument(parseInt(id));
+        }
+      });
+
+      await Promise.all(deletePromises);
+
+      toast.success(`Successfully deleted ${itemsToDelete.length} item(s)`);
+
+      // Clear selection
       if (!itemId) {
         setSelectedItems([]);
       }
+
+      // Refresh folder contents
+      if (id) {
+        const response = await getFolderDetails(parseInt(id));
+        setFolderData(response);
+
+        const items: FolderItem[] = [
+          ...(response.childs || []).map((child) => ({
+            id: child.id,
+            folder_title: child.name,
+            type: "folder" as const,
+            category: response.name || "Uncategorized",
+            size: "0 B",
+            document_count: 0,
+            status: "Active" as const,
+            created_by: "Unknown",
+            created_date: new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+          })),
+          ...(response.documents || []).map((doc) => ({
+            id: doc.id,
+            folder_title: doc.title,
+            type: "file" as const,
+            category:
+              doc.document_category_name || response.name || "Uncategorized",
+            format: doc.attachment?.file_type?.toUpperCase() || "PDF",
+            size: formatFileSize(doc.attachment?.file_size || 0),
+            document_count: 1,
+            status: doc.active ? ("Active" as const) : ("Inactive" as const),
+            created_by: doc.created_by_full_name || "Unknown",
+            created_date: formatDate(doc.created_at),
+            modified_date: doc.updated_at
+              ? formatDate(doc.updated_at)
+              : undefined,
+            preview_url: doc.attachment?.preview_url,
+          })),
+        ];
+
+        const filteredItems = isFileListView
+          ? items.filter((item) => item.type === "file")
+          : items;
+        setFolderItems(filteredItems);
+      }
+    } catch (error) {
+      console.error("Error deleting items:", error);
+      toast.error("Failed to delete items. Please try again.");
     }
   };
 

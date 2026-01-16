@@ -7,10 +7,7 @@ import { toast } from 'sonner';
 import ConvertModal from '@/components/ConvertModal';
 import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
-// TODO: Implement comments and user mentions when dependencies are available
-// import { Mention, MentionsInput } from 'react-mentions';
-// import { fetchUsers } from '@/redux/slices/userSlice';
-// import { fetchActiveTags } from '@/redux/slices/tagsSlice';
+import ReactMarkdown from 'react-markdown';
 
 // Types
 interface OpportunityDetailsData {
@@ -595,313 +592,416 @@ const OpportunityDetailsPage = () => {
     }
 
     return (
-        <div className="m-4">
-            <Button
-                variant="ghost"
-                onClick={() => navigate(-1)}
-                className="p-4"
-            >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-            </Button>
-            <div className="px-4 pt-1">
-                <h2 className="text-[15px] p-3 px-0">
-                    <span className="mr-3 text-[#c72030]">OP-{opportunityDetails?.id}</span>
-                    <span>
-                        {opportunityDetails?.title
-                            .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
-                            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}
-                    </span>
-                </h2>
-
-                <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-                <div className="flex items-center justify-between my-3 text-[12px]">
-                    <div className="flex items-center gap-3 text-[#323232]">
-                        <span>Created By : {opportunityDetails?.created_by?.name || 'N/A'}</span>
-
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-
-                        <span className="flex items-center gap-3">
-                            Created On : {formatToDDMMYYYY_AMPM(opportunityDetails?.created_at)}
-                        </span>
-
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-
-                        <span
-                            className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
-                                'bg-gray-400 text-white'
-                                }`}
-                        >
-                            <div className="relative" ref={dropdownRef}>
-                                <div
-                                    className="flex items-center gap-1 cursor-pointer px-2 py-1"
-                                    onClick={() => setOpenDropdown(!openDropdown)}
-                                    role="button"
-                                    aria-haspopup="true"
-                                    aria-expanded={openDropdown}
-                                    tabIndex={0}
-                                    onKeyDown={(e) => e.key === 'Enter' && setOpenDropdown(!openDropdown)}
-                                >
-                                    <span className="text-[13px]">{selectedOption}</span>
-                                    <ChevronDown
-                                        size={15}
-                                        className={`${openDropdown ? 'rotate-180' : ''} transition-transform`}
-                                    />
-                                </div>
-                                <ul
-                                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? 'block' : 'hidden'
-                                        }`}
-                                    role="menu"
-                                    style={{
-                                        minWidth: '150px',
-                                        maxHeight: '400px',
-                                        overflowY: 'auto',
-                                        zIndex: 1000,
-                                    }}
-                                >
-                                    {dropdownOptions.map((option, idx) => (
-                                        <li key={idx} role="menuitem">
-                                            <button
-                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? 'bg-gray-100 font-semibold' : ''
-                                                    }`}
-                                                onClick={() => handleOptionSelect(option)}
-                                            >
-                                                {option}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </span>
-
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-
-                        {!opportunityDetails?.task_created ? (
-                            <>
-                                <span
-                                    className="cursor-pointer flex items-center gap-1"
-                                    onClick={handleConvertToTask}
-                                >
-                                    <RefreshCw className="mx-1" size={15} /> Convert
-                                </span>
-
-                                <span className="h-6 w-[1px] border border-gray-300"></span>
-
-                                <span
-                                    className="flex items-center gap-1 cursor-pointer"
-                                // onClick={handleAddToDo}
-                                >
-                                    <CircleCheckBig size={15} />
-                                    <span>Add To Do</span>
-                                </span>
-                            </>
-                        ) : (
-                            <span className="cursor-pointer flex items-center gap-1" onClick={handleGoToTask}>
-                                <LogOut className="mx-1" size={15} /> Go to{' '}
-                                {opportunityDetails.project_management_id
-                                    ? 'Project'
-                                    : opportunityDetails.milestone_id
-                                        ? 'Milestone'
-                                        : 'Task'}
-                            </span>
-                        )}
-                    </div>
-                </div>
-                <div className="border-b-[3px] border-grey my-3"></div>
-
-                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
-                    <div className="font-[600] text-[16px] flex items-center gap-4">
-                        <ChevronDownCircle
-                            color="#c72030"
-                            size={30}
-                            className={`${isFirstCollapsed ? 'rotate-180' : 'rotate-0'
-                                } transition-transform cursor-pointer`}
-                            onClick={toggleFirstCollapse}
-                        />
-                        Description
-                    </div>
-                    <div className="mt-3 overflow-hidden transition-all duration-300" style={{ maxHeight: isFirstCollapsed ? '0px' : '1000px' }}>
-                        <p>
-                            {opportunityDetails?.description
+        <>
+            <div className="m-4">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate(-1)}
+                    className="p-4"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                </Button>
+                <div className="px-4 pt-1">
+                    <h2 className="text-[15px] p-3 px-0">
+                        <span className="mr-3 text-[#c72030]">OP-{opportunityDetails?.id}</span>
+                        <span>
+                            {opportunityDetails?.title
                                 .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
-                                .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || 'No description provided'}
-                        </p>
-                    </div>
-                </div>
+                                .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}
+                        </span>
+                    </h2>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
-                        <div className="flex items-center gap-4">
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+                    <div className="flex items-center justify-between my-3 text-[12px]">
+                        <div className="flex items-center gap-3 text-[#323232]">
+                            <span>Created By : {opportunityDetails?.created_by?.name || 'N/A'}</span>
+
+                            <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                            <span className="flex items-center gap-3">
+                                Created On : {formatToDDMMYYYY_AMPM(opportunityDetails?.created_at)}
+                            </span>
+
+                            <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                            <span
+                                className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] ||
+                                    'bg-gray-400 text-white'
+                                    }`}
+                            >
+                                <div className="relative" ref={dropdownRef}>
+                                    <div
+                                        className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                                        onClick={() => setOpenDropdown(!openDropdown)}
+                                        role="button"
+                                        aria-haspopup="true"
+                                        aria-expanded={openDropdown}
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && setOpenDropdown(!openDropdown)}
+                                    >
+                                        <span className="text-[13px]">{selectedOption}</span>
+                                        <ChevronDown
+                                            size={15}
+                                            className={`${openDropdown ? 'rotate-180' : ''} transition-transform`}
+                                        />
+                                    </div>
+                                    <ul
+                                        className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? 'block' : 'hidden'
+                                            }`}
+                                        role="menu"
+                                        style={{
+                                            minWidth: '150px',
+                                            maxHeight: '400px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                        }}
+                                    >
+                                        {dropdownOptions.map((option, idx) => (
+                                            <li key={idx} role="menuitem">
+                                                <button
+                                                    className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? 'bg-gray-100 font-semibold' : ''
+                                                        }`}
+                                                    onClick={() => handleOptionSelect(option)}
+                                                >
+                                                    {option}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </span>
+
+                            <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                            {!opportunityDetails?.task_created ? (
+                                <>
+                                    <span
+                                        className="cursor-pointer flex items-center gap-1"
+                                        onClick={handleConvertToTask}
+                                    >
+                                        <RefreshCw className="mx-1" size={15} /> Convert
+                                    </span>
+
+                                    <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                                    <span
+                                        className="flex items-center gap-1 cursor-pointer"
+                                    // onClick={handleAddToDo}
+                                    >
+                                        <CircleCheckBig size={15} />
+                                        <span>Add To Do</span>
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="cursor-pointer flex items-center gap-1" onClick={handleGoToTask}>
+                                    <LogOut className="mx-1" size={15} /> Go to{' '}
+                                    {opportunityDetails.project_management_id
+                                        ? 'Project'
+                                        : opportunityDetails.milestone_id
+                                            ? 'Milestone'
+                                            : 'Task'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="border-b-[3px] border-grey my-3"></div>
+
+                    <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
+                        <div className="font-[600] text-[16px] flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#c72030"
                                 size={30}
-                                className={`${isDetailsCollapsed ? 'rotate-180' : 'rotate-0'} cursor-pointer transition-transform`}
-                                onClick={toggleDetailsCollapse}
+                                className={`${isFirstCollapsed ? 'rotate-180' : 'rotate-0'
+                                    } transition-transform cursor-pointer`}
+                                onClick={toggleFirstCollapse}
                             />
-                            Details
+                            Description
                         </div>
-                        {isDetailsCollapsed && (
-                            <div className="flex items-center gap-6">
-                                <div className="flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">
-                                        Responsible Person:
-                                    </div>
-                                    <div className="text-left text-[12px]">
-                                        {opportunityDetails?.responsible_person ? (
-                                            <span>{opportunityDetails.responsible_person.name}</span>
-                                        ) : (
-                                            <span className="text-gray-500">Not Assigned</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">Tags:</div>
-                                    <div className="text-left text-[12px]">
-                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
-                                            <span>{opportunityDetails.task_tags.length} Tag(s)</span>
-                                        ) : (
-                                            <span className="text-gray-500">No Tags</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div
-                        className="mt-3 overflow-hidden transition-all duration-500"
-                        ref={detailsContentRef}
-                        style={{
-                            maxHeight: isDetailsCollapsed ? '0px' : '1000px',
-                            opacity: isDetailsCollapsed ? 0 : 1,
-                        }}
-                    >
-                        <div className="flex flex-col">
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[13px] font-[500]">
-                                        Responsible Person :
-                                    </div>
-                                    <div className="text-left text-[13px]">
-                                        {opportunityDetails?.responsible_person ? (
-                                            <span>{opportunityDetails.responsible_person.name}</span>
-                                        ) : (
-                                            <span className="text-gray-500">Not Assigned</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-start justify-start gap-3">
-                                    <div className="text-right text-[13px] font-[500]">
-                                        Tags :
-                                    </div>
-                                    <div className="text-left text-[13px]">
-                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {opportunityDetails.task_tags.map((tag, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
-                                                    >
-                                                        {tag.company_tag?.name || 'Unknown'}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-500">No tags assigned</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-start justify-start gap-3">
-                                    <div className="text-right text-[13px] font-[500]">
-                                        Observers :
-                                    </div>
-                                    <div className="text-left text-[13px]">
-                                        {opportunityDetails?.observers && opportunityDetails.observers.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {opportunityDetails.observers.map((tag, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
-                                                    >
-                                                        {tag.user_name || 'Unknown'}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-500">No observers assigned</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="mt-3 overflow-hidden transition-all duration-300" style={{ maxHeight: isFirstCollapsed ? '0px' : '1000px' }}>
+                            <div
+                                className="prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{
+                                    __html: opportunityDetails?.description || '<p>No description provided</p>'
+                                }}
+                            />
                         </div>
                     </div>
-                </div>
 
-                <div>
-                    <div className="flex items-center justify-between my-3">
-                        <div className="flex items-center gap-10">
-                            {['Comments', 'Documents'].map((item) => (
-                                <div
-                                    key={item}
-                                    className={`text-[14px] font-[400] ${tab === item ? 'selected' : 'cursor-pointer'
-                                        }`}
-                                    onClick={() => setTab(item)}
-                                >
-                                    {item}
+                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                        <div className="font-[600] text-[16px] flex items-center gap-10">
+                            <div className="flex items-center gap-4">
+                                <ChevronDownCircle
+                                    color="#c72030"
+                                    size={30}
+                                    className={`${isDetailsCollapsed ? 'rotate-180' : 'rotate-0'} cursor-pointer transition-transform`}
+                                    onClick={toggleDetailsCollapse}
+                                />
+                                Details
+                            </div>
+                            {isDetailsCollapsed && (
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center justify-start gap-3">
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Responsible Person:
+                                        </div>
+                                        <div className="text-left text-[12px]">
+                                            {opportunityDetails?.responsible_person ? (
+                                                <span>{opportunityDetails.responsible_person.name}</span>
+                                            ) : (
+                                                <span className="text-gray-500">Not Assigned</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-start gap-3">
+                                        <div className="text-right text-[12px] font-[500]">Tags:</div>
+                                        <div className="text-left text-[12px]">
+                                            {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                                <span>{opportunityDetails.task_tags.length} Tag(s)</span>
+                                            ) : (
+                                                <span className="text-gray-500">No Tags</span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            ))}
+                            )}
+                        </div>
+
+                        <div
+                            className="mt-3 overflow-hidden transition-all duration-500"
+                            ref={detailsContentRef}
+                            style={{
+                                maxHeight: isDetailsCollapsed ? '0px' : '1000px',
+                                opacity: isDetailsCollapsed ? 0 : 1,
+                            }}
+                        >
+                            <div className="flex flex-col">
+                                <div className="flex items-center ml-36">
+                                    <div className="w-1/2 flex items-center justify-start gap-3">
+                                        <div className="text-right text-[13px] font-[500]">
+                                            Responsible Person :
+                                        </div>
+                                        <div className="text-left text-[13px]">
+                                            {opportunityDetails?.responsible_person ? (
+                                                <span>{opportunityDetails.responsible_person.name}</span>
+                                            ) : (
+                                                <span className="text-gray-500">Not Assigned</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                                <div className="flex items-center ml-36">
+                                    <div className="w-1/2 flex items-start justify-start gap-3">
+                                        <div className="text-right text-[13px] font-[500]">
+                                            Tags :
+                                        </div>
+                                        <div className="text-left text-[13px]">
+                                            {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {opportunityDetails.task_tags.map((tag, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                        >
+                                                            {tag.company_tag?.name || 'Unknown'}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-500">No tags assigned</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                                <div className="flex items-center ml-36">
+                                    <div className="w-1/2 flex items-start justify-start gap-3">
+                                        <div className="text-right text-[13px] font-[500]">
+                                            Observers :
+                                        </div>
+                                        <div className="text-left text-[13px]">
+                                            {opportunityDetails?.observers && opportunityDetails.observers.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {opportunityDetails.observers.map((tag, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                        >
+                                                            {tag.user_name || 'Unknown'}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-500">No observers assigned</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
                     <div>
-                        {tab === 'Documents' && (
-                            <Attachments
-                                attachments={opportunityDetails?.attachments || []}
-                                id={opportunityDetails?.id}
-                                getOpportunity={getOpportunity}
-                            />
-                        )}
-                        {tab === 'Comments' && (
-                            <Comments
-                                comments={opportunityDetails?.comments || []}
-                                getOpportunity={getOpportunity}
-                            />
-                        )}
+                        <div className="flex items-center justify-between my-3">
+                            <div className="flex items-center gap-10">
+                                {['Comments', 'Documents'].map((item) => (
+                                    <div
+                                        key={item}
+                                        className={`text-[14px] font-[400] ${tab === item ? 'selected' : 'cursor-pointer'
+                                            }`}
+                                        onClick={() => setTab(item)}
+                                    >
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+                        <div>
+                            {tab === 'Documents' && (
+                                <Attachments
+                                    attachments={opportunityDetails?.attachments || []}
+                                    id={opportunityDetails?.id}
+                                    getOpportunity={getOpportunity}
+                                />
+                            )}
+                            {tab === 'Comments' && (
+                                <Comments
+                                    comments={opportunityDetails?.comments || []}
+                                    getOpportunity={getOpportunity}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
+                {isTaskModalOpen && (
+                    <ConvertModal
+                        isModalOpen={isTaskModalOpen}
+                        setIsModalOpen={setIsTaskModalOpen}
+                        prefillData={{
+                            title: opportunityDetails?.title,
+                            project: opportunityDetails?.project_management_id,
+                            projectName: opportunityDetails?.project_name,
+                            task: opportunityDetails?.task_management_id,
+                            taskName: opportunityDetails?.task_name,
+                            description: opportunityDetails?.description,
+                            responsible_person: {
+                                id: opportunityDetails?.responsible_person?.id
+                            },
+                            tags: opportunityDetails?.task_tags
+                        }}
+                        opportunityId={Number(id)}
+                    />
+                )}
             </div>
-            {isTaskModalOpen && (
-                <ConvertModal
-                    isModalOpen={isTaskModalOpen}
-                    setIsModalOpen={setIsTaskModalOpen}
-                    prefillData={{
-                        title: opportunityDetails?.title,
-                        project: opportunityDetails?.project_management_id,
-                        projectName: opportunityDetails?.project_name,
-                        task: opportunityDetails?.task_management_id,
-                        taskName: opportunityDetails?.task_name,
-                        description: opportunityDetails?.description,
-                        responsible_person: {
-                            id: opportunityDetails?.responsible_person?.id
-                        },
-                        tags: opportunityDetails?.task_tags
-                    }}
-                    opportunityId={Number(id)}
-                />
-            )}
-        </div>
+
+            <style>{`
+                .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+                    color: #1a1a1a;
+                    font-weight: 600;
+                    margin-top: 1rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                .prose h1 {
+                    font-size: 1.875rem;
+                }
+
+                .prose h2 {
+                    font-size: 1.5rem;
+                }
+
+                .prose h3 {
+                    font-size: 1.25rem;
+                }
+
+                .prose p {
+                    margin: 0.75rem 0;
+                    line-height: 1.6;
+                    color: #333;
+                }
+
+                .prose strong {
+                    font-weight: 700;
+                    color: #1a1a1a;
+                }
+
+                .prose em {
+                    font-style: italic;
+                    color: #1a1a1a;
+                }
+
+                .prose u {
+                    text-decoration: underline;
+                }
+
+                .prose s {
+                    text-decoration: line-through;
+                }
+
+                .prose blockquote {
+                    border-left: 4px solid #c72030;
+                    padding-left: 1rem;
+                    margin: 1rem 0;
+                    color: #666;
+                    font-style: italic;
+                }
+
+                .prose code {
+                    background-color: #f5f5f5;
+                    padding: 0.25rem 0.5rem;
+                    border-radius: 4px;
+                    font-family: monospace;
+                    color: #d63384;
+                }
+
+                .prose pre {
+                    background-color: #f5f5f5;
+                    padding: 1rem;
+                    border-radius: 4px;
+                    overflow-x: auto;
+                    margin: 1rem 0;
+                }
+
+                .prose pre code {
+                    background-color: transparent;
+                    color: #333;
+                    padding: 0;
+                }
+
+                .prose ul, .prose ol {
+                    margin: 1rem 0;
+                    padding-left: 2rem;
+                }
+
+                .prose li {
+                    margin: 0.5rem 0;
+                }
+
+                .prose a {
+                    color: #01569E;
+                    text-decoration: underline;
+                }
+
+                .prose a:hover {
+                    color: #004080;
+                }
+
+                .prose img {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 4px;
+                    margin: 1rem 0;
+                }
+            `}</style>
+        </>
     );
 };
 

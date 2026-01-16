@@ -741,6 +741,42 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
     }
 
+    // Step 4: require either an uploaded ID image or a government ID number
+    if (step === 4) {
+      const errs: Record<number, boolean> = {};
+      let hasMissing = false;
+      const allVisitors = [0, ...visitors.map((v) => v.id)];
+      allVisitors.forEach((id) => {
+        const idState = identityByVisitor[id];
+        const hasGov = !!(idState && idState.govId && String(idState.govId).trim());
+        const docs = idState && Array.isArray(idState.documents) ? idState.documents : [];
+        const hasFile = docs.some((d) => {
+          // documents may be File objects or objects like { name, url, file }
+          if (!d) return false;
+          if ((d as unknown) instanceof File) return true;
+          const maybe = d as { file?: File };
+          return !!(maybe && maybe.file instanceof File);
+        });
+        if (!hasGov && !hasFile) {
+          errs[id] = true;
+          hasMissing = true;
+        }
+      });
+      setIdentityErrors(errs);
+      if (hasMissing) {
+        showToast("Please upload at least one ID image or enter Government ID number for all visitors.");
+        setExpandedVisitors((e) => {
+          const next = { ...e };
+          Object.keys(errs).forEach((k) => {
+            const id = Number(k);
+            if (!Number.isNaN(id)) next[id] = true;
+          });
+          return next;
+        });
+        return;
+      }
+    }
+
     setStep((s) => (s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1)));
   };
 
