@@ -685,29 +685,82 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
   const handleEdit = (id: number) => {
     console.warn("Edit site:", id);
-    // Find the site data from the current list
-    const siteToEdit = sites.find((site) => site.id === id);
-    if (siteToEdit) {
-      setSelectedSiteId(id);
-      // Map SiteItem to SiteData format
-      const mappedSiteData: SiteData = {
-        id: siteToEdit.id,
-        name: siteToEdit.name,
-        company_id: siteToEdit.company_id,
-        headquarter_id: siteToEdit.country_id, // Map country_id to headquarter_id
-        region_id: siteToEdit.region_id,
-        latitude: siteToEdit.latitude,
-        longitude: siteToEdit.longitude,
-        address: siteToEdit.address,
-        state: siteToEdit.state,
-        city: siteToEdit.city,
-        active: siteToEdit.active,
-      };
-      setSelectedSiteData(mappedSiteData);
-      setIsEditModalOpen(true);
-    } else {
-      toast.error("Site not found");
-    }
+    setSelectedSiteId(id);
+    // Fetch the full site data from the API
+    fetch(getFullUrl(`/pms/sites/${id}.json`), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: getAuthHeader(),
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        const site = result.site;
+        if (site) {
+          // Map all fields from API response, including all boolean/toggle fields
+          const mappedSiteData: SiteData = {
+            id: site.id,
+            name: site.name,
+            code: site.code,
+            address: site.address,
+            city: site.city,
+            district: site.district,
+            state: site.state,
+            postal_code: site.postal_code,
+            country_id: site.country_id ?? site.headquarter_id,
+            region_id: site.region_id,
+            company_id: site.company_id,
+            site_type: site.site_type,
+            active: site.active,
+            latitude: site.latitude,
+            longitude: site.longitude,
+            contact_person: site.contact_person,
+            contact_email: site.contact_email,
+            contact_phone: site.contact_phone,
+            description: site.description,
+            created_at: site.created_at,
+            updated_at: site.updated_at,
+            country_name: site.country_name ?? site.headquarter_name,
+            region_name: site.region_name,
+            company_name: site.company_name,
+            headquarter_id: site.headquarter_id,
+            image_url: site.image_url ? [...site.image_url] : [],
+            google_maps_url: site.google_maps_url,
+            attachfile: site.image_url ? [...site.image_url] : [],
+            // All boolean/toggle fields for switches in modal
+            skip_host_approval: site.skip_host_approval,
+            survey_enabled: site.survey_enabled,
+            fitout_enabled: site.fitout_enabled,
+            mailroom_enabled: site.mailroom_enabled,
+            create_breakdown_ticket: site.create_breakdown_ticket,
+            parking_enabled: site.parking_enabled,
+            default_visitor_pass: site.default_visitor_pass,
+            ecommerce_service_enabled: site.ecommerce_service_enabled,
+            operational_audit_enabled: site.operational_audit_enabled,
+            steps_enabled: site.steps_enabled,
+            transportation_enabled: site.transportation_enabled,
+            business_card_enabled: site.business_card_enabled,
+            visitor_enabled: site.visitor_enabled,
+            govt_id_enabled: site.govt_id_enabled,
+            visitor_host_mandatory: site.visitor_host_mandatory,
+            // Optionally include all other fields from API response
+            ...site
+          };
+          setSelectedSiteData(mappedSiteData);
+          setIsEditModalOpen(true);
+        } else {
+          toast.error("Site not found");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching site by id:", error);
+        toast.error("Failed to fetch site details");
+      });
   };
 
   const handleDelete = (id: number) => {
