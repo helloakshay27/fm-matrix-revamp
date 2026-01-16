@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
+  DollarSign,
   User,
   CalendarDays,
   CreditCard,
@@ -35,8 +36,8 @@ import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlic
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import axios from "axios";
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -99,37 +100,6 @@ const muiTheme = createTheme({
   },
 });
 
-const columns: ColumnConfig[] = [
-  {
-    key: "start_hour",
-    label: "Start Hour",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "start_min",
-    label: "Start Minute",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_hour",
-    label: "End Hour",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_min",
-    label: "End Minute",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-]
-
 export const BookingSetupDetailPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -138,15 +108,23 @@ export const BookingSetupDetailPage = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState();
   const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
-  const [slotsConfigured, setSlotsConfigured] = useState([])
+  const [slotsConfigured, setSlotsConfigured] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState<{ [key: string]: boolean }>({});
+  const [popoverOpen, setPopoverOpen] = useState<{ [key: string]: boolean }>({});
+  const [premiumPercentage, setPremiumPercentage] = useState<{ [key: string]: string }>({});
+  const [isPremiumSlots, setIsPremiumSlots] = useState<{ [key: string]: boolean }>({});
+  const [inventories, setInventories] = useState<any[]>([]);
+  const [loadingInventories, setLoadingInventories] = useState(false);
+  const [blockDaySlots, setBlockDaySlots] = useState<{ [key: number]: any[] }>({});
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    department: "",
+    facility_name: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -154,6 +132,7 @@ export const BookingSetupDetailPage = () => {
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
+    igstPercentage: "",
     perSlotCharge: "",
     bookingAllowedBefore: { day: "", hour: "", minute: "" },
     advanceBooking: { day: "", hour: "", minute: "" },
@@ -186,6 +165,20 @@ export const BookingSetupDetailPage = () => {
         wrapTime: "",
       },
     ],
+    chargeSetup: {
+      member: { selected: false, adult: "", child: "" },
+      guest: { selected: false, adult: "", child: "" },
+      minimumPersonAllowed: "1",
+      maximumPersonAllowed: "1",
+    },
+    blockDays: [] as Array<{
+      id: number;
+      startDate: string;
+      endDate: string;
+      dayType: string;
+      blockReason: string;
+      selectedSlots: string[];
+    }>,
   });
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
@@ -241,6 +234,38 @@ export const BookingSetupDetailPage = () => {
     setAdditionalOpen(!additionalOpen);
   };
 
+  const fetchBlockDaySlots = async (facilityId: string, date: string, blockIndex: number) => {
+    try {
+      const formattedDate = date.replace(/-/g, '/');
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            on_date: formattedDate,
+          }
+        }
+      );
+
+      if (response.data && response.data.slots) {
+        console.log(`Slots fetched for block day ${blockIndex}:`, response.data.slots);
+        setBlockDaySlots(prev => ({
+          ...prev,
+          [blockIndex]: response.data.slots
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching block day slots:', error);
+      setBlockDaySlots(prev => ({
+        ...prev,
+        [blockIndex]: []
+      }));
+    }
+  };
+
   const fetchDepartments = async () => {
     if (departments.length > 0) return;
     setLoadingDepartments(true);
@@ -272,6 +297,33 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
+  const fetchInventories = async () => {
+    if (inventories.length > 0) return;
+    setLoadingInventories(true);
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/pms/inventories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      if (data && Array.isArray(data.inventories)) {
+        setInventories(data.inventories);
+      } else {
+        setInventories([]);
+      }
+    } catch (error) {
+      console.error("Error fetching inventories:", error);
+      setInventories([]);
+    } finally {
+      setLoadingInventories(false);
+    }
+  };
+
   const handleEditClick = (id) => {
     navigate(`/settings/vas/booking/setup/edit/${id}`);
   }
@@ -281,11 +333,12 @@ export const BookingSetupDetailPage = () => {
       const response = await dispatch(
         facilityBookingSetupDetails({ baseUrl, token, id })
       ).unwrap();
+      console.log(response.cover_image?.document)
       setFormData({
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
         isRequest: response.fac_type === "request" ? true : false,
-        department: response.department_id ?? "",
+        facility_name: response.facility_name ?? "",
         appKey: response.app_key,
         postpaid: response.postpaid,
         prepaid: response.prepaid,
@@ -293,6 +346,7 @@ export const BookingSetupDetailPage = () => {
         complimentary: response.complementary,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
+        igstPercentage: response.igst,
         perSlotCharge: response?.facility_charge?.per_slot_charge,
         bookingAllowedBefore: {
           day: response.bb_dhm.d,
@@ -326,7 +380,7 @@ export const BookingSetupDetailPage = () => {
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
         sharedContentInfo: response.shared_content,
-        slots: response.facility_slots.map((slot) => ({
+        slots: response.facility_slots?.map((slot) => ({
           startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
           breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
           breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
@@ -334,53 +388,200 @@ export const BookingSetupDetailPage = () => {
           concurrentSlots: slot.facility_slot.max_bookings,
           slotBy: slot.facility_slot.breakminutes_label,
           wrapTime: slot.facility_slot.wrap_time,
-        })),
+        })) || [],
+        chargeSetup: {
+          member: { selected: response.facility_charge?.adult_member_charge, adult: response.facility_charge?.adult_member_charge, child: response.facility_charge?.child_member_charge },
+          guest: { selected: response.facility_charge?.adult_guest_charge, adult: response.facility_charge?.adult_guest_charge, child: response.facility_charge?.child_guest_charge },
+          minimumPersonAllowed: response.min_people,
+          maximumPersonAllowed: response.max_people,
+        },
+        blockDays: response?.facility_blockings?.map((blocking: any) => ({
+          id: blocking.facility_blocking?.id,
+          startDate: blocking.facility_blocking?.ondate || "",
+          endDate: "",
+          dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+          blockReason: blocking.facility_blocking?.reason || "",
+          selectedSlots: blocking.facility_blocking?.block_slot || [],
+        })) || [],
       });
-      const transformedRules = response.cancellation_rules.map((rule: any) => ({
+
+      // Fetch slots for ALL block days (so we can display them in the UI)
+      response?.facility_blockings?.forEach((blocking: any, index: number) => {
+        const ondate = blocking.facility_blocking?.ondate;
+
+        if (ondate) {
+          console.log(`Fetching slots for block day ${index}:`, {
+            date: ondate,
+            blockSlotIds: blocking.facility_blocking?.block_slot
+          });
+          fetchBlockDaySlots(id!, ondate, index);
+        }
+      });
+
+      const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
-          type: rule.hour, // You can dynamically determine this if needed
-          value: rule.min,
-          day: rule.day,
+          type: rule.hour?.toString().padStart(2, "0") || "00",
+          value: rule.min?.toString().padStart(2, "0") || "00",
+          day: rule.day?.toString() || "0",
         },
         deduction: rule.deduction?.toString() || '',
-      }));
+      })) || [];
 
       setCancellationRules([...transformedRules]);
 
-      setSlotsConfigured(response.facility_slots.map(slot => (
-        {
-          start_hour: slot.facility_slot.start_hour.toString().padStart(2, "0"),
-          start_min: slot.facility_slot.start_min.toString().padStart(2, "0"),
-          end_hour: slot.facility_slot.end_hour.toString().padStart(2, "0"),
-          end_min: slot.facility_slot.end_min.toString().padStart(2, "0"),
-        }
-      )));
+      const slots = response.facility_slots.map(slot => (
+        slot?.facility_slot?.setup_slot_times?.map(time => ({
+          id: time.setup_slot_time.id,
+          isPremium: time.setup_slot_time.is_premium,
+          premium_percentage: time.setup_slot_time.premium_percentage || 0,
+          startTime: { hour: time.setup_slot_time.start_hour, minute: time.setup_slot_time.start_minute },
+          endTime: { hour: time.setup_slot_time.end_hour, minute: time.setup_slot_time.end_minute },
+        }))
+      ));
+      setSlotsConfigured(slots);
 
+      // Initialize premium slots and percentage
+      const premiumMap: { [key: string]: boolean } = {};
+      const percentageMap: { [key: string]: string } = {};
+      slots[0]?.forEach((slot: any, idx: number) => {
+        const slotKey = `${slot.id}-${idx}`;
+        premiumMap[slotKey] = slot.isPremium || false;
+        percentageMap[slotKey] = slot.premium_percentage?.toString() || '';
+      });
+      setIsPremiumSlots(premiumMap);
+      setPremiumPercentage(percentageMap);
       // setCancellationRules(response.cancellation_rules)
-      setSelectedFile(response?.cover_image?.document);
+      setSelectedFile(response.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
       );
       setQrUrl(response?.qr_code.document);
+
+      // Setup gallery images
+      const allGalleryImages: any[] = [];
+
+      // 1:1 images
+      if (response?.gallery_image_1_by_1 && Array.isArray(response.gallery_image_1_by_1)) {
+        response.gallery_image_1_by_1.forEach((item: any) => {
+          if (item.gallery_image_1_by_1?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_1_by_1.document,
+              ratio: '1:1',
+              enableToApp: true
+            });
+          }
+        });
+      }
+
+      // 16:9 images
+      if (response?.gallery_image_16_by_9 && Array.isArray(response.gallery_image_16_by_9)) {
+        response.gallery_image_16_by_9.forEach((item: any) => {
+          if (item.gallery_image_16_by_9?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_16_by_9.document,
+              ratio: '16:9',
+              enableToApp: true
+            });
+          }
+        });
+      }
+
+      // 9:16 images
+      if (response?.gallery_image_9_by_16 && Array.isArray(response.gallery_image_9_by_16)) {
+        response.gallery_image_9_by_16.forEach((item: any) => {
+          if (item.gallery_image_9_by_16?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_9_by_16.document,
+              ratio: '9:16',
+              enableToApp: true
+            });
+          }
+        });
+      }
+
+      // 3:2 images
+      if (response?.gallery_image_3_by_2 && Array.isArray(response.gallery_image_3_by_2)) {
+        response.gallery_image_3_by_2.forEach((item: any) => {
+          if (item.gallery_image_3_by_2?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_3_by_2.document,
+              ratio: '3:2',
+              enableToApp: true
+            });
+          }
+        });
+      }
+
+      setGalleryImages(allGalleryImages);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching facility details:", error);
+      console.error("Error details:", error?.response?.data || error.message);
     }
   };
 
-  console.log(cancellationRules)
+  console.log(selectedFile)
+
+  const handleSlotCheckboxChange = (slotId: string) => {
+    setIsPremiumSlots(prev => ({
+      ...prev,
+      [slotId]: !prev[slotId]
+    }));
+
+    // Open popover when checkbox is checked
+    if (!isPremiumSlots[slotId]) {
+      setPopoverOpen(prev => ({
+        ...prev,
+        [slotId]: true
+      }));
+    }
+  };
+
+  const handleSendData = async (slotId: string) => {
+    try {
+      const payload = {
+        slot_time_id: slotId,
+        is_premium: true,
+        premium_percentage: parseFloat(premiumPercentage[slotId]) || 0
+      };
+
+      const response = await axios.patch(
+        `https://${baseUrl}/pms/admin/facility_setups/${id}/update_slot_premium.json`,
+        payload,
+        {
+          headers: {
+            Authorization: `${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Data sent successfully:", response.data);
+
+      // Update isPremiumSlots to reflect the premium status
+      setIsPremiumSlots(prev => ({
+        ...prev,
+        [slotId]: true
+      }));
+
+      setPopoverOpen(prev => ({
+        ...prev,
+        [slotId]: false
+      }));
+    } catch (error) {
+      console.error("Error sending data:", error);
+    }
+  };
 
   useEffect(() => {
     fetchDepartments();
+    fetchInventories();
     fetchFacilityBookingDetails();
   }, []);
-
-  const renderCell = (item: any, columnKey: string) => {
-    switch (columnKey) {
-      default:
-        return item[columnKey] || "-";
-    }
-  }
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -390,7 +591,9 @@ export const BookingSetupDetailPage = () => {
           <div className="flex items-end justify-between gap-2">
             <Button
               variant="ghost"
-              onClick={() => navigate("/settings/vas/booking/setup")}
+              onClick={() => location.pathname.includes("/club-management/") ?
+                navigate("/club-management/vas/booking/setup") : navigate("/settings/vas/booking/setup")
+              }
               className="p-0"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -428,63 +631,92 @@ export const BookingSetupDetailPage = () => {
         <div className="space-y-6">
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <User className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC INFo</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                BASIC INFO
+              </h3>
             </div>
-            <div className="space-y-6 py-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TextField
-                  label="Facility Name*"
-                  value={formData.facilityName}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
-                <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
-                  <Select
-                    value={formData.department}
-                    label="Department"
-                    disabled
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      {loadingDepartments ? "Loading..." : "All"}
-                    </MenuItem>
-                    {Array.isArray(departments) &&
-                      departments.map((dept, index) => (
-                        <MenuItem key={index} value={dept.id}>
-                          {dept.department_name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </div>
 
-              <div className="flex gap-6 py-2">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="bookable"
-                    name="type"
-                    checked={formData.isBookable}
-                    disabled
-                    className="text-blue-600"
-                  />
-                  <label htmlFor="bookable">Bookable</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="request"
-                    name="type"
-                    checked={formData.isRequest}
-                    disabled
-                    className="text-blue-600"
-                  />
-                  <label htmlFor="request">Request</label>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Facility Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.facilityName || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Category Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.facility_name || "-"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Charge Setup Card */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                CHARGE SETUP
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Member Adult Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.member.adult || "-"}
+                </span>
+              </div>
+              {/* <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Guest Adult Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.guest.adult || "-"}
+                </span>
+              </div> */}
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Member Child Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.member.child || "-"}
+                </span>
+              </div>
+              {/* <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Guest Child Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.guest.child || "-"}
+                </span>
+              </div> */}
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Minimum Person Allowed</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.minimumPersonAllowed || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Maximum Person Allowed</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.maximumPersonAllowed || "-"}
+                </span>
               </div>
             </div>
           </div>
@@ -498,296 +730,112 @@ export const BookingSetupDetailPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
             </div>
 
-            <div>
-              <Button
-                disabled
-                className="bg-purple-600 hover:bg-purple-700 mb-4 opacity-50 cursor-not-allowed"
-              >
-                Add
-              </Button>
-              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
-                <div>Start Time</div>
-                <div>Break Time Start</div>
-                <div>Break Time End</div>
-                <div>End Time</div>
-                <div>Concurrent Slots</div>
-                <div>Slot by</div>
-                <div>Wrap Time</div>
-              </div>
+            <div className="space-y-6">
               {formData.slots.map((slot, index) => (
-                <div key={index} className="grid grid-cols-7 gap-2 mb-2">
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.startTime.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.startTime.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                <div key={index} className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700">Slot {index + 1}</h4>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Start Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {String(slot.startTime.hour).padStart(2, '0')}:{String(slot.startTime.minute).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">End Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {String(slot.endTime.hour).padStart(2, '0')}:{String(slot.endTime.minute).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Break Time Start</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {String(slot.breakTimeStart.hour).padStart(2, '0')}:{String(slot.breakTimeStart.minute).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Break Time End</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {String(slot.breakTimeEnd.hour).padStart(2, '0')}:{String(slot.breakTimeEnd.minute).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Concurrent Slots</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.concurrentSlots || "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Slot By</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.slotBy || "-"}
+                      </span>
+                    </div>
+                    {/* <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Wrap Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.wrapTime || "-"}
+                      </span>
+                    </div> */}
                   </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeStart.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeStart.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeEnd.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeEnd.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.endTime.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.endTime.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <TextField
-                    size="small"
-                    value={slot.concurrentSlots}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
-                  />
-                  <FormControl size="small">
-                    <Select
-                      value={slot.slotBy}
-                      disabled
-                    >
-                      <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
-                      <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
-                      <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
-                      <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
-                      <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    size="small"
-                    value={slot.wrapTime}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
-                  />
+                  {index < formData.slots.length - 1 && <hr className="mt-4" />}
                 </div>
               ))}
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Booking Allowed before :
-                  </label>
-                  <p className="text-sm text-gray-600 mb-2">
-                    (Enter Time: DD Days, HH Hours, MM Minutes)
-                  </p>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+
+              <div className="border-t pt-6 space-y-4">
+                <h4 className="text-sm font-semibold text-gray-700">Booking Configuration</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Booking Allowed Before</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.bookingAllowedBefore.day}d {formData.bookingAllowedBefore.hour}h {formData.bookingAllowedBefore.minute}m
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Advance Booking :
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Advance Booking</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.advanceBooking.day}d {formData.advanceBooking.hour}h {formData.advanceBooking.minute}m
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Can Cancel Before Schedule :
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Can Cancel Before</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.canCancelBefore.day}d {formData.canCancelBefore.hour}h {formData.canCancelBefore.minute}m
+                    </span>
                   </div>
-                </div>
-              </div>
-              <div className="space-y-4 flex items-center justify-between mt-4">
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="allowMultipleSlots"
-                      checked={formData.allowMultipleSlots}
-                      disabled
-                    />
-                    <label htmlFor="allowMultipleSlots">
-                      Allow Multiple Slots
-                    </label>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Allow Multiple Slots</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.allowMultipleSlots ? "Yes" : "No"}
+                    </span>
                   </div>
                   {formData.allowMultipleSlots && (
-                    <div>
-                      <TextField
-                        label="Maximum no. of slots"
-                        value={formData.maximumSlots}
-                        variant="outlined"
-                        size="small"
-                        style={{ width: "200px" }}
-                        InputProps={{ readOnly: true }}
-                      />
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[160px]">Maximum Slots</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.maximumSlots || "-"}
+                      </span>
                     </div>
                   )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Facility can be booked</span>
-                  <TextField
-                    value={formData.facilityBookedTimes}
-                    variant="outlined"
-                    size="small"
-                    style={{ width: "80px" }}
-                    InputProps={{ readOnly: true }}
-                  />
-                  <span>times per day by User</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Facility Booked Times Per Day</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.facilityBookedTimes || "-"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -801,80 +849,278 @@ export const BookingSetupDetailPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SLOTS CONFIGURED</h3>
             </div>
 
-            <EnhancedTable
-              data={slotsConfigured}
-              columns={columns}
-              renderCell={renderCell}
-              storageKey="slots-configured-table"
-              hideColumnsButton={true}
-              hideTableExport={true}
-              hideTableSearch={true}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {slotsConfigured[0]?.map((slot, idx) => {
+                const slotKey = `${slot.id}-${idx}`;
+                return (
+                  <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
+                    if (selectedSlots[slotKey]) {
+                      setPopoverOpen(prev => ({
+                        ...prev,
+                        [slotKey]: open
+                      }));
+                    }
+                  }}>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isPremiumSlots[slotKey] || false}
+                          onChange={() => {
+                            handleSlotCheckboxChange(slotKey);
+                            if (isPremiumSlots[slotKey]) {
+                              // Unchecking: close modal
+                              setPopoverOpen(prev => ({ ...prev, [slotKey]: false }));
+                            } else {
+                              // Checking: open modal
+                              setPopoverOpen(prev => ({ ...prev, [slotKey]: true }));
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                        <Label
+                          className="cursor-pointer text-sm font-medium"
+                        >
+                          {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
+                            <span className="ml-2 text-xs text-gray-600">
+                              ({premiumPercentage[slotKey]}%)
+                            </span>
+                          )}
+                        </Label>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">Set Premium Percentage</h4>
+                          <p className="text-xs text-gray-500">
+                            {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`premium-${slotKey}`} className="text-sm">
+                            Premium Percentage (%)
+                          </Label>
+                          <TextField
+                            id={`premium-${slotKey}`}
+                            type="number"
+                            placeholder="Enter percentage"
+                            value={premiumPercentage[slotKey] || ""}
+                            onKeyDown={(e) => {
+                              if (e.key === "-" || e.key === "Subtract") {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              // Block any input that starts with a dash
+                              if (val.startsWith("-")) return;
+                              // Remove all dashes explicitly (for cases like --4555)
+                              val = val.replace(/-/g, "");
+                              // Only allow numbers and dot, no other chars
+                              val = val.replace(/[^\d.]/g, "");
+                              // Prevent multiple dots
+                              val = val.replace(/(\..*)\./g, '$1');
+                              // If empty, set as is
+                              if (val === "") {
+                                setPremiumPercentage(prev => ({ ...prev, [slotKey]: "" }));
+                                return;
+                              }
+                              // If not a valid number, do not update
+                              if (isNaN(Number(val))) return;
+                              // Restrict to 0-100 and clamp immediately
+                              let num = parseFloat(val);
+                              if (num < 0) num = 0;
+                              if (num > 100) num = 100;
+                              // Only allow up to 100 in the UI
+                              setPremiumPercentage(prev => ({
+                                ...prev,
+                                [slotKey]: num.toString()
+                              }));
+                            }}
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            inputProps={{ min: "0", max: "100", step: "0.01" }}
+                          />
+                        </div>
+                        <Button
+                          onClick={() => handleSendData(slotKey)}
+                          className="w-full bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Block Days Section */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+            </div>
+
+            {formData.blockDays.length > 0 ? (
+              <div className="space-y-6">
+                {formData.blockDays.map((blockDay, index) => (
+                  <div key={blockDay.id || index} className="p-4 border rounded-lg space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-700">Block Day {index + 1}</h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <TextField
+                        label="Date"
+                        type="date"
+                        value={blockDay.startDate}
+                        variant="outlined"
+                        InputProps={{ readOnly: true }}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex gap-6 px-1">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id={`entireDay-${index}`}
+                          name={`dayType-${index}`}
+                          checked={blockDay.dayType === "entireDay"}
+                          disabled
+                          className="text-blue-600"
+                        />
+                        <label htmlFor={`entireDay-${index}`}>Entire Day</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id={`selectedSlots-${index}`}
+                          name={`dayType-${index}`}
+                          checked={blockDay.dayType === "selectedSlots"}
+                          disabled
+                          className="text-blue-600"
+                        />
+                        <label htmlFor={`selectedSlots-${index}`}>Selected Slots</label>
+                      </div>
+                    </div>
+
+                    {blockDay.dayType === "selectedSlots" && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">Select Slots to Block</label>
+                        {blockDaySlots[index]?.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {blockDaySlots[index].map((slot: any) => {
+                              const isBlocked = blockDay.selectedSlots.includes(slot.id.toString());
+                              return (
+                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg bg-gray-50">
+                                  <input
+                                    type="checkbox"
+                                    id={`block-slot-${index}-${slot.id}`}
+                                    checked={isBlocked}
+                                    disabled
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-not-allowed"
+                                  />
+                                  <label
+                                    htmlFor={`block-slot-${index}-${slot.id}`}
+                                    className="text-sm font-medium cursor-not-allowed"
+                                  >
+                                    {slot.ampm}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-gray-500 text-sm">Loading slots...</div>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                      <Textarea
+                        value={blockDay.blockReason}
+                        className="min-h-[100px]"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No block days configured</p>
+            )}
           </div>
 
           {/* Configure Payment */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE PAYMENT</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                CONFIGURE PAYMENT
+              </h3>
             </div>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    disabled
-                  />
-                  <label htmlFor="postpaid">Postpaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    disabled
-                  />
-                  <label htmlFor="prepaid">Prepaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    disabled
-                  />
-                  <label htmlFor="payOnFacility">Pay on Facility</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    disabled
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Prepaid</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.prepaid ? "Yes" : "No"}
+                </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <TextField
-                  label="SGST(%)"
-                  value={formData.sgstPercentage}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
-                <TextField
-                  label="GST(%)"
-                  value={formData.gstPercentage}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Pay at Facility</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.payOnFacility ? "Yes" : "No"}
+                </span>
               </div>
-              <TextField
-                label="Per Slot Charge"
-                value={formData.perSlotCharge}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Complimentary</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.complimentary ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.sgstPercentage || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.gstPercentage || "-"}
+                </span>
+              </div>
+              {/* <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">IGST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.igstPercentage || "-"}
+                </span>
+              </div> */}
+              {/* <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.perSlotCharge || "-"}
+                </span>
+              </div> */}
             </div>
           </div>
 
@@ -911,7 +1157,7 @@ export const BookingSetupDetailPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Booking Summary Image</h3>
               </div>
               <div>
-                {selectedBookingFiles.length > 0 && (
+                {selectedBookingFiles.length > 0 ? (
                   <div className="flex gap-2 flex-wrap">
                     {selectedBookingFiles.map((file, index) => (
                       <img
@@ -922,9 +1168,72 @@ export const BookingSetupDetailPage = () => {
                       />
                     ))}
                   </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No image selected
+                  </div>
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Gallery Images */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  GALLERY IMAGES [{galleryImages.length}]
+                </h3>
+              </div>
+            </div>
+
+            {galleryImages.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#E5E0D3]">
+                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Image Name</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Preview</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Ratio</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Enable to App</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {galleryImages.map((image: any, index: number) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="border border-gray-300 px-4 py-3">
+                          <span className="text-gray-900">{image.name || `Image ${index + 1}`}</span>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3">
+                          <div className="flex justify-center">
+                            <img
+                              src={image.preview}
+                              alt={`gallery-preview-${index}`}
+                              className="h-20 w-20 rounded border border-gray-200 object-cover"
+                            />
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          {image.ratio || '1:1'}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={image.enableToApp ?? true}
+                              disabled
+                              className="w-5 h-5 mx-auto"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -945,7 +1254,7 @@ export const BookingSetupDetailPage = () => {
           </div>
 
           {/* Terms & Conditions and Cancellation Text */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid  gap-6">
             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -961,24 +1270,9 @@ export const BookingSetupDetailPage = () => {
                 />
               </div>
             </div>
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                  <MessageSquareX className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY*</h3>
-              </div>
-              <div>
-                <Textarea
-                  value={formData.cancellationText}
-                  className="min-h-[100px]"
-                  readOnly
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Cancellation Rules */}
+          {/* Rule Setup */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -999,10 +1293,14 @@ export const BookingSetupDetailPage = () => {
                   key={index}
                   className="grid grid-cols-3 gap-4 mb-2 items-center"
                 >
+                  {/* Description */}
                   <div className="text-sm text-gray-600">
                     {rule.description}
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* Time Type & Value */}
+                  <div className="flex gap-2 items-center">
+                    {/* Day Input */}
                     <TextField
                       placeholder="Day"
                       size="small"
@@ -1010,36 +1308,48 @@ export const BookingSetupDetailPage = () => {
                       variant="outlined"
                       value={rule.time.day}
                       InputProps={{ readOnly: true }}
+                      disabled
                     />
+                    <span>DD</span>
+
+                    {/* Hours: 0 - 24 */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.type}
                         disabled
                       >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i}>
-                            {i}
+                        {Array.from({ length: 25 }, (_, i) => (
+                          <MenuItem
+                            key={i}
+                            value={i.toString().padStart(2, "0")}
+                          >
+                            {i.toString().padStart(2, "0")}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
+                    <span>HH</span>
 
+                    {/* Minutes: 0 - 59 */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.value}
                         disabled
                       >
-                        {Array.from({ length: 24 }, (_, i) => (
+                        {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem
                             key={i}
-                            value={i}
+                            value={i.toString().padStart(2, "0")}
                           >
-                            {i}
+                            {i.toString().padStart(2, "0")}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
+                    <span>MM</span>
                   </div>
+
+                  {/* Percentage Input */}
                   <TextField
                     placeholder="%"
                     size="small"
@@ -1050,10 +1360,22 @@ export const BookingSetupDetailPage = () => {
                 </div>
               ))}
             </div>
+
+            <div className="space-y-3">
+              <div className="font-medium text-gray-700">
+                Cancellation Policy<span>*</span>
+              </div>
+              <Textarea
+                placeholder="Enter cancellation text"
+                value={formData.cancellationText}
+                disabled
+                className="min-h-[100px]"
+              />
+            </div>
           </div>
 
-          {/* Additional Setup */}
-          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
+          {/* /* Additional Setup */}
+          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? "h-auto" : "h-[6rem]"}`}>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1250,6 +1572,6 @@ export const BookingSetupDetailPage = () => {
         qrCode={qrUrl}
         handleDownloadQR={handleDownloadQr}
       />
-    </ThemeProvider >
+    </ThemeProvider>
   );
 };

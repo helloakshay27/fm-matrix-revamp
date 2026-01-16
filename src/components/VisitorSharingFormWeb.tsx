@@ -14,12 +14,14 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [ndaAgree, setNdaAgree] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const apiErrorTimerRef = React.useRef<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -216,6 +218,26 @@ const VisitorSharingFormWeb: React.FC = () => {
           setPassDays(data.pass_days.map(String));
         if (data.qr_code_url) setQrCodeUrl(String(data.qr_code_url));
         if (data.notes) setNotes(String(data.notes));
+
+        // Prefill profile photo when API returns `image` (string URL or object)
+        if (data.image) {
+          let imageUrl: string | undefined;
+          if (typeof data.image === "string") imageUrl = data.image;
+          else if (data.image && typeof data.image === "object") {
+            const imgObj = data.image as Record<string, unknown>;
+            imageUrl =
+              typeof imgObj.url === "string"
+                ? imgObj.url
+                : typeof imgObj.image_url === "string"
+                ? imgObj.image_url
+                : typeof imgObj.document_url === "string"
+                ? imgObj.document_url
+                : typeof imgObj.file_url === "string"
+                ? imgObj.file_url
+                : undefined;
+          }
+          if (imageUrl) setProfilePhoto(String(imageUrl));
+        }
 
         if (data.visitor_identity) {
           type DocShape = {
@@ -638,10 +660,12 @@ const VisitorSharingFormWeb: React.FC = () => {
     primaryVisitor,
     additionalVisitors = [],
     carryingAssetFlag = false,
+  imageBase64 = null,
   }: {
     primaryVisitor: VisitorPayload;
     additionalVisitors?: VisitorPayload[];
     carryingAssetFlag?: boolean;
+  imageBase64?: string | null;
   }) => {
     const formData = new FormData();
 
@@ -653,6 +677,16 @@ const VisitorSharingFormWeb: React.FC = () => {
 
     // include resource id as requested (2920)
     formData.append("gatekeeper[resource_id]", "2920");
+
+    // include profile photo when provided on Step 1
+    // priority: base64 string (from uploaded File or prefetched URL) -> fallback URL
+    if (imageBase64) {
+      // server expects raw base64 (without data: prefix)
+      formData.append("gatekeeper[image_base64]", imageBase64);
+    } else if (profilePhoto && typeof profilePhoto === "string") {
+      // final fallback: if the prefilled photo is a URL, send it as image_url
+      formData.append("gatekeeper[image]", profilePhoto);
+    }
 
     if (primaryVisitor.guest_type)
       formData.append("gatekeeper[guest_type]", primaryVisitor.guest_type);
@@ -958,6 +992,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   // Submit built FormData to API
   const submitToApi = async () => {
     try {
+      setIsSubmitting(true);
       const token = urlToken || "";
       const visitorId = urlVisitorId;
       const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorId}/update_expected_visitor.json`;
@@ -1054,10 +1089,42 @@ const VisitorSharingFormWeb: React.FC = () => {
       // eslint-disable-next-line no-console
       console.debug("[submitToApi] additionalVisitors:", additionalVisitors);
 
+      // Convert uploaded File to base64 when present; otherwise fetch the prefetched URL
+      let imageBase64: string | null = null;
+      const toBase64FromBlob = (blob: Blob) =>
+        new Promise<string | null>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string | null;
+            if (!result) return resolve(null);
+            const comma = result.indexOf(",");
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+
+      try {
+        if (profilePhotoFile) {
+          // convert uploaded file to base64
+          imageBase64 = await toBase64FromBlob(profilePhotoFile as Blob);
+        } else if (profilePhoto && typeof profilePhoto === "string") {
+          // fetch the URL and convert to base64 (may fail due to CORS)
+          const resp = await fetch(profilePhoto, { mode: "cors" });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            imageBase64 = await toBase64FromBlob(blob);
+          }
+        }
+      } catch (err) {
+        imageBase64 = null;
+      }
+
       const fd = buildVisitorFormData({
         primaryVisitor,
         additionalVisitors,
         carryingAssetFlag: carryingAsset,
+        imageBase64,
       });
 
       // Debug: inspect FormData entries to verify files and keys before sending
@@ -1088,6 +1155,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       if (!res.ok) {
         showToast("Submission failed. Please try again.");
         setApiError(`Submit failed (${res.status})`);
+        setIsSubmitting(false);
         // auto-hide after 6 seconds
         if (apiErrorTimerRef.current)
           window.clearTimeout(apiErrorTimerRef.current);
@@ -1099,9 +1167,11 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
       await res.json();
       setShowSuccess(true);
+      setIsSubmitting(false);
     } catch (err) {
       showToast("Network error. Please check your connection.");
       setApiError("Network error during submit");
+      setIsSubmitting(false);
       if (apiErrorTimerRef.current)
         window.clearTimeout(apiErrorTimerRef.current);
       apiErrorTimerRef.current = window.setTimeout(
@@ -1355,15 +1425,15 @@ const VisitorSharingFormWeb: React.FC = () => {
                             }`}
                           >
                             {label}
-                          </button>
-                        );
-                      })}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              <div>
+                  <div>
                 <div className="text-xs text-gray-600">
                   Contact Number <span className="text-[#C72030]">*</span>
                 </div>
@@ -1942,9 +2012,36 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="pt-2">
                 <button
                   onClick={submitToApi}
-                  className="w-full bg-[#C72030] text-white py-3 rounded font-semibold"
+                  className={`w-full py-3 rounded font-semibold text-white ${isSubmitting ? 'bg-gray-400 cursor-wait' : 'bg-[#C72030]'}`}
+                  disabled={isSubmitting}
                 >
-                  Submit
+                  {isSubmitting ? (
+                    <span className="inline-flex items-center justify-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Submit'
+                  )}
                 </button>
               </div>
             </div>

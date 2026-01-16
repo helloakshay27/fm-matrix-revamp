@@ -608,13 +608,7 @@ const BookingListDashboard = () => {
   };
 
   const handleView = (id: number) => {
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("bookings")) {
-      navigate(`/bookings/${id}`);
-    } else {
-      navigate(`/vas/bookings/details/${id}`);
-    }
+    navigate(`/vas/bookings/details/${id}`);
   };
 
   const renderActions = (item: BookingData) => (

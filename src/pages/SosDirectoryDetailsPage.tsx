@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@mui/material";
 import axios from "axios";
 import { FileText, Loader2, File, Pencil, ArrowLeft } from "lucide-react";
@@ -14,6 +15,12 @@ interface SosDirectory {
     document_url?: string;
     created_at?: string;
     created_by?: string;
+    shared_sos_directories?: [
+        {
+            site_id: number;
+            site_name: string;
+        }
+    ];
     user?: {
         name: string;
     }
@@ -29,6 +36,7 @@ const SosDirectoryDetailsPage = () => {
     const [data, setData] = useState<SosDirectory | null>(null);
     const [status, setStatus] = useState(true);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [darkImagePreview, setDarkImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         fetchDetails();
@@ -43,8 +51,11 @@ const SosDirectoryDetailsPage = () => {
 
             setData(dirData);
             setStatus(dirData.status === true || dirData.status === "true");
-            if (dirData.document_url) {
-                setImagePreview(dirData.document_url);
+            if (dirData.sos_directory_lite_url) {
+                setImagePreview(dirData.sos_directory_lite_url);
+            }
+            if (dirData.sos_directory_dark_url) {
+                setDarkImagePreview(dirData.sos_directory_dark_url);
             }
         } catch (error) {
             console.error("Error fetching details:", error);
@@ -178,10 +189,10 @@ const SosDirectoryDetailsPage = () => {
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Tech Park</span>
                             <span className="text-gray-500 mx-2">:</span>
-                            <div className="text-gray-900 font-medium">
-                                Tech Park 1,<br />
-                                Tech Park 2,<br />
-                                Tech Park 3.
+                            <div className="text-gray-900 font-medium space-y-1">
+                                {data?.shared_sos_directories?.map((dir: any, index: number) => (
+                                    <div key={index}>{dir.site_name}</div>
+                                ))}
                             </div>
                         </div>
                         <div className="flex items-start">
@@ -211,23 +222,49 @@ const SosDirectoryDetailsPage = () => {
                     <span className="font-semibold text-lg text-gray-800">Attachment</span>
                 </div>
 
-                <div className="p-8">
-                    <h3 className="text-base font-bold text-gray-900 mb-4">Upload Cover Image</h3>
+                <div className="p-8 grid grid-cols-1 md:grid-cols-5 gap-8">
+                    <div>
+                        <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                            Light Mode Image
+                        </Label>
 
-                    <div
-                        className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
-                    >
-                        {imagePreview ? (
-                            <>
-                                <img
-                                    src={imagePreview}
-                                    alt="Directory Cover"
-                                    className="w-20 h-20 object-contain"
-                                />
-                            </>
-                        ) : (
-                            <span className="text-gray-400 text-sm">No Image</span>
-                        )}
+                        <div
+                            className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+                        >
+                            {imagePreview ? (
+                                <>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Directory Cover"
+                                        className="w-20 h-20 object-contain"
+                                    />
+                                </>
+                            ) : (
+                                <span className="text-gray-400 text-sm">No Image</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label className="text-sm font-bold text-gray-700 mb-4 block">
+                            Dark Mode Image
+                        </Label>
+
+                        <div
+                            className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+                        >
+                            {darkImagePreview ? (
+                                <>
+                                    <img
+                                        src={darkImagePreview}
+                                        alt="Directory Dark Cover"
+                                        className="w-20 h-20 object-contain"
+                                    />
+                                </>
+                            ) : (
+                                <span className="text-gray-400 text-sm">No Image</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
