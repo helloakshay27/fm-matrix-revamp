@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Pagination,
@@ -10,12 +10,17 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { DocumentActionPanel } from "@/components/document/DocumentActionPanel";
 import { DocumentFilterModal } from "@/components/document/DocumentFilterModal";
 import { DocumentEnhancedTable } from "@/components/document/DocumentEnhancedTable";
 import { DocumentSelectionPanel } from "@/components/document/DocumentSelectionPanel";
-import { getFoldersList, FolderListItem } from "@/services/documentService";
+import {
+  getFoldersList,
+  FolderListItem,
+  deleteFolder,
+} from "@/services/documentService";
 import { toast } from "sonner";
 import { FileIcon } from "@/components/document/FileIcon";
 
@@ -305,15 +310,143 @@ export const DocumentManagement = () => {
 
   const renderActions = (document: Document) => {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleViewDetails(document.id)}
-        className="p-1 h-8 w-8"
-      >
-        <Eye className="w-4 h-4 text-[#C72030]" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleViewDetails(document.id)}
+          className="p-1 h-8 w-8"
+          title="View Details"
+        >
+          <Eye className="w-4 h-4 text-[#C72030]" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate(`/maintenance/documents/folder/edit/${document.id}`)
+          }
+          className="p-1 h-8 w-8"
+          title="Edit Folder"
+        >
+          <Edit className="w-4 h-4 text-[#C72030]" />
+        </Button>
+      </div>
     );
+  };
+
+  const renderPaginationItems = () => {
+    if (!totalPages || totalPages <= 0) {
+      return null;
+    }
+    const items = [];
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => setCurrentPage(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show ellipsis or pages after first page
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show current page and surrounding pages
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show ellipsis or pages before last page
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => setCurrentPage(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      // Always show last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => setCurrentPage(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => setCurrentPage(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
   };
 
   const handleApplyFilters = (newFilters: typeof filters) => {
@@ -336,22 +469,60 @@ export const DocumentManagement = () => {
       selectedItems.includes(doc.id.toString())
     );
 
-    // For now, navigate to the first selected folder's edit page
+    // Navigate to folder edit page
     if (selectedDocs.length === 1) {
-      navigate(`/maintenance/documents/folder/${selectedDocs[0].id}/edit`);
+      navigate(`/maintenance/documents/folder/edit/${selectedDocs[0].id}`);
     } else {
-      toast.info("Bulk update coming soon");
+      toast.info("Please select only one folder to update");
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedItems.length === 0) {
       toast.error("No folders selected");
       return;
     }
 
-    // Add confirmation and delete logic
-    toast.info(`Delete ${selectedItems.length} folder(s) - Coming soon`);
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedItems.length} folder(s)? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      // Delete each folder
+      const deletePromises = selectedItems.map((id) =>
+        deleteFolder(parseInt(id))
+      );
+      await Promise.all(deletePromises);
+
+      toast.success(`Successfully deleted ${selectedItems.length} folder(s)`);
+      setSelectedItems([]);
+
+      // Refresh the list
+      const response = await getFoldersList(currentPage, filters);
+      const transformedData: Document[] = response.folders
+        .filter((folder) => folder.name)
+        .map((folder) => ({
+          id: folder.id,
+          folder_title: folder.name || "Untitled",
+          category: folder.document_category_name || "Uncategorized",
+          document_count: folder.total_files,
+          size: formatFileSize(folder.total_file_size),
+          status: folder.active === false ? "Inactive" : "Active",
+          created_by: folder.created_by_full_name || "Unknown",
+          created_date: formatDate(folder.created_at),
+          modified_date: formatDate(folder.updated_at),
+          files_count: folder.total_files,
+          folders_count: (folder.childs || []).length,
+        }));
+      setDocuments(transformedData);
+    } catch (error) {
+      console.error("Error deleting folders:", error);
+      toast.error("Failed to delete folders. Please try again.");
+    }
   };
 
   return (
@@ -399,17 +570,7 @@ export const DocumentManagement = () => {
                         }
                       />
                     </PaginationItem>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <PaginationItem key={index}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(index + 1)}
-                          isActive={currentPage === index + 1}
-                          className="cursor-pointer"
-                        >
-                          {index + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {renderPaginationItems()}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() =>
@@ -454,7 +615,7 @@ export const DocumentManagement = () => {
         onApplyFilters={handleApplyFilters}
       />
 
-      {/* Document Selection Panel */}
+      {/* Document Selection Panel - Move and Copy hidden for folder list */}
       {selectedItems.length > 0 && (
         <DocumentSelectionPanel
           selectedItems={selectedItems}
@@ -463,8 +624,6 @@ export const DocumentManagement = () => {
           )}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
-          onMove={() => toast.info("Move functionality - Coming soon")}
-          onCopy={() => toast.info("Copy functionality - Coming soon")}
           onClearSelection={handleClearSelection}
         />
       )}
