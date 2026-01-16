@@ -18,82 +18,92 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const apiErrorTimerRef = React.useRef<number | null>(null);
 
   const showToast = (msg: string, duration = 3000) => {
-  // clear any existing timer
-  if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-  setToastMessage(msg);
-  setToastVisible(true);
-  toastTimerRef.current = window.setTimeout(() => {
-    setToastVisible(false);
-    toastTimerRef.current = null;
-  }, duration);
-};
-    // Basic form state (missing from earlier edits)
-    type Asset = {
-      id: number;
-      category?: string;
-      name?: string;
-      serial?: string;
-      notes?: string;
-      attachments?: { name: string; url: string; file?: File }[];
-    };
+    // clear any existing timer
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    setToastVisible(true);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastVisible(false);
+      toastTimerRef.current = null;
+    }, duration);
+  };
+  // Basic form state (missing from earlier edits)
+  type Asset = {
+    id: number;
+    category?: string;
+    name?: string;
+    serial?: string;
+    notes?: string;
+    attachments?: { name: string; url: string; file?: File }[];
+  };
 
-    type IdentityPayload = {
-      identity_type?: string;
-      government_id_number?: string;
-      documents?: File[];
-    };
+  type IdentityPayload = {
+    identity_type?: string;
+    government_id_number?: string;
+    documents?: File[];
+  };
 
-    type VisitorPayload = {
+  // documents can be File or an object with a .file property when prefilling from API
+  type DocumentLike = File | { name?: string; url?: string; file?: File };
+
+  type VisitorPayload = {
     // allow mapping of additional visitor fields too
     name?: string;
     mobile?: string;
-  email?: string;
+    email?: string;
     vehicle_number?: string;
-      guest_type?: string;
-      guest_number?: string;
-      guest_name?: string;
-      guest_email?: string;
-      guest_vehicle_number?: string;
-      expected_at?: string;
-      visit_purpose?: string;
-      company_name?: string;
-      visit_to?: string;
-      persont_to_meet?: string;
-      plus_person?: number;
+    guest_vehicle_type?: string;
+    vehicle_type?: string;
+    guest_type?: string;
+    guest_number?: string;
+    guest_name?: string;
+    guest_email?: string;
+    guest_vehicle_number?: string;
+    expected_at?: string;
+    visit_purpose?: string;
+    company_name?: string;
+    visit_to?: string;
+    persont_to_meet?: string;
+    plus_person?: number;
+    notes?: string;
+    pass_holder?: string;
+    pass_start_date?: string;
+    pass_end_date?: string;
+    pass_days?: string[];
+    assets?: Array<{
+      asset_category_name?: string;
+      asset_name?: string;
+      serial_model_number?: string;
       notes?: string;
-      pass_holder?: string;
-      pass_start_date?: string;
-      pass_end_date?: string;
-      pass_days?: string[];
-      assets?: Array<{
-        asset_category_name?: string;
-        asset_name?: string;
-        serial_model_number?: string;
-        notes?: string;
-        documents?: File[];
-      }>;
-      identity?: IdentityPayload;
-    };
+      documents?: File[];
+      attachments?: { name?: string; url?: string; file?: File }[];
+    }>;
+    identity?: IdentityPayload;
+  };
 
-    const [guestType, setGuestType] = useState<"Once" | "Frequent">("Once");
-    const [contact, setContact] = useState<string>("");
-    const [name, setName] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [expectedDate, setExpectedDate] = useState<string>("");
-    const [expectedTime, setExpectedTime] = useState<string>("");
-    const [fromTime, setFromTime] = useState<string>("");
-    const [toTime, setToTime] = useState<string>("");
-    const [purpose, setPurpose] = useState<string>("");
-    const [company, setCompany] = useState<string>("");
-    const [location, setLocation] = useState<string>("");
-    const [personToMeet, setPersonToMeet] = useState<string>("myself");
-    const [personToMeetName, setPersonToMeetName] = useState<string>("");
-    const [toLocation, setToLocation] = useState<string>("");
+  const [guestType, setGuestType] = useState<"Once" | "Frequent">("Once");
+  const [contact, setContact] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [expectedDate, setExpectedDate] = useState<string>("");
+  const [expectedTime, setExpectedTime] = useState<string>("");
+  const [fromTime, setFromTime] = useState<string>("");
+  const [toTime, setToTime] = useState<string>("");
+  const [purpose, setPurpose] = useState<string>("");
+  const [company, setCompany] = useState<string>("");
+  const [location, setLocation] = useState<string>("");
+  const [personToMeet, setPersonToMeet] = useState<string>("myself");
+  const [personToMeetName, setPersonToMeetName] = useState<string>("");
+  const [toLocation, setToLocation] = useState<string>("");
 
-    const [primaryVehicle, setPrimaryVehicle] = useState<"car" | "bike" | null>(null);
-    const [primaryVehicleNumber, setPrimaryVehicleNumber] = useState<string>("");
+  const [primaryVehicle, setPrimaryVehicle] = useState<"car" | "bike" | null>(
+    null
+  );
+  const [primaryVehicleNumber, setPrimaryVehicleNumber] = useState<string>("");
 
   // Extra fields populated from API response
   const [passHolder, setPassHolder] = useState<boolean | null>(null);
@@ -106,114 +116,375 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [urlToken, setUrlToken] = useState<string | null>(null);
   const [urlVisitorId, setUrlVisitorId] = useState<string | null>(null);
 
-    const [visitors, setVisitors] = useState<Visitor[]>([]);
-    const [visitorErrors, setVisitorErrors] = useState<Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>>({});
-    const [primaryVehicleError, setPrimaryVehicleError] = useState<boolean>(false);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [visitorErrors, setVisitorErrors] = useState<
+    Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>
+  >({});
+  const [primaryVehicleError, setPrimaryVehicleError] =
+    useState<boolean>(false);
 
-    const [assetsByVisitor, setAssetsByVisitor] = useState<Record<number, Asset[]>>({});
-    const [carryingAsset, setCarryingAsset] = useState<boolean>(false);
-    const [expandedVisitors, setExpandedVisitors] = useState<Record<number, boolean>>({ 0: false });
-    const [assetCategoryErrors, setAssetCategoryErrors] = useState<Record<number, boolean>>({});
+  const [assetsByVisitor, setAssetsByVisitor] = useState<
+    Record<number, Asset[]>
+  >({});
+  const [carryingAsset, setCarryingAsset] = useState<boolean>(false);
+  const [expandedVisitors, setExpandedVisitors] = useState<
+    Record<number, boolean>
+  >({ 0: false });
+  const [assetCategoryErrors, setAssetCategoryErrors] = useState<
+    Record<number, boolean>
+  >({});
 
-    // Prefill Step 1 from host API (image upload intentionally excluded)
-    useEffect(() => {
-      // extract token from query and id from path
-      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const token = params ? params.get('token') : null;
-      let id: string | null = null;
-      if (typeof window !== 'undefined') {
-        const parts = window.location.pathname.split('/').filter(Boolean);
-        if (parts.length) id = parts[parts.length - 1];
-      }
-      setUrlToken(token);
-      setUrlVisitorId(id);
+  // Prefill Step 1 from host API (image upload intentionally excluded)
+  useEffect(() => {
+    // extract token from query and id from path
+    const params =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const token = params ? params.get("token") : null;
+    let id: string | null = null;
+    if (typeof window !== "undefined") {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      if (parts.length) id = parts[parts.length - 1];
+    }
+    setUrlToken(token);
+    setUrlVisitorId(id);
 
-      if (!id || !token) {
-        // missing values; prefill is optional
-        return;
-      }
+    if (!id || !token) {
+      // missing values; prefill is optional
+      return;
+    }
 
-      const loadPrefill = async () => {
-        try {
-          const res = await fetch(`https://lockated-api.gophygital.work/pms/visitors/${id}.json?token=${encodeURIComponent(token)}`);
-          if (!res.ok) return;
-          const data = await res.json();
-          // Map common host fields into the Step 1 state
-          if (data.guest_type) setGuestType(data.guest_type);
-          if (data.guest_number) setContact(String(data.guest_number));
-          else if (data.mobile) setContact(String(data.mobile));
-
-          if (data.guest_name) setName(String(data.guest_name));
-          else if (data.name) setName(String(data.name));
-
-          if (data.guest_email) setEmail(String(data.guest_email));
-          else if (data.email) setEmail(String(data.email));
-          if (data.expected_at) {
-            const [d, t] = String(data.expected_at).split('T');
-            if (d) setExpectedDate(d);
-            if (t) setExpectedTime(t.replace(/Z$/, ''));
-          }
-          if (data.visit_purpose) setPurpose(String(data.visit_purpose));
-          if (data.company_name) setCompany(String(data.company_name));
-          if (data.visit_to) setLocation(String(data.visit_to));
-          if (data.persont_to_meet) setPersonToMeetName(String(data.persont_to_meet));
-
-          if (data.guest_vehicle_number) setPrimaryVehicleNumber(String(data.guest_vehicle_number));
-
-          if (typeof data.pass_holder !== 'undefined') setPassHolder(Boolean(data.pass_holder));
-          if (data.pass_start_date) setPassStartDate(String(data.pass_start_date));
-          if (data.pass_end_date) setPassEndDate(String(data.pass_end_date));
-          if (Array.isArray(data.pass_days)) setPassDays(data.pass_days.map(String));
-          if (data.qr_code_url) setQrCodeUrl(String(data.qr_code_url));
-          if (data.notes) setNotes(String(data.notes));
-
-          if (data.visitor_identity) {
-            type DocShape = { name?: string; url?: string };
-            setIdentityByVisitor((s) => ({
-              ...s,
-              0: {
-                type: data.visitor_identity.identity_type,
-                govId: data.visitor_identity.government_id_number,
-                photoCount: 0,
-                documents: (data.visitor_identity.documents || []).map((d: DocShape) => ({ name: d.name, url: d.url })),
-              },
-            }));
-          }
-
-          if (Array.isArray(data.additional_visitors) && data.additional_visitors.length) {
-            type AddVis = {
-              mobile?: string;
-              guest_number?: string;
-              name?: string;
-              guest_name?: string;
-              email?: string;
-              guest_email?: string;
-              vehicle_number?: string;
-              guest_vehicle_number?: string;
-            };
-            const mapped = data.additional_visitors.map((av: AddVis, idx: number) => ({
-              id: idx + 1,
-              contact: av.mobile || av.guest_number || "",
-              name: av.name || av.guest_name || "",
-              email: av.email || av.guest_email || "",
-              vehicle: null,
-              vehicleNumber: av.vehicle_number || av.guest_vehicle_number || "",
-            }));
-            setVisitors(mapped);
-          }
-        } catch (e) {
-          // silent fail; prefill is optional
+    const loadPrefill = async () => {
+      try {
+        const res = await fetch(
+          `https://lockated-api.gophygital.work/pms/visitors/${id}.json?token=${encodeURIComponent(token)}`
+        );
+        if (!res.ok) {
+          // surface server errors to the small mobile card for easier debugging
+          setApiError(`Prefill failed (${res.status})`);
+          return;
         }
-      };
-      loadPrefill();
-    }, []);
+        const data = await res.json();
+        // Map common host fields into the Step 1 state
+        if (data.guest_type) setGuestType(data.guest_type);
+        if (data.guest_number) setContact(String(data.guest_number));
+        else if (data.mobile) setContact(String(data.mobile));
 
-    // Step 4 identity per visitor
+        if (data.guest_name) setName(String(data.guest_name));
+        else if (data.name) setName(String(data.name));
+
+        if (data.guest_email) setEmail(String(data.guest_email));
+        else if (data.email) setEmail(String(data.email));
+        if (data.expected_at) {
+          const [d, t] = String(data.expected_at).split("T");
+          if (d) setExpectedDate(d);
+          if (t) {
+            // t may contain seconds, milliseconds and timezone like "11:08:00.000+05:30"
+            const m = t.match(/(\d{2}:\d{2})/);
+            setExpectedTime(m ? m[1] : t.replace(/Z$/, ""));
+          }
+        }
+        if (data.visit_purpose) setPurpose(String(data.visit_purpose));
+        if (data.company_name) setCompany(String(data.company_name));
+        if (data.visit_to) setLocation(String(data.visit_to));
+        if (data.persont_to_meet)
+          setPersonToMeetName(String(data.persont_to_meet));
+
+        if (data.guest_vehicle_number)
+          setPrimaryVehicleNumber(String(data.guest_vehicle_number));
+
+        // map vehicle type into primaryVehicle state if provided
+        const primaryVt = data.guest_vehicle_type || data.vehicle_type || "";
+        if (primaryVt) {
+          const vt = String(primaryVt).toLowerCase();
+          if (vt.includes("car")) setPrimaryVehicle("car");
+          else if (
+            vt.includes("bike") ||
+            vt.includes("motor") ||
+            vt.includes("two")
+          )
+            setPrimaryVehicle("bike");
+        }
+
+        if (typeof data.pass_holder !== "undefined")
+          setPassHolder(Boolean(data.pass_holder));
+        if (data.pass_start_date)
+          setPassStartDate(String(data.pass_start_date));
+        if (data.pass_end_date) setPassEndDate(String(data.pass_end_date));
+        if (Array.isArray(data.pass_days))
+          setPassDays(data.pass_days.map(String));
+        if (data.qr_code_url) setQrCodeUrl(String(data.qr_code_url));
+        if (data.notes) setNotes(String(data.notes));
+
+        if (data.visitor_identity) {
+          type DocShape = {
+            name?: string;
+            url?: string;
+            document_url?: string;
+            documentUrl?: string;
+            file_url?: string;
+          };
+          setIdentityByVisitor((s) => ({
+            ...s,
+            0: {
+              type: data.visitor_identity.identity_type,
+              govId: data.visitor_identity.government_id_number,
+              photoCount: 0,
+              documents: (data.visitor_identity.documents || []).map(
+                (d: DocShape) => ({
+                  name: d.name || undefined,
+                  url: d.url || d.document_url || d.documentUrl || d.file_url,
+                })
+              ),
+            },
+          }));
+        }
+
+        if (
+          Array.isArray(data.additional_visitors) &&
+          data.additional_visitors.length
+        ) {
+          type AddVis = {
+            mobile?: string;
+            guest_number?: string;
+            name?: string;
+            guest_name?: string;
+            email?: string;
+            guest_email?: string;
+            vehicle_number?: string;
+            guest_vehicle_number?: string;
+            vehicle_type?: string;
+            guest_vehicle_type?: string;
+          };
+          const mapped = data.additional_visitors.map(
+            (av: AddVis, idx: number) => {
+              // detect vehicle type variants
+              const vtRaw = (av.vehicle_type ||
+                av.guest_vehicle_type ||
+                "") as string;
+              let vehicle: "car" | "bike" | null = null;
+              if (vtRaw) {
+                const vt = String(vtRaw).toLowerCase();
+                if (vt.includes("car")) vehicle = "car";
+                else if (
+                  vt.includes("bike") ||
+                  vt.includes("motor") ||
+                  vt.includes("two")
+                )
+                  vehicle = "bike";
+              }
+              return {
+                id: idx + 1,
+                contact: av.mobile || av.guest_number || "",
+                name: av.name || av.guest_name || "",
+                email: av.email || av.guest_email || "",
+                vehicle,
+                vehicleNumber:
+                  av.vehicle_number || av.guest_vehicle_number || "",
+              };
+            }
+          );
+          setVisitors(mapped);
+          // Map identity for additional visitors (so Step 4 shows gov id and photos)
+          try {
+            const identitiesMap: Record<number, IdentityState> = {};
+            const addVisArr = Array.isArray(
+              (data as unknown as { additional_visitors?: unknown })
+                .additional_visitors
+            )
+              ? (data as unknown as { additional_visitors?: unknown })
+                  .additional_visitors
+              : [];
+            (addVisArr as unknown[]).forEach((avUnknown, idx: number) => {
+              const id = idx + 1; // matches visitors[] mapping (primary = 0)
+              if (!avUnknown || typeof avUnknown !== "object") return;
+              const av = avUnknown as Record<string, unknown>;
+              const identity = (av.identity || av.visitor_identity) as
+                | Record<string, unknown>
+                | undefined;
+              if (!identity) return;
+              const docsArr = Array.isArray(identity.documents)
+                ? identity.documents
+                : [];
+              const documents = (docsArr as unknown[])
+                .map((dUnknown) => {
+                  if (!dUnknown || typeof dUnknown !== "object")
+                    return undefined;
+                  const d = dUnknown as Record<string, unknown>;
+                  const url =
+                    typeof d.document_url === "string"
+                      ? d.document_url
+                      : typeof d.url === "string"
+                        ? d.url
+                        : typeof d.documentUrl === "string"
+                          ? d.documentUrl
+                          : typeof d.file_url === "string"
+                            ? d.file_url
+                            : undefined;
+                  if (!url) return undefined;
+                  return {
+                    name: typeof d.name === "string" ? d.name : "",
+                    url,
+                  };
+                })
+                .filter(Boolean) as { name: string; url: string }[];
+
+              const gov =
+                typeof identity.government_id_number === "string"
+                  ? identity.government_id_number
+                  : undefined;
+              const idType =
+                typeof identity.identity_type === "string"
+                  ? identity.identity_type
+                  : undefined;
+              if (documents.length || gov || idType) {
+                identitiesMap[id] = {
+                  type: idType as IdentityState["type"] | undefined,
+                  govId: gov,
+                  photoCount: documents.length,
+                  documents: documents,
+                };
+              }
+            });
+            if (Object.keys(identitiesMap).length) {
+              setIdentityByVisitor((s) => ({ ...s, ...identitiesMap }));
+            }
+          } catch (_) {
+            // best-effort mapping
+          }
+          // Map assets from the host response into our assetsByVisitor state so
+          // Step 3 shows prefilled assets and their document URLs.
+          try {
+            const assetsMap: Record<number, Asset[]> = {};
+
+            const maybeAssets = (data as unknown as { assets?: unknown })
+              .assets;
+            if (Array.isArray(maybeAssets) && maybeAssets.length) {
+              const primaryArr: Asset[] = [];
+              for (let ai = 0; ai < maybeAssets.length; ai++) {
+                const a = maybeAssets[ai] as
+                  | Record<string, unknown>
+                  | undefined;
+                if (!a) continue;
+                const docs = Array.isArray(a.documents)
+                  ? (a.documents as unknown[])
+                  : [];
+                const attachments = docs.map((d) => {
+                  const dd = d as Record<string, unknown> | undefined;
+                  return {
+                    name: typeof dd?.name === "string" ? dd!.name : undefined,
+                    url:
+                      typeof dd?.document_url === "string"
+                        ? dd!.document_url
+                        : typeof dd?.url === "string"
+                          ? dd!.url
+                          : typeof dd?.file_url === "string"
+                            ? dd!.file_url
+                            : undefined,
+                  };
+                });
+                primaryArr.push({
+                  id: typeof a.id === "number" ? a.id : ai,
+                  category:
+                    typeof a.asset_category_name === "string"
+                      ? a.asset_category_name
+                      : typeof a.asset_category === "string"
+                        ? a.asset_category
+                        : "",
+                  name: typeof a.asset_name === "string" ? a.asset_name : "",
+                  serial:
+                    typeof a.serial_model_number === "string"
+                      ? a.serial_model_number
+                      : "",
+                  notes: typeof a.notes === "string" ? a.notes : "",
+                  attachments,
+                });
+              }
+              if (primaryArr.length) assetsMap[0] = primaryArr;
+            }
+
+            const maybeAdditional = (
+              data as unknown as {
+                additional_visitors?: unknown;
+              }
+            ).additional_visitors;
+            if (Array.isArray(maybeAdditional)) {
+              for (let avIdx = 0; avIdx < maybeAdditional.length; avIdx++) {
+                const av = maybeAdditional[avIdx] as
+                  | Record<string, unknown>
+                  | undefined;
+                if (!av) continue;
+                const maybeAvAssets = av.assets;
+                if (!Array.isArray(maybeAvAssets) || !maybeAvAssets.length)
+                  continue;
+                const arr: Asset[] = [];
+                for (let ai = 0; ai < maybeAvAssets.length; ai++) {
+                  const a = maybeAvAssets[ai] as
+                    | Record<string, unknown>
+                    | undefined;
+                  if (!a) continue;
+                  const docs = Array.isArray(a.documents)
+                    ? (a.documents as unknown[])
+                    : [];
+                  const attachments = docs.map((d) => {
+                    const dd = d as Record<string, unknown> | undefined;
+                    return {
+                      name: typeof dd?.name === "string" ? dd!.name : undefined,
+                      url:
+                        typeof dd?.document_url === "string"
+                          ? dd!.document_url
+                          : typeof dd?.url === "string"
+                            ? dd!.url
+                            : typeof dd?.file_url === "string"
+                              ? dd!.file_url
+                              : undefined,
+                    };
+                  });
+                  arr.push({
+                    id: typeof a.id === "number" ? a.id : ai,
+                    category:
+                      typeof a.asset_category_name === "string"
+                        ? a.asset_category_name
+                        : typeof a.asset_category === "string"
+                          ? a.asset_category
+                          : "",
+                    name: typeof a.asset_name === "string" ? a.asset_name : "",
+                    serial:
+                      typeof a.serial_model_number === "string"
+                        ? a.serial_model_number
+                        : "",
+                    notes: typeof a.notes === "string" ? a.notes : "",
+                    attachments,
+                  });
+                }
+                if (arr.length) assetsMap[avIdx + 1] = arr;
+              }
+            }
+
+            if (Object.keys(assetsMap).length) {
+              setAssetsByVisitor((s) => ({ ...s, ...assetsMap }));
+              // mark carryingAsset true when any assets were prefilled
+              setCarryingAsset(true);
+            }
+          } catch (err) {
+            // swallow mapping errors; prefill is best-effort
+          }
+        }
+      } catch (e) {
+        // show a brief API error card on network failure
+        setApiError("Prefill network error");
+      }
+    };
+    loadPrefill();
+  }, []);
+
+  // Step 4 identity per visitor
   type IdentityState = {
-  type?: "PAN" | "Aadhaar" | "Passport" | "Driving License";
-  govId?: string;
-  photoCount?: number;
-  documents?: { name: string; url: string; file?: File }[];
+    type?: "PAN" | "Aadhaar" | "Passport" | "Driving License";
+    govId?: string;
+    photoCount?: number;
+    documents?: { name: string; url: string; file?: File }[];
   };
   const [identityByVisitor, setIdentityByVisitor] = useState<
     Record<number, IdentityState>
@@ -328,6 +599,30 @@ const VisitorSharingFormWeb: React.FC = () => {
         setAssetCategoryErrors(nextErrors);
         if (hasAssetErrors) {
           showToast("Please select asset category for all visitors.");
+          // expand the visitor sections that have missing categories
+          setExpandedVisitors((e) => {
+            const next = { ...e };
+            Object.keys(nextErrors).forEach((k) => {
+              const id = Number(k);
+              if (nextErrors[id]) next[id] = true;
+            });
+            return next;
+          });
+
+          // scroll to the first failing visitor after the DOM updates
+          const firstFailKey = Object.keys(nextErrors).find(
+            (k) => nextErrors[Number(k)]
+          );
+          if (firstFailKey) {
+            const failId = Number(firstFailKey);
+            // give React a tick to apply expanded state
+            setTimeout(() => {
+              const el = document.getElementById(`asset-visitor-${failId}`);
+              if (el && typeof el.scrollIntoView === "function") {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 60);
+          }
           return;
         }
       } else {
@@ -339,111 +634,349 @@ const VisitorSharingFormWeb: React.FC = () => {
     setStep((s) => (s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1)));
   };
 
-  const buildVisitorFormData = ({ primaryVisitor, additionalVisitors = [], carryingAssetFlag = false }: { primaryVisitor: VisitorPayload; additionalVisitors?: VisitorPayload[]; carryingAssetFlag?: boolean }) => {
-      const formData = new FormData();
+  const buildVisitorFormData = ({
+    primaryVisitor,
+    additionalVisitors = [],
+    carryingAssetFlag = false,
+  }: {
+    primaryVisitor: VisitorPayload;
+    additionalVisitors?: VisitorPayload[];
+    carryingAssetFlag?: boolean;
+  }) => {
+    const formData = new FormData();
 
-      // include carrying asset flag (use the key spelled as requested)
-      formData.append('gatekeeper[carring_asset]', carryingAssetFlag ? 'true' : 'false');
+    // include carrying asset flag (use the key spelled as requested)
+    formData.append(
+      "gatekeeper[carring_asset]",
+      carryingAssetFlag ? "true" : "false"
+    );
 
-      if (primaryVisitor.guest_type)
-        formData.append("gatekeeper[guest_type]", primaryVisitor.guest_type);
-      if (primaryVisitor.guest_number)
-        formData.append("gatekeeper[guest_number]", primaryVisitor.guest_number);
-      if (primaryVisitor.guest_name)
-        formData.append("gatekeeper[guest_name]", primaryVisitor.guest_name);
-      if (primaryVisitor.guest_email)
-        formData.append("gatekeeper[guest_email]", primaryVisitor.guest_email);
-      if (primaryVisitor.guest_vehicle_number)
-        formData.append("gatekeeper[guest_vehicle_number]", primaryVisitor.guest_vehicle_number);
-      formData.append("gatekeeper[approve]", "5");
+    // include resource id as requested (2920)
+    formData.append("gatekeeper[resource_id]", "2920");
 
-      if (primaryVisitor.expected_at)
-        formData.append("gatekeeper[expected_at]", primaryVisitor.expected_at);
-      if (primaryVisitor.visit_purpose)
-        formData.append("gatekeeper[visit_purpose]", primaryVisitor.visit_purpose);
-      if (primaryVisitor.company_name)
-        formData.append("gatekeeper[company_name]", primaryVisitor.company_name);
-      if (primaryVisitor.visit_to)
-        formData.append("gatekeeper[visit_to]", primaryVisitor.visit_to);
-      if (primaryVisitor.persont_to_meet)
-        formData.append("gatekeeper[persont_to_meet]", primaryVisitor.persont_to_meet);
-      if (primaryVisitor.plus_person)
-        formData.append("gatekeeper[plus_person]", String(primaryVisitor.plus_person));
-      if (primaryVisitor.notes) formData.append("gatekeeper[notes]", primaryVisitor.notes);
+    if (primaryVisitor.guest_type)
+      formData.append("gatekeeper[guest_type]", primaryVisitor.guest_type);
+    if (primaryVisitor.guest_number)
+      formData.append("gatekeeper[guest_number]", primaryVisitor.guest_number);
+    if (primaryVisitor.guest_name)
+      formData.append("gatekeeper[guest_name]", primaryVisitor.guest_name);
+    if (primaryVisitor.guest_email)
+      formData.append("gatekeeper[guest_email]", primaryVisitor.guest_email);
+    if (primaryVisitor.guest_vehicle_number)
+      formData.append(
+        "gatekeeper[guest_vehicle_number]",
+        primaryVisitor.guest_vehicle_number
+      );
+    if (primaryVisitor.guest_vehicle_type)
+      formData.append(
+        "gatekeeper[vehicle_type]",
+        primaryVisitor.guest_vehicle_type
+      );
+    formData.append("gatekeeper[approve]", "5");
 
-      if (primaryVisitor.pass_holder) formData.append("gatekeeper[pass_holder]", primaryVisitor.pass_holder);
-      if (primaryVisitor.pass_start_date) formData.append("gatekeeper[pass_start_date]", primaryVisitor.pass_start_date);
-      if (primaryVisitor.pass_end_date) formData.append("gatekeeper[pass_end_date]", primaryVisitor.pass_end_date);
-    (primaryVisitor.pass_days || []).forEach((d: string) => formData.append("gatekeeper[pass_days][]", d));
+    if (primaryVisitor.expected_at)
+      formData.append("gatekeeper[expected_at]", primaryVisitor.expected_at);
+    if (primaryVisitor.visit_purpose)
+      formData.append(
+        "gatekeeper[visit_purpose]",
+        primaryVisitor.visit_purpose
+      );
+    if (primaryVisitor.company_name)
+      formData.append("gatekeeper[company_name]", primaryVisitor.company_name);
+    if (primaryVisitor.visit_to)
+      formData.append("gatekeeper[visit_to]", primaryVisitor.visit_to);
+    if (primaryVisitor.persont_to_meet)
+      formData.append(
+        "gatekeeper[persont_to_meet]",
+        primaryVisitor.persont_to_meet
+      );
+    if (primaryVisitor.plus_person)
+      formData.append(
+        "gatekeeper[plus_person]",
+        String(primaryVisitor.plus_person)
+      );
+    if (primaryVisitor.notes)
+      formData.append("gatekeeper[notes]", primaryVisitor.notes);
+
+    if (primaryVisitor.pass_holder)
+      formData.append("gatekeeper[pass_holder]", primaryVisitor.pass_holder);
+    if (primaryVisitor.pass_start_date)
+      formData.append(
+        "gatekeeper[pass_start_date]",
+        primaryVisitor.pass_start_date
+      );
+    if (primaryVisitor.pass_end_date)
+      formData.append(
+        "gatekeeper[pass_end_date]",
+        primaryVisitor.pass_end_date
+      );
+    (primaryVisitor.pass_days || []).forEach((d: string) =>
+      formData.append("gatekeeper[pass_days][]", d)
+    );
 
     (primaryVisitor.assets || []).forEach((a, idx: number) => {
-        if (a.asset_category_name) formData.append(`gatekeeper[assets][${idx}][asset_category_name]`, a.asset_category_name);
-        if (a.asset_name) formData.append(`gatekeeper[assets][${idx}][asset_name]`, a.asset_name);
-        if (a.serial_model_number) formData.append(`gatekeeper[assets][${idx}][serial_model_number]`, a.serial_model_number);
-        if (a.notes) formData.append(`gatekeeper[assets][${idx}][notes]`, a.notes);
-        (a.documents || []).forEach((f: File) => { if (f) formData.append(`gatekeeper[assets][${idx}][documents][]`, f); });
+      if (a.asset_category_name)
+        formData.append(
+          `gatekeeper[assets][${idx}][asset_category_name]`,
+          a.asset_category_name
+        );
+      if (a.asset_name)
+        formData.append(`gatekeeper[assets][${idx}][asset_name]`, a.asset_name);
+      if (a.serial_model_number)
+        formData.append(
+          `gatekeeper[assets][${idx}][serial_model_number]`,
+          a.serial_model_number
+        );
+      if (a.notes)
+        formData.append(`gatekeeper[assets][${idx}][notes]`, a.notes);
+      // Collect files from `documents` (File) and `attachments` (may contain .file)
+      const docFiles: File[] = [];
+      (a.documents || []).forEach((d) => {
+        if (d instanceof File) docFiles.push(d);
+      });
+      (a.attachments || []).forEach((att) => {
+        if (att && att.file) docFiles.push(att.file);
       });
 
-      if (primaryVisitor.identity) {
-        if (primaryVisitor.identity.identity_type) formData.append("gatekeeper[visitor_identity][identity_type]", primaryVisitor.identity.identity_type);
-        if (primaryVisitor.identity.government_id_number) formData.append("gatekeeper[visitor_identity][government_id_number]", primaryVisitor.identity.government_id_number);
-        (primaryVisitor.identity.documents || []).forEach((f: File) => { if (f) formData.append("gatekeeper[visitor_identity][documents][]", f); });
+      // Append file objects first (expected by server)
+      docFiles.forEach((f) =>
+        formData.append(`gatekeeper[assets][${idx}][documents][]`, f)
+      );
+
+      // If no file objects but prefilling provided URLs, send them as fallback keys
+      if (docFiles.length === 0) {
+        (a.documents || []).forEach((d) => {
+          const maybe = d as unknown as { url?: string };
+          if (maybe && typeof maybe.url === "string") {
+            formData.append(
+              `gatekeeper[assets][${idx}][documents_urls][]`,
+              maybe.url
+            );
+          }
+        });
+        (a.attachments || []).forEach((att) => {
+          if (att && typeof att.url === "string") {
+            formData.append(
+              `gatekeeper[assets][${idx}][documents_urls][]`,
+              att.url
+            );
+          }
+        });
       }
+    });
+
+    if (primaryVisitor.identity) {
+      if (primaryVisitor.identity.identity_type)
+        formData.append(
+          "gatekeeper[visitor_identity][identity_type]",
+          primaryVisitor.identity.identity_type
+        );
+      if (primaryVisitor.identity.government_id_number)
+        formData.append(
+          "gatekeeper[visitor_identity][government_id_number]",
+          primaryVisitor.identity.government_id_number
+        );
+      // documents may be File objects or objects like { name, url, file }
+      (primaryVisitor.identity.documents || []).forEach((doc: DocumentLike) => {
+        const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
+        if (file)
+          formData.append("gatekeeper[visitor_identity][documents][]", file);
+      });
+    }
 
     additionalVisitors.forEach((v, i: number) => {
-        if (v.name) formData.append(`gatekeeper[additional_visitors_attributes][${i}][name]`, v.name);
-        if (v.mobile) formData.append(`gatekeeper[additional_visitors_attributes][${i}][mobile]`, v.mobile);
-        if (v.email) formData.append(`gatekeeper[additional_visitors_attributes][${i}][email]`, v.email);
-        if (v.vehicle_number) formData.append(`gatekeeper[additional_visitors_attributes][${i}][vehicle_number]`, v.vehicle_number);
-        if (v.guest_type) formData.append(`gatekeeper[additional_visitors_attributes][${i}][guest_type]`, v.guest_type);
-        if (v.expected_at) formData.append(`gatekeeper[additional_visitors_attributes][${i}][expected_at]`, v.expected_at);
-        if (v.visit_purpose) formData.append(`gatekeeper[additional_visitors_attributes][${i}][visit_purpose]`, v.visit_purpose);
-        if (v.company_name) formData.append(`gatekeeper[additional_visitors_attributes][${i}][company_name]`, v.company_name);
-        if (v.visit_to) formData.append(`gatekeeper[additional_visitors_attributes][${i}][visit_to]`, v.visit_to);
-        if (v.persont_to_meet) formData.append(`gatekeeper[additional_visitors_attributes][${i}][persont_to_meet]`, v.persont_to_meet);
-        if (v.plus_person) formData.append(`gatekeeper[additional_visitors_attributes][${i}][plus_person]`, String(v.plus_person));
-        if (v.notes) formData.append(`gatekeeper[additional_visitors_attributes][${i}][notes]`, v.notes);
+      if (v.name)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][name]`,
+          v.name
+        );
+      if (v.mobile)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][mobile]`,
+          v.mobile
+        );
+      if (v.email)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][email]`,
+          v.email
+        );
+      if (v.vehicle_number)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][vehicle_number]`,
+          v.vehicle_number
+        );
+      if (v.vehicle_type)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][vehicle_type]`,
+          v.vehicle_type
+        );
+      if (v.guest_type)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][guest_type]`,
+          v.guest_type
+        );
+      if (v.expected_at)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][expected_at]`,
+          v.expected_at
+        );
+      if (v.visit_purpose)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][visit_purpose]`,
+          v.visit_purpose
+        );
+      if (v.company_name)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][company_name]`,
+          v.company_name
+        );
+      if (v.visit_to)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][visit_to]`,
+          v.visit_to
+        );
+      if (v.persont_to_meet)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][persont_to_meet]`,
+          v.persont_to_meet
+        );
+      if (v.plus_person)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][plus_person]`,
+          String(v.plus_person)
+        );
+      if (v.notes)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][notes]`,
+          v.notes
+        );
 
-        if (v.pass_holder) formData.append(`gatekeeper[additional_visitors_attributes][${i}][pass_holder]`, v.pass_holder);
-        if (v.pass_start_date) formData.append(`gatekeeper[additional_visitors_attributes][${i}][pass_start_date]`, v.pass_start_date);
-        if (v.pass_end_date) formData.append(`gatekeeper[additional_visitors_attributes][${i}][pass_end_date]`, v.pass_end_date);
-    (v.pass_days || []).forEach((d: string) => formData.append(`gatekeeper[additional_visitors_attributes][${i}][pass_days][]`, d));
+      if (v.pass_holder)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][pass_holder]`,
+          v.pass_holder
+        );
+      if (v.pass_start_date)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][pass_start_date]`,
+          v.pass_start_date
+        );
+      if (v.pass_end_date)
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][pass_end_date]`,
+          v.pass_end_date
+        );
+      (v.pass_days || []).forEach((d: string) =>
+        formData.append(
+          `gatekeeper[additional_visitors_attributes][${i}][pass_days][]`,
+          d
+        )
+      );
 
-    (v.assets || []).forEach((a, aIdx: number) => {
-          if (a.asset_category_name) formData.append(`gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][asset_category_name]`, a.asset_category_name);
-          if (a.asset_name) formData.append(`gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][asset_name]`, a.asset_name);
-          if (a.serial_model_number) formData.append(`gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][serial_model_number]`, a.serial_model_number);
-          if (a.notes) formData.append(`gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][notes]`, a.notes);
-          (a.documents || []).forEach((f: File) => { if (f) formData.append(`gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`, f); });
+      (v.assets || []).forEach((a, aIdx: number) => {
+        if (a.asset_category_name)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][asset_category_name]`,
+            a.asset_category_name
+          );
+        if (a.asset_name)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][asset_name]`,
+            a.asset_name
+          );
+        if (a.serial_model_number)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][serial_model_number]`,
+            a.serial_model_number
+          );
+        if (a.notes)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][notes]`,
+            a.notes
+          );
+        // handle documents and attachments for additional visitor asset
+        const docFilesAdd: File[] = [];
+        (a.documents || []).forEach((d) => {
+          if (d instanceof File) docFilesAdd.push(d);
         });
-
-    if (v.identity) {
-          if (v.identity.identity_type) formData.append(`gatekeeper[additional_visitors_attributes][${i}][identity][identity_type]`, v.identity.identity_type);
-          if (v.identity.government_id_number) formData.append(`gatekeeper[additional_visitors_attributes][${i}][identity][government_id_number]`, v.identity.government_id_number);
-          (v.identity.documents || []).forEach((f: File) => { if (f) formData.append(`gatekeeper[additional_visitors_attributes][${i}][identity][documents][]`, f); });
-    }
+        (a.attachments || []).forEach((att) => {
+          if (att && att.file) docFilesAdd.push(att.file);
+        });
+        docFilesAdd.forEach((f) =>
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
+            f
+          )
+        );
+        if (docFilesAdd.length === 0) {
+          (a.documents || []).forEach((d) => {
+            const maybe = d as unknown as { url?: string };
+            if (maybe && typeof maybe.url === "string") {
+              formData.append(
+                `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents_urls][]`,
+                maybe.url
+              );
+            }
+          });
+          (a.attachments || []).forEach((att) => {
+            if (att && typeof att.url === "string") {
+              formData.append(
+                `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents_urls][]`,
+                att.url
+              );
+            }
+          });
+        }
       });
 
-  return formData;
-    };
+      if (v.identity) {
+        if (v.identity.identity_type)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][identity][identity_type]`,
+            v.identity.identity_type
+          );
+        if (v.identity.government_id_number)
+          formData.append(
+            `gatekeeper[additional_visitors_attributes][${i}][identity][government_id_number]`,
+            v.identity.government_id_number
+          );
+        // accept File or { name, url, file }
+        (v.identity.documents || []).forEach((doc: DocumentLike) => {
+          const file =
+            doc instanceof File ? doc : (doc as { file?: File })?.file;
+          if (file)
+            formData.append(
+              `gatekeeper[additional_visitors_attributes][${i}][identity][documents][]`,
+              file
+            );
+        });
+      }
+    });
+
+    return formData;
+  };
   // Submit built FormData to API
   const submitToApi = async () => {
     try {
-      const url =
-        "https://lockated-api.gophygital.work/pms/visitors/create_expected_visitor.json?=null";
-  const token = urlToken || "";
+      const token = urlToken || "";
+      const visitorId = urlVisitorId;
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorId}/update_expected_visitor.json`;
+      const url = token
+        ? `${baseUrl}?token=${encodeURIComponent(token)}`
+        : baseUrl;
 
       const expectedIso =
         expectedDate && expectedTime
-          ? `${expectedDate}T${expectedTime.replace(/\s+/g, "")}`
+          ? `${expectedDate}T${expectedTime.replace(/\s+/g, "")}${expectedTime.match(/^\d{2}:\d{2}$/) ? ":00" : ""}`
           : "";
 
-  const primaryVisitor: VisitorPayload = {
+      const primaryVisitor: VisitorPayload = {
         guest_type: guestType,
         guest_number: contact,
         guest_name: name,
         guest_email: email,
         guest_vehicle_number: primaryVehicleNumber,
+        guest_vehicle_type: primaryVehicle || undefined,
         expected_at: expectedIso,
         visit_purpose: purpose,
         company_name: company,
@@ -451,31 +984,36 @@ const VisitorSharingFormWeb: React.FC = () => {
         persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
-        pass_holder: "true",
-        pass_start_date: undefined,
-        pass_end_date: undefined,
-        pass_days: [],
+        pass_holder: passHolder ? "true" : undefined,
+        pass_start_date: passStartDate || undefined,
+        pass_end_date: passEndDate || undefined,
+        pass_days: passDays || [],
         assets: (assetsByVisitor[0] || []).map((a) => ({
           asset_category_name: a.category,
           asset_name: a.name,
           serial_model_number: a.serial,
           notes: a.notes,
-          documents: (a.attachments || []).map((att) => att.file).filter(Boolean),
+          documents: (a.attachments || [])
+            .map((att) => att.file)
+            .filter(Boolean),
         })),
         identity: identityByVisitor[0]
           ? {
               identity_type: identityByVisitor[0].type,
               government_id_number: identityByVisitor[0].govId,
-              documents: (identityByVisitor[0].documents || []).map((d) => d.file!).filter(Boolean),
+              documents: (identityByVisitor[0].documents || [])
+                .map((d) => d.file!)
+                .filter(Boolean),
             }
           : undefined,
       };
 
-  const additionalVisitors: VisitorPayload[] = visitors.map((vis) => ({
+      const additionalVisitors: VisitorPayload[] = visitors.map((vis) => ({
         name: vis.name,
         mobile: vis.contact,
         email: vis.email,
         vehicle_number: vis.vehicleNumber,
+        vehicle_type: vis.vehicle || undefined,
         guest_type: "Once",
         expected_at: expectedIso,
         visit_purpose: purpose,
@@ -493,21 +1031,55 @@ const VisitorSharingFormWeb: React.FC = () => {
           asset_name: a.name,
           serial_model_number: a.serial,
           notes: a.notes,
-          documents: (a.attachments || []).map((att) => att.file).filter(Boolean),
+          documents: (a.attachments || [])
+            .map((att) => att.file)
+            .filter(Boolean),
         })),
         identity: identityByVisitor[vis.id]
           ? {
               identity_type: identityByVisitor[vis.id].type,
               government_id_number: identityByVisitor[vis.id].govId,
-              documents: (identityByVisitor[vis.id].documents || []).map((d) => d.file!).filter(Boolean),
+              documents: (identityByVisitor[vis.id].documents || [])
+                .map((d) => d.file!)
+                .filter(Boolean),
             }
           : undefined,
       }));
 
-  const fd = buildVisitorFormData({ primaryVisitor, additionalVisitors, carryingAssetFlag: carryingAsset });
+      // Debug: inspect state and payload shapes to ensure File objects exist
+      // eslint-disable-next-line no-console
+      console.debug("[submitToApi] assetsByVisitor:", assetsByVisitor);
+      // eslint-disable-next-line no-console
+      console.debug("[submitToApi] primaryVisitor:", primaryVisitor);
+      // eslint-disable-next-line no-console
+      console.debug("[submitToApi] additionalVisitors:", additionalVisitors);
 
+      const fd = buildVisitorFormData({
+        primaryVisitor,
+        additionalVisitors,
+        carryingAssetFlag: carryingAsset,
+      });
+
+      // Debug: inspect FormData entries to verify files and keys before sending
+      if (fd instanceof FormData) {
+        // eslint-disable-next-line no-console
+        console.debug("[submitToApi] FormData entries:");
+        for (const entry of fd.entries()) {
+          const [k, v] = entry as [string, unknown];
+          if (v instanceof File) {
+            // eslint-disable-next-line no-console
+            console.debug(k, "(File)", v.name, v.type, v.size);
+          } else {
+            // eslint-disable-next-line no-console
+            console.debug(k, v as string);
+          }
+        }
+      }
+
+      // eslint-disable-next-line no-console
+      console.log("[submitToApi] submitting to:", url);
       const res = await fetch(url, {
-        method: "POST",
+        method: "PUT",
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
@@ -515,18 +1087,33 @@ const VisitorSharingFormWeb: React.FC = () => {
       });
       if (!res.ok) {
         showToast("Submission failed. Please try again.");
+        setApiError(`Submit failed (${res.status})`);
+        // auto-hide after 6 seconds
+        if (apiErrorTimerRef.current)
+          window.clearTimeout(apiErrorTimerRef.current);
+        apiErrorTimerRef.current = window.setTimeout(
+          () => setApiError(null),
+          6000
+        );
         return;
       }
       await res.json();
       setShowSuccess(true);
     } catch (err) {
       showToast("Network error. Please check your connection.");
+      setApiError("Network error during submit");
+      if (apiErrorTimerRef.current)
+        window.clearTimeout(apiErrorTimerRef.current);
+      apiErrorTimerRef.current = window.setTimeout(
+        () => setApiError(null),
+        6000
+      );
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-14">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-28">
         {/* Header */}
         <div className="bg-[#D5DBDB66] rounded p-3 mb-3">
           <h2 className="text-lg font-semibold">
@@ -558,6 +1145,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                 />
               ))}
             </div>
+
             {/* Toast */}
             {toastVisible && toastMessage && (
               <div className="fixed left-1/2 transform -translate-x-1/2 bottom-20 z-50 w-[90%] sm:w-auto max-w-md">
@@ -718,6 +1306,63 @@ const VisitorSharingFormWeb: React.FC = () => {
                 </div>
               </div>
 
+              {guestType === "Frequent" && (
+                <div className="mt-3 bg-white border border-gray-100 rounded p-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-gray-600">Valid From*</div>
+                      <input
+                        type="date"
+                        value={passStartDate || ""}
+                        onChange={(e) =>
+                          setPassStartDate(e.target.value || null)
+                        }
+                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-600">Valid To*</div>
+                      <input
+                        type="date"
+                        value={passEndDate || ""}
+                        onChange={(e) => setPassEndDate(e.target.value || null)}
+                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="text-xs text-gray-600">Day Permitted:</div>
+                    <div className="mt-2 flex gap-2">
+                      {["S", "M", "T", "W", "Th", "F", "S"].map((label, i) => {
+                        const key = String(i);
+                        const selected = passDays.includes(key);
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() =>
+                              setPassDays((p) =>
+                                p.includes(key)
+                                  ? p.filter((x) => x !== key)
+                                  : [...p, key]
+                              )
+                            }
+                            className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
+                              selected
+                                ? "bg-[#d8d3c6] border-[#d8d3c6]"
+                                : "bg-white border-gray-200"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="text-xs text-gray-600">
                   Contact Number <span className="text-[#C72030]">*</span>
@@ -778,27 +1423,6 @@ const VisitorSharingFormWeb: React.FC = () => {
                     disabled
                     className="mt-1 w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm cursor-not-allowed"
                     placeholder="07:00 AM"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <div className="text-xs text-gray-600">From</div>
-                  <input
-                    value={fromTime}
-                    onChange={(e) => setFromTime(e.target.value)}
-                    placeholder="HH:MM"
-                    className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs text-gray-600">To</div>
-                  <input
-                    value={toTime}
-                    onChange={(e) => setToTime(e.target.value)}
-                    placeholder="HH:MM"
-                    className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                   />
                 </div>
               </div>
@@ -936,18 +1560,57 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Profile Photo</div>
-                  <div className="w-4 h-4 border border-gray-300 rounded" />
+                  <button
+                    type="button"
+                    aria-label="Edit profile photo"
+                    onClick={() => setStep(1)}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200">
                     {profilePhoto ? (
-                      <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                      <img
+                        src={profilePhoto}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full bg-gray-200" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="text-xs text-gray-400">This photo will appear on your gate pass</div>
+                    <div className="text-xs text-gray-400">
+                      This photo will appear on your gate pass
+                    </div>
                   </div>
                 </div>
               </div>
@@ -956,7 +1619,40 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Visitor Details</div>
-                  <div className="w-4 h-4 border border-gray-300 rounded" />
+                  <button
+                    type="button"
+                    aria-label="Edit visitor details"
+                    onClick={() => setStep(1)}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1022,8 +1718,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                       <ul className="space-y-1">
                         {visitors.map((v) => (
                           <li key={v.id} className="flex justify-between">
-                            <span className="text-gray-700">{v.name || `Visitor ${v.id}`}</span>
-                            <span className="text-gray-500">{v.contact || '—'}{v.vehicleNumber ? ` • ${v.vehicleNumber}` : ''}</span>
+                            <span className="text-gray-700">
+                              {v.name || `Visitor ${v.id}`}
+                            </span>
+                            <span className="text-gray-500">
+                              {v.contact || "—"}
+                              {v.vehicleNumber ? ` • ${v.vehicleNumber}` : ""}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1036,7 +1737,40 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Logistics Details</div>
-                  <div className="w-4 h-4 border border-gray-300 rounded" />
+                  <button
+                    type="button"
+                    aria-label="Edit logistics details"
+                    onClick={() => setStep(2)}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1068,7 +1802,40 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Assets Details</div>
-                  <div className="w-4 h-4 border border-gray-300 rounded" />
+                  <button
+                    type="button"
+                    aria-label="Edit assets details"
+                    onClick={() => setStep(3)}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1121,7 +1888,30 @@ const VisitorSharingFormWeb: React.FC = () => {
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Government ID:</span>
-                    <span className="text-gray-900 font-medium">{identityByVisitor[0]?.govId || 'N/A'}</span>
+                    <span className="text-gray-900 font-medium">
+                      {identityByVisitor[0]?.govId || "N/A"}
+                    </span>
+                  </div>
+                  <div className="absolute right-3 top-3">
+                    <button
+                      type="button"
+                      aria-label="Edit identity verification"
+                      onClick={() => setStep(4)}
+                      className="text-gray-600"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 19 19"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M9.5 12.1923L4.75 7.44232L5.85833 6.33398L9.5 9.97565L13.1417 6.33398L14.25 7.44232L9.5 12.1923Z"
+                          fill="#1D1B20"
+                        />
+                      </svg>
+                    </button>
                   </div>
                   <div className="text-gray-500">Attachment:</div>
                   <div className="mt-1 grid grid-cols-2 gap-2">
@@ -1129,8 +1919,18 @@ const VisitorSharingFormWeb: React.FC = () => {
                       <div className="h-20 bg-gray-200 rounded" />
                     ) : (
                       (identityByVisitor[0]?.documents || []).map((doc, i) => (
-                        <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="h-20 block rounded overflow-hidden border">
-                          <img src={doc.url} alt={doc.name || 'doc'} className="w-full h-full object-cover" />
+                        <a
+                          key={i}
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-20 block rounded overflow-hidden border"
+                        >
+                          <img
+                            src={doc.url}
+                            alt={doc.name || "doc"}
+                            className="w-full h-full object-cover"
+                          />
                         </a>
                       ))
                     )}
@@ -1626,7 +2426,11 @@ const VisitorSharingFormWeb: React.FC = () => {
                   name?: string;
                 }>
               ).map((v) => (
-                <div key={v.id} className="border border-gray-100 rounded mb-3">
+                <div
+                  id={`asset-visitor-${v.id}`}
+                  key={v.id}
+                  className="border border-gray-100 rounded mb-3"
+                >
                   <div className="flex items-center justify-between px-3 py-2">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded-full bg-[#C72030] text-white flex items-center justify-center text-xs">
@@ -1705,6 +2509,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           "Electrical",
                           "Furniture",
                           "Other",
+                          "Tool",
+                          "Electronics",
                         ].map((c) => {
                           const selected =
                             (assetsByVisitor[v.id] || [])[0]?.category === c;
@@ -1840,7 +2646,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                                             ...x,
                                             attachments: [
                                               ...(x.attachments || []),
-                                              { name: file.name, url },
+                                              { name: file.name, url, file },
                                             ],
                                           }
                                         : x
@@ -1971,7 +2777,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                       <div className="flex flex-wrap gap-2">
                         {["PAN", "Aadhaar", "Passport", "Driving License"].map(
                           (idType) => {
-                            const selected = identityByVisitor[v.id]?.type === idType;
+                            const selected =
+                              identityByVisitor[v.id]?.type === idType;
                             return (
                               <button
                                 key={idType}
@@ -1981,11 +2788,11 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     ...s,
                                     [v.id]: {
                                       ...(s[v.id] || {}),
-                                      type: idType as IdentityState['type'],
+                                      type: idType as IdentityState["type"],
                                     },
                                   }))
                                 }
-                                className={`px-3 py-1 border rounded text-sm ${selected ? 'bg-[#d8d3c6] border-[#d8d3c6] text-gray-800' : 'bg-white border-gray-200'}`}
+                                className={`px-3 py-1 border rounded text-sm ${selected ? "bg-[#d8d3c6] border-[#d8d3c6] text-gray-800" : "bg-white border-gray-200"}`}
                               >
                                 {idType}
                               </button>
@@ -2008,7 +2815,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                               >
                                 {/* Preview if exists in identity documents (separate from asset attachments) */}
                                 {(() => {
-                                  const doc = identityByVisitor[v.id]?.documents?.[idx];
+                                  const doc =
+                                    identityByVisitor[v.id]?.documents?.[idx];
                                   if (doc) {
                                     return (
                                       <>
@@ -2024,7 +2832,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                                               ...s,
                                               [v.id]: {
                                                 ...(s[v.id] || {}),
-                                                documents: (s[v.id]?.documents || []).map((d, i) => i === idx ? undefined : d).filter(Boolean),
+                                                documents: (
+                                                  s[v.id]?.documents || []
+                                                )
+                                                  .map((d, i) =>
+                                                    i === idx ? undefined : d
+                                                  )
+                                                  .filter(Boolean),
                                               },
                                             }));
                                           }}
@@ -2079,7 +2893,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                                             [v.id]: {
                                               ...(s[v.id] || {}),
                                               documents: [
-                                                ...((s[v.id]?.documents) || []),
+                                                ...(s[v.id]?.documents || []),
                                                 { name: file.name, url, file },
                                               ],
                                             },
@@ -2106,6 +2920,16 @@ const VisitorSharingFormWeb: React.FC = () => {
                           Government ID No.
                         </div>
                         <input
+                          value={identityByVisitor[v.id]?.govId || ""}
+                          onChange={(e) =>
+                            setIdentityByVisitor((s) => ({
+                              ...s,
+                              [v.id]: {
+                                ...(s[v.id] || {}),
+                                govId: e.target.value,
+                              },
+                            }))
+                          }
                           className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                           placeholder="Enter ID Number..."
                         />
@@ -2118,8 +2942,8 @@ const VisitorSharingFormWeb: React.FC = () => {
           </div>
         )}
 
-        {/* Sticky bottom actions */}
-        <div className="sticky bottom-0 flex justify-center p-4 bg-white z-30">
+        {/* Fixed bottom actions */}
+        <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
             {step > 1 && (
               <button
@@ -2146,6 +2970,32 @@ const VisitorSharingFormWeb: React.FC = () => {
             )}
           </div>
         </div>
+        {/* Small mobile API error card */}
+        {apiError && (
+          <div className="fixed left-1/2 bottom-24 z-50 sm:hidden transform -translate-x-1/2">
+            <div className="w-64 bg-white border border-red-200 rounded shadow p-3 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-red-700 font-medium">API Error</div>
+                <button
+                  onClick={() => {
+                    setApiError(null);
+                    if (apiErrorTimerRef.current) {
+                      window.clearTimeout(apiErrorTimerRef.current);
+                      apiErrorTimerRef.current = null;
+                    }
+                  }}
+                  className="text-gray-400"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="mt-2 text-xs text-gray-700 break-words">
+                {apiError}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

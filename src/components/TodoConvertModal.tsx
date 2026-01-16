@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { Dialog, DialogTitle, DialogContent, Slide } from "@mui/material";
+import { X } from "lucide-react";
 import ProjectTaskCreateModal from "./ProjectTaskCreateModal";
 
 const Transition = forwardRef(function Transition(props: any, ref: any) {
@@ -72,9 +73,15 @@ const TodoConvertModal = ({
           textAlign: "center",
           borderBottom: "2px solid #E95420",
           py: 2,
+          position: "relative",
         }}
       >
         Convert Todo to Task
+        <X
+          className="absolute top-4 right-6 cursor-pointer text-gray-500 hover:text-gray-800"
+          onClick={closeModal}
+          size={20}
+        />
       </DialogTitle>
 
       <DialogContent
