@@ -7,11 +7,11 @@ import { toast } from "sonner";
 
 interface UserDetail {
     id: number;
-    name: string;
+    user_name: string;
     email: string;
     mobile: string;
     gender: string;
-    access_card_no: string;
+    access_card_number: string;
     organization: string;
     designation: string;
     address: string;
@@ -152,7 +152,7 @@ const CommunityUserDetails = () => {
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[170px]">Name</span>
                                 {/* <span className="text-gray-500 mx-2">:</span> */}
-                                <span className="text-gray-900 font-medium">{userDetails.name || "-"}</span>
+                                <span className="text-gray-900 font-medium">{userDetails.user_name || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
@@ -170,7 +170,7 @@ const CommunityUserDetails = () => {
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[170px]">Access Card Number</span>
                                 {/* <span className="text-gray-500 mx-2">:</span> */}
-                                <span className="text-gray-900 font-medium">{userDetails.access_card_no || "-"}</span>
+                                <span className="text-gray-900 font-medium">{userDetails.access_card_number || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
