@@ -18,6 +18,8 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const apiErrorTimerRef = React.useRef<number | null>(null);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -158,7 +160,11 @@ const VisitorSharingFormWeb: React.FC = () => {
         const res = await fetch(
           `https://lockated-api.gophygital.work/pms/visitors/${id}.json?token=${encodeURIComponent(token)}`
         );
-        if (!res.ok) return;
+        if (!res.ok) {
+          // surface server errors to the small mobile card for easier debugging
+          setApiError(`Prefill failed (${res.status})`);
+          return;
+        }
         const data = await res.json();
         // Map common host fields into the Step 1 state
         if (data.guest_type) setGuestType(data.guest_type);
@@ -280,6 +286,57 @@ const VisitorSharingFormWeb: React.FC = () => {
             }
           );
           setVisitors(mapped);
+          // Map identity for additional visitors (so Step 4 shows gov id and photos)
+          try {
+            const identitiesMap: Record<number, IdentityState> = {};
+            const addVisArr = Array.isArray((data as unknown as { additional_visitors?: unknown }).additional_visitors)
+              ? (data as unknown as { additional_visitors?: unknown }).additional_visitors
+              : [];
+            (addVisArr as unknown[]).forEach((avUnknown, idx: number) => {
+              const id = idx + 1; // matches visitors[] mapping (primary = 0)
+              if (!avUnknown || typeof avUnknown !== "object") return;
+              const av = avUnknown as Record<string, unknown>;
+              const identity = (av.identity || av.visitor_identity) as Record<string, unknown> | undefined;
+              if (!identity) return;
+              const docsArr = Array.isArray(identity.documents) ? identity.documents : [];
+                const documents = (docsArr as unknown[])
+                .map((dUnknown) => {
+                  if (!dUnknown || typeof dUnknown !== "object") return undefined;
+                  const d = dUnknown as Record<string, unknown>;
+                  const url = typeof d.document_url === "string"
+                    ? d.document_url
+                    : typeof d.url === "string"
+                    ? d.url
+                    : typeof d.documentUrl === "string"
+                    ? d.documentUrl
+                    : typeof d.file_url === "string"
+                    ? d.file_url
+                    : undefined;
+                  if (!url) return undefined;
+                  return {
+                    name: typeof d.name === "string" ? d.name : "",
+                    url,
+                  };
+                })
+                .filter(Boolean) as { name: string; url: string }[];
+
+              const gov = typeof identity.government_id_number === "string" ? identity.government_id_number : undefined;
+              const idType = typeof identity.identity_type === "string" ? identity.identity_type : undefined;
+              if (documents.length || gov || idType) {
+                identitiesMap[id] = {
+                  type: idType as IdentityState['type'] | undefined,
+                  govId: gov,
+                  photoCount: documents.length,
+                  documents: documents,
+                };
+              }
+            });
+            if (Object.keys(identitiesMap).length) {
+              setIdentityByVisitor((s) => ({ ...s, ...identitiesMap }));
+            }
+          } catch (_) {
+            // best-effort mapping
+          }
           // Map assets from the host response into our assetsByVisitor state so
           // Step 3 shows prefilled assets and their document URLs.
           try {
@@ -387,7 +444,8 @@ const VisitorSharingFormWeb: React.FC = () => {
           }
         }
       } catch (e) {
-        // silent fail; prefill is optional
+  // show a brief API error card on network failure
+  setApiError("Prefill network error");
       }
     };
     loadPrefill();
@@ -513,6 +571,28 @@ const VisitorSharingFormWeb: React.FC = () => {
         setAssetCategoryErrors(nextErrors);
         if (hasAssetErrors) {
           showToast("Please select asset category for all visitors.");
+          // expand the visitor sections that have missing categories
+          setExpandedVisitors((e) => {
+            const next = { ...e };
+            Object.keys(nextErrors).forEach((k) => {
+              const id = Number(k);
+              if (nextErrors[id]) next[id] = true;
+            });
+            return next;
+          });
+
+          // scroll to the first failing visitor after the DOM updates
+          const firstFailKey = Object.keys(nextErrors).find((k) => nextErrors[Number(k)]);
+          if (firstFailKey) {
+            const failId = Number(firstFailKey);
+            // give React a tick to apply expanded state
+            setTimeout(() => {
+              const el = document.getElementById(`asset-visitor-${failId}`);
+              if (el && typeof el.scrollIntoView === "function") {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 60);
+          }
           return;
         }
       } else {
@@ -874,10 +954,10 @@ const VisitorSharingFormWeb: React.FC = () => {
         persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
-        pass_holder: "true",
-        pass_start_date: undefined,
-        pass_end_date: undefined,
-        pass_days: [],
+  pass_holder: passHolder ? "true" : undefined,
+  pass_start_date: passStartDate || undefined,
+  pass_end_date: passEndDate || undefined,
+  pass_days: passDays || [],
         assets: (assetsByVisitor[0] || []).map((a) => ({
           asset_category_name: a.category,
           asset_name: a.name,
@@ -976,19 +1056,26 @@ const VisitorSharingFormWeb: React.FC = () => {
         body: fd,
       });
       if (!res.ok) {
-        showToast("Submission failed. Please try again.");
-        return;
+  showToast("Submission failed. Please try again.");
+  setApiError(`Submit failed (${res.status})`);
+  // auto-hide after 6 seconds
+  if (apiErrorTimerRef.current) window.clearTimeout(apiErrorTimerRef.current);
+  apiErrorTimerRef.current = window.setTimeout(() => setApiError(null), 6000);
+  return;
       }
       await res.json();
       setShowSuccess(true);
     } catch (err) {
-      showToast("Network error. Please check your connection.");
+  showToast("Network error. Please check your connection.");
+  setApiError("Network error during submit");
+  if (apiErrorTimerRef.current) window.clearTimeout(apiErrorTimerRef.current);
+  apiErrorTimerRef.current = window.setTimeout(() => setApiError(null), 6000);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-14">
+  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-28">
         {/* Header */}
         <div className="bg-[#D5DBDB66] rounded p-3 mb-3">
           <h2 className="text-lg font-semibold">
@@ -1207,22 +1294,31 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="mt-3">
                     <div className="text-xs text-gray-600">Day Permitted:</div>
                     <div className="mt-2 flex gap-2">
-                      {["S", "M", "T", "W", "Th", "F", "S"].map((d, i) => {
-                        const selected = passDays.includes(d);
+                      {[
+                        "S",
+                        "M",
+                        "T",
+                        "W",
+                        "Th",
+                        "F",
+                        "S",
+                      ].map((label, i) => {
+                        const key = String(i);
+                        const selected = passDays.includes(key);
                         return (
                           <button
                             key={i}
                             type="button"
                             onClick={() =>
                               setPassDays((p) =>
-                                p.includes(d) ? p.filter((x) => x !== d) : [...p, d]
+                                p.includes(key) ? p.filter((x) => x !== key) : [...p, key]
                               )
                             }
                             className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
                               selected ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border-gray-200"
                             }`}
                           >
-                            {d}
+                            {label}
                           </button>
                         );
                       })}
@@ -1430,7 +1526,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Profile Photo</div>
-                  <div>
+                  <button
+                    type="button"
+                    aria-label="Edit profile photo"
+                    onClick={() => setStep(1)}
+                    className="text-gray-600"
+                  >
                     <svg
                       width="36"
                       height="32"
@@ -1446,8 +1547,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                      </g>
-                      <defs>
+                        </g>
+                        <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -1458,7 +1559,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                         </clipPath>
                       </defs>
                     </svg>
-                  </div>
+                  </button>
                 </div>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200">
@@ -1484,7 +1585,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Visitor Details</div>
-                  <div>
+                  <button
+                    type="button"
+                    aria-label="Edit visitor details"
+                    onClick={() => setStep(1)}
+                    className="text-gray-600"
+                  >
                     <svg
                       width="36"
                       height="32"
@@ -1512,7 +1618,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                         </clipPath>
                       </defs>
                     </svg>
-                  </div>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1597,7 +1703,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Logistics Details</div>
-                  <div>
+                  <button
+                    type="button"
+                    aria-label="Edit logistics details"
+                    onClick={() => setStep(2)}
+                    className="text-gray-600"
+                  >
                     <svg
                       width="36"
                       height="32"
@@ -1613,8 +1724,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                      </g>
-                      <defs>
+                        </g>
+                        <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -1625,7 +1736,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                         </clipPath>
                       </defs>
                     </svg>
-                  </div>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1657,7 +1768,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">Assets Details</div>
-                  <div>
+                  <button
+                    type="button"
+                    aria-label="Edit assets details"
+                    onClick={() => setStep(3)}
+                    className="text-gray-600"
+                  >
                     <svg
                       width="36"
                       height="32"
@@ -1673,8 +1789,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                      </g>
-                      <defs>
+                        </g>
+                        <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -1685,7 +1801,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                         </clipPath>
                       </defs>
                     </svg>
-                  </div>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -1741,6 +1857,27 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <span className="text-gray-900 font-medium">
                       {identityByVisitor[0]?.govId || "N/A"}
                     </span>
+                  </div>
+                  <div className="absolute right-3 top-3">
+                    <button
+                      type="button"
+                      aria-label="Edit identity verification"
+                      onClick={() => setStep(4)}
+                      className="text-gray-600"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 19 19"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M9.5 12.1923L4.75 7.44232L5.85833 6.33398L9.5 9.97565L13.1417 6.33398L14.25 7.44232L9.5 12.1923Z"
+                          fill="#1D1B20"
+                        />
+                      </svg>
+                    </button>
                   </div>
                   <div className="text-gray-500">Attachment:</div>
                   <div className="mt-1 grid grid-cols-2 gap-2">
@@ -2255,7 +2392,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   name?: string;
                 }>
               ).map((v) => (
-                <div key={v.id} className="border border-gray-100 rounded mb-3">
+                <div id={`asset-visitor-${v.id}`} key={v.id} className="border border-gray-100 rounded mb-3">
                   <div className="flex items-center justify-between px-3 py-2">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded-full bg-[#C72030] text-white flex items-center justify-center text-xs">
@@ -2767,8 +2904,8 @@ const VisitorSharingFormWeb: React.FC = () => {
           </div>
         )}
 
-        {/* Sticky bottom actions */}
-        <div className="sticky bottom-0 flex justify-center p-4 bg-white z-30">
+        {/* Fixed bottom actions */}
+        <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
             {step > 1 && (
               <button
@@ -2795,6 +2932,30 @@ const VisitorSharingFormWeb: React.FC = () => {
             )}
           </div>
         </div>
+        {/* Small mobile API error card */}
+        {apiError && (
+          <div className="fixed left-1/2 bottom-24 z-50 sm:hidden transform -translate-x-1/2">
+            <div className="w-64 bg-white border border-red-200 rounded shadow p-3 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-red-700 font-medium">API Error</div>
+                <button
+                  onClick={() => {
+                    setApiError(null);
+                    if (apiErrorTimerRef.current) {
+                      window.clearTimeout(apiErrorTimerRef.current);
+                      apiErrorTimerRef.current = null;
+                    }
+                  }}
+                  className="text-gray-400"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="mt-2 text-xs text-gray-700 break-words">{apiError}</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
