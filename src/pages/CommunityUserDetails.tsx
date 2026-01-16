@@ -150,32 +150,32 @@ const CommunityUserDetails = () => {
                         {/* Left Column */}
                         <div className="space-y-6">
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Name</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Name</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.name || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Email Address</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Email Address</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.email || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Gender</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Gender</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.gender || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Access Card Number</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Access Card Number</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.access_card_no || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Address</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Address</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.address || "-"}</span>
                             </div>
                         </div>
@@ -183,32 +183,32 @@ const CommunityUserDetails = () => {
                         {/* Right Column */}
                         <div className="space-y-6">
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Mobile Number</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Mobile Number</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.mobile || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Employee Number</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Employee Number</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.employee_number || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Organisation</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Organisation</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.organization || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Designation</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Designation</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.designation || "-"}</span>
                             </div>
 
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Community Joined</span>
-                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-500 min-w-[170px]">Community Joined</span>
+                                {/* <span className="text-gray-500 mx-2">:</span> */}
                                 <span className="text-gray-900 font-medium">{userDetails.community_joined || "-"}</span>
                             </div>
                         </div>
@@ -229,7 +229,7 @@ const CommunityUserDetails = () => {
                                     <span className="font-semibold text-lg text-gray-800">Reports</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`${getStatusColor(report.status).bg} ${getStatusColor(report.status).text} px-3 py-1 rounded text-sm font-medium`}>
+                                    <span className={`${getStatusColor(report.status).bg} text-black px-3 py-1 rounded text-sm font-normal`}>
                                         {formatStatusDisplay(report.status)}
                                     </span>
                                     <Button variant="ghost" className="p-2" onClick={() => deleteReport(report.id)}>
@@ -242,7 +242,7 @@ const CommunityUserDetails = () => {
                                     <div>
                                         <label className="text-sm text-gray-500 block mb-2">Report:</label>
                                         <span
-                                            className="bg-[#e06060] text-white px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
+                                            className="bg-[rgba(199,32,48,0.5)] text-white w-[139px] px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
                                             onClick={() => navigate(`/pulse/community/${communityId}/reports/details/${report.id}`)}
                                         >
                                             <File size={16} /> 1 Report
