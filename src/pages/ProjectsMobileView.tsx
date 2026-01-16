@@ -73,12 +73,7 @@ const ProjectsMobileView = () => {
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/project_managements.json?${filters}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                `https://${baseUrl}/project_managements.json?${filters}&token=${token}`
             );
 
             const projectsData = response.data?.project_managements || [];
