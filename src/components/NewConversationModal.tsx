@@ -29,7 +29,7 @@ const NewConversationModal = ({
     currentUserId ? [currentUserId] : []
   );
   const [groupName, setGroupName] = useState("");
-  const [userLoading, setUserLoading] = useState(false)
+  const [userLoading, setUserLoading] = useState(false);
   const [escalateUsers, setEscalateUsers] = useState<any[]>([]);
 
   // Fetch escalate users
@@ -285,30 +285,38 @@ const NewConversationModal = ({
             <div className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-0">
               {userLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-xl">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-2 rounded-xl"
+                  >
                     <Skeleton className="w-4 h-4 rounded" />
                     <Skeleton className="w-9 h-9 rounded-full" />
                     <Skeleton className="h-4 flex-1" />
                   </div>
                 ))
-              ) : escalateUsers.filter((user) =>
-                user.id !== currentUserId &&
-                user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-              ).length > 0 ? (
-                escalateUsers
-                  .filter((user) =>
+              ) : escalateUsers.filter(
+                  (user) =>
                     user.id !== currentUserId &&
                     user.full_name
                       .toLowerCase()
                       .includes(searchQuery.toLowerCase())
+                ).length > 0 ? (
+                escalateUsers
+                  .filter(
+                    (user) =>
+                      user.id !== currentUserId &&
+                      user.full_name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
                   )
                   .map((user) => (
                     <div
                       key={user.id}
-                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
-                        ? "bg-[#c72030]/10"
-                        : "hover:bg-gray-100"
-                        }`}
+                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
+                        selectedUsers.includes(user.id)
+                          ? "bg-[#c72030]/10"
+                          : "hover:bg-gray-100"
+                      }`}
                       onClick={() => toggleUserSelection(user.id)}
                     >
                       <input

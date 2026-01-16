@@ -12,12 +12,39 @@ import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '0.375rem',
+    backgroundColor: 'white',
+    height: {
+      xs: '36px',
+      sm: '45px'
+    },
+    '& fieldset': {
+      borderColor: '#d1d5db',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#3b82f6',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#3b82f6',
+    },
+  },
+};
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
 
+  // Get URL parameters
   const urlFacilityId = searchParams.get('facility_id');
   const urlDate = searchParams.get('date');
   const urlSlotTime = searchParams.get('slot_time');
@@ -30,6 +57,10 @@ export const AddFacilityBookingPage = () => {
   const occupantUsersLoading = occupantUsersState?.loading;
   const occupantUsersError = occupantUsersState?.error;
 
+  const [guestUsers, setGuestUsers] = useState([]);
+  const [guestUsersLoading, setGuestUsersLoading] = useState(false);
+  const [guestUsersError, setGuestUsersError] = useState(null);
+
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
     Array.isArray(entitiesResponse) ? entitiesResponse : [];
@@ -38,8 +69,8 @@ export const AddFacilityBookingPage = () => {
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('fm');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [userType, setUserType] = useState('self');
+  const [selectedUser, setSelectedUser] = useState(JSON.parse(localStorage.getItem('user') || '{}').id);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -49,6 +80,15 @@ export const AddFacilityBookingPage = () => {
     prepaid: number;
     pay_on_facility: number;
     complementary: number;
+    facility_charge?: {
+      adult_member_charge?: number;
+      adult_guest_charge?: number;
+      child_member_charge?: number;
+      child_guest_charge?: number;
+      per_slot_charge?: number;
+    };
+    gst?: number;
+    sgst?: number;
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
@@ -64,11 +104,101 @@ export const AddFacilityBookingPage = () => {
     formated_end_hour: string;
     formated_start_minute: string;
     formated_end_minute: string;
+    is_premium: boolean | null;
+    premium_percentage: number | null;
   }>>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
+  const [bookingRuleData, setBookingRuleData] = useState<{
+    can_book: boolean;
+    rate: number;
+  } | null>(null);
+
+  // Helper: Check if slot selection is allowed
+  const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
+  // Helper: Max slots user can select
+  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
+  // Helper: Max concurrent slots
+  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+
+  // Helper: Check if a slot can be selected (enforce concurrent rule)
+  const isSlotSelectable = (slotId: number) => {
+    if (!canSelectSlots) return false;
+    if (selectedSlots.includes(slotId)) return true; // allow deselect
+    if (selectedSlots.length >= maxSelectableSlots) return false;
+    // Check concurrent rule: sort selected + candidate, check max consecutive
+    const all = [...selectedSlots, slotId].sort((a, b) => a - b);
+    let maxConsec = 1, curr = 1;
+    for (let i = 1; i < all.length; i++) {
+      if (all[i] === all[i - 1] + 1) {
+        curr++;
+        maxConsec = Math.max(maxConsec, curr);
+      } else {
+        curr = 1;
+      }
+    }
+    return maxConsec <= maxConcurrentSlots;
+  };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
+  const [complementaryReason, setComplementaryReason] = useState('');
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+  // Helper: Get max people allowed from facility details
+  const maxPeople = facilityDetails?.max_people || 0;
+  const [peopleTable, setPeopleTable] = useState<Array<{
+    srNo: number;
+    role: string;
+    user: string;
+    level: string;
+  }>>([]);
 
+  // Fetch guest users
+  const fetchGuestUsers = async () => {
+    setGuestUsersLoading(true);
+    setGuestUsersError(null);
+    try {
+      const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
+        params: {
+          'q[lock_user_permissions_user_type_eq]': 'pms_guest'
+        }
+      });
+      if (response.data && response.data.occupant_users) {
+        setGuestUsers(response.data.occupant_users);
+      }
+    } catch (error) {
+      console.error('Error fetching guest users:', error);
+      setGuestUsersError(error);
+      setGuestUsers([]);
+    } finally {
+      setGuestUsersLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(fetchFMUsers());
+    dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
+  }, [dispatch]);
+
+  // Load all user types when facility is selected for the people table
+  useEffect(() => {
+    if (facilityDetails) {
+      // Load FM users if not already loaded
+      if (fmUsers.length === 0 && !fmUsersLoading) {
+        dispatch(fetchFMUsers());
+      }
+      // Load occupant users if not already loaded
+      if (occupantUsers.length === 0 && !occupantUsersLoading) {
+        dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
+      }
+      // Load guest users if not already loaded
+      if (guestUsers.length === 0 && !guestUsersLoading) {
+        fetchGuestUsers();
+      }
+    }
+  }, [facilityDetails]);
+
+  // Pre-populate facility and date from URL parameters
   useEffect(() => {
     if (urlFacilityId && facilities.length > 0) {
       const facility = facilities.find(f => f.id.toString() === urlFacilityId);
@@ -90,28 +220,6 @@ export const AddFacilityBookingPage = () => {
     }
   }, [urlDate]);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    if (userType === 'occupant') {
-      dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
-      dispatch(fetchEntities());
-    } else {
-      dispatch(fetchFMUsers());
-    }
-    dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
-  }, [dispatch, userType]);
-
-  useEffect(() => {
-
-    if (selectedFacility && selectedDate) {
-      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-      fetchSlots(facilityId, selectedDate, selectedUser || undefined);
-    } else {
-      setSlots([]);
-      setSelectedSlots([]);
-    }
-  }, [selectedFacility, selectedDate, selectedUser]);
-
   // Fetch facility details when facility is selected
   const fetchFacilityDetails = async (facilityId: string) => {
     try {
@@ -119,6 +227,16 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
+
+        // Initialize people table based on max_people
+        const maxPeople = response.data.facility_setup.max_people || 1;
+        const initialTable = Array.from({ length: maxPeople }, (_, index) => ({
+          srNo: index + 1,
+          role: '',
+          user: '',
+          level: index === 0 ? 'primary' : 'secondary'
+        }));
+        setPeopleTable(initialTable);
       }
     } catch (error) {
       console.error('Error fetching facility details:', error);
@@ -137,14 +255,20 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  const fetchSlots = async (facilityId: string, date: string, userId: string) => {
+  const fetchSlots = async (facilityId: string, date: string, userId?: string) => {
     try {
       const formattedDate = date.replace(/-/g, '/');
+      const params: any = {
+        on_date: formattedDate
+      };
+
+      // Only add user_id if it's provided
+      if (userId) {
+        params.user_id = userId;
+      }
+
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
-        params: {
-          on_date: formattedDate,
-          user_id: userId
-        }
+        params
       });
 
       if (response.data && response.data.slots) {
@@ -157,15 +281,89 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  // Effect to fetch slots when facility, date, and user are all selected
+  // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
-    if (selectedFacility && selectedDate && selectedUser) {
-      fetchSlots(selectedFacility.id, selectedDate, selectedUser);
+
+    if (selectedFacility && selectedDate) {
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      fetchSlots(facilityId, selectedDate, selectedUser || undefined);
     } else {
       setSlots([]);
       setSelectedSlots([]);
     }
   }, [selectedFacility, selectedDate, selectedUser]);
+
+  // Call amenity booking API when member user type is selected with user and facility
+  useEffect(() => {
+    console.log('=== Amenity API Check ===');
+    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
+    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
+    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
+    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
+    console.log('========================');
+    const token = localStorage.getItem('token')
+    console.log('Token for Amenity API:', token);
+    if (selectedUser && selectedFacility) {
+      const fetchAmenityBooking = async () => {
+        try {
+          const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+          // Fetch booking rule for user
+          console.log('=== Calling Booking Rule API ===');
+          const baseUrl = localStorage.getItem('baseUrl');
+          const bookingRuleResponse = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${facilityId}/booking_rule_for_user?user_id=${selectedUser}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json, text/plain, */*',
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('Booking Rule for User Response:', bookingRuleResponse.data);
+          // Store booking rule data in state
+          if (bookingRuleResponse.data) {
+            setBookingRuleData(bookingRuleResponse.data);
+            console.log('Booking rule rate:', bookingRuleResponse.data.rate);
+          }
+          console.log('================================');
+        } catch (amenityError: any) {
+          console.error('Error fetching amenity booking by club plan:', amenityError);
+          if (amenityError.response) {
+            console.error('Error response status:', amenityError.response.status);
+            console.error('Error response data:', amenityError.response.data);
+            console.error('Error response headers:', amenityError.response.headers);
+            // If it's a 500 error, the API might have specific validation requirements
+            if (amenityError.response.status === 500) {
+              console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
+            }
+          }
+        }
+      };
+      fetchAmenityBooking();
+    } else {
+      console.log('❌ Amenity API not called - condition not met');
+    }
+  }, [userType, selectedUser, selectedFacility]);
+
+  useEffect(() => {
+    if (urlSlotTime && slots.length > 0 && selectedSlots.length === 0) {
+      const decodedSlotTime = decodeURIComponent(urlSlotTime);
+      const matchingSlot = slots.find(slot => {
+        const slotTimeNormalized = slot.ampm
+          .replace(/\s+/g, '')
+          .replace('to', '-')
+          .toLowerCase();
+
+        const urlTimeNormalized = decodedSlotTime
+          .replace(/\s+/g, '')
+          .toLowerCase();
+
+        return slotTimeNormalized === urlTimeNormalized;
+      });
+
+      if (matchingSlot) {
+        setSelectedSlots([matchingSlot.id]);
+      }
+    }
+  }, [urlSlotTime, slots]);
 
   // Handle slot selection
   const handleSlotSelection = (slotId: number) => {
@@ -173,6 +371,8 @@ export const AddFacilityBookingPage = () => {
       if (prev.includes(slotId)) {
         return prev.filter(id => id !== slotId);
       } else {
+        // Enforce selection rules
+        if (!isSlotSelectable(slotId)) return prev;
         return [...prev, slotId];
       }
     });
@@ -202,6 +402,10 @@ export const AddFacilityBookingPage = () => {
         toast.error('Please select a payment method');
         return;
       }
+      if (paymentMethod === 'complementary' && !complementaryReason.trim()) {
+        toast.error('Please enter a reason for complementary booking');
+        return;
+      }
       if (selectedSlots.length === 0) {
         toast.error('Please select at least one slot');
         return;
@@ -222,23 +426,98 @@ export const AddFacilityBookingPage = () => {
         }
       }
 
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+
+      // --- Cost calculation based on per_slot_charge only ---
+      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+      const slotsCount = selectedSlots.length;
+
+      // Calculate total based only on per_slot_charge
+      const slotTotal = slotsCount * perSlotCharge;
+      const subtotalBeforeDiscount = slotTotal;
+      const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+      const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+      const gstPercentage = facilityDetails?.gst || 0;
+      const sgstPercentage = facilityDetails?.sgst || 0;
+      const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+      const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+      const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+
+      // Build booked_members_attributes array from people table
+      const bookedMembersAttributes = peopleTable
+        .filter(row => row.role && row.user) // Only include rows with both role and user selected
+        .map(row => {
+          // Set charge to 0 since we're only using per_slot_charge
+          const totalCharge = 0;
+
+          return {
+            user_id: parseInt(row.user),
+            oftype: row.level, // 'primary' or 'secondary'
+            total_charge: totalCharge
+          };
+        });
+
+      // Use cost summary calculation (from UI) for payload values
+      const costSummary = (() => {
+        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+        const slotsCount = selectedSlots.length;
+
+        // Calculate total based only on per_slot_charge
+        const slotTotal = slotsCount * perSlotCharge;
+        const subtotalBeforeDiscount = slotTotal;
+        const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+        const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+        const gstPercentage = facilityDetails?.gst || 0;
+        const sgstPercentage = facilityDetails?.sgst || 0;
+        const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+        const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+        const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+        return {
+          slotTotal,
+          subtotalBeforeDiscount,
+          discountAmount,
+          subtotalAfterDiscount,
+          gstPercentage,
+          sgstPercentage,
+          gstAmount,
+          sgstAmount,
+          amountFull
+        };
+      })();
+
       const payload = {
         facility_booking: {
+          user_id: selectedUser,
           user_society_type: 'User',
           resource_type: 'Pms::Site',
           resource_id: selectedSiteId,
           book_by_id: selectedSlots[0],
           book_by: 'slot',
-          facility_id: selectedFacility.id,
+          facility_id: facilityId,
           startdate: selectedDate.replace(/-/g, '/'),
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
+          member_charges: 0,
+          guest_charges: 0,
+          guest_premium_details: [],
+          discount: costSummary.discountAmount,
+          cgst_amount: costSummary.gstAmount,
+          sgst_amount: costSummary.sgstAmount,
+          gst: costSummary.gstPercentage,
+          sgst: costSummary.sgstPercentage,
+          sub_total: costSummary.subtotalAfterDiscount,
+          amount_full: costSummary.amountFull,
+          booked_members_attributes: bookedMembersAttributes,
+          member_count: userType === 'occupant' ? 1 : 0,
+          guest_count: numberOfGuests,
+          ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
-        on_behalf_of: userType === 'occupant' ? 'occupant-user' : 'fm-user',
+        on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
         occupant_user_id: userType === 'occupant' ? selectedUser : '',
-        fm_user_id: userType === 'fm' ? selectedUser : ''
+        fm_user_id: userType === 'fm' ? selectedUser : '',
+        guest_user_id: userType === 'guest' ? selectedUser : ''
       };
 
       console.log('Payload being sent:', JSON.stringify(payload, null, 2));
@@ -249,13 +528,32 @@ export const AddFacilityBookingPage = () => {
           'Content-Type': 'application/json',
         },
       });
+      console.log(response)
 
       console.log('Response received:', response.status, response.data);
 
-      if (response.status === 200 || response.status === 201) {
-        console.log('Booking created successfully:', response.data);
-        toast.error('Booking created successfully!');
-        navigate('/vas/booking/list');
+      if (response.data.error) {
+        toast.error(response.data.error);
+        return;
+      }
+
+      // Check if payment method is prepaid
+      if (paymentMethod === 'prepaid') {
+        // Get the booking ID from response
+        const bookingId = response.data.facility_booking?.id || response.data.id;
+        const token = localStorage.getItem('token');
+
+        if (bookingId && token) {
+          toast.success('Booking created successfully! Redirecting to payment gateway...');
+          // Navigate to payment gateway redirection page with booking ID and token
+          navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
+        } else {
+          toast.error('Booking created but payment redirection failed. Please contact support.');
+          navigate(-1);
+        }
+      } else {
+        toast.success('Booking created successfully!');
+        navigate(-1);
       }
     } catch (error: any) {
       console.error('Error creating facility booking:', error);
@@ -269,31 +567,6 @@ export const AddFacilityBookingPage = () => {
 
   const handleBackToList = () => {
     navigate(-1);
-  };
-
-  const fieldStyles = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '0.375rem',
-      backgroundColor: 'white',
-      height: {
-        xs: '36px',
-        sm: '45px'
-      },
-      '& fieldset': {
-        borderColor: '#d1d5db',
-      },
-      '&:hover fieldset': {
-        borderColor: '#9ca3af',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#3b82f6',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      '&.Mui-focused': {
-        color: '#3b82f6',
-      },
-    },
   };
 
   return (
@@ -321,61 +594,23 @@ export const AddFacilityBookingPage = () => {
         {/* User Type Selection */}
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
+
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fm" id="fm" />
-              <Label htmlFor="fm">FM User</Label>
+              <RadioGroupItem value="self" id="self" />
+              <Label htmlFor="self">Self</Label>
             </div>
+
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Occupant User</Label>
+              <RadioGroupItem value="user" id="user" />
+              <Label htmlFor="user">Users</Label>
             </div>
           </RadioGroup>
         </div>
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Client Dropdown - only for occupant users */}
-          {userType === 'occupant' && (
-            <div className="space-y-2">
-              <TextField
-                select
-                label="Client"
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                SelectProps={{ displayEmpty: true }}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                disabled={entitiesLoading}
-                helperText={entitiesError ? "Error loading companies" : ""}
-                error={!!entitiesError}
-              >
-                <MenuItem value="" disabled>
-                  <em>
-                    Select Client
-                  </em>
-                </MenuItem>
-                {entitiesLoading && (
-                  <MenuItem value="" disabled>
-                    Loading companies...
-                  </MenuItem>
-                )}
-                {!entitiesLoading && !entitiesError && entities.length === 0 && (
-                  <MenuItem value="" disabled>
-                    No companies available
-                  </MenuItem>
-                )}
-                {entities.map((entity) => (
-                  <MenuItem key={entity.id} value={entity.id.toString()}>
-                    {entity.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
-          )}
 
-          {/* User Selection - occupant or fm users */}
+          {/* User Selection - occupant, fm, or guest users */}
           <div className="space-y-2">
             <TextField
               select
@@ -393,42 +628,14 @@ export const AddFacilityBookingPage = () => {
                 shrink: true
               }}
               sx={fieldStyles}
-              disabled={userType === 'occupant' ? occupantUsersLoading : fmUsersLoading}
-              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : (fmUsersError ? "Error loading users" : "")}
-              error={userType === 'occupant' ? !!occupantUsersError : !!fmUsersError}
+              disabled={userType === 'self'}
             >
               <MenuItem value="" disabled>
                 <em>
                   Select User
                 </em>
               </MenuItem>
-              {userType === 'occupant' && occupantUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'occupant' && !occupantUsersLoading && !occupantUsersError && occupantUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'occupant' && occupantUsers.map((user) => (
-                <MenuItem key={user.id} value={user.id.toString()}>
-                  {user.name}
-                </MenuItem>
-              ))}
-
-              {userType === 'fm' && fmUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'fm' && !fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'fm' && fmUsers.map((user) => (
+              {fmUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.full_name}
                 </MenuItem>
@@ -545,31 +752,55 @@ export const AddFacilityBookingPage = () => {
           <h2 className="text-lg font-semibold mb-4">Select Slot<span className="text-red-500"> *</span></h2>
           {slots.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {slots.map((slot) => (
-                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                  <input
-                    type="checkbox"
-                    id={`slot-${slot.id}`}
-                    checked={selectedSlots.includes(slot.id)}
-                    onChange={() => handleSlotSelection(slot.id)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <Label
-                    htmlFor={`slot-${slot.id}`}
-                    className="cursor-pointer text-sm font-medium"
-                  >
-                    {slot.ampm}
-                  </Label>
-                </div>
-              ))}
+              {slots.map((slot) => {
+                const disabled = !isSlotSelectable(slot.id);
+                return (
+                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                    <input
+                      type="checkbox"
+                      id={`slot-${slot.id}`}
+                      checked={selectedSlots.includes(slot.id)}
+                      onChange={() => handleSlotSelection(slot.id)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={!canSelectSlots || disabled}
+                    />
+                    <Label
+                      htmlFor={`slot-${slot.id}`}
+                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                    >
+                      {slot.ampm}
+                      {slot.is_premium && slot.premium_percentage && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                          </svg>
+                          +{slot.premium_percentage}%
+                        </span>
+                      )}
+                    </Label>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-500">
-              {selectedFacility && selectedDate && selectedUser
+              {selectedFacility && selectedDate
                 ? "No slots available for the selected date"
-                : "Please select facility, date, and user to see available slots"
+                : "Please select facility and date to see available slots"
               }
             </p>
+          )}
+          {/* Show booking rule info/warnings */}
+          {bookingRuleData && !canSelectSlots && (
+            <div className="mt-2 text-red-600 text-sm font-medium">You are not allowed to book slots for this user.</div>
+          )}
+          {bookingRuleData && canSelectSlots && (
+            <div className="mt-2 text-gray-600 text-xs">
+              {bookingRuleData.multiple_bookings
+                ? `You can select up to ${maxSelectableSlots} slots. `
+                : 'You can select only one slot. '}
+              {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+            </div>
           )}
         </div>
 
@@ -607,7 +838,155 @@ export const AddFacilityBookingPage = () => {
           {!facilityDetails && selectedFacility && (
             <p className="text-gray-500">Please select a facility to see available payment methods</p>
           )}
+
+          {/* Complementary Reason Input */}
+          {paymentMethod === 'complementary' && (
+            <div className="mt-4">
+              <TextField
+                label="Reason"
+                required
+                value={complementaryReason}
+                onChange={(e) => setComplementaryReason(e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500",
+                  },
+                  shrink: true
+                }}
+                sx={fieldStyles}
+                placeholder="Enter reason for complementary booking"
+              />
+            </div>
+          )}
         </div>
+
+        {/* Cost Summary Section */}
+        {selectedUser && facilityDetails && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
+            <div className="space-y-3">
+              {/* Calculate costs based on per_slot_charge only */}
+              {(() => {
+                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
+                const slotsCount = selectedSlots.length;
+                const hasSlots = slotsCount > 0;
+
+                // Calculate total based only on per_slot_charge
+                const slotTotal = slotsCount * perSlotCharge;
+                const subtotalBeforeDiscount = slotTotal;
+                const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+                const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+
+                const gstPercentage = facilityDetails.gst || 0;
+                const sgstPercentage = facilityDetails.sgst || 0;
+                const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                const totalTax = gstAmount + sgstAmount;
+                const grandTotal = subtotalAfterDiscount + totalTax;
+
+                return (
+                  <>
+                    {/* Slots Count - Only show when slots are selected */}
+                    {hasSlots && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                        <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                        <span className="font-semibold text-blue-600">{slotsCount}</span>
+                      </div>
+                    )}
+
+                    {/* Slot Charges */}
+                    {hasSlots && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Slot Charges</span>
+                          <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                        </div>
+                        <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Subtotal Before Discount */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-gray-700 font-medium">Subtotal</span>
+                      <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
+                    </div>
+
+                    {/* Discount - Editable */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700">Discount</span>
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={discountPercentage}
+                            onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                            variant="outlined"
+                            sx={{
+                              width: '80px',
+                              '& .MuiOutlinedInput-root': {
+                                height: '36px',
+                                '& input': {
+                                  textAlign: 'right',
+                                  padding: '8px 12px'
+                                }
+                              }
+                            }}
+                            inputProps={{
+                              min: 0,
+                              max: 100,
+                              step: 0.1
+                            }}
+                          />
+                          <span className="text-gray-500">%</span>
+                        </div>
+                      </div>
+                      <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
+                    </div>
+
+                    {/* Subtotal After Discount */}
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                        <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* GST */}
+                    {gstPercentage > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">GST</span>
+                          <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                        </div>
+                        <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* SGST */}
+                    {sgstPercentage > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">SGST</span>
+                          <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                        </div>
+                        <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Grand Total */}
+                    <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-center">
@@ -650,7 +1029,9 @@ export const AddFacilityBookingPage = () => {
           <DialogContent>
             <div className="space-y-4">
               {
-                selectedFacility.cancellation_policy
+                selectedFacility && typeof selectedFacility === 'object'
+                  ? selectedFacility.cancellation_policy || 'No cancellation policy available'
+                  : 'No cancellation policy available'
               }
             </div>
           </DialogContent>
@@ -675,7 +1056,9 @@ export const AddFacilityBookingPage = () => {
           <DialogContent>
             <div className="space-y-4">
               {
-                selectedFacility.terms
+                selectedFacility && typeof selectedFacility === 'object'
+                  ? selectedFacility.terms || 'No terms and conditions available'
+                  : 'No terms and conditions available'
               }
             </div>
           </DialogContent>

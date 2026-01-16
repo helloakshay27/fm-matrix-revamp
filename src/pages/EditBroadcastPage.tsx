@@ -63,7 +63,26 @@ export const EditBroadcastPage = () => {
     const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
     const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
 
+    // Community Selection State
+    const [selectedCommunities, setSelectedCommunities] = useState<number[]>([]);
+    const [communities, setCommunities] = useState<any[]>([]);
+
+    console.log(selectedCommunities)
+    console.log(selectedCommunities)
+
     useEffect(() => {
+        // Check if returning from community selection FIRST
+        const savedCommunities = localStorage.getItem('selectedCommunityIds');
+        let hasNewCommunitySelection = false;
+        let newSelectedCommunities: number[] = [];
+
+        if (savedCommunities) {
+            newSelectedCommunities = JSON.parse(savedCommunities).map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id);
+            hasNewCommunitySelection = newSelectedCommunities.length > 0;
+            setSelectedCommunities(newSelectedCommunities);
+            localStorage.removeItem('selectedCommunityIds');
+        }
+
         const fetchBroadcastData = async () => {
             try {
                 setIsLoading(true);
@@ -92,29 +111,38 @@ export const EditBroadcastPage = () => {
                     title: response.notice_heading || "",
                     expiryDate,
                     description: response.notice_text || "",
-                    markImportant: response.important ? "yes" : "no",
+                    markImportant: response.is_important ? "yes" : "no",
                     showOnHomeScreen: response.show_on_home_screen ? "yes" : "no",
-                    visibleAfterExpire: response.visible_after_expire ? "yes" : "no",
+                    visibleAfterExpire: response.flag_expire ? "yes" : "no",
                     shareWith,
-                    shareWithCommunities: response.share_with_communities ? "yes" : "no",
+                    // If we have new community selection, use 'yes', otherwise use API value
+                    shareWithCommunities: hasNewCommunitySelection ? 'yes' : (response.shared_community ? "yes" : "no"),
                     attachment: null,
                     coverImage: null,
                 });
 
-                setSelectedTechParks(selectedSites);
+                if (response.shared === 1 && response.shared_notices) {
+                    setSelectedTechParks(response.shared_notices.map((dir: any) => dir.site_id));
+                }
 
                 // Set existing attachments
                 if (response.attachments && response.attachments.length > 0) {
-                    setExistingAttachmentUrl(response.attachments[0].document_url);
+                    setExistingAttachmentUrl(response.attachments[0].url);
                 }
 
                 // Set existing cover image
-                if (response.cover_image_url) {
-                    setExistingCoverImageUrl(response.cover_image_url);
+                if (response.cover_image) {
+                    setExistingCoverImageUrl(response.cover_image.url);
+                }
+
+                // Set selected communities from response only if we don't have new selection
+                if (!hasNewCommunitySelection && response.community_ids && response.community_ids.length > 0) {
+                    const communityIds = response.community_ids.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id);
+                    setSelectedCommunities(communityIds);
                 }
             } catch (error) {
                 console.log(error);
-                toast.error("Failed to fetch broadcast details");
+                toast.error("Failed to fetch notice details");
                 navigate(-1);
             } finally {
                 setIsLoading(false);
@@ -124,6 +152,8 @@ export const EditBroadcastPage = () => {
         if (id) {
             fetchBroadcastData();
         }
+
+        fetchCommunities();
     }, [dispatch, baseUrl, token, id, navigate]);
 
     const fetchTechParks = async () => {
@@ -145,6 +175,23 @@ export const EditBroadcastPage = () => {
         }
     };
 
+    const fetchCommunities = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/communities.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setCommunities(response.data.communities || []);
+        } catch (error) {
+            console.error("Failed to fetch communities", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchTechParks();
+    }, []);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
@@ -159,8 +206,19 @@ export const EditBroadcastPage = () => {
             [name]: value,
         }));
         if (name === "shareWith" && value === "individual") {
-            fetchTechParks();
             setIsTechParkModalOpen(true);
+        }
+        if (name === "shareWithCommunities" && value === "yes") {
+            localStorage.setItem('title', formData.title);
+            localStorage.setItem('description', formData.description);
+            localStorage.setItem('expiryDate', formData.expiryDate);
+            localStorage.setItem('markImportant', formData.markImportant);
+            localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+            localStorage.setItem('visibleAfterExpire', formData.visibleAfterExpire);
+            localStorage.setItem('shareWith', formData.shareWith);
+            localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
+            localStorage.setItem('shareWithCommunities', formData.shareWithCommunities);
+            navigate(`/pulse/community?mode=selection&from=edit&id=${id}`);
         }
     };
 
@@ -276,38 +334,49 @@ export const EditBroadcastPage = () => {
             formDataToSend.append("noticeboard[notice_text]", formData.description);
 
             // Mapping fields to backend keys
-            formDataToSend.append("noticeboard[important]", formData.markImportant === "yes" ? "true" : "false");
-            formDataToSend.append("noticeboard[show_on_home_screen]", formData.showOnHomeScreen === "yes" ? "true" : "false");
-            formDataToSend.append("noticeboard[visible_after_expire]", formData.visibleAfterExpire === "yes" ? "true" : "false");
+            formDataToSend.append("noticeboard[is_important]", formData.markImportant === "yes" ? "1" : "0");
+            formDataToSend.append("noticeboard[show_on_home_screen]", formData.showOnHomeScreen === "yes" ? "1" : "0");
+            formDataToSend.append("noticeboard[flag_expire]", formData.visibleAfterExpire === "yes" ? "1" : "0");
 
-            formDataToSend.append("noticeboard[shared]", formData.shareWith === "all" ? "2" : "1");
-            formDataToSend.append("noticeboard[share_with_communities]", formData.shareWithCommunities === "yes" ? "true" : "false");
+            formDataToSend.append("noticeboard[shared]", formData.shareWith === "all" ? "2" : "1"); // 2 for all, 1 for specific?
+            formDataToSend.append("noticeboard[shared_community]", formData.shareWithCommunities === "yes" ? "1" : "0");
 
-            formDataToSend.append("noticeboard[of_phase]", "pms");
             formDataToSend.append("noticeboard[of_atype]", "Pms::Site");
             formDataToSend.append("noticeboard[of_atype_id]", localStorage.getItem("selectedSiteId") || "");
             formDataToSend.append("noticeboard[publish]", "1");
+            formDataToSend.append("noticeboard[active]", "1");
 
             if (formData.shareWith === 'individual') {
                 selectedTechParks.forEach(id => {
-                    formDataToSend.append("noticeboard[site_ids][]", id.toString());
+                    formDataToSend.append("site_ids[]", id.toString());
+                });
+            } else {
+                techParks.forEach(techPark => {
+                    formDataToSend.append("site_ids[]", techPark.id.toString());
+                });
+            }
+
+            // Add selected community IDs if communities are selected
+            if (formData.shareWithCommunities === 'yes' && selectedCommunities.length > 0) {
+                selectedCommunities.forEach(id => {
+                    formDataToSend.append("noticeboard[community_ids][]", id.toString());
                 });
             }
 
             if (formData.attachment) {
-                formDataToSend.append("noticeboard[files_attached][]", formData.attachment);
+                formDataToSend.append("documents[]", formData.attachment);
             }
 
             if (formData.coverImage) {
-                formDataToSend.append("noticeboard[cover_image]", formData.coverImage);
+                formDataToSend.append("cover_image", formData.coverImage);
             }
 
             await dispatch(updateBroadcast({ id, data: formDataToSend, baseUrl, token })).unwrap();
-            toast.success("Broadcast updated successfully");
-            navigate(-1);
+            toast.success("Notice updated successfully");
+            navigate("/pulse/notices");
         } catch (error: any) {
             console.log(error);
-            toast.error(error.message || "Failed to update broadcast");
+            toast.error(error.message || "Failed to update notice");
         } finally {
             setIsSubmitting(false);
         }
@@ -316,7 +385,7 @@ export const EditBroadcastPage = () => {
     if (isLoading) {
         return (
             <div className="p-4 md:px-8 py-6 bg-white min-h-screen flex items-center justify-center">
-                <div className="text-lg text-gray-600">Loading broadcast details...</div>
+                <div className="text-lg text-gray-600">Loading notice details...</div>
             </div>
         );
     }
@@ -325,7 +394,7 @@ export const EditBroadcastPage = () => {
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
             <Button
                 variant="ghost"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/pulse/notices')}
                 className="p-0 mb-4 hover:bg-transparent"
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -561,11 +630,38 @@ export const EditBroadcastPage = () => {
                                         .filter(park => selectedTechParks.includes(park.id))
                                         .map(park => park.name)
                                         .join(", ")}
-                                    .
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => setIsTechParkModalOpen(true)}
+                                    className="hover:text-red-700 transition-colors"
+                                >
+                                    <Pencil size={14} />
+                                </button>
+                            </div>
+                        )}
+
+                        {formData.shareWithCommunities === "yes" && selectedCommunities.length > 0 && (
+                            <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+                                <span>
+                                    {communities
+                                        .filter(community => selectedCommunities.includes(community.id))
+                                        .map(community => community.name)
+                                        .join(", ")}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        localStorage.setItem('title', formData.title);
+                                        localStorage.setItem('description', formData.description);
+                                        localStorage.setItem('expiryDate', formData.expiryDate);
+                                        localStorage.setItem('markImportant', formData.markImportant);
+                                        localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+                                        localStorage.setItem('visibleAfterExpire', formData.visibleAfterExpire);
+                                        localStorage.setItem('shareWith', formData.shareWith);
+                                        localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
+                                        navigate(`/pulse/community?mode=selection&from=edit&id=${id}`)
+                                    }}
                                     className="hover:text-red-700 transition-colors"
                                 >
                                     <Pencil size={14} />

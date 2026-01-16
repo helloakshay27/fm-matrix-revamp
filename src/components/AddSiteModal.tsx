@@ -172,7 +172,17 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         visitor_enabled: editingSite.visitor_enabled ?? false,
         govt_id_enabled: editingSite.govt_id_enabled ?? false,
         visitor_host_mandatory: editingSite.visitor_host_mandatory ?? false,
+        attachfile: null,
       });
+      // Show preselected image preview if available
+      // Support both array and object for attachfile
+      if (Array.isArray(editingSite.attachfile) && editingSite.attachfile.length > 0 && editingSite.attachfile[0].url) {
+        setSiteImagePreviewUrl(editingSite.attachfile[0].url);
+      } else if (editingSite.attachfile && editingSite.attachfile.document_url) {
+        setSiteImagePreviewUrl(editingSite.attachfile.document_url);
+      } else {
+        setSiteImagePreviewUrl(null);
+      }
     } else {
       // Reset form for new site
       setFormData({
@@ -204,7 +214,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         visitor_enabled: false,
         govt_id_enabled: false,
         visitor_host_mandatory: false,
+        attachfile: null,
       });
+      setSiteImagePreviewUrl(null);
     }
   }, [editingSite, isOpen]);
 
@@ -500,6 +512,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               : "Add new site details including name, company, country, region, and location information"}
           </div>
         </DialogHeader>
+        {/* Console log for edit preselected data */}
+        {editingSite && (
+          <>{console.log('Preselected edit data:', editingSite)}</>
+        )}
 
         {isLoadingDropdowns ? (
           <div className="flex items-center justify-center py-8">

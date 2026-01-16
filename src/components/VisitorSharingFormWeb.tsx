@@ -289,29 +289,39 @@ const VisitorSharingFormWeb: React.FC = () => {
           // Map identity for additional visitors (so Step 4 shows gov id and photos)
           try {
             const identitiesMap: Record<number, IdentityState> = {};
-            const addVisArr = Array.isArray((data as unknown as { additional_visitors?: unknown }).additional_visitors)
-              ? (data as unknown as { additional_visitors?: unknown }).additional_visitors
+            const addVisArr = Array.isArray(
+              (data as unknown as { additional_visitors?: unknown })
+                .additional_visitors
+            )
+              ? (data as unknown as { additional_visitors?: unknown })
+                  .additional_visitors
               : [];
             (addVisArr as unknown[]).forEach((avUnknown, idx: number) => {
               const id = idx + 1; // matches visitors[] mapping (primary = 0)
               if (!avUnknown || typeof avUnknown !== "object") return;
               const av = avUnknown as Record<string, unknown>;
-              const identity = (av.identity || av.visitor_identity) as Record<string, unknown> | undefined;
+              const identity = (av.identity || av.visitor_identity) as
+                | Record<string, unknown>
+                | undefined;
               if (!identity) return;
-              const docsArr = Array.isArray(identity.documents) ? identity.documents : [];
-                const documents = (docsArr as unknown[])
+              const docsArr = Array.isArray(identity.documents)
+                ? identity.documents
+                : [];
+              const documents = (docsArr as unknown[])
                 .map((dUnknown) => {
-                  if (!dUnknown || typeof dUnknown !== "object") return undefined;
+                  if (!dUnknown || typeof dUnknown !== "object")
+                    return undefined;
                   const d = dUnknown as Record<string, unknown>;
-                  const url = typeof d.document_url === "string"
-                    ? d.document_url
-                    : typeof d.url === "string"
-                    ? d.url
-                    : typeof d.documentUrl === "string"
-                    ? d.documentUrl
-                    : typeof d.file_url === "string"
-                    ? d.file_url
-                    : undefined;
+                  const url =
+                    typeof d.document_url === "string"
+                      ? d.document_url
+                      : typeof d.url === "string"
+                        ? d.url
+                        : typeof d.documentUrl === "string"
+                          ? d.documentUrl
+                          : typeof d.file_url === "string"
+                            ? d.file_url
+                            : undefined;
                   if (!url) return undefined;
                   return {
                     name: typeof d.name === "string" ? d.name : "",
@@ -320,11 +330,17 @@ const VisitorSharingFormWeb: React.FC = () => {
                 })
                 .filter(Boolean) as { name: string; url: string }[];
 
-              const gov = typeof identity.government_id_number === "string" ? identity.government_id_number : undefined;
-              const idType = typeof identity.identity_type === "string" ? identity.identity_type : undefined;
+              const gov =
+                typeof identity.government_id_number === "string"
+                  ? identity.government_id_number
+                  : undefined;
+              const idType =
+                typeof identity.identity_type === "string"
+                  ? identity.identity_type
+                  : undefined;
               if (documents.length || gov || idType) {
                 identitiesMap[id] = {
-                  type: idType as IdentityState['type'] | undefined,
+                  type: idType as IdentityState["type"] | undefined,
                   govId: gov,
                   photoCount: documents.length,
                   documents: documents,
@@ -342,11 +358,14 @@ const VisitorSharingFormWeb: React.FC = () => {
           try {
             const assetsMap: Record<number, Asset[]> = {};
 
-            const maybeAssets = (data as unknown as { assets?: unknown }).assets;
+            const maybeAssets = (data as unknown as { assets?: unknown })
+              .assets;
             if (Array.isArray(maybeAssets) && maybeAssets.length) {
               const primaryArr: Asset[] = [];
               for (let ai = 0; ai < maybeAssets.length; ai++) {
-                const a = maybeAssets[ai] as Record<string, unknown> | undefined;
+                const a = maybeAssets[ai] as
+                  | Record<string, unknown>
+                  | undefined;
                 if (!a) continue;
                 const docs = Array.isArray(a.documents)
                   ? (a.documents as unknown[])
@@ -359,10 +378,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                       typeof dd?.document_url === "string"
                         ? dd!.document_url
                         : typeof dd?.url === "string"
-                        ? dd!.url
-                        : typeof dd?.file_url === "string"
-                        ? dd!.file_url
-                        : undefined,
+                          ? dd!.url
+                          : typeof dd?.file_url === "string"
+                            ? dd!.file_url
+                            : undefined,
                   };
                 });
                 primaryArr.push({
@@ -371,8 +390,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                     typeof a.asset_category_name === "string"
                       ? a.asset_category_name
                       : typeof a.asset_category === "string"
-                      ? a.asset_category
-                      : "",
+                        ? a.asset_category
+                        : "",
                   name: typeof a.asset_name === "string" ? a.asset_name : "",
                   serial:
                     typeof a.serial_model_number === "string"
@@ -385,20 +404,29 @@ const VisitorSharingFormWeb: React.FC = () => {
               if (primaryArr.length) assetsMap[0] = primaryArr;
             }
 
-            const maybeAdditional = (data as unknown as {
-              additional_visitors?: unknown;
-            }).additional_visitors;
+            const maybeAdditional = (
+              data as unknown as {
+                additional_visitors?: unknown;
+              }
+            ).additional_visitors;
             if (Array.isArray(maybeAdditional)) {
               for (let avIdx = 0; avIdx < maybeAdditional.length; avIdx++) {
-                const av = maybeAdditional[avIdx] as Record<string, unknown> | undefined;
+                const av = maybeAdditional[avIdx] as
+                  | Record<string, unknown>
+                  | undefined;
                 if (!av) continue;
                 const maybeAvAssets = av.assets;
-                if (!Array.isArray(maybeAvAssets) || !maybeAvAssets.length) continue;
+                if (!Array.isArray(maybeAvAssets) || !maybeAvAssets.length)
+                  continue;
                 const arr: Asset[] = [];
                 for (let ai = 0; ai < maybeAvAssets.length; ai++) {
-                  const a = maybeAvAssets[ai] as Record<string, unknown> | undefined;
+                  const a = maybeAvAssets[ai] as
+                    | Record<string, unknown>
+                    | undefined;
                   if (!a) continue;
-                  const docs = Array.isArray(a.documents) ? (a.documents as unknown[]) : [];
+                  const docs = Array.isArray(a.documents)
+                    ? (a.documents as unknown[])
+                    : [];
                   const attachments = docs.map((d) => {
                     const dd = d as Record<string, unknown> | undefined;
                     return {
@@ -407,10 +435,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                         typeof dd?.document_url === "string"
                           ? dd!.document_url
                           : typeof dd?.url === "string"
-                          ? dd!.url
-                          : typeof dd?.file_url === "string"
-                          ? dd!.file_url
-                          : undefined,
+                            ? dd!.url
+                            : typeof dd?.file_url === "string"
+                              ? dd!.file_url
+                              : undefined,
                     };
                   });
                   arr.push({
@@ -419,8 +447,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                       typeof a.asset_category_name === "string"
                         ? a.asset_category_name
                         : typeof a.asset_category === "string"
-                        ? a.asset_category
-                        : "",
+                          ? a.asset_category
+                          : "",
                     name: typeof a.asset_name === "string" ? a.asset_name : "",
                     serial:
                       typeof a.serial_model_number === "string"
@@ -444,8 +472,8 @@ const VisitorSharingFormWeb: React.FC = () => {
           }
         }
       } catch (e) {
-  // show a brief API error card on network failure
-  setApiError("Prefill network error");
+        // show a brief API error card on network failure
+        setApiError("Prefill network error");
       }
     };
     loadPrefill();
@@ -582,7 +610,9 @@ const VisitorSharingFormWeb: React.FC = () => {
           });
 
           // scroll to the first failing visitor after the DOM updates
-          const firstFailKey = Object.keys(nextErrors).find((k) => nextErrors[Number(k)]);
+          const firstFailKey = Object.keys(nextErrors).find(
+            (k) => nextErrors[Number(k)]
+          );
           if (firstFailKey) {
             const failId = Number(firstFailKey);
             // give React a tick to apply expanded state
@@ -954,10 +984,10 @@ const VisitorSharingFormWeb: React.FC = () => {
         persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
-  pass_holder: passHolder ? "true" : undefined,
-  pass_start_date: passStartDate || undefined,
-  pass_end_date: passEndDate || undefined,
-  pass_days: passDays || [],
+        pass_holder: passHolder ? "true" : undefined,
+        pass_start_date: passStartDate || undefined,
+        pass_end_date: passEndDate || undefined,
+        pass_days: passDays || [],
         assets: (assetsByVisitor[0] || []).map((a) => ({
           asset_category_name: a.category,
           asset_name: a.name,
@@ -1056,26 +1086,34 @@ const VisitorSharingFormWeb: React.FC = () => {
         body: fd,
       });
       if (!res.ok) {
-  showToast("Submission failed. Please try again.");
-  setApiError(`Submit failed (${res.status})`);
-  // auto-hide after 6 seconds
-  if (apiErrorTimerRef.current) window.clearTimeout(apiErrorTimerRef.current);
-  apiErrorTimerRef.current = window.setTimeout(() => setApiError(null), 6000);
-  return;
+        showToast("Submission failed. Please try again.");
+        setApiError(`Submit failed (${res.status})`);
+        // auto-hide after 6 seconds
+        if (apiErrorTimerRef.current)
+          window.clearTimeout(apiErrorTimerRef.current);
+        apiErrorTimerRef.current = window.setTimeout(
+          () => setApiError(null),
+          6000
+        );
+        return;
       }
       await res.json();
       setShowSuccess(true);
     } catch (err) {
-  showToast("Network error. Please check your connection.");
-  setApiError("Network error during submit");
-  if (apiErrorTimerRef.current) window.clearTimeout(apiErrorTimerRef.current);
-  apiErrorTimerRef.current = window.setTimeout(() => setApiError(null), 6000);
+      showToast("Network error. Please check your connection.");
+      setApiError("Network error during submit");
+      if (apiErrorTimerRef.current)
+        window.clearTimeout(apiErrorTimerRef.current);
+      apiErrorTimerRef.current = window.setTimeout(
+        () => setApiError(null),
+        6000
+      );
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
-  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-28">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg pb-28">
         {/* Header */}
         <div className="bg-[#D5DBDB66] rounded p-3 mb-3">
           <h2 className="text-lg font-semibold">
@@ -1276,7 +1314,9 @@ const VisitorSharingFormWeb: React.FC = () => {
                       <input
                         type="date"
                         value={passStartDate || ""}
-                        onChange={(e) => setPassStartDate(e.target.value || null)}
+                        onChange={(e) =>
+                          setPassStartDate(e.target.value || null)
+                        }
                         className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                       />
                     </div>
@@ -1294,15 +1334,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="mt-3">
                     <div className="text-xs text-gray-600">Day Permitted:</div>
                     <div className="mt-2 flex gap-2">
-                      {[
-                        "S",
-                        "M",
-                        "T",
-                        "W",
-                        "Th",
-                        "F",
-                        "S",
-                      ].map((label, i) => {
+                      {["S", "M", "T", "W", "Th", "F", "S"].map((label, i) => {
                         const key = String(i);
                         const selected = passDays.includes(key);
                         return (
@@ -1311,11 +1343,15 @@ const VisitorSharingFormWeb: React.FC = () => {
                             type="button"
                             onClick={() =>
                               setPassDays((p) =>
-                                p.includes(key) ? p.filter((x) => x !== key) : [...p, key]
+                                p.includes(key)
+                                  ? p.filter((x) => x !== key)
+                                  : [...p, key]
                               )
                             }
                             className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
-                              selected ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border-gray-200"
+                              selected
+                                ? "bg-[#d8d3c6] border-[#d8d3c6]"
+                                : "bg-white border-gray-200"
                             }`}
                           >
                             {label}
@@ -1390,8 +1426,6 @@ const VisitorSharingFormWeb: React.FC = () => {
                   />
                 </div>
               </div>
-
-          
 
               <div>
                 <div className="text-xs text-gray-600">Purpose</div>
@@ -1547,8 +1581,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                        </g>
-                        <defs>
+                      </g>
+                      <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -1724,8 +1758,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                        </g>
-                        <defs>
+                      </g>
+                      <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -1789,8 +1823,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                        </g>
-                        <defs>
+                      </g>
+                      <defs>
                         <clipPath id="clip0_23208_24694">
                           <rect
                             width="15.996"
@@ -2392,7 +2426,11 @@ const VisitorSharingFormWeb: React.FC = () => {
                   name?: string;
                 }>
               ).map((v) => (
-                <div id={`asset-visitor-${v.id}`} key={v.id} className="border border-gray-100 rounded mb-3">
+                <div
+                  id={`asset-visitor-${v.id}`}
+                  key={v.id}
+                  className="border border-gray-100 rounded mb-3"
+                >
                   <div className="flex items-center justify-between px-3 py-2">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded-full bg-[#C72030] text-white flex items-center justify-center text-xs">
@@ -2952,7 +2990,9 @@ const VisitorSharingFormWeb: React.FC = () => {
                   ×
                 </button>
               </div>
-              <div className="mt-2 text-xs text-gray-700 break-words">{apiError}</div>
+              <div className="mt-2 text-xs text-gray-700 break-words">
+                {apiError}
+              </div>
             </div>
           </div>
         )}

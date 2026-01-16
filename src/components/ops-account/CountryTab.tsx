@@ -606,7 +606,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDelete(country.id)}
@@ -614,7 +614,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                   title="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </Button> */}
               </div>
             )}
             renderCell={(country: CountryItem, columnKey: string) => {

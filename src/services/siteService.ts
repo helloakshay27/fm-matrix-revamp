@@ -543,6 +543,7 @@ class SiteService {
 
       const result = await response.json();
   console.warn("Get site by ID response:", result);
+  console.log("Site data returned from getSiteById:", result.data || result);
 
       if (response.ok) {
         return result.data || result;

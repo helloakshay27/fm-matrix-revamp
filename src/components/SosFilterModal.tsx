@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import axios from 'axios';
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -23,6 +24,11 @@ const SosFilterModal: React.FC<FilterModalProps> = ({
   currentFilters,
 }) => {
   const [filters, setFilters] = useState<SosFilterParams>(currentFilters);
+  const [fmUsers, setFmUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
 
   const fieldStyles = {
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -40,6 +46,28 @@ const SosFilterModal: React.FC<FilterModalProps> = ({
     style: {
       zIndex: 10000,
     },
+  };
+
+  useEffect(() => {
+    if (isOpen && fmUsers.length === 0) {
+      fetchFmUsers();
+    }
+  }, [isOpen]);
+
+  const fetchFmUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setFmUsers(response.data.users || []);
+    } catch (error) {
+      console.error('Failed to fetch FM users', error);
+    } finally {
+      setLoadingUsers(false);
+    }
   };
 
   const handleTextChange = (field: keyof SosFilterParams, value: string) => {
@@ -94,16 +122,25 @@ const SosFilterModal: React.FC<FilterModalProps> = ({
 
             {/* Created By */}
             <div>
-              <TextField
-                fullWidth
-                label="Created By"
-                variant="outlined"
-                size="small"
-                value={filters.created_by || ''}
-                onChange={(e) => handleTextChange('created_by', e.target.value)}
-                placeholder="Enter Created By"
-                sx={fieldStyles}
-              />
+              <FormControl fullWidth variant="outlined" size="small">
+                <InputLabel shrink>Created By</InputLabel>
+                <MuiSelect
+                  label="Created By"
+                  value={filters.created_by || ''}
+                  onChange={(e) => handleTextChange('created_by', e.target.value)}
+                  MenuProps={menuProps}
+                  sx={fieldStyles}
+                  displayEmpty
+                  disabled={loadingUsers}
+                >
+                  <MenuItem value=""><em>{loadingUsers ? 'Loading users...' : 'Select User'}</em></MenuItem>
+                  {fmUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.full_name}>
+                      {user.full_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
 
             {/* Status */}

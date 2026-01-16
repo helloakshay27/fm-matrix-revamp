@@ -79,9 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Check if non-employee user needs to select project/site
   const hostname = window.location.hostname;
-  const isViSite =
-    hostname.includes("vi-web.gophygital.work") ||
-    hostname.includes("localhost:5174");
+  const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -102,11 +100,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Detect Pulse site - used for fallback when no API role exists
   const isPulseSite =
+    hostname.includes("localhost") ||
     hostname.includes("pulse.lockated.com") ||
     hostname.includes("pulse.gophygital.work") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
-    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
