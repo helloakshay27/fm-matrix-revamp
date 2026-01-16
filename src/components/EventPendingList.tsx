@@ -4,8 +4,10 @@ import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchEventById } from '@/store/slices/eventSlice';
 
 const columns: ColumnConfig[] = [
     {
@@ -56,11 +58,28 @@ const EventPendingList = () => {
     const { id: eventId } = useParams();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
+    const navigate = useNavigate()
+    const dispatch = useAppDispatch()
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [eventData, setEventData] = useState<any>({});
+
+    useEffect(() => {
+        const fetchEvent = async () => {
+            try {
+                const response = await dispatch(fetchEventById({ id: eventId, baseUrl, token })).unwrap();
+                setEventData(response)
+            } catch (error) {
+                console.log(error)
+                toast.error("Failed to fetch event")
+            }
+        }
+
+        fetchEvent();
+    }, [])
 
     const fetchRegisteredUsers = async () => {
         setLoading(true);
@@ -133,7 +152,7 @@ const EventPendingList = () => {
     const renderCell = (item: any, columnKey: string) => {
         if (columnKey === 'action') {
             return (
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => navigate(`users/${item.id}`)}>
                     <Eye className="w-4 h-4" />
                 </Button>
             );
@@ -145,6 +164,14 @@ const EventPendingList = () => {
 
         if (columnKey === 'email') {
             return item?.user?.email;
+        }
+
+        if (columnKey === 'mobile') {
+            return item?.user?.mobile;
+        }
+
+        if (columnKey === 'organisation') {
+            return item?.user?.organization?.name;
         }
 
         if (columnKey === 'created_at' && item.created_at) {
@@ -178,7 +205,7 @@ const EventPendingList = () => {
                                 variant="outline"
                                 className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
-                                disabled={selectedItems.length === 0 || isUpdating}
+                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count < eventData.capacity}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Deny
@@ -186,7 +213,7 @@ const EventPendingList = () => {
                             <Button
                                 className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
-                                disabled={selectedItems.length === 0 || isUpdating}
+                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count < eventData.capacity}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Approve

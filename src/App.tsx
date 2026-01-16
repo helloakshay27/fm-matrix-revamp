@@ -915,6 +915,7 @@ import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
+import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3840,6 +3841,10 @@ function App() {
                     <Route
                       path="/pulse/events/edit/:id"
                       element={<EditEventPage />}
+                    />
+                    <Route
+                      path="/pulse/events/details/:id/users/:userid"
+                      element={<EventUserDetailsPage />}
                     />
 
                     <Route

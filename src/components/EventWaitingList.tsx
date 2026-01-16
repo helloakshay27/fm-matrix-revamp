@@ -4,7 +4,7 @@ import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const columns: ColumnConfig[] = [
     {
@@ -55,6 +55,7 @@ const EventWaitingList = () => {
     const { id: eventId } = useParams();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
+    const navigate = useNavigate()
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -85,7 +86,7 @@ const EventWaitingList = () => {
     const renderCell = (item: any, columnKey: string) => {
         if (columnKey === 'action') {
             return (
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => navigate(`users/${item.id}`)}>
                     <Eye className="w-4 h-4" />
                 </Button>
             );
@@ -95,8 +96,16 @@ const EventWaitingList = () => {
             return item?.user?.firstname + " " + item?.user?.lastname;
         }
 
+        if (columnKey === 'mobile') {
+            return item?.user?.mobile;
+        }
+
         if (columnKey === 'email') {
             return item?.user?.email;
+        }
+
+        if (columnKey === 'organisation') {
+            return item?.user?.organization?.name;
         }
 
         if (columnKey === 'created_at' && item.created_at) {
