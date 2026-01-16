@@ -203,9 +203,9 @@ if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
       } else {
         // Use JSON if no image change
         requestBody = JSON.stringify({
-          service_category: {
-            service_cat_name: formData.service_cat_name,
-          },
+          // service_category: {
+            name: formData.service_cat_name,
+          // },
         });
         headers = {
           "Content-Type": "application/json",
