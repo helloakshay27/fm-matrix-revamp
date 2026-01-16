@@ -26,18 +26,17 @@ const MilestoneDetailsMobile = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 toast.error('Authentication token not found');
                 return;
             }
 
             const response = await fetch(
-                `https://lockated-api.gophygital.work/milestones/${milestoneId}.json`,
+                `https://lockated-api.gophygital.work/milestones/${milestoneId}.json?token=${token}`,
                 {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 }

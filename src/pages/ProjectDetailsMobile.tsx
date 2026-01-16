@@ -26,18 +26,17 @@ const ProjectDetailsMobile = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 toast.error('Authentication token not found');
                 return;
             }
 
             const response = await fetch(
-                `https://lockated-api.gophygital.work/project_managements/${projectId}.json`,
+                `https://lockated-api.gophygital.work/project_managements/${projectId}.json?token=${token}`,
                 {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 }
@@ -174,17 +173,17 @@ const ProjectDetailsMobile = () => {
                                 <span className="text-sm text-gray-700 w-32 flex-shrink-0">Start Date</span>
                                 <span className="text-sm text-gray-500 mr-2">:</span>
                                 <span className="text-sm text-gray-900 flex-1">{projectData.start_date}</span>
-                               
+
                             </div>
                             <div className="flex mb-3">
                                 <span className="text-sm text-gray-700 w-32 flex-shrink-0">End Date</span>
                                 <span className="text-sm text-gray-500 mr-2">:</span>
                                 <span className="text-sm text-gray-900 flex-1">{projectData.end_date}</span>
-                                
+
                             </div>
 
 
-                            
+
                         </div>
                     )}
                 </div>
