@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -123,24 +123,14 @@ export const MemberSelectionPanel: React.FC<MemberSelectionPanelProps> = ({
                         size="sm"
                         onClick={handleDeleteClick}
                         disabled={isDeleting}
-                        className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+                        className="text-gray-600  flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
                     >
                         {isDeleting ? (
                             <Loader2 className="w-6 h-6 mt-4 animate-spin" />
                         ) : (
-                            <svg
-                                className="w-5 h-5 mt-4"
-                                viewBox="0 0 16 19"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M5.4039 13.8926L8.0039 11.3412L10.6039 13.8926L12.0039 12.5187L9.4039 9.96733L12.0039 7.41593L10.6039 6.04209L8.0039 8.5935L5.4039 6.04209L4.0039 7.41593L6.6039 9.96733L4.0039 12.5187L5.4039 13.8926ZM3.0039 18.3084C2.45391 18.3084 1.98307 18.1163 1.59141 17.7319C1.19974 17.3476 1.00391 16.8856 1.00391 16.3458V3.58882H0.00390625V1.62621H5.0039V0.644897H11.0039V1.62621H16.0039V3.58882H15.0039V16.3458C15.0039 16.8856 14.8081 17.3476 14.4164 17.7319C14.0247 18.1163 13.5539 18.3084 13.0039 18.3084H3.0039ZM13.0039 3.58882H3.0039V16.3458H13.0039V3.58882Z"
-                                    fill="#1C1B1F"
-                                />
-                            </svg>
+                            <Trash2 className="w-5 h-5" />
                         )}
-                        <span className="text-xs font-medium">Remove Member</span>
+                        <span className="text-xs font-medium">Remove</span>
                     </Button>
 
                     <div className="w-px h-8 bg-gray-300 mr-5"></div>
