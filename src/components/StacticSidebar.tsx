@@ -1017,27 +1017,20 @@ const modulesByPackage = {
             { name: "Recurring Journals ", href: "/settings/recurring-journal" },
              { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
              { name: "Tax Setup ", href: "/settings/tax-setup" },
-          // {
-          //   name: "Escalation Matrix",
-          //   href: "/settings/ticket-management/escalation-matrix",
-          // },
-          // {
-          //   name: "Cost Approval",
-          //   href: "/settings/ticket-management/cost-approval",
-          // },
+        
         ],
       },
 
-      //   {
-      //   name: "Configuration",
-      //   icon: Settings,
-      //   subItems: [
+        {
+        name: "Configuration",
+        icon: Settings,
+        subItems: [
         
-      //        { name: "Charges ", href: "/settings/charge-setup" },
-      //        { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+             { name: "Charges ", href: "/settings/charge-setup" },
+            //  { name: "Bill Cycles ", href: "/settings/bill-cycles" },
         
-      //   ],
-      // },
+        ],
+      },
   ],
 };
 

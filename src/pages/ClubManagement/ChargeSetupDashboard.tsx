@@ -761,11 +761,11 @@ const columns = [
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/charges/${item.id}`)}
+          onClick={() => navigate(`/settings/charge-setup/details`)}
           title="View"
           className="p-0"
         >
-          {/* <Eye className="w-4 h-4" /> */}
+          <Eye className="w-4 h-4" />
         </Button>
 
         <Button

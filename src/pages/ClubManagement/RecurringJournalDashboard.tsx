@@ -654,11 +654,11 @@ const columns = [
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
-                    onClick={() => navigate(`/club-management/recurring-journal/details/${item.id || item.actions}`)}
+                    onClick={() => navigate(`/settings/recurring-journal/details`)}
                     title="View Details"
                     className="p-0"
                   >
-                    {/* <Eye className="w-4 h-4" /> */}
+                    <Eye className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"

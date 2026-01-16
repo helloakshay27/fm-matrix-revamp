@@ -814,6 +814,8 @@ import ChargeSetupDashboard from "./pages/ClubManagement/ChargeSetupDashboard";
 import ChargeSetupAdd from "./pages/ClubManagement/ChargeSetupAdd";
 import BillCyclesDashboard from "./pages/ClubManagement/BillCyclesDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
+import {RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
+import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1628,6 +1630,10 @@ function App() {
                     path="/settings/recurring-journal/add"
                     element={<RecurringJournalAdd />}
                   />
+                   <Route
+                    path="/settings/recurring-journal/details"
+                    element={<RecurringJournalDetails />}
+                  />
                   <Route
                     path="/settings/chart-journal"
                     element={<ChartOfAccountsDashboard />}
@@ -1643,6 +1649,10 @@ function App() {
                   <Route
                     path="/settings/charge-setup/add"
                     element={<ChargeSetupAdd />}
+                  />
+                                    <Route
+                    path="/settings/charge-setup/details"
+                    element={<ChargeSetupDetails />}
                   />
                   <Route
                     path="/settings/bill-cycles"
