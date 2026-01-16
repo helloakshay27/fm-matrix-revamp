@@ -133,19 +133,19 @@ export const AddCRMCustomerPage = () => {
     const payload = {
       entity: {
         name: formData.customerName,
-        email: formData.email,
-        mobile: formData.mobile,
-        customer_type: formData.customerType,
-        ext_customer_code: formData.companyCode,
-        company_code: formData.companyCode,
+        email: formData.email || undefined,
+        mobile: formData.mobile || undefined,
+        ...(formData.customerType && { customer_type: formData.customerType }),
+        ext_customer_code: formData.customerCode,
+        company_code: formData.companyCode || undefined,
         color_code: formData.colorCode,
-        ssid: formData.ssid,
+        ssid: formData.ssid || undefined,
         customer_leases_attributes: leases.map((lease) => ({
           site_id: localStorage.getItem("selectedSiteId"),
-          lease_start_date: lease.leaseStartDate,
-          lease_end_date: lease.leaseEndDate,
-          free_parking: lease.freeParking,
-          paid_parking: lease.paidParking,
+          lease_start_date: lease.leaseStartDate || undefined,
+          lease_end_date: lease.leaseEndDate || undefined,
+          free_parking: lease.freeParking || undefined,
+          paid_parking: lease.paidParking || undefined,
         })),
         entity_domains_attributes: domains
           .filter((d) => d.domain.trim() !== "")
