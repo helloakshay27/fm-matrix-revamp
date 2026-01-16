@@ -527,7 +527,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                 <div class="gantt-progress-bar">
                                     <div
                                         class="gantt-progress-bar-fill"
-                                        style="width: ${task.completionPercent}%"
+                                        style="width: ${task.completionPercent ?? 0}%"
                                     ></div>
                                     <div class="gantt-progress-bar-label">
                                         ${task.completionPercent}%

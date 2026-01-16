@@ -210,7 +210,7 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
-  // Default fallback for other sites
+  // Default fallback for other sitess
   const response = await fetch(
       `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
@@ -524,7 +524,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work");
 
-  const isDevSite = hostname.includes("uat-fm-matrix.lockated.com");
+  const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
   let apiUrl = "";
 
@@ -533,7 +533,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   } else if (isViSite) {
     apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isDevSite) {
-    apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+    apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else {
     // Default fallback
     apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;

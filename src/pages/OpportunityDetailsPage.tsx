@@ -547,7 +547,6 @@ const OpportunityDetailsPage = () => {
                 todo: {
                     title: opportunityDetails.title,
                     status: 'open',
-                    target_date: new Date().toISOString().split('T')[0]
                 },
             };
 
@@ -690,7 +689,7 @@ const OpportunityDetailsPage = () => {
 
                                 <span
                                     className="flex items-center gap-1 cursor-pointer"
-                                    onClick={handleAddToDo}
+                                // onClick={handleAddToDo}
                                 >
                                     <CircleCheckBig size={15} />
                                     <span>Add To Do</span>

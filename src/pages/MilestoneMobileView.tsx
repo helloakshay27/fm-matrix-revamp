@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react";
-import { Download, Eye, LogOut, Search } from "lucide-react";
+import { ArrowLeft, Download, Eye, LogOut, Search } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -74,12 +74,8 @@ const MilestoneMobileView = () => {
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/milestones.json?${filters}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${storedToken}`,
-                    },
-                }
+                `https://${baseUrl}/milestones.json?${filters}&token=${storedToken}`,
+                {}
             );
 
             const milestonesData = response.data || [];
@@ -153,7 +149,12 @@ const MilestoneMobileView = () => {
         <div className="min-h-screen bg-gray-50 p-4">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Milestones</h1>
+                <div className="flex items-center gap-4 mb-4">
+                    <Button variant="ghost" className="p-0" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={18} />
+                    </Button>
+                    <h1 className="text-2xl font-bold text-gray-900">Milestones</h1>
+                </div>
 
                 {/* Search Bar */}
                 <div className="relative">

@@ -92,13 +92,13 @@ const Communtiy = () => {
                 params.append('q[active_eq]', currentFilters.status)
             }
             if (currentFilters.created_at) {
-                params.append('q[created_at_eq]', currentFilters.created_at)
+                params.append('q[created_on_eq]', currentFilters.created_at)
             }
             if (currentFilters.created_by) {
-                params.append('q[created_by_eq]', currentFilters.created_by)
+                params.append('q[created_by_id_eq]', currentFilters.created_by)
             }
             if (currentSearch) {
-                params.append('q[name_cont]', currentSearch)
+                params.append('q[name_or_created_by_firstname_or_created_by_lastname_cont]', currentSearch)
             }
 
             const response = await axios.get(`https://${baseUrl}/communities.json?${params.toString()}`, {

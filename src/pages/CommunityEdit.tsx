@@ -97,6 +97,10 @@ const CommunityEdit = () => {
       toast.error("Community Name is required");
       return false;
     }
+    if (!formData.coverImage && !coverImagePreview) {
+      toast.error("Cover Image is required");
+      return false;
+    }
     return true;
   };
 

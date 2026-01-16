@@ -20,7 +20,11 @@ function SupersetDashboard() {
     }
 
     if (selectedSiteId) {
-      params.append("project_id", selectedSiteId);
+      const projectIds = [203, 200, 198, 196, 192, 190, 187, 186, 182, 180];
+
+      projectIds.forEach((id) => {
+        params.append("project_id[]", id.toString());
+      });
     }
 
     return `https://superset.lockated.com/superset/dashboard/3/?${params.toString()}`;

@@ -32,7 +32,7 @@ const CommunityDetails = () => {
                     <TabsTrigger value="details" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Community Details</TabsTrigger>
                     <TabsTrigger value="feed" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Community Feed</TabsTrigger>
                     <TabsTrigger value="reports" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Reports</TabsTrigger>
-                    <TabsTrigger value="events" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Events</TabsTrigger>
+                    <TabsTrigger value="events" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Shared</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="details">
