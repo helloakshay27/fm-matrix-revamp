@@ -21,6 +21,8 @@ import { getFullUrl } from "../config/apiConfig";
 import { Mention, MentionsInput } from "react-mentions";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { AddTagModal } from "./AddTagModal";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -63,6 +65,8 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   const [mentionTags, setMentionTags] = useState<any[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const quillRef = useRef<HTMLDivElement>(null);
+  const quillEditorRef = useRef<Quill | null>(null);
 
   // Fetch mention users
   const fetchMentionUsers = async () => {
@@ -105,8 +109,53 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
       dispatch(fetchFMUsers());
       fetchMentionUsers();
       fetchMentionTags();
+
+      // Initialize Quill editor with a small delay to ensure DOM is ready
+      const initTimer = setTimeout(() => {
+        if (quillRef.current) {
+          // Clear previous instance if it exists
+          if (quillEditorRef.current) {
+            quillEditorRef.current = null;
+          }
+
+          quillEditorRef.current = new Quill(quillRef.current, {
+            theme: "snow",
+            placeholder: "Type description...",
+            modules: {
+              toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ["bold", "italic", "underline", "strike"],
+                ["blockquote"],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["link"],
+                ["clean"],
+              ],
+            },
+          });
+
+          // Set initial description if exists
+          if (description) {
+            quillEditorRef.current.root.innerHTML = description;
+          }
+
+          // Handle text changes
+          quillEditorRef.current.on("text-change", () => {
+            const htmlContent = quillEditorRef.current?.root.innerHTML;
+            setDescription(htmlContent || "");
+          });
+        }
+      }, 100);
+
+      return () => {
+        clearTimeout(initTimer);
+      };
+    } else {
+      // Reset editor ref when modal closes
+      if (quillEditorRef.current) {
+        quillEditorRef.current = null;
+      }
     }
-  }, [dispatch, open]);
+  }, [dispatch, open])
 
   // Derived User Options
   const usersList =
@@ -142,11 +191,13 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
     if (!responsiblePerson)
       return toast.error("Responsible Person is required");
 
+    console.log(description)
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("opportunity[title]", title);
-      formData.append("opportunity[description]", description);
+      formData.append("opportunity[description]", description.trim()); // Preserve formatting
       formData.append("opportunity[responsible_person_id]", responsiblePerson);
       formData.append("opportunity[status]", "open"); // Default status
 
@@ -183,6 +234,9 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
       // Reset form
       setTitle("");
       setDescription("");
+      if (quillEditorRef.current) {
+        quillEditorRef.current.setContents([]);
+      }
       setResponsiblePerson("");
       setTags([]);
       setAttachments([]);
@@ -255,277 +309,261 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
     },
   };
 
-  const descriptionMentionStyles = {
-    control: {
-      fontSize: 14,
-      backgroundColor: "white",
-      minHeight: 100,
-    },
-    highlighter: {
-      overflow: "hidden",
-      padding: "8px 14px",
-      border: "1px solid transparent",
-    },
-    input: {
-      margin: 0,
-      padding: "8px 14px",
-      outline: "none",
-      border: "1px solid rgba(0, 0, 0, 0.23)",
-      borderRadius: "4px",
-      minHeight: 100,
-    },
-    suggestions: {
-      list: {
-        backgroundColor: "white",
-        border: "1px solid #ccc",
-        fontSize: 14,
-        zIndex: 100,
-        maxHeight: "150px",
-        overflowY: "auto" as const,
-        borderRadius: "4px",
-      },
-      item: {
-        padding: "5px 10px",
-        borderBottom: "1px solid #eee",
-        cursor: "pointer",
-      },
-      itemFocused: {
-        backgroundColor: "#01569E",
-        color: "white",
-        fontWeight: "bold",
-      },
-    },
-  };
-
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      TransitionComponent={Transition}
-      fullScreen // Using fullScreen but limiting width with CSS as per example
-      PaperProps={{
-        style: {
-          position: "fixed",
-          right: 0,
-          top: 0,
-          height: "100%",
-          width: "35rem", // Fixed width side panel
-          margin: 0,
-          borderRadius: 0,
-          maxWidth: "100%",
-        },
-      }}
-    >
-      <DialogContent className="!p-0 flex flex-col h-full bg-white">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <Typography variant="h6" className="font-semibold text-center flex-1">
-            Add Opportunities
-          </Typography>
-          <IconButton onClick={onClose} size="small">
-            <X size={20} />
-          </IconButton>
-        </div>
-
-        <div className="border-b border-[#E95420] w-full" />
-
-        {/* Body */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-3">
-          {/* Title */}
-          <div>
-            <Typography variant="subtitle2" className="mb-2 font-medium">
-              Title <span className="text-red-500">*</span>
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        TransitionComponent={Transition}
+        fullScreen // Using fullScreen but limiting width with CSS as per example
+        PaperProps={{
+          style: {
+            position: "fixed",
+            right: 0,
+            top: 0,
+            height: "100%",
+            width: "40rem", // Fixed width side panel
+            margin: 0,
+            borderRadius: 0,
+            maxWidth: "100%",
+          },
+        }}
+      >
+        <DialogContent className="!p-0 flex flex-col h-full bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <Typography variant="h6" className="font-semibold text-center flex-1">
+              Add Opportunities
             </Typography>
-            <MentionsInput
-              value={title}
-              onChange={(e, newValue) => setTitle(newValue)}
-              placeholder="Type @ to mention users. Type # to mention tags"
-              style={mentionStyles}
-              className="mentions-title"
-            >
-              <Mention
-                trigger="@"
-                data={mentionData}
-                markup="@[__display__](__id__)"
-                displayTransform={(id, display) => `@${display} `}
-                appendSpaceOnAdd
-              />
-              <Mention
-                trigger="#"
-                data={tagData}
-                markup="#[__display__](__id__)"
-                displayTransform={(id, display) => `#${display} `}
-                appendSpaceOnAdd
-              />
-            </MentionsInput>
+            <IconButton onClick={onClose} size="small">
+              <X size={20} />
+            </IconButton>
           </div>
 
-          {/* Description */}
-          <div>
-            <Typography variant="subtitle2" className="font-medium">
-              Description
-            </Typography>
-            <MentionsInput
-              value={description}
-              onChange={(e, newValue) => setDescription(newValue)}
-              placeholder="Type @ to mention users. Type # to mention tags"
-              style={descriptionMentionStyles}
-              className="mentions-description"
-            >
-              <Mention
-                trigger="@"
-                data={mentionData}
-                markup="@[__display__](__id__)"
-                displayTransform={(id, display) => `@${display} `}
-                appendSpaceOnAdd
-              />
-              <Mention
-                trigger="#"
-                data={tagData}
-                markup="#[__display__](__id__)"
-                displayTransform={(id, display) => `#${display} `}
-                appendSpaceOnAdd
-              />
-            </MentionsInput>
-          </div>
+          <div className="border-b border-[#E95420] w-full" />
 
-          {/* Responsible Person */}
-          <div>
-            <Typography variant="subtitle2" className="mb-2 font-medium">
-              Responsible Person <span className="text-red-500">*</span>
-            </Typography>
-            <MuiSelectField
-              options={userOptions}
-              value={responsiblePerson}
-              onChange={(e) => setResponsiblePerson(e.target.value as string)}
-              fullWidth
-            />
-          </div>
-
-          <div>
-            <div
-              className="text-[12px] text-[red] text-right cursor-pointer mb-2"
-              onClick={() => setIsTagModalOpen(true)}
-            >
-              <i>Create new tag</i>
-            </div>
-            <MuiMultiSelect
-              label="Tags"
-              options={mentionTags.map((tag) => ({
-                value: tag.id,
-                label: tag.name,
-                id: tag.id,
-              }))}
-              value={tags}
-              onChange={(values) => handleMultiSelectChange("tags", values)}
-              placeholder="Select Tags"
-            />
-          </div>
-
-          <div className="!mt-6">
-            <MuiMultiSelect
-              label={
-                <>
-                  Observer<span className="text-red-500">*</span>
-                </>
-              }
-              options={mentionUsers
-                ?.filter(Boolean)
-                .map((user: any) => ({
-                  label: user?.full_name || "Unknown",
-                  value: user?.id,
-                }))}
-              value={observers}
-              placeholder="Select Observer"
-              onChange={(values) => handleMultiSelectChange("observers", values)}
-            />
-          </div>
-
-          {/* Attachments */}
-          <div>
-            <Typography variant="subtitle2" className="mb-2 font-medium">
-              Attachments
-            </Typography>
-            <div className="border rounded-md p-3 flex items-center justify-between bg-white">
-              <span className="text-gray-500 text-sm italic">
-                {attachments.length === 0
-                  ? "No Documents Attached"
-                  : `${attachments.length} file(s) attached`}
-              </span>
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                onClick={() => fileInputRef.current?.click()}
-                sx={{
-                  textTransform: "none",
-                  bgcolor: "#C72030",
-                  "&:hover": { bgcolor: "#A01020" },
-                }}
+          {/* Body */}
+          <div className="flex-1 p-6 overflow-y-auto space-y-3">
+            {/* Title */}
+            <div>
+              <Typography variant="subtitle2" className="mb-2 font-medium">
+                Title <span className="text-red-500">*</span>
+              </Typography>
+              <MentionsInput
+                value={title}
+                onChange={(e, newValue) => setTitle(newValue)}
+                placeholder="Type @ to mention users. Type # to mention tags"
+                style={mentionStyles}
+                className="mentions-title"
               >
-                Attach Files
-              </Button>
-              <input
-                type="file"
-                hidden
-                multiple
-                ref={fileInputRef}
-                onChange={handleFileChange}
+                <Mention
+                  trigger="@"
+                  data={mentionData}
+                  markup="@[__display__](__id__)"
+                  displayTransform={(id, display) => `@${display} `}
+                  appendSpaceOnAdd
+                />
+                <Mention
+                  trigger="#"
+                  data={tagData}
+                  markup="#[__display__](__id__)"
+                  displayTransform={(id, display) => `#${display} `}
+                  appendSpaceOnAdd
+                />
+              </MentionsInput>
+            </div>
+
+            {/* Description */}
+            <div>
+              <Typography variant="subtitle2" className="font-medium mb-2">
+                Description
+              </Typography>
+              <div
+                ref={quillRef}
+                style={{
+                  border: "1px solid rgba(0, 0, 0, 0.23)",
+                  borderRadius: "4px",
+                  minHeight: "200px",
+                }}
               />
             </div>
 
-            {/* File List */}
-            {attachments.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {attachments.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border text-sm"
-                  >
-                    <span className="truncate max-w-[150px]">{file.name}</span>
-                    <Trash2
-                      size={14}
-                      className="cursor-pointer text-gray-500 hover:text-red-500"
-                      onClick={() => handleRemoveAttachment(index)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+            {/* Responsible Person */}
+            <div>
+              <Typography variant="subtitle2" className="mb-2 font-medium">
+                Responsible Person <span className="text-red-500">*</span>
+              </Typography>
+              <MuiSelectField
+                options={userOptions}
+                value={responsiblePerson}
+                onChange={(e) => setResponsiblePerson(e.target.value as string)}
+                fullWidth
+              />
+            </div>
 
-        {/* Footer */}
-        <div className="p-6 pt-0 flex justify-center">
-          <Button
-            variant="outlined"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            sx={{
-              color: "black",
-              borderColor: "black",
-              borderRadius: 0,
-              minWidth: "120px",
-              cursor: "pointer",
-              textTransform: "none",
-              borderWidth: "1px",
-              "&:hover": {
-                borderWidth: "1px",
+            <div>
+              <div
+                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                onClick={() => setIsTagModalOpen(true)}
+              >
+                <i>Create new tag</i>
+              </div>
+              <MuiMultiSelect
+                label="Tags"
+                options={mentionTags.map((tag) => ({
+                  value: tag.id,
+                  label: tag.name,
+                  id: tag.id,
+                }))}
+                value={tags}
+                onChange={(values) => handleMultiSelectChange("tags", values)}
+                placeholder="Select Tags"
+              />
+            </div>
+
+            <div className="!mt-6">
+              <MuiMultiSelect
+                label={
+                  <>
+                    Observer<span className="text-red-500">*</span>
+                  </>
+                }
+                options={mentionUsers
+                  ?.filter(Boolean)
+                  .map((user: any) => ({
+                    label: user?.full_name || "Unknown",
+                    value: user?.id,
+                  }))}
+                value={observers}
+                placeholder="Select Observer"
+                onChange={(values) => handleMultiSelectChange("observers", values)}
+              />
+            </div>
+
+            {/* Attachments */}
+            <div>
+              <Typography variant="subtitle2" className="mb-2 font-medium">
+                Attachments
+              </Typography>
+              <div className="border rounded-md p-3 flex items-center justify-between bg-white">
+                <span className="text-gray-500 text-sm italic">
+                  {attachments.length === 0
+                    ? "No Documents Attached"
+                    : `${attachments.length} file(s) attached`}
+                </span>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => fileInputRef.current?.click()}
+                  sx={{
+                    textTransform: "none",
+                    bgcolor: "#C72030",
+                    "&:hover": { bgcolor: "#A01020" },
+                  }}
+                >
+                  Attach Files
+                </Button>
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              {/* File List */}
+              {attachments.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {attachments.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border text-sm"
+                    >
+                      <span className="truncate max-w-[150px]">{file.name}</span>
+                      <Trash2
+                        size={14}
+                        className="cursor-pointer text-gray-500 hover:text-red-500"
+                        onClick={() => handleRemoveAttachment(index)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 pt-0 flex justify-center">
+            <Button
+              variant="outlined"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              sx={{
+                color: "black",
                 borderColor: "black",
-                bgcolor: "rgba(0,0,0,0.05)",
-              },
-            }}
-          >
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </Button>
-        </div>
-      </DialogContent>
-      <AddTagModal
-        isOpen={isTagModalOpen}
-        onClose={() => setIsTagModalOpen(false)}
-        onTagCreated={() => fetchMentionTags()}
-      />
-    </Dialog>
+                borderRadius: 0,
+                minWidth: "120px",
+                cursor: "pointer",
+                textTransform: "none",
+                borderWidth: "1px",
+                "&:hover": {
+                  borderWidth: "1px",
+                  borderColor: "black",
+                  bgcolor: "rgba(0,0,0,0.05)",
+                },
+              }}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+          </div>
+        </DialogContent>
+        <AddTagModal
+          isOpen={isTagModalOpen}
+          onClose={() => setIsTagModalOpen(false)}
+          onTagCreated={() => fetchMentionTags()}
+        />
+      </Dialog>
+
+      <style>{`
+        .ql-toolbar {
+          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+          border-radius: 4px 4px 0 0;
+          background-color: #fafafa;
+        }
+
+        .ql-container {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-radius: 0 0 4px 4px;
+          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+        }
+
+        .ql-editor {
+          padding: 12px 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: rgba(0, 0, 0, 0.6);
+          font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+          color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+          color: #01569E;
+        }
+      `}</style>
+    </>
   );
 };
 
