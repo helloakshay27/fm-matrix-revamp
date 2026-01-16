@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, File } from "lucide-react";
 import { Switch } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -7,7 +7,6 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { MemberSelectionPanel } from "./MemberSelectionPanel";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
 interface CommunityDetailsTabProps {
@@ -57,7 +56,19 @@ const memberColumns: ColumnConfig[] = [
         label: 'Organisation',
         sortable: true,
         draggable: true
-    }
+    },
+    {
+        key: 'designation',
+        label: 'Designation',
+        sortable: true,
+        draggable: true
+    },
+    {
+        key: 'address',
+        label: 'Correspondence Address',
+        sortable: true,
+        draggable: true
+    },
 ];
 
 const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetailsTabProps) => {
@@ -110,6 +121,9 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
     const renderMemberCell = (member: any, columnKey: string) => {
         if (columnKey === 'actions') {
             return renderMemberActions(member);
+        }
+        if (columnKey === 'mobile') {
+            return `+91 ${member[columnKey]}` || "-";
         }
         return member[columnKey] || "-";
     };
@@ -184,7 +198,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                 <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <FileText size={16} />
+                            <File size={16} />
                         </div>
                         <span className="font-semibold text-lg text-gray-800">Community Details</span>
                     </div>
@@ -235,19 +249,25 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                     {/* Community Info Grid */}
                     <div className="grid grid-cols-2 gap-6">
                         <div className="grid grid-cols-2 gap-6">
-                            <div>
+                            <div className="flex gap-4">
                                 <p className="text-sm text-gray-500 mb-1">Community Name</p>
                                 <p className="text-sm font-semibold text-gray-900">{communityData.name}</p>
                             </div>
-                            <div>
+                            <div className="flex gap-4">
                                 <p className="text-sm text-gray-500 mb-1">Members</p>
                                 <p className="text-sm font-semibold text-gray-900">{communityData?.all_members?.length}</p>
                             </div>
-                            <div>
+                            <div className="flex gap-4">
                                 <p className="text-sm text-gray-500 mb-1">Created On</p>
-                                <p className="text-sm font-semibold text-gray-900">{new Date(communityData.created_at).toLocaleDateString()}</p>
+                                <p className="text-sm font-semibold text-gray-900">{
+                                    communityData.created_at ? new Intl.DateTimeFormat("en-GB", {
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric",
+                                    }).format(new Date(communityData.created_at)) : "-"
+                                }</p>
                             </div>
-                            <div>
+                            <div className="flex gap-4">
                                 <p className="text-sm text-gray-500 mb-1">Created By</p>
                                 <p className="text-sm font-semibold text-gray-900">{communityData.created_by}</p>
                             </div>
@@ -261,7 +281,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
             <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
                     <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <FileText size={16} />
+                        <File size={16} />
                     </div>
                     <span className="font-semibold text-lg text-gray-800">Community Member Details</span>
                 </div>

@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Trash2, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Member {
     id: string;
@@ -26,18 +35,22 @@ export const MemberSelectionPanel: React.FC<MemberSelectionPanelProps> = ({
 }) => {
     const [showAll, setShowAll] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleClearClick = () => {
         console.log("X button clicked - clearing selection");
         onClearSelection();
     };
 
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = () => {
         if (selectedMembers.length === 0) {
             toast.error("No members selected for deletion.");
             return;
         }
+        setIsDialogOpen(true);
+    };
 
+    const handleConfirmDelete = async () => {
         setIsDeleting(true);
         try {
             await onDeleteMembers();
@@ -46,6 +59,7 @@ export const MemberSelectionPanel: React.FC<MemberSelectionPanelProps> = ({
             console.error("Delete error:", error);
         } finally {
             setIsDeleting(false);
+            setIsDialogOpen(false);
         }
     };
 
@@ -142,6 +156,23 @@ export const MemberSelectionPanel: React.FC<MemberSelectionPanelProps> = ({
                     </Button>
                 </div>
             </div>
+
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure want to remove the members?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-[#C72030] hover:bg-[#A61B28]">
+                            Remove
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
