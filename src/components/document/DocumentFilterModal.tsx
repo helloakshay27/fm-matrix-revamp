@@ -166,69 +166,6 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
 
         <div className="space-y-6 py-4">
           {/* Document Information Section */}
-          <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">
-              Document Information
-            </h3>
-            <div className="grid grid-cols-3 gap-6">
-              <TextField
-                label="Document Title"
-                placeholder="Search by title..."
-                value={localFilters.title || ""}
-                onChange={(e) =>
-                  setLocalFilters({ ...localFilters, title: e.target.value })
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <TextField
-                label="File Name"
-                placeholder="Search by file name..."
-                value={localFilters.fileName || ""}
-                onChange={(e) =>
-                  setLocalFilters({ ...localFilters, fileName: e.target.value })
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>File Type</InputLabel>
-                <MuiSelect
-                  value={localFilters.fileType || ""}
-                  onChange={(e) =>
-                    setLocalFilters({
-                      ...localFilters,
-                      fileType: e.target.value,
-                    })
-                  }
-                  label="File Type"
-                  displayEmpty
-                  MenuProps={selectMenuProps}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>All Types</em>
-                  </MenuItem>
-                  <MenuItem value="application/pdf">PDF</MenuItem>
-                  <MenuItem value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                    Word (DOCX)
-                  </MenuItem>
-                  <MenuItem value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-                    Excel (XLSX)
-                  </MenuItem>
-                  <MenuItem value="application/vnd.openxmlformats-officedocument.presentationml.presentation">
-                    PowerPoint (PPTX)
-                  </MenuItem>
-                  <MenuItem value="image/jpeg">JPEG Image</MenuItem>
-                  <MenuItem value="image/png">PNG Image</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
 
           {/* Organization & Status Section */}
           <div>

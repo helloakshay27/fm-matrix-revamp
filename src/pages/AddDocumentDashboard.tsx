@@ -98,6 +98,7 @@ export const AddDocumentDashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [showTechParkModal, setShowTechParkModal] = useState(false);
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
@@ -194,6 +195,53 @@ export const AddDocumentDashboard = () => {
     const files = event.target.files;
     if (files && files[0]) {
       setCoverImage(files[0]);
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      const file = files[0];
+      const allowedTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ];
+
+      if (allowedTypes.includes(file.type) || file.type.startsWith("image/")) {
+        setCoverImage(file);
+        toast.success(`File "${file.name}" uploaded successfully`);
+      } else {
+        toast.error(
+          "Please upload a valid document file (PDF, DOC, XLS, PPT, or Image)"
+        );
+      }
     }
   };
 
@@ -697,9 +745,21 @@ export const AddDocumentDashboard = () => {
 
             {/* Upload Area or File Display */}
             {!coverImage ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+              <div
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+                  isDragging
+                    ? "border-[#C72030] bg-red-50"
+                    : "border-gray-300 bg-white"
+                }`}
+              >
                 <p className="text-sm text-gray-500 mb-4">
-                  Choose a file or drag & drop it here
+                  {isDragging
+                    ? "Drop your file here"
+                    : "Choose a file or drag & drop it here"}
                 </p>
                 <label>
                   <input
