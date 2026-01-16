@@ -643,6 +643,7 @@ import { AddBookingSetupPage } from "./pages/AddBookingSetupPage";
 
 // Import Add Facility Booking page
 import { AddFacilityBookingPage } from "./pages/AddFacilityBookingPage";
+import { PaymentRedirectPage } from "./pages/PaymentRedirectPage";
 import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
@@ -879,6 +880,7 @@ import SOSDirectory from "./pages/SOSDirectory";
 import EditSosDirectory from "./pages/EditSosDirectory";
 import AddSosDirectory from "./pages/AddSosDirectory";
 import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
+import SOSCategorySetupPage from "./pages/SOSCategorySetupPage";
 
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
@@ -890,6 +892,20 @@ import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAdd
 import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
+import Communtiy from "./pages/Communtiy";
+import CommunityAdd from "./pages/CommunityAdd";
+import CommunityDetails from "./pages/CommunityDetails";
+import CommunityReportsPage from "./pages/CommunityReportsPage";
+import CommunityEdit from "./pages/CommunityEdit";
+import CuratedServiceDashboard from "./pages/CuratedServiceDashboard";
+import { AddCuratedServicePage } from "./pages/AddCuratedServicePage";
+import { EditCuratedServicePage } from "./pages/EditCuratedServicePage";
+import CuratedServiceCategoryDashboard from "./pages/CuratedServiceCategoryDashboard";
+import { AddCuratedServiceCategoryPage } from "./pages/AddCuratedServiceCategoryPage";
+import { EditCuratedServiceCategoryPage } from "./pages/EditCuratedServiceCategoryPage";
+import CommunityUserDetails from "./pages/CommunityUserDetails";
+import ReportsDetailsPage from "./pages/ReportsDetailsPage";
+import AmenityCategorySetup from "./pages/AmenityCategorySetup";
 import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
 import MilestoneMobileView from "./pages/MilestoneMobileView";
@@ -899,6 +915,7 @@ import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
+import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -952,7 +969,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -985,58 +1002,58 @@ function App() {
     };
   }, [token, connect, socketUrl]);
 
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
-          setIsSubscribed(true);
-          toast.success("Real-time connection established!", {
-            duration: 2000,
-          });
-        },
-        onMessageNotification: (message) => {
-          console.warn(message);
-          if (message.user_id !== currentUser.id) {
-            return;
-          }
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+  //         setIsSubscribed(true);
+  //         toast.success("Real-time connection established!", {
+  //           duration: 2000,
+  //         });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         console.warn(message);
+  //         if (message.user_id !== currentUser.id) {
+  //           return;
+  //         }
 
-          if (!("Notification" in window)) {
-            toast.error("Not supported");
-            return;
-          }
+  //         if (!("Notification" in window)) {
+  //           toast.error("Not supported");
+  //           return;
+  //         }
 
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              const notification = new Notification("New Message Received", {
-                body: message.body,
-              });
+  //         Notification.requestPermission().then((permission) => {
+  //           if (permission === "granted") {
+  //             const notification = new Notification("New Message Received", {
+  //               body: message.body,
+  //             });
 
-              notification.onclick = () => {
-                window.focus();
-                if (message.ntype === "conversation") {
-                  navigate(`/vas/channels/messages/${message.conversation_id}`);
-                } else if (message.ntype === "projectspace") {
-                  navigate(`/vas/channels/groups/${message.project_space_id}`);
-                }
-              };
-            }
-          });
-        },
-        onDisconnected: () => {
-          console.warn("❌ Chat subscription disconnected");
-          setIsSubscribed(false);
-          toast.error("Real-time chat disconnected");
-        },
-      });
-      console.warn("📋 Subscription object:", sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+  //             notification.onclick = () => {
+  //               window.focus();
+  //               if (message.ntype === "conversation") {
+  //                 navigate(`/vas/channels/messages/${message.conversation_id}`);
+  //               } else if (message.ntype === "projectspace") {
+  //                 navigate(`/vas/channels/groups/${message.project_space_id}`);
+  //               }
+  //             };
+  //           }
+  //         });
+  //       },
+  //       onDisconnected: () => {
+  //         console.warn("❌ Chat subscription disconnected");
+  //         setIsSubscribed(false);
+  //         toast.error("Real-time chat disconnected");
+  //       },
+  //     });
+  //     console.warn("📋 Subscription object:", sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.warn("⏰ Clearing subscription timer");
-      clearTimeout(subscriptionTimer);
-    };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+  //   return () => {
+  //     console.warn("⏰ Clearing subscription timer");
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
@@ -3548,6 +3565,11 @@ function App() {
                       element={<BookingSetupDetailPage />}
                     />
 
+                    <Route
+                      path="/payment-redirect"
+                      element={<PaymentRedirectPage />}
+                    />
+
                     {/* Master Location Routes */}
                     <Route
                       path="/master/location/building"
@@ -3828,6 +3850,10 @@ function App() {
                       path="/pulse/events/edit/:id"
                       element={<EditEventPage />}
                     />
+                    <Route
+                      path="/pulse/events/details/:id/users/:userid"
+                      element={<EventUserDetailsPage />}
+                    />
 
                     <Route
                       path="/pulse/notices"
@@ -3844,6 +3870,37 @@ function App() {
                     <Route
                       path="/pulse/notices/details/:id"
                       element={<BroadcastDetailsPage />}
+                    />
+
+                    <Route path="/pulse/community" element={<Communtiy />} />
+
+                    <Route
+                      path="/pulse/community/add"
+                      element={<CommunityAdd />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:id"
+                      element={<CommunityDetails />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:id/reports"
+                      element={<CommunityReportsPage />}
+                    />
+
+                    <Route
+                      path="/pulse/community/edit/:id"
+                      element={<CommunityEdit />}
+                    />
+
+                    <Route
+                      path="/pulse/community/:communityId/user/:userId"
+                      element={<CommunityUserDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/:communityId/reports/details/:id"
+                      element={<ReportsDetailsPage />}
                     />
 
                     <Route
@@ -3912,9 +3969,33 @@ function App() {
                       path="/pulse/pulse-privilege/service-category/edit/:id"
                       element={<EditServiceCategoryPage />}
                     />
+                    <Route path="/pulse/amenity" element={<BookingList />} />
+                    {/* Plus curated Service Routes */}
                     <Route
-                      path="/pulse/amenity"
-                      element={<AmenitySetupDashboard />}
+                      path="/pulse/curated-services/service"
+                      element={<CuratedServiceDashboard />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service/create"
+                      element={<AddCuratedServicePage />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service/edit/:id"
+                      element={<EditCuratedServicePage />}
+                    />
+
+                    {/*  curated Service  Category Routes */}
+                    <Route
+                      path="/pulse/curated-services/service-category"
+                      element={<CuratedServiceCategoryDashboard />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service-category/create"
+                      element={<AddCuratedServiceCategoryPage />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service-category/edit/:id"
+                      element={<EditCuratedServiceCategoryPage />}
                     />
 
                     {/* Carpool Routes */}
@@ -3946,6 +4027,11 @@ function App() {
                     <Route
                       path="/pulse/sos-directory/:id"
                       element={<SosDirectoryDetailsPage />}
+                    />
+
+                    <Route
+                      path="/pulse/sos-category-setup"
+                      element={<SOSCategorySetupPage />}
                     />
                   </Route>
 
@@ -4042,6 +4128,10 @@ function App() {
                     <Route
                       path="/settings/vas/booking/setup"
                       element={<BookingSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/category-setup"
+                      element={<AmenityCategorySetup />}
                     />
                     <Route
                       path="/settings/vas/booking/setup/add"

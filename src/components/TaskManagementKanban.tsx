@@ -292,7 +292,7 @@ const TaskManagementKanban = ({ fetchData }) => {
                                 key={card.id}
                                 add={card.add}
                                 color={card.color}
-                                count={0}
+                                count={filteredTasks.length}
                                 title={card.title}
                                 onDrop={handleSubtaskStatusDrop}
                             >

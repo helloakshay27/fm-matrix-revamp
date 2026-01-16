@@ -4,7 +4,7 @@ import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "axios";
 import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const BookingCalenderView = () => {
@@ -30,6 +30,9 @@ const BookingCalenderView = () => {
     const [currentMonth, setCurrentMonth] = useState(initialMonth);
     const [currentYear, setCurrentYear] = useState(initialYear);
     const [showActionPanel, setShowActionPanel] = useState(false);
+
+    const datesContainerRef = useRef<HTMLDivElement | null>(null);
+    const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const getFacilities = async () => {
         try {
@@ -79,7 +82,7 @@ const BookingCalenderView = () => {
             const generatedDates = Array.from({ length: daysInMonth }, (_, i) => {
                 const dateObj = new Date(currentYear, monthIndex, i + 1);
                 const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
-                const isOff = dayName === "Sunday"; // Example: Sundays off
+                const isOff = false;
                 const formattedDate = dateObj.toLocaleDateString("en-GB"); // dd/mm/yyyy
                 const yyyy = dateObj.getFullYear();
                 const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -124,12 +127,26 @@ const BookingCalenderView = () => {
         }
     };
 
+    useEffect(() => {
+        if (!datesContainerRef.current || !selectedDateForApi) return;
+
+        const targetEl = dateRefs.current[selectedDateForApi];
+        if (targetEl) {
+            const container = datesContainerRef.current;
+            const targetOffset = targetEl.offsetLeft - container.offsetLeft;
+            // Position selected date ~300px left of center
+            const centerScroll = targetOffset - (container.clientWidth / 2) + (targetEl.clientWidth / 2);
+            const scrollLeft = Math.max(centerScroll + 300, 0);
+            container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+        }
+    }, [selectedDateForApi, dates]);
+
     const fetchTimeSlotsForDate = async (date) => {
         try {
-            // Generate time slots from 9 AM to 9 PM with 15-minute intervals
+            // Generate time slots from 5 AM to 9 PM with 15-minute intervals
             const timeSlots = [];
-            for (let i = 0; i < 12; i++) {
-                const startHour = i + 9;
+            for (let i = 0; i < 16; i++) {
+                const startHour = i + 5;
                 const startAmPm = startHour < 12 ? "AM" : "PM";
 
                 // Create 4 fifteen-minute slots for each hour
@@ -262,12 +279,6 @@ const BookingCalenderView = () => {
 
     return (
         <div className="pt-2 space-y-6">
-            {/* <div className="flex items-center justify-end">
-                <Button variant="outline" className="w-[40px] h-[40px]">
-                    <Bell className="w-5 h-5" />
-                </Button>
-            </div> */}
-
             {/* Header Controls */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
@@ -300,10 +311,6 @@ const BookingCalenderView = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input placeholder="Search..." className="pl-10 pr-10" />
                     </div>
-                    <Button className="text-[14px]">
-                        <ArrowUpDown size={16} />
-                        Advance Search
-                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -311,6 +318,9 @@ const BookingCalenderView = () => {
                         title="Filter"
                     >
                         <Filter className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" className="w-[40px] h-[40px]">
+                        <Bell className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
@@ -322,7 +332,7 @@ const BookingCalenderView = () => {
             {/* Calendar Container */}
             <div className="flex flex-col gap-0">
                 {/* Dates Header - Separate Scrolling */}
-                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+                <div ref={datesContainerRef} className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
                     <div className="min-w-fit flex">
                         <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-10">
                             <div className="flex items-center justify-between gap-2">
@@ -350,6 +360,11 @@ const BookingCalenderView = () => {
                             {dates.map((dateInfo, idx) => (
                                 <div
                                     key={idx}
+                                    ref={(el) => {
+                                        if (el) {
+                                            dateRefs.current[dateInfo.fullDate] = el;
+                                        }
+                                    }}
                                     onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && (
                                         setSelectedDate(dateInfo.date),
                                         setSelectedDateForApi(dateInfo.fullDate)
@@ -459,7 +474,7 @@ const BookingCalenderView = () => {
                                                                     ${selectedDateInfo?.isOff || isSlotBlocked
                                                                         ? "bg-gray-100 cursor-not-allowed"
                                                                         : slotBooked
-                                                                            ? "bg-gray-400 cursor-pointer hover:bg-gray-500"
+                                                                            ? "bg-gray-300 cursor-pointer hover:bg-gray-400"
                                                                             : "bg-white hover:bg-blue-50 cursor-pointer"
                                                                     }
                                                                     ${slot.quarter === 0 ? 'border-l border-l-gray-400' : ''}

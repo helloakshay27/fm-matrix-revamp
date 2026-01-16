@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react";
-import { Download, Eye, Search, X } from "lucide-react";
+import { ArrowLeft, Download, Eye, Search, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -130,12 +130,7 @@ const ProjectTasksMobileView = () => {
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/task_managements.json?${filters}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${storedToken}`,
-                    },
-                }
+                `https://${baseUrl}/task_managements.json?${filters}&token=${storedToken}`
             );
 
             const tasksData = response.data?.task_managements || [];
@@ -229,13 +224,9 @@ const ProjectTasksMobileView = () => {
 
             const response = baseUrl
                 ? await axios.patch(
-                    `https://${baseUrl}/task_managements/${id}.json`,
+                    `https://${baseUrl}/task_managements/${id}.json?token=${storedToken}`,
                     payload,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${storedToken}`,
-                        },
-                    }
+                    {}
                 )
                 : null;
 
@@ -304,7 +295,12 @@ const ProjectTasksMobileView = () => {
         <div className="min-h-screen bg-gray-50 p-4">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Tasks</h1>
+                <div className="flex items-center gap-4 mb-4">
+                    <Button variant="ghost" className="p-0" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={18} />
+                    </Button>
+                    <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+                </div>
 
                 {/* Search Bar */}
                 <div className="relative">

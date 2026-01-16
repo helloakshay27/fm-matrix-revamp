@@ -489,21 +489,21 @@ const GanttChart = ({ selectedColumns = {} }) => {
             return `<span class="gantt-milestone-link" data-id="${task.navigationid}" style="cursor: pointer; font-size: 14px;" title="${task.text
               .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
               .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}">${task.text
-              .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
-              .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
+                .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
           }
           if (task.type === "task") {
             return `<span class="gantt-milestone-link" data-id="${task.parent.split("-")[1]}" style="cursor: pointer; font-size: 14px;" title="${task.text
               .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
               .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}">${task.text
-              .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
-              .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
+                .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
           }
           return `<span class="gantt-subtask-link" data-id="${task.navigationid}" data-parent="${task.parent.split("-")[1]}" style="cursor: pointer; font-size: 14px;" title="${task.text
             .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
             .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}">${task.text
-            .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
-            .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
+              .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+              .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}</span>`;
         },
       },
       {
@@ -527,7 +527,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                 <div class="gantt-progress-bar">
                                     <div
                                         class="gantt-progress-bar-fill"
-                                        style="width: ${task.completionPercent}%"
+                                        style="width: ${task.completionPercent ?? 0}%"
                                     ></div>
                                     <div class="gantt-progress-bar-label">
                                         ${task.completionPercent}%
@@ -770,8 +770,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
           const formattedEnd = item.end_date
             ? formatEndDateDMYFromISO(item.end_date)
             : formatEndDateDMYFromISO(
-                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-              );
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            );
           console.log(item);
           tasksData.push({
             navigationid: item.id,
@@ -837,7 +837,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                   ? calculateDuration(formattedStartTask, formattedEndTask)
                   : task.estimated_hour
                     ? task.estimated_hour +
-                      (task.estimated_min ? task.estimated_min / 60 : 0)
+                    (task.estimated_min ? task.estimated_min / 60 : 0)
                     : 1;
 
               console.log(task);
@@ -869,8 +869,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 try {
                   const preds = Array.isArray(task.predecessor_task)
                     ? task.predecessor_task
-                        .flat(Infinity)
-                        .filter((p) => p != null)
+                      .flat(Infinity)
+                      .filter((p) => p != null)
                     : [];
 
                   preds.forEach((pred) => {
@@ -903,14 +903,14 @@ const GanttChart = ({ selectedColumns = {} }) => {
                   const subTaskDuration =
                     formattedStartSubTask && formattedEndSubTask
                       ? calculateDuration(
-                          formattedStartSubTask,
-                          formattedEndSubTask
-                        )
+                        formattedStartSubTask,
+                        formattedEndSubTask
+                      )
                       : subTask.estimated_hour
                         ? subTask.estimated_hour +
-                          (subTask.estimated_min
-                            ? subTask.estimated_min / 60
-                            : 0)
+                        (subTask.estimated_min
+                          ? subTask.estimated_min / 60
+                          : 0)
                         : 1;
 
                   tasksData.push({
@@ -940,8 +940,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
                     try {
                       const preds = Array.isArray(subTask.predecessor_task)
                         ? subTask.predecessor_task
-                            .flat(Infinity)
-                            .filter((p) => p != null)
+                          .flat(Infinity)
+                          .filter((p) => p != null)
                         : [];
 
                       preds.forEach((pred) => {

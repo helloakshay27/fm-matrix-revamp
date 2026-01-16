@@ -26,7 +26,7 @@ interface BroadcastDetails {
   shared?: number;
   show_on_home_screen?: boolean;
   visible_after_expire?: boolean;
-  share_with_communities?: boolean;
+  shared_community?: boolean;
 }
 
 export const BroadcastDetailsPage = () => {
@@ -51,9 +51,9 @@ export const BroadcastDetailsPage = () => {
         const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
         setBroadcastDetails(response)
         // Set initial switch states
-        setIsActive(response.status === 'active' || response.status === 'Active');
+        setIsActive(response.active);
         setShowOnHomeScreen(response.show_on_home_screen || false);
-        setVisibleAfterExpire(response.visible_after_expire || false);
+        setVisibleAfterExpire(response.flag_expire || false);
       } catch (error) {
         console.log(error)
         toast.error("Failed to fetch broadcast details")
@@ -104,13 +104,13 @@ export const BroadcastDetailsPage = () => {
       const formData = new FormData();
 
       if (field === 'active') {
-        formData.append('noticeboard[status]', value ? 'active' : 'inactive');
+        formData.append('noticeboard[active]', value ? '1' : '0');
         setIsActive(value);
       } else if (field === 'show_on_home_screen') {
         formData.append('noticeboard[show_on_home_screen]', value.toString());
         setShowOnHomeScreen(value);
       } else if (field === 'visible_after_expire') {
-        formData.append('noticeboard[visible_after_expire]', value.toString());
+        formData.append('noticeboard[flag_expire]', value ? '1' : '0');
         setVisibleAfterExpire(value);
       }
 
@@ -300,7 +300,7 @@ export const BroadcastDetailsPage = () => {
             <div className="flex items-center gap-8">
               <span className="text-sm text-gray-500 min-w-[180px]">Share With Communities</span>
               <span className="text-sm font-medium text-gray-900">
-                {broadcastDetails.share_with_communities ? "Yes" : "No"}
+                {broadcastDetails.shared_community ? "Yes" : "No"}
               </span>
             </div>
           </div>
@@ -323,12 +323,12 @@ export const BroadcastDetailsPage = () => {
               {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
                   <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.attachments[0]?.document_name || "Document.pdf"}
+                    {broadcastDetails.attachments[0]?.document_name || "Document"}
                   </span>
                   <div className="flex flex-col items-center">
-                    {broadcastDetails.attachments[0]?.document_url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                    {broadcastDetails.attachments[0]?.url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                       <img
-                        src={broadcastDetails.attachments[0].document_url}
+                        src={broadcastDetails.attachments[0].url}
                         alt="Document"
                         className="w-16 h-16 object-contain"
                       />

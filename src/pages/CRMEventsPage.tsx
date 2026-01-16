@@ -1,23 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus, Pencil } from 'lucide-react';
+import { Plus, Edit, Calendar, IndianRupee, CalendarCheck, AlertCircle, CalendarClock, FileCheck, CalendarRange } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
 import { fetchEvents } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
+
+const formatDateWithTimezone = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  const millis = String(date.getMilliseconds()).padStart(3, "0");
+
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
+  const offsetMinutes = pad(Math.abs(offset) % 60);
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${millis}${sign}${offsetHours}:${offsetMinutes}`;
+};
+
 
 export const CRMEventsPage = () => {
   const dispatch = useAppDispatch();
@@ -31,19 +45,26 @@ export const CRMEventsPage = () => {
   const [events, setEvents] = useState([])
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    unit: '',
-    dateRange: {
-      from: undefined,
-      to: undefined,
-    },
     status: '',
+    created_at: '',
+    created_by: '',
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
-  const [openFilterDialog, setOpenFilterDialog] = useState(false);
+  const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [cardData, setCardData] = useState({
+    total_events: "",
+    upcoming_events: "",
+    past_events: "",
+    complementary_events: "",
+    paid_events: "",
+    requestable_events: "",
+    pending_requests: "",
+    total_registrations: ""
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,13 +77,27 @@ export const CRMEventsPage = () => {
           created_by: event.created_by || 'Unknown',
           from_time: event.from_time,
           to_time: event.to_time,
+          is_paid: event.is_paid,
           event_type: event.shared === 0 ? "General" : "Personal",
+          event_location: event.event_at,
+          amount: event.amount_per_member,
+          member_capacity: event.capacity,
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
           created_at: event.created_at,
         }));
         setEvents(mappedEvents);
+        setCardData({
+          total_events: response.dashboard.total_events || "0",
+          upcoming_events: response.dashboard.upcoming_events || "0",
+          past_events: response.dashboard.past_events || "0",
+          complementary_events: response.dashboard.complementary_events || "0",
+          paid_events: response.dashboard.paid_events || "0",
+          requestable_events: response.dashboard.requestable_events || "0",
+          pending_requests: response.dashboard.pending_requests || "0",
+          total_registrations: response.dashboard.total_registrations || "0"
+        });
         setPagination({
           current_page: response.pagination.current_page,
           total_count: response.pagination.total_count,
@@ -78,40 +113,60 @@ export const CRMEventsPage = () => {
   }, [])
 
   const columns = [
-    { key: 'event_name', label: 'Title', sortable: true, defaultVisible: true },
-    { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
-    { key: 'created_by', label: 'Created By', sortable: true, defaultVisible: true },
-    { key: 'from_time', label: 'Start Date', sortable: true, defaultVisible: true },
-    { key: 'to_time', label: 'End Date', sortable: true, defaultVisible: true },
-    { key: 'event_type', label: 'Event Type', sortable: true, defaultVisible: true },
+    { key: 'event_name', label: 'Event Name', sortable: true, defaultVisible: true },
+    { key: 'event_date', label: 'Event Date', sortable: true, defaultVisible: true },
+    { key: 'event_time', label: 'Event Time', sortable: true, defaultVisible: true },
+    { key: 'event_category', label: 'Event Category', sortable: true, defaultVisible: true },
     { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
-    { key: 'is_expired', label: 'Expired', sortable: true, defaultVisible: true },
-    { key: 'attachments', label: 'Attachments', sortable: true, defaultVisible: true },
-    { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+    { key: 'event_location', label: 'Event Location', sortable: true, defaultVisible: true },
+    // { key: 'pulse_category', label: 'Pulse Category', sortable: true, defaultVisible: true },
+    // { key: 'requestable', label: 'Requestable', sortable: true, defaultVisible: true },
+    // { key: 'approval_pending', label: 'Approval Pending', sortable: true, defaultVisible: true },
+    { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
+    { key: 'member_capacity', label: 'Member Capacity', sortable: true, defaultVisible: true },
+    // { key: 'seat_remaining', label: 'Seat Remaining', sortable: true, defaultVisible: true },
+    // { key: 'member_per_limit', label: 'Member Per Limit', sortable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Event Created On', sortable: true, defaultVisible: true },
+    { key: 'created_by', label: 'Event Created By', sortable: true, defaultVisible: true },
+    // { key: 'interested_count', label: 'Interested', sortable: true, defaultVisible: true },
+    // { key: 'registered_count', label: 'Registered', sortable: true, defaultVisible: true },
+    // { key: 'waitlist_count', label: 'Waitlist', sortable: true, defaultVisible: true },
   ];
 
-  // Handle filter dialog
-  const handleOpenFilterDialog = () => {
-    setOpenFilterDialog(true);
+  // Handle filter modal
+  const handleOpenFilterModal = () => {
+    setOpenFilterModal(true);
   };
 
-  const handleCloseFilterDialog = () => {
-    setOpenFilterDialog(false);
-  };
+  const handleApplyFilters = async (filterData: { status?: string; created_at?: string; created_by?: string }) => {
+    // Update local filters state
+    setFilters({
+      status: filterData.status || '',
+      created_at: filterData.created_at || '',
+      created_by: filterData.created_by || '',
+    });
 
-  const handleApplyFilters = async () => {
-    const formatedStartDate = filters.dateRange.from ? format(new Date(filters.dateRange.from), "MM/dd/yyyy") : null;
-    const formatedEndDate = filters.dateRange.to ? format(new Date(filters.dateRange.to), "MM/dd/yyyy") : null;
+    // Build filter params for API
+    const filterParams: any = {};
 
-    const filterParams = {
-      "q[publish_in]": filters.status,
-      ...(formatedStartDate && formatedEndDate && { "q[date_range]": `${formatedStartDate} - ${formatedEndDate}` }),
-    };
+    if (filterData.status) {
+      filterParams["q[publish_in]"] = filterData.status;
+    }
+
+    if (filterData.created_at) {
+      const formattedDate = format(new Date(filterData.created_at), "yyyy-MM-dd");
+      filterParams["q[created_at_eq]"] = formattedDate;
+    }
+
+    if (filterData.created_by) {
+      filterParams["q[created_by]"] = filterData.created_by;
+    }
 
     const queryString = new URLSearchParams(filterParams).toString();
 
     try {
       const response = await dispatch(fetchEvents({ baseUrl, token, params: queryString, page: pagination.current_page, per_page: 10 })).unwrap();
+      console.log(response.classifieds)
       const mappedEvents = response.classifieds.map(event => ({
         id: event.id,
         event_name: event.event_name,
@@ -119,7 +174,11 @@ export const CRMEventsPage = () => {
         created_by: event.created_by || 'Unknown',
         from_time: event.from_time,
         to_time: event.to_time,
+        is_paid: event.is_paid,
         event_type: event.shared === 0 ? "General" : "Personal",
+        event_location: event.event_at,
+        amount: event.amount_per_member,
+        member_capacity: event.capacity,
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -135,18 +194,6 @@ export const CRMEventsPage = () => {
       console.log(error);
       toast.error('Failed to fetch data');
     }
-    setOpenFilterDialog(false);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      unit: '',
-      dateRange: {
-        from: undefined,
-        to: undefined,
-      },
-      status: '',
-    });
   };
 
   const handleAdd = () => {
@@ -164,13 +211,27 @@ export const CRMEventsPage = () => {
   // Render cell content
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
-      case 'status':
-        return (
-          <Badge className="bg-green-600 text-white">{item.status}</Badge>
-        );
+      case 'event_date':
+        return new Intl.DateTimeFormat("en-GB", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(new Date(item.from_time));
+      case 'event_time':
+        return new Intl.DateTimeFormat("en-GB", {
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        }).format(new Date(item.from_time));
+      case "event_category":
+        return item.is_paid ? "Paid" : "Complimentary";
       case 'event_type':
         return (
           <span>{item.event_type}</span>
+        );
+      case 'amount':
+        return (
+          <span>{item.amount}</span>
         );
       case 'is_expired':
         return item.is_expired ? (
@@ -180,10 +241,13 @@ export const CRMEventsPage = () => {
         );
       case 'attachments':
         return item.attachments.length > 0 ? (
-          <img
-            style={{ width: "100%", height: "50px" }}
-            src={item.attachments[0].document}
-          />
+          <div className='bg-gray-100'>
+            <img
+              style={{ width: "100%", height: "50px" }}
+              className='object-contain'
+              src={item.attachments[0].document}
+            />
+          </div>
         ) : (
           'None'
         );
@@ -343,7 +407,6 @@ export const CRMEventsPage = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-blue-600"
         onClick={() => handleView(item.id)}
       >
         <Eye className="h-4 w-4" />
@@ -351,94 +414,57 @@ export const CRMEventsPage = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-green-600"
         onClick={() => handleEdit(item.id)}
       >
-        <Pencil className="h-4 w-4" />
+        <Edit className="h-4 w-4" />
       </Button>
     </div>
   );
 
-  const getDateRangeLabel = () => {
-    const { from, to } = filters.dateRange;
-    if (from && to) {
-      return `${format(from, 'MM/dd/yyyy')} - ${format(to, 'MM/dd/yyyy')}`;
-    } else if (from) {
-      return `${format(from, 'MM/dd/yyyy')} - ...`;
-    } else {
-      return 'Select Date Range';
-    }
-  };
+
+
+  const cardValues = [
+    { title: "Total Events", value: cardData.total_events, icon: <Calendar className="w-5 h-5" color="#C72030" /> },
+    { title: "Upcoming Events", value: cardData.upcoming_events, icon: <CalendarRange className="w-5 h-5" color="#C72030" /> },
+    { title: "Past Events", value: cardData.past_events, icon: <CalendarClock className="w-5 h-5" color="#C72030" /> },
+    { title: "Complementary Events", value: cardData.complementary_events, icon: <CalendarCheck className="w-5 h-5" color="#C72030" /> },
+    { title: "Paid Events", value: cardData.paid_events, icon: <IndianRupee className="w-5 h-5" color="#C72030" /> },
+    { title: "Requestable Events", value: cardData.requestable_events, icon: <FileCheck className="w-5 h-5" color="#C72030" /> },
+    { title: "Pending Requests", value: cardData.pending_requests, icon: <AlertCircle className="w-5 h-5" color="#C72030" /> },
+    { title: "Total Registrations", value: cardData.total_registrations, icon: <FileCheck className="w-5 h-5" color="#C72030" /> },
+  ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Filter Dialog */}
-      <Dialog open={openFilterDialog} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Filter Events</DialogTitle>
-        <DialogContent>
-          <div className="flex flex-col gap-4 mt-4">
-
-            {/* Date Range Picker */}
-            <FormControl fullWidth>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !filters.dateRange?.from && 'text-gray-400'
-                    )}
-                    style={{ border: "1px solid #ccc", padding: "25px 15px", borderRadius: "3px" }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {getDateRangeLabel()}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start" style={{ zIndex: 9999 }}>
-                  <Calendar
-                    mode="range"
-                    selected={filters.dateRange}
-                    onSelect={(range) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        dateRange: {
-                          from: range?.from,
-                          to: range?.to,
-                        },
-                      }))
-                    }
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </FormControl>
-
-            {/* Status Filter */}
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filters.status}
-                onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
-                label="Status"
-              >
-                <MenuItem value="Select" disabled>Select Status</MenuItem>
-                <MenuItem value="1">Published</MenuItem>
-                <MenuItem value="2">Disabled</MenuItem>
-              </Select>
-            </FormControl>
+    <div className="p-6 space-y-6">
+      {/* Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cardValues.map((card, index) => (
+          <div key={index}>
+            <div
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-sm flex items-center gap-4`}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded-[3px]">
+                {card.icon}
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {card.value || 0}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  {card.title}
+                </div>
+              </div>
+            </div>
           </div>
-        </DialogContent>
+        ))}
+      </div>
 
-        <DialogActions>
-          <Button onClick={handleResetFilters} color="secondary">
-            Reset
-          </Button>
-          <Button onClick={() => handleApplyFilters()} color="primary">
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Filter Modal */}
+      <CRMEventsFilterModal
+        open={openFilterModal}
+        onOpenChange={setOpenFilterModal}
+        onApply={handleApplyFilters}
+      />
 
       {/* Enhanced Table */}
       <EnhancedTable
@@ -450,8 +476,6 @@ export const CRMEventsPage = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search events..."
-        pagination={true}
-        pageSize={10}
         enableSearch={true}
         loading={loading}
         leftActions={
@@ -465,7 +489,7 @@ export const CRMEventsPage = () => {
             </Button>
           </div>
         }
-        onFilterClick={handleOpenFilterDialog}
+        onFilterClick={handleOpenFilterModal}
       />
 
       <div className="flex justify-center mt-6">

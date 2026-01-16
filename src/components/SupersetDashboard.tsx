@@ -1,26 +1,48 @@
-import React from "react";
-
-const SUPERSET_DASHBOARD_URL =
-	"https://superset.lockated.com/superset/dashboard/b21f6dea-788d-4139-b37a-f95d2dca691d/?standalone=3&native_filters_key=GvRU_UwpVX4";
+import React, { useMemo } from "react";
 
 function SupersetDashboard() {
-	return (
-		<main className="p-4">
-			<div className="mb-4">
-				{/* <h1 className="text-xl font-semibold">Superset Dashboard</h1> */}
-			</div>
-			<div className="w-full h-[calc(100vh-160px)] overflow-hidden rounded-lg border border-gray-200 bg-white">
-				<iframe
-					src={SUPERSET_DASHBOARD_URL}
-					title="Superset Dashboard"
-					className="w-full h-full border-0"
-					allow="clipboard-read; clipboard-write; fullscreen"
-					referrerPolicy="no-referrer-when-downgrade"
-				/>
-			</div>
-		</main>
-	);
+  // Get dynamic token from authentication
+  const token = localStorage.getItem("token");
+  const selectedSiteId = localStorage.getItem("selectedSiteId");
+
+  // Build dynamic Superset dashboard URL
+  const SUPERSET_DASHBOARD_URL = useMemo(() => {
+    const params = new URLSearchParams({
+      native_filters_key: "Etpl0AYTl7M",
+      standalone: "2",
+    });
+
+    if (token) {
+      params.append(
+        "token",
+        "93d65f48f3b24ee90357e76fd3747b863dfba98a5445511b"
+      );
+    }
+
+    if (selectedSiteId) {
+      const projectIds = [203, 200, 198, 196, 192, 190, 187, 186, 182, 180];
+
+      projectIds.forEach((id) => {
+        params.append("project_id[]", id.toString());
+      });
+    }
+
+    return `https://superset.lockated.com/superset/dashboard/3/?${params.toString()}`;
+  }, [token, selectedSiteId]);
+
+  return (
+    <main className="p-4">
+      <div className="w-full h-[calc(100vh-120px)] overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <iframe
+          src={SUPERSET_DASHBOARD_URL}
+          title="Superset Dashboard"
+          className="w-full h-full border-0"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+    </main>
+  );
 }
 
 export default SupersetDashboard;
-
