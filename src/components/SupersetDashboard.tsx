@@ -20,7 +20,7 @@ function SupersetDashboard() {
     }
 
     if (selectedSiteId) {
-      params.append("project_id", selectedSiteId);
+      params.append("project_id", "15");
     }
 
     return `https://superset.lockated.com/superset/dashboard/3/?${params.toString()}`;
