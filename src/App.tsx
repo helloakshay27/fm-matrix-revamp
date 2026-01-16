@@ -969,7 +969,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -3833,7 +3833,10 @@ function App() {
                       element={<BannerDetailsPage />}
                     />
                     <Route path="/pulse/events" element={<CRMEventsPage />} />
-                    <Route path="/pulse/events/add" element={<AddEventPage />} />
+                    <Route
+                      path="/pulse/events/add"
+                      element={<AddEventPage />}
+                    />
                     <Route
                       path="/pulse/events/details/:id"
                       element={<CRMEventDetailsPage />}
@@ -3864,10 +3867,7 @@ function App() {
                       element={<BroadcastDetailsPage />}
                     />
 
-                    <Route
-                      path="/pulse/community"
-                      element={<Communtiy />}
-                    />
+                    <Route path="/pulse/community" element={<Communtiy />} />
 
                     <Route
                       path="/pulse/community/add"
@@ -3964,9 +3964,33 @@ function App() {
                       path="/pulse/pulse-privilege/service-category/edit/:id"
                       element={<EditServiceCategoryPage />}
                     />
+                    <Route path="/pulse/amenity" element={<BookingList />} />
+                    {/* Plus curated Service Routes */}
                     <Route
-                      path="/pulse/amenity"
-                      element={<BookingList />}
+                      path="/pulse/curated-services/service"
+                      element={<CuratedServiceDashboard />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service/create"
+                      element={<AddCuratedServicePage />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service/edit/:id"
+                      element={<EditCuratedServicePage />}
+                    />
+
+                    {/*  curated Service  Category Routes */}
+                    <Route
+                      path="/pulse/curated-services/service-category"
+                      element={<CuratedServiceCategoryDashboard />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service-category/create"
+                      element={<AddCuratedServiceCategoryPage />}
+                    />
+                    <Route
+                      path="/pulse/curated-services/service-category/edit/:id"
+                      element={<EditCuratedServiceCategoryPage />}
                     />
 
                     {/* Carpool Routes */}
