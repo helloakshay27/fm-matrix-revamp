@@ -1136,7 +1136,7 @@ const ProjectTaskCreateModal = ({
       }
       toast.dismiss();
       toast.success("Task created successfully");
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.log(error);
       const errors = error.response.data;
