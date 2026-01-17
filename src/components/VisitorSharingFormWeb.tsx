@@ -1439,14 +1439,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold mb-1">Form already submitted</h3>
             <p className="text-sm text-gray-600 mb-4">This submission has been received by the host. No further actions are available.</p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => { if (typeof window !== 'undefined') window.location.reload(); }}
-                className="px-4 py-2 bg-[#C72030] text-white rounded-md text-sm"
-              >
-                Refresh
-              </button>
-            </div>
+           
           </div>
         </div>
       </div>
