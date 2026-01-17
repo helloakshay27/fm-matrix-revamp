@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 type Visitor = {
   id: number;
@@ -17,12 +17,19 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState<boolean>(false);
   const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
+  // Camera state for Step 1 image capture
+  const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const apiErrorTimerRef = React.useRef<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // when the server indicates the form was already submitted (approve: 5)
+  // we show only a centered card and hide the rest of the UI
+  const [alreadySubmitted, setAlreadySubmitted] = useState<boolean>(false);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -145,6 +152,13 @@ const VisitorSharingFormWeb: React.FC = () => {
     console.debug("[state] carryingAsset:", carryingAsset, "expandedVisitors:", expandedVisitors);
   }, [assetsByVisitor, carryingAsset, expandedVisitors]);
 
+  // cleanup camera stream when component unmounts
+  useEffect(() => {
+    return () => {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+    };
+  }, [stream]);
+
   // Prefill Step 1 from host API (image upload intentionally excluded)
   useEffect(() => {
     // extract token from query and id from path
@@ -198,7 +212,19 @@ const VisitorSharingFormWeb: React.FC = () => {
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
-        if (data.visit_to) setLocation(String(data.visit_to));
+        // prefer guest_from if provided by host API, otherwise fall back to visit_to
+        const guestFrom = (data as Record<string, unknown>)?.guest_from;
+        if (typeof guestFrom !== 'undefined' && guestFrom !== null) {
+          setLocation(String(guestFrom));
+        } else if (data.visit_to) {
+          setLocation(String(data.visit_to));
+        }
+        // Also prefill the Step 2 "to location" field from the host API's visit_to when available
+        if (data.visit_to) {
+          setToLocation(String(data.visit_to));
+        }
+  // Debug: log the host-provided location fields so we can verify why both may be identical
+  // eslint-disable-next-line no-console
         if (data.persont_to_meet)
           setPersonToMeetName(String(data.persont_to_meet));
 
@@ -271,6 +297,14 @@ const VisitorSharingFormWeb: React.FC = () => {
             },
           }));
         }
+
+          // If the host response indicates the form was already submitted,
+          // show only the small card and skip the rest of the prefill mapping.
+          const maybeApprove = (data as Record<string, unknown>)?.approve;
+          if (typeof maybeApprove !== 'undefined' && Number(maybeApprove) === 5) {
+            setAlreadySubmitted(true);
+            return;
+          }
 
           // Map primary assets (always) from host response so Step 3 shows prefilled assets
           try {
@@ -1263,6 +1297,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         return out;
       };
+
       // eslint-disable-next-line no-console
       console.debug('[submitToApi] attachments summary:', summarize(assetsByVisitor));
 
@@ -1285,7 +1320,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             console.debug(k, "(File)", v.name, v.type, v.size);
           } else {
             // eslint-disable-next-line no-console
-            console.debug(k, v as string);
+            console.debug(k, String(v));
           }
         }
       }
@@ -1327,6 +1362,43 @@ const VisitorSharingFormWeb: React.FC = () => {
       );
     }
   };
+
+  // If server told us the form was already submitted, render only the card
+  if (alreadySubmitted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm px-2">
+          <div className="bg-white border border-gray-100 rounded-lg shadow-md p-5 text-center">
+            <div className="flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Form already submitted</h3>
+            <p className="text-sm text-gray-600 mb-4">This submission has been received by the host. No further actions are available.</p>
+            <div className="flex justify-center">
+              <button
+                onClick={() => { if (typeof window !== 'undefined') window.location.reload(); }}
+                className="px-4 py-2 bg-[#C72030] text-white rounded-md text-sm"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
@@ -1465,6 +1537,77 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Upload Photo
                       </span>
                     </label>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowCameraModal(true);
+                        try {
+                          const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                          setStream(s);
+                          if (videoRef.current) videoRef.current.srcObject = s;
+                        } catch (err) {
+                          showToast('Unable to access camera. Please allow camera permission or use Upload.');
+                        }
+                      }}
+                      className="ml-2 bg-white border border-gray-200 text-sm px-3 py-2 rounded"
+                    >
+                      Use Camera
+                    </button>
+
+                    {showCameraModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/50" onClick={() => {
+                          if (stream) stream.getTracks().forEach((t) => t.stop());
+                          setStream(null);
+                          setShowCameraModal(false);
+                        }} />
+                        <div className="bg-white rounded p-4 z-10 w-[90%] max-w-md">
+                          <div className="flex flex-col items-stretch gap-3">
+                            <video ref={videoRef} autoPlay playsInline className="w-full h-56 bg-black rounded" />
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => {
+                                  const video = videoRef.current;
+                                  if (!video) return;
+                                  const canvas = document.createElement('canvas');
+                                  canvas.width = video.videoWidth || 640;
+                                  canvas.height = video.videoHeight || 480;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                                  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                  setProfilePhoto(dataUrl);
+                                  const arr = dataUrl.split(',');
+                                  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+                                  const bstr = atob(arr[1]);
+                                  let n = bstr.length;
+                                  const u8arr = new Uint8Array(n);
+                                  while (n--) u8arr[n] = bstr.charCodeAt(n);
+                                  const file = new File([u8arr], `camera_${Date.now()}.jpg`, { type: mime });
+                                  setProfilePhotoFile(file);
+                                  setProfilePhotoChanged(true);
+                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  setStream(null);
+                                  setShowCameraModal(false);
+                                }}
+                                className="bg-[#C72030] text-white px-4 py-2 rounded"
+                              >
+                                Capture
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  setStream(null);
+                                  setShowCameraModal(false);
+                                }}
+                                className="bg-white border border-gray-200 px-4 py-2 rounded"
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-gray-400 mt-2">
                     This photo will appear on your gate pass
@@ -1936,7 +2079,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">To Location:</span>
                     <span className="text-gray-900 font-medium">
-                      {toLocation || location || "N/A"}
+                      {location || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -2016,7 +2159,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">To Location:</span>
                     <span className="text-gray-900 font-medium">
-                      {toLocation || location || "N/A"}
+                      {toLocation || "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -2223,13 +2366,16 @@ const VisitorSharingFormWeb: React.FC = () => {
           <div className="fixed inset-0 z-40 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-50 w-80 max-w-xs bg-white rounded-lg shadow-lg p-5">
-              <button
-                aria-label="Close"
-                onClick={() => setShowSuccess(false)}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
+                <button
+                  aria-label="Close"
+                  onClick={() => {
+                    // reload the page so the GET prefill runs again
+                    if (typeof window !== 'undefined') window.location.reload();
+                  }}
+                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-full bg-[#4ade80] flex items-center justify-center mb-3 relative">
                   <svg
@@ -3209,34 +3355,36 @@ const VisitorSharingFormWeb: React.FC = () => {
           </div>
         )}
 
-        {/* Fixed bottom actions */}
-        <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
-          <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
-            {step > 1 && (
-              <button
-                onClick={() => {
-                  // Clear validation errors when navigating back
-                  setVisitorErrors({});
-                  setPrimaryVehicleError(false);
-                  setAssetCategoryErrors({});
-                  setStep((s) => Math.max(1, s - 1));
-                }}
-                className="w-1/2 bg-white border border-gray-200 py-3 rounded"
-              >
-                Back
-              </button>
-            )}
-            {step < 6 && (
-              <button
-                onClick={handleNext}
-                disabled={step === 5 && !ndaAgree}
-                className={`flex-1 py-3 font-semibold rounded ${step === 5 && !ndaAgree ? "bg-gray-300 text-white cursor-not-allowed" : "bg-[#C72030] text-white"}`}
-              >
-                {step === 5 ? "Preview" : "Next"}
-              </button>
-            )}
+        {/* Fixed bottom actions (hidden while submitting or after success) */}
+        {!isSubmitting && !showSuccess && (
+          <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
+            <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
+              {step > 1 && (
+                <button
+                  onClick={() => {
+                    // Clear validation errors when navigating back
+                    setVisitorErrors({});
+                    setPrimaryVehicleError(false);
+                    setAssetCategoryErrors({});
+                    setStep((s) => Math.max(1, s - 1));
+                  }}
+                  className="w-1/2 bg-white border border-gray-200 py-3 rounded"
+                >
+                  Back
+                </button>
+              )}
+              {step < 6 && (
+                <button
+                  onClick={handleNext}
+                  disabled={step === 5 && !ndaAgree}
+                  className={`flex-1 py-3 font-semibold rounded ${step === 5 && !ndaAgree ? "bg-gray-300 text-white cursor-not-allowed" : "bg-[#C72030] text-white"}`}
+                >
+                  {step === 5 ? "Preview" : "Next"}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         {/* Small mobile API error card */}
         {apiError && (
           <div className="fixed left-1/2 bottom-24 z-50 sm:hidden transform -translate-x-1/2">
