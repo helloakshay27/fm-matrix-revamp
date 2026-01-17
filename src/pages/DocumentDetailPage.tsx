@@ -8,6 +8,7 @@ import {
   Edit2,
   Copy,
   Move,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -19,9 +20,12 @@ import {
   DocumentAttachment,
   bulkMoveCopyDocuments,
   updateDocumentStatus,
+  shareDocument,
+  ShareDocumentPayload,
 } from "@/services/documentService";
 import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
 import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
+import { DocumentShareModal } from "@/components/document/DocumentShareModal";
 
 interface DocumentPermission {
   id: number;
@@ -49,6 +53,17 @@ interface DocumentPermission {
     id: number;
     name: string;
   }>;
+}
+
+interface DocumentUser {
+  id: number;
+  user_type: "internal" | "external";
+  user_id: number | null;
+  email: string | null;
+  access_level: "viewer" | "editor";
+  status: string;
+  invited_by_id: number;
+  user_name: string;
 }
 
 interface DocumentDetail {
@@ -63,6 +78,7 @@ interface DocumentDetail {
   active: boolean | null;
   attachment: DocumentAttachment;
   document_permissions?: DocumentPermission[];
+  document_users?: DocumentUser[];
 }
 
 export const DocumentDetailPage = () => {
@@ -73,6 +89,7 @@ export const DocumentDetailPage = () => {
   const [showEditor, setShowEditor] = useState(false);
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [operationType, setOperationType] = useState<"move" | "copy">("move");
   const hostname = window.location.hostname;
 
@@ -116,6 +133,66 @@ export const DocumentDetailPage = () => {
     } catch (error) {
       console.error("Error deleting document:", error);
       toast.error("Failed to delete document");
+    }
+  };
+
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
+  const handleSaveShares = async (
+    shares: Array<{
+      id: string;
+      user_type: "internal" | "external";
+      user_id: number | null;
+      email: string | null;
+      full_name?: string;
+      access_level: "viewer" | "editor";
+    }>
+  ) => {
+    if (!document || !id) return;
+
+    try {
+      // Get existing shares
+      const existingShares = document.document_users || [];
+      const existingShareIds = existingShares.map((s) => s.id.toString());
+
+      // Identify new shares (shares that don't have an ID in existingShares)
+      const newShares = shares
+        .filter((share) => {
+          // If the share ID is a number from existing shares, skip it
+          return !existingShareIds.includes(share.id);
+        })
+        .map((share) => ({
+          user_type: share.user_type,
+          user_id: share.user_id,
+          email: share.email,
+          access_level: share.access_level,
+        }));
+
+      // Identify removed shares (existing shares not in current shares list)
+      const currentShareIds = shares.map((s) => s.id);
+      const removedShares = existingShares
+        .filter((existing) => !currentShareIds.includes(existing.id.toString()))
+        .map((existing) => ({ id: existing.id }));
+
+      // Build payload
+      const payload: ShareDocumentPayload = {
+        shares: newShares,
+        unshare: removedShares,
+      };
+
+      // Call API
+      await shareDocument(parseInt(id, 10), payload);
+      toast.success("Document shares updated successfully");
+
+      // Refresh document data to get updated shares
+      const response = await getDocumentDetail(parseInt(id, 10));
+      setDocument(response);
+      setShowShareModal(false);
+    } catch (error) {
+      console.error("Error updating shares:", error);
+      toast.error("Failed to update document shares");
     }
   };
 
@@ -348,6 +425,14 @@ export const DocumentDetailPage = () => {
             Document &gt; Document Detail
           </div>
           <div className="flex items-center gap-3">
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+              title="Share Document"
+            >
+              <Share2 className="w-5 h-5 text-[#C72030]" />
+            </button>
             {/* Move Button */}
             <button
               onClick={handleMove}
@@ -622,6 +707,23 @@ export const DocumentDetailPage = () => {
         selectedDocumentIds={document ? [document.id] : []}
         sourceFolderId={document?.folder_id}
         onConfirm={handleBulkMoveConfirm}
+      />
+
+      {/* Document Share Modal */}
+      <DocumentShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        initialShares={
+          document?.document_users?.map((user) => ({
+            id: user.id.toString(),
+            user_type: user.user_type,
+            user_id: user.user_id,
+            email: user.email,
+            full_name: user.user_name,
+            access_level: user.access_level,
+          })) || []
+        }
+        onSave={handleSaveShares}
       />
     </div>
   );

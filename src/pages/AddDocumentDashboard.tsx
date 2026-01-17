@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
+import { DocumentShareModal } from "@/components/document/DocumentShareModal";
 import { toast } from "sonner";
 
 // Field styles for Material-UI components
@@ -101,9 +102,20 @@ export const AddDocumentDashboard = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [showTechParkModal, setShowTechParkModal] = useState(false);
   const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
   const [selectedCommunities, setSelectedCommunities] = useState<
     { id: number; name: string }[]
+  >([]);
+  const [documentShares, setDocumentShares] = useState<
+    Array<{
+      id: string;
+      user_type: "internal" | "external";
+      user_id: number | null;
+      email: string | null;
+      full_name?: string;
+      access_level: "viewer" | "editor";
+    }>
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -389,6 +401,12 @@ export const AddDocumentDashboard = () => {
               ? parseInt(formData.documentFolder, 10)
               : undefined,
             category_id: parseInt(formData.documentCategory, 10),
+            shares: documentShares.map((share) => ({
+              user_type: share.user_type,
+              user_id: share.user_id,
+              email: share.email,
+              access_level: share.access_level,
+            })),
             attachments: [
               {
                 filename: coverImage.name,
@@ -722,6 +740,28 @@ export const AddDocumentDashboard = () => {
                   </button>
                 </div>
               )}
+
+            {/* Share with People Button */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <Button
+                onClick={() => setShowShareModal(true)}
+                className="bg-[#C72030] hover:bg-[#A01828] text-white gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share with People
+                {documentShares.length > 0 && (
+                  <span className="ml-2 bg-white text-[#C72030] px-2 py-0.5 rounded-full text-xs font-semibold">
+                    {documentShares.length}
+                  </span>
+                )}
+              </Button>
+              {documentShares.length > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Shared with {documentShares.length}{" "}
+                  {documentShares.length === 1 ? "person" : "people"}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -879,6 +919,14 @@ export const AddDocumentDashboard = () => {
         onSelectionChange={(communities) => {
           setSelectedCommunities(communities);
         }}
+      />
+
+      {/* Document Share Modal */}
+      <DocumentShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onSave={(shares) => setDocumentShares(shares)}
+        initialShares={documentShares}
       />
     </div>
   );
