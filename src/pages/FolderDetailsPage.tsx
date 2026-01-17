@@ -884,6 +884,7 @@ export const FolderDetailsPage = () => {
             setShowShareModal(false);
             setSelectedDocumentForShare(null);
           }}
+          documentId={selectedDocumentForShare}
           initialShares={
             folderItems
               .find((item) => item.id === selectedDocumentForShare)

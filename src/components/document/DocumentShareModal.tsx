@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, UserPlus, Mail, User, Trash2 } from "lucide-react";
+import { X, UserPlus, Mail, User, Trash2, Link2, Copy } from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -39,6 +39,7 @@ interface DocumentShareModalProps {
   onClose: () => void;
   onSave: (shares: ShareItem[]) => void;
   initialShares?: ShareItem[];
+  documentId?: number;
 }
 
 const fieldStyles = {
@@ -70,6 +71,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   onClose,
   onSave,
   initialShares = [],
+  documentId,
 }) => {
   const [shares, setShares] = useState<ShareItem[]>(initialShares);
   const [shareType, setShareType] = useState<"internal" | "external">(
@@ -80,6 +82,33 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   const [accessLevel, setAccessLevel] = useState<"viewer" | "editor">("viewer");
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Get organization ID from localStorage
+  const getOrgId = () => {
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    // Extract org_id from stored data or use a default
+    // You may need to adjust this based on how org_id is stored
+    return localStorage.getItem("org_id") || "1";
+  };
+
+  const handleCopyShareLink = () => {
+    if (!documentId) {
+      toast.error("Document ID not available");
+      return;
+    }
+
+    const orgId = getOrgId();
+    const shareLink = `${window.location.origin}/document/share/${documentId}?org_id=${orgId}`;
+
+    navigator.clipboard.writeText(shareLink).then(
+      () => {
+        toast.success("Share link copied to clipboard!");
+      },
+      () => {
+        toast.error("Failed to copy link");
+      }
+    );
+  };
 
   // Fetch internal users
   useEffect(() => {
@@ -212,14 +241,27 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
             <UserPlus className="w-5 h-5 text-[#C72030]" />
             SHARE DOCUMENT
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {documentId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyShareLink}
+                className="h-8 gap-2 border-[#C72030] text-[#C72030] hover:bg-red-50"
+              >
+                <Link2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Copy Link</span>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <div id="document-share-dialog-description" className="sr-only">
             Share document with internal users and external emails with
             different access levels

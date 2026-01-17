@@ -713,6 +713,7 @@ export const DocumentDetailPage = () => {
       <DocumentShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
+        documentId={document?.id}
         initialShares={
           document?.document_users?.map((user) => ({
             id: user.id.toString(),

@@ -822,6 +822,8 @@ import { DocumentDetailPage } from "./pages/DocumentDetailPage";
 import { CreateFolderPage } from "./pages/CreateFolderPage";
 import { EditFolderPage } from "./pages/EditFolderPage";
 import { OnlyOfficeEditorPage } from "./pages/OnlyOfficeEditorPage";
+
+import { DocumentShareLinkPage } from "./pages/DocumentShareLinkPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
@@ -917,6 +919,7 @@ import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
+import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1065,6 +1068,16 @@ function App() {
             <PermissionsProvider>
               <ActionLayoutProvider>
                 <Routes>
+                  {/* Public Routes - No Authentication Required */}
+                  <Route
+                    path="/document/share/:id"
+                    element={<DocumentShareLinkPage />}
+                  />
+                  <Route
+                    path="/documents/editor/:documentId"
+                    element={<OnlyOfficePublicEditorPage />}
+                  />
+
                   {/* Admin Routes */}
                   <Route
                     path="/ops-console"
@@ -2539,10 +2552,6 @@ function App() {
                     />
                     <Route
                       path="/maintenance/documents/editor/:documentId"
-                      element={<OnlyOfficeEditorPage />}
-                    />
-                    <Route
-                      path="/documents/editor/:documentId"
                       element={<OnlyOfficeEditorPage />}
                     />
                     <Route
