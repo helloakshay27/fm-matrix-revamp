@@ -418,7 +418,7 @@ export const DocumentDetailPage = () => {
             <div>
               <p className="text-sm text-gray-500 mb-1">Category</p>
               <p className="font-medium text-[#1a1a1a]">
-                {document.document_category_name || "N/A"}
+                {document.document_category_name || "Uncategorized"}
               </p>
             </div>
             <div>
@@ -553,8 +553,8 @@ export const DocumentDetailPage = () => {
                     </text>
                   </svg>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-[#1a1a1a]">
+                <div className="text-center w-full px-2">
+                  <p className="text-sm font-medium text-[#1a1a1a] break-words overflow-wrap-anywhere">
                     {document.attachment.filename}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">

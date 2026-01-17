@@ -529,6 +529,21 @@ export const deleteDocument = async (documentId: number): Promise<void> => {
 };
 
 /**
+ * Delete folder by ID
+ */
+export const deleteFolder = async (folderId: number): Promise<void> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  await axios.delete(`https://${baseUrl}/folders/${folderId}.json`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+};
+
+/**
  * Convert file to base64
  */
 export const fileToBase64 = (file: File): Promise<string> => {
@@ -596,7 +611,7 @@ export const updateDocumentStatus = async (
   const token = getToken();
 
   const response = await axios.patch(
-    `https://${baseUrl}/documents/${documentId}`,
+    `https://${baseUrl}/documents/${documentId}.json`,
     {
       document: {
         active: active,
@@ -624,12 +639,50 @@ export const updateFolderStatus = async (
   const token = getToken();
 
   const response = await axios.patch(
-    `https://${baseUrl}/folders/${folderId}`,
+    `https://${baseUrl}/folders/${folderId}.json`,
     {
       folder: {
         active: active,
       },
     },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Update folder details
+ */
+export const updateFolder = async (
+  folderId: number,
+  folderData: {
+    name?: string;
+    category_id?: number;
+    parent_id?: number | null;
+    active?: boolean;
+  },
+  permissions?: FolderPermission[]
+): Promise<FolderDetailsResponse> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const payload: any = {
+    folder: folderData,
+  };
+
+  if (permissions && permissions.length > 0) {
+    payload.permissions = permissions;
+  }
+
+  const response = await axios.patch(
+    `https://${baseUrl}/folders/${folderId}.json`,
+    payload,
     {
       headers: {
         Authorization: `Bearer ${token}`,
