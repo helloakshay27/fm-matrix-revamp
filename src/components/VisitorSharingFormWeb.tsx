@@ -1424,20 +1424,41 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <label className="inline-block">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,.png,.jpg,.jpeg"
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              setProfilePhoto(String(reader.result));
-                              setProfilePhotoFile(file);
-                              setProfilePhotoChanged(true);
-                              setProfilePhotoError(false);
-                            };
-                            reader.readAsDataURL(file);
+                          if (!file) return;
+                          const type = file.type || '';
+                          const name = file.name || '';
+                          const ext = name.split('.').pop()?.toLowerCase() || '';
+                          const isSvg = type === 'image/svg+xml' || ext === 'svg';
+                          if (isSvg) {
+                            setProfilePhoto(null);
+                            setProfilePhotoFile(null);
+                            setProfilePhotoChanged(false);
+                            setProfilePhotoError(true);
+                            showToast('SVG files are not allowed for profile photo. Please upload PNG or JPEG.');
+                            return;
                           }
+                          // allow only PNG/JPEG
+                          const allowed = ['image/png', 'image/jpeg'];
+                          if (!allowed.includes(type) && !['png', 'jpg', 'jpeg'].includes(ext)) {
+                            setProfilePhoto(null);
+                            setProfilePhotoFile(null);
+                            setProfilePhotoChanged(false);
+                            setProfilePhotoError(true);
+                            showToast('Please upload a PNG or JPEG image.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setProfilePhoto(String(reader.result));
+                            setProfilePhotoFile(file);
+                            setProfilePhotoChanged(true);
+                            setProfilePhotoError(false);
+                          };
+                          reader.readAsDataURL(file);
                         }}
                       />
                       <span className="bg-[#C72030] text-white px-4 py-2 rounded shadow cursor-pointer inline-block">
