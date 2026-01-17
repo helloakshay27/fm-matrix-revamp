@@ -274,16 +274,16 @@ export const EditCuratedServicePage = () => {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
       // }
 
-      if (formData.mobile) {
+      // if (formData.mobile) {
         formDataToSend.append("mobile", formData.mobile);
-      }
+      // }
 
-      if (formData.address) {
+      // if (formData.address) {
         formDataToSend.append("address", formData.address);
-      }
-       if (formData.email) {
+      // }
+      //  if (formData.email) {
         formDataToSend.append("email", formData.email);
-      }
+      // }
 
       if (imageChanged) {
         if (attachment) {

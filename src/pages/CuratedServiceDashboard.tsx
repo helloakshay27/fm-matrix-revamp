@@ -18,6 +18,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "osr_category_name",
+    label: "Service Category Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "email",
     label: "Email",
     sortable: true,
@@ -44,6 +51,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
+    // width: 200,
   },
   {
     key: "attachment",
@@ -103,6 +111,7 @@ const CuratedServiceDashboard = () => {
             mobile: item.mobile,
             address: item.address,
             active: item.active === 1,
+            osr_category_name: item.osr_category_name,
             attachment: item.attachment
             ? {
                 document_url: item.attachment.document_url,
@@ -122,6 +131,9 @@ const CuratedServiceDashboard = () => {
       setLoadingData(false);
     }
   };
+
+
+  console.log("Plus Services Data:", plusServices);
 
   useEffect(() => {
     fetchData();
@@ -276,12 +288,31 @@ const CuratedServiceDashboard = () => {
             disabled={updatingStatus[item.id]}
           />
         );
+         case "category":
+      return (
+        <span className="text-sm text-gray-600">
+          {item.osr_category_name|| "-"}
+        </span>
+      );
 
       case "description":
         return (
-          <span className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
+          title={item.description || ""}
+          style={{ maxWidth: 250 }}
+          >
             {item.description || "-"}
-          </span>
+          </div>
+        );
+      case "address":
+        return (
+          <div
+            className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
+            title={item.address || ""}
+            style={{ maxWidth: 250 }}
+          >
+            {item.address || "-"}
+          </div>
         );
 
       case "email":
