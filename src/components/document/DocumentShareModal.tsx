@@ -40,6 +40,7 @@ interface DocumentShareModalProps {
   onSave: (shares: ShareItem[]) => void;
   initialShares?: ShareItem[];
   documentId?: number;
+  publicUuid?: string | null;
 }
 
 const fieldStyles = {
@@ -72,6 +73,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   onSave,
   initialShares = [],
   documentId,
+  publicUuid,
 }) => {
   const [shares, setShares] = useState<ShareItem[]>(initialShares);
   const [shareType, setShareType] = useState<"internal" | "external">(
@@ -92,13 +94,13 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   };
 
   const handleCopyShareLink = () => {
-    if (!documentId) {
-      toast.error("Document ID not available");
+    if (!publicUuid) {
+      toast.error("Public share link not available for this document");
       return;
     }
 
     const orgId = getOrgId();
-    const shareLink = `${window.location.origin}/document/share/${documentId}?org_id=${orgId}`;
+    const shareLink = `${window.location.origin}/document/share/${publicUuid}?org_id=${orgId}`;
 
     navigator.clipboard.writeText(shareLink).then(
       () => {
@@ -242,7 +244,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
             SHARE DOCUMENT
           </DialogTitle>
           <div className="flex items-center gap-2">
-            {documentId && (
+            {publicUuid && (
               <Button
                 variant="outline"
                 size="sm"

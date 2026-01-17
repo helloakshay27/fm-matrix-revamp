@@ -75,7 +75,7 @@ export const OnlyOfficePublicEditorPage = () => {
 
       // Use baseClient which will automatically set the base URL based on org_id parameter
 
-      const apiUrl = `/attachfiles/${documentId}/onlyoffice_config.json`;
+      const apiUrl = `/attachfiles/${documentId}/onlyoffice_config_with_token`;
       console.log("API URL (relative):", apiUrl);
 
       const response = await baseClient.get(apiUrl);

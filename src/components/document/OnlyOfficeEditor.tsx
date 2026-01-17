@@ -17,7 +17,7 @@ export const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
 
   useEffect(() => {
     // Navigate to the dedicated OnlyOffice editor page
-    navigate(`/documents/editor/${attachmentId}`);
+    navigate(`/maintenance/documents/editor/${attachmentId}`);
     // Close the modal since we're navigating away
     onClose();
   }, [attachmentId, navigate, onClose]);

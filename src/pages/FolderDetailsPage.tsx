@@ -49,6 +49,7 @@ interface FolderItem {
   created_date: string;
   modified_date?: string;
   preview_url?: string;
+  public_uuid?: string | null;
   document_users?: Array<{
     id: number;
     user_type: "internal" | "external";
@@ -261,6 +262,7 @@ export const FolderDetailsPage = () => {
               ? formatDate(doc.updated_at)
               : undefined,
             preview_url: doc.attachment?.preview_url,
+            public_uuid: doc.public_uuid,
             document_users: doc.document_users || [],
           })),
         ];
@@ -686,6 +688,7 @@ export const FolderDetailsPage = () => {
               ? formatDate(doc.updated_at)
               : undefined,
             preview_url: doc.attachment?.preview_url,
+            public_uuid: doc.public_uuid,
             document_users: doc.document_users || [],
           })),
         ];
@@ -885,6 +888,10 @@ export const FolderDetailsPage = () => {
             setSelectedDocumentForShare(null);
           }}
           documentId={selectedDocumentForShare}
+          publicUuid={
+            folderItems.find((item) => item.id === selectedDocumentForShare)
+              ?.public_uuid
+          }
           initialShares={
             folderItems
               .find((item) => item.id === selectedDocumentForShare)

@@ -76,6 +76,7 @@ interface DocumentDetail {
   folder_name: string;
   created_at: string;
   active: boolean | null;
+  public_uuid?: string | null;
   attachment: DocumentAttachment;
   document_permissions?: DocumentPermission[];
   document_users?: DocumentUser[];
@@ -714,6 +715,7 @@ export const DocumentDetailPage = () => {
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         documentId={document?.id}
+        publicUuid={document?.public_uuid}
         initialShares={
           document?.document_users?.map((user) => ({
             id: user.id.toString(),
