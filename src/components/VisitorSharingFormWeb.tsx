@@ -1193,8 +1193,8 @@ const VisitorSharingFormWeb: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = urlToken || "";
-      const visitorId = urlVisitorId;
-      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorId}/update_expected_visitor.json`;
+      const visitorEncryptedId = urlVisitorId;
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json?is_encrypted=true`;
       const url = token
         ? `${baseUrl}?token=${encodeURIComponent(token)}`
         : baseUrl;
