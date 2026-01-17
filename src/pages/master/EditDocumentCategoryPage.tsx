@@ -83,51 +83,60 @@ const EditDocumentCategoryPage = () => {
           }}
         >
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Controller
-                name="name"
-                control={control}
-                rules={{ required: "Category name is required" }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={
-                      <span>
-                        Category Name <span style={{ color: "red" }}>*</span>
-                      </span>
-                    }
-                    placeholder="Enter category name"
-                    variant="outlined"
-                    fullWidth
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
-              <Controller
-                name="description"
-                control={control}
-                rules={{ required: "Description is required" }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={
-                      <span>
-                        Description <span style={{ color: "red" }}>*</span>
-                      </span>
-                    }
-                    placeholder="Enter description"
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    error={!!errors.description}
-                    helperText={errors.description?.message}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <Controller
+                  name="name"
+                  control={control}
+                  rules={{ required: "Category name is required" }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label={
+                        <span>
+                          Category Name <span style={{ color: "red" }}>*</span>
+                        </span>
+                      }
+                      placeholder="Enter category name"
+                      variant="outlined"
+                      fullWidth
+                      error={!!errors.name}
+                      helperText={errors.name?.message}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "45px",
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <Controller
+                  name="description"
+                  control={control}
+                  rules={{ required: "Description is required" }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label={
+                        <span>
+                          Description <span style={{ color: "red" }}>*</span>
+                        </span>
+                      }
+                      placeholder="Enter description"
+                      variant="outlined"
+                      fullWidth
+                      multiline
+                      rows={4}
+                      error={!!errors.description}
+                      helperText={errors.description?.message}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </div>
             </div>
 
             <div className="flex justify-center gap-4 mt-6">
