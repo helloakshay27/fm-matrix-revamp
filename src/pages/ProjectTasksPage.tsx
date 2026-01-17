@@ -526,6 +526,7 @@ const ProjectTasksPage = () => {
     const [overdueTaskId, setOverdueTaskId] = useState<number | null>(null);
     const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState<{ id: number; status: string } | null>(null);
 
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -1191,6 +1192,35 @@ const ProjectTasksPage = () => {
 
     const handleStatusChange = async (id: number, status: string) => {
         try {
+            // Check if task is being marked as completed and if it's overdue
+            if (status === 'completed') {
+                const task = tasks.find(t => t.id === id);
+                if (!task) {
+                    toast.error("Task not found");
+                    return;
+                }
+
+                // Check if task is overdue using the target_date
+                const isTaskOverdue = (date: string | Date) => {
+                    const d = new Date(date);
+                    const today = new Date();
+
+                    d.setHours(0, 0, 0, 0);
+                    today.setHours(0, 0, 0, 0);
+
+                    return d < today;
+                };
+
+                if (isTaskOverdue(new Date(task.target_date))) {
+                    // Show overdue reason modal for status change
+                    setOverdueTaskId(id);
+                    setPendingStatusChange({ id, status });
+                    setIsOverdueModalOpen(true);
+                    return;
+                }
+            }
+
+            // If not overdue or not being marked as complete, proceed normally
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
 
             fetchData(1, sortColumn, sortDirection);
@@ -1412,13 +1442,23 @@ const ProjectTasksPage = () => {
 
         setIsOverdueLoading(true);
         try {
-            // Update the completion percentage
-            await dispatch(editProjectTask({
-                token,
-                baseUrl,
-                id: String(overdueTaskId),
-                data: { completion_percent: pendingCompletionPercentage }
-            })).unwrap();
+            // If this is a status change (marking as complete)
+            if (pendingStatusChange) {
+                await dispatch(updateTaskStatus({
+                    token,
+                    baseUrl,
+                    id: String(overdueTaskId),
+                    data: { status: pendingStatusChange.status }
+                })).unwrap();
+            } else {
+                // Otherwise it's a completion percentage change
+                await dispatch(editProjectTask({
+                    token,
+                    baseUrl,
+                    id: String(overdueTaskId),
+                    data: { completion_percent: pendingCompletionPercentage }
+                })).unwrap();
+            }
 
             // Save the overdue reason as a comment
             const commentPayload = {
@@ -1439,13 +1479,18 @@ const ProjectTasksPage = () => {
 
             fetchData();
 
-            toast.success('Completion percentage updated with overdue reason');
+            const message = pendingStatusChange
+                ? 'Task marked as complete with overdue reason'
+                : 'Completion percentage updated with overdue reason';
+
+            toast.success(message);
             setIsOverdueModalOpen(false);
             setOverdueTaskId(null);
             setPendingCompletionPercentage(0);
+            setPendingStatusChange(null);
         } catch (error) {
             console.log(error);
-            toast.error('Failed to update completion percentage');
+            toast.error('Failed to update task');
         } finally {
             setIsOverdueLoading(false);
         }
