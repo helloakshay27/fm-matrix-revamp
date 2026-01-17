@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Heart } from "lucide-react";
+import { ArrowLeft, File, FileText, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface ReportDetail {
     id?: number;
@@ -40,6 +55,15 @@ interface Comment {
     reports_count?: number;
 }
 
+interface PollOption {
+    id: number;
+    name: string;
+    total_votes: number;
+    voted: boolean;
+    vote_percentage: number;
+    votes: any[];
+}
+
 interface Post {
     id: number;
     title: string | null;
@@ -60,6 +84,7 @@ interface Post {
     isliked?: boolean;
     attachments: Attachment[];
     comments?: Comment[];
+    poll_options?: PollOption[];
 }
 
 const ReportsDetailsPage = () => {
@@ -72,6 +97,15 @@ const ReportsDetailsPage = () => {
     const [loading, setLoading] = useState(true);
     const [reviewStatus, setReviewStatus] = useState("Under Review");
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
+    const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+    const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+    const [postContent, setPostContent] = useState("");
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [createPostOpen, setCreatePostOpen] = useState(false);
+    const [createPollOpen, setCreatePollOpen] = useState(false);
 
     useEffect(() => {
         fetchReportDetails();
@@ -91,12 +125,15 @@ const ReportsDetailsPage = () => {
             );
             setReportDetails(response.data.report);
             setReviewStatus(response.data?.report?.status || "Under Review");
+            setExistingAttachments(response.data?.report?.post?.attachments || []);
         } catch (error) {
             console.error("Error fetching report details:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    console.log(existingAttachments)
 
     const updateReportStatus = async (newStatus: string) => {
         try {
@@ -174,6 +211,227 @@ const ReportsDetailsPage = () => {
         });
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const filesArray = Array.from(e.target.files);
+            setSelectedFiles(prev => [...prev, ...filesArray]);
+        }
+    };
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const filesArray = Array.from(files).filter(
+                file => file.type.startsWith('image/') || file.type.startsWith('video/')
+            );
+            setSelectedFiles(prev => [...prev, ...filesArray]);
+        }
+    };
+
+    const handleRemovePollOption = (index: number) => {
+        if (pollOptions.length > 2) {
+            setPollOptions(prev => prev.filter((_, i) => i !== index));
+        }
+    };
+
+    const handlePollOptionChange = (index: number, value: string) => {
+        setPollOptions(prev => {
+            const newOptions = [...prev];
+            newOptions[index] = value;
+            return newOptions;
+        });
+    };
+
+    const handleEditPost = (post: Post) => {
+        setIsEditMode(true);
+        setEditingPost(post);
+        setPostContent(post.body);
+        setExistingAttachments(post.attachments || []);
+        setSelectedFiles([]);
+
+        // Check if post has poll options
+        if (post.poll_options && post.poll_options.length > 0) {
+            // Open poll modal for poll posts
+            setPollOptions(post.poll_options.map(opt => opt.name));
+            setCreatePollOpen(true);
+        } else {
+            // Open regular post modal for normal posts
+            setCreatePostOpen(true);
+        }
+    };
+
+    const handleAddPollOption = () => {
+        setPollOptions(prev => [...prev, '']);
+    };
+
+    const handleCreatePost = async () => {
+        if (!postContent.trim()) {
+            toast.error('Please enter post content');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('body', postContent);
+
+            if (!isEditMode) {
+                formData.append('resource_id', communityId || '');
+                formData.append('resource_type', 'Community');
+            }
+
+            if (selectedFiles.length > 0) {
+                selectedFiles.forEach((file) => {
+                    formData.append('attachments[]', file);
+                });
+            }
+
+            const url = isEditMode
+                ? `https://${baseUrl}/posts/${editingPost?.id}.json`
+                : `https://${baseUrl}/posts.json`;
+
+            const method = isEditMode ? 'patch' : 'post';
+
+            const response = await axios[method](
+                url,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+                toast.success(isEditMode ? 'Post updated successfully' : 'Post created successfully');
+
+                // Check if post has poll options
+                const postData = response.data.post || response.data;
+                if (postData && postData.poll_options && postData.poll_options.length > 0) {
+                    // Post is of poll type, open poll modal for editing
+                    setEditingPost(postData);
+                    setCreatePostOpen(false);
+                    setCreatePollOpen(true);
+                } else {
+                    setCreatePostOpen(false);
+                    setPostContent("");
+                    setSelectedFiles([]);
+                    setIsEditMode(false);
+                    setEditingPost(null);
+                    setExistingAttachments([]);
+                }
+
+                await fetchReportDetails(); // Refresh the posts list
+            }
+        } catch (error) {
+            console.error('Error saving post:', error);
+            toast.error(`Failed to ${isEditMode ? 'update' : 'create'} post. Please try again.`);
+        }
+    };
+
+    const handleCreatePoll = async () => {
+        if (!postContent.trim()) {
+            toast.error('Please enter poll content');
+            return;
+        }
+
+        // Validate poll options - at least 2 non-empty options
+        const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+        if (validOptions.length < 2) {
+            toast.error('Please provide at least 2 poll options');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('body', postContent);
+            formData.append('resource_id', communityId || '');
+            formData.append('resource_type', 'Community');
+
+            // Add poll options
+            validOptions.forEach((option, index) => {
+                formData.append(`poll_options_attributes[${index}][name]`, option);
+            });
+
+            // Add attachments if any
+            if (selectedFiles.length > 0) {
+                selectedFiles.forEach((file) => {
+                    formData.append('attachments[]', file);
+                });
+            }
+
+            const response = await axios.post(
+                `https://${baseUrl}/posts.json`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+                toast.success('Poll created successfully');
+                setCreatePollOpen(false);
+                setPostContent("");
+                setSelectedFiles([]);
+                setPollOptions(['', '']);
+                await fetchReportDetails(); // Refresh the posts list
+            }
+        } catch (error) {
+            console.error('Error creating poll:', error);
+            toast.error('Failed to create poll. Please try again.');
+        }
+    };
+
+
+    const handleDeletePost = async (postId: number) => {
+        if (!confirm('Are you sure you want to delete this post?')) {
+            return;
+        }
+
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/posts/${postId}.json`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 204) {
+                toast.success('Post deleted successfully');
+                await fetchReportDetails(); // Refresh the posts list
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            toast.error('Failed to delete post. Please try again.');
+        }
+    };
+
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         const now = new Date();
@@ -192,6 +450,28 @@ const ReportsDetailsPage = () => {
             return date.toLocaleDateString();
         }
     };
+
+    const deleteComment = async (commentId: number) => {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+        try {
+            await axios.delete(
+                `https://${baseUrl}/comments/${commentId}.json`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+            toast.success('Comment deleted successfully');
+            await fetchReportDetails();
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            toast.error('Failed to delete comment. Please try again.');
+        }
+    };
+
 
 
     if (loading) {
@@ -349,6 +629,24 @@ const ReportsDetailsPage = () => {
                                     </div>
                                 </div>
                             </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                        <MoreVertical size={14} className="text-gray-500 cursor-pointer" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuItem onClick={() => handleEditPost(reportDetails.post!)}>
+                                        Edit Post
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleDeletePost(reportDetails.post!.id)}
+                                        className="text-red-600 focus:text-red-600"
+                                    >
+                                        Delete Post
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                         {reportDetails.post.title && (
                             <h2 className="text-lg font-semibold text-gray-900 mb-2">{reportDetails.post.title}</h2>
@@ -403,7 +701,7 @@ const ReportsDetailsPage = () => {
                         <div className="flex items-center gap-4">
                             <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
                                 👍
-                                <span className="text-sm font-medium">{reportDetails.post.likes_with_emoji?.thumb || 0}</span>
+                                <span className="text-sm font-medium">{reportDetails.post.likes_with_emoji?.thumbs_up || 0}</span>
                             </button>
                             <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
                                 ❤️
@@ -417,8 +715,8 @@ const ReportsDetailsPage = () => {
                         {reportDetails.comment && (
                             <div className="mt-6">
                                 <h4 className="font-semibold text-gray-900 mb-4">Reported Comment</h4>
-                                <div className="bg-red-50 border border-red-200 rounded-[8px] p-4">
-                                    <div className="flex items-start justify-between mb-3">
+                                <div className="border border-red-200 rounded-[8px] p-4">
+                                    <div className="flex items-start gap-6 mb-3">
                                         <div className="flex items-center gap-3">
                                             <img
                                                 src={reportDetails.comment.commentor_profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reportDetails.comment.commentor_full_name}`}
@@ -432,15 +730,24 @@ const ReportsDetailsPage = () => {
                                                 <p className="text-sm text-gray-500">{formatTimestamp(reportDetails.comment.created_at)}</p>
                                             </div>
                                         </div>
+
+                                        <span
+                                            className="bg-[rgba(199,32,48,0.5)] text-white w-[139px] px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
+                                        >
+                                            <File size={16} /> 1 Report
+                                        </span>
                                     </div>
                                     <p className="text-gray-700 mb-3">{reportDetails.comment.body}</p>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between border-t pt-3">
                                         <div className="flex items-center gap-4">
                                             <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
                                                 <Heart size={16} />
                                                 <span className="text-sm font-medium">0</span>
                                             </button>
                                         </div>
+                                        <Button variant="ghost" size="sm" className="border border-[#c72030] rounded-[5px] text-[#c72030]" onClick={() => deleteComment(reportDetails.comment.id)}>
+                                            <Trash2 size={18} color="#c72030" /> Delete
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -448,6 +755,348 @@ const ReportsDetailsPage = () => {
                     </div>
                 </div>
             )}
+
+            <Dialog open={createPostOpen} onOpenChange={(open) => {
+                setCreatePostOpen(open);
+                if (!open) {
+                    // Reset all state when closing
+                    setPostContent("");
+                    setSelectedFiles([]);
+                    setIsEditMode(false);
+                    setEditingPost(null);
+                    setExistingAttachments([]);
+                }
+            }}>
+                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold text-gray-900">
+                            {isEditMode ? 'Edit Post' : 'Create Post'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-5 overflow-y-auto flex-1 pr-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Add Media
+                            </label>
+                            {(selectedFiles.length > 0 || existingAttachments.length > 0) ? (
+                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px]">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {/* Display existing attachments */}
+                                        {existingAttachments.map((attachment) => (
+                                            <div key={attachment.id} className="relative">
+                                                {attachment.document_content_type.startsWith('image/') ? (
+                                                    <img
+                                                        src={attachment.document_url}
+                                                        alt="Existing attachment"
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : attachment.document_content_type.startsWith('video/') ? (
+                                                    <video
+                                                        src={attachment.document_url}
+                                                        controls
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : null}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setExistingAttachments(prev => prev.filter(a => a.id !== attachment.id));
+                                                    }}
+                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {/* Display new files */}
+                                        {selectedFiles.map((file, index) => (
+                                            <div key={index} className="relative">
+                                                {file.type.startsWith('image/') ? (
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : file.type.startsWith('video/') ? (
+                                                    <video
+                                                        src={URL.createObjectURL(file)}
+                                                        controls
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : null}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                                                    }}
+                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Add more files button */}
+                                    <div className="mt-4">
+                                        <input
+                                            type="file"
+                                            id="file-upload-more"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                            accept="image/*,video/*"
+                                            multiple
+                                        />
+                                        <label
+                                            htmlFor="file-upload-more"
+                                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Add More Files
+                                        </label>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    className={`bg-white border p-12 text-center transition-colors rounded-[8px] ${isDragging
+                                        ? 'border-[#c72030] border-2 bg-red-50'
+                                        : 'border-[#E5E5E5]'
+                                        }`}
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                >
+                                    <input
+                                        type="file"
+                                        id="file-upload"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                        accept="image/*,video/*"
+                                        multiple
+                                    />
+                                    <label
+                                        htmlFor="file-upload"
+                                        className="cursor-pointer text-[#9CA3AF]"
+                                    >
+                                        <p className="text-sm leading-relaxed">
+                                            Choose files or<br />drag & drop them here
+                                        </p>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Post Content
+                            </label>
+                            <Textarea
+                                placeholder="Write your announcement or message..."
+                                value={postContent}
+                                onChange={(e) => setPostContent(e.target.value)}
+                                className="min-h-[120px] bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px]"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setCreatePostOpen(false);
+                                    setPostContent("");
+                                    setSelectedFiles([]);
+                                    setIsEditMode(false);
+                                    setEditingPost(null);
+                                    setExistingAttachments([]);
+                                }}
+                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="!bg-[#c72030] !hover:bg-[#b01d2a] !text-white rounded-[8px]"
+                                onClick={handleCreatePost}
+                            >
+                                {isEditMode ? 'Update Post' : 'Publish Post'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Poll Modal */}
+            <Dialog open={createPollOpen} onOpenChange={(open) => {
+                setCreatePollOpen(open);
+                if (!open) {
+                    // Reset poll state when closing
+                    setPostContent("");
+                    setSelectedFiles([]);
+                    setPollOptions(['', '']);
+                }
+            }}>
+                <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold text-gray-900">Create Admin Post</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-5 overflow-y-auto flex-1 pr-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Add Media
+                            </label>
+                            {selectedFiles.length > 0 ? (
+                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px]">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {selectedFiles.map((file, index) => (
+                                            <div key={index} className="relative">
+                                                {file.type.startsWith("image/") ? (
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : file.type.startsWith("video/") ? (
+                                                    <video
+                                                        src={URL.createObjectURL(file)}
+                                                        controls
+                                                        className="w-full h-40 object-cover rounded-lg"
+                                                    />
+                                                ) : null}
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setSelectedFiles((prev) =>
+                                                            prev.filter((_, i) => i !== index)
+                                                        );
+                                                    }}
+                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Add more files button */}
+                                    <div className="mt-4">
+                                        <input
+                                            type="file"
+                                            id="poll-file-upload-more"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                            accept="image/*,video/*"
+                                            multiple
+                                        />
+                                        <label
+                                            htmlFor="poll-file-upload-more"
+                                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Add More Files
+                                        </label>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    className={`bg-white border p-12 text-center transition-colors rounded-[8px] ${isDragging
+                                        ? 'border-[#c72030] border-2 bg-red-50'
+                                        : 'border-[#E5E5E5]'
+                                        }`}
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                >
+                                    <input
+                                        type="file"
+                                        id="poll-file-upload"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                        accept="image/*,video/*"
+                                        multiple
+                                    />
+                                    <label
+                                        htmlFor="poll-file-upload"
+                                        className="cursor-pointer text-[#9CA3AF]"
+                                    >
+                                        <p className="text-sm leading-relaxed">
+                                            Choose files or<br />drag & drop them here
+                                        </p>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Post Content
+                            </label>
+                            <Textarea
+                                placeholder="Write your announcement or message..."
+                                value={postContent}
+                                onChange={(e) => setPostContent(e.target.value)}
+                                className="min-h-[120px] bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px]"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Poll Options
+                            </label>
+                            <div className="space-y-3">
+                                {pollOptions.map((option, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <Input
+                                            placeholder={`Option ${index + 1}`}
+                                            value={option}
+                                            onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                                            className="bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px] flex-1"
+                                        />
+                                        {pollOptions.length > 2 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleRemovePollOption(index)}
+                                                className="!text-red-600 hover:!bg-red-50 h-10 px-3"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                                <Button
+                                    variant="outline"
+                                    onClick={handleAddPollOption}
+                                    className="w-auto border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px] flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add Option
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setCreatePollOpen(false);
+                                    setPostContent("");
+                                    setSelectedFiles([]);
+                                    setPollOptions(['', '']);
+                                }}
+                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="bg-[#c72030] hover:bg-[#b01d2a] text-white rounded-[8px]"
+                                onClick={handleCreatePoll}
+                            >
+                                Publish Poll
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

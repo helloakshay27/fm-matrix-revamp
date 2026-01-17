@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Dialog,
     DialogContent,
@@ -112,12 +112,12 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
 
     const [createPostOpen, setCreatePostOpen] = useState(false);
     const [createPollOpen, setCreatePollOpen] = useState(false);
     const [postContent, setPostContent] = useState("");
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-    const [communityActive, setCommunityActive] = useState(true);
     const [isDragging, setIsDragging] = useState(false);
     const [showCommentsForPost, setShowCommentsForPost] = useState<number | null>(null);
     const [posts, setPosts] = useState<Post[]>([]);
@@ -125,6 +125,21 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
     const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+    const [isToggling, setIsToggling] = useState<number | null>(null)
+    const [isActive, setIsActive] = useState(true);
+
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/communities/${communityId}.json`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+            setIsActive(response.data.active)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const fetchPosts = async () => {
         try {
@@ -141,6 +156,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     }
 
     useEffect(() => {
+        fetchData()
         fetchPosts()
     }, [])
 
@@ -188,7 +204,16 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         setPostContent(post.body);
         setExistingAttachments(post.attachments || []);
         setSelectedFiles([]);
-        setCreatePostOpen(true);
+
+        // Check if post has poll options
+        if (post.poll_options && post.poll_options.length > 0) {
+            // Open poll modal for poll posts
+            setPollOptions(post.poll_options.map(opt => opt.name));
+            setCreatePollOpen(true);
+        } else {
+            // Open regular post modal for normal posts
+            setCreatePostOpen(true);
+        }
     };
 
     const handleDeletePost = async (postId: number) => {
@@ -256,17 +281,55 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
             if (response.status === 200 || response.status === 201) {
                 toast.success(isEditMode ? 'Post updated successfully' : 'Post created successfully');
-                setCreatePostOpen(false);
-                setPostContent("");
-                setSelectedFiles([]);
-                setIsEditMode(false);
-                setEditingPost(null);
-                setExistingAttachments([]);
+
+                // Check if post has poll options
+                const postData = response.data.post || response.data;
+                if (postData && postData.poll_options && postData.poll_options.length > 0) {
+                    // Post is of poll type, open poll modal for editing
+                    setEditingPost(postData);
+                    setCreatePostOpen(false);
+                    setCreatePollOpen(true);
+                } else {
+                    setCreatePostOpen(false);
+                    setPostContent("");
+                    setSelectedFiles([]);
+                    setIsEditMode(false);
+                    setEditingPost(null);
+                    setExistingAttachments([]);
+                }
+
                 await fetchPosts(); // Refresh the posts list
             }
         } catch (error) {
             console.error('Error saving post:', error);
             toast.error(`Failed to ${isEditMode ? 'update' : 'create'} post. Please try again.`);
+        }
+    };
+
+    const handleStatusChange = async (id: number, currentActive: boolean) => {
+        const newActive = !currentActive;
+        setIsToggling(id);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('community[active]', newActive ? 'true' : 'false');
+
+            await axios.put(
+                `https://${baseUrl}/communities/${id}.json`,
+                formDataToSend,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+            setIsActive(newActive);
+            toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.error || "Failed to update community status");
+        } finally {
+            setIsToggling(null);
         }
     };
 
@@ -610,8 +673,9 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 <FormControlLabel
                     control={
                         <Switch
-                            checked={communityActive}
-                            onChange={(e) => setCommunityActive(e.target.checked)}
+                            checked={isActive}
+                            onChange={() => handleStatusChange(Number(id), isActive)}
+                            disabled={isToggling === Number(id)}
                             sx={{
                                 '& .MuiSwitch-switchBase.Mui-checked': {
                                     color: '#10B981',
@@ -630,7 +694,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     }
                     label={
                         <span className="text-sm font-medium">
-                            {communityActive ? "Active" : "Inactive"}
+                            {isActive ? "Active" : "Inactive"}
                         </span>
                     }
                     labelPlacement="end"
