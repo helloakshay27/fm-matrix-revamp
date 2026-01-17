@@ -37,12 +37,12 @@ export const DocumentShareLinkPage = () => {
 
         // Fetch document details
         const response = await baseClient.get(
-          `/documents/public_view?public_uuid=${id}.json`
+          `/documents/public_view?uuid=${id}`
         );
         setDocument(response.data);
 
         // Redirect to editor with org_id
-        const attachmentId = response.data.attachment.id;
+        const attachmentId = response.data.attachment.uuid;
         navigate(`/documents/editor/${attachmentId}?org_id=${orgId}`, {
           replace: true,
         });
