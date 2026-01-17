@@ -1361,7 +1361,7 @@ const ProjectTasksPage = () => {
             return;
         }
 
-        if (percentage < 100) {
+        if (percentage > 100) {
             toast.error("Completion percentage must be less than 100");
             return;
         }
@@ -1691,7 +1691,7 @@ const ProjectTasksPage = () => {
                                 if (e.key === "Enter") {
                                     const value = (e.target as HTMLInputElement).value;
                                     if (value < item.completion_percent) {
-                                        toast.error("Completion percentage must be greater than or equal to the current completion percentage");
+                                        toast.error(`Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`);
                                         return;
                                     }
                                     handleCompletionPercentageChange(item.id, value);
@@ -1701,7 +1701,7 @@ const ProjectTasksPage = () => {
                                 const value = e.target.value;
                                 if (value !== String(item.completion_percent)) {
                                     if (value < item.completion_percent) {
-                                        toast.error("Completion percentage must be greater than or equal to the current completion percentage");
+                                        toast.error(`Completion percentage must be greater than or equal to the current completion percentage (${item.completion_percent}%)`);
                                         return;
                                     }
                                     handleCompletionPercentageChange(item.id, value);
