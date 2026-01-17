@@ -25,6 +25,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [apiConsentHtml, setApiConsentHtml] = useState<string | null>(null);
   const apiErrorTimerRef = React.useRef<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // when the server indicates the form was already submitted (approve: 5)
@@ -159,6 +160,18 @@ const VisitorSharingFormWeb: React.FC = () => {
     };
   }, [stream]);
 
+  // helper to open the camera modal and request camera permissions/stream
+  const openCamera = async () => {
+    setShowCameraModal(true);
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      setStream(s);
+      if (videoRef.current) videoRef.current.srcObject = s;
+    } catch (err) {
+      showToast('Unable to access camera. Please allow camera permission or use Upload.');
+    }
+  };
+
   // Prefill Step 1 from host API (image upload intentionally excluded)
   useEffect(() => {
     // extract token from query and id from path
@@ -191,6 +204,32 @@ const VisitorSharingFormWeb: React.FC = () => {
           return;
         }
         const data = await res.json();
+        // DEBUG: log consent form payload so we can confirm shape
+        if (typeof console !== 'undefined' && console.warn) {
+          // cast to Record to avoid `any` lint rule
+          console.warn('[prefill] visitor_consent_form:', (data as Record<string, unknown>)?.visitor_consent_form);
+        }
+        try {
+          const vcf = (data as Record<string, unknown>)?.visitor_consent_form as unknown;
+          if (vcf) {
+            // If the consent form is a string, use it directly.
+            if (typeof vcf === 'string') {
+              setApiConsentHtml(String(vcf));
+            } else if (typeof vcf === 'object' && vcf !== null) {
+              // Narrow to an object and safely read possible fields.
+              const obj = vcf as Record<string, unknown>;
+              const descVal = obj.description ?? obj.value ?? obj.html ?? null;
+              if (typeof descVal === 'string') {
+                setApiConsentHtml(descVal);
+              } else if (descVal != null) {
+                // Fallback: coerce non-string values to string if present.
+                setApiConsentHtml(String(descVal));
+              }
+            }
+          }
+        } catch (_) {
+          // ignore malformed consent payload
+        }
         // Map common host fields into the Step 1 state
         if (data.guest_type) setGuestType(data.guest_type);
         if (data.guest_number) setContact(String(data.guest_number));
@@ -224,8 +263,7 @@ const VisitorSharingFormWeb: React.FC = () => {
           setToLocation(String(data.visit_to));
         }
   // Debug: log the host-provided location fields so we can verify why both may be identical
-  // eslint-disable-next-line no-console
-        if (data.persont_to_meet)
+  if (data.persont_to_meet)
           setPersonToMeetName(String(data.persont_to_meet));
 
         if (data.guest_vehicle_number)
@@ -829,6 +867,21 @@ const VisitorSharingFormWeb: React.FC = () => {
   }) => {
     const formData = new FormData();
 
+    // Track files we've already appended to avoid duplicates in multipart payloads.
+    // Use name|size|lastModified as a best-effort signature.
+    const seenFiles = new Set<string>();
+  const fileSignature = (f: File) => `${f.name}|${f.size}|${(f as File & { lastModified?: number }).lastModified ?? 0}`;
+    const appendFileOnce = (key: string, f: File) => {
+      try {
+        const sig = fileSignature(f);
+        if (seenFiles.has(sig)) return;
+        seenFiles.add(sig);
+      } catch (_) {
+        // If anything goes wrong, fall back to appending (safer than dropping silently)
+      }
+      formData.append(key, f);
+    };
+
     // include carrying asset flag (use the key spelled as requested)
     formData.append(
       "gatekeeper[carring_asset]",
@@ -929,8 +982,9 @@ const VisitorSharingFormWeb: React.FC = () => {
       // attachments when some items have File objects and others only URLs.
       // For each attachment: if file exists append as File, otherwise append url as documents_urls[].
       (a.attachments || []).forEach((att) => {
-        if (att && (att as { file?: File }).file) {
-          formData.append(`gatekeeper[assets][${idx}][documents][]`, (att as { file?: File }).file as File);
+        const file = (att as { file?: File })?.file;
+        if (file instanceof File) {
+          appendFileOnce(`gatekeeper[assets][${idx}][documents][]`, file);
         } else if (att && typeof att.url === "string") {
           formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, att.url);
         }
@@ -938,7 +992,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       // Also include any File objects present in a.documents (legacy shape)
       (a.documents || []).forEach((d) => {
         if (d instanceof File) {
-          formData.append(`gatekeeper[assets][${idx}][documents][]`, d);
+          appendFileOnce(`gatekeeper[assets][${idx}][documents][]`, d);
         } else {
           const maybe = d as unknown as { url?: string };
           if (maybe && typeof maybe.url === "string") {
@@ -962,8 +1016,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       // documents may be File objects or objects like { name, url, file }
       (primaryVisitor.identity.documents || []).forEach((doc: DocumentLike) => {
         const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
-        if (file)
-          formData.append("gatekeeper[visitor_identity][documents][]", file);
+        if (file) appendFileOnce("gatekeeper[visitor_identity][documents][]", file);
       });
     }
 
@@ -1079,10 +1132,11 @@ const VisitorSharingFormWeb: React.FC = () => {
           );
         // Append per-attachment/file for additional visitor asset
         (a.attachments || []).forEach((att) => {
-          if (att && (att as { file?: File }).file) {
-            formData.append(
+          const file = (att as { file?: File })?.file;
+          if (file instanceof File) {
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
-              (att as { file?: File }).file as File
+              file
             );
           } else if (att && typeof att.url === "string") {
             formData.append(
@@ -1093,7 +1147,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         (a.documents || []).forEach((d) => {
           if (d instanceof File) {
-            formData.append(
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
               d
             );
@@ -1122,10 +1176,9 @@ const VisitorSharingFormWeb: React.FC = () => {
           );
         // accept File or { name, url, file }
         (v.identity.documents || []).forEach((doc: DocumentLike) => {
-          const file =
-            doc instanceof File ? doc : (doc as { file?: File })?.file;
+          const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
           if (file)
-            formData.append(
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][identity][documents][]`,
               file
             );
@@ -1140,8 +1193,8 @@ const VisitorSharingFormWeb: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = urlToken || "";
-      const visitorId = urlVisitorId;
-      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorId}/update_expected_visitor.json`;
+      const visitorEncryptedId = urlVisitorId;
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json?is_encrypted=true`;
       const url = token
         ? `${baseUrl}?token=${encodeURIComponent(token)}`
         : baseUrl;
@@ -1454,7 +1507,11 @@ const VisitorSharingFormWeb: React.FC = () => {
               className={`mt-2 border-2 border-dashed rounded p-3 ${profilePhotoError ? "border-[#C72030]" : "border-gray-200"}`}
             >
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                <div
+                  className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white overflow-hidden cursor-pointer"
+                  onClick={() => openCamera()}
+                  title="Click to open camera"
+                >
                   {profilePhoto ? (
                     <img
                       src={profilePhoto}
@@ -1537,22 +1594,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Upload Photo
                       </span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setShowCameraModal(true);
-                        try {
-                          const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-                          setStream(s);
-                          if (videoRef.current) videoRef.current.srcObject = s;
-                        } catch (err) {
-                          showToast('Unable to access camera. Please allow camera permission or use Upload.');
-                        }
-                      }}
-                      className="ml-2 bg-white border border-gray-200 text-sm px-3 py-2 rounded"
-                    >
-                      Use Camera
-                    </button>
+                    {/* Use Camera button removed - avatar circle opens camera instead */}
 
                     {showCameraModal && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -1864,41 +1906,11 @@ const VisitorSharingFormWeb: React.FC = () => {
           <div className="bg-white rounded shadow-sm p-2">
             <div className="p-3">
               <div className="bg-white border border-gray-100 rounded p-4 text-sm leading-6 text-gray-800">
-                <p>
-                  By entering the premises, you (“Visitor”) acknowledge and
-                  agree to the following:
-                </p>
-                <p className="mt-2">
-                  During your visit, you may have access to or may observe
-                  confidential information, including but not limited to
-                  business operations, processes, documents, systems, client
-                  information, designs, discussions, or any proprietary material
-                  related to [Company Name].
-                </p>
-                <p className="mt-2">You agree that:</p>
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  <li>
-                    All such information is confidential and is the property of
-                    [Company Name].
-                  </li>
-                  <li>
-                    You will not disclose, record, photograph, copy, or share
-                    any confidential information with any third party.
-                  </li>
-                  <li>
-                    Confidential information must be used only for the purpose
-                    of your visit.
-                  </li>
-                  <li>This obligation continues even after your visit ends.</li>
-                </ul>
-                <p className="mt-3">
-                  Any breach of this agreement may result in legal action as per
-                  applicable laws and company policies.
-                </p>
-                <p className="mt-3">
-                  By proceeding, you confirm that you have read, understood, and
-                  agreed to this Non-Disclosure Agreement.
-                </p>
+                {apiConsentHtml ? (
+                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: apiConsentHtml }} />
+                ) : (
+                  <div className="text-sm text-gray-700">By entering the premises, you (“Visitor”) acknowledge and agree to the terms provided by the host.</div>
+                )}
               </div>
 
               <label className="mt-4 flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -2080,6 +2092,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <span className="text-gray-500">To Location:</span>
                     <span className="text-gray-900 font-medium">
                       {location || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Guest Type:</span>
+                    <span className="text-gray-900 font-medium">
+                      {guestType || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -2267,7 +2285,12 @@ const VisitorSharingFormWeb: React.FC = () => {
 
               {/* Identity Verification summary */}
               <div className="bg-white border border-gray-100 rounded p-3">
-                <div className="text-sm font-medium">Identity Verification</div>
+                <div className="text-sm font-medium">
+                  Identity Verification
+                  {visitors && visitors.length > 0 ? (
+                    <span className="ml-2 text-sm text-gray-600">(Additional: {visitors.length})</span>
+                  ) : null}
+                </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Government ID:</span>
@@ -3355,36 +3378,34 @@ const VisitorSharingFormWeb: React.FC = () => {
           </div>
         )}
 
-        {/* Fixed bottom actions (hidden while submitting or after success) */}
-        {!isSubmitting && !showSuccess && (
-          <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
-            <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
-              {step > 1 && (
-                <button
-                  onClick={() => {
-                    // Clear validation errors when navigating back
-                    setVisitorErrors({});
-                    setPrimaryVehicleError(false);
-                    setAssetCategoryErrors({});
-                    setStep((s) => Math.max(1, s - 1));
-                  }}
-                  className="w-1/2 bg-white border border-gray-200 py-3 rounded"
-                >
-                  Back
-                </button>
-              )}
-              {step < 6 && (
-                <button
-                  onClick={handleNext}
-                  disabled={step === 5 && !ndaAgree}
-                  className={`flex-1 py-3 font-semibold rounded ${step === 5 && !ndaAgree ? "bg-gray-300 text-white cursor-not-allowed" : "bg-[#C72030] text-white"}`}
-                >
-                  {step === 5 ? "Preview" : "Next"}
-                </button>
-              )}
-            </div>
+        {/* Fixed bottom actions */}
+        <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
+          <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
+            {step > 1 && !isSubmitting && !showSuccess && (
+              <button
+                onClick={() => {
+                  // Clear validation errors when navigating back
+                  setVisitorErrors({});
+                  setPrimaryVehicleError(false);
+                  setAssetCategoryErrors({});
+                  setStep((s) => Math.max(1, s - 1));
+                }}
+                className="w-1/2 bg-white border border-gray-200 py-3 rounded"
+              >
+                Back
+              </button>
+            )}
+            {step < 6 && (
+              <button
+                onClick={handleNext}
+                disabled={step === 5 && !ndaAgree}
+                className={`flex-1 py-3 font-semibold rounded ${step === 5 && !ndaAgree ? "bg-gray-300 text-white cursor-not-allowed" : "bg-[#C72030] text-white"}`}
+              >
+                {step === 5 ? "Preview" : "Next"}
+              </button>
+            )}
           </div>
-        )}
+        </div>
         {/* Small mobile API error card */}
         {apiError && (
           <div className="fixed left-1/2 bottom-24 z-50 sm:hidden transform -translate-x-1/2">
