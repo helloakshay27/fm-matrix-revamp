@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 type Visitor = {
   id: number;
@@ -17,12 +17,22 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState<boolean>(false);
   const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
+  // Camera state for Step 1 image capture
+  const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = React.useRef<number | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [apiConsentHtml, setApiConsentHtml] = useState<string | null>(null);
   const apiErrorTimerRef = React.useRef<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // when the server indicates the form was already submitted (approve: 5)
+  // we show only a centered card and hide the rest of the UI
+  const [alreadySubmitted, setAlreadySubmitted] = useState<boolean>(false);
+  // when user navigates from Preview via an Edit button, remember to return to Preview
+  const [returnToPreviewOnNext, setReturnToPreviewOnNext] = useState<boolean>(false);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -133,6 +143,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [expandedVisitors, setExpandedVisitors] = useState<
     Record<number, boolean>
   >({ 0: false });
+  // Step 3 asset errors: true means at least one required asset field missing
   const [assetCategoryErrors, setAssetCategoryErrors] = useState<
     Record<number, boolean>
   >({});
@@ -144,6 +155,25 @@ const VisitorSharingFormWeb: React.FC = () => {
     // eslint-disable-next-line no-console
     console.debug("[state] carryingAsset:", carryingAsset, "expandedVisitors:", expandedVisitors);
   }, [assetsByVisitor, carryingAsset, expandedVisitors]);
+
+  // cleanup camera stream when component unmounts
+  useEffect(() => {
+    return () => {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+    };
+  }, [stream]);
+
+  // helper to open the camera modal and request camera permissions/stream
+  const openCamera = async () => {
+    setShowCameraModal(true);
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      setStream(s);
+      if (videoRef.current) videoRef.current.srcObject = s;
+    } catch (err) {
+      showToast('Unable to access camera. Please allow camera permission or use Upload.');
+    }
+  };
 
   // Prefill Step 1 from host API (image upload intentionally excluded)
   useEffect(() => {
@@ -177,6 +207,32 @@ const VisitorSharingFormWeb: React.FC = () => {
           return;
         }
         const data = await res.json();
+        // DEBUG: log consent form payload so we can confirm shape
+        if (typeof console !== 'undefined' && console.warn) {
+          // cast to Record to avoid `any` lint rule
+          console.warn('[prefill] visitor_consent_form:', (data as Record<string, unknown>)?.visitor_consent_form);
+        }
+        try {
+          const vcf = (data as Record<string, unknown>)?.visitor_consent_form as unknown;
+          if (vcf) {
+            // If the consent form is a string, use it directly.
+            if (typeof vcf === 'string') {
+              setApiConsentHtml(String(vcf));
+            } else if (typeof vcf === 'object' && vcf !== null) {
+              // Narrow to an object and safely read possible fields.
+              const obj = vcf as Record<string, unknown>;
+              const descVal = obj.description ?? obj.value ?? obj.html ?? null;
+              if (typeof descVal === 'string') {
+                setApiConsentHtml(descVal);
+              } else if (descVal != null) {
+                // Fallback: coerce non-string values to string if present.
+                setApiConsentHtml(String(descVal));
+              }
+            }
+          }
+        } catch (_) {
+          // ignore malformed consent payload
+        }
         // Map common host fields into the Step 1 state
         if (data.guest_type) setGuestType(data.guest_type);
         if (data.guest_number) setContact(String(data.guest_number));
@@ -198,8 +254,19 @@ const VisitorSharingFormWeb: React.FC = () => {
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
-        if (data.visit_to) setLocation(String(data.visit_to));
-        if (data.persont_to_meet)
+        // prefer guest_from if provided by host API, otherwise fall back to visit_to
+        const guestFrom = (data as Record<string, unknown>)?.guest_from;
+        if (typeof guestFrom !== 'undefined' && guestFrom !== null) {
+          setLocation(String(guestFrom));
+        } else if (data.visit_to) {
+          setLocation(String(data.visit_to));
+        }
+        // Also prefill the Step 2 "to location" field from the host API's visit_to when available
+        if (data.visit_to) {
+          setToLocation(String(data.visit_to));
+        }
+  // Debug: log the host-provided location fields so we can verify why both may be identical
+  if (data.persont_to_meet)
           setPersonToMeetName(String(data.persont_to_meet));
 
         if (data.guest_vehicle_number)
@@ -271,6 +338,14 @@ const VisitorSharingFormWeb: React.FC = () => {
             },
           }));
         }
+
+          // If the host response indicates the form was already submitted,
+          // show only the small card and skip the rest of the prefill mapping.
+          const maybeApprove = (data as Record<string, unknown>)?.approve;
+          if (typeof maybeApprove !== 'undefined' && Number(maybeApprove) === 5) {
+            setAlreadySubmitted(true);
+            return;
+          }
 
           // Map primary assets (always) from host response so Step 3 shows prefilled assets
           try {
@@ -692,7 +767,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       return;
     }
 
-    // Step 3: require Asset Category selection for primary and all additional visitors only when carryingAsset is true
+  // Step 3: require Asset details for primary and all additional visitors only when carryingAsset is true
     if (step === 3) {
       if (carryingAsset) {
         let hasAssetErrors = false;
@@ -700,15 +775,27 @@ const VisitorSharingFormWeb: React.FC = () => {
         // Validate primary visitor (id: 0) and any visitor entries that exist
         const allVisitors = [0, ...visitors.map((v) => v.id)];
         allVisitors.forEach((id) => {
-          const list = assetsByVisitor[id] || [];
-          const category = list[0]?.category || "";
-          const missing = !category.trim();
-          nextErrors[id] = missing;
-          if (missing) hasAssetErrors = true;
+      const list = assetsByVisitor[id] || [];
+      const first = list[0];
+      const category = first?.category || "";
+      const name = first?.name || "";
+      const serial = first?.serial || "";
+
+      // Required fields: Category, Asset Name, Serial No.
+      const missingCategory = !category.trim();
+      const missingName = !name.trim();
+      const missingSerial = !serial.trim();
+
+      const missingAny = missingCategory || missingName || missingSerial;
+
+      nextErrors[id] = missingAny;
+      if (missingAny) hasAssetErrors = true;
         });
         setAssetCategoryErrors(nextErrors);
         if (hasAssetErrors) {
-          showToast("Please select asset category for all visitors.");
+          showToast(
+            "Please fill Asset Category, Asset Name and Serial No. for all visitors."
+          );
           // expand the visitor sections that have missing categories
           setExpandedVisitors((e) => {
             const next = { ...e };
@@ -741,13 +828,14 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
     }
 
-    // Step 4: require either an uploaded ID image or a government ID number
+    // Step 4: require identity type selection AND either an uploaded ID image or a government ID number
     if (step === 4) {
       const errs: Record<number, boolean> = {};
       let hasMissing = false;
       const allVisitors = [0, ...visitors.map((v) => v.id)];
       allVisitors.forEach((id) => {
         const idState = identityByVisitor[id];
+        const hasType = !!(idState && idState.type);
         const hasGov = !!(idState && idState.govId && String(idState.govId).trim());
         const docs = idState && Array.isArray(idState.documents) ? idState.documents : [];
         const hasFile = docs.some((d) => {
@@ -757,14 +845,15 @@ const VisitorSharingFormWeb: React.FC = () => {
           const maybe = d as { file?: File };
           return !!(maybe && maybe.file instanceof File);
         });
-        if (!hasGov && !hasFile) {
+        // mark missing if no identity type OR neither gov id nor file present
+        if (!hasType || (!hasGov && !hasFile)) {
           errs[id] = true;
           hasMissing = true;
         }
       });
       setIdentityErrors(errs);
       if (hasMissing) {
-        showToast("Please upload at least one ID image or enter Government ID number for all visitors.");
+        showToast("Please select an ID type and provide at least one ID image or enter Government ID number for all visitors.");
         setExpandedVisitors((e) => {
           const next = { ...e };
           Object.keys(errs).forEach((k) => {
@@ -775,6 +864,13 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         return;
       }
+    }
+
+    // If user came from Preview via an Edit button, return them to Preview on Next
+    if (returnToPreviewOnNext) {
+      setReturnToPreviewOnNext(false);
+      setStep(6);
+      return;
     }
 
     setStep((s) => (s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1)));
@@ -794,6 +890,21 @@ const VisitorSharingFormWeb: React.FC = () => {
   includeImage?: boolean;
   }) => {
     const formData = new FormData();
+
+    // Track files we've already appended to avoid duplicates in multipart payloads.
+    // Use name|size|lastModified as a best-effort signature.
+    const seenFiles = new Set<string>();
+  const fileSignature = (f: File) => `${f.name}|${f.size}|${(f as File & { lastModified?: number }).lastModified ?? 0}`;
+    const appendFileOnce = (key: string, f: File) => {
+      try {
+        const sig = fileSignature(f);
+        if (seenFiles.has(sig)) return;
+        seenFiles.add(sig);
+      } catch (_) {
+        // If anything goes wrong, fall back to appending (safer than dropping silently)
+      }
+      formData.append(key, f);
+    };
 
     // include carrying asset flag (use the key spelled as requested)
     formData.append(
@@ -895,8 +1006,9 @@ const VisitorSharingFormWeb: React.FC = () => {
       // attachments when some items have File objects and others only URLs.
       // For each attachment: if file exists append as File, otherwise append url as documents_urls[].
       (a.attachments || []).forEach((att) => {
-        if (att && (att as { file?: File }).file) {
-          formData.append(`gatekeeper[assets][${idx}][documents][]`, (att as { file?: File }).file as File);
+        const file = (att as { file?: File })?.file;
+        if (file instanceof File) {
+          appendFileOnce(`gatekeeper[assets][${idx}][documents][]`, file);
         } else if (att && typeof att.url === "string") {
           formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, att.url);
         }
@@ -904,7 +1016,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       // Also include any File objects present in a.documents (legacy shape)
       (a.documents || []).forEach((d) => {
         if (d instanceof File) {
-          formData.append(`gatekeeper[assets][${idx}][documents][]`, d);
+          appendFileOnce(`gatekeeper[assets][${idx}][documents][]`, d);
         } else {
           const maybe = d as unknown as { url?: string };
           if (maybe && typeof maybe.url === "string") {
@@ -928,8 +1040,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       // documents may be File objects or objects like { name, url, file }
       (primaryVisitor.identity.documents || []).forEach((doc: DocumentLike) => {
         const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
-        if (file)
-          formData.append("gatekeeper[visitor_identity][documents][]", file);
+        if (file) appendFileOnce("gatekeeper[visitor_identity][documents][]", file);
       });
     }
 
@@ -1045,10 +1156,11 @@ const VisitorSharingFormWeb: React.FC = () => {
           );
         // Append per-attachment/file for additional visitor asset
         (a.attachments || []).forEach((att) => {
-          if (att && (att as { file?: File }).file) {
-            formData.append(
+          const file = (att as { file?: File })?.file;
+          if (file instanceof File) {
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
-              (att as { file?: File }).file as File
+              file
             );
           } else if (att && typeof att.url === "string") {
             formData.append(
@@ -1059,7 +1171,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         (a.documents || []).forEach((d) => {
           if (d instanceof File) {
-            formData.append(
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][assets][${aIdx}][documents][]`,
               d
             );
@@ -1088,10 +1200,9 @@ const VisitorSharingFormWeb: React.FC = () => {
           );
         // accept File or { name, url, file }
         (v.identity.documents || []).forEach((doc: DocumentLike) => {
-          const file =
-            doc instanceof File ? doc : (doc as { file?: File })?.file;
+          const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
           if (file)
-            formData.append(
+            appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][identity][documents][]`,
               file
             );
@@ -1106,8 +1217,8 @@ const VisitorSharingFormWeb: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = urlToken || "";
-      const visitorId = urlVisitorId;
-      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorId}/update_expected_visitor.json`;
+      const visitorEncryptedId = urlVisitorId;
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json?is_encrypted=true`;
       const url = token
         ? `${baseUrl}?token=${encodeURIComponent(token)}`
         : baseUrl;
@@ -1263,6 +1374,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         return out;
       };
+
       // eslint-disable-next-line no-console
       console.debug('[submitToApi] attachments summary:', summarize(assetsByVisitor));
 
@@ -1285,7 +1397,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             console.debug(k, "(File)", v.name, v.type, v.size);
           } else {
             // eslint-disable-next-line no-console
-            console.debug(k, v as string);
+            console.debug(k, String(v));
           }
         }
       }
@@ -1327,6 +1439,36 @@ const VisitorSharingFormWeb: React.FC = () => {
       );
     }
   };
+
+  // If server told us the form was already submitted, render only the card
+  if (alreadySubmitted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm px-2">
+          <div className="bg-white border border-gray-100 rounded-lg shadow-md p-5 text-center">
+            <div className="flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Form already submitted</h3>
+            <p className="text-sm text-gray-600 mb-4">This submission has been received by the host. No further actions are available.</p>
+           
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-4 px-2">
@@ -1370,7 +1512,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   {toastMessage}
                 </div>
               </div>
-            )}
+            )} 
           </div>
         </div>
 
@@ -1382,7 +1524,11 @@ const VisitorSharingFormWeb: React.FC = () => {
               className={`mt-2 border-2 border-dashed rounded p-3 ${profilePhotoError ? "border-[#C72030]" : "border-gray-200"}`}
             >
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                <div
+                  className="w-20 h-20 rounded-full border border-gray-200 flex items-center justify-center bg-white overflow-hidden cursor-pointer"
+                  onClick={() => openCamera()}
+                  title="Click to open camera"
+                >
                   {profilePhoto ? (
                     <img
                       src={profilePhoto}
@@ -1424,26 +1570,103 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <label className="inline-block">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,.png,.jpg,.jpeg"
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              setProfilePhoto(String(reader.result));
-                              setProfilePhotoFile(file);
-                              setProfilePhotoChanged(true);
-                              setProfilePhotoError(false);
-                            };
-                            reader.readAsDataURL(file);
+                          if (!file) return;
+                          const type = file.type || '';
+                          const name = file.name || '';
+                          const ext = name.split('.').pop()?.toLowerCase() || '';
+                          const isSvg = type === 'image/svg+xml' || ext === 'svg';
+                          if (isSvg) {
+                            setProfilePhoto(null);
+                            setProfilePhotoFile(null);
+                            setProfilePhotoChanged(false);
+                            setProfilePhotoError(true);
+                            showToast('SVG files are not allowed for profile photo. Please upload PNG or JPEG.');
+                            return;
                           }
+                          // allow only PNG/JPEG
+                          const allowed = ['image/png', 'image/jpeg'];
+                          if (!allowed.includes(type) && !['png', 'jpg', 'jpeg'].includes(ext)) {
+                            setProfilePhoto(null);
+                            setProfilePhotoFile(null);
+                            setProfilePhotoChanged(false);
+                            setProfilePhotoError(true);
+                            showToast('Please upload a PNG or JPEG image.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setProfilePhoto(String(reader.result));
+                            setProfilePhotoFile(file);
+                            setProfilePhotoChanged(true);
+                            setProfilePhotoError(false);
+                          };
+                          reader.readAsDataURL(file);
                         }}
                       />
                       <span className="bg-[#C72030] text-white px-4 py-2 rounded shadow cursor-pointer inline-block">
                         Upload Photo
                       </span>
                     </label>
+                    {/* Use Camera button removed - avatar circle opens camera instead */}
+
+                    {showCameraModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/50" onClick={() => {
+                          if (stream) stream.getTracks().forEach((t) => t.stop());
+                          setStream(null);
+                          setShowCameraModal(false);
+                        }} />
+                        <div className="bg-white rounded p-4 z-10 w-[90%] max-w-md">
+                          <div className="flex flex-col items-stretch gap-3">
+                            <video ref={videoRef} autoPlay playsInline className="w-full h-56 bg-black rounded" />
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => {
+                                  const video = videoRef.current;
+                                  if (!video) return;
+                                  const canvas = document.createElement('canvas');
+                                  canvas.width = video.videoWidth || 640;
+                                  canvas.height = video.videoHeight || 480;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                                  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                  setProfilePhoto(dataUrl);
+                                  const arr = dataUrl.split(',');
+                                  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+                                  const bstr = atob(arr[1]);
+                                  let n = bstr.length;
+                                  const u8arr = new Uint8Array(n);
+                                  while (n--) u8arr[n] = bstr.charCodeAt(n);
+                                  const file = new File([u8arr], `camera_${Date.now()}.jpg`, { type: mime });
+                                  setProfilePhotoFile(file);
+                                  setProfilePhotoChanged(true);
+                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  setStream(null);
+                                  setShowCameraModal(false);
+                                }}
+                                className="bg-[#C72030] text-white px-4 py-2 rounded"
+                              >
+                                Capture
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  setStream(null);
+                                  setShowCameraModal(false);
+                                }}
+                                className="bg-white border border-gray-200 px-4 py-2 rounded"
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-gray-400 mt-2">
                     This photo will appear on your gate pass
@@ -1700,41 +1923,11 @@ const VisitorSharingFormWeb: React.FC = () => {
           <div className="bg-white rounded shadow-sm p-2">
             <div className="p-3">
               <div className="bg-white border border-gray-100 rounded p-4 text-sm leading-6 text-gray-800">
-                <p>
-                  By entering the premises, you (“Visitor”) acknowledge and
-                  agree to the following:
-                </p>
-                <p className="mt-2">
-                  During your visit, you may have access to or may observe
-                  confidential information, including but not limited to
-                  business operations, processes, documents, systems, client
-                  information, designs, discussions, or any proprietary material
-                  related to [Company Name].
-                </p>
-                <p className="mt-2">You agree that:</p>
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  <li>
-                    All such information is confidential and is the property of
-                    [Company Name].
-                  </li>
-                  <li>
-                    You will not disclose, record, photograph, copy, or share
-                    any confidential information with any third party.
-                  </li>
-                  <li>
-                    Confidential information must be used only for the purpose
-                    of your visit.
-                  </li>
-                  <li>This obligation continues even after your visit ends.</li>
-                </ul>
-                <p className="mt-3">
-                  Any breach of this agreement may result in legal action as per
-                  applicable laws and company policies.
-                </p>
-                <p className="mt-3">
-                  By proceeding, you confirm that you have read, understood, and
-                  agreed to this Non-Disclosure Agreement.
-                </p>
+                {apiConsentHtml ? (
+                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: apiConsentHtml }} />
+                ) : (
+                  <div className="text-sm text-gray-700">By entering the premises, you (“Visitor”) acknowledge and agree to the terms provided by the host.</div>
+                )}
               </div>
 
               <label className="mt-4 flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -1782,7 +1975,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <button
                     type="button"
                     aria-label="Edit profile photo"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(1);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -1841,7 +2037,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <button
                     type="button"
                     aria-label="Edit visitor details"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(1);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -1915,7 +2114,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">To Location:</span>
                     <span className="text-gray-900 font-medium">
-                      {toLocation || location || "N/A"}
+                      {location || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Guest Type:</span>
+                    <span className="text-gray-900 font-medium">
+                      {guestType || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -1955,11 +2160,24 @@ const VisitorSharingFormWeb: React.FC = () => {
               {/* Logistics Details */}
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Logistics Details</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium">Logistics Details</div>
+                    {visitors && visitors.length > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium"
+                        aria-label={`Additional visitors (logistics): ${visitors.length}`}
+                      >
+                        {visitors.length}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     aria-label="Edit logistics details"
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(2);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -1995,7 +2213,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">To Location:</span>
                     <span className="text-gray-900 font-medium">
-                      {toLocation || location || "N/A"}
+                      {toLocation || "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -2020,11 +2238,24 @@ const VisitorSharingFormWeb: React.FC = () => {
               {/* Assets Details (Primary only simple summary) */}
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Assets Details</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium">Assets Details</div>
+                    {visitors && visitors.length > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium"
+                        aria-label={`Additional visitors carrying assets: ${visitors.length}`}
+                      >
+                        {visitors.length}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     aria-label="Edit assets details"
-                    onClick={() => setStep(3)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(3);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -2103,34 +2334,59 @@ const VisitorSharingFormWeb: React.FC = () => {
 
               {/* Identity Verification summary */}
               <div className="bg-white border border-gray-100 rounded p-3">
-                <div className="text-sm font-medium">Identity Verification</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    Identity Verification
+                    {visitors && visitors.length > 0 ? (
+                      <span className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium" aria-label={`Additional visitors: ${visitors.length}`}>
+                        {visitors.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Edit identity verification"
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(4);
+                    }}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
+                </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Government ID:</span>
                     <span className="text-gray-900 font-medium">
                       {identityByVisitor[0]?.govId || "N/A"}
                     </span>
-                  </div>
-                  <div className="absolute right-3 top-3">
-                    <button
-                      type="button"
-                      aria-label="Edit identity verification"
-                      onClick={() => setStep(4)}
-                      className="text-gray-600"
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 19 19"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M9.5 12.1923L4.75 7.44232L5.85833 6.33398L9.5 9.97565L13.1417 6.33398L14.25 7.44232L9.5 12.1923Z"
-                          fill="#1D1B20"
-                        />
-                      </svg>
-                    </button>
                   </div>
                   <div className="text-gray-500">Attachment:</div>
                   <div className="mt-1 grid grid-cols-2 gap-2">
@@ -2202,13 +2458,16 @@ const VisitorSharingFormWeb: React.FC = () => {
           <div className="fixed inset-0 z-40 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-50 w-80 max-w-xs bg-white rounded-lg shadow-lg p-5">
-              <button
-                aria-label="Close"
-                onClick={() => setShowSuccess(false)}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
+                <button
+                  aria-label="Close"
+                  onClick={() => {
+                    // reload the page so the GET prefill runs again
+                    if (typeof window !== 'undefined') window.location.reload();
+                  }}
+                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-full bg-[#4ade80] flex items-center justify-center mb-3 relative">
                   <svg
@@ -2240,7 +2499,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         )}
 
         {/* Step 2 */}
-        {step === 2 && (
+        {(step as number) === 2 && (
           <div className="bg-white rounded shadow-sm p-2">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -2788,7 +3047,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     ),
                                   }));
                                 }
-                                // clear error for this visitor once category is chosen
+                                // clear pure category error; name/serial may still show their own messages
                                 setAssetCategoryErrors((e) => ({
                                   ...e,
                                   [v.id]: false,
@@ -2800,11 +3059,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                           );
                         })}
                       </div>
-                      {assetCategoryErrors[v.id] && (
-                        <div className="text-xs text-[#C72030] mt-1">
-                          Asset Category is required
-                        </div>
-                      )}
+                      {/* Show category error only if this visitor currently has no category selected */}
+                      {assetCategoryErrors[v.id] &&
+                        !(assetsByVisitor[v.id] || [])[0]?.category?.trim() && (
+                          <div className="text-xs text-[#C72030] mt-1">
+                            Asset Category is required
+                          </div>
+                        )}
 
                       {(assetsByVisitor[v.id] || []).map((a) => (
                         <div
@@ -2830,6 +3091,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                               placeholder="Enter name..."
                             />
+                            {/* simple error helper when Step 3 validation failed for this visitor */}
+                            {assetCategoryErrors[v.id] && !a.name?.trim() && (
+                              <div className="mt-1 text-xs text-[#C72030]">
+                                Asset Name is required
+                              </div>
+                            )}
                           </div>
 
                           <div className="mt-2">
@@ -2851,6 +3118,11 @@ const VisitorSharingFormWeb: React.FC = () => {
                               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                               placeholder="Enter Serial no..."
                             />
+                            {assetCategoryErrors[v.id] && !a.serial?.trim() && (
+                              <div className="mt-1 text-xs text-[#C72030]">
+                                Serial/Model No. is required
+                              </div>
+                            )}
                           </div>
 
                           <div className="mt-2">
@@ -2965,7 +3237,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               ))}
             </div>
           </div>
-        )}
+  )}
 
         {/* Step 4: Identity Verification */}
         {step === 4 && (
@@ -3191,7 +3463,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         {/* Fixed bottom actions */}
         <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
-            {step > 1 && (
+            {step > 1 && !isSubmitting && !showSuccess && (
               <button
                 onClick={() => {
                   // Clear validation errors when navigating back
