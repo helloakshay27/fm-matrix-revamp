@@ -31,6 +31,8 @@ const VisitorSharingFormWeb: React.FC = () => {
   // when the server indicates the form was already submitted (approve: 5)
   // we show only a centered card and hide the rest of the UI
   const [alreadySubmitted, setAlreadySubmitted] = useState<boolean>(false);
+  // when user navigates from Preview via an Edit button, remember to return to Preview
+  const [returnToPreviewOnNext, setReturnToPreviewOnNext] = useState<boolean>(false);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -141,6 +143,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [expandedVisitors, setExpandedVisitors] = useState<
     Record<number, boolean>
   >({ 0: false });
+  // Step 3 asset errors: true means at least one required asset field missing
   const [assetCategoryErrors, setAssetCategoryErrors] = useState<
     Record<number, boolean>
   >({});
@@ -764,7 +767,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       return;
     }
 
-    // Step 3: require Asset Category selection for primary and all additional visitors only when carryingAsset is true
+  // Step 3: require Asset details for primary and all additional visitors only when carryingAsset is true
     if (step === 3) {
       if (carryingAsset) {
         let hasAssetErrors = false;
@@ -772,15 +775,27 @@ const VisitorSharingFormWeb: React.FC = () => {
         // Validate primary visitor (id: 0) and any visitor entries that exist
         const allVisitors = [0, ...visitors.map((v) => v.id)];
         allVisitors.forEach((id) => {
-          const list = assetsByVisitor[id] || [];
-          const category = list[0]?.category || "";
-          const missing = !category.trim();
-          nextErrors[id] = missing;
-          if (missing) hasAssetErrors = true;
+      const list = assetsByVisitor[id] || [];
+      const first = list[0];
+      const category = first?.category || "";
+      const name = first?.name || "";
+      const serial = first?.serial || "";
+
+      // Required fields: Category, Asset Name, Serial No.
+      const missingCategory = !category.trim();
+      const missingName = !name.trim();
+      const missingSerial = !serial.trim();
+
+      const missingAny = missingCategory || missingName || missingSerial;
+
+      nextErrors[id] = missingAny;
+      if (missingAny) hasAssetErrors = true;
         });
         setAssetCategoryErrors(nextErrors);
         if (hasAssetErrors) {
-          showToast("Please select asset category for all visitors.");
+          showToast(
+            "Please fill Asset Category, Asset Name and Serial No. for all visitors."
+          );
           // expand the visitor sections that have missing categories
           setExpandedVisitors((e) => {
             const next = { ...e };
@@ -813,13 +828,14 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
     }
 
-    // Step 4: require either an uploaded ID image or a government ID number
+    // Step 4: require identity type selection AND either an uploaded ID image or a government ID number
     if (step === 4) {
       const errs: Record<number, boolean> = {};
       let hasMissing = false;
       const allVisitors = [0, ...visitors.map((v) => v.id)];
       allVisitors.forEach((id) => {
         const idState = identityByVisitor[id];
+        const hasType = !!(idState && idState.type);
         const hasGov = !!(idState && idState.govId && String(idState.govId).trim());
         const docs = idState && Array.isArray(idState.documents) ? idState.documents : [];
         const hasFile = docs.some((d) => {
@@ -829,14 +845,15 @@ const VisitorSharingFormWeb: React.FC = () => {
           const maybe = d as { file?: File };
           return !!(maybe && maybe.file instanceof File);
         });
-        if (!hasGov && !hasFile) {
+        // mark missing if no identity type OR neither gov id nor file present
+        if (!hasType || (!hasGov && !hasFile)) {
           errs[id] = true;
           hasMissing = true;
         }
       });
       setIdentityErrors(errs);
       if (hasMissing) {
-        showToast("Please upload at least one ID image or enter Government ID number for all visitors.");
+        showToast("Please select an ID type and provide at least one ID image or enter Government ID number for all visitors.");
         setExpandedVisitors((e) => {
           const next = { ...e };
           Object.keys(errs).forEach((k) => {
@@ -847,6 +864,13 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
         return;
       }
+    }
+
+    // If user came from Preview via an Edit button, return them to Preview on Next
+    if (returnToPreviewOnNext) {
+      setReturnToPreviewOnNext(false);
+      setStep(6);
+      return;
     }
 
     setStep((s) => (s === 5 ? (ndaAgree ? 6 : 5) : Math.min(6, s + 1)));
@@ -1439,14 +1463,7 @@ const VisitorSharingFormWeb: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold mb-1">Form already submitted</h3>
             <p className="text-sm text-gray-600 mb-4">This submission has been received by the host. No further actions are available.</p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => { if (typeof window !== 'undefined') window.location.reload(); }}
-                className="px-4 py-2 bg-[#C72030] text-white rounded-md text-sm"
-              >
-                Refresh
-              </button>
-            </div>
+           
           </div>
         </div>
       </div>
@@ -1495,7 +1512,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   {toastMessage}
                 </div>
               </div>
-            )}
+            )} 
           </div>
         </div>
 
@@ -1958,7 +1975,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <button
                     type="button"
                     aria-label="Edit profile photo"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(1);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -2017,7 +2037,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <button
                     type="button"
                     aria-label="Edit visitor details"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(1);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -2137,11 +2160,24 @@ const VisitorSharingFormWeb: React.FC = () => {
               {/* Logistics Details */}
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Logistics Details</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium">Logistics Details</div>
+                    {visitors && visitors.length > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium"
+                        aria-label={`Additional visitors (logistics): ${visitors.length}`}
+                      >
+                        {visitors.length}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     aria-label="Edit logistics details"
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(2);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -2202,11 +2238,24 @@ const VisitorSharingFormWeb: React.FC = () => {
               {/* Assets Details (Primary only simple summary) */}
               <div className="bg-white border border-gray-100 rounded p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Assets Details</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium">Assets Details</div>
+                    {visitors && visitors.length > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium"
+                        aria-label={`Additional visitors carrying assets: ${visitors.length}`}
+                      >
+                        {visitors.length}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     aria-label="Edit assets details"
-                    onClick={() => setStep(3)}
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(3);
+                    }}
                     className="text-gray-600"
                   >
                     <svg
@@ -2285,11 +2334,52 @@ const VisitorSharingFormWeb: React.FC = () => {
 
               {/* Identity Verification summary */}
               <div className="bg-white border border-gray-100 rounded p-3">
-                <div className="text-sm font-medium">
-                  Identity Verification
-                  {visitors && visitors.length > 0 ? (
-                    <span className="ml-2 text-sm text-gray-600">(Additional: {visitors.length})</span>
-                  ) : null}
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    Identity Verification
+                    {visitors && visitors.length > 0 ? (
+                      <span className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium" aria-label={`Additional visitors: ${visitors.length}`}>
+                        {visitors.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Edit identity verification"
+                    onClick={() => {
+                      setReturnToPreviewOnNext(true);
+                      setStep(4);
+                    }}
+                    className="text-gray-600"
+                  >
+                    <svg
+                      width="36"
+                      height="32"
+                      viewBox="0 0 36 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_23208_24694)">
+                        <path
+                          d="M24.1036 12.5395C24.456 12.1872 24.654 11.7093 24.6541 11.211C24.6541 10.7128 24.4563 10.2349 24.104 9.88248C23.7517 9.5301 23.2738 9.33209 22.7755 9.33203C22.2773 9.33197 21.7994 9.52985 21.447 9.88215L12.5519 18.7792C12.3971 18.9335 12.2827 19.1235 12.2186 19.3324L11.3382 22.233C11.3209 22.2907 11.3196 22.3519 11.3344 22.4102C11.3492 22.4686 11.3794 22.5218 11.422 22.5643C11.4646 22.6068 11.5179 22.637 11.5762 22.6517C11.6346 22.6663 11.6958 22.6649 11.7534 22.6476L14.6547 21.7678C14.8634 21.7043 15.0534 21.5906 15.2079 21.4366L24.1036 12.5395Z"
+                          stroke="#C72030"
+                          strokeWidth="1.333"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_23208_24694">
+                          <rect
+                            width="15.996"
+                            height="15.996"
+                            fill="white"
+                            transform="translate(9.99121 7.99805)"
+                          />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-2 text-xs space-y-2">
                   <div className="flex justify-between">
@@ -2297,27 +2387,6 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <span className="text-gray-900 font-medium">
                       {identityByVisitor[0]?.govId || "N/A"}
                     </span>
-                  </div>
-                  <div className="absolute right-3 top-3">
-                    <button
-                      type="button"
-                      aria-label="Edit identity verification"
-                      onClick={() => setStep(4)}
-                      className="text-gray-600"
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 19 19"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M9.5 12.1923L4.75 7.44232L5.85833 6.33398L9.5 9.97565L13.1417 6.33398L14.25 7.44232L9.5 12.1923Z"
-                          fill="#1D1B20"
-                        />
-                      </svg>
-                    </button>
                   </div>
                   <div className="text-gray-500">Attachment:</div>
                   <div className="mt-1 grid grid-cols-2 gap-2">
@@ -2430,7 +2499,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         )}
 
         {/* Step 2 */}
-        {step === 2 && (
+        {(step as number) === 2 && (
           <div className="bg-white rounded shadow-sm p-2">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -2978,7 +3047,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     ),
                                   }));
                                 }
-                                // clear error for this visitor once category is chosen
+                                // clear pure category error; name/serial may still show their own messages
                                 setAssetCategoryErrors((e) => ({
                                   ...e,
                                   [v.id]: false,
@@ -2990,11 +3059,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                           );
                         })}
                       </div>
-                      {assetCategoryErrors[v.id] && (
-                        <div className="text-xs text-[#C72030] mt-1">
-                          Asset Category is required
-                        </div>
-                      )}
+                      {/* Show category error only if this visitor currently has no category selected */}
+                      {assetCategoryErrors[v.id] &&
+                        !(assetsByVisitor[v.id] || [])[0]?.category?.trim() && (
+                          <div className="text-xs text-[#C72030] mt-1">
+                            Asset Category is required
+                          </div>
+                        )}
 
                       {(assetsByVisitor[v.id] || []).map((a) => (
                         <div
@@ -3020,6 +3091,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                               placeholder="Enter name..."
                             />
+                            {/* simple error helper when Step 3 validation failed for this visitor */}
+                            {assetCategoryErrors[v.id] && !a.name?.trim() && (
+                              <div className="mt-1 text-xs text-[#C72030]">
+                                Asset Name is required
+                              </div>
+                            )}
                           </div>
 
                           <div className="mt-2">
@@ -3041,6 +3118,11 @@ const VisitorSharingFormWeb: React.FC = () => {
                               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
                               placeholder="Enter Serial no..."
                             />
+                            {assetCategoryErrors[v.id] && !a.serial?.trim() && (
+                              <div className="mt-1 text-xs text-[#C72030]">
+                                Serial/Model No. is required
+                              </div>
+                            )}
                           </div>
 
                           <div className="mt-2">
@@ -3155,7 +3237,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               ))}
             </div>
           </div>
-        )}
+  )}
 
         {/* Step 4: Identity Verification */}
         {step === 4 && (
