@@ -87,10 +87,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
 
   // Get organization ID from localStorage
   const getOrgId = () => {
-    const baseUrl = localStorage.getItem("baseUrl") || "";
-    // Extract org_id from stored data or use a default
-    // You may need to adjust this based on how org_id is stored
-    return localStorage.getItem("org_id") || "1";
+    return localStorage.getItem("org_id") || sessionStorage.getItem("org_id") ;
   };
 
   const handleCopyShareLink = () => {
@@ -281,11 +278,10 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
             <div className="grid grid-cols-2 gap-4 mb-4">
               <button
                 onClick={() => setShareType("internal")}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  shareType === "internal"
+                className={`p-3 rounded-lg border-2 transition-all ${shareType === "internal"
                     ? "border-[#C72030] bg-red-50"
                     : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4" />
@@ -294,11 +290,10 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
               </button>
               <button
                 onClick={() => setShareType("external")}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  shareType === "external"
+                className={`p-3 rounded-lg border-2 transition-all ${shareType === "external"
                     ? "border-[#C72030] bg-red-50"
                     : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
@@ -428,11 +423,10 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          share.user_type === "internal"
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${share.user_type === "internal"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-green-100 text-green-600"
-                        }`}
+                          }`}
                       >
                         {share.user_type === "internal" ? (
                           <User className="w-5 h-5" />
