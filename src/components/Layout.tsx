@@ -104,6 +104,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.gophygital.work") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
+    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
