@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, File, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -106,6 +106,7 @@ const ReportsDetailsPage = () => {
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [createPostOpen, setCreatePostOpen] = useState(false);
     const [createPollOpen, setCreatePollOpen] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | null; id: number | null }>({ open: false, type: null, id: null });
 
     useEffect(() => {
         fetchReportDetails();
@@ -408,29 +409,46 @@ const ReportsDetailsPage = () => {
 
 
     const handleDeletePost = async (postId: number) => {
-        if (!confirm('Are you sure you want to delete this post?')) {
-            return;
-        }
+        setDeleteConfirmation({ open: true, type: 'post', id: postId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirmation.id) return;
 
         try {
-            const response = await axios.delete(
-                `https://${baseUrl}/posts/${postId}.json`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
+            if (deleteConfirmation.type === 'post') {
+                const response = await axios.delete(
+                    `https://${baseUrl}/posts/${deleteConfirmation.id}.json`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
+                );
 
-            if (response.status === 200 || response.status === 204) {
-                toast.success('Post deleted successfully');
-                await fetchReportDetails(); // Refresh the posts list
+                if (response.status === 200 || response.status === 204) {
+                    toast.success('Post deleted successfully');
+                    await fetchReportDetails();
+                }
+            } else if (deleteConfirmation.type === 'comment') {
+                await axios.delete(
+                    `https://${baseUrl}/comments/${deleteConfirmation.id}.json`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
+                );
+                toast.success('Comment deleted successfully');
+                await fetchReportDetails();
             }
         } catch (error) {
-            console.error('Error deleting post:', error);
-            toast.error('Failed to delete post. Please try again.');
+            console.error(`Error deleting ${deleteConfirmation.type}:`, error);
+            toast.error(`Failed to delete ${deleteConfirmation.type}. Please try again.`);
+        } finally {
+            setDeleteConfirmation({ open: false, type: null, id: null });
         }
-    };
+    }
 
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
@@ -451,25 +469,8 @@ const ReportsDetailsPage = () => {
         }
     };
 
-    const deleteComment = async (commentId: number) => {
-        if (!confirm('Are you sure you want to delete this comment?')) {
-            return;
-        }
-        try {
-            await axios.delete(
-                `https://${baseUrl}/comments/${commentId}.json`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            toast.success('Comment deleted successfully');
-            await fetchReportDetails();
-        } catch (error) {
-            console.error('Error deleting comment:', error);
-            toast.error('Failed to delete comment. Please try again.');
-        }
+    const deleteComment = (commentId: number) => {
+        setDeleteConfirmation({ open: true, type: 'comment', id: commentId });
     };
 
 
@@ -487,7 +488,7 @@ const ReportsDetailsPage = () => {
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
             {/* Header with back button */}
-            <div className="flex items-center justify-between gap-4 mb-6">
+            {/* <div className="flex items-center justify-between gap-4 mb-6">
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
@@ -496,7 +497,8 @@ const ReportsDetailsPage = () => {
                     <ArrowLeft className="w-4 h-4" />
                     Back
                 </Button>
-            </div>
+            </div> */}
+            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4"><Link to={'/pulse/community'}>Community</Link> <span className="font-normal">{">"}</span> Report Details</h1>
 
             {/* Main Content Card */}
             <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
@@ -613,7 +615,7 @@ const ReportsDetailsPage = () => {
                         </span>
                     </div>
                     <div className="p-6 bg-white">
-                        <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start justify-between mb-4 w-[70%]">
                             <div className="flex items-center gap-3">
                                 <img
                                     src={reportDetails.post.creator_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reportDetails.post.creator_full_name}`}
@@ -653,9 +655,9 @@ const ReportsDetailsPage = () => {
                         {reportDetails.post.title && (
                             <h2 className="text-lg font-semibold text-gray-900 mb-2">{reportDetails.post.title}</h2>
                         )}
-                        <p className="text-gray-700 mb-4">{reportDetails.post.body}</p>
+                        <p className="text-gray-700 mb-4 w-[70%]">{reportDetails.post.body}</p>
                         {reportDetails.post.attachments && reportDetails.post.attachments.length > 0 && (
-                            <div className={`mb-4 gap-1 ${reportDetails.post.attachments.length === 1 ? 'grid grid-cols-1' :
+                            <div className={`mb-4 gap-1 w-[70%] ${reportDetails.post.attachments.length === 1 ? 'grid grid-cols-1' :
                                 reportDetails.post.attachments.length === 2 ? 'grid grid-cols-2' :
                                     reportDetails.post.attachments.length === 3 ? 'grid grid-cols-2' :
                                         'grid grid-cols-2'
@@ -700,22 +702,36 @@ const ReportsDetailsPage = () => {
                                 )).slice(0, 4)}
                             </div>
                         )}
-                        <div className="flex items-center gap-4">
-                            <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-                                👍
-                                <span className="text-sm font-medium">{reportDetails.post.likes_with_emoji?.thumbs_up || 0}</span>
-                            </button>
-                            <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
-                                ❤️
-                                <span className="text-sm font-medium">{reportDetails.post.likes_with_emoji?.heart || 0}</span>
-                            </button>
-                            <button className="flex items-center gap-1 text-gray-600 hover:text-orange-600 transition-colors">
-                                🔥
-                                <span className="text-sm font-medium">{reportDetails.post.likes_with_emoji?.fire || 0}</span>
-                            </button>
+                        <div className="flex items-center gap-4 w-[70%]">
+                            {(() => {
+                                const EMOJI_MAP: Record<string, { icon: string; hoverClass: string }> = {
+                                    thumbs_up: { icon: "👍", hoverClass: "hover:text-blue-600" },
+                                    laugh: { icon: "😂", hoverClass: "hover:text-green-600" },
+                                    heart: { icon: "❤️", hoverClass: "hover:text-red-600" },
+                                    angry: { icon: "😠", hoverClass: "hover:text-red-800" },
+                                    clap: { icon: "👏", hoverClass: "hover:text-yellow-600" },
+                                };
+
+                                return Object.entries(reportDetails.post.likes_with_emoji || {}).map(
+                                    ([emojiKey, count]) => {
+                                        const emoji = EMOJI_MAP[emojiKey];
+                                        if (!emoji || count === 0) return null;
+
+                                        return (
+                                            <button
+                                                key={emojiKey}
+                                                className={`flex items-center gap-1 text-gray-600 transition-colors ${emoji.hoverClass}`}
+                                            >
+                                                <span>{emoji.icon}</span>
+                                                <span className="text-sm font-medium">{count}</span>
+                                            </button>
+                                        );
+                                    }
+                                );
+                            })()}
                         </div>
                         {reportDetails.comment && (
-                            <div className="mt-6">
+                            <div className="mt-6 w-[70%]">
                                 <h4 className="font-semibold text-gray-900 mb-4">Reported Comment</h4>
                                 <div className="border border-red-200 rounded-[8px] p-4">
                                     <div className="flex items-start gap-6 mb-3">
@@ -1095,6 +1111,33 @@ const ReportsDetailsPage = () => {
                             >
                                 Publish Poll
                             </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmation.open} onOpenChange={(open) => {
+                if (!open) setDeleteConfirmation({ open: false, type: null, id: null });
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : 'Comment'} ?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
+                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors"
+                            >
+                                Yes
+                            </button>
                         </div>
                     </div>
                 </DialogContent>

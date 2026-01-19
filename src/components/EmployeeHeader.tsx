@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Globe,
   Bell,
@@ -40,28 +40,50 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { getUser, clearAuth } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 import axios from "axios";
 import { toast } from "sonner";
 
-// Employee modules/packages
-const employeeModules = [
-  { name: "Company Hub", icon: Globe },
-  { name: "Dashboard", icon: Home },
-  { name: "Project Task", icon: FolderKanban },
-  { name: "Ticket", icon: Ticket },
-  { name: "Visitors", icon: Users },
-  { name: "Calendar", icon: Calendar1 },
-  { name: "Documents", icon: FileText },
-  { name: "ID Card", icon: User },
-  { name: "MOM", icon: FileText },
-  { name: "TO DO", icon: MessageSquare },
-  { name: "Ask AI", icon: ChartArea },
-  { name: "Book Seats", icon: Calendar1 },
-  { name: "Parking", icon: Car },
-  { name: "Booking", icon: Package },
-  { name: "F&B", icon: ChartArea },
+// Icon mapping for employee header modules based on action_name
+const headerIconMap: Record<string, any> = {
+  employee_company_hub: Globe,
+  employee_dashboard: Home,
+  employee_projects_overview: FolderKanban,
+  employee_ticket: Ticket,
+  employee_documets: FileText,
+  employee_id_card: User,
+  employee_mom: FileText,
+  employee_todo: MessageSquare,
+  employee_askai: ChartArea,
+  employee_seat_booking: Calendar1,
+  employee_parking: Car,
+  employee_booking: Package,
+  employee_fb: ChartArea,
+};
+
+// Fallback static employeeModules for backward compatibility
+const staticEmployeeModules = [
+  { name: "Company Hub", icon: Globe, action_name: "employee_company_hub" },
+  { name: "Dashboard", icon: Home, action_name: "employee_dashboard" },
+  {
+    name: "Project Task",
+    icon: FolderKanban,
+    action_name: "employee_projects_overview",
+  },
+  { name: "Ticket", icon: Ticket, action_name: "employee_ticket" },
+  { name: "Visitors", icon: Users, action_name: "employee_visitor" },
+  { name: "Calendar", icon: Calendar1, action_name: "employee_calendar" },
+  { name: "Documents", icon: FileText, action_name: "employee_documets" },
+  { name: "ID Card", icon: User, action_name: "employee_id_card" },
+  { name: "MOM", icon: FileText, action_name: "employee_mom" },
+  { name: "TO DO", icon: MessageSquare, action_name: "employee_todo" },
+  { name: "Ask AI", icon: ChartArea, action_name: "employee_askai" },
+  { name: "Book Seats", icon: Calendar1, action_name: "employee_seat_booking" },
+  { name: "Parking", icon: Car, action_name: "employee_parking" },
+  { name: "Booking", icon: Package, action_name: "employee_booking" },
+  { name: "F&B", icon: ChartArea, action_name: "employee_fb" },
 ];
 
 export const EmployeeHeader: React.FC = () => {
@@ -70,6 +92,37 @@ export const EmployeeHeader: React.FC = () => {
   const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
 
   const navigate = useNavigate();
+  const { userRole } = usePermissions();
+
+  // Helper function to get first available admin link
+  const getFirstAdminLink = (): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/";
+    }
+
+    // Find first module with active functions (excluding Employee modules)
+    for (const module of userRole.lock_modules) {
+      // Skip Employee Sidebar and Employee Projects Sidebar modules
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) {
+        continue;
+      }
+
+      // Find first active function with a react_link
+      const firstActiveFunction = module.lock_functions.find(
+        (func) =>
+          func.function_active === 1 && func.react_link && !func.parent_function
+      );
+
+      if (firstActiveFunction && firstActiveFunction.react_link) {
+        return firstActiveFunction.react_link;
+      }
+    }
+
+    return "/"; // Fallback to root
+  };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -79,6 +132,44 @@ export const EmployeeHeader: React.FC = () => {
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Build dynamic employee modules from Employee Sidebar module (module_id: 127)
+  const employeeModules = useMemo(() => {
+    if (!userRole || !userRole.lock_modules) {
+      return staticEmployeeModules;
+    }
+
+    // Find Employee Sidebar module
+    const sidebarModule = userRole.lock_modules.find(
+      (m: any) => m.module_name === "Employee Sidebar"
+    );
+
+    if (!sidebarModule) {
+      // If Employee Sidebar module is not found, return empty array
+      // This means the user doesn't have permission to see header modules
+      return [];
+    }
+
+    // Build modules from active functions
+    const dynamicModules = sidebarModule.lock_functions
+      .filter((func: any) => func.function_active === 1)
+      .map((func: any) => {
+        const icon = headerIconMap[func.action_name] || Globe;
+        // Map function name to module display name
+        let displayName = func.function_name;
+        if (func.action_name === "employee_projects_overview") {
+          displayName = "Project Task";
+        }
+        return {
+          name: displayName,
+          icon: icon,
+          action_name: func.action_name,
+          react_link: func.react_link,
+        };
+      });
+
+    return dynamicModules.length > 0 ? dynamicModules : [];
+  }, [userRole]);
 
   const fetchWalleteDetails = async () => {
     setIsLoading(true);
@@ -120,7 +211,7 @@ export const EmployeeHeader: React.FC = () => {
     const saved = localStorage.getItem("employeeVisibleModules");
     return saved
       ? JSON.parse(saved)
-      : employeeModules.slice(0, 10).map((m) => m.name);
+      : employeeModules.slice(0, 9).map((m) => m.name);
   });
 
   const MAX_VISIBLE_MODULES = 9;
@@ -246,12 +337,18 @@ export const EmployeeHeader: React.FC = () => {
     loadUserInfo();
   }, []);
 
-  const handleModuleClick = (moduleName: string) => {
-    setCurrentSection(moduleName);
+  const handleModuleClick = (module: any) => {
+    setCurrentSection(module.name);
     setIsModuleMenuOpen(false);
 
-    // Navigate to the module's default page
-    switch (moduleName) {
+    // Navigate using react_link if available, otherwise use static mapping
+    if (module.react_link) {
+      navigate(module.react_link);
+      return;
+    }
+
+    // Fallback to static navigation for backward compatibility
+    switch (module.name) {
       case "Company Hub":
         navigate("/employee/company-hub");
         break;
@@ -270,7 +367,6 @@ export const EmployeeHeader: React.FC = () => {
       case "MOM":
         navigate("/vas/mom");
         break;
-
       case "Book Seats":
         navigate("/employee/space-management/bookings");
         break;
@@ -518,11 +614,12 @@ export const EmployeeHeader: React.FC = () => {
                         }
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
-                        onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
-                          ? "bg-white text-[#C72030] shadow-sm"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                          }`}
+                        onClick={() => handleModuleClick(module)}
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
+                          isActive
+                            ? "bg-white text-[#C72030] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                        }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -582,11 +679,12 @@ export const EmployeeHeader: React.FC = () => {
                               onDragStart={(e) =>
                                 handleModuleDragStart(e, module.name)
                               }
-                              onClick={() => handleModuleClick(module.name)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
-                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                : "hover:bg-[#f6f4ee] text-gray-700"
-                                }`}
+                              onClick={() => handleModuleClick(module)}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
+                                isActive
+                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                  : "hover:bg-[#f6f4ee] text-gray-700"
+                              }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
@@ -710,15 +808,17 @@ export const EmployeeHeader: React.FC = () => {
                             markAsRead(notification.id);
                           }
                         }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -737,12 +837,13 @@ export const EmployeeHeader: React.FC = () => {
                             <div className="mt-2">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${notification.type === "task"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : notification.type === "meeting"
-                                    ? "bg-green-50 text-green-700 border-green-200"
-                                    : "bg-gray-50 text-gray-700 border-gray-200"
-                                  }`}
+                                className={`text-xs ${
+                                  notification.type === "task"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : notification.type === "meeting"
+                                      ? "bg-green-50 text-green-700 border-green-200"
+                                      : "bg-gray-50 text-gray-700 border-gray-200"
+                                }`}
                               >
                                 {notification.type}
                               </Badge>
@@ -826,7 +927,8 @@ export const EmployeeHeader: React.FC = () => {
                         );
                         localStorage.setItem("selectedView", "admin");
                         localStorage.removeItem("tempType");
-                        window.location.href = "/maintenance/asset";
+                        const adminLink = getFirstAdminLink();
+                        window.location.href = adminLink;
                       }}
                       className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
                     >

@@ -2,10 +2,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddSprintModal from "@/components/AddSprintModal";
@@ -115,7 +114,7 @@ const transformedSprints = (sprints: any[]) => {
       id: String(item.id ?? ""),
       title: item.title ?? item.name ?? "",
       status: (item.status ?? "").charAt(0).toUpperCase() + (item.status ?? "").slice(1),
-      sprint_owner: item.sprint_owner_name ?? item.owner_name ?? "-",
+      sprint_owner: item.sprint_owner_name ?? "-",
       start_date: item.start_date ?? "",
       end_date: item.end_date ?? "",
       duration: item.duration ?? "",
@@ -125,11 +124,21 @@ const transformedSprints = (sprints: any[]) => {
   });
 };
 
+const statusOptions = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "completed", label: "Completed" },
+  { value: "overdue", label: "Overdue" },
+]
+
 export const SprintDashboard = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -158,7 +167,7 @@ export const SprintDashboard = () => {
   const getOwners = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -192,37 +201,13 @@ export const SprintDashboard = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const cachedResult = await cache.getOrFetch(
-        "sprints_list",
-        async () => {
-          // TODO: Replace with actual sprint API call when available
-          // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-          // return transformedSprints(response);
-
-          // Mock data for now
-          return [
-            {
-              id: "S-78",
-              title: "test 333",
-              status: "Active",
-              sprint_owner: "Test User Name",
-              start_date: "2025-11-04",
-              end_date: "2025-11-04",
-              duration: "0w:0d:00h:00m:00s",
-              priority: "Medium",
-              number_of_projects: 3,
-            },
-          ];
-        },
-        2 * 60 * 1000, // Fresh for 2 minutes
-        10 * 60 * 1000 // Stale up to 10 minutes
-      );
-      setSprints(cachedResult.data);
+      const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      setSprints(transformedSprints(response));
     } catch (error) {
       console.error(error);
       toast.error(error || "Failed to fetch sprints");
     }
-  }, []);
+  }, [dispatch, token, baseUrl]);
 
   useEffect(() => {
     fetchData();
@@ -249,8 +234,6 @@ export const SprintDashboard = () => {
 
       await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
       toast.success("Sprint created successfully");
-      // Invalidate cache after sprint creation
-      cache.invalidatePattern("sprints_*");
       fetchData();
       setAddSprintModalOpen(false);
     } catch (error: any) {
@@ -268,8 +251,6 @@ export const SprintDashboard = () => {
         updateSprint({ token, baseUrl, id, data: payload })
       ).unwrap();
       toast.success("Sprint updated successfully");
-      // Invalidate cache after sprint update
-      cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
       console.error(error);
@@ -286,8 +267,6 @@ export const SprintDashboard = () => {
         updateSprintStatus({ token, baseUrl, id, data: payload })
       ).unwrap();
       toast.success("Sprint status updated successfully");
-      // Invalidate cache after sprint status update
-      cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
       console.error(error);
@@ -320,35 +299,65 @@ export const SprintDashboard = () => {
     switch (columnKey) {
       case "number_of_projects":
         return item.number_of_projects > 0 ? item.number_of_projects : "-"; // Ensure proper rendering of the value
-      case "status":
-        return (
-          <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
-              ? "bg-green-100 text-green-800"
-              : item.status === "Completed"
-                ? "bg-blue-100 text-blue-800"
-                : item.status === "In_progress"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : item.status === "Stopped"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-              }`}
+      case "status": {
+        const statusColorMap = {
+          open: { dot: "bg-blue-500" },
+          in_progress: { dot: "bg-amber-500" },
+          on_hold: { dot: "bg-gray-500" },
+          completed: { dot: "bg-teal-500" },
+          overdue: { dot: "bg-red-500" },
+        };
+
+        const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
+        return <FormControl
+          variant="standard"
+          sx={{ width: 148 }} // same as w-32
+        >
+          <Select
+            value={item.status}
+            onChange={(e) =>
+              handleStatusChange(item.id, e.target.value as string)
+            }
+            // disabled
+            disableUnderline
+            renderValue={(value) => (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+              </div>
+            )}
+            sx={{
+              fontSize: "0.875rem",
+              cursor: "pointer",
+              "& .MuiSelect-select": {
+                padding: "4px 0",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              },
+              // "&.Mui-disabled": {
+              //     color: "#000",
+              // },
+              // // For the selected value text
+              // "&.Mui-disabled .MuiSelect-select": {
+              //     color: "#000",
+              //     WebkitTextFillColor: "#000",
+              // },
+            }}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
-                ? "bg-green-500"
-                : item.status === "Completed"
-                  ? "bg-blue-500"
-                  : item.status === "In_progress"
-                    ? "bg-yellow-500"
-                    : item.status === "Stopped"
-                      ? "bg-red-500"
-                      : "bg-gray-500"
-                }`}
-            ></span>
-            {item.status}
-          </span>
-        );
+            {statusOptions.map((opt) => {
+              const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+              return (
+                <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                  <span>{opt.label}</span>
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+      }
       case "duration":
         if (item.start_date && item.end_date) {
           return (
@@ -502,13 +511,6 @@ export const SprintDashboard = () => {
         rightActions={rightActions}
         storageKey="sprint-table"
         onFilterClick={() => { }}
-        canAddRow={true}
-        readonlyColumns={["id", "duration", "number_of_projects"]}
-        onAddRow={(newRowData) => {
-          handleSubmit(newRowData);
-        }}
-        renderEditableCell={renderEditableCell}
-        newRowPlaceholder="Click to add new sprint"
         loading={isLoading}
       />
 

@@ -130,6 +130,10 @@ const VisitorSharingFormWeb: React.FC = () => {
   // token and visitor id from URL
   const [urlToken, setUrlToken] = useState<string | null>(null);
   const [urlVisitorId, setUrlVisitorId] = useState<string | null>(null);
+  // encrypted id returned by the GET prefill API (preferred when present)
+  const [prefillEncryptedId, setPrefillEncryptedId] = useState<string | null>(
+    null
+  );
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [visitorErrors, setVisitorErrors] = useState<
@@ -211,7 +215,7 @@ const VisitorSharingFormWeb: React.FC = () => {
     const loadPrefill = async () => {
       try {
         const res = await fetch(
-          `https://lockated-api.gophygital.work/pms/visitors/${id}.json?token=${encodeURIComponent(token)}`
+          `https://lockated-api.gophygital.work/pms/visitors/${id}/visitor_show.json?token=${encodeURIComponent(token)}`
         );
         if (!res.ok) {
           // surface server errors to the small mobile card for easier debugging
@@ -219,6 +223,16 @@ const VisitorSharingFormWeb: React.FC = () => {
           return;
         }
         const data = await res.json();
+        // If the GET prefill response contains an encrypted visitor id, save it
+        // so we can prefer it for the update call later (authoritative).
+        try {
+          const possibleId =
+            (data && (data.visitor_encrypted_id || data.encrypted_id || data.id || data.visitor_id)) ||
+            null;
+          if (possibleId) setPrefillEncryptedId(String(possibleId));
+        } catch (_) {
+          // ignore
+        }
         // DEBUG: log consent form payload so we can confirm shape
         if (typeof console !== "undefined" && console.warn) {
           // cast to Record to avoid `any` lint rule
@@ -867,44 +881,52 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
     }
 
-    // Step 4: require identity type selection AND either an uploaded ID image or a government ID number
+    // Step 4: require identity type selection AND either an uploaded ID image OR a government ID number
     if (step === 4) {
       const errs: Record<number, boolean> = {};
       let hasMissing = false;
       const allVisitors = [0, ...visitors.map((v) => v.id)];
+
       allVisitors.forEach((id) => {
         const idState = identityByVisitor[id];
+
         const hasType = !!(idState && idState.type);
-        const hasGov = !!(
-          idState &&
-          idState.govId &&
-          String(idState.govId).trim()
-        );
+
+        const hasGov =
+          !!idState &&
+          typeof idState.govId === "string" &&
+          idState.govId.trim().length > 0;
+
         const docs =
-          idState && Array.isArray(idState.documents) ? idState.documents : [];
-        const hasFile = docs.some((d) => {
-          // documents may be File objects or objects like { name, url, file }
-          if (!d) return false;
-          if ((d as unknown) instanceof File) return true;
-          const maybe = d as { file?: File };
-          return !!(maybe && maybe.file instanceof File);
+          idState && Array.isArray(idState.documents)
+            ? idState.documents
+            : [];
+
+        // documents are stored as { name, url, file }.
+        // Consider image provided if we have at least one real File OR a valid URL
+        const hasImage = docs.some((d) => {
+          const maybe = d as { file?: File; url?: string };
+          const hasFile = maybe.file instanceof File;
+          const hasUrl = typeof maybe.url === "string" && maybe.url.trim().length > 0;
+          return hasFile || hasUrl;
         });
-        // mark missing if no identity type OR neither gov id nor file present
-        if (!hasType || (!hasGov && !hasFile)) {
-          errs[id] = true;
-          hasMissing = true;
-        }
+
+        // missing only if: no type OR (no gov id AND no file)
+  const missing = !hasType || (!hasGov && !hasImage);
+        errs[id] = missing;
+        if (missing) hasMissing = true;
       });
+
       setIdentityErrors(errs);
       if (hasMissing) {
         showToast(
-          "Please select an ID type and provide at least one ID image or enter Government ID number for all visitors."
+          "Please select an ID type and provide at least one ID image OR enter Government ID number for all visitors."
         );
-        setExpandedVisitors((e) => {
-          const next = { ...e };
-          Object.keys(errs).forEach((k) => {
-            const id = Number(k);
-            if (!Number.isNaN(id)) next[id] = true;
+        setExpandedVisitors((prev) => {
+          const next = { ...prev };
+          const allVisitorsLocal = [0, ...visitors.map((v) => v.id)];
+          allVisitorsLocal.forEach((id) => {
+            if (errs[id]) next[id] = true;
           });
           return next;
         });
@@ -1272,10 +1294,25 @@ const VisitorSharingFormWeb: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = urlToken || "";
-      const visitorEncryptedId = urlVisitorId;
-      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json?is_encrypted=true`;
+      // Prefer query param `id` -> prefillEncryptedId (from GET) -> path-derived urlVisitorId
+      let visitorEncryptedId: string | null = null;
+      try {
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const idFromQuery = params.get("id");
+          if (idFromQuery) visitorEncryptedId = idFromQuery;
+        }
+      } catch (_) {
+        // ignore
+      }
+      if (!visitorEncryptedId) visitorEncryptedId = prefillEncryptedId || urlVisitorId;
+
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json`;
+      // append token using & if baseUrl already contains query params
       const url = token
-        ? `${baseUrl}?token=${encodeURIComponent(token)}`
+        ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(
+            token
+          )}`
         : baseUrl;
 
       const expectedIso =
@@ -1310,12 +1347,6 @@ const VisitorSharingFormWeb: React.FC = () => {
           serial_model_number: a.serial,
           notes: a.notes,
           // keep original attachments array (may contain { name, url, file })
-          attachments: (a.attachments || []).map((att) => ({
-            name: att.name,
-            url: att.url,
-            file: (att as { file?: File })?.file,
-          })),
-          // convenience documents array with File objects (if present)
           documents: (a.attachments || [])
             .map((att) => att.file)
             .filter(Boolean),
@@ -2400,6 +2431,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                     </span>
                   </div>
                   {(() => {
+                    // Show only primary visitor's first asset summary in Preview
                     const list = assetsByVisitor[0] || [];
                     if (!carryingAsset || list.length === 0)
                       return (
@@ -2421,15 +2453,19 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Serial No.:</span>
+                          <span className="text-gray-500">Serial No:</span>
                           <span className="text-gray-900 font-medium">
                             {first.serial || "N/A"}
                           </span>
                         </div>
                         {first.notes && (
-                          <div className="text-[11px] text-gray-700">
-                            {first.notes}
-                          </div>
+                        
+                          <div className="flex justify-between">
+                          <span className="text-gray-500">Notes:</span>
+                          <span className="text-gray-900 font-medium">
+                            {first.notes || "N/A"}
+                          </span>
+                        </div>
                         )}
                       </>
                     );
@@ -2496,28 +2532,32 @@ const VisitorSharingFormWeb: React.FC = () => {
                       {identityByVisitor[0]?.govId || "N/A"}
                     </span>
                   </div>
-                  <div className="text-gray-500">Attachment:</div>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(identityByVisitor[0]?.documents || []).length === 0 ? (
-                      <div className="h-20 bg-gray-200 rounded" />
-                    ) : (
-                      (identityByVisitor[0]?.documents || []).map((doc, i) => (
-                        <a
-                          key={i}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-20 block rounded overflow-hidden border"
-                        >
-                          <img
-                            src={doc.url}
-                            alt={doc.name || "doc"}
-                            className="w-full h-full object-cover"
-                          />
-                        </a>
-                      ))
-                    )}
-                  </div>
+                  {(() => {
+                    const docs = identityByVisitor[0]?.documents;
+                    if (!Array.isArray(docs) || docs.length === 0) return null;
+                    return (
+                      <>
+                        <div className="text-gray-500">Attachment:</div>
+                        <div className="mt-1 grid grid-cols-2 gap-2">
+                          {docs.map((doc, i) => (
+                            <a
+                              key={i}
+                              href={doc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-20 block rounded overflow-hidden border"
+                            >
+                              <img
+                                src={doc.url}
+                                alt={doc.name || "doc"}
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -2555,6 +2595,21 @@ const VisitorSharingFormWeb: React.FC = () => {
                   ) : (
                     "Submit"
                   )}
+                </button>
+              </div>
+              {/* Back button shown only on Preview, placed below Submit */}
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    // Clear validation errors and return to previous step (5)
+                    setVisitorErrors({});
+                    setPrimaryVehicleError(false);
+                    setAssetCategoryErrors({});
+                    setStep(5);
+                  }}
+                  className="w-full py-3 rounded bg-white border border-gray-200 text-gray-700"
+                >
+                  Back
                 </button>
               </div>
             </div>
@@ -3085,10 +3140,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                       </button>
                       <button
                         onClick={() =>
-                          setExpandedVisitors((e) => ({
-                            ...e,
-                            [v.id]: !e[v.id],
-                          }))
+                          setExpandedVisitors((e) => ({ ...e, [v.id]: !e[v.id] }))
                         }
                         className="text-gray-600"
                         aria-label="Toggle"
@@ -3571,7 +3623,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         {/* Fixed bottom actions */}
         <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
-            {step > 1 && !isSubmitting && !showSuccess && (
+            {step > 1 && step !== 6 && !isSubmitting && !showSuccess && (
               <button
                 onClick={() => {
                   // Clear validation errors when navigating back
