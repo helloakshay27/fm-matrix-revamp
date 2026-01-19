@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { usePermissions } from "../contexts/PermissionsContext";
 import {
   Home,
   Ticket,
@@ -38,6 +39,7 @@ import {
   CalendarDays,
   Utensils,
   Bot,
+  Circle,
 } from "lucide-react";
 
 /**
@@ -68,7 +70,27 @@ import {
  * in EmployeeHeader, which will reload the page with full admin layout.
  */
 
-// Module-based navigation structures for employees
+// Icon mapping for employee sidebar functions
+const functionIconMap: Record<string, any> = {
+  employee_projects: Briefcase,
+  employee_projects_overview: Briefcase,
+  employee_project_dashboard: Target,
+  employee_project_tasks: ListChecks,
+  employee_project_issues: Bug,
+  employee_project_sprint: Zap,
+  employee_project_channels: MessageSquare,
+  employee_project_minutes_of_meeting: FileCheck2Icon,
+  employee_opportunity_register: Target,
+  employee_project_documents: File,
+  employee_project_todo: CircleCheckBig,
+};
+
+// Fallback icon
+const getFunctionIcon = (actionName: string) => {
+  return functionIconMap[actionName] || Circle;
+};
+
+// Static fallback for backward compatibility
 const employeeNavigationByModule: Record<string, any> = {
   Dashboard: {
     Overview: {
@@ -359,12 +381,74 @@ export const EmployeeSidebar: React.FC = () => {
   const location = useLocation();
   const { isSidebarCollapsed, setIsSidebarCollapsed, currentSection } =
     useLayout();
+  const { userRole } = usePermissions();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-  // Get navigation structure based on current module
-  const navigationStructure =
-    employeeNavigationByModule[currentSection] ||
-    employeeNavigationByModule["Project Task"];
+  // Build dynamic navigation from Employee Projects Sidebar module (module_id: 126)
+  const navigationStructure = useMemo(() => {
+    if (!userRole || !userRole.lock_modules) {
+      return employeeNavigationByModule[currentSection] || {};
+    }
+
+    // Find Employee Projects Sidebar module
+    const projectsModule = userRole.lock_modules.find(
+      (m: any) => m.module_name === "Employee Projects Sidebar"
+    );
+
+    if (!projectsModule || currentSection !== "Project Task") {
+      return employeeNavigationByModule[currentSection] || {};
+    }
+
+    // Build navigation structure from active functions
+    const dynamicNav: Record<string, any> = {};
+
+    projectsModule.lock_functions.forEach((func: any) => {
+      if (func.function_active !== 1) return;
+
+      const Icon = getFunctionIcon(func.action_name);
+
+      // Check if this function has a parent
+      if (!func.parent_function || func.parent_function === "") {
+        // Top-level function
+        dynamicNav[func.function_name] = {
+          icon: Icon,
+          href: func.react_link,
+          items: [],
+          action_name: func.action_name, // Store action_name for parent matching
+        };
+      }
+    });
+
+    // Second pass: add child functions (only active ones)
+    projectsModule.lock_functions.forEach((func: any) => {
+      // Double check: only add active child functions
+      if (func.function_active !== 1) return;
+
+      if (func.parent_function && func.parent_function !== "") {
+        // Find parent in dynamic nav by matching action_name
+        const parentKey = Object.keys(dynamicNav).find(
+          (key) => dynamicNav[key].action_name === func.parent_function
+        );
+
+        if (parentKey) {
+          if (!dynamicNav[parentKey].items) {
+            dynamicNav[parentKey].items = [];
+          }
+          // Only add if function is active (extra safety check)
+          if (func.function_active === 1 && func.react_link) {
+            dynamicNav[parentKey].items.push({
+              name: func.function_name,
+              href: func.react_link,
+            });
+          }
+        }
+      }
+    });
+
+    return Object.keys(dynamicNav).length > 0
+      ? dynamicNav
+      : employeeNavigationByModule[currentSection] || {};
+  }, [userRole, currentSection]);
 
   const toggleSection = (section: string) => {
     setOpenSections((prev) => ({
@@ -475,8 +559,8 @@ export const EmployeeSidebar: React.FC = () => {
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                       }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
@@ -524,8 +608,8 @@ export const EmployeeSidebar: React.FC = () => {
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
                           className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                             }`}
                         >
                           {isActive(item.href) && (

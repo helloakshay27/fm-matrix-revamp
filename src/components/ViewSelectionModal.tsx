@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Navigate, useNavigate } from "react-router-dom";
+import { usePermissions } from "../contexts/PermissionsContext";
 
 interface ViewSelectionModalProps {
   isOpen: boolean;
@@ -21,13 +22,41 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
 }) => {
   const [selectedView, setSelectedView] = useState<string | null>("admin"); // Default to admin
   const navigate = useNavigate();
+  const { userRole } = usePermissions();
+
+  // Helper function to get first available admin link
+  const getFirstAdminLink = (): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/";
+    }
+
+    // Find first module with active functions (excluding Employee modules)
+    for (const module of userRole.lock_modules) {
+      // Skip Employee Sidebar and Employee Projects Sidebar modules
+      if (module.module_name === "Employee Sidebar" || module.module_name === "Employee Projects Sidebar") {
+        continue;
+      }
+
+      // Find first active function with a react_link
+      const firstActiveFunction = module.lock_functions.find(
+        (func) => func.function_active === 1 && func.react_link && !func.parent_function
+      );
+
+      if (firstActiveFunction && firstActiveFunction.react_link) {
+        return firstActiveFunction.react_link;
+      }
+    }
+
+    return "/"; // Fallback to root
+  };
 
   const handleViewSelection = (viewType: string) => {
     // Set localStorage based on selected view
     if (viewType === "admin") {
       localStorage.setItem("userType", "pms_organization_admin");
       localStorage.setItem("selectedView", "admin");
-      navigate("/");
+      const adminLink = getFirstAdminLink();
+      navigate(adminLink);
     } else if (viewType === "employee") {
       localStorage.setItem("userType", "pms_occupant");
       localStorage.setItem("tempType", "pms_organization_admin"); // Clear selected company for employee view
@@ -41,7 +70,7 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={() => { }}>
       <DialogContent className="sm:max-w-[600px] bg-white [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center text-[#1a1a1a]">
@@ -56,19 +85,17 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           {/* Admin View Card */}
           <button
             onClick={() => setSelectedView("admin")}
-            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
-              selectedView === "admin"
+            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${selectedView === "admin"
                 ? "border-[#C72030] bg-red-50 shadow-lg"
                 : "border-gray-200 bg-white hover:border-gray-300"
-            }`}
+              }`}
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                  selectedView === "admin"
+                className={`w-20 h-20 rounded-full flex items-center justify-center ${selectedView === "admin"
                     ? "bg-[#C72030] text-white"
                     : "bg-gray-100 text-gray-600"
-                }`}
+                  }`}
               >
                 <Shield className="w-10 h-10" />
               </div>
@@ -103,19 +130,17 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           {/* Employee View Card */}
           <button
             onClick={() => setSelectedView("employee")}
-            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
-              selectedView === "employee"
+            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${selectedView === "employee"
                 ? "border-[#C72030] bg-red-50 shadow-lg"
                 : "border-gray-200 bg-white hover:border-gray-300"
-            }`}
+              }`}
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                  selectedView === "employee"
+                className={`w-20 h-20 rounded-full flex items-center justify-center ${selectedView === "employee"
                     ? "bg-[#C72030] text-white"
                     : "bg-gray-100 text-gray-600"
-                }`}
+                  }`}
               >
                 <Users className="w-10 h-10" />
               </div>
@@ -154,11 +179,10 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           <Button
             onClick={() => selectedView && handleViewSelection(selectedView)}
             disabled={!selectedView}
-            className={`px-8 py-6 text-lg font-semibold rounded-lg transition-all duration-300 ${
-              selectedView
+            className={`px-8 py-6 text-lg font-semibold rounded-lg transition-all duration-300 ${selectedView
                 ? "bg-[#C72030] hover:bg-[#a01828] text-white shadow-lg hover:shadow-xl"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             Continue
             <ArrowRight className="ml-2 w-5 h-5" />
