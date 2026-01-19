@@ -11,6 +11,7 @@ import { fetchProjectTeams, createProjectTeam, updateProjectTeam, deleteProjectT
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import MuiMultiSelect from "@/components/MuiMultiSelect";
 import { toast } from "sonner";
+import axios from "axios";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -53,12 +54,9 @@ const columns: ColumnConfig[] = [
 const ProjectTeams = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { teams, loading } = useSelector((state: RootState) => state.projectTeams);
-    const { users: fmUsers } = useSelector((state: RootState) => {
-        const sliceData = (state.fmUsers as any);
-        return { users: sliceData.data?.users || sliceData.users || [] };
-    });
 
-    console.log(teams)
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -67,10 +65,28 @@ const ProjectTeams = () => {
     const [selectedLead, setSelectedLead] = useState<number | null>(null);
     const [selectedMembers, setSelectedMembers] = useState<{ value: number; label: string }[]>([]);
     const [submitting, setSubmitting] = useState(false)
+    const [users, setUsers] = useState([])
+
+    const getUsers = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+
+            setUsers(response.data.users)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     useEffect(() => {
         dispatch(fetchProjectTeams());
-        dispatch(fetchFMUsers());
+        getUsers()
     }, [dispatch]);
 
     const openAddDialog = () => {
@@ -101,7 +117,7 @@ const ProjectTeams = () => {
 
         // Convert to MuiMultiSelect format
         const membersForSelect = memberIds.map(id => {
-            const user = fmUsers.find((u: any) => u.id === id);
+            const user = users.find((u: any) => u.id === id);
             return { value: id, label: user?.full_name || `User ${id}` };
         });
         setSelectedMembers(membersForSelect);
@@ -140,7 +156,12 @@ const ProjectTeams = () => {
                 project_team: {
                     name: teamName,
                     team_lead_id: selectedLead,
-                    user_ids: selectedMembers.map(member => member.value), // Extract IDs from MuiMultiSelect format
+                    user_ids: Array.from(
+                        new Set([
+                            selectedLead, // include team lead
+                            ...selectedMembers.map(member => member.value),
+                        ])
+                    ), // Extract IDs from MuiMultiSelect format
                 },
             };
 
@@ -308,7 +329,7 @@ const ProjectTeams = () => {
                                             <em>Select Team Lead</em>
                                         </MenuItem>
                                         {
-                                            fmUsers.map((user: any) => (
+                                            users.map((user: any) => (
                                                 <MenuItem key={user.id} value={user.id}>
                                                     {user.full_name}
                                                 </MenuItem>
@@ -322,7 +343,7 @@ const ProjectTeams = () => {
                             <div className="mt-4 space-y-2">
                                 <MuiMultiSelect
                                     label="Team Members*"
-                                    options={fmUsers
+                                    options={users
                                         .filter((user: any) => user.id !== selectedLead)
                                         .map((user: any) => ({ value: user.id, label: user.full_name, id: user.id }))}
                                     value={selectedMembers}
