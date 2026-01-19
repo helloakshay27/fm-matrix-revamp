@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchMoMs } from "@/store/slices/momSlice";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Function to generate smooth, light random colors for participant badges
 const generateLightColor = (seed: number): string => {
@@ -98,6 +99,7 @@ const columns: ColumnConfig[] = [
 
 const MinutesOfMeeting = () => {
     const { setCurrentSection } = useLayout();
+    const { shouldShow } = useDynamicPermissions();
 
     const view = localStorage.getItem("selectedView");
 
@@ -187,14 +189,16 @@ const MinutesOfMeeting = () => {
     const renderActions = (item: MeetingData) => {
         return (
             <div className="flex gap-2">
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1"
-                    onClick={() => navigate(`/vas/edit-mom/${item.id}`)}
-                >
-                    <Edit className="w-4 h-4" />
-                </Button>
+                {shouldShow("employee_project_minutes_of_meeting", "update") && (
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        className="p-1"
+                        onClick={() => navigate(`/vas/edit-mom/${item.id}`)}
+                    >
+                        <Edit className="w-4 h-4" />
+                    </Button>
+                )}
             </div>
         )
     };
@@ -212,13 +216,15 @@ const MinutesOfMeeting = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={openAddDialog}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            {shouldShow("employee_project_minutes_of_meeting", "create") && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={openAddDialog}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>
+            )}
         </>
     );
 

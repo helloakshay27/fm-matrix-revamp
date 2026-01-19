@@ -1416,16 +1416,6 @@ export const EditSchedulePage = () => {
     //   newFieldErrors.category = 'Category is required';
     // }
 
-    if (!formData.submissionTime) {
-      errors.push('Submission Time is required');
-      newFieldErrors.submissionTime = 'Submission Time is required';
-    }
-
-    if (formData.submissionTime && !formData.submissionTimeValue) {
-      errors.push('Submission Time Value is required');
-      newFieldErrors.submissionTimeValue = 'Submission Time Value is required';
-    }
-
     if (!formData.graceTime) {
       errors.push('Grace Time is required');
       newFieldErrors.graceTime = 'Grace Time is required';
@@ -3110,7 +3100,7 @@ export const EditSchedulePage = () => {
           {/* Submission Time */}
           <Box>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Submission Time <span style={{ color: 'red' }}>*</span></InputLabel>
+              <InputLabel shrink>Submission Time</InputLabel>
               <Select
                 label="Submission Time"
                 notched

@@ -13,6 +13,7 @@ import { FormControl, MenuItem, Select } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import qs from "qs";
 import {
     Tooltip,
@@ -153,6 +154,7 @@ const IssuesListPage = ({
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
     const location = useLocation();
+    const { shouldShow } = useDynamicPermissions();
     const { id: projectId } = useParams<{ id: string }>();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
@@ -504,15 +506,17 @@ const IssuesListPage = ({
 
     const renderActions = (item: any) => (
         <div className="flex items-center justify-center gap-2">
-            <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => navigate(`/vas/issues/${item.id}`)}
-                title="View Issue Details"
-            >
-                <Eye className="w-4 h-4" />
-            </Button>
+            {shouldShow("employee_project_issues", "show") && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
+                    onClick={() => navigate(`/vas/issues/${item.id}`)}
+                    title="View Issue Details"
+                >
+                    <Eye className="w-4 h-4" />
+                </Button>
+            )}
         </div>
     );
 
@@ -851,13 +855,15 @@ const IssuesListPage = ({
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={handleOpenDialog}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            {shouldShow("employee_project_issues", "create") && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={handleOpenDialog}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>
+            )}
         </>
     );
 
