@@ -610,152 +610,151 @@ export const VisitorDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  {/* Visitor Image */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Column 1: Profile Image */}
                   {hasData(visitorData.image) && (
-                    <div className="flex items-start col-span-2">
-                      <span className="text-gray-500 min-w-[140px]">Visitor Image</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <div className="flex-1">
-                        <img
-                          src={
-                            visitorData.image?.startsWith("http")
-                              ? visitorData.image
-                              : "/placeholder.svg"
-                          }
-                          alt={visitorData.guest_name || "Visitor"}
-                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "/placeholder.svg";
-                          }}
-                        />
+                    <div className="flex items-start justify-center lg:justify-start pl-9">
+                      <img
+                        src={
+                          visitorData.image?.startsWith("http")
+                            ? visitorData.image
+                            : "/placeholder.svg"
+                        }
+                        alt={visitorData.guest_name || "Visitor"}
+                        className="ml-9 w-40 h-40 object-cover rounded-lg border-2 border-gray-200"
+                        onError={(e) => {
+                          const target =  e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Columns 2 & 3: Information Grid */}
+                  <div className={`${hasData(visitorData.image) ? 'lg:col-span-2' : 'lg:col-span-3'} grid grid-cols-1 md:grid-cols-2 gap-6 text-sm`}>
+                    {hasData(visitorData.guest_name) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Visitor Name</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.guest_name}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {hasData(visitorData.guest_name) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Visitor Name</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.guest_name}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.guest_type) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Guest Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.guest_type}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.guest_type) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Guest Type</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.guest_type}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.guest_number) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.guest_number}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.guest_number) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.guest_number}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.visitor_host_name) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Person To Meet</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.visitor_host_name}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.visitor_host_name) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Person To Meet</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.visitor_host_name}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.visitor_host_email) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Visitor Email</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.visitor_host_email}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.visitor_host_email) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Visitor Email</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.visitor_host_email}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.location) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">To Location</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.location}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.location) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">To Location</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.location}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.visit_purpose) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Purpose</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.visit_purpose}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.visit_purpose) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Purpose</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.visit_purpose}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.expected_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Expected Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {new Date(visitorData.expected_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.expected_at) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Expected Date</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {new Date(visitorData.expected_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
+                    {hasData(visitorData.expected_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Expected Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {new Date(visitorData.expected_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.expected_at) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Expected Time</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {new Date(visitorData.expected_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  )}
+                    {hasData(visitorData.guest_from) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Coming From</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.guest_from}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.guest_from) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Coming From</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.guest_from}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.created_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created Date & Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {new Date(visitorData.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.created_at) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Created Date & Time</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {new Date(visitorData.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+                    {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Additional Visitor</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.additional_visitors.length}
+                        </span>
+                      </div>
+                    )}
 
-                  {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Additional Visitor</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {visitorData.additional_visitors.length}
-                      </span>
-                    </div>
-                  )}
+                    {hasData(visitorData.temperature) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Temperature</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.temperature}°C</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.temperature) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Temperature</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.temperature}°C</span>
-                    </div>
-                  )}
-
-                  {hasData(visitorData.notes) && (
-                    <div className="flex items-start col-span-2">
-                      <span className="text-gray-500 min-w-[140px]">Notes</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.notes}</span>
-                    </div>
-                  )}
+                    {hasData(visitorData.notes) && (
+                      <div className="flex items-start md:col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Notes</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.notes}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -904,7 +903,7 @@ export const VisitorDetailsPage = () => {
                 >
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-4">
-                      Visitor {index + 1}
+                    Visitor {index + 1}                    
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(visitor?.name) && (
@@ -956,166 +955,6 @@ export const VisitorDetailsPage = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* Identity Details for this visitor */}
-                  {visitor.identity && (
-                    <div className="border-t pt-6">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
-                        {hasData(visitor.identity?.identity_type) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">ID Type</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{visitor.identity.identity_type}</span>
-                          </div>
-                        )}
-
-                        {hasData(visitor.identity?.government_id_number) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">Government ID</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{visitor.identity.government_id_number}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {visitor.identity.documents && visitor.identity.documents.length > 0 && (
-                        <div>
-                          <p className="text-xs text-gray-600 mb-2">Identity Documents:</p>
-                          <div className="flex flex-wrap gap-4">
-                            {visitor.identity.documents.map((document: DocumentItem, docIndex: number) => {
-                              const url = document.document_url;
-                              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-
-                              return isImage ? (
-                                <div key={document.id} className="relative inline-block">
-                                  <img
-                                    src={url}
-                                    alt={`Identity Document ${docIndex + 1}`}
-                                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedDoc({
-                                        id: document.id,
-                                        url,
-                                        document_name: url.split("/").pop() || `Document_${document.id}`,
-                                      });
-                                      setIsModalOpen(true);
-                                    }}
-                                  />
-                                  <button
-                                    className="absolute top-1 right-1 bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
-                                    onClick={() => {
-                                      setSelectedDoc({
-                                        id: document.id,
-                                        url,
-                                        document_name: url.split("/").pop() || `Document_${document.id}`,
-                                      });
-                                      setIsModalOpen(true);
-                                    }}
-                                  >
-                                    <Eye className="w-3 h-3 text-gray-600" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <Button
-                                  key={document.id}
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      id: document.id,
-                                      url,
-                                      document_name: url.split("/").pop() || `Document_${document.id}`,
-                                    });
-                                    setIsModalOpen(true);
-                                  }}
-                                >
-                                  <FileText className="w-3 h-3 mr-1" />
-                                  Doc {docIndex + 1}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Assets for this visitor */}
-                  {visitor.assets && visitor.assets.length > 0 && (
-                    <div className="border-t pt-6">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-4">Assets</h4>
-                      <div className="space-y-4">
-                        {visitor.assets.map((asset: AssetItem, assetIndex: number) => (
-                          <div key={asset.id || assetIndex} className="bg-white rounded-lg p-4 border border-gray-200">
-                            <h5 className="text-sm font-semibold text-gray-800 mb-3">
-                              Asset {assetIndex + 1}
-                            </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              {hasData(asset?.asset_category_name) && (
-                                <div className="flex items-start">
-                                  <span className="text-gray-500 min-w-[140px]">Category</span>
-                                  <span className="text-gray-500 mx-2">:</span>
-                                  <span className="text-gray-900 font-medium">{asset.asset_category_name}</span>
-                                </div>
-                              )}
-
-                              {hasData(asset?.asset_name) && (
-                                <div className="flex items-start">
-                                  <span className="text-gray-500 min-w-[140px]">Asset Name</span>
-                                  <span className="text-gray-500 mx-2">:</span>
-                                  <span className="text-gray-900 font-medium">{asset.asset_name}</span>
-                                </div>
-                              )}
-
-                              {hasData(asset?.serial_model_number) && (
-                                <div className="flex items-start">
-                                  <span className="text-gray-500 min-w-[140px]">Serial/Model No</span>
-                                  <span className="text-gray-500 mx-2">:</span>
-                                  <span className="text-gray-900 font-medium">{asset.serial_model_number}</span>
-                                </div>
-                              )}
-
-                              {hasData(asset?.notes) && (
-                                <div className="flex items-start">
-                                  <span className="text-gray-500 min-w-[140px]">Notes</span>
-                                  <span className="text-gray-500 mx-2">:</span>
-                                  <span className="text-gray-900 font-medium">{asset.notes}</span>
-                                </div>
-                              )}
-
-                              {asset?.documents && asset.documents.length > 0 && (
-                                <div className="flex items-start col-span-2">
-                                  <span className="text-gray-500 min-w-[140px]">Documents</span>
-                                  <span className="text-gray-500 mx-2">:</span>
-                                  <div className="flex-1 flex flex-wrap gap-2">
-                                    {asset.documents.map((doc, docIndex) => (
-                                      <Button
-                                        key={doc.id}
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedDoc({
-                                            id: doc.id,
-                                            url: doc.document_url,
-                                            document_name: `Asset Doc ${docIndex + 1}`,
-                                          });
-                                          setIsModalOpen(true);
-                                        }}
-                                      >
-                                        <FileText className="w-3 h-3 mr-1" />
-                                        Doc {docIndex + 1}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))
             ) : (
@@ -1127,12 +966,23 @@ export const VisitorDetailsPage = () => {
 
           {/* Tab 3: Asset Details */}
           <TabsContent value="assets" className="p-6 space-y-6">
-            {visitorData.assets && visitorData.assets.length > 0 ? (
-              visitorData.assets.map((asset: AssetItem, index: number) => (
-                <div key={asset.id || index} className="border rounded-lg p-6 bg-gray-50">
-                  <h3 className="text-base font-semibold text-gray-900 mb-4">
-                    Asset {index + 1}
-                  </h3>
+            {/* Main Visitor's Assets */}
+            {visitorData.assets && visitorData.assets.length > 0 && (
+              <div className="space-y-6">
+<h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+  {visitorData?.guest_name
+    ? `${visitorData.guest_name}'s Assets`
+    : 'Main Visitor Assets'}
+
+  <span className="ml-2 text-sm font-normal text-gray-600">
+    (Primary Visitor)
+  </span>
+</h2>
+                {visitorData.assets.map((asset: AssetItem, index: number) => (
+                  <div key={asset.id || index} className="border rounded-lg p-6 bg-gray-50">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">
+                      {/* {asset?.asset_name || asset?.asset_category_name || `Asset ${index + 1}`} */}
+                    </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     {hasData(asset?.asset_category_name) && (
                       <div className="flex items-start">
@@ -1193,8 +1043,90 @@ export const VisitorDetailsPage = () => {
                     )}
                   </div>
                 </div>
+              ))}
+              </div>
+            )}
+
+            {/* Additional Visitors' Assets */}
+            {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
+              visitorData.additional_visitors.map((visitor: AdditionalVisitor, visitorIndex: number) => (
+                visitor.assets && visitor.assets.length > 0 && (
+                  <div key={visitor.id || visitorIndex} className="space-y-6">
+                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                      {visitor?.name ? `${visitor.name}'s Assets` : `Visitor ${visitorIndex + 1} Assets`}
+                    </h2>
+                    {visitor.assets.map((asset: AssetItem, assetIndex: number) => (
+                      <div key={asset.id || assetIndex} className="border rounded-lg p-6 bg-gray-50">
+                        {/* <h3 className="text-base font-semibold text-gray-900 mb-4">
+                          {asset?.asset_name || asset?.asset_category_name || `Asset ${assetIndex + 1}`}
+                        </h3> */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                          {hasData(asset?.asset_category_name) && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Asset Category</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{asset.asset_category_name}</span>
+                            </div>
+                          )}
+
+                          {hasData(asset?.asset_name) && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Asset Name</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{asset.asset_name}</span>
+                            </div>
+                          )}
+
+                          {hasData(asset?.serial_model_number) && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Serial/ Model No</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{asset.serial_model_number}</span>
+                            </div>
+                          )}
+
+                          {hasData(asset?.notes) && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Notes</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{asset.notes}</span>
+                            </div>
+                          )}
+
+                          {asset?.documents && asset.documents.length > 0 && (
+                            <div className="flex items-start col-span-2">
+                              <span className="text-gray-500 min-w-[140px]">Attachments</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <div className="flex-1 flex flex-wrap gap-2">
+                                {asset.documents.map((doc, docIndex) => (
+                                  <Button
+                                    key={doc.id}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: doc.id,
+                                        url: doc.document_url,
+                                        document_name: `Attachment ${docIndex + 1}`,
+                                      });
+                                      setIsModalOpen(true);
+                                    }}
+                                  >
+                                    Attachment {docIndex + 1}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
               ))
-            ) : (
+            )}
+
+            {!visitorData.assets?.length && !visitorData.additional_visitors?.some(v => v.assets?.length) && (
               <div className="text-center py-12 text-gray-500">
                 No asset details found
               </div>
@@ -1203,11 +1135,19 @@ export const VisitorDetailsPage = () => {
 
           {/* Tab 4: Identity Verification */}
           <TabsContent value="identity" className="p-6 space-y-6">
-            {visitorData.visitor_identity && visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 ? (
-              <div className="border rounded-lg p-6 bg-gray-50">
-                <h3 className="text-base font-semibold text-gray-900 mb-4">
-                  Identity Details
-                </h3>
+            {/* Main Visitor's Identity */}
+            {visitorData.visitor_identity && visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
+                  {visitorData?.guest_name ? `${visitorData.guest_name}'s Identity Details` : 'Main Visitor Identity'}
+                    <span className="ml-2 text-sm font-normal text-gray-600">
+                     (Primary Visitor)
+                    </span>
+                </h2>
+                <div className="border rounded-lg p-6 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900 mb-4">
+                    Identity Information
+                  </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
                   {hasData(visitorData.visitor_identity?.identity_type) && (
                     <div className="flex items-start">
@@ -1285,7 +1225,104 @@ export const VisitorDetailsPage = () => {
                   </div>
                 )}
               </div>
-            ) : (
+              </div>
+            )}
+
+            {/* Additional Visitors' Identities */}
+            {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
+              visitorData.additional_visitors.map((visitor: AdditionalVisitor, visitorIndex: number) => (
+                visitor.identity && visitor.identity.documents && visitor.identity.documents.length > 0 && (
+                  <div key={visitor.id || visitorIndex}>
+                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
+                      {visitor?.name ? `${visitor.name}'s Identity Details` : `Visitor ${visitorIndex + 1} Identity`}
+                    </h2>
+                    <div className="border rounded-lg p-6 bg-gray-50">
+                      <h3 className="text-base font-semibold text-gray-900 mb-4">
+                        Identity Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
+                        {hasData(visitor.identity?.identity_type) && (
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">ID Type</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{visitor.identity.identity_type}</span>
+                          </div>
+                        )}
+
+                        {hasData(visitor.identity?.government_id_number) && (
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">Government ID</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{visitor.identity.government_id_number}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {visitor.identity.documents.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Documents</h4>
+                          <div className="flex flex-wrap gap-4">
+                            {visitor.identity.documents.map((document: DocumentItem, docIndex: number) => {
+                              const url = document.document_url;
+                              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+
+                              return isImage ? (
+                                <div key={document.id} className="relative inline-block">
+                                  <img
+                                    src={url}
+                                    alt={`Document ${docIndex + 1}`}
+                                    className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: document.id,
+                                        url,
+                                        document_name: url.split("/").pop() || `Document_${document.id}`,
+                                      });
+                                      setIsModalOpen(true);
+                                    }}
+                                  />
+                                  <button
+                                    className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: document.id,
+                                        url,
+                                        document_name: url.split("/").pop() || `Document_${document.id}`,
+                                      });
+                                      setIsModalOpen(true);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 text-gray-600" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <Button
+                                  key={document.id}
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedDoc({
+                                      id: document.id,
+                                      url,
+                                      document_name: url.split("/").pop() || `Document_${document.id}`,
+                                    });
+                                    setIsModalOpen(true);
+                                  }}
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  View Document {docIndex + 1}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              ))
+            )}
+
+            {!visitorData.visitor_identity?.documents?.length && !visitorData.additional_visitors?.some(v => v.identity?.documents?.length) && (
               <div className="text-center py-12 text-gray-500">
                 No identity verification documents found
               </div>

@@ -205,9 +205,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const handleOrganizationSelect = (org: Organization) => {
     localStorage.setItem("selectedOrg", org.name);
     localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    localStorage.setItem("org_id", org.id.toString());
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name);
     sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    sessionStorage.setItem("org_id", org.id.toString());
     setBaseUrl(`${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
     // Save the base URL in the format: sub_domain.domain
@@ -251,7 +253,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       }
 
       // Check if number is verified first
-      if (response.number_verified === 0 && isViSite ) {
+      if (response.number_verified === 0 && isViSite) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
