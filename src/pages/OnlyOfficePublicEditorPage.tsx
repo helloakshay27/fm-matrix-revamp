@@ -36,7 +36,8 @@ export const OnlyOfficePublicEditorPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [documentTitle, setDocumentTitle] = useState<string>("Document Editor");
-
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get("email");
   useEffect(() => {
     console.log("OnlyOfficeEditorPage mounted with documentId:", documentId);
 
@@ -75,7 +76,7 @@ export const OnlyOfficePublicEditorPage = () => {
 
       // Use baseClient which will automatically set the base URL based on org_id parameter
 
-      const apiUrl = `/attachfiles/${documentId}/onlyoffice_config_with_token`;
+      const apiUrl = `/attachfiles/${documentId}/onlyoffice_config_with_token?email=${email}`;
       console.log("API URL (relative):", apiUrl);
 
       const response = await baseClient.get(apiUrl);
