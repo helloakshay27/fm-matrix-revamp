@@ -127,6 +127,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | null; id: number | null }>({ open: false, type: null, id: null });
 
     const fetchData = async () => {
         try {
@@ -152,6 +153,44 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             setPosts(response.data.posts);
         } catch (error) {
             console.log(error)
+        }
+    }
+
+    const confirmDelete = async () => {
+        if (!deleteConfirmation.id) return;
+
+        try {
+            if (deleteConfirmation.type === 'post') {
+                const response = await axios.delete(
+                    `https://${baseUrl}/posts/${deleteConfirmation.id}.json`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (response.status === 200 || response.status === 204) {
+                    toast.success('Post deleted successfully');
+                    await fetchPosts();
+                }
+            } else if (deleteConfirmation.type === 'comment') {
+                await axios.delete(
+                    `https://${baseUrl}/comments/${deleteConfirmation.id}.json`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
+                );
+                toast.success('Comment deleted successfully');
+                await fetchPosts();
+            }
+        } catch (error) {
+            console.error(`Error deleting ${deleteConfirmation.type}:`, error);
+            toast.error(`Failed to delete ${deleteConfirmation.type}. Please try again.`);
+        } finally {
+            setDeleteConfirmation({ open: false, type: null, id: null });
         }
     }
 
@@ -216,29 +255,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
-    const handleDeletePost = async (postId: number) => {
-        if (!confirm('Are you sure you want to delete this post?')) {
-            return;
-        }
-
-        try {
-            const response = await axios.delete(
-                `https://${baseUrl}/posts/${postId}.json`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (response.status === 200 || response.status === 204) {
-                toast.success('Post deleted successfully');
-                await fetchPosts(); // Refresh the posts list
-            }
-        } catch (error) {
-            console.error('Error deleting post:', error);
-            toast.error('Failed to delete post. Please try again.');
-        }
+    const handleDeletePost = (postId: number) => {
+        setDeleteConfirmation({ open: true, type: 'post', id: postId });
     };
 
     const handleCreatePost = async () => {
@@ -333,25 +351,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
-    const deleteComment = async (commentId: number) => {
-        if (!confirm('Are you sure you want to delete this comment?')) {
-            return;
-        }
-        try {
-            await axios.delete(
-                `https://${baseUrl}/comments/${commentId}.json`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            toast.success('Comment deleted successfully');
-            await fetchPosts();
-        } catch (error) {
-            console.error('Error deleting comment:', error);
-            toast.error('Failed to delete comment. Please try again.');
-        }
+    const deleteComment = (commentId: number) => {
+        setDeleteConfirmation({ open: true, type: 'comment', id: commentId });
     };
 
     // Poll option handlers
@@ -430,15 +431,37 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     };
 
     // Helper function to format timestamp
+    // const formatTimestamp = (timestamp: string) => {
+    //     const date = new Date(timestamp);
+    //     const now = new Date();
+    //     const diffInMs = now.getTime() - date.getTime();
+    //     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    //     const diffInDays = Math.floor(diffInHours / 24);
+
+    //     if (diffInHours < 1) {
+    //         const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    //         return `${diffInMinutes}m ago`;
+    //     } else if (diffInHours < 24) {
+    //         return `${diffInHours}h ago`;
+    //     } else if (diffInDays < 7) {
+    //         return `${diffInDays}d ago`;
+    //     } else {
+    //         return date.toLocaleDateString();
+    //     }
+    // };
+
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         const now = new Date();
         const diffInMs = now.getTime() - date.getTime();
-        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        const diffInHours = Math.floor(diffInMinutes / 60);
         const diffInDays = Math.floor(diffInHours / 24);
 
-        if (diffInHours < 1) {
-            const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        if (diffInMinutes < 1) {
+            return "just now";
+        } else if (diffInMinutes < 60) {
             return `${diffInMinutes}m ago`;
         } else if (diffInHours < 24) {
             return `${diffInHours}h ago`;
@@ -449,11 +472,18 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
+
     const PostCard = ({ post }: { post: Post }) => {
-        // Calculate total reactions from likes_with_emoji
-        const thumbsUpCount = post.likes_with_emoji?.thumb || 0;
-        const heartCount = post.likes_with_emoji?.heart || 0;
-        const fireCount = post.likes_with_emoji?.fire || 0;
+        const EMOJI_MAP: Record<
+            string,
+            { icon: string; hoverClass: string }
+        > = {
+            thumbs_up: { icon: "👍", hoverClass: "hover:text-blue-600" },
+            laugh: { icon: "😂", hoverClass: "hover:text-green-600" },
+            heart: { icon: "❤️", hoverClass: "hover:text-red-600" },
+            angry: { icon: "😠", hoverClass: "hover:text-red-800" },
+            clap: { icon: "👏", hoverClass: "hover:text-yellow-600" },
+        };
 
         return (
             <div className="bg-white rounded-[10px] border border-gray-200 p-6 mb-4 w-[80%]">
@@ -581,18 +611,23 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
                 {/* Reactions and Comments */}
                 <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-                        👍
-                        <span className="text-sm font-medium">{thumbsUpCount}</span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
-                        ❤️
-                        <span className="text-sm font-medium">{heartCount}</span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-600 hover:text-orange-600 transition-colors">
-                        🔥
-                        <span className="text-sm font-medium">{fireCount}</span>
-                    </button>
+                    {Object.entries(post.likes_with_emoji || {}).map(
+                        ([emojiKey, count]) => {
+                            const emoji = EMOJI_MAP[emojiKey];
+
+                            if (!emoji || count === 0) return null;
+
+                            return (
+                                <button
+                                    key={emojiKey}
+                                    className={`flex items-center gap-1 text-gray-600 transition-colors ${emoji.hoverClass}`}
+                                >
+                                    <span>{emoji.icon}</span>
+                                    <span className="text-sm font-medium">{count}</span>
+                                </button>
+                            );
+                        }
+                    )}
                     <button
                         className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
                         onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
@@ -710,7 +745,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                             Create Post
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent className="min-w-[9.1rem]">
                         <DropdownMenuItem onClick={() => setCreatePostOpen(true)}>
                             Create Post
                         </DropdownMenuItem>
@@ -888,7 +923,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                     setEditingPost(null);
                                     setExistingAttachments([]);
                                 }}
-                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                                className="!border-gray-300 !bg-[#F9F8F6] !text-gray-700 hover:bg-gray-50 rounded-[8px]"
                             >
                                 Cancel
                             </Button>
@@ -1045,9 +1080,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                 <Button
                                     variant="outline"
                                     onClick={handleAddPollOption}
-                                    className="w-auto border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px] flex items-center gap-2"
+                                    className="w-auto !border-gray-300 !bg-[#F9F8F6] !text-gray-700 hover:bg-gray-50 rounded-[8px] flex items-center gap-2"
                                 >
-                                    <Plus className="w-4 h-4" />
                                     Add Option
                                 </Button>
                             </div>
@@ -1062,16 +1096,43 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                     setSelectedFiles([]);
                                     setPollOptions(['', '']);
                                 }}
-                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                                className="!border-gray-300 !bg-[#F9F8F6] !text-gray-700 hover:bg-gray-50 rounded-[8px]"
                             >
                                 Cancel
                             </Button>
                             <Button
-                                className="bg-[#c72030] hover:bg-[#b01d2a] text-white rounded-[8px]"
+                                className="!bg-[#c72030] !hover:bg-[#b01d2a] !text-white rounded-[8px]"
                                 onClick={handleCreatePoll}
                             >
                                 Publish Poll
                             </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmation.open} onOpenChange={(open) => {
+                if (!open) setDeleteConfirmation({ open: false, type: null, id: null });
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : 'Comment'} ?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
+                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors"
+                            >
+                                Yes
+                            </button>
                         </div>
                     </div>
                 </DialogContent>
