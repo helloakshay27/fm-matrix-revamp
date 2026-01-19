@@ -15,7 +15,8 @@ const VisitorSharingFormWeb: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
-  const [profilePhotoChanged, setProfilePhotoChanged] = useState<boolean>(false);
+  const [profilePhotoChanged, setProfilePhotoChanged] =
+    useState<boolean>(false);
   const [profilePhotoError, setProfilePhotoError] = useState<boolean>(false);
   // Camera state for Step 1 image capture
   const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
@@ -32,7 +33,8 @@ const VisitorSharingFormWeb: React.FC = () => {
   // we show only a centered card and hide the rest of the UI
   const [alreadySubmitted, setAlreadySubmitted] = useState<boolean>(false);
   // when user navigates from Preview via an Edit button, remember to return to Preview
-  const [returnToPreviewOnNext, setReturnToPreviewOnNext] = useState<boolean>(false);
+  const [returnToPreviewOnNext, setReturnToPreviewOnNext] =
+    useState<boolean>(false);
 
   const showToast = (msg: string, duration = 3000) => {
     // clear any existing timer
@@ -128,6 +130,10 @@ const VisitorSharingFormWeb: React.FC = () => {
   // token and visitor id from URL
   const [urlToken, setUrlToken] = useState<string | null>(null);
   const [urlVisitorId, setUrlVisitorId] = useState<string | null>(null);
+  // encrypted id returned by the GET prefill API (preferred when present)
+  const [prefillEncryptedId, setPrefillEncryptedId] = useState<string | null>(
+    null
+  );
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [visitorErrors, setVisitorErrors] = useState<
@@ -153,7 +159,12 @@ const VisitorSharingFormWeb: React.FC = () => {
     // eslint-disable-next-line no-console
     console.debug("[state] assetsByVisitor:", assetsByVisitor);
     // eslint-disable-next-line no-console
-    console.debug("[state] carryingAsset:", carryingAsset, "expandedVisitors:", expandedVisitors);
+    console.debug(
+      "[state] carryingAsset:",
+      carryingAsset,
+      "expandedVisitors:",
+      expandedVisitors
+    );
   }, [assetsByVisitor, carryingAsset, expandedVisitors]);
 
   // cleanup camera stream when component unmounts
@@ -167,11 +178,16 @@ const VisitorSharingFormWeb: React.FC = () => {
   const openCamera = async () => {
     setShowCameraModal(true);
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
       setStream(s);
       if (videoRef.current) videoRef.current.srcObject = s;
     } catch (err) {
-      showToast('Unable to access camera. Please allow camera permission or use Upload.');
+      showToast(
+        "Unable to access camera. Please allow camera permission or use Upload."
+      );
     }
   };
 
@@ -199,7 +215,7 @@ const VisitorSharingFormWeb: React.FC = () => {
     const loadPrefill = async () => {
       try {
         const res = await fetch(
-          `https://lockated-api.gophygital.work/pms/visitors/${id}.json?token=${encodeURIComponent(token)}`
+          `https://lockated-api.gophygital.work/pms/visitors/${id}/visitor_show.json?token=${encodeURIComponent(token)}`
         );
         if (!res.ok) {
           // surface server errors to the small mobile card for easier debugging
@@ -207,22 +223,36 @@ const VisitorSharingFormWeb: React.FC = () => {
           return;
         }
         const data = await res.json();
+        // If the GET prefill response contains an encrypted visitor id, save it
+        // so we can prefer it for the update call later (authoritative).
+        try {
+          const possibleId =
+            (data && (data.visitor_encrypted_id || data.encrypted_id || data.id || data.visitor_id)) ||
+            null;
+          if (possibleId) setPrefillEncryptedId(String(possibleId));
+        } catch (_) {
+          // ignore
+        }
         // DEBUG: log consent form payload so we can confirm shape
-        if (typeof console !== 'undefined' && console.warn) {
+        if (typeof console !== "undefined" && console.warn) {
           // cast to Record to avoid `any` lint rule
-          console.warn('[prefill] visitor_consent_form:', (data as Record<string, unknown>)?.visitor_consent_form);
+          console.warn(
+            "[prefill] visitor_consent_form:",
+            (data as Record<string, unknown>)?.visitor_consent_form
+          );
         }
         try {
-          const vcf = (data as Record<string, unknown>)?.visitor_consent_form as unknown;
+          const vcf = (data as Record<string, unknown>)
+            ?.visitor_consent_form as unknown;
           if (vcf) {
             // If the consent form is a string, use it directly.
-            if (typeof vcf === 'string') {
+            if (typeof vcf === "string") {
               setApiConsentHtml(String(vcf));
-            } else if (typeof vcf === 'object' && vcf !== null) {
+            } else if (typeof vcf === "object" && vcf !== null) {
               // Narrow to an object and safely read possible fields.
               const obj = vcf as Record<string, unknown>;
               const descVal = obj.description ?? obj.value ?? obj.html ?? null;
-              if (typeof descVal === 'string') {
+              if (typeof descVal === "string") {
                 setApiConsentHtml(descVal);
               } else if (descVal != null) {
                 // Fallback: coerce non-string values to string if present.
@@ -256,7 +286,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.company_name) setCompany(String(data.company_name));
         // prefer guest_from if provided by host API, otherwise fall back to visit_to
         const guestFrom = (data as Record<string, unknown>)?.guest_from;
-        if (typeof guestFrom !== 'undefined' && guestFrom !== null) {
+        if (typeof guestFrom !== "undefined" && guestFrom !== null) {
           setLocation(String(guestFrom));
         } else if (data.visit_to) {
           setLocation(String(data.visit_to));
@@ -265,8 +295,8 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.visit_to) {
           setToLocation(String(data.visit_to));
         }
-  // Debug: log the host-provided location fields so we can verify why both may be identical
-  if (data.persont_to_meet)
+        // Debug: log the host-provided location fields so we can verify why both may be identical
+        if (data.persont_to_meet)
           setPersonToMeetName(String(data.persont_to_meet));
 
         if (data.guest_vehicle_number)
@@ -305,12 +335,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               typeof imgObj.url === "string"
                 ? imgObj.url
                 : typeof imgObj.image_url === "string"
-                ? imgObj.image_url
-                : typeof imgObj.document_url === "string"
-                ? imgObj.document_url
-                : typeof imgObj.file_url === "string"
-                ? imgObj.file_url
-                : undefined;
+                  ? imgObj.image_url
+                  : typeof imgObj.document_url === "string"
+                    ? imgObj.document_url
+                    : typeof imgObj.file_url === "string"
+                      ? imgObj.file_url
+                      : undefined;
           }
           if (imageUrl) setProfilePhoto(String(imageUrl));
         }
@@ -339,91 +369,108 @@ const VisitorSharingFormWeb: React.FC = () => {
           }));
         }
 
-          // If the host response indicates the form was already submitted,
-          // show only the small card and skip the rest of the prefill mapping.
-          const maybeApprove = (data as Record<string, unknown>)?.approve;
-          if (typeof maybeApprove !== 'undefined' && Number(maybeApprove) === 5) {
-            setAlreadySubmitted(true);
-            return;
-          }
+        // If the host response indicates the form was already submitted,
+        // show only the small card and skip the rest of the prefill mapping.
+        const maybeApprove = (data as Record<string, unknown>)?.approve;
+        if (typeof maybeApprove !== "undefined" && Number(maybeApprove) === 5) {
+          setAlreadySubmitted(true);
+          return;
+        }
 
-          // Map primary assets (always) from host response so Step 3 shows prefilled assets
-          try {
-            const maybeAssetsPrimary = (data as unknown as { assets?: unknown }).assets;
-            if (Array.isArray(maybeAssetsPrimary) && maybeAssetsPrimary.length) {
-              const canonicalizeCategory = (raw: unknown) => {
-                if (!raw) return "";
-                const s = String(raw).trim();
-                const lower = s.toLowerCase();
-                const known = [
-                  "it",
-                  "mechanical",
-                  "electrical",
-                  "furniture",
-                  "other",
-                  "tool",
-                  "electronics",
-                ];
-                const found = known.find((k) => lower.includes(k));
-                if (found) return found === "it" ? "IT" : found[0].toUpperCase() + found.slice(1);
-                return s;
-              };
-              const primaryArr: Asset[] = [];
-              for (let ai = 0; ai < maybeAssetsPrimary.length; ai++) {
-                const a = maybeAssetsPrimary[ai] as Record<string, unknown> | undefined;
-                if (!a) continue;
-                const docs = Array.isArray(a.documents) ? (a.documents as unknown[]) : [];
-                const attachments = docs.map((d) => {
-                  const dd = d as Record<string, unknown> | undefined;
-                  return {
-                    name: typeof dd?.name === "string" ? dd!.name : undefined,
-                    url:
-                      typeof dd?.document_url === "string"
-                        ? dd!.document_url
-                        : typeof dd?.url === "string"
-                          ? dd!.url
-                          : typeof dd?.file_url === "string"
-                            ? dd!.file_url
-                            : undefined,
-                  };
-                });
-                primaryArr.push({
-                  id: typeof a.id === "number" ? a.id : ai,
-                  category: canonicalizeCategory(a.asset_category_name || a.asset_category || ""),
-                  name: typeof a.asset_name === "string" ? a.asset_name : "",
-                  serial: typeof a.serial_model_number === "string" ? a.serial_model_number : "",
-                  notes: typeof a.notes === "string" ? a.notes : "",
-                  attachments,
-                });
-              }
-              if (primaryArr.length) {
-                // Merge with any existing primary assets so we don't drop File objects
-                setAssetsByVisitor((s) => {
-                  const prev = Array.isArray(s[0]) ? s[0] : [];
-                  const merged = primaryArr.map((a, idx) => {
-                    const prevA = prev[idx];
-                    if (prevA && Array.isArray(prevA.attachments) && Array.isArray(a.attachments)) {
-                      const mergedAttachments = a.attachments!.map((att, ai) => {
-                        const prevAtt = prevA.attachments![ai];
-                        const file = prevAtt && (prevAtt as { file?: File }).file;
-                        return file ? { ...att, file } : att;
-                      });
-                      return { ...a, attachments: mergedAttachments };
-                    }
-                    return a;
-                  });
-                  return { ...s, 0: merged };
-                });
-                setCarryingAsset(true);
-                setExpandedVisitors((s) => ({ ...s, 0: true }));
-                // debug
-                // eslint-disable-next-line no-console
-                console.debug("[prefill-primary] primaryArr:", primaryArr);
-              }
+        // Map primary assets (always) from host response so Step 3 shows prefilled assets
+        try {
+          const maybeAssetsPrimary = (data as unknown as { assets?: unknown })
+            .assets;
+          if (Array.isArray(maybeAssetsPrimary) && maybeAssetsPrimary.length) {
+            const canonicalizeCategory = (raw: unknown) => {
+              if (!raw) return "";
+              const s = String(raw).trim();
+              const lower = s.toLowerCase();
+              const known = [
+                "it",
+                "mechanical",
+                "electrical",
+                "furniture",
+                "other",
+                "tool",
+                "electronics",
+              ];
+              const found = known.find((k) => lower.includes(k));
+              if (found)
+                return found === "it"
+                  ? "IT"
+                  : found[0].toUpperCase() + found.slice(1);
+              return s;
+            };
+            const primaryArr: Asset[] = [];
+            for (let ai = 0; ai < maybeAssetsPrimary.length; ai++) {
+              const a = maybeAssetsPrimary[ai] as
+                | Record<string, unknown>
+                | undefined;
+              if (!a) continue;
+              const docs = Array.isArray(a.documents)
+                ? (a.documents as unknown[])
+                : [];
+              const attachments = docs.map((d) => {
+                const dd = d as Record<string, unknown> | undefined;
+                return {
+                  name: typeof dd?.name === "string" ? dd!.name : undefined,
+                  url:
+                    typeof dd?.document_url === "string"
+                      ? dd!.document_url
+                      : typeof dd?.url === "string"
+                        ? dd!.url
+                        : typeof dd?.file_url === "string"
+                          ? dd!.file_url
+                          : undefined,
+                };
+              });
+              primaryArr.push({
+                id: typeof a.id === "number" ? a.id : ai,
+                category: canonicalizeCategory(
+                  a.asset_category_name || a.asset_category || ""
+                ),
+                name: typeof a.asset_name === "string" ? a.asset_name : "",
+                serial:
+                  typeof a.serial_model_number === "string"
+                    ? a.serial_model_number
+                    : "",
+                notes: typeof a.notes === "string" ? a.notes : "",
+                attachments,
+              });
             }
-          } catch (err) {
-            // best-effort
+            if (primaryArr.length) {
+              // Merge with any existing primary assets so we don't drop File objects
+              setAssetsByVisitor((s) => {
+                const prev = Array.isArray(s[0]) ? s[0] : [];
+                const merged = primaryArr.map((a, idx) => {
+                  const prevA = prev[idx];
+                  if (
+                    prevA &&
+                    Array.isArray(prevA.attachments) &&
+                    Array.isArray(a.attachments)
+                  ) {
+                    const mergedAttachments = a.attachments!.map((att, ai) => {
+                      const prevAtt = prevA.attachments![ai];
+                      const file = prevAtt && (prevAtt as { file?: File }).file;
+                      return file ? { ...att, file } : att;
+                    });
+                    return { ...a, attachments: mergedAttachments };
+                  }
+                  return a;
+                });
+                return { ...s, 0: merged };
+              });
+              setCarryingAsset(true);
+              setExpandedVisitors((s) => ({ ...s, 0: true }));
+              // debug
+              // eslint-disable-next-line no-console
+              console.debug("[prefill-primary] primaryArr:", primaryArr);
+            }
           }
+        } catch (err) {
+          // best-effort
+        }
 
         if (
           Array.isArray(data.additional_visitors) &&
@@ -622,11 +669,14 @@ const VisitorSharingFormWeb: React.FC = () => {
                       Array.isArray(prevA.attachments) &&
                       Array.isArray(a.attachments)
                     ) {
-                      const mergedAttachments = a.attachments!.map((att, ai) => {
-                        const prevAtt = prevA.attachments![ai];
-                        const file = prevAtt && (prevAtt as { file?: File }).file;
-                        return file ? { ...att, file } : att;
-                      });
+                      const mergedAttachments = a.attachments!.map(
+                        (att, ai) => {
+                          const prevAtt = prevA.attachments![ai];
+                          const file =
+                            prevAtt && (prevAtt as { file?: File }).file;
+                          return file ? { ...att, file } : att;
+                        }
+                      );
                       return { ...a, attachments: mergedAttachments };
                     }
                     return a;
@@ -650,7 +700,10 @@ const VisitorSharingFormWeb: React.FC = () => {
               // eslint-disable-next-line no-console
               console.debug("[prefill] assetsMap:", assetsMap);
               // eslint-disable-next-line no-console
-              console.debug("[prefill] carryingAsset=true, expandedVisitors (will update):", Object.keys(assetsMap).map(k => Number(k)));
+              console.debug(
+                "[prefill] carryingAsset=true, expandedVisitors (will update):",
+                Object.keys(assetsMap).map((k) => Number(k))
+              );
             }
           } catch (err) {
             // swallow mapping errors; prefill is best-effort
@@ -767,7 +820,7 @@ const VisitorSharingFormWeb: React.FC = () => {
       return;
     }
 
-  // Step 3: require Asset details for primary and all additional visitors only when carryingAsset is true
+    // Step 3: require Asset details for primary and all additional visitors only when carryingAsset is true
     if (step === 3) {
       if (carryingAsset) {
         let hasAssetErrors = false;
@@ -775,21 +828,21 @@ const VisitorSharingFormWeb: React.FC = () => {
         // Validate primary visitor (id: 0) and any visitor entries that exist
         const allVisitors = [0, ...visitors.map((v) => v.id)];
         allVisitors.forEach((id) => {
-      const list = assetsByVisitor[id] || [];
-      const first = list[0];
-      const category = first?.category || "";
-      const name = first?.name || "";
-      const serial = first?.serial || "";
+          const list = assetsByVisitor[id] || [];
+          const first = list[0];
+          const category = first?.category || "";
+          const name = first?.name || "";
+          const serial = first?.serial || "";
 
-      // Required fields: Category, Asset Name, Serial No.
-      const missingCategory = !category.trim();
-      const missingName = !name.trim();
-      const missingSerial = !serial.trim();
+          // Required fields: Category, Asset Name, Serial No.
+          const missingCategory = !category.trim();
+          const missingName = !name.trim();
+          const missingSerial = !serial.trim();
 
-      const missingAny = missingCategory || missingName || missingSerial;
+          const missingAny = missingCategory || missingName || missingSerial;
 
-      nextErrors[id] = missingAny;
-      if (missingAny) hasAssetErrors = true;
+          nextErrors[id] = missingAny;
+          if (missingAny) hasAssetErrors = true;
         });
         setAssetCategoryErrors(nextErrors);
         if (hasAssetErrors) {
@@ -828,37 +881,52 @@ const VisitorSharingFormWeb: React.FC = () => {
       }
     }
 
-    // Step 4: require identity type selection AND either an uploaded ID image or a government ID number
+    // Step 4: require identity type selection AND either an uploaded ID image OR a government ID number
     if (step === 4) {
       const errs: Record<number, boolean> = {};
       let hasMissing = false;
       const allVisitors = [0, ...visitors.map((v) => v.id)];
+
       allVisitors.forEach((id) => {
         const idState = identityByVisitor[id];
+
         const hasType = !!(idState && idState.type);
-        const hasGov = !!(idState && idState.govId && String(idState.govId).trim());
-        const docs = idState && Array.isArray(idState.documents) ? idState.documents : [];
-        const hasFile = docs.some((d) => {
-          // documents may be File objects or objects like { name, url, file }
-          if (!d) return false;
-          if ((d as unknown) instanceof File) return true;
-          const maybe = d as { file?: File };
-          return !!(maybe && maybe.file instanceof File);
+
+        const hasGov =
+          !!idState &&
+          typeof idState.govId === "string" &&
+          idState.govId.trim().length > 0;
+
+        const docs =
+          idState && Array.isArray(idState.documents)
+            ? idState.documents
+            : [];
+
+        // documents are stored as { name, url, file }.
+        // Consider image provided if we have at least one real File OR a valid URL
+        const hasImage = docs.some((d) => {
+          const maybe = d as { file?: File; url?: string };
+          const hasFile = maybe.file instanceof File;
+          const hasUrl = typeof maybe.url === "string" && maybe.url.trim().length > 0;
+          return hasFile || hasUrl;
         });
-        // mark missing if no identity type OR neither gov id nor file present
-        if (!hasType || (!hasGov && !hasFile)) {
-          errs[id] = true;
-          hasMissing = true;
-        }
+
+        // missing only if: no type OR (no gov id AND no file)
+  const missing = !hasType || (!hasGov && !hasImage);
+        errs[id] = missing;
+        if (missing) hasMissing = true;
       });
+
       setIdentityErrors(errs);
       if (hasMissing) {
-        showToast("Please select an ID type and provide at least one ID image or enter Government ID number for all visitors.");
-        setExpandedVisitors((e) => {
-          const next = { ...e };
-          Object.keys(errs).forEach((k) => {
-            const id = Number(k);
-            if (!Number.isNaN(id)) next[id] = true;
+        showToast(
+          "Please select an ID type and provide at least one ID image OR enter Government ID number for all visitors."
+        );
+        setExpandedVisitors((prev) => {
+          const next = { ...prev };
+          const allVisitorsLocal = [0, ...visitors.map((v) => v.id)];
+          allVisitorsLocal.forEach((id) => {
+            if (errs[id]) next[id] = true;
           });
           return next;
         });
@@ -880,21 +948,22 @@ const VisitorSharingFormWeb: React.FC = () => {
     primaryVisitor,
     additionalVisitors = [],
     carryingAssetFlag = false,
-  imageBase64 = null,
-  includeImage = false,
+    imageBase64 = null,
+    includeImage = false,
   }: {
     primaryVisitor: VisitorPayload;
     additionalVisitors?: VisitorPayload[];
     carryingAssetFlag?: boolean;
-  imageBase64?: string | null;
-  includeImage?: boolean;
+    imageBase64?: string | null;
+    includeImage?: boolean;
   }) => {
     const formData = new FormData();
 
     // Track files we've already appended to avoid duplicates in multipart payloads.
     // Use name|size|lastModified as a best-effort signature.
     const seenFiles = new Set<string>();
-  const fileSignature = (f: File) => `${f.name}|${f.size}|${(f as File & { lastModified?: number }).lastModified ?? 0}`;
+    const fileSignature = (f: File) =>
+      `${f.name}|${f.size}|${(f as File & { lastModified?: number }).lastModified ?? 0}`;
     const appendFileOnce = (key: string, f: File) => {
       try {
         const sig = fileSignature(f);
@@ -1010,7 +1079,10 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (file instanceof File) {
           appendFileOnce(`gatekeeper[assets][${idx}][documents][]`, file);
         } else if (att && typeof att.url === "string") {
-          formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, att.url);
+          formData.append(
+            `gatekeeper[assets][${idx}][documents_urls][]`,
+            att.url
+          );
         }
       });
       // Also include any File objects present in a.documents (legacy shape)
@@ -1020,7 +1092,10 @@ const VisitorSharingFormWeb: React.FC = () => {
         } else {
           const maybe = d as unknown as { url?: string };
           if (maybe && typeof maybe.url === "string") {
-            formData.append(`gatekeeper[assets][${idx}][documents_urls][]`, maybe.url);
+            formData.append(
+              `gatekeeper[assets][${idx}][documents_urls][]`,
+              maybe.url
+            );
           }
         }
       });
@@ -1040,7 +1115,8 @@ const VisitorSharingFormWeb: React.FC = () => {
       // documents may be File objects or objects like { name, url, file }
       (primaryVisitor.identity.documents || []).forEach((doc: DocumentLike) => {
         const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
-        if (file) appendFileOnce("gatekeeper[visitor_identity][documents][]", file);
+        if (file)
+          appendFileOnce("gatekeeper[visitor_identity][documents][]", file);
       });
     }
 
@@ -1200,7 +1276,8 @@ const VisitorSharingFormWeb: React.FC = () => {
           );
         // accept File or { name, url, file }
         (v.identity.documents || []).forEach((doc: DocumentLike) => {
-          const file = doc instanceof File ? doc : (doc as { file?: File })?.file;
+          const file =
+            doc instanceof File ? doc : (doc as { file?: File })?.file;
           if (file)
             appendFileOnce(
               `gatekeeper[additional_visitors_attributes][${i}][identity][documents][]`,
@@ -1217,10 +1294,25 @@ const VisitorSharingFormWeb: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = urlToken || "";
-      const visitorEncryptedId = urlVisitorId;
-      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json?is_encrypted=true`;
+      // Prefer query param `id` -> prefillEncryptedId (from GET) -> path-derived urlVisitorId
+      let visitorEncryptedId: string | null = null;
+      try {
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const idFromQuery = params.get("id");
+          if (idFromQuery) visitorEncryptedId = idFromQuery;
+        }
+      } catch (_) {
+        // ignore
+      }
+      if (!visitorEncryptedId) visitorEncryptedId = prefillEncryptedId || urlVisitorId;
+
+      const baseUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitorEncryptedId}/update_expected_visitor.json`;
+      // append token using & if baseUrl already contains query params
       const url = token
-        ? `${baseUrl}?token=${encodeURIComponent(token)}`
+        ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(
+            token
+          )}`
         : baseUrl;
 
       const expectedIso =
@@ -1255,12 +1347,6 @@ const VisitorSharingFormWeb: React.FC = () => {
           serial_model_number: a.serial,
           notes: a.notes,
           // keep original attachments array (may contain { name, url, file })
-          attachments: (a.attachments || []).map((att) => ({
-            name: att.name,
-            url: att.url,
-            file: (att as { file?: File })?.file,
-          })),
-          // convenience documents array with File objects (if present)
           documents: (a.attachments || [])
             .map((att) => att.file)
             .filter(Boolean),
@@ -1366,9 +1452,9 @@ const VisitorSharingFormWeb: React.FC = () => {
             id: a.id,
             name: a.name,
             attachments: (a.attachments || []).map((att) => ({
-              name: att && typeof att.name === 'string' ? att.name : null,
+              name: att && typeof att.name === "string" ? att.name : null,
               hasFile: !!(att && (att as { file?: File }).file),
-              url: att && typeof att.url === 'string' ? att.url : null,
+              url: att && typeof att.url === "string" ? att.url : null,
             })),
           }));
         });
@@ -1376,7 +1462,10 @@ const VisitorSharingFormWeb: React.FC = () => {
       };
 
       // eslint-disable-next-line no-console
-      console.debug('[submitToApi] attachments summary:', summarize(assetsByVisitor));
+      console.debug(
+        "[submitToApi] attachments summary:",
+        summarize(assetsByVisitor)
+      );
 
       const fd = buildVisitorFormData({
         primaryVisitor,
@@ -1456,14 +1545,26 @@ const VisitorSharingFormWeb: React.FC = () => {
                   stroke="currentColor"
                   strokeWidth="1.5"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"
+                  />
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-semibold mb-1">Form already submitted</h3>
-            <p className="text-sm text-gray-600 mb-4">This submission has been received by the host. No further actions are available.</p>
-           
+            <h3 className="text-lg font-semibold mb-1">
+              Form already submitted
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This submission has been received by the host. No further actions
+              are available.
+            </p>
           </div>
         </div>
       </div>
@@ -1512,7 +1613,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                   {toastMessage}
                 </div>
               </div>
-            )} 
+            )}
           </div>
         </div>
 
@@ -1575,26 +1676,33 @@ const VisitorSharingFormWeb: React.FC = () => {
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
                           if (!file) return;
-                          const type = file.type || '';
-                          const name = file.name || '';
-                          const ext = name.split('.').pop()?.toLowerCase() || '';
-                          const isSvg = type === 'image/svg+xml' || ext === 'svg';
+                          const type = file.type || "";
+                          const name = file.name || "";
+                          const ext =
+                            name.split(".").pop()?.toLowerCase() || "";
+                          const isSvg =
+                            type === "image/svg+xml" || ext === "svg";
                           if (isSvg) {
                             setProfilePhoto(null);
                             setProfilePhotoFile(null);
                             setProfilePhotoChanged(false);
                             setProfilePhotoError(true);
-                            showToast('SVG files are not allowed for profile photo. Please upload PNG or JPEG.');
+                            showToast(
+                              "SVG files are not allowed for profile photo. Please upload PNG or JPEG."
+                            );
                             return;
                           }
                           // allow only PNG/JPEG
-                          const allowed = ['image/png', 'image/jpeg'];
-                          if (!allowed.includes(type) && !['png', 'jpg', 'jpeg'].includes(ext)) {
+                          const allowed = ["image/png", "image/jpeg"];
+                          if (
+                            !allowed.includes(type) &&
+                            !["png", "jpg", "jpeg"].includes(ext)
+                          ) {
                             setProfilePhoto(null);
                             setProfilePhotoFile(null);
                             setProfilePhotoChanged(false);
                             setProfilePhotoError(true);
-                            showToast('Please upload a PNG or JPEG image.');
+                            showToast("Please upload a PNG or JPEG image.");
                             return;
                           }
                           const reader = new FileReader();
@@ -1615,36 +1723,63 @@ const VisitorSharingFormWeb: React.FC = () => {
 
                     {showCameraModal && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/50" onClick={() => {
-                          if (stream) stream.getTracks().forEach((t) => t.stop());
-                          setStream(null);
-                          setShowCameraModal(false);
-                        }} />
+                        <div
+                          className="absolute inset-0 bg-black/50"
+                          onClick={() => {
+                            if (stream)
+                              stream.getTracks().forEach((t) => t.stop());
+                            setStream(null);
+                            setShowCameraModal(false);
+                          }}
+                        />
                         <div className="bg-white rounded p-4 z-10 w-[90%] max-w-md">
                           <div className="flex flex-col items-stretch gap-3">
-                            <video ref={videoRef} autoPlay playsInline className="w-full h-56 bg-black rounded" />
+                            <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              className="w-full h-56 bg-black rounded"
+                            />
                             <div className="flex gap-2 justify-center">
                               <button
                                 onClick={() => {
                                   const video = videoRef.current;
                                   if (!video) return;
-                                  const canvas = document.createElement('canvas');
+                                  const canvas =
+                                    document.createElement("canvas");
                                   canvas.width = video.videoWidth || 640;
                                   canvas.height = video.videoHeight || 480;
-                                  const ctx = canvas.getContext('2d');
-                                  if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                                  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                  const ctx = canvas.getContext("2d");
+                                  if (ctx)
+                                    ctx.drawImage(
+                                      video,
+                                      0,
+                                      0,
+                                      canvas.width,
+                                      canvas.height
+                                    );
+                                  const dataUrl = canvas.toDataURL(
+                                    "image/jpeg",
+                                    0.85
+                                  );
                                   setProfilePhoto(dataUrl);
-                                  const arr = dataUrl.split(',');
-                                  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+                                  const arr = dataUrl.split(",");
+                                  const mime =
+                                    arr[0].match(/:(.*?);/)?.[1] ||
+                                    "image/jpeg";
                                   const bstr = atob(arr[1]);
                                   let n = bstr.length;
                                   const u8arr = new Uint8Array(n);
                                   while (n--) u8arr[n] = bstr.charCodeAt(n);
-                                  const file = new File([u8arr], `camera_${Date.now()}.jpg`, { type: mime });
+                                  const file = new File(
+                                    [u8arr],
+                                    `camera_${Date.now()}.jpg`,
+                                    { type: mime }
+                                  );
                                   setProfilePhotoFile(file);
                                   setProfilePhotoChanged(true);
-                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  if (stream)
+                                    stream.getTracks().forEach((t) => t.stop());
                                   setStream(null);
                                   setShowCameraModal(false);
                                 }}
@@ -1654,7 +1789,8 @@ const VisitorSharingFormWeb: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => {
-                                  if (stream) stream.getTracks().forEach((t) => t.stop());
+                                  if (stream)
+                                    stream.getTracks().forEach((t) => t.stop());
                                   setStream(null);
                                   setShowCameraModal(false);
                                 }}
@@ -1749,26 +1885,25 @@ const VisitorSharingFormWeb: React.FC = () => {
               </div>
 
               {guestType === "Frequent" && (
-                <div className="mt-3 bg-white border border-gray-100 rounded p-3">
+                <div className="mt-3 bg-white border border-gray-100 rounded p-3 pointer-events-none opacity-60">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-xs text-gray-600">Valid From*</div>
                       <input
                         type="date"
                         value={passStartDate || ""}
-                        onChange={(e) =>
-                          setPassStartDate(e.target.value || null)
-                        }
-                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                        className="mt-1 w-full bg-gray-100 border border-gray-200 rounded px-3 py-2 text-sm"
+                        disabled
                       />
                     </div>
+
                     <div>
                       <div className="text-xs text-gray-600">Valid To*</div>
                       <input
                         type="date"
                         value={passEndDate || ""}
-                        onChange={(e) => setPassEndDate(e.target.value || null)}
-                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                        className="mt-1 w-full bg-gray-100 border border-gray-200 rounded px-3 py-2 text-sm"
+                        disabled
                       />
                     </div>
                   </div>
@@ -1779,33 +1914,28 @@ const VisitorSharingFormWeb: React.FC = () => {
                       {["S", "M", "T", "W", "Th", "F", "S"].map((label, i) => {
                         const key = String(i);
                         const selected = passDays.includes(key);
+
                         return (
                           <button
                             key={i}
                             type="button"
-                            onClick={() =>
-                              setPassDays((p) =>
-                                p.includes(key)
-                                  ? p.filter((x) => x !== key)
-                                  : [...p, key]
-                              )
-                            }
+                            disabled
                             className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
                               selected
                                 ? "bg-[#d8d3c6] border-[#d8d3c6]"
-                                : "bg-white border-gray-200"
+                                : "bg-gray-100 border-gray-200"
                             }`}
                           >
                             {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
+                  </div>
+                </div>
+              )}
 
-                  <div>
+              <div>
                 <div className="text-xs text-gray-600">
                   Contact Number <span className="text-[#C72030]">*</span>
                 </div>
@@ -1924,9 +2054,15 @@ const VisitorSharingFormWeb: React.FC = () => {
             <div className="p-3">
               <div className="bg-white border border-gray-100 rounded p-4 text-sm leading-6 text-gray-800">
                 {apiConsentHtml ? (
-                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: apiConsentHtml }} />
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: apiConsentHtml }}
+                  />
                 ) : (
-                  <div className="text-sm text-gray-700">By entering the premises, you (“Visitor”) acknowledge and agree to the terms provided by the host.</div>
+                  <div className="text-sm text-gray-700">
+                    By entering the premises, you (“Visitor”) acknowledge and
+                    agree to the terms provided by the host.
+                  </div>
                 )}
               </div>
 
@@ -2295,6 +2431,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                     </span>
                   </div>
                   {(() => {
+                    // Show only primary visitor's first asset summary in Preview
                     const list = assetsByVisitor[0] || [];
                     if (!carryingAsset || list.length === 0)
                       return (
@@ -2316,15 +2453,19 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Serial No.:</span>
+                          <span className="text-gray-500">Serial No:</span>
                           <span className="text-gray-900 font-medium">
                             {first.serial || "N/A"}
                           </span>
                         </div>
                         {first.notes && (
-                          <div className="text-[11px] text-gray-700">
-                            {first.notes}
-                          </div>
+                        
+                          <div className="flex justify-between">
+                          <span className="text-gray-500">Notes:</span>
+                          <span className="text-gray-900 font-medium">
+                            {first.notes || "N/A"}
+                          </span>
+                        </div>
                         )}
                       </>
                     );
@@ -2338,7 +2479,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                   <div className="text-sm font-medium">
                     Identity Verification
                     {visitors && visitors.length > 0 ? (
-                      <span className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium" aria-label={`Additional visitors: ${visitors.length}`}>
+                      <span
+                        className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#C72030] text-white text-xs font-medium"
+                        aria-label={`Additional visitors: ${visitors.length}`}
+                      >
                         {visitors.length}
                       </span>
                     ) : null}
@@ -2388,28 +2532,32 @@ const VisitorSharingFormWeb: React.FC = () => {
                       {identityByVisitor[0]?.govId || "N/A"}
                     </span>
                   </div>
-                  <div className="text-gray-500">Attachment:</div>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {(identityByVisitor[0]?.documents || []).length === 0 ? (
-                      <div className="h-20 bg-gray-200 rounded" />
-                    ) : (
-                      (identityByVisitor[0]?.documents || []).map((doc, i) => (
-                        <a
-                          key={i}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-20 block rounded overflow-hidden border"
-                        >
-                          <img
-                            src={doc.url}
-                            alt={doc.name || "doc"}
-                            className="w-full h-full object-cover"
-                          />
-                        </a>
-                      ))
-                    )}
-                  </div>
+                  {(() => {
+                    const docs = identityByVisitor[0]?.documents;
+                    if (!Array.isArray(docs) || docs.length === 0) return null;
+                    return (
+                      <>
+                        <div className="text-gray-500">Attachment:</div>
+                        <div className="mt-1 grid grid-cols-2 gap-2">
+                          {docs.map((doc, i) => (
+                            <a
+                              key={i}
+                              href={doc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-20 block rounded overflow-hidden border"
+                            >
+                              <img
+                                src={doc.url}
+                                alt={doc.name || "doc"}
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -2417,7 +2565,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               <div className="pt-2">
                 <button
                   onClick={submitToApi}
-                  className={`w-full py-3 rounded font-semibold text-white ${isSubmitting ? 'bg-gray-400 cursor-wait' : 'bg-[#C72030]'}`}
+                  className={`w-full py-3 rounded font-semibold text-white ${isSubmitting ? "bg-gray-400 cursor-wait" : "bg-[#C72030]"}`}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -2445,8 +2593,23 @@ const VisitorSharingFormWeb: React.FC = () => {
                       Submitting...
                     </span>
                   ) : (
-                    'Submit'
+                    "Submit"
                   )}
+                </button>
+              </div>
+              {/* Back button shown only on Preview, placed below Submit */}
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    // Clear validation errors and return to previous step (5)
+                    setVisitorErrors({});
+                    setPrimaryVehicleError(false);
+                    setAssetCategoryErrors({});
+                    setStep(5);
+                  }}
+                  className="w-full py-3 rounded bg-white border border-gray-200 text-gray-700"
+                >
+                  Back
                 </button>
               </div>
             </div>
@@ -2458,16 +2621,16 @@ const VisitorSharingFormWeb: React.FC = () => {
           <div className="fixed inset-0 z-40 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-50 w-80 max-w-xs bg-white rounded-lg shadow-lg p-5">
-                <button
-                  aria-label="Close"
-                  onClick={() => {
-                    // reload the page so the GET prefill runs again
-                    if (typeof window !== 'undefined') window.location.reload();
-                  }}
-                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-                >
-                  ×
-                </button>
+              <button
+                aria-label="Close"
+                onClick={() => {
+                  // reload the page so the GET prefill runs again
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-full bg-[#4ade80] flex items-center justify-center mb-3 relative">
                   <svg
@@ -2977,10 +3140,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                       </button>
                       <button
                         onClick={() =>
-                          setExpandedVisitors((e) => ({
-                            ...e,
-                            [v.id]: !e[v.id],
-                          }))
+                          setExpandedVisitors((e) => ({ ...e, [v.id]: !e[v.id] }))
                         }
                         className="text-gray-600"
                         aria-label="Toggle"
@@ -3237,7 +3397,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               ))}
             </div>
           </div>
-  )}
+        )}
 
         {/* Step 4: Identity Verification */}
         {step === 4 && (
@@ -3463,7 +3623,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         {/* Fixed bottom actions */}
         <div className="fixed left-0 right-0 bottom-0 flex justify-center p-4 bg-white z-40 border-t border-gray-100">
           <div className="w-full max-w-xs sm:max-w-sm flex gap-3">
-            {step > 1 && !isSubmitting && !showSuccess && (
+            {step > 1 && step !== 6 && !isSubmitting && !showSuccess && (
               <button
                 onClick={() => {
                   // Clear validation errors when navigating back
