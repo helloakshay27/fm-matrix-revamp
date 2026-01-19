@@ -1,9 +1,30 @@
-import React, { useMemo } from "react";
+import axios from "axios";
+import React, { useEffect, useMemo, useState } from "react";
 
 function SupersetDashboard() {
   // Get dynamic token from authentication
+  const [ids, setIds] = useState([])
+  const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const selectedSiteId = localStorage.getItem("selectedSiteId");
+  const userId = localStorage.getItem('userId')
+
+  const fetchProjectIds = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/users/${userId}/asssoicated_projects.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      setIds(response.data.map((item: any) => item.project_management_id))
+    } catch (error) {
+      console.error('Error fetching project IDs:', error);
+    }
+  }
+
+  useEffect(() => {
+    fetchProjectIds()
+  }, [])
 
   // Build dynamic Superset dashboard URL
   const SUPERSET_DASHBOARD_URL = useMemo(() => {
@@ -20,9 +41,9 @@ function SupersetDashboard() {
     }
 
     if (selectedSiteId) {
-      const projectIds = [203, 200, 198, 196, 192, 190, 187, 186, 182, 180];
+      // const projectIds = [203, 200, 198, 196, 192, 190, 187, 186, 182, 180];
 
-      projectIds.forEach((id) => {
+      ids.forEach((id) => {
         params.append("project_id[]", id.toString());
       });
     }
