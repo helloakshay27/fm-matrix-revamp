@@ -21,6 +21,7 @@ import TaskManagementKanban from "@/components/TaskManagementKanban";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { TransitionProps } from "@mui/material/transitions";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import clsx from "clsx";
 import axios from "axios";
 import { baseClient } from "@/utils/withoutTokenBase";
@@ -422,6 +423,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
     const [searchParams] = useSearchParams();
+    const { shouldShow } = useDynamicPermissions();
 
     const view = localStorage.getItem("selectedView");
     const urlToken = searchParams.get("token");
@@ -1178,15 +1180,17 @@ const ProjectTasksPage = () => {
 
     const renderActions = (item: any) => (
         <div className="flex items-center justify-center gap-2">
-            <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => handleView(item.id)}
-                title="View Task Details"
-            >
-                <Eye className="w-4 h-4" />
-            </Button>
+            {shouldShow("employee_project_tasks", "show") && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
+                    onClick={() => handleView(item.id)}
+                    title="View Task Details"
+                >
+                    <Eye className="w-4 h-4" />
+                </Button>
+            )}
         </div>
     );
 
@@ -1866,13 +1870,15 @@ const ProjectTasksPage = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setShowActionPanel(true)}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Action
-            </Button>
+            {shouldShow("employee_project_tasks", "create") && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={() => setShowActionPanel(true)}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Action
+                </Button>
+            )}
         </>
     );
 

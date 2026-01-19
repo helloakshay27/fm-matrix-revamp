@@ -15,6 +15,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
     {
@@ -43,7 +44,6 @@ const columns: ColumnConfig[] = [
 const ProjectGroups = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { data: projectGroupsData, loading: projectGroupsLoading } = useSelector((state: RootState) => state.fetchProjectGroups);
-    const { data: fmUsersData } = useSelector((state: RootState) => state.fmUsers);
 
     // Auth / User context (mocking or getting from localStorage as per request)
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -57,15 +57,32 @@ const ProjectGroups = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [showMembersDropdown, setShowMembersDropdown] = useState(false);
     const [isActive, setIsActive] = useState(true);
+    const [users, setUsers] = useState([]);
+
+    const getUsers = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+
+            setUsers(response.data.users)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const groups = projectGroupsData || [];
     // Flatten users list from FMUser response
-    const usersOptions = fmUsersData?.users || [];
 
     useEffect(() => {
         if (baseUrl && token) {
             dispatch(fetchProjectGroups({ baseUrl, token }));
-            dispatch(fetchFMUsers());
+            getUsers();
         }
     }, [dispatch, baseUrl, token]);
 
@@ -315,7 +332,7 @@ const ProjectGroups = () => {
                                     </button>
                                     {showMembersDropdown && (
                                         <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                                            {usersOptions.map(user => (
+                                            {users.map(user => (
                                                 <label
                                                     key={user.id}
                                                     className="flex items-center px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"
@@ -340,7 +357,7 @@ const ProjectGroups = () => {
                                     <p className="text-sm text-gray-600 mb-2">Selected Members:</p>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedMembers.map((memberId, index) => {
-                                            const user = usersOptions.find(u => u.id === memberId);
+                                            const user = users.find(u => u.id === memberId);
                                             const color = user ? `hsl(${(user.id * 137) % 360}, 70%, 80%)` : '#ccc';
                                             return user ? (
                                                 <div
