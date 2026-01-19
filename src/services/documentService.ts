@@ -252,6 +252,22 @@ export interface UpdateDocumentPayload {
   permissions?: FolderPermission[];
 }
 
+export interface ShareUser {
+  user_type: "internal" | "external";
+  user_id: number | null;
+  email: string | null;
+  access_level: "viewer" | "editor";
+}
+
+export interface UnshareUser {
+  id: number;
+}
+
+export interface ShareDocumentPayload {
+  shares: ShareUser[];
+  unshare: UnshareUser[];
+}
+
 /**
  * Fetch all categories
  */
@@ -682,6 +698,30 @@ export const updateFolder = async (
 
   const response = await axios.patch(
     `https://${baseUrl}/folders/${folderId}.json`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Share document with users
+ */
+export const shareDocument = async (
+  documentId: number,
+  payload: ShareDocumentPayload
+): Promise<{ success: boolean; message: string }> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.post(
+    `https://${baseUrl}/documents/${documentId}/share.json`,
     payload,
     {
       headers: {

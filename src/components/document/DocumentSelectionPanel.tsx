@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Edit, Trash2, FolderInput, Copy } from "lucide-react";
+import { X, Edit, Trash2, FolderInput, Copy, Share2 } from "lucide-react";
 
 interface Document {
   id: number;
@@ -14,6 +14,7 @@ interface DocumentSelectionPanelProps {
   onDelete: () => void;
   onMove?: () => void;
   onCopy?: () => void;
+  onShare?: () => void;
   onClearSelection: () => void;
 }
 
@@ -24,6 +25,7 @@ export const DocumentSelectionPanel: React.FC<DocumentSelectionPanelProps> = ({
   onDelete,
   onMove,
   onCopy,
+  onShare,
   onClearSelection,
 }) => {
   if (selectedItems.length === 0) {
@@ -83,6 +85,19 @@ export const DocumentSelectionPanel: React.FC<DocumentSelectionPanelProps> = ({
             >
               <Copy className="w-6 h-6 text-black" />
               <span className="text-xs text-gray-600">Copy</span>
+            </Button>
+          )}
+
+          {/* Share Button */}
+          {onShare && (
+            <Button
+              onClick={onShare}
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+            >
+              <Share2 className="w-6 h-6 text-black" />
+              <span className="text-xs text-gray-600">Share</span>
             </Button>
           )}
 

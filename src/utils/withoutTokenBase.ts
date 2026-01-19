@@ -132,7 +132,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (orgId) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          apiUrl = `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
@@ -195,12 +195,12 @@ baseClient.interceptors.request.use(
       }
 
       // Priority 4: Fallback URL
-      config.baseURL = "https://lockated-api.gophygital.work/";
+      config.baseURL = "https://pulse-api.lockated.com/";
       console.warn("⚠️ Using fallback URL:", config.baseURL);
     } catch (error) {
       console.error("❌ Error in request interceptor:", error);
       // Always set a fallback URL on error
-      config.baseURL = "https://lockated-api.gophygital.work/";
+      config.baseURL = "https://pulse-api.lockated.com/";
       console.warn("⚠️ Using fallback URL due to error:", config.baseURL);
     }
 
