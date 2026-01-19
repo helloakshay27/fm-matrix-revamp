@@ -884,7 +884,7 @@ export const AddBookingSetupPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* <div className="overflow-x-auto">
               <table className="w-full border">
                 <thead>
                   <tr className="bg-gray-50">
@@ -1000,115 +1000,9 @@ export const AddBookingSetupPage = () => {
                       </div>
                     </td>
                   </tr>
-                  {/* <tr>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.chargeSetup.guest.selected}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  selected: !!checked,
-                                },
-                              },
-                            })
-                          }
-                        />
-                        <span>Guest</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.adult}
-                          onCheckedChange={(checked) => {
-                            if (!checked) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: "",
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.adult}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.child}
-                          onCheckedChange={(checked) => {
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  child: checked ? formData.chargeSetup.guest.child || "" : "",
-                                },
-                              },
-                            });
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.child}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    child: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                  </tr> */}
                 </tbody>
               </table>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               <div className="flex items-center gap-3">
