@@ -1200,7 +1200,7 @@ function App() {
                   <Route path="/dailypdf" element={<DailyReport />} />
                   <Route path="/weeklypdf" element={<WeeklyReport />} />
                   <Route
-                    path="/visitor/gatepass/:token"
+                    path="/visitor/gatepass"
                     element={<VisitorPassWeb />}
                   />
                   <Route

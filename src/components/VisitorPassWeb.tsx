@@ -66,9 +66,17 @@ type ApiResponse = Partial<{
   visitor_consent_form?: { value?: string; description?: string };
 }>;
 
-// derive token from URL path when possible (/visitor/gatepass/:token)
-function extractTokenFromPath(): string | null {
+// derive token from query param visitor_code or from URL path when possible
+function extractToken(): string | null {
   if (typeof window === "undefined") return null;
+  // prefer query param ?visitor_code=...
+  try {
+    const qp = new URLSearchParams(window.location.search);
+    const code = qp.get("visitor_code") || qp.get("visitorCode") || qp.get("token");
+    if (code) return code;
+  } catch {
+    // ignore
+  }
   const parts = window.location.pathname.split("/").filter(Boolean);
   // If path contains 'gatepass' take the following segment as token
   const gateIdx = parts.findIndex((p) => p.toLowerCase() === "gatepass");
@@ -81,8 +89,8 @@ function extractTokenFromPath(): string | null {
 const DEFAULT_API = (() => {
   const base = "https://live-api.gophygital.work";
   const fallback = "";
-  const token = extractTokenFromPath() ?? fallback;
-  return `${base}/pms/visitors/${token}/gate_pass.json`;
+  const id = extractToken() ?? fallback;
+  return `${base}/pms/visitors/${id}/gate_pass.json`;
 })();
 
 const VisitorPassWeb: React.FC<VisitorPassProps> = ({
