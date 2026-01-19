@@ -945,7 +945,7 @@ export const ProjectsDashboard = () => {
       case "completion_percent":
         return <div className="flex items-center gap-2 cursor-pointer">
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.milestonesCompleted}
+            {item.status === "completed" ? 1 : 0}
           </span>
           <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
             <div
@@ -957,13 +957,13 @@ export const ProjectsDashboard = () => {
             </span>
           </div>
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.milestones}
+            1
           </span>
         </div>
       case "milestoneCompletionPercent":
         return <div className="flex items-center gap-2 cursor-pointer">
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.tasksCompleted}
+            {item.milestonesCompleted}
           </span>
           <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
             <div
@@ -975,13 +975,13 @@ export const ProjectsDashboard = () => {
             </span>
           </div>
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.tasks}
+            {item.milestones}
           </span>
         </div>
       case "taskCompletionPercent":
         return <div className="flex items-center gap-2 cursor-pointer">
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.subtasksCompleted}
+            {item.tasksCompleted}
           </span>
           <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
             <div
@@ -993,7 +993,7 @@ export const ProjectsDashboard = () => {
             </span>
           </div>
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.subtasks}
+            {item.tasks}
           </span>
         </div>
       case "subtaskCompletionPercent":
