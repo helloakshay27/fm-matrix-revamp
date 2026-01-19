@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
 
+
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
 
 const ManualJournalAdd = () => {
