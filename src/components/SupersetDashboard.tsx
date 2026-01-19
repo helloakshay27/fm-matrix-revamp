@@ -49,7 +49,7 @@ function SupersetDashboard() {
     }
 
     return `https://superset.lockated.com/superset/dashboard/3/?${params.toString()}`;
-  }, [token, selectedSiteId]);
+  }, [token, selectedSiteId, ids]);
 
   return (
     <main className="p-4">
