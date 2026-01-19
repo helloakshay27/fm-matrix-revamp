@@ -15,6 +15,8 @@ import {
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { usePermissions } from "@/contexts/PermissionsContext";
+import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
 const muiFieldStyles = {
   width: "100%",
@@ -54,6 +56,7 @@ const muiFieldStyles = {
 export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userRole } = usePermissions();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -234,7 +237,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
-      const response = await loginUser(email, password, baseUrl, organizationId);
+      const response = await loginUser(
+        email,
+        password,
+        baseUrl,
+        organizationId
+      );
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
@@ -277,7 +285,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         localStorage.setItem("userType", response.user_type?.toString() || "");
         // Session Storage
         sessionStorage.setItem("userId", response.id?.toString() || "");
-        sessionStorage.setItem("userType", response.user_type?.toString() || "");
+        sessionStorage.setItem(
+          "userType",
+          response.user_type?.toString() || ""
+        );
 
         toast.success(
           "OTP sent successfully! Please verify your phone number to continue."
@@ -293,7 +304,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       if (
         response.company_id === 145 &&
         response.web_enabled === true &&
-        isViSite && response.access_token
+        isViSite &&
+        response.access_token
       ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
@@ -318,7 +330,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         localStorage.setItem("userType", response.user_type?.toString() || "");
         // Session Storage
         sessionStorage.setItem("userId", response.id?.toString() || "");
-        sessionStorage.setItem("userType", response.user_type?.toString() || "");
+        sessionStorage.setItem(
+          "userType",
+          response.user_type?.toString() || ""
+        );
 
         toast.success(
           "OTP sent successfully! Please verify your phone number to continue."
@@ -356,38 +371,72 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       const from =
         (location.state as { from?: Location })?.from?.pathname +
-        (location.state as { from?: Location })?.from?.search ||
+          (location.state as { from?: Location })?.from?.search ||
         "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        isViSite
-          ? navigate("/safety/m-safe/internal")
-          : navigate(from, { replace: true });
-        // Special routing for user ID 189005
-
         const userType = localStorage.getItem("userType");
-        const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
+        const isLocalhost =
+          hostname.includes("localhost") ||
+          hostname.includes("lockated.gophygital.work") ||
+          hostname.includes("fm-matrix.lockated.com");
+        const isPulseSite =
+          hostname.includes("pulse.lockated.com") ||
+          hostname.includes("pulse.gophygital.work");
 
+        // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
+        if (userRole) {
+          const firstRoute = findFirstAccessibleRoute(userRole);
+          if (firstRoute) {
+            navigate(firstRoute, { replace: true });
+            return;
+          }
+        }
+
+        // PRIORITY 2: Localhost with userType-based routing
         if (userType && isLocalhost) {
-          // Navigate based on userType
           if (userType === "pms_organization_admin") {
             navigate("/admin/dashboard", { replace: true });
+            return;
           } else if (userType === "pms_occupant") {
             navigate("/vas/projects", { replace: true });
+            return;
           }
-        } else if (response.id === 189005) {
+        }
+
+        // PRIORITY 3: Company ID-based routing for specific companies
+        if (
+          response.company_id === 300 ||
+          response.company_id === 295 ||
+          response.company_id === 298 ||
+          response.company_id === 199
+        ) {
+          // For these companies, use dynamic routing from permissions
+          if (userRole) {
+            const firstRoute = findFirstAccessibleRoute(userRole);
+            if (firstRoute) {
+              navigate(firstRoute, { replace: true });
+              return;
+            }
+          }
+          // Fallback to default admin route for these companies
+          navigate("/admin/dashboard", { replace: true });
+          return;
+        }
+
+        // PRIORITY 4: Domain-specific and user-specific fallback routing
+        if (response.id === 189005) {
           navigate("/dashboard");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
+        } else if (isPulseSite) {
+          navigate("/maintenance/ticket");
         } else {
-
-          navigate("/vas/projects")
           navigate(from, { replace: true });
         }
-
       }, 500);
     } catch (error: any) {
       console.error("Login error:", error);
@@ -432,12 +481,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
-              ? "bg-[#C72030] text-white shadow-lg scale-110"
-              : step < currentStep
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-400"
-              }`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
+              step === currentStep
+                ? "bg-[#C72030] text-white shadow-lg scale-110"
+                : step < currentStep
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-400"
+            }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -449,16 +499,19 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       </div>
       <div className="flex justify-center items-center gap-2">
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
       </div>
       <p className="text-gray-400 text-sm mt-3 font-medium">
@@ -534,7 +587,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           variant="ghost"
           size="sm"
           className="text-gray-300 hover:text-white p-1"
-          style={{ marginTop: '10px' }}
+          style={{ marginTop: "10px" }}
         >
           <ArrowLeft size={30} />
         </Button>
@@ -728,8 +781,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
-                }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
+                isViSite ? "-mt-4" : ""
+              }`}
             >
               {isOmanSite ? (
                 <svg
@@ -849,10 +903,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${isViSite
-                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                  : "text-gray-600 text-sm font-medium"
-                  }`}
+                className={`${
+                  isViSite
+                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                    : "text-gray-600 text-sm font-medium"
+                }`}
               >
                 Sign in to your account
               </p>

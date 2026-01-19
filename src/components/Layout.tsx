@@ -168,8 +168,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298
+      selectedCompany?.id === 199
     ) {
       return <ActionSidebar />;
     }
@@ -184,7 +183,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <StacticSidebar />;
       case "default":
       default:
-        return <ActionSidebar />;
+        return <StacticSidebar />; // Changed from ActionSidebar to StacticSidebar as fallback
     }
   };
 
@@ -226,8 +225,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298
+      selectedCompany?.id === 199
     ) {
       return <ActionHeader />;
     }
@@ -242,7 +240,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <StaticDynamicHeader />;
       case "default":
       default:
-        return <ActionHeader />;
+        return <StaticDynamicHeader />; // Changed from ActionHeader to StaticDynamicHeader as fallback
     }
   };
 
