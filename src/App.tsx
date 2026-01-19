@@ -814,8 +814,10 @@ import ChargeSetupDashboard from "./pages/ClubManagement/ChargeSetupDashboard";
 import ChargeSetupAdd from "./pages/ClubManagement/ChargeSetupAdd";
 import BillCyclesDashboard from "./pages/ClubManagement/BillCyclesDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
-import {RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
+import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
 import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
+import { BudgetDashboard } from "./pages/ClubManagement/BudgetDashboard";
+import { BillCyclesDetails } from "./pages/ClubManagement/BillCyclesDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1630,7 +1632,7 @@ function App() {
                     path="/settings/recurring-journal/add"
                     element={<RecurringJournalAdd />}
                   />
-                   <Route
+                  <Route
                     path="/settings/recurring-journal/details"
                     element={<RecurringJournalDetails />}
                   />
@@ -1650,7 +1652,7 @@ function App() {
                     path="/settings/charge-setup/add"
                     element={<ChargeSetupAdd />}
                   />
-                                    <Route
+                  <Route
                     path="/settings/charge-setup/details"
                     element={<ChargeSetupDetails />}
                   />
@@ -1658,10 +1660,19 @@ function App() {
                     path="/settings/bill-cycles"
                     element={<BillCyclesDashboard />}
                   />
- 
+
                   <Route
                     path="/settings/bill-cycles/add"
                     element={<BillCyclesAdd />}
+                  />
+                    <Route
+                    path="/settings/bill-cycles/details"
+                    element={<BillCyclesDetails/>}
+                  />
+
+                  <Route
+                    path="/settings/Budget"
+                    element={<BudgetDashboard />}
                   />
 
                   {/* Club Management - Occupant Users */}

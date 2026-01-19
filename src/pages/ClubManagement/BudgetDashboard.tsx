@@ -117,7 +117,7 @@ interface GroupMembershipData {
   } | null;
 }
 
-export const BillCyclesDashboard = () => {
+export const BudgetDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
@@ -529,7 +529,7 @@ export const BillCyclesDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/bill-cycles/add');
+    navigate('/settings/manual-journal/add');
   };
 
   // Render membership status badge
@@ -568,120 +568,249 @@ export const BillCyclesDashboard = () => {
     );
   };
 
- 
-  const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'id', label: 'ID', sortable: true },
-  { key: 'bill_cycle_name', label: 'Bill Cycle Name', sortable: true },
-  { key: 'start_date', label: 'Start Date', sortable: true },
-  { key: 'end_date', label: 'End Date', sortable: true },
-  { key: 'frequency', label: 'Frequency', sortable: true },
-  { key: 'charges', label: 'Charges', sortable: false },
-  { key: 'payment_due_in', label: 'Payment Due In', sortable: true },
-  { key: 'interest', label: 'Interest', sortable: true },
-  { key: 'fine', label: 'Fine', sortable: true },
-  { key: 'created_on', label: 'Created On', sortable: true },
-  { key: 'created_by', label: 'Created By', sortable: true },
-  { key: 'active', label: 'Active', sortable: true }
+  // Define columns for EnhancedTable
+  // const columns = [
+  //   { key: 'actions', label: 'Actions', sortable: false },
+  //   { key: 'id', label: 'Group ID', sortable: true },
+  //   { key: 'membership_plan_id', label: 'Plan ID', sortable: true },
+  //   { key: 'member_count', label: 'Members', sortable: false },
+  //   { key: 'member_names', label: 'Member Names', sortable: false },
+  //   { key: 'member_emails', label: 'Emails', sortable: false },
+  //   { key: 'member_mobiles', label: 'Mobiles', sortable: false },
+  //   { key: 'site_name', label: 'Site Name', sortable: true },
+  //   { key: 'start_date', label: 'Start Date', sortable: true },
+  //   { key: 'end_date', label: 'End Date', sortable: true },
+  //   { key: 'referred_by', label: 'Referred By', sortable: true },
+  //   { key: 'membershipStatus', label: 'Status', sortable: false },
+  //   { key: 'created_at', label: 'Created On', sortable: true }
+  // ];
+
+// const columns = [
+//   { key: 'actions', label: 'Actions', sortable: false },
+//   { key: 'date', label: 'Date', sortable: true },
+//   { key: 'journal', label: 'Journal', sortable: true },
+//   { key: 'reference_number', label: 'Reference Number', sortable: true },
+//   { key: 'status', label: 'Status', sortable: true },
+//   { key: 'notes', label: 'Notes', sortable: false },
+//   { key: 'amount', label: 'Amount', sortable: true },
+//   { key: 'reporting_method', label: 'Reporting Method', sortable: true }
+// ];
+
+const columns = [
+  { key: 'select', label: '', sortable: false },
+  { key: 'actions', label: 'Action', sortable: false },
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'financial_year', label: 'Financial Year', sortable: true },
+  { key: 'budget_period', label: 'Budget Period', sortable: true },
 ];
 
+  
 
   // Render cell content
-const renderCell = (item: any, columnKey: string) => {
+//   const renderCell = (item: GroupMembershipData, columnKey: string) => {
+//     if (columnKey === 'actions') {
+//       return (
+//         <div className="flex gap-2">
+//           <Button
+//             variant="ghost"
+//             onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
+//             title="View Details"
+//             className="p-0"
+//           >
+//             {/* <Eye className="w-4 h-4" /> */}
+//           </Button>
+//           <Button
+//             variant="ghost"
+//             onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
+//             title="Edit"
+//             className="p-0"
+//           >
+//             {/* <Edit className="w-4 h-4" /> */}
+//           </Button>
+//         </div>
+//       );
+//     }
+
+//     if (columnKey === 'member_count') {
+//       return (
+//         <div className="flex items-center gap-2">
+//           <Users className="w-4 h-4 text-[#C72030]" />
+//           <span className="font-medium">{item.club_members?.length || 0}</span>
+//         </div>
+//       );
+//     }
+
+//     if (columnKey === 'member_names') {
+//       const names = item.club_members?.map(m => m.user_name).filter(Boolean);
+//       if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
+      
+//       return (
+//         <div className="flex flex-col gap-1">
+//           {names.slice(0, 2).map((name, idx) => (
+//             <span key={idx} className="text-sm">{name}</span>
+//           ))}
+//           {names.length > 2 && (
+//             <span 
+//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+//               onClick={() => {
+//                 setModalData({
+//                   isOpen: true,
+//                   title: 'Member Names',
+//                   items: names
+//                 });
+//               }}
+//             >
+//               +{names.length - 2} more
+//             </span>
+//           )}
+//         </div>
+//       );
+//     }
+
+//     if (columnKey === 'member_emails') {
+//       const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
+//       if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
+      
+//       return (
+//         <div className="flex flex-col gap-1">
+//           {emails.slice(0, 2).map((email, idx) => (
+//             <span key={idx} className="text-sm">{email}</span>
+//           ))}
+//           {emails.length > 2 && (
+//             <span 
+//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+//               onClick={() => {
+//                 setModalData({
+//                   isOpen: true,
+//                   title: 'Member Emails',
+//                   items: emails
+//                 });
+//               }}
+//             >
+//               +{emails.length - 2} more
+//             </span>
+//           )}
+//         </div>
+//       );
+//     }
+
+//     if (columnKey === 'member_mobiles') {
+//       const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
+//       if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
+      
+//       return (
+//         <div className="flex flex-col gap-1">
+//           {mobiles.slice(0, 2).map((mobile, idx) => (
+//             <span key={idx} className="text-sm">{mobile}</span>
+//           ))}
+//           {mobiles.length > 2 && (
+//             <span 
+//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+//               onClick={() => {
+//                 setModalData({
+//                   isOpen: true,
+//                   title: 'Member Mobiles',
+//                   items: mobiles
+//                 });
+//               }}
+//             >
+//               +{mobiles.length - 2} more
+//             </span>
+//           )}
+//         </div>
+//       );
+//     }
+
+//     if (columnKey === 'site_name') {
+//       const siteName = item.club_members?.[0]?.site_name;
+//       return siteName || <span className="text-gray-400">-</span>;
+//     }
+
+//     if (columnKey === 'membershipStatus') {
+//       return renderStatusBadge(item.start_date, item.end_date, false);
+//     }
+
+//     if (columnKey === 'start_date' || columnKey === 'end_date') {
+//       const dateValue = item[columnKey];
+//       if (!dateValue) return <span className="text-gray-400">-</span>;
+//       return new Date(dateValue).toLocaleDateString('en-GB');
+//     }
+
+//     if (columnKey === 'created_at') {
+//       const createdAt = item.club_members?.[0]?.created_at;
+//       if (!createdAt) return <span className="text-gray-400">-</span>;
+//       return new Date(createdAt).toLocaleDateString('en-GB');
+//     }
+
+//     if (columnKey === 'referred_by') {
+//       return item.referred_by || <span className="text-gray-400">-</span>;
+//     }
+
+//     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+//       return <span className="text-gray-400">--</span>;
+//     }
+
+//     return item[columnKey];
+//   };
+
+  const renderCell = (item: any, columnKey: string) => {
+  // Checkbox column
+  if (columnKey === 'select') {
+    return (
+      <input
+        type="checkbox"
+        className="w-4 h-4 cursor-pointer"
+      />
+    );
+  }
+
+  // Action column (View + Edit)
   if (columnKey === 'actions') {
     return (
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/bill-cycles/details`)}
-          title="View"
           className="p-0"
+          title="View"
+          onClick={() => navigate(`/maintenance/${item.id}`)}
         >
-          <Eye className="w-4 h-4" />
+          {/* <Eye className="w-4 h-4 text-gray-600" /> */}
         </Button>
 
         <Button
           variant="ghost"
-          onClick={() => navigate(`/bill-cycles/${item.id}/edit`)}
-          title="Edit"
           className="p-0"
+          title="Edit"
+          onClick={() => navigate(`/maintenance/${item.id}/edit`)}
         >
-          {/* <Edit className="w-4 h-4" /> */}
+          {/* <Edit className="w-4 h-4 text-[#C72030]" /> */}
         </Button>
       </div>
     );
   }
 
-  if (columnKey === 'id') {
-    return item.id ?? <span className="text-gray-400">--</span>;
+  // Name column
+  if (columnKey === 'name') {
+    return item.name || <span className="text-gray-400">-</span>;
   }
 
-  if (columnKey === 'bill_cycle_name') {
-    return item.bill_cycle_name || <span className="text-gray-400">--</span>;
+  // Financial Year column
+  if (columnKey === 'financial_year') {
+    return item.financial_year || <span className="text-gray-400">-</span>;
   }
 
-  if (columnKey === 'start_date' || columnKey === 'end_date') {
-    const date = item[columnKey];
-    if (!date) return <span className="text-gray-400">--</span>;
-    return new Date(date).toLocaleDateString('en-GB');
+  // Budget Period column
+  if (columnKey === 'budget_period') {
+    return item.budget_period || <span className="text-gray-400">-</span>;
   }
 
-  if (columnKey === 'frequency') {
-    return item.frequency || <span className="text-gray-400">--</span>;
+  // Fallback
+  if (!item[columnKey]) {
+    return <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'charges') {
-    // adjust based on API (count / amount / array)
-    if (Array.isArray(item.charges)) {
-      return item.charges.length;
-    }
-    return item.charges ?? <span className="text-gray-400">--</span>;
-  }
-
-  if (columnKey === 'payment_due_in') {
-    return item.payment_due_in
-      ? `${item.payment_due_in} days`
-      : <span className="text-gray-400">--</span>;
-  }
-
-  if (columnKey === 'interest') {
-    return item.interest
-      ? `${item.interest}%`
-      : <span className="text-gray-400">--</span>;
-  }
-
-  if (columnKey === 'fine') {
-    return item.fine
-      ? `₹${item.fine}`
-      : <span className="text-gray-400">--</span>;
-  }
-
-  if (columnKey === 'created_on') {
-    if (!item.created_on) return <span className="text-gray-400">--</span>;
-    return new Date(item.created_on).toLocaleDateString('en-GB');
-  }
-
-  if (columnKey === 'created_by') {
-    return item.created_by || <span className="text-gray-400">--</span>;
-  }
-
-  if (columnKey === 'active') {
-    return (
-      <span
-        className={`px-2 py-1 text-xs font-medium rounded-full ${
-          item.active
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
-        }`}
-      >
-        {item.active ? 'Active' : 'Inactive'}
-      </span>
-    );
-  }
-
-  return <span className="text-gray-400">--</span>;
+  return item[columnKey];
 };
-
 
 
   // Custom left actions
@@ -810,4 +939,4 @@ const renderCell = (item: any, columnKey: string) => {
   );
 };
 
-export default BillCyclesDashboard;
+export default BudgetDashboard;
