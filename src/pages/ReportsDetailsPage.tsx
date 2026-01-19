@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, File, FileText, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, File, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import {
@@ -504,14 +504,17 @@ const ReportsDetailsPage = () => {
                 <div className="bg-[#F6F4EE] px-6 py-4 flex items-center justify-between border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <FileText size={22} />
+                            <File size={22} />
                         </div>
                         <h2 className="text-lg font-semibold text-gray-900">
                             Report Detail
                         </h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className={`${getStatusColor(reviewStatus).bg} ${getStatusColor(reviewStatus).text} px-3 py-1 rounded text-sm font-medium`}>
+                        <span className={`${getStatusColor(reviewStatus).bg} ${getStatusColor(reviewStatus).text} px-3 py-1 rounded text-sm flex items-center gap-2`}>
+                            <svg width="13" height="14" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6.1875 6.75V3.9375C6.1875 3.78832 6.24676 3.64524 6.35225 3.53975C6.45774 3.43426 6.60082 3.375 6.75 3.375C6.89918 3.375 7.04226 3.43426 7.14775 3.53975C7.25324 3.64524 7.3125 3.78832 7.3125 3.9375V6.75C7.3125 6.89918 7.25324 7.04226 7.14775 7.14775C7.04226 7.25324 6.89918 7.3125 6.75 7.3125C6.60082 7.3125 6.45774 7.25324 6.35225 7.14775C6.24676 7.04226 6.1875 6.89918 6.1875 6.75ZM6.75 10.125C6.91688 10.125 7.08001 10.0755 7.21876 9.9828C7.35752 9.89009 7.46566 9.75831 7.52952 9.60414C7.59338 9.44996 7.61009 9.28031 7.57754 9.11664C7.54498 8.95297 7.46462 8.80263 7.34662 8.68463C7.22862 8.56663 7.07828 8.48627 6.91461 8.45371C6.75094 8.42116 6.58129 8.43787 6.42711 8.50173C6.27294 8.56559 6.14116 8.67373 6.04845 8.81249C5.95573 8.95124 5.90625 9.11437 5.90625 9.28125C5.90625 9.50503 5.99514 9.71964 6.15338 9.87787C6.31161 10.0361 6.52622 10.125 6.75 10.125ZM13.5 1.125V5.0625C13.5 8.76937 11.7056 11.0159 10.2002 12.2477C8.57883 13.5738 6.96586 14.0245 6.89555 14.0428C6.79887 14.0691 6.69692 14.0691 6.60023 14.0428C6.52992 14.0245 4.91906 13.5738 3.29555 12.2477C1.79438 11.0159 0 8.76937 0 5.0625V1.125C0 0.826631 0.118526 0.540483 0.329505 0.329505C0.540483 0.118526 0.826631 0 1.125 0H12.375C12.6734 0 12.9595 0.118526 13.1705 0.329505C13.3815 0.540483 13.5 0.826631 13.5 1.125ZM12.375 1.125H1.125V5.0625C1.125 7.68516 2.09672 9.8093 4.01273 11.3773C4.82853 12.0445 5.75498 12.5635 6.75 12.9108C7.75821 12.5573 8.69624 12.0289 9.52102 11.3498C11.4145 9.78469 12.375 7.66898 12.375 5.0625V1.125Z" fill="#1A1A1A" />
+                            </svg>
                             {formatStatusDisplay(reviewStatus)}
                         </span>
                     </div>
@@ -525,7 +528,6 @@ const ReportsDetailsPage = () => {
                         <div className="space-y-6">
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Report by</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {reportDetails?.reported_by}
                                 </span>
@@ -533,7 +535,6 @@ const ReportsDetailsPage = () => {
 
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Report Date</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {getDateFromTimestamp(reportDetails?.created_at)}
                                 </span>
@@ -541,7 +542,6 @@ const ReportsDetailsPage = () => {
 
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Status</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {reportDetails?.active ? "Active" : "Inactive"}
                                 </span>
@@ -549,7 +549,6 @@ const ReportsDetailsPage = () => {
 
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Issue Description</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium text-sm">
                                     {reportDetails?.description}
                                 </span>
@@ -560,7 +559,6 @@ const ReportsDetailsPage = () => {
                         <div className="space-y-6">
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Report Against</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {reportDetails?.reported_against || "Raj"}
                                 </span>
@@ -568,7 +566,6 @@ const ReportsDetailsPage = () => {
 
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Report Time</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {getTimeFromTimestamp(reportDetails?.created_at)}
                                 </span>
@@ -576,16 +573,15 @@ const ReportsDetailsPage = () => {
 
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Review Status</span>
-                                <span className="text-gray-500 mx-2">:</span>
                                 <select
                                     value={reviewStatus}
                                     onChange={handleStatusChange}
                                     disabled={updatingStatus}
-                                    className="border border-gray-300 rounded px-3 py-2 text-sm font-medium text-gray-900 bg-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="border border-gray-300 rounded pr-2 py-1 text-sm text-gray-900 bg-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     <option value="under_review">Under Review</option>
-                                    <option value="action_in_progress">In Progress</option>
-                                    <option value="resolved">Resolved</option>
+                                    <option value="action_in_progress">Action In Progress</option>
+                                    <option value="resolve">Resolve</option>
                                     <option value="closed">Closed</option>
                                 </select>
                                 {updatingStatus && (
@@ -603,12 +599,18 @@ const ReportsDetailsPage = () => {
                     <div className="bg-[#F6F4EE] px-6 py-4 flex items-center justify-between border-b border-gray-200">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                <FileText size={22} />
+                                <File size={22} />
                             </div>
                             <h2 className="text-lg font-semibold text-gray-900">
                                 Reported Content
                             </h2>
                         </div>
+                        <span className={`${getStatusColor(reviewStatus).bg} ${getStatusColor(reviewStatus).text} px-3 py-1 rounded text-sm flex items-center gap-2`}>
+                            <svg width="13" height="14" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6.1875 6.75V3.9375C6.1875 3.78832 6.24676 3.64524 6.35225 3.53975C6.45774 3.43426 6.60082 3.375 6.75 3.375C6.89918 3.375 7.04226 3.43426 7.14775 3.53975C7.25324 3.64524 7.3125 3.78832 7.3125 3.9375V6.75C7.3125 6.89918 7.25324 7.04226 7.14775 7.14775C7.04226 7.25324 6.89918 7.3125 6.75 7.3125C6.60082 7.3125 6.45774 7.25324 6.35225 7.14775C6.24676 7.04226 6.1875 6.89918 6.1875 6.75ZM6.75 10.125C6.91688 10.125 7.08001 10.0755 7.21876 9.9828C7.35752 9.89009 7.46566 9.75831 7.52952 9.60414C7.59338 9.44996 7.61009 9.28031 7.57754 9.11664C7.54498 8.95297 7.46462 8.80263 7.34662 8.68463C7.22862 8.56663 7.07828 8.48627 6.91461 8.45371C6.75094 8.42116 6.58129 8.43787 6.42711 8.50173C6.27294 8.56559 6.14116 8.67373 6.04845 8.81249C5.95573 8.95124 5.90625 9.11437 5.90625 9.28125C5.90625 9.50503 5.99514 9.71964 6.15338 9.87787C6.31161 10.0361 6.52622 10.125 6.75 10.125ZM13.5 1.125V5.0625C13.5 8.76937 11.7056 11.0159 10.2002 12.2477C8.57883 13.5738 6.96586 14.0245 6.89555 14.0428C6.79887 14.0691 6.69692 14.0691 6.60023 14.0428C6.52992 14.0245 4.91906 13.5738 3.29555 12.2477C1.79438 11.0159 0 8.76937 0 5.0625V1.125C0 0.826631 0.118526 0.540483 0.329505 0.329505C0.540483 0.118526 0.826631 0 1.125 0H12.375C12.6734 0 12.9595 0.118526 13.1705 0.329505C13.3815 0.540483 13.5 0.826631 13.5 1.125ZM12.375 1.125H1.125V5.0625C1.125 7.68516 2.09672 9.8093 4.01273 11.3773C4.82853 12.0445 5.75498 12.5635 6.75 12.9108C7.75821 12.5573 8.69624 12.0289 9.52102 11.3498C11.4145 9.78469 12.375 7.66898 12.375 5.0625V1.125Z" fill="#1A1A1A" />
+                            </svg>
+                            {formatStatusDisplay(reviewStatus)}
+                        </span>
                     </div>
                     <div className="p-6 bg-white">
                         <div className="flex items-start justify-between mb-4">
