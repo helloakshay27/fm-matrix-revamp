@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { cache } from "@/utils/cacheUtils";
 import { baseClient } from "@/utils/withoutTokenBase";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
@@ -398,32 +397,19 @@ export const ProjectsDashboard = () => {
 
         filters +=
           (filters ? "&" : "") +
-          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${getUserId()}&page=${page}`;
+          `page=${page}`;
 
-        // Create cache key based on filters and page
-        const cacheKey = `projects_${filters}_${page}`;
-
-        // Try to use cached data first (stale-while-revalidate)
+        // Fetch data
         if (!isLoadMore && page === 1) {
-          const cachedResult = await cache.getOrFetch(
-            cacheKey,
-            async () => {
-              const response = await dispatch(
-                filterProjects({ token, baseUrl, filters })
-              ).unwrap();
-              return response;
-            },
-            2 * 60 * 1000, // Fresh for 2 minutes
-            10 * 60 * 1000 // Stale up to 10 minutes
-          );
+          const response = await dispatch(
+            filterProjects({ token, baseUrl, filters })
+          ).unwrap();
 
-          // cachedResult has structure: { data: <actual-response>, fromCache: boolean }
-          const actualData = cachedResult?.data || cachedResult;
-          const projectsData = actualData?.project_managements || [];
+          const projectsData = response?.data?.project_managements || response?.project_managements || [];
           const transformedData = transformedProjects(projectsData);
           setProjects(transformedData);
 
-          const paginationData = actualData?.pagination;
+          const paginationData = response?.data?.pagination || response?.pagination;
           setHasMore(page < (paginationData?.total_pages || 1));
           setCurrentPage(page);
         } else {
@@ -554,14 +540,7 @@ export const ProjectsDashboard = () => {
 
   const getTeams = useCallback(async () => {
     try {
-      await cache.getOrFetch(
-        "project_teams",
-        async () => {
-          return await dispatch(fetchProjectTeams()).unwrap();
-        },
-        5 * 60 * 1000, // Fresh for 5 minutes
-        30 * 60 * 1000 // Stale up to 30 minutes
-      );
+      await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -580,14 +559,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = useCallback(async () => {
     try {
-      await cache.getOrFetch(
-        "project_tags",
-        async () => {
-          return await dispatch(fetchProjectsTags()).unwrap();
-        },
-        5 * 60 * 1000, // Fresh for 5 minutes
-        30 * 60 * 1000 // Stale up to 30 minutes
-      );
+      await dispatch(fetchProjectsTags()).unwrap();
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -628,7 +600,6 @@ export const ProjectsDashboard = () => {
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
       // Invalidate cache after project creation
-      cache.invalidatePattern("projects_*");
       fetchData(1, "", false, debouncedSearchTerm);
     } catch (error) {
       console.log(error);
