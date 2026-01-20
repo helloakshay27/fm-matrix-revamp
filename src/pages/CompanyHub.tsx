@@ -33,6 +33,9 @@ import "swiper/css/pagination";
 import "swiper/css/scrollbar";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
+import ceoImage from "../assets/ceo/ceoimage.jpeg";
+import employeeImage from "../assets/employee/employee1.jpeg";
+
 import businessPlanIcon from "@/assets/business_plan.png";
 import ourGroupIcon from "@/assets/our_group.png";
 import productsIcon from "@/assets/products.png";
@@ -58,7 +61,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
   // Get user data from localStorage
   const user = getUser();
-  const displayName = userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
+  const displayName =
+    userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   // State for video popup
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -953,7 +957,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               {/* CEO Image - Flush to Bottom Left */}
               <div className="absolute bottom-0 left-0 w-[200px] z-20">
                 <img
-                  src="/src/assets/ceo/ceoimage.jpeg"
+                  src={ceoImage}
                   alt="Chetan Bafna"
                   className="w-full object-bottom drop-shadow-2xl"
                 />
@@ -1042,7 +1046,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             <div className="flex-1 flex items-center justify-start pl-2">
               <div className="w-48 h-48 rounded-full border-4 border-white/20 overflow-hidden shadow-sm">
                 <img
-                  src="/src/assets/employee/employee1.jpeg"
+                  src={employeeImage}
                   alt="Employee"
                   className="w-full h-full object-cover"
                 />
@@ -1053,9 +1057,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             <div className="flex justify-between items-end w-full pb-2">
               {/* Name & Role */}
               <div className="flex flex-col items-start gap-1">
-                <h4 className="text-2xl font-bold leading-tight">
-                  Akshay 
-                </h4>
+                <h4 className="text-2xl font-bold leading-tight">Akshay</h4>
                 <p className="text-sm font-medium opacity-80 mb-1">
                   Frontend Developer
                 </p>
