@@ -400,7 +400,7 @@ export const ProjectsDashboard = () => {
 
         filters +=
           (filters ? "&" : "") +
-          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${getUserId()}&page=${page}`;
+          `page=${page}`;
 
         // Create cache key based on filters and page
         const cacheKey = `projects_${filters}_${page}`;

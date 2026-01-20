@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, AlertCircle, File, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -28,6 +32,8 @@ const CommunityUserDetails = () => {
 
     const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; reportId: number | null }>({ open: false, reportId: null });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchUserDetails();
@@ -82,18 +88,29 @@ const CommunityUserDetails = () => {
     };
 
     const deleteReport = async (reportId: number) => {
+        setDeleteConfirmation({ open: true, reportId });
+    };
+
+    const confirmDeleteReport = async () => {
+        if (!deleteConfirmation.reportId) return;
+
+        setIsDeleting(true);
         try {
-            await axios.get(`https://${baseUrl}/communities/${communityId}/remove_report.json?report_id=${reportId}`, {
+            await axios.get(`https://${baseUrl}/communities/${communityId}/remove_report.json?report_id=${deleteConfirmation.reportId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
-            })
+            });
             toast.success("Report deleted successfully");
-            fetchUserDetails();
+            await fetchUserDetails();
         } catch (error) {
-            console.log(error)
+            console.log(error);
+            toast.error("Failed to delete report");
+        } finally {
+            setIsDeleting(false);
+            setDeleteConfirmation({ open: false, reportId: null });
         }
-    }
+    };
 
     if (loading) {
         return (
@@ -118,7 +135,7 @@ const CommunityUserDetails = () => {
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
             {/* Header with back button */}
-            <div className="flex items-center justify-between gap-4 mb-6">
+            {/* <div className="flex items-center justify-between gap-4 mb-6">
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
@@ -127,7 +144,8 @@ const CommunityUserDetails = () => {
                     <ArrowLeft className="w-4 h-4" />
                     Back
                 </Button>
-            </div>
+            </div> */}
+            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4"><Link to={'/pulse/community'}>Community</Link> <span className="font-normal">{">"}</span> View User Details</h1>
 
             {/* Main Content Card */}
             <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
@@ -240,7 +258,7 @@ const CommunityUserDetails = () => {
                                     </Button>
                                 </div>
                             </div>
-                            <div className="p-6 bg-white">
+                            <div className="p-6 bg-white grid grid-cols-3 items-start">
                                 <div className="space-y-4">
                                     <div>
                                         <label className="text-sm text-gray-500 block mb-2">Report:</label>
@@ -255,11 +273,48 @@ const CommunityUserDetails = () => {
                                         <label className="text-sm text-gray-500 block">Reported On {formatReportedDate(report.created_at)}</label>
                                     </div>
                                 </div>
+
+                                <div className="space-y-4 flex items-center gap-3">
+                                    <div className="flex items-start">
+                                        <span className="text-sm text-gray-500 block min-w-[120px]">Issue</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {report.description}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ))
                 }
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmation.open} onOpenChange={(open) => {
+                if (!open) setDeleteConfirmation({ open: false, reportId: null });
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to Delete<br />this Report?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setDeleteConfirmation({ open: false, reportId: null })}
+                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmDeleteReport}
+                                disabled={isDeleting}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeleting ? "Deleting..." : "Yes"}
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

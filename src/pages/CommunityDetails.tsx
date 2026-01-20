@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +16,7 @@ const CommunityDetails = () => {
 
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
-            <div className="flex items-center justify-between mb-6">
+            {/* <div className="flex items-center justify-between mb-6">
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
@@ -25,7 +25,9 @@ const CommunityDetails = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                 </Button>
-            </div>
+            </div> */}
+
+            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4"><Link to={'/pulse/community'}>Community</Link> <span className="font-normal">{">"}</span> Community Details</h1>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
