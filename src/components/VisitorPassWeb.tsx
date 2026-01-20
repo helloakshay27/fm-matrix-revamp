@@ -64,6 +64,9 @@ type ApiResponse = Partial<{
   guest_from: string | null;
   guest_email: string | null;
   visitor_consent_form?: { value?: string; description?: string };
+  // optional alternate host name fields that some APIs provide
+  person_to_meet_name?: string | null;
+  visited_to_host_name?: string | null;
 }>;
 
 // derive token from query param visitor_code or from URL path when possible
@@ -162,7 +165,8 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const name = data?.guest_name ?? "null";
   const role = data?.guest_type ?? "null";
   const otp = data?.otp_string ?? "null";
-  const host = data?.visitor_host_name ?? "null";
+  const host =
+    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "null";
   const passId = data?.pass_number ? String(data.id) : "null";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
