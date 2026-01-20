@@ -567,7 +567,7 @@ export const BroadcastDashboard = () => {
 
   const cardValues = [
     { title: "Total Notices", value: cardData.total_notices, icon: <Rows4 className="w-5 h-5" color="#C72030" /> },
-    { title: "Important", value: cardData.important_notices, icon: <Star className="w-5 h-5" color="#C72030" /> },
+    { title: "Pop-up Notices", value: cardData.important_notices, icon: <Star className="w-5 h-5" color="#C72030" /> },
     { title: "Expiring Soon", value: cardData.expiring_soon_notices, icon: <CalendarX className="w-5 h-5" color="#C72030" /> },
     { title: "Active Now", value: cardData.active_notices, icon: <ThumbsUp className="w-5 h-5" color="#C72030" /> },
     { title: "Inactive", value: cardData.inactive_notices, icon: <ThumbsDown className="w-5 h-5" color="#C72030" /> },
