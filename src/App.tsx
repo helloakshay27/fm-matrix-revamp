@@ -170,6 +170,7 @@ import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
 // Import Carpool pages
 import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
+import { RideDetail } from "./pages/pulse/RideDetail";
 
 // Import Icons pages
 import { IconsDashboard } from "./pages/IconsDashboard";
@@ -1487,14 +1488,6 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <CompanyHub />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/business-plan"
-                      element={
-                        <ProtectedRoute>
-                          <BusinessPlan />
                         </ProtectedRoute>
                       }
                     />
@@ -4028,6 +4021,10 @@ function App() {
                     <Route
                       path="/pulse/carpool"
                       element={<CarpoolDashboard />}
+                    />
+                    <Route
+                      path="/pulse/carpool/ride-detail"
+                      element={<RideDetail />}
                     />
 
                     <Route
