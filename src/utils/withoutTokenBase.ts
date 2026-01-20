@@ -133,7 +133,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (orgId) {
-          apiUrl = `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
