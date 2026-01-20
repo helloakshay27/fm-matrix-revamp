@@ -315,13 +315,15 @@ export const FolderDetailsPage = () => {
   const handlePreview = (itemId: string) => {
     const item = folderItems.find((i) => i.id.toString() === itemId);
     if (item) {
-      // Get the document from folderData to access preview_url
+      // Get the document from folderData to access attachment ID
       const doc = folderData?.documents?.find(
         (d) => d.id.toString() === itemId
       );
-      if (doc?.attachment?.preview_url) {
-        // Open preview in new window
-        window.open(doc.attachment.preview_url, "_blank");
+      if (doc?.attachment?.id) {
+        // Navigate to document editor with attachment ID
+        navigate(`/maintenance/documents/editor/${doc.attachment.id}`);
+      } else {
+        toast.error("Document attachment not found");
       }
     }
   };
