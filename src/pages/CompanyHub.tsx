@@ -397,16 +397,15 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   }
                 }}
               >
-                <div className="rounded-full bg-white bg-opacity-60 border-2 border-white flex items-center justify-center shadow-md group-hover:bg-white group-hover:scale-110 transition-all duration-300 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32">
-                  <item.icon className="w-6 h-6 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-gray-700" />
+                <div className="rounded-full bg-white bg-opacity-90 border-2 border-white flex items-center justify-center shadow-md group-hover:bg-white group-hover:scale-110 transition-all duration-300 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32">
                   {item.image ? (
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover rounded-full"
+                      className="w-[90%] h-[90%] object-contain p-1"
                     />
                   ) : (
-                    <item.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 text-gray-700" />
+                    <item.icon className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 text-gray-700" />
                   )}
                 </div>
                 <span className="text-xs sm:text-sm lg:text-base font-semibold text-gray-800 text-center whitespace-nowrap">
