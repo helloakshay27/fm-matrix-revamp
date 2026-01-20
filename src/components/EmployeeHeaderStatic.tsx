@@ -49,7 +49,7 @@ import { toast } from "sonner";
 const employeeModules = [
   { name: "Company Hub", icon: Globe },
   { name: "Dashboard", icon: Home },
-  { name: "Project Task", icon: FolderKanban },
+  { name: "PATM", icon: FolderKanban },
   { name: "Ticket", icon: Ticket },
   { name: "Visitors", icon: Users },
   { name: "Calendar", icon: Calendar1 },
@@ -115,15 +115,24 @@ export const EmployeeHeaderStatic: React.FC = () => {
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
-  // Module visibility management
+  // Module visibility management with responsive max modules
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const MAX_VISIBLE_MODULES =
+    windowWidth >= 1400 ? 10 : windowWidth >= 1200 ? 9 : 7;
+
   const [visibleModules, setVisibleModules] = useState<string[]>(() => {
     const saved = localStorage.getItem("employeeVisibleModules");
     return saved
       ? JSON.parse(saved)
-      : employeeModules.slice(0, 10).map((m) => m.name);
+      : employeeModules.slice(0, MAX_VISIBLE_MODULES).map((m) => m.name);
   });
-
-  const MAX_VISIBLE_MODULES = 9;
 
   // Ensure "Company Hub" and "Dashboard" are always the first modules
   const orderedVisibleModules = [...visibleModules];
@@ -496,17 +505,22 @@ export const EmployeeHeaderStatic: React.FC = () => {
         </div>
 
         {/* Center Section - Module Navigation */}
-        <div className="flex-1 flex justify-center px-2 lg:px-4 overflow-x-auto scrollbar-hide">
+        <div className="flex-1 flex justify-start px-2 lg:px-4 overflow-x-auto scrollbar-hide">
           <TooltipProvider delayDuration={300}>
-            <div className="flex items-center gap-1 rounded-lg p-1">
+            <div className="flex items-center gap-2 rounded-lg p-1">
               {/* Main visible modules */}
               {displayedModules.map((module) => {
                 const Icon = module.icon;
                 const isActive = currentSection === module.name;
+                // Show full name above 1400px (up to 12 chars), truncate below
                 const truncatedName =
-                  module.name.length > 8
-                    ? module.name.substring(0, 8) + ".."
-                    : module.name;
+                  windowWidth >= 1400
+                    ? module.name.length > 12
+                      ? module.name.substring(0, 12) + ".."
+                      : module.name
+                    : module.name.length > 8
+                      ? module.name.substring(0, 8) + ".."
+                      : module.name;
 
                 return (
                   <Tooltip key={module.name}>
@@ -621,7 +635,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
             className="flex items-center gap-2"
             onClick={() => navigate("/employee-wallet")}
           >
-            <Wallet /> ₹ {availableBalance.toFixed(2)}
+            ₹ {availableBalance.toFixed(2)}
           </button>
           <button
             className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
