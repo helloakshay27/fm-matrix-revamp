@@ -267,6 +267,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
       case "Dashboard":
         navigate("/employee/dashboard");
         break;
+      case "PATM":
       case "Project Task":
         navigate("/vas/projects");
         break;
