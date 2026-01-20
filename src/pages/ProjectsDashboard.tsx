@@ -599,7 +599,6 @@ export const ProjectsDashboard = () => {
       };
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
-      // Invalidate cache after project creation
       fetchData(1, "", false, debouncedSearchTerm);
     } catch (error) {
       console.log(error);
