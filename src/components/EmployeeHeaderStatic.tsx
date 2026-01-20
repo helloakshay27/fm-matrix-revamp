@@ -621,7 +621,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
             className="flex items-center gap-2"
             onClick={() => navigate("/employee-wallet")}
           >
-            <Wallet /> ₹ {availableBalance.toFixed(2)}
+           ₹ {availableBalance.toFixed(2)}
           </button>
           <button
             className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"

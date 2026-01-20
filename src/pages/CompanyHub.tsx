@@ -31,13 +31,18 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/scrollbar";
 import { useNavigate } from "react-router-dom";
+import { getUser } from "../utils/auth";
 
 interface CompanyHubProps {
   userName?: string;
 }
 
-const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
+const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const navigate = useNavigate();
+
+  // Get user data from localStorage
+  const user = getUser();
+  const displayName = userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   // State for video popup
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -143,7 +148,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
         </button>
 
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 lg:mb-12">
-          Welcome, {userName}!
+          Welcome, {displayName}!
         </h1>
 
         <div className="relative">
@@ -255,7 +260,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
                 }}
               >
                 <div className="rounded-full bg-white bg-opacity-60 border-2 border-white flex items-center justify-center shadow-md group-hover:bg-white group-hover:scale-110 transition-all duration-300 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32">
-                  <item.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 text-gray-700" />
+                  <item.icon className="w-6 h-6 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-gray-700" />
                 </div>
                 <span className="text-xs sm:text-sm lg:text-base font-semibold text-gray-800 text-center whitespace-nowrap">
                   {item.name}
@@ -845,7 +850,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
               {/* CEO Image - Flush to Bottom Left */}
               <div className="absolute bottom-0 left-0 w-[200px] z-20">
                 <img
-                  src="/ceo-cutout.png"
+                  src="/src/assets/ceo/ceoimage.jpeg"
                   alt="Chetan Bafna"
                   className="w-full object-bottom drop-shadow-2xl"
                 />
@@ -934,7 +939,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
             <div className="flex-1 flex items-center justify-start pl-2">
               <div className="w-48 h-48 rounded-full border-4 border-white/20 overflow-hidden shadow-sm">
                 <img
-                  src="https://randomuser.me/api/portraits/men/32.jpg"
+                  src="/src/assets/employee/employee1.jpeg"
                   alt="Employee"
                   className="w-full h-full object-cover"
                 />
@@ -946,10 +951,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
               {/* Name & Role */}
               <div className="flex flex-col items-start gap-1">
                 <h4 className="text-2xl font-bold leading-tight">
-                  Jayesh Paresh
+                  Akshay 
                 </h4>
                 <p className="text-sm font-medium opacity-80 mb-1">
-                  Business Analyst
+                  Frontend Developer
                 </p>
               </div>
 
