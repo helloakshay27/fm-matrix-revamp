@@ -208,10 +208,11 @@ export const EmployeeHeader: React.FC = () => {
 
   // Module visibility management
   const [visibleModules, setVisibleModules] = useState<string[]>(() => {
-    const saved = localStorage.getItem("employeeVisibleModules");
-    return saved
-      ? JSON.parse(saved)
-      : employeeModules.slice(0, 9).map((m) => m.name);
+    // const saved = localStorage.getItem("employeeVisibleModules");
+    // return saved
+    //   ? JSON.parse(saved)
+    //   : employeeModules.slice(0, 9).map((m) => m.name);
+    return employeeModules.slice(0, 9).map((m) => m.name);
   });
 
   const MAX_VISIBLE_MODULES = 9;
@@ -422,10 +423,10 @@ export const EmployeeHeader: React.FC = () => {
       newVisibleModules.splice(targetIndex, 0, draggedModuleName);
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem(
-        "employeeVisibleModules",
-        JSON.stringify(newVisibleModules)
-      );
+      // localStorage.setItem(
+      //   "employeeVisibleModules",
+      //   JSON.stringify(newVisibleModules)
+      // );
     }
     // Case 2: Dragged module is hidden, target is visible - swap them
     else if (draggedIndex === -1 && targetIndex !== -1) {
@@ -433,10 +434,10 @@ export const EmployeeHeader: React.FC = () => {
       newVisibleModules[targetIndex] = draggedModuleName;
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem(
-        "employeeVisibleModules",
-        JSON.stringify(newVisibleModules)
-      );
+      // localStorage.setItem(
+      //   "employeeVisibleModules",
+      //   JSON.stringify(newVisibleModules)
+      // );
     }
   };
 
@@ -451,10 +452,10 @@ export const EmployeeHeader: React.FC = () => {
       : [...visibleModules, moduleName];
 
     setVisibleModules(newVisibleModules);
-    localStorage.setItem(
-      "employeeVisibleModules",
-      JSON.stringify(newVisibleModules)
-    );
+    // localStorage.setItem(
+    //   "employeeVisibleModules",
+    //   JSON.stringify(newVisibleModules)
+    // );
   };
 
   const userType = localStorage.getItem("userType");
