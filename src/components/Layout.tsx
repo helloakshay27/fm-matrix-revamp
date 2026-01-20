@@ -20,8 +20,10 @@ import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 import { EmployeeSidebar } from "./EmployeeSidebar";
+import { EmployeeSidebarStatic } from "./EmployeeSidebarStatic";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
+import { EmployeeHeaderStatic } from "./EmployeeHeaderStatic";
 import { ViewSelectionModal } from "./ViewSelectionModal";
 import { PulseSidebar } from "./PulseSidebar";
 import { PulseDynamicHeader } from "./PulseDynamicHeader";
@@ -121,7 +123,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (isEmployeeUser && isLocalhost) {
       // Only render sidebar for Project Task module
       if (currentSection === "Project Task") {
-        return <EmployeeSidebar />;
+        // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
+        if (
+          selectedCompany?.id === 300 ||
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199
+        ) {
+          return <EmployeeSidebar />;
+        }
+        return <EmployeeSidebarStatic />;
       }
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
@@ -315,8 +326,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         onComplete={() => setShowViewModal(false)}
       />
 
-      {/* Conditional Header - Use EmployeeHeader for employee users */}
-      {isEmployeeUser && isLocalhost ? <EmployeeHeader /> : <Header />}
+      {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
+      {isEmployeeUser && isLocalhost ? (
+        selectedCompany?.id === 300 ||
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ? (
+          <EmployeeHeader />
+        ) : (
+          <EmployeeHeaderStatic />
+        )
+      ) : (
+        <Header />
+      )}
 
       {renderSidebar()}
       {renderDynamicHeader()}
