@@ -103,7 +103,7 @@ export default function Todo() {
   const getTodos = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/todos.json?q[user_id_eq]=${JSON.parse(localStorage.getItem("user")).id}`,
+        `https://${baseUrl}/todos.json`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
