@@ -1490,6 +1490,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/business-plan"
+                      element={
+                        <ProtectedRoute>
+                          <BusinessPlan />
+                        </ProtectedRoute>
+                      }
+                    />
 
                     <Route path="/vas/channels" element={<ChannelsLayout />}>
                       <Route
