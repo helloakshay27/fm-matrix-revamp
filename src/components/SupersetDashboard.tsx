@@ -39,10 +39,8 @@ function SupersetDashboard() {
         "93d65f48f3b24ee90357e76fd3747b863dfba98a5445511b"
       );
     }
-    ids.forEach((id) => {
-      params.append("project_id[]", id.toString());
-    });
 
+    params.append("project_id", ids.join(","));
     return `https://superset.lockated.com/superset/dashboard/3/?${params.toString()}`;
   }, [token, selectedSiteId, ids]);
 

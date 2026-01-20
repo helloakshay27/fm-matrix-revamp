@@ -3,15 +3,11 @@ import { Button } from "@/components/ui/button";
 import { X, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Member {
     id: string;
@@ -147,22 +143,33 @@ export const MemberSelectionPanel: React.FC<MemberSelectionPanelProps> = ({
                 </div>
             </div>
 
-            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure want to remove the members?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-[#C72030] hover:bg-[#A61B28]">
-                            Remove
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                if (!open) setIsDialogOpen(false);
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to Remove<br />the selected member(s)?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setIsDialogOpen(false)}
+                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={isDeleting}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeleting ? "Deleting..." : "Yes"}
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
