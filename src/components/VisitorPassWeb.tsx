@@ -64,11 +64,22 @@ type ApiResponse = Partial<{
   guest_from: string | null;
   guest_email: string | null;
   visitor_consent_form?: { value?: string; description?: string };
+  // optional alternate host name fields that some APIs provide
+  person_to_meet_name?: string | null;
+  visited_to_host_name?: string | null;
 }>;
 
-// derive token from URL path when possible (/visitor/gatepass/:token)
-function extractTokenFromPath(): string | null {
+// derive token from query param visitor_code or from URL path when possible
+function extractToken(): string | null {
   if (typeof window === "undefined") return null;
+  // prefer query param ?visitor_code=...
+  try {
+    const qp = new URLSearchParams(window.location.search);
+    const code = qp.get("visitor_code") || qp.get("visitorCode") || qp.get("token");
+    if (code) return code;
+  } catch {
+    // ignore
+  }
   const parts = window.location.pathname.split("/").filter(Boolean);
   // If path contains 'gatepass' take the following segment as token
   const gateIdx = parts.findIndex((p) => p.toLowerCase() === "gatepass");
@@ -81,8 +92,8 @@ function extractTokenFromPath(): string | null {
 const DEFAULT_API = (() => {
   const base = "https://live-api.gophygital.work";
   const fallback = "";
-  const token = extractTokenFromPath() ?? fallback;
-  return `${base}/pms/visitors/${token}/gate_pass.json`;
+  const id = extractToken() ?? fallback;
+  return `${base}/pms/visitors/${id}/gate_pass.json`;
 })();
 
 const VisitorPassWeb: React.FC<VisitorPassProps> = ({
@@ -154,7 +165,8 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const name = data?.guest_name ?? "null";
   const role = data?.guest_type ?? "null";
   const otp = data?.otp_string ?? "null";
-  const host = data?.visitor_host_name ?? "null";
+  const host =
+    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "null";
   const passId = data?.pass_number ? String(data.id) : "null";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
