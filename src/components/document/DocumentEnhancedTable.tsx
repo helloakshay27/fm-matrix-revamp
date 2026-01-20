@@ -140,10 +140,10 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
             onClick={() => onViewDetails(item.id)}
           >
             {item.format &&
-            ["JPG", "JPEG", "PNG", "GIF", "WEBP", "BMP"].includes(
-              item.format.toUpperCase()
-            ) &&
-            item.preview_url ? (
+              ["JPG", "JPEG", "PNG", "GIF", "WEBP", "BMP"].includes(
+                item.format.toUpperCase()
+              ) &&
+              item.preview_url ? (
               <img
                 src={item.preview_url}
                 alt={item.folder_title}
@@ -226,15 +226,15 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
       {/* Action Bar */}
       <div className="flex items-center justify-between gap-3  p-4 rounded-lg shadow-sm  ">
         {/* Left: Action Button - Only show when NOT in file list view */}
-        {!isFileListView && (
-          <Button
-            onClick={onActionClick}
-            className="bg-[#C72030] hover:bg-[#A01828] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
-        )}
+        {/* {!isFileListView && ( */}
+        <Button
+          onClick={onActionClick}
+          className="bg-[#C72030] hover:bg-[#A01828] text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Action
+        </Button>
+        {/* )} */}
 
         {/* Right: Search, Filter, Sort, View Toggle */}
         <div className="flex items-center gap-3 ml-auto">
@@ -302,7 +302,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
                     <input
                       type="radio"
                       checked={sortBy === "title_asc"}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="text-[#C72030] focus:ring-[#C72030]"
                     />
                     <span className="text-sm">Title A-Z</span>
@@ -314,7 +314,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
                     <input
                       type="radio"
                       checked={sortBy === "title_desc"}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="text-[#C72030] focus:ring-[#C72030]"
                     />
                     <span className="text-sm">Title Z-A</span>
@@ -326,7 +326,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
                     <input
                       type="radio"
                       checked={sortBy === "size"}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="text-[#C72030] focus:ring-[#C72030]"
                     />
                     <span className="text-sm">Size</span>
@@ -338,7 +338,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
                     <input
                       type="radio"
                       checked={sortBy === "recent"}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="text-[#C72030] focus:ring-[#C72030]"
                     />
                     <span className="text-sm">Recently Modified</span>
@@ -352,22 +352,20 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
           <div className="flex border border-[#C72030] rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${
-                viewMode === "grid"
+              className={`p-2 transition-colors ${viewMode === "grid"
                   ? "bg-[#C72030] text-white"
                   : "text-[#C72030] hover:bg-red-50"
-              }`}
+                }`}
               title="Grid View"
             >
               <Grid3x3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("table")}
-              className={`p-2 border-l border-[#C72030] transition-colors ${
-                viewMode === "table"
+              className={`p-2 border-l border-[#C72030] transition-colors ${viewMode === "table"
                   ? "bg-[#C72030] text-white"
                   : "text-[#C72030] hover:bg-red-50"
-              }`}
+                }`}
               title="Table View"
             >
               <List className="w-4 h-4" />
@@ -376,11 +374,10 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
             {!isFileListView && (
               <button
                 onClick={() => setViewMode("tree")}
-                className={`p-2 border-l border-[#C72030] transition-colors ${
-                  viewMode === "tree"
+                className={`p-2 border-l border-[#C72030] transition-colors ${viewMode === "tree"
                     ? "bg-[#C72030] text-white"
                     : "text-[#C72030] hover:bg-red-50"
-                }`}
+                  }`}
                 title="Tree View"
               >
                 <FolderTree className="w-4 h-4" />

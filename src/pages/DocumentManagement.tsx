@@ -21,6 +21,11 @@ import {
   getFoldersList,
   FolderListItem,
   deleteFolder,
+  createDocument,
+  getCategories,
+  CreateDocumentPayload,
+  FolderPermission,
+  Category,
 } from "@/services/documentService";
 import { toast } from "sonner";
 import { FileIcon } from "@/components/document/FileIcon";
@@ -205,6 +210,8 @@ export const DocumentManagement = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
+  const [isCreating, setIsCreating] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState({
     title: "",
     folderName: "",
@@ -216,6 +223,19 @@ export const DocumentManagement = () => {
     createdDateTo: "",
     status: "",
   });
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Fetch folders data
   useEffect(() => {
@@ -295,8 +315,8 @@ export const DocumentManagement = () => {
         return (
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium ${document.status === "Active"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
               }`}
           >
             {document.status}
@@ -530,6 +550,330 @@ export const DocumentManagement = () => {
     }
   };
 
+  const handleAddPdf = async () => {
+    setIsCreating(true);
+    try {
+      // Generate random title for the blank PDF
+      const randomTitle = `PDF_${Date.now()}`;
+
+      // Fetch blank.pdf from public folder
+      const response = await fetch("/blank.pdf");
+      const pdfBlob = await response.blob();
+
+      // Convert PDF blob to base64
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64String = result.split(",")[1]; // Remove data:application/pdf;base64, prefix
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      // Create payload with blank PDF attachment
+      const permissions: FolderPermission[] = [
+        {
+          access_level: "all",
+          access_to: "Pms::Site",
+          access_ids: [],
+        },
+        {
+          access_level: "all",
+          access_to: "Community",
+          access_ids: [],
+        },
+      ];
+
+      const payload: CreateDocumentPayload = {
+        document: {
+          title: randomTitle,
+          folder_id: undefined,
+          category_id: categories[0]?.id || 1,
+          shares: [],
+          attachments: [
+            {
+              filename: "document.pdf",
+              content: `data:application/pdf;base64,${pdfBase64}`,
+              content_type: "application/pdf",
+            },
+          ],
+        },
+        permissions,
+      };
+
+      const createResponse = await createDocument(payload);
+
+      // Extract document ID from response and redirect to editor
+      const documentId = (createResponse as any)?.attachment?.id;
+
+      if (documentId) {
+        toast.success("Blank PDF created! Opening editor...");
+        navigate(`/maintenance/documents/editor/${documentId}`);
+      } else {
+        toast.error("Document created but could not open editor. Please try again.");
+        navigate("/maintenance/documents");
+      }
+    } catch (error: unknown) {
+      console.error("Error creating blank PDF:", error);
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create blank PDF. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleAddDoc = async () => {
+    setIsCreating(true);
+    try {
+      // Generate random title for the blank PDF
+      const randomTitle = `Doc_${Date.now()}`;
+
+      // Fetch blank.pdf from public folder
+      const response = await fetch("/blank.docx");
+      const pdfBlob = await response.blob();
+
+      // Convert PDF blob to base64
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64String = result.split(",")[1]; // Remove data:application/pdf;base64, prefix
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      // Create payload with blank PDF attachment
+      const permissions: FolderPermission[] = [
+        {
+          access_level: "all",
+          access_to: "Pms::Site",
+          access_ids: [],
+        },
+        {
+          access_level: "all",
+          access_to: "Community",
+          access_ids: [],
+        },
+      ];
+
+      const payload: CreateDocumentPayload = {
+        document: {
+          title: randomTitle,
+          folder_id: 297,
+          category_id: categories[0]?.id || 1,
+          shares: [],
+          attachments: [
+            {
+              filename: "document.docx",
+              content: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${pdfBase64}`,
+              content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            },
+          ],
+        },
+        permissions,
+      };
+
+      const createResponse = await createDocument(payload);
+
+      // Extract document ID from response and redirect to editor
+      const documentId = (createResponse as any)?.attachment?.id;
+
+      if (documentId) {
+        toast.success("Blank PDF created! Opening editor...");
+        navigate(`/maintenance/documents/editor/${documentId}`);
+      } else {
+        toast.error("Document created but could not open editor. Please try again.");
+        navigate("/maintenance/documents");
+      }
+    } catch (error: unknown) {
+      console.error("Error creating blank PDF:", error);
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create blank PDF. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleAddSheet = async () => {
+    setIsCreating(true);
+    try {
+      // Generate random title for the blank PDF
+      const randomTitle = `Sheet_${Date.now()}`;
+
+      // Fetch blank.pdf from public folder
+      const response = await fetch("/black.xlsx");
+      const pdfBlob = await response.blob();
+
+      // Convert PDF blob to base64
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64String = result.split(",")[1]; // Remove data:application/pdf;base64, prefix
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      // Create payload with blank PDF attachment
+      const permissions: FolderPermission[] = [
+        {
+          access_level: "all",
+          access_to: "Pms::Site",
+          access_ids: [],
+        },
+        {
+          access_level: "all",
+          access_to: "Community",
+          access_ids: [],
+        },
+      ];
+
+      const payload: CreateDocumentPayload = {
+        document: {
+          title: randomTitle,
+          folder_id: 297,
+          category_id: categories[0]?.id || 1,
+          shares: [],
+          attachments: [
+            {
+              filename: "document.xlsx",
+              content: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${pdfBase64}`,
+              content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+          ],
+        },
+        permissions,
+      };
+
+      const createResponse = await createDocument(payload);
+
+      // Extract document ID from response and redirect to editor
+      const documentId = (createResponse as any)?.attachment?.id;
+
+      if (documentId) {
+        toast.success("Blank PDF created! Opening editor...");
+        navigate(`/maintenance/documents/editor/${documentId}`);
+      } else {
+        toast.error("Document created but could not open editor. Please try again.");
+        navigate("/maintenance/documents");
+      }
+    } catch (error: unknown) {
+      console.error("Error creating blank PDF:", error);
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create blank PDF. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleAddPpt = async () => {
+    setIsCreating(true);
+    try {
+      // Generate random title for the blank PDF
+      const randomTitle = `Presentation_${Date.now()}`;
+
+      // Fetch blank.pdf from public folder
+      const response = await fetch("/blank.pptx");
+      const pdfBlob = await response.blob();
+
+      // Convert PDF blob to base64
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64String = result.split(",")[1]; // Remove data:application/pdf;base64, prefix
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      // Create payload with blank PDF attachment
+      const permissions: FolderPermission[] = [
+        {
+          access_level: "all",
+          access_to: "Pms::Site",
+          access_ids: [],
+        },
+        {
+          access_level: "all",
+          access_to: "Community",
+          access_ids: [],
+        },
+      ];
+
+      const payload: CreateDocumentPayload = {
+        document: {
+          title: randomTitle,
+          folder_id: 297,
+          category_id: categories[0]?.id || 1,
+          shares: [],
+          attachments: [
+            {
+              filename: "document.pptx",
+              content: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${pdfBase64}`,
+              content_type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            },
+          ],
+        },
+        permissions,
+      };
+
+      const createResponse = await createDocument(payload);
+
+      // Extract document ID from response and redirect to editor
+      const documentId = (createResponse as any)?.attachment?.id;
+
+      if (documentId) {
+        toast.success("Blank PDF created! Opening editor...");
+        navigate(`/maintenance/documents/editor/${documentId}`);
+      } else {
+        toast.error("Document created but could not open editor. Please try again.");
+        navigate("/maintenance/documents");
+      }
+    } catch (error: unknown) {
+      console.error("Error creating blank PDF:", error);
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create blank PDF. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6">
       <div className="w-full space-y-6">
@@ -610,6 +954,10 @@ export const DocumentManagement = () => {
           setShowActionPanel(false);
           navigate("/maintenance/documents/create-folder");
         }}
+        onAddPdf={handleAddPdf}
+        onAddDoc={handleAddDoc}
+        onAddSheet={handleAddSheet}
+        onAddPpt={handleAddPpt}
       />
 
       {/* Filter Modal */}
