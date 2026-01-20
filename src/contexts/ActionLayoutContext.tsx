@@ -74,12 +74,22 @@ export const ActionLayoutProvider: React.FC<ActionLayoutProviderProps> = ({
   // Extract available modules from userRole
   useEffect(() => {
     if (userRole && userRole.lock_modules) {
-      // Filter modules that have at least one active function
+      // Filter modules that have at least one active function (parent or child)
       const modulesWithActiveFunctions = userRole.lock_modules.filter(
         (module: LockModule) => {
-          const hasActiveFunction = module.lock_functions.some(
-            (func) => func.function_active === 1
-          );
+          const hasActiveFunction = module.lock_functions.some((func) => {
+            // Check if the function itself is active
+            if (func.function_active === 1) {
+              return true;
+            }
+            // Also check if any of its sub_functions are active
+            if (func.sub_functions && func.sub_functions.length > 0) {
+              return func.sub_functions.some(
+                (subFunc) => subFunc.sub_function_active === 1
+              );
+            }
+            return false;
+          });
           return hasActiveFunction;
         }
       );
