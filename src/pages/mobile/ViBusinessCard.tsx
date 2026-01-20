@@ -139,7 +139,7 @@ export const ViBusinessCard: React.FC = () => {
           designation: data.lock_user_permission?.designation || "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
-          profileImage: data.business_card_url || "",
+          profileImage: data.business_card_url || data.avatar_url,
           website: data.user_other_detail?.website_link || "",
           address: data.site_name,
           socialLinks: data.user_other_detail?.social_links || [],
