@@ -125,7 +125,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
   }, []);
 
   const MAX_VISIBLE_MODULES =
-    windowWidth >= 1400 ? 12 : windowWidth >= 1200 ? 9 : 7;
+    windowWidth >= 1500 ? 12 : windowWidth >= 1200 ? 9 : 7;
 
   const [visibleModules, setVisibleModules] = useState<string[]>(() => {
     const saved = localStorage.getItem("employeeVisibleModules");
