@@ -128,10 +128,11 @@ export const EmployeeHeaderStatic: React.FC = () => {
     windowWidth >= 1400 ? 10 : windowWidth >= 1200 ? 9 : 7;
 
   const [visibleModules, setVisibleModules] = useState<string[]>(() => {
-    const saved = localStorage.getItem("employeeVisibleModules");
-    return saved
-      ? JSON.parse(saved)
-      : employeeModules.slice(0, MAX_VISIBLE_MODULES).map((m) => m.name);
+    // const saved = localStorage.getItem("employeeVisibleModules");
+    // return saved
+    //   ? JSON.parse(saved)
+    //   : employeeModules.slice(0, MAX_VISIBLE_MODULES).map((m) => m.name);
+    return employeeModules.slice(0, MAX_VISIBLE_MODULES).map((m) => m.name);
   });
 
   // Ensure "Company Hub" and "Dashboard" are always the first modules
@@ -336,10 +337,10 @@ export const EmployeeHeaderStatic: React.FC = () => {
       newVisibleModules.splice(targetIndex, 0, draggedModuleName);
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem(
-        "employeeVisibleModules",
-        JSON.stringify(newVisibleModules)
-      );
+      // localStorage.setItem(
+      //   "employeeVisibleModules",
+      //   JSON.stringify(newVisibleModules)
+      // );
     }
     // Case 2: Dragged module is hidden, target is visible - swap them
     else if (draggedIndex === -1 && targetIndex !== -1) {
@@ -347,10 +348,10 @@ export const EmployeeHeaderStatic: React.FC = () => {
       newVisibleModules[targetIndex] = draggedModuleName;
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem(
-        "employeeVisibleModules",
-        JSON.stringify(newVisibleModules)
-      );
+      // localStorage.setItem(
+      //   "employeeVisibleModules",
+      //   JSON.stringify(newVisibleModules)
+      // );
     }
   };
 
@@ -365,10 +366,10 @@ export const EmployeeHeaderStatic: React.FC = () => {
       : [...visibleModules, moduleName];
 
     setVisibleModules(newVisibleModules);
-    localStorage.setItem(
-      "employeeVisibleModules",
-      JSON.stringify(newVisibleModules)
-    );
+    // localStorage.setItem(
+    //   "employeeVisibleModules",
+    //   JSON.stringify(newVisibleModules)
+    // );
   };
 
   const userType = localStorage.getItem("userType");
