@@ -17,6 +17,7 @@ import {
   Megaphone,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
@@ -31,6 +32,21 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/scrollbar";
 import { useNavigate } from "react-router-dom";
+import businessPlanIcon from "@/assets/business_plan.png";
+import ourGroupIcon from "@/assets/our_group.png";
+import productsIcon from "@/assets/products.png";
+import documentDriveIcon from "@/assets/document_drive.png";
+import hrPoliciesIcon from "@/assets/hr_policies.png";
+import directoryIcon from "@/assets/directory.png";
+import employeeFaqIcon from "@/assets/employee_faq.png";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+
+interface QuickLink {
+  name: string;
+  icon: React.ElementType;
+  image: string;
+  link?: string;
+}
 
 interface CompanyHubProps {
   userName?: string;
@@ -43,7 +59,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // State for Audio Player
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(() => {
+    const saved = localStorage.getItem("company_hub_audio_playing");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize Audio
@@ -54,13 +73,21 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
     audioRef.current = new Audio("/company-anthem.mp3");
     audioRef.current.loop = true;
 
+    // Attempt to autoplay if enabled
+    if (isPlaying) {
+      audioRef.current.play().catch((e) => {
+        console.error("Audio autoplay failed:", e);
+        setIsPlaying(false); // Update state if autoplay is blocked
+      });
+    }
+
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [isPlaying]);
 
   const toggleAudio = () => {
     if (audioRef.current) {
@@ -69,10 +96,114 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
       } else {
         audioRef.current
           .play()
-          .catch((e) => console.log("Audio play failed:", e));
+          .catch((e) => console.error("Audio play failed:", e));
       }
-      setIsPlaying(!isPlaying);
+      const newState = !isPlaying;
+      setIsPlaying(newState);
+      localStorage.setItem(
+        "company_hub_audio_playing",
+        JSON.stringify(newState)
+      );
     }
+  };
+
+  // State for Post Input
+  const [postText, setPostText] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles((prev) => [
+        ...prev,
+        ...Array.from(e.target.files || []),
+      ]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePublish = () => {
+    if (!postText.trim() && selectedFiles.length === 0) return;
+
+    // Simulate publishing
+    setPostText("");
+    setSelectedFiles([]);
+    // You could add a toast here if you like
+  };
+
+  // State for Comments
+  const [comments, setComments] = useState([
+    {
+      id: 1,
+      name: "Jessica Taylor",
+      image: "https://randomuser.me/api/portraits/women/44.jpg",
+      time: "2h ago",
+      text: "This is really helpful! Thanks for sharing these insights.",
+      likes: 12,
+      isLiked: false,
+      replyLabel: "1 replies",
+      hasReplyBadge: false,
+    },
+    {
+      id: 2,
+      name: "Sarah Johnson",
+      image: "https://randomuser.me/api/portraits/women/65.jpg",
+      time: "1h ago",
+      text: "Great progress! Keep perfectly fit, consistent layout is key.",
+      likes: 8,
+      isLiked: false,
+      replyLabel: "Reply",
+      hasReplyBadge: true,
+    },
+    {
+      id: 3,
+      name: "Mike Ross",
+      image: "https://randomuser.me/api/portraits/men/33.jpg",
+      time: "30m ago",
+      text: "Looking solid! What's your routine like?",
+      likes: 5,
+      isLiked: false,
+      replyLabel: "Reply",
+      hasReplyBadge: false,
+    },
+    {
+      id: 4,
+      name: "Emily Doe",
+      image: "https://randomuser.me/api/portraits/women/22.jpg",
+      time: "15m ago",
+      text: "Inspiring! 💪",
+      likes: 2,
+      isLiked: false,
+      replyLabel: "Reply",
+      hasReplyBadge: false,
+    },
+  ]);
+
+  const handleLike = (id: number) => {
+    setComments((prev) =>
+      prev.map((comment) => {
+        if (comment.id === id) {
+          return {
+            ...comment,
+            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+            isLiked: !comment.isLiked,
+          };
+        }
+        return comment;
+      })
+    );
+  };
+
+  const handleDelete = (id: number) => {
+    // User requested DELETE button not to work
+    console.log("Delete clicked for comment", id);
   };
 
   // Function to close video
@@ -108,14 +239,19 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
     { label: "On Hold", value: "02", color: "border-orange-400" },
   ];
 
-  const quickLinks = [
-    { name: "Business plan", icon: Users },
-    { name: "Our Group", icon: Users },
-    { name: "Products", icon: Laptop },
-    { name: "Document Drive", icon: FileText },
-    { name: "HR Policies", icon: ClipboardCheck },
-    { name: "Directory", icon: Book },
-    { name: "Eployee FAQ", icon: Book },
+  const quickLinks: QuickLink[] = [
+    { name: "Business plan", icon: Users, image: businessPlanIcon },
+    { name: "Our Group", icon: Users, image: ourGroupIcon },
+    { name: "Products", icon: Laptop, image: productsIcon },
+    {
+      name: "Document Drive",
+      icon: FileText,
+      image: documentDriveIcon,
+      link: "/vas/documents",
+    },
+    { name: "HR Policies", icon: ClipboardCheck, image: hrPoliciesIcon },
+    { name: "Directory", icon: Book, image: directoryIcon },
+    { name: "Eployee FAQ", icon: Book, image: employeeFaqIcon },
   ];
 
   const pollOptions = [
@@ -221,21 +357,13 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
         </div>
 
         {/* ⬇️ ARROW — ANCHORED TO WHITE SECTION BOTTOM */}
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-0 z-30">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md animate-bounce">
-            <svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-0 z-30 pointer-events-none">
+          <div className="w-20 h-20 -mb-10">
+            <DotLottieReact
+              src="https://lottiefiles.com/free-animation/scroll-down-PWraFAMNYF"
+              loop
+              autoplay
+            />
           </div>
         </div>
       </section>
@@ -248,14 +376,28 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
                 key={index}
                 className="flex flex-col items-center gap-2 cursor-pointer group flex-shrink-0"
                 onClick={() => {
-                  // Navigate to dedicated page for each section
-                  const pageName = item.name.toLowerCase().replace(/\s+/g, "-");
-                  // window.location.href = `/${pageName}`;
-                  navigate(`/${pageName}`);
+                  if (item.link) {
+                    navigate(item.link);
+                  } else {
+                    // Navigate to dedicated page for each section
+                    const pageName = item.name
+                      .toLowerCase()
+                      .replace(/\s+/g, "-");
+                    // window.location.href = `/${pageName}`;
+                    navigate(`/${pageName}`);
+                  }
                 }}
               >
                 <div className="rounded-full bg-white bg-opacity-60 border-2 border-white flex items-center justify-center shadow-md group-hover:bg-white group-hover:scale-110 transition-all duration-300 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32">
-                  <item.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 text-gray-700" />
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <item.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 text-gray-700" />
+                  )}
                 </div>
                 <span className="text-xs sm:text-sm lg:text-base font-semibold text-gray-800 text-center whitespace-nowrap">
                   {item.name}
@@ -283,12 +425,17 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
                 type="text"
                 placeholder="Time to express yourself, start typing!"
                 className="flex-1 bg-transparent outline-none text-sm text-gray-600 placeholder-gray-400 font-medium"
+                value={postText}
+                onChange={(e) => setPostText(e.target.value)}
               />
             </div>
 
             {/* Attachments & Actions */}
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-2 text-gray-500 text-sm cursor-pointer hover:text-gray-700 transition-colors w-fit">
+            <div className="flex-1 flex flex-col justify-center gap-2">
+              <div
+                className="flex items-center gap-2 text-gray-500 text-sm cursor-pointer hover:text-gray-700 transition-colors w-fit"
+                onClick={handleAttachClick}
+              >
                 <div className="rotate-45">
                   <svg
                     className="w-5 h-5"
@@ -306,11 +453,46 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
                 </div>
                 <span>Attach Files, images, documents</span>
               </div>
+
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                hidden
+                multiple
+                onChange={handleFileChange}
+              />
+
+              {/* Selected Files Preview */}
+              {selectedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-600"
+                    >
+                      <span className="max-w-[150px] truncate">
+                        {file.name}
+                      </span>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="hover:text-red-500"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Publish Button */}
             <div className="flex justify-end">
-              <button className="bg-[#C72030] text-white px-8 py-2 rounded text-base font-medium hover:bg-[#a01a26] transition-colors shadow-sm">
+              <button
+                className="bg-[#C72030] text-white px-8 py-2 rounded text-base font-medium hover:bg-[#a01a26] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handlePublish}
+                disabled={!postText.trim() && selectedFiles.length === 0}
+              >
                 Publish
               </button>
             </div>
@@ -376,150 +558,70 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName = "Sandeep" }) => {
 
             {/* Comments Section */}
             <div className="flex flex-col gap-4 pt-2">
-              {/* Comment 1 */}
-              <div className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-3">
-                    <img
-                      src="https://randomuser.me/api/portraits/women/44.jpg"
-                      alt="Jessica Taylor"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
-                        Jessica Taylor
-                      </h4>
-                      <p className="text-gray-400 text-xs mt-0.5">2h ago</p>
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex gap-3">
+                      <img
+                        src={comment.image}
+                        alt={comment.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm">
+                          {comment.name}
+                        </h4>
+                        <p className="text-gray-400 text-xs mt-0.5">
+                          {comment.time}
+                        </p>
+                      </div>
                     </div>
+                    {comment.hasReplyBadge && (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded font-medium">
+                        Reply
+                      </span>
+                    )}
                   </div>
-                </div>
 
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  This is really helpful! Thanks for sharing these insights.
-                </p>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {comment.text}
+                  </p>
 
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                    <button className="flex items-center gap-1 hover:text-red-500">
-                      <Heart className="w-4 h-4" /> 12
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-blue-500">
-                      <MessageSquare className="w-4 h-4" /> 1 replies
-                    </button>
-                  </div>
-                  <button className="flex items-center gap-1.5 text-red-500 bg-red-50 px-3 py-1.5 rounded border border-red-100 text-xs font-semibold hover:bg-red-100 transition-colors">
-                    <span className="w-3 h-3 border border-red-500 rounded-sm flex items-center justify-center text-[10px]">
-                      x
-                    </span>{" "}
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              {/* Comment 2 */}
-              <div className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-3">
-                    <img
-                      src="https://randomuser.me/api/portraits/women/65.jpg"
-                      alt="Sarah Johnson"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
-                        Sarah Johnson
-                      </h4>
-                      <p className="text-gray-400 text-xs mt-0.5">1h ago</p>
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
+                      <button
+                        className={`flex items-center gap-1 hover:text-red-500 ${
+                          comment.isLiked ? "text-red-500" : ""
+                        }`}
+                        onClick={() => handleLike(comment.id)}
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            comment.isLiked ? "fill-current" : ""
+                          }`}
+                        />{" "}
+                        {comment.likes}
+                      </button>
+                      <button className="flex items-center gap-1 hover:text-blue-500">
+                        <MessageSquare className="w-4 h-4" />{" "}
+                        {comment.replyLabel}
+                      </button>
                     </div>
-                  </div>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded font-medium">
-                    Reply
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Great progress! Keep perfectly fit, consistent layout is key.
-                </p>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                    <button className="flex items-center gap-1 hover:text-red-500">
-                      <Heart className="w-4 h-4" /> 8
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-blue-500">
-                      <MessageSquare className="w-4 h-4" /> Reply
+                    <button
+                      className="flex items-center gap-1.5 text-red-500 bg-red-50 px-3 py-1.5 rounded border border-red-100 text-xs font-semibold hover:bg-red-100 transition-colors"
+                      onClick={() => handleDelete(comment.id)}
+                    >
+                      <span className="w-3 h-3 border border-red-500 rounded-sm flex items-center justify-center text-[10px]">
+                        x
+                      </span>{" "}
+                      Delete
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Comment 3 (Duplicate for scrolling) */}
-              <div className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-3">
-                    <img
-                      src="https://randomuser.me/api/portraits/men/33.jpg"
-                      alt="Mike Ross"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
-                        Mike Ross
-                      </h4>
-                      <p className="text-gray-400 text-xs mt-0.5">30m ago</p>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Looking solid! What's your routine like?
-                </p>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                    <button className="flex items-center gap-1 hover:text-red-500">
-                      <Heart className="w-4 h-4" /> 5
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-blue-500">
-                      <MessageSquare className="w-4 h-4" /> Reply
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comment 4 (Duplicate for scrolling) */}
-              <div className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-3">
-                    <img
-                      src="https://randomuser.me/api/portraits/women/22.jpg"
-                      alt="Emily Doe"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
-                        Emily Doe
-                      </h4>
-                      <p className="text-gray-400 text-xs mt-0.5">15m ago</p>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Inspiring! 💪
-                </p>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                    <button className="flex items-center gap-1 hover:text-red-500">
-                      <Heart className="w-4 h-4" /> 2
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-blue-500">
-                      <MessageSquare className="w-4 h-4" /> Reply
-                    </button>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
