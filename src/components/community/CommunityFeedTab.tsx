@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { ImageCarouselModal } from "./ImageCarouselModal";
+import { ReactionsModal } from "./ReactionsModal";
 
 interface CommunityFeedTabProps {
     communityId?: string;
@@ -128,6 +130,12 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | null; id: number | null }>({ open: false, type: null, id: null });
+    const [carouselOpen, setCarouselOpen] = useState(false);
+    const [carouselAttachments, setCarouselAttachments] = useState<Attachment[]>([]);
+    const [carouselStartIndex, setCarouselStartIndex] = useState(0);
+    const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
+    const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
+    const [reactionsModalData, setReactionsModalData] = useState<Like[]>([]);
 
     const fetchData = async () => {
         try {
@@ -280,11 +288,18 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 });
             }
 
+            // Add removed attachment IDs when editing
+            if (isEditMode && removedAttachmentIds.length > 0) {
+                removedAttachmentIds.forEach((id) => {
+                    formData.append('attachment_ids[]', id.toString());
+                });
+            }
+
             const url = isEditMode
                 ? `https://${baseUrl}/posts/${editingPost?.id}.json`
                 : `https://${baseUrl}/posts.json`;
 
-            const method = isEditMode ? 'patch' : 'post';
+            const method = isEditMode ? 'put' : 'post';
 
             const response = await axios[method](
                 url,
@@ -314,6 +329,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     setIsEditMode(false);
                     setEditingPost(null);
                     setExistingAttachments([]);
+                    setRemovedAttachmentIds([]);
                 }
 
                 await fetchPosts(); // Refresh the posts list
@@ -405,6 +421,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 });
             }
 
+            // Add removed attachment IDs when editing
+            if (isEditMode && removedAttachmentIds.length > 0) {
+                removedAttachmentIds.forEach((id) => {
+                    formData.append('attachment_ids[]', id.toString());
+                });
+            }
+
             const response = await axios.post(
                 `https://${baseUrl}/posts.json`,
                 formData,
@@ -422,6 +445,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 setPostContent("");
                 setSelectedFiles([]);
                 setPollOptions(['', '']);
+                setRemovedAttachmentIds([]);
                 await fetchPosts(); // Refresh the posts list
             }
         } catch (error) {
@@ -460,7 +484,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         const diffInDays = Math.floor(diffInHours / 24);
 
         if (diffInMinutes < 1) {
-            return "just now";
+            return "Just now";
         } else if (diffInMinutes < 60) {
             return `${diffInMinutes}m ago`;
         } else if (diffInHours < 24) {
@@ -560,57 +584,81 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     </div>
                 )}
 
-                {/* Post Attachments - WhatsApp Style */}
+                {/* Post Attachments - Instagram Style Carousel */}
                 {post.attachments && post.attachments.length > 0 && (
                     <div className={`mb-4 gap-1 ${post.attachments.length === 1 ? 'grid grid-cols-1' :
                         post.attachments.length === 2 ? 'grid grid-cols-2' :
                             post.attachments.length === 3 ? 'grid grid-cols-2' :
                                 'grid grid-cols-2'
                         }`}>
-                        {post.attachments.map((attachment, index) => (
-                            <div
-                                key={attachment.id}
-                                className={`relative overflow-hidden rounded-lg ${post.attachments.length === 1 ? 'col-span-1' :
-                                    post.attachments.length === 3 && index === 0 ? 'col-span-2' :
-                                        post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
-                                            ''
-                                    }`}
-                                style={{
-                                    height: post.attachments.length === 1 ? '400px' :
-                                        post.attachments.length === 2 ? '300px' :
-                                            post.attachments.length === 3 && index === 0 ? '300px' :
-                                                post.attachments.length === 3 ? '200px' :
-                                                    post.attachments.length > 4 && index === 0 ? '400px' : '200px'
-                                }}
-                            >
-                                {attachment.document_content_type.startsWith('image/') ? (
-                                    <img
-                                        src={attachment.url}
-                                        alt="Post attachment"
-                                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                    />
-                                ) : attachment.document_content_type.startsWith('video/') ? (
-                                    <video
-                                        src={attachment.url}
-                                        controls
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : null}
-                                {/* Show count overlay for 5+ images */}
-                                {post.attachments.length > 4 && index === 3 && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                                        <span className="text-white text-3xl font-semibold">
-                                            +{post.attachments.length - 4}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        )).slice(0, 4)}
+                        {post.attachments.map((attachment, index) => {
+                            const isImage = attachment.document_content_type.startsWith('image/');
+                            const isVideo = attachment.document_content_type.startsWith('video/');
+                            const shouldShowMore = post.attachments.length > 4 && index === 3;
+
+                            return (
+                                <div
+                                    key={attachment.id}
+                                    className={`relative overflow-hidden rounded-lg cursor-pointer group ${post.attachments.length === 1 ? 'col-span-1' :
+                                        post.attachments.length === 3 && index === 0 ? 'col-span-2' :
+                                            post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
+                                                ''
+                                        }`}
+                                    style={{
+                                        height: post.attachments.length === 1 ? '400px' :
+                                            post.attachments.length === 2 ? '300px' :
+                                                post.attachments.length === 3 && index === 0 ? '300px' :
+                                                    post.attachments.length === 3 ? '200px' :
+                                                        post.attachments.length > 4 && index === 0 ? '400px' : '200px'
+                                    }}
+                                    onClick={() => {
+                                        if (isImage || isVideo) {
+                                            setCarouselAttachments(post.attachments);
+                                            setCarouselStartIndex(index);
+                                            setCarouselOpen(true);
+                                        }
+                                    }}
+                                >
+                                    {isImage ? (
+                                        <img
+                                            src={attachment.url}
+                                            alt="Post attachment"
+                                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                                        />
+                                    ) : isVideo ? (
+                                        <video
+                                            src={attachment.url}
+                                            controls
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : null}
+
+                                    {/* Show count overlay for 5+ images */}
+                                    {shouldShowMore && (
+                                        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
+                                            <span className="text-white text-3xl font-semibold">
+                                                +{post.attachments.length - 4}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Image Count Badge (if multiple images) */}
+                                    {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length > 1 && (
+                                        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                                            </svg>
+                                            {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }).slice(0, 4)}
                     </div>
                 )}
 
                 {/* Reactions and Comments */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
                     {Object.entries(post.likes_with_emoji || {}).map(
                         ([emojiKey, count]) => {
                             const emoji = EMOJI_MAP[emojiKey];
@@ -620,7 +668,11 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                             return (
                                 <button
                                     key={emojiKey}
-                                    className={`flex items-center gap-1 text-gray-600 transition-colors ${emoji.hoverClass}`}
+                                    onClick={() => {
+                                        setReactionsModalData(post.likes_with_user_names);
+                                        setReactionsModalOpen(true);
+                                    }}
+                                    className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
                                 >
                                     <span>{emoji.icon}</span>
                                     <span className="text-sm font-medium">{count}</span>
@@ -666,9 +718,9 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                     </div>
                                 </div>
 
-                                <p className="text-gray-700 mb-3">{comment.body}</p>
+                                <p className="text-gray-700 mb-3 text-sm">{comment.body}</p>
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between border-t border-gray-200 w-[75%] pt-2">
                                     <div className="flex items-center gap-4">
                                         <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
                                             <Heart size={16} />
@@ -678,10 +730,10 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="!text-red-600 hover:!bg-red-50 flex items-center gap-1 h-8 px-3"
+                                        className="border border-[#c72030] rounded-[5px] text-[#c72030]"
                                         onClick={() => deleteComment(comment.id)}
                                     >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={14} color="#c72030" />
                                         Delete
                                     </Button>
                                 </div>
@@ -782,10 +834,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 }
             }}>
                 <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
-                    <DialogHeader>
+                    <DialogHeader className="flex flex-row justify-between items-center">
                         <DialogTitle className="text-xl font-semibold text-gray-900">
                             {isEditMode ? 'Edit Post' : 'Create Post'}
                         </DialogTitle>
+                        <Button variant="ghost" onClick={() => setCreatePostOpen(false)}>
+                            <X />
+                        </Button>
                     </DialogHeader>
                     <div className="space-y-5 overflow-y-auto flex-1 pr-2">
                         <div>
@@ -815,6 +870,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         setExistingAttachments(prev => prev.filter(a => a.id !== attachment.id));
+                                                        setRemovedAttachmentIds(prev => [...prev, attachment.id]);
                                                     }}
                                                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
                                                 >
@@ -949,8 +1005,11 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 }
             }}>
                 <DialogContent className="max-w-2xl bg-[#F9F8F6] rounded-[16px] max-h-[90vh] flex flex-col">
-                    <DialogHeader>
+                    <DialogHeader className="flex flex-row justify-between items-center">
                         <DialogTitle className="text-xl font-semibold text-gray-900">Create Admin Post</DialogTitle>
+                        <Button variant="ghost" onClick={() => setCreatePollOpen(false)}>
+                            <X />
+                        </Button>
                     </DialogHeader>
                     <div className="space-y-5 overflow-y-auto flex-1 pr-2">
                         <div>
@@ -1137,6 +1196,21 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Image Carousel Modal */}
+            <ImageCarouselModal
+                open={carouselOpen}
+                onOpenChange={setCarouselOpen}
+                attachments={carouselAttachments}
+                initialIndex={carouselStartIndex}
+            />
+
+            {/* Reactions Modal */}
+            <ReactionsModal
+                open={reactionsModalOpen}
+                onOpenChange={setReactionsModalOpen}
+                reactions={reactionsModalData}
+            />
         </div>
     );
 };
