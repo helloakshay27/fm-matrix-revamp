@@ -331,34 +331,63 @@ export const ActionSidebar = () => {
 
   // Build hierarchical structure (must be called before any conditional returns)
   const hierarchicalFunctions = useMemo(() => {
-    const parentMap = new Map<string, any[]>();
+    // Helper function to check if a function has active descendants
+    const hasActiveDescendant = (func: any, allFunctions: any[]): boolean => {
+      // Check if the function itself is active
+      if (func.function_active === 1) {
+        return true;
+      }
+
+      // Find direct children
+      const children = allFunctions.filter(
+        (f) => f.parent_function === func.action_name
+      );
+
+      // Recursively check if any child has active descendants
+      return children.some((child) => hasActiveDescendant(child, allFunctions));
+    };
+
     const topLevel: any[] = [];
 
-    // First pass: identify parents and children
+    // First pass: identify top-level functions (no parent)
     moduleFunctions.forEach((func) => {
       if (!func.parent_function || func.parent_function === "") {
-        // This is a top-level function
         topLevel.push({ ...func, children: [] });
       }
     });
 
-    // Second pass: assign children to parents
-    moduleFunctions.forEach((func) => {
-      if (func.parent_function && func.parent_function !== "") {
-        // Find parent by matching action_name with parent_function
-        const parent = topLevel.find(
-          (p) => p.action_name === func.parent_function
-        );
-        if (parent) {
-          if (!parent.children) {
-            parent.children = [];
-          }
-          parent.children.push(func);
-        }
-      }
-    });
+    // Second pass: recursively build children for each parent
+    const buildChildren = (parent: any): void => {
+      const children = moduleFunctions.filter(
+        (func) => func.parent_function === parent.action_name
+      );
 
-    return topLevel;
+      children.forEach((child) => {
+        const childWithChildren = { ...child, children: [] };
+        parent.children.push(childWithChildren);
+        buildChildren(childWithChildren); // Recursive call
+      });
+    };
+
+    topLevel.forEach((parent) => buildChildren(parent));
+
+    // Filter: only include functions that are active OR have active descendants
+    const filterInactive = (func: any): any | null => {
+      if (!hasActiveDescendant(func, moduleFunctions)) {
+        return null; // Exclude this branch entirely
+      }
+
+      // Include this function, but filter its children recursively
+      const filteredChildren = func.children
+        .map((child: any) => filterInactive(child))
+        .filter((child: any) => child !== null);
+
+      return { ...func, children: filteredChildren };
+    };
+
+    return topLevel
+      .map((func) => filterInactive(func))
+      .filter((func) => func !== null);
   }, [moduleFunctions]);
 
   // Don't render if not visible or no module selected
