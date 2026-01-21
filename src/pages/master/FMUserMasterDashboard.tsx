@@ -209,7 +209,7 @@ export const FMUserMasterDashboard = () => {
       const response = await dispatch(
         getFMUsers({ baseUrl, token, perPage: 10, currentPage: page, ...filterParams })
       ).unwrap() as FMUserAPIResponse;
-      const transformedData = response.fm_users.map(transformFMUserData);
+      const transformedData = (response?.fm_users ?? []).map(transformFMUserData);
       setFmUsersData(transformedData);
       setFilteredFMUsersData(transformedData);
       setPagination({
@@ -1017,7 +1017,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1045,7 +1045,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1076,7 +1076,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1104,7 +1104,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
