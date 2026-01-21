@@ -1174,6 +1174,27 @@ export const TicketDashboard = () => {
     }
   };
 
+  const formatDateOnly = (dateString: string) => {
+    if (!dateString) return '--';
+    try {
+      // Parse the ISO string to extract only the date part
+      // Format: "2025-11-19T12:01:19.000+04:00"
+      const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const [, year, month, day] = match;
+        return `${day}/${month}/${year}`;
+      }
+      // Fallback to Date object if regex doesn't match
+      const date = new Date(dateString);
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   // Helper function to format escalation data
   const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
     if (!escalation) return null;
@@ -1319,7 +1340,7 @@ export const TicketDashboard = () => {
       return formatDate(item.created_at);
     }
     if (columnKey === 'review_tracking_date') {
-      return formatDate(item.review_tracking_date);
+      return formatDateOnly(item.review_tracking_date);
     }
     if (columnKey === 'response_tat') {
       return formatEscalationMinutes(item.next_response_escalation);
