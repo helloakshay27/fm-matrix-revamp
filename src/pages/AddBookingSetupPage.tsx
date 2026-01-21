@@ -297,10 +297,12 @@ export const AddBookingSetupPage = () => {
     } else if (!formData.location) {
       toast.error("Please enter Location");
       return false;
-    } else if (!formData.facilityBookedTimes) {
-      toast.error("Please enter how many times facility can be booked per day");
-      return false;
-    } else if (!formData.termsConditions) {
+    }
+    // else if (!formData.facilityBookedTimes) {
+    //   toast.error("Please enter how many times facility can be booked per day");
+    //   return false;
+    // } 
+    else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
     } else if (!formData.cancellationText) {
@@ -1593,27 +1595,31 @@ export const AddBookingSetupPage = () => {
                   )}
                 </div> */}
 
-                {/* <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Facility can be booked</span>
-                  <TextField
-                    placeholder=""
-                    value={formData.facilityBookedTimes}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only positive integers (no decimals, no negatives)
-                      if (value === '' || /^[1-9]\d*$/.test(value)) {
-                        setFormData({
-                          ...formData,
-                          facilityBookedTimes: value,
-                        });
-                      }
-                    }}
-                    variant="outlined"
-                    size="small"
-                    style={{ width: "80px" }}
-                  />
-                  <span>times per day by User</span>
-                </div> */}
+                {
+                  formData.isBookable && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>Facility can be booked</span>
+                      <TextField
+                        placeholder=""
+                        value={formData.facilityBookedTimes}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow only positive integers (no decimals, no negatives)
+                          if (value === '' || /^[1-9]\d*$/.test(value)) {
+                            setFormData({
+                              ...formData,
+                              facilityBookedTimes: value,
+                            });
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        style={{ width: "80px" }}
+                      />
+                      <span>times per day by User</span>
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>
