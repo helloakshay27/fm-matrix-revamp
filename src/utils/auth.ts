@@ -10,6 +10,7 @@ export interface User {
   longitude?: number;
   country_code?: string;
   spree_api_key?: string;
+  is_login?: boolean;
   access_token?: string;
   number_verified?: number;
   lock_role?: {
