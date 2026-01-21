@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
-import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
+import { FormControlLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import axios from "axios";
 import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -466,7 +466,7 @@ const BookingCalenderView = () => {
                                                         const slotBooked = !!bookedSlot;
                                                         const isSlotBlocked = facilityBookings.is_blocked || bookedSlot?.is_blocked || false;
 
-                                                        return (
+                                                        const slotElement = (
                                                             <div
                                                                 key={slot.id}
                                                                 onClick={() => !isSlotBlocked && handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
@@ -487,6 +487,14 @@ const BookingCalenderView = () => {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                        );
+
+                                                        return slotBooked && bookedSlot?.booked_by_name ? (
+                                                            <Tooltip key={slot.id} title={`Booked by: ${bookedSlot.booked_by_name}`} arrow>
+                                                                {slotElement}
+                                                            </Tooltip>
+                                                        ) : (
+                                                            slotElement
                                                         );
                                                     })}
                                                 </div>

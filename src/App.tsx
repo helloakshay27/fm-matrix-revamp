@@ -974,7 +974,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2086,7 +2086,7 @@ function App() {
                       path="/safety/permit/safety-check-form"
                       element={<PermitSafetyCheckForm />}
                     />
-                    <Route path="/safety/permit/vendor-form/:id?" />
+                    <Route path="/safety/permit/vendor-form/:id?" element={<VendorPermitForm />} />
                     <Route
                       path="/safety/permit/fill-form/:id?"
                       element={<FillForm />}

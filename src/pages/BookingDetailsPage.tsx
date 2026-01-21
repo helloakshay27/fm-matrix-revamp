@@ -274,7 +274,7 @@ export const BookingDetailsPage = () => {
     <div className="p-[30px] min-h-screen bg-transparent">
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/pulse/amenity`)}
           className="flex items-center gap-1 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
