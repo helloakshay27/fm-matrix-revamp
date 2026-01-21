@@ -819,6 +819,10 @@ import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
 import { BudgetDashboard } from "./pages/ClubManagement/BudgetDashboard";
 import { BillCyclesDetails } from "./pages/ClubManagement/BillCyclesDetails";
 import BudgetAdd from "./pages/ClubManagement/BudgetAdd";
+import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
+import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
+import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
+import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1679,6 +1683,23 @@ function App() {
                     path="/settings/Budget/add"
                     element={<BudgetAdd/>}
                   />
+                    <Route
+                    path="/settings/reports/balance-sheet"
+                    element={<BalanceSheetReport/>}
+                  />
+                    <Route
+                    path="/settings/reports/profit-and-loss"
+                    element={<ProfitAndLossReport/>}
+                  />
+                     <Route
+                    path="/settings/reports/tax-summary"
+                    element={<TaxSummaryReport/>}
+                  />
+                   <Route
+                    path="/settings/reports/gst-payable"
+                    element={<GstPayableReport/>}
+                  />
+
 
                   {/* Club Management - Occupant Users */}
                   <Route

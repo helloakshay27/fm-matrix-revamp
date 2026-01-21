@@ -1032,6 +1032,31 @@ const modulesByPackage = {
         
         ],
       },
+
+       {
+        name: "Reports",
+        icon: FileText,
+        subItems: [
+          { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+          {
+            name: "Profit & Loss",
+            href: "/settings/reports/profit-and-loss",
+          },
+            {
+            name: "GST Payable",
+            href: "/settings/reports/gst-payable",
+          },
+            {
+            name: "GST Receivable",
+            href: "/settings/reports/gst-receivable",
+          },
+          {
+            name: "Tax Summary",
+            href: "/settings/reports/tax-summary",
+          },
+         
+        ],
+      },
   ],
 };
 
