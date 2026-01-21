@@ -13,6 +13,7 @@ interface LockFunction {
   function_name: string;
   react_link: string;
   action_name: string;
+  parent_function: string;
   function_active: number;
   sub_functions: SubFunction[];
 }
@@ -74,13 +75,43 @@ export const ActionLayoutProvider: React.FC<ActionLayoutProviderProps> = ({
   // Extract available modules from userRole
   useEffect(() => {
     if (userRole && userRole.lock_modules) {
-      // Filter modules that have at least one active function
+      // Helper function to recursively check if a function has any active descendants
+      const hasActiveDescendant = (
+        func: LockFunction,
+        allFunctions: LockFunction[]
+      ): boolean => {
+        // Check if the function itself is active
+        if (func.function_active === 1) {
+          return true;
+        }
+
+        // Check if any sub_functions are active
+        if (func.sub_functions && func.sub_functions.length > 0) {
+          if (func.sub_functions.some((sf) => sf.sub_function_active === 1)) {
+            return true;
+          }
+        }
+
+        // Recursively check child functions (functions with parent_function matching this action_name)
+        const childFunctions = allFunctions.filter(
+          (cf) => cf.parent_function === func.action_name
+        );
+
+        for (const child of childFunctions) {
+          if (hasActiveDescendant(child, allFunctions)) {
+            return true;
+          }
+        }
+
+        return false;
+      };
+
+      // Filter modules that have at least one active function (including descendants)
       const modulesWithActiveFunctions = userRole.lock_modules.filter(
         (module: LockModule) => {
-          const hasActiveFunction = module.lock_functions.some(
-            (func) => func.function_active === 1
+          return module.lock_functions.some((func) =>
+            hasActiveDescendant(func, module.lock_functions)
           );
-          return hasActiveFunction;
         }
       );
 
@@ -141,7 +172,7 @@ export const ActionLayoutProvider: React.FC<ActionLayoutProviderProps> = ({
     }
   }, [location.pathname, userRole]);
 
-  // Get all active functions for a specific module
+  // Get all functions for a specific module (including inactive parents with active children)
   const getModuleFunctions = (moduleName: string): LockFunction[] => {
     const module = availableModules.find(
       (m) => m.module_name.toLowerCase() === moduleName.toLowerCase()
@@ -151,8 +182,8 @@ export const ActionLayoutProvider: React.FC<ActionLayoutProviderProps> = ({
       return [];
     }
 
-    // Return only active functions
-    return module.lock_functions.filter((func) => func.function_active === 1);
+    // Return all functions - the sidebar will handle filtering based on active descendants
+    return module.lock_functions;
   };
 
   return (
