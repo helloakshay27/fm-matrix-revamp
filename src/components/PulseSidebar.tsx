@@ -338,6 +338,7 @@ const modulesByPackage = {
       subItems: [
         { name: "Amenity Setup", href: "/settings/vas/booking/setup" },
         { name: "Category Setup", href: "/settings/vas/booking/category-setup" },
+        { name: "Accessories Setup", href: "/settings/vas/booking/accessories-setup" },
       ],
     },
     {

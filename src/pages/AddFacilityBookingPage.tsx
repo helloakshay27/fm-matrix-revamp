@@ -89,7 +89,23 @@ export const AddFacilityBookingPage = () => {
     };
     gst?: number;
     sgst?: number;
+    facility_setup_accessories?: Array<{
+      facility_setup_accessory: {
+        id: number;
+        pms_inventory_id: number;
+        pms_inventory?: {
+          id: number;
+          name: string;
+        };
+      };
+    }>;
   } | null>(null);
+  const [selectedAccessories, setSelectedAccessories] = useState<number[]>([]);
+  const [availableAccessories, setAvailableAccessories] = useState<Array<{
+    id: number;
+    name: string;
+    inventoryId: number;
+  }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
     id: number;
@@ -227,6 +243,19 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
+        setSelectedAccessories([]); // Reset selected accessories
+
+        // Extract and set available accessories from facility setup
+        if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
+          const accessories = response.data.facility_setup.facility_setup_accessories.map(item => ({
+            id: item.facility_setup_accessory?.id || 0,
+            name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0
+          }));
+          setAvailableAccessories(accessories);
+        } else {
+          setAvailableAccessories([]);
+        }
 
         // Initialize people table based on max_people
         const maxPeople = response.data.facility_setup.max_people || 1;
@@ -241,6 +270,8 @@ export const AddFacilityBookingPage = () => {
     } catch (error) {
       console.error('Error fetching facility details:', error);
       setFacilityDetails(null);
+      setAvailableAccessories([]);
+      setSelectedAccessories([]);
     }
   };
 
@@ -252,6 +283,8 @@ export const AddFacilityBookingPage = () => {
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
+      setAvailableAccessories([]);
+      setSelectedAccessories([]);
     }
   };
 
@@ -295,12 +328,6 @@ export const AddFacilityBookingPage = () => {
 
   // Call amenity booking API when member user type is selected with user and facility
   useEffect(() => {
-    console.log('=== Amenity API Check ===');
-    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
-    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
-    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
-    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
-    console.log('========================');
     const token = localStorage.getItem('token')
     console.log('Token for Amenity API:', token);
     if (selectedUser && selectedFacility) {
@@ -374,6 +401,17 @@ export const AddFacilityBookingPage = () => {
         // Enforce selection rules
         if (!isSlotSelectable(slotId)) return prev;
         return [...prev, slotId];
+      }
+    });
+  };
+
+  // Handle accessory selection
+  const handleAccessorySelection = (accessoryId: number) => {
+    setSelectedAccessories(prev => {
+      if (prev.includes(accessoryId)) {
+        return prev.filter(id => id !== accessoryId);
+      } else {
+        return [...prev, accessoryId];
       }
     });
   };
@@ -498,6 +536,7 @@ export const AddFacilityBookingPage = () => {
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
+          accessory_ids: selectedAccessories,
           entity_id: selectedCompany,
           member_charges: 0,
           guest_charges: 0,
@@ -803,6 +842,32 @@ export const AddFacilityBookingPage = () => {
             </div>
           )}
         </div>
+
+        {/* Select Accessories Section */}
+        {availableAccessories.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Select Accessories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {availableAccessories.map((accessory) => (
+                <div key={accessory.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    id={`accessory-${accessory.id}`}
+                    checked={selectedAccessories.includes(accessory.id)}
+                    onChange={() => handleAccessorySelection(accessory.id)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label
+                    htmlFor={`accessory-${accessory.id}`}
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    {accessory.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Payment Method Section */}
         <div>

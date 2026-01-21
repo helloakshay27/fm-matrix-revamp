@@ -121,14 +121,7 @@ export const AddBookingSetupPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {
-      tv: false,
-      whiteboard: false,
-      casting: false,
-      smartPenForTV: false,
-      wirelessCharging: false,
-      meetingRoomInventory: false,
-    },
+    amenities: {} as Record<number, boolean>,
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -577,33 +570,22 @@ export const AddBookingSetupPage = () => {
         );
       });
 
-      const amenities = [];
-      if (formData.amenities.tv) amenities.push("TV");
-      if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-      if (formData.amenities.casting) amenities.push("Casting");
-      if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-      if (formData.amenities.wirelessCharging)
-        amenities.push("Wireless Charging");
-      if (formData.amenities.meetingRoomInventory)
-        amenities.push("Meeting Room Inventory");
+      const selectedAccessories = Object.entries(formData.amenities)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([inventoryId]) => parseInt(inventoryId));
 
-      amenities.forEach((name, index) => {
+      console.log('=== Selected Accessories ===');
+      console.log('formData.amenities:', formData.amenities);
+      console.log('selectedAccessories IDs:', selectedAccessories);
+      console.log('Total accessories selected:', selectedAccessories.length);
+      console.log('===========================');
+
+      selectedAccessories.forEach((inventoryId, index) => {
         formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][tag_type]`,
-          "amenity_things"
+          `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
+          inventoryId.toString()
         );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][category_name]`,
-          name
-        );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][_destroy]`,
-          "0"
-        );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][selected]`,
-          "1"
-        );
+        console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
       });
 
       // Facility Slots
@@ -2144,7 +2126,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             <div className="space-y-4" id="additional">
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
@@ -2180,9 +2162,9 @@ export const AddBookingSetupPage = () => {
                     ))
                   )}
                 </div>
-              </div> */}
+              </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
@@ -2287,7 +2269,7 @@ export const AddBookingSetupPage = () => {
                     </label>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">

@@ -244,7 +244,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         organizationId
       );
 
-      if (!response.is_login) {
+      if (
+        (hostname !== "pulse.lockated.com" && hostname !== "localhost") &&
+        !response.is_login
+      ) {
         toast.error("You are not approved to login.")
         return
       }
