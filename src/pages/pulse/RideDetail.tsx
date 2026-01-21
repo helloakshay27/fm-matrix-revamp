@@ -1,221 +1,621 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  FileText,
+  Paperclip,
+  AlertCircle,
+  Star,
+  FileCheck,
+  Eye,
+} from "lucide-react";
+import carGrayImage from "@/assets/car_gray.png";
+import carBlackImage from "@/assets/car_black.png";
+import carRedImage from "@/assets/car_red.png";
+import carBeigeImage from "@/assets/car_beige.png";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+
+// Mock ride data - same structure as in CarpoolDashboard
+const allRides = [
+  {
+    id: "1",
+    driver: "Hamza",
+    registrationNumber: "MH 01 AB 2345",
+    passengers: "Raj, Tiwari, Pooja",
+    leavingFrom: "Panchshil Tech Park One",
+    destination: "Pune Rly Station",
+    carImage: carGrayImage,
+    carModel: "Maruti Suzuki Wagonr",
+    carColor: "White",
+    status: "Active",
+    departureTime: "10:00 AM",
+    rideDate: "13 October 2025",
+    bookingDate: "13 October 2025",
+    expectedArrivalTime: "10:30 AM",
+    seat: "3/4",
+    genderPreference: "All",
+    pricePerPerson: "₹250",
+    emergencyContact: "+91 1234567890",
+  },
+  {
+    id: "2",
+    driver: "Shahab",
+    registrationNumber: "MH 12 CD 6789",
+    passengers: "Raj, Tiwari, Pooja, Rohan",
+    leavingFrom: "Panchshil Tech Park One",
+    destination: "Pune Rly Station",
+    carImage: carBlackImage,
+    carModel: "Honda City",
+    carColor: "Black",
+    status: "Active",
+    departureTime: "11:00 AM",
+    rideDate: "13 October 2025",
+    bookingDate: "12 October 2025",
+    expectedArrivalTime: "11:30 AM",
+    seat: "4/4",
+    genderPreference: "All",
+    pricePerPerson: "₹260",
+    emergencyContact: "+91 9876543210",
+  },
+  {
+    id: "3",
+    driver: "Yukta",
+    registrationNumber: "MH 04 GH 4455",
+    passengers: "Raj, Tiwari, Pooja, Rohan",
+    leavingFrom: "Panchshil Tech Park One",
+    destination: "Pune Rly Station",
+    carImage: carRedImage,
+    carModel: "Hyundai Verna",
+    carColor: "Red",
+    status: "Active",
+    departureTime: "12:00 PM",
+    rideDate: "13 October 2025",
+    bookingDate: "11 October 2025",
+    expectedArrivalTime: "12:30 PM",
+    seat: "3/4",
+    genderPreference: "Female",
+    pricePerPerson: "₹270",
+    emergencyContact: "+91 5555666677",
+  },
+  {
+    id: "4",
+    driver: "Rahul",
+    registrationNumber: "MH 12 ST 1010",
+    passengers: "Raj, Tiwari, Pooja, Rohan",
+    leavingFrom: "Panchshil Tech Park One",
+    destination: "Pune Rly Station",
+    carImage: carBeigeImage,
+    carModel: "Toyota Etios",
+    carColor: "Beige",
+    status: "Active",
+    departureTime: "1:00 PM",
+    rideDate: "13 October 2025",
+    bookingDate: "13 October 2025",
+    expectedArrivalTime: "1:30 PM",
+    seat: "2/4",
+    genderPreference: "Male",
+    pricePerPerson: "₹240",
+    emergencyContact: "+91 8888999900",
+  },
+];
 
 export const RideDetail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const rideId = searchParams.get("id");
   const [activeTab, setActiveTab] = useState("Ride Details");
 
-  // Mock ride data - in production this would come from an API
-  const rideData = {
-    driver: "Hamza",
-    registrationNumber: "MH 01 AB 2345",
-    departureTime: "10:00 AM",
-    rideDate: "13 October 2025",
-    bookingDate: "13 October 2025",
-    passengers: "Raj, Tiwari, Pooja",
-    expectedArrivalTime: "10:30 AM",
-    seat: "3/4",
-    genderPreference: "All",
-    status: "Active",
-    leavingFrom: "Panchshil Teck Park One",
-    destination: "Pune Rly Station",
-    pricePerPerson: "₹250",
-  };
+  const rideId = searchParams.get("id");
 
-  const tabs = ["Ride Details", "Car Detail", "Driver's Detail", "Passenger's Detail"];
-
-  const handleBack = () => {
-    navigate(-1);
-  };
+  // Find the ride data based on ID from URL
+  const rideData = useMemo(() => {
+    const ride = allRides.find((r) => r.id === rideId);
+    // Default to first ride if ID not found
+    return ride || allRides[0];
+  }, [rideId]);
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+    <div className="bg-white px-6 py-4">
       {/* Breadcrumb */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <button 
-            onClick={handleBack}
-            className="hover:text-gray-900 transition-colors cursor-pointer"
-          >
-            Carpool
-          </button>
-          <span>&gt;</span>
-          <span className="text-gray-900 font-medium">Ride Detail</span>
-        </div>
+      <div className="text-sm text-gray-500 mb-6">
+        <span
+          className="cursor-pointer hover:text-gray-700"
+          onClick={() => navigate(-1)}
+        >
+          Carpool
+        </span>{" "}
+        &gt; <span className="text-gray-700">Ride Detail</span>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-4 border-b border-gray-200 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab
-                ? "text-gray-900 bg-[#F6F4EE] border-b-2 border-gray-900"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
+          <TabsTrigger
+            value="Ride Details"
+            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
-            {tab}
-          </button>
-        ))}
-      </div>
+            Ride Details
+          </TabsTrigger>
+          <TabsTrigger
+            value="Car Detail"
+            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+          >
+            Car Detail
+          </TabsTrigger>
+          <TabsTrigger
+            value="Driver's Detail"
+            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+          >
+            Driver's Detail
+          </TabsTrigger>
+          <TabsTrigger
+            value="Passenger's Detail"
+            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+          >
+            Passenger's Detail
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Ride Details Tab */}
-      {activeTab === "Ride Details" && (
-        <div className="space-y-6">
-          {/* Header with Report Button */}
-          <Card className="bg-[#F6F4EE]">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[#C72030]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Ride Detail</h2>
+        <TabsContent value="Ride Details">
+          {/* Ride Detail Section - Combined Header and Info */}
+          <div className="border border-gray-200 mb-6">
+            {/* Header */}
+            <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#E91E63]" />
                 </div>
-                <Button className="bg-[#C72030] hover:bg-[#A01828] text-white">
-                  <span className="mr-2">⚠</span> Report
-                </Button>
+                <h2 className="font-semibold text-base">Ride Detail</h2>
               </div>
-            </CardContent>
-          </Card>
+              <Badge className="bg-[#E57373] hover:bg-[#E57373] text-white px-4 py-1.5 text-sm rounded">
+                1 Report
+              </Badge>
+            </div>
 
-          {/* Ride Information Grid */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {/* Left Column */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm text-gray-500">Driver</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.driver}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Ride Date</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.rideDate}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Booking Date</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.bookingDate}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Status</label>
-                    <div className="mt-1">
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                        {rideData.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Price Per Person</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.pricePerPerson}</p>
-                  </div>
-                </div>
+            {/* Info Grid */}
+            <div className="px-8 py-6">
+              <div className="grid grid-cols-3 gap-x-20 gap-y-5 text-sm">
+                <Info label="Driver" value={rideData.driver} />
+                <Info
+                  label="Registration Number"
+                  value={rideData.registrationNumber}
+                />
+                <Info label="Departure Time" value={rideData.departureTime} />
 
-                {/* Right Column */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm text-gray-500">Registration Number</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.registrationNumber}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Passenger's</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.passengers}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Seat</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.seat}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Leaving From</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.leavingFrom}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Destination</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.destination}</p>
-                  </div>
-                </div>
+                <Info label="Ride Date" value={rideData.rideDate} />
+                <Info label="Passenger's" value={rideData.passengers} />
+                <Info
+                  label="Expected Arrival Time"
+                  value={rideData.expectedArrivalTime}
+                />
 
-                {/* Full Width Items */}
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                  <div>
-                    <label className="text-sm text-gray-500">Departure Time</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.departureTime}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Expected Arrival Time</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.expectedArrivalTime}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Gender Preference</label>
-                    <p className="text-base font-medium text-gray-900 mt-1">{rideData.genderPreference}</p>
-                  </div>
-                </div>
+                <Info label="Booking Date" value={rideData.bookingDate} />
+                <Info label="Seat" value={rideData.seat} />
+                <Info
+                  label="Gender Preference"
+                  value={rideData.genderPreference}
+                />
+
+                <Info label="Status" value={rideData.status} />
+                <Info label="Leaving From" value={rideData.leavingFrom} />
+
+                <Info
+                  label="Price Per Person"
+                  value={rideData.pricePerPerson}
+                />
+                <Info label="Destination" value={rideData.destination} />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Attachment */}
+          <Section title="Attachment" icon={<Paperclip />} right={undefined}>
+            <p className="font-semibold mb-4">Car Image</p>
+            <div className="grid grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="border border-dashed border-gray-400 p-4 flex items-center justify-center"
+                >
+                  <img
+                    src={rideData.carImage}
+                    className="object-contain h-24"
+                    alt={`Car ${i}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* Reports */}
+          <Section
+            title="Reports"
+            icon={<AlertCircle />}
+            right={
+              <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A]">
+                Under Review
+              </Badge>
+            }
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Report:</p>
+                <Badge className="bg-[#E57373] text-white px-4 py-1 mb-2">
+                  1 Report
+                </Badge>
+                <p className="text-sm text-gray-500">
+                  Reported On Oct 21, 2025
+                </p>
+              </div>
+              <Button variant="outline" className="px-8">
+                View Reports
+              </Button>
+            </div>
+          </Section>
+        </TabsContent>
+
+        <TabsContent value="Car Detail">
+          {/* Car Detail Section */}
+          <div className="border border-gray-200 mb-6">
+            {/* Header */}
+            <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#E91E63]" />
+                </div>
+                <h2 className="font-semibold text-base">Car Detail</h2>
+              </div>
+            </div>
+
+            {/* Car Info */}
+            <div className="px-8 py-6">
+              <div className="grid grid-cols-2 gap-x-32 gap-y-5 text-sm">
+                <Info label="Driver" value={rideData.driver} />
+                <Info
+                  label="Registration Number"
+                  value={rideData.registrationNumber}
+                />
+
+                <Info label="Car Model Name" value={rideData.carModel} />
+                <Info label="Seat" value={rideData.seat} />
+
+                <Info label="Car Color" value={rideData.carColor} />
+              </div>
+            </div>
+          </div>
 
           {/* Attachment Section */}
-          <Card className="bg-[#F6F4EE]">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-[#C72030]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          <Section title="Attachment" icon={<Paperclip />} right={undefined}>
+            <p className="font-semibold mb-4">Car Image</p>
+            <div className="grid grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="border border-dashed border-gray-400 p-4 flex items-center justify-center"
+                >
+                  <img
+                    src={rideData.carImage}
+                    className="object-contain h-24"
+                    alt={`Car ${i}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </Section>
+        </TabsContent>
+
+        <TabsContent value="Driver's Detail">
+          {/* Driver's Detail Section */}
+          <div className="border border-gray-200 mb-6">
+            {/* Header */}
+            <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#E91E63]" />
+                </div>
+                <h2 className="font-semibold text-base">Driver's Detail</h2>
+              </div>
+            </div>
+
+            {/* Driver Info */}
+            <div className="px-8 py-6">
+              <div className="grid grid-cols-2 gap-x-32 gap-y-5 text-sm">
+                <Info label="Driver" value={rideData.driver} />
+                <Info
+                  label="Registration Number"
+                  value={rideData.registrationNumber}
+                />
+
+                <Info label="Ride Date" value={rideData.rideDate} />
+                <Info
+                  label="Gender Preference"
+                  value={rideData.genderPreference}
+                />
+
+                <Info label="Booking Date" value={rideData.bookingDate} />
+                <Info label="Leaving From" value={rideData.leavingFrom} />
+
+                <Info label="Status" value={rideData.status} />
+                <Info label="Destination" value={rideData.destination} />
+
+                <Info label="Seat" value={rideData.seat} />
+                <Info
+                  label="Emergency Contact No."
+                  value={rideData.emergencyContact}
+                />
+
+                <Info
+                  label="Price Per Person"
+                  value={rideData.pricePerPerson}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Attachment Section */}
+          <Section title="Attachment" icon={<Paperclip />} right={undefined}>
+            <p className="font-semibold mb-4">Car Image</p>
+            <div className="grid grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="border border-dashed border-gray-400 p-4 flex items-center justify-center"
+                >
+                  <img
+                    src={rideData.carImage}
+                    className="object-contain h-24"
+                    alt={`Car ${i}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* Documents Section */}
+          <Section
+            title="Documents"
+            icon={<FileCheck />}
+            right={
+              <Badge className="bg-[#E8F5E9] text-[#2E7D32] border-0 flex items-center gap-1.5 px-3 py-1.5">
+                <div className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center">
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Attachment</h3>
+                Verified
+              </Badge>
+            }
+          >
+            <div>
+              <p className="text-sm text-gray-500 mb-2">Documents Submitted</p>
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <span className="text-sm">Driving License</span>
+                <FileText className="w-4 h-4 text-gray-400 ml-4" />
+                <span className="text-sm">Aadhaar Card</span>
               </div>
-              
+              <p className="text-xs text-gray-400 mt-2">
+                Submitted On Dec 15, 2024
+              </p>
+            </div>
+          </Section>
+
+          {/* Reports Section */}
+          <Section
+            title="Reports"
+            icon={<AlertCircle />}
+            right={
+              <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4" />
+                Under Review
+              </Badge>
+            }
+          >
+            <div className="flex justify-between items-center">
               <div>
-                <label className="text-sm text-gray-500 mb-3 block">Car Image</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center bg-white">
-                      <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  ))}
+                <p className="text-sm text-gray-500 mb-2">Report:</p>
+                <Badge className="bg-[#E57373] text-white px-4 py-1 mb-2">
+                  1 Report
+                </Badge>
+                <p className="text-sm text-gray-500">
+                  Reported On Oct 21, 2025
+                </p>
+              </div>
+              <Button variant="outline" className="px-8">
+                View Reports
+              </Button>
+            </div>
+          </Section>
+
+          {/* Reviews Section */}
+          <Section title="Reviews" icon={<Star />} right={undefined}>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Reviews:</p>
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-base font-medium">
+                    4.2 Rating Out Of 5
+                  </span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              <Button variant="outline" className="px-8">
+                View Reviews
+              </Button>
+            </div>
+          </Section>
+        </TabsContent>
 
-      {/* Other Tabs - Placeholder Content */}
-      {activeTab === "Car Detail" && (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-500">Car details will be displayed here.</p>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="Passenger's Detail">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Total User's</h2>
 
-      {activeTab === "Driver's Detail" && (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-500">Driver's details will be displayed here.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeTab === "Passenger's Detail" && (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-gray-500">Passenger's details will be displayed here.</p>
-          </CardContent>
-        </Card>
-      )}
+            {/* Passengers Table with EnhancedTaskTable */}
+            <EnhancedTaskTable
+              data={[
+                {
+                  id: "1",
+                  accessCardNumber: "54647",
+                  name: "Hamza",
+                  mobileNumber: "+91 1234567890",
+                  emailAddress: "hamza.soas@localted.com",
+                  employeeNumber: "346347",
+                  gender: "Male",
+                },
+                {
+                  id: "2",
+                  accessCardNumber: "54647",
+                  name: "Shahab",
+                  mobileNumber: "+91 1234567890",
+                  emailAddress: "hamza.soas@localted.com",
+                  employeeNumber: "346347",
+                  gender: "Male",
+                },
+                {
+                  id: "3",
+                  accessCardNumber: "64647",
+                  name: "Yukta",
+                  mobileNumber: "+91 1234567890",
+                  emailAddress: "hamza.jasal@localted.com",
+                  employeeNumber: "346347",
+                  gender: "Female",
+                },
+                {
+                  id: "4",
+                  accessCardNumber: "54647",
+                  name: "Rahul",
+                  mobileNumber: "+91 1234567890",
+                  emailAddress: "hamza.soas@localted.com",
+                  employeeNumber: "346347",
+                  gender: "Male",
+                },
+              ]}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "accessCardNumber",
+                  label: "Access card Number",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "name",
+                  label: "Name",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "mobileNumber",
+                  label: "Mobile Number",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "emailAddress",
+                  label: "Email Address",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "employeeNumber",
+                  label: "Employee Number",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "gender",
+                  label: "Gender",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+              ]}
+              renderRow={(passenger) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/user-detail?id=${passenger.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                accessCardNumber: passenger.accessCardNumber,
+                name: passenger.name,
+                mobileNumber: passenger.mobileNumber,
+                emailAddress: passenger.emailAddress,
+                employeeNumber: passenger.employeeNumber,
+                gender: passenger.gender,
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="passenger-detail-table"
+              emptyMessage="No passengers found"
+              searchPlaceholder="Search passengers..."
+              exportFileName="passengers"
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
+/* Reusable helpers */
+const Info: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <p className="text-gray-400 mb-1">{label}</p>
+    <p className="font-medium text-gray-900">{value}</p>
+  </div>
+);
+
+const Section: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, icon, right, children }) => (
+  <div className="bg-[#FAF8F4] border border-gray-200 px-6 py-6 mb-8">
+    <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-[#EFE7DB] flex items-center justify-center text-[#E11D48]">
+          {icon}
+        </div>
+        <h3 className="font-semibold text-lg">{title}</h3>
+      </div>
+      {right}
+    </div>
+    {children}
+  </div>
+);

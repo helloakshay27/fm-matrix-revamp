@@ -149,6 +149,11 @@ import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
+// Import Pulse pages
+import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
+import { RideDetail } from "./pages/pulse/RideDetail";
+import { UserDetail } from "./pages/pulse/UserDetail";
+
 import { EditEventPage } from "./pages/EditEventPage";
 
 // Import Visitors pages
@@ -167,10 +172,6 @@ import { EditVisitorGatePage } from "./pages/EditVisitorGatePage";
 import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
-
-// Import Carpool pages
-import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
-import { RideDetail } from "./pages/pulse/RideDetail";
 
 // Import Icons pages
 import { IconsDashboard } from "./pages/IconsDashboard";
@@ -4025,6 +4026,10 @@ function App() {
                     <Route
                       path="/pulse/carpool/ride-detail"
                       element={<RideDetail />}
+                    />
+                    <Route
+                      path="/pulse/carpool/user-detail"
+                      element={<UserDetail />}
                     />
 
                     <Route

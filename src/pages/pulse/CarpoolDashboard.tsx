@@ -11,6 +11,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import carGrayImage from "@/assets/car_gray.png";
+import carRedImage from "@/assets/car_red.png";
+import carBlackImage from "@/assets/car_black.png";
+import carBeigeImage from "@/assets/car_beige.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
   PaginationContent,
@@ -190,7 +195,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "scheduled",
   },
   {
@@ -200,7 +205,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "scheduled",
   },
   {
@@ -210,7 +215,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "scheduled",
   },
   {
@@ -220,7 +225,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "scheduled",
   },
 ];
@@ -300,7 +305,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "active",
   },
   {
@@ -310,7 +315,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "active",
   },
   {
@@ -320,7 +325,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "active",
   },
   {
@@ -330,7 +335,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "active",
   },
 ];
@@ -518,13 +523,15 @@ export const CarpoolDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ridesData, setRidesData] = useState<RideRecord[]>(mockTodayRides);
   const [usersData, setUsersData] = useState<UserRecord[]>(mockUsers);
-  const [pendingKYCData, setPendingKYCData] = useState<UserRecord[]>(mockPendingKYC);
+  const [pendingKYCData, setPendingKYCData] =
+    useState<UserRecord[]>(mockPendingKYC);
   const [selectedReportStatus, setSelectedReportStatus] = useState<{
     [key: string]: string;
   }>({});
   const [selectedRides, setSelectedRides] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [activeReportTab, setActiveReportTab] = useState<string>("Under Review");
+  const [activeReportTab, setActiveReportTab] =
+    useState<string>("Under Review");
   const itemsPerPage = 10;
 
   // Calendar states
@@ -879,7 +886,7 @@ export const CarpoolDashboard = () => {
       {activeView !== "" && (
         <div className="mb-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <button 
+            <button
               onClick={handleBackToDashboard}
               className="hover:text-gray-900 transition-colors cursor-pointer"
             >
@@ -903,129 +910,117 @@ export const CarpoolDashboard = () => {
       {/* Status Cards - Only show when no specific view is active */}
       {activeView === "" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-        {statusCards.map((card, index) => (
-          <div
-            key={index}
-            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
-              activeView === card.status ? "!shadow-lg" : ""
-            }`}
-            onClick={() => handleStatusCardClick(card.status)}
-          >
-            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-              <card.icon className="w-6 h-6 text-[#C72030]" />
-            </div>
-            <div>
-              <div className="text-2xl font-semibold text-[#1A1A1A]">
-                {card.count.toLocaleString()}
+          {statusCards.map((card, index) => (
+            <div
+              key={index}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                activeView === card.status ? "!shadow-lg" : ""
+              }`}
+              onClick={() => handleStatusCardClick(card.status)}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <card.icon className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-sm font-medium text-[#1A1A1A]">
-                {card.title}
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {card.count.toLocaleString()}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  {card.title}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
         </div>
       )}
 
       {/* Calendar Dates Filter - Only show when no specific view is active */}
       {activeView === "" && (
         <div className="flex flex-col mb-6">
-  <div
-    ref={datesContainerRef}
-    className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-  >
-    <div className="min-w-fit flex bg-[#efe9dd] border border-[#c9c2b8] h-[48px] items-center">
-
-      
-      {/* Month Section */}
-      <div className="w-36 flex-shrink-0 bg-[#efe9dd] border-r border-[#c9c2b8] px-3 py-1 sticky left-0 z-10">
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-transparent"
-            onClick={() => handleMonthChange("prev")}
-          >
-            <ChevronLeft className="w-4 h-4 text-black" />
-          </Button>
-
-          <div className="text-[#C72030] font-semibold text-sm">
-            {calendarMonth}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-transparent"
-            onClick={() => handleMonthChange("next")}
-          >
-            <ChevronRight className="w-4 h-4 text-black" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Dates */}
-      <div className="flex">
-        {calendarDates.map((dateInfo, idx) => (
           <div
-            key={idx}
-            ref={(el) => {
-              if (el && dateInfo.fullDate) {
-                dateRefs.current[dateInfo.fullDate] = el;
-              }
-            }}
-            onClick={() =>
-              !dateInfo.isOff &&
-              (setSelectedCalendarDate(dateInfo.date),
-              setSelectedCalendarDateForApi(dateInfo.fullDate))
-            }
-            className={`border-r border-[#c9c2b8] w-[115px] px-1 py-1 text-center cursor-pointer transition-all
+            ref={datesContainerRef}
+            className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+          >
+            <div className="min-w-fit flex bg-[#efe9dd] border border-[#c9c2b8] h-[40px] items-center">
+              {/* Month Section */}
+              <div className="w-36 flex-shrink-0 bg-[#efe9dd] border-r border-[#c9c2b8] px-3 py-0.5 sticky left-0 z-10">
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-transparent"
+                    onClick={() => handleMonthChange("prev")}
+                  >
+                    <ChevronLeft className="w-4 h-4 text-black" />
+                  </Button>
+
+                  <div className="text-[#C72030] font-semibold text-sm">
+                    {calendarMonth}
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-transparent"
+                    onClick={() => handleMonthChange("next")}
+                  >
+                    <ChevronRight className="w-4 h-4 text-black" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="flex">
+                {calendarDates.map((dateInfo, idx) => (
+                  <div
+                    key={idx}
+                    ref={(el) => {
+                      if (el && dateInfo.fullDate) {
+                        dateRefs.current[dateInfo.fullDate] = el;
+                      }
+                    }}
+                    onClick={() =>
+                      !dateInfo.isOff &&
+                      (setSelectedCalendarDate(dateInfo.date),
+                      setSelectedCalendarDateForApi(dateInfo.fullDate))
+                    }
+                    className={`border-r border-[#c9c2b8] w-[115px] px-1 py-0.5 text-center cursor-pointer transition-all
               ${
                 selectedCalendarDate === dateInfo.date
                   ? "bg-[#f5f1ea] border-b-2 border-b-[#C72030]"
                   : dateInfo.isOff
-                  ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
-                  : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
+                    ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
+                    : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
               }`}
-          >
-            <div className="text-xs font-medium">
-              {dateInfo.date}
+                  >
+                    <div className="text-xs font-medium">{dateInfo.date}</div>
+
+                    <div className="text-[11px] font-semibold leading-none">
+                      {new Date(dateInfo.fullDate).toLocaleDateString("en-US", {
+                        weekday: "long",
+                      })}
+                      {dateInfo.isOff && (
+                        <span className="block text-[11px] text-gray-500">
+                          OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-
-           <div className="text-[11px] font-semibold leading-none">
-
-                   {new Date(dateInfo.fullDate).toLocaleDateString("en-US", {
-                   weekday: "long",
-                   })}
-                   { dateInfo.isOff && (
-                     <span className="block text-[11px] text-gray-500">
-                   OFF
-                   </span>
-                   )}
-                </div>
-
           </div>
-        ))}
-      </div>
-
-    </div>
-  </div>
-</div>
+        </div>
       )}
 
-
-
-
       {/* Table Views */}
-      {(activeView === "" || activeView === "today" || activeView === "total") && (
+      {(activeView === "" ||
+        activeView === "today" ||
+        activeView === "total") && (
         <>
           {/* Section title for main dashboard */}
-          {activeView === "" && (
-            <div className="mb-4">
-              
-            </div>
-          )}
-          
+          {activeView === "" && <div className="mb-4"></div>}
+
           <EnhancedTaskTable
             data={currentRides}
             columns={[
@@ -1081,9 +1076,9 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1093,7 +1088,13 @@ export const CarpoolDashboard = () => {
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -1202,10 +1203,12 @@ export const CarpoolDashboard = () => {
               ),
             })}
             enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={false}
+            hideTableSearch={true}
             storageKey="carpool-upcoming-rides-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
@@ -1274,9 +1277,9 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1286,7 +1289,13 @@ export const CarpoolDashboard = () => {
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -1297,9 +1306,10 @@ export const CarpoolDashboard = () => {
             })}
             enableSearch={true}
             enableSelection={false}
+            hideColumnsButton={true}
             selectable={false}
             enableExport={false}
-            hideTableSearch={false}
+            hideTableSearch={true}
             storageKey="carpool-active-rides-table"
             emptyMessage="No active rides"
           />
@@ -1320,7 +1330,7 @@ export const CarpoolDashboard = () => {
         <div className="space-y-4">
           {/* Tab Navigation */}
           <div className="flex gap-4 border-b border-gray-200">
-            <button 
+            <button
               onClick={() => setActiveReportTab("Under Review")}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeReportTab === "Under Review"
@@ -1330,7 +1340,7 @@ export const CarpoolDashboard = () => {
             >
               Under Review
             </button>
-            <button 
+            <button
               onClick={() => setActiveReportTab("Action in Progress")}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeReportTab === "Action in Progress"
@@ -1340,7 +1350,7 @@ export const CarpoolDashboard = () => {
             >
               Action in Progress
             </button>
-            <button 
+            <button
               onClick={() => setActiveReportTab("Resolved")}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeReportTab === "Resolved"
@@ -1350,7 +1360,7 @@ export const CarpoolDashboard = () => {
             >
               Resolved
             </button>
-            <button 
+            <button
               onClick={() => setActiveReportTab("Closed")}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeReportTab === "Closed"
@@ -1424,9 +1434,9 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(report) => ({
               actions: (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1477,10 +1487,12 @@ export const CarpoolDashboard = () => {
               ),
             })}
             enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={false}
+            hideTableSearch={true}
             storageKey="carpool-reports-table"
             emptyMessage="No reports found"
             exportFileName="carpool-reports"
@@ -1699,10 +1711,12 @@ export const CarpoolDashboard = () => {
               gender: user.gender,
             })}
             enableSearch={true}
+            hideTableExport={true}
             enableSelection={false}
+            hideColumnsButton={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={false}
+            hideTableSearch={true}
             storageKey="carpool-users-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
@@ -1783,10 +1797,12 @@ export const CarpoolDashboard = () => {
               gender: user.gender,
             })}
             enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={false}
+            hideTableSearch={true}
             storageKey="carpool-pending-kyc-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
