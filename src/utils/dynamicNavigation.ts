@@ -168,42 +168,82 @@ export const checkPermission = (
 };
 
 /**
- * Find the first accessible route for the user
+ * Helper function to check if a function has any active descendants (recursive)
+ */
+const hasActiveDescendant = (func: any, allFunctions: any[]): boolean => {
+  // Check if the function itself is active
+  if (func.function_active === 1) {
+    return true;
+  }
+
+  // Check if any sub_functions are active
+  if (func.sub_functions && func.sub_functions.length > 0) {
+    if (func.sub_functions.some((sf: any) => sf.sub_function_active === 1)) {
+      return true;
+    }
+  }
+
+  // Recursively check child functions (functions with parent_function matching this action_name)
+  const childFunctions = allFunctions.filter(
+    (cf: any) => cf.parent_function === func.action_name
+  );
+
+  for (const child of childFunctions) {
+    if (hasActiveDescendant(child, allFunctions)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Find the first accessible route for the user based on active permissions
  */
 export const findFirstAccessibleRoute = (
   userRole: UserRoleResponse | null
 ): string | null => {
-  if (!userRole) return null;
+  if (!userRole || !userRole.lock_modules) return null;
 
-  // Iterate through all packages and their items
-  for (const packageName of Object.keys(modulesByPackage)) {
-    const items = modulesByPackage[
-      packageName as keyof typeof modulesByPackage
-    ] as SidebarItem[];
+  // Find the first module with active functions (including descendants)
+  for (const module of userRole.lock_modules) {
+    if (!module.lock_functions || module.lock_functions.length === 0) {
+      continue;
+    }
 
-    for (const item of items) {
-      // Check if the item itself is accessible
-      if (checkPermission(item, userRole)) {
-        // If it has sub-items, check them recursively
-        if (item.subItems && item.subItems.length > 0) {
-          for (const subItem of item.subItems) {
-            if (checkPermission(subItem, userRole)) {
-              if (subItem.href) return subItem.href;
+    // Find the first function with active descendants
+    for (const func of module.lock_functions) {
+      if (hasActiveDescendant(func, module.lock_functions)) {
+        // If this function has a react_link and is active, use it
+        if (func.function_active === 1 && func.react_link) {
+          return func.react_link;
+        }
 
-              // Check deeper nesting if needed (though usually 2 levels is max)
-              if (subItem.subItems && subItem.subItems.length > 0) {
-                for (const deepSubItem of subItem.subItems) {
-                  if (deepSubItem.href) return deepSubItem.href;
-                }
-              }
-            }
+        // Otherwise, find the first active descendant with a react_link
+        const findFirstActiveLink = (
+          currentFunc: any,
+          allFuncs: any[]
+        ): string | null => {
+          // Check if current function is active and has a link
+          if (currentFunc.function_active === 1 && currentFunc.react_link) {
+            return currentFunc.react_link;
           }
-        }
 
-        // If no sub-items or none accessible, but parent is accessible and has href
-        if (item.href) {
-          return item.href;
-        }
+          // Check child functions
+          const children = allFuncs.filter(
+            (f: any) => f.parent_function === currentFunc.action_name
+          );
+
+          for (const child of children) {
+            const link = findFirstActiveLink(child, allFuncs);
+            if (link) return link;
+          }
+
+          return null;
+        };
+
+        const link = findFirstActiveLink(func, module.lock_functions);
+        if (link) return link;
       }
     }
   }
