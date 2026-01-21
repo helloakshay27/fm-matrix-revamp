@@ -818,6 +818,7 @@ import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournal
 import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
 import { BudgetDashboard } from "./pages/ClubManagement/BudgetDashboard";
 import { BillCyclesDetails } from "./pages/ClubManagement/BillCyclesDetails";
+import BudgetAdd from "./pages/ClubManagement/BudgetAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1673,6 +1674,10 @@ function App() {
                   <Route
                     path="/settings/Budget"
                     element={<BudgetDashboard />}
+                  />
+                   <Route
+                    path="/settings/Budget/add"
+                    element={<BudgetAdd/>}
                   />
 
                   {/* Club Management - Occupant Users */}

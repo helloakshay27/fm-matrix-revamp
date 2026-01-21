@@ -529,7 +529,7 @@ export const BudgetDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/manual-journal/add');
+    navigate('/settings/Budget/add');
   };
 
   // Render membership status badge
