@@ -218,7 +218,13 @@ export const EditExternalUserPage = () => {
       } else {
         toast.info('Please fix the highlighted fields');
       }
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        // Log the error instead of leaving an empty catch block
+        // eslint-disable-next-line no-console
+        console.warn('Failed to scroll to top', err);
+      }
       return;
     }
     const idForUpdate = userId || formData?.id || originalUser?.id;
@@ -499,7 +505,7 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setLmLoading(true);
-        const companyId = getSelectedCompanyId() ?? (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
+        const companyId = getSelectedCompanyId() ?? originalUser?.company_id ?? originalUser?.lock_user_permission?.company_id ?? formData.company_id ?? 145;
         const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
         const url = `${cleanBaseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -626,10 +632,10 @@ export const EditExternalUserPage = () => {
               {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
             </FormControl>
             <FormControl fullWidth size="small" error={!!fieldErrors.report_to_id}>
-              <InputLabel>Line Manager<span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel>Reporting Manager<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select
                 value={formData.report_to_id || ''}
-                label="Line Manager"
+                label="Reporting Manager"
                 displayEmpty
                 renderValue={(value) => {
                   if (!value) return 'Select';

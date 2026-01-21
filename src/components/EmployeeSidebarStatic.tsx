@@ -82,6 +82,55 @@ const employeeNavigationByModule: Record<string, any> = {
       items: [],
     },
   },
+  PATM: {
+    Projects: {
+      icon: Briefcase,
+      items: [
+        { name: "Project Overview", href: "/vas/projects" },
+        { name: "Project Dashboard", href: "/vas/project-dashboard" },
+      ],
+    },
+    "My Tasks": {
+      icon: ListChecks,
+      href: "/vas/tasks",
+      items: [],
+    },
+    Issues: {
+      icon: Bug,
+      href: "/vas/issues",
+      items: [],
+    },
+    Sprint: {
+      icon: Zap,
+      href: "/vas/sprint",
+      items: [],
+    },
+    Channels: {
+      icon: MessageSquare,
+      href: "/vas/channels",
+      items: [],
+    },
+    "Minutes of Meeting": {
+      icon: FileCheck2Icon,
+      href: "/vas/mom",
+      items: [],
+    },
+    "Opportunity Register": {
+      icon: Target,
+      href: "/vas/opportunity",
+      items: [],
+    },
+    "To Do": {
+      icon: CircleCheckBig,
+      href: "/vas/todo",
+      items: [],
+    },
+    Documents: {
+      icon: File,
+      href: "/vas/documents",
+      items: [],
+    },
+  },
   "Project Task": {
     Projects: {
       icon: Briefcase,
