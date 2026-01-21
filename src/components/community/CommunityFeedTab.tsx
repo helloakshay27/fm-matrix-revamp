@@ -27,6 +27,8 @@ import {
     MessageSquare,
     MoreVertical,
     FileText,
+    Calendar1,
+    MapPin,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -108,6 +110,12 @@ interface Post {
     attachments: Attachment[];
     comments: Comment[];
     poll_options?: PollOption[];
+    type: 'post' | 'event' | 'notice';
+    event_date?: string;
+    event_time?: string;
+    event_location?: string;
+    location?: string;
+    expire_time?: string;
 }
 
 const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps) => {
@@ -137,6 +145,46 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
     const [reactionsModalData, setReactionsModalData] = useState<Like[]>([]);
 
+    const transformedEvent = (event: any) => {
+        return {
+            id: event.id,
+            title: event.event_name,
+            body: event.description,
+            active: event.active,
+            created_at: event.created_at,
+            creator_full_name: event.created_by,
+            creator_image_url: null,
+            resource_name: communityName,
+            attachments: event.documents.map((doc: any) => ({
+                id: doc.id,
+                document_content_type: doc.doctype,
+                url: doc.document,
+            })),
+            type: 'event',
+            event_date: event.from_time,
+            location: event.event_at,
+        }
+    }
+
+    const transformedNotice = (notice: any) => {
+        return {
+            id: notice.id,
+            title: notice.notice_heading,
+            body: notice.notice_text || '',
+            active: notice.active,
+            created_at: notice.created_at,
+            creator_full_name: notice.created_by,
+            creator_image_url: null,
+            resource_name: communityName,
+            attachments: notice.cover_image ? [{
+                id: notice.cover_image.id,
+                url: notice.cover_image.url,
+                document_content_type: "image/jpeg"
+            }] : [],
+            type: 'notice',
+        }
+    }
+
     const fetchData = async () => {
         try {
             const response = await axios.get(`https://${baseUrl}/communities/${communityId}.json`, {
@@ -157,12 +205,24 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     "Authorization": `Bearer ${token}`
                 }
             })
+            const posts = response.data.posts.map(post => ({
+                ...post,
+                type: 'post'
+            }))
+            const events = response.data.events.map(transformedEvent)
+            const notices = response.data.notices ? response.data.notices.map(transformedNotice) : []
 
-            setPosts(response.data.posts);
+            const combined = [...posts, ...events, ...notices].sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            setPosts(combined);
         } catch (error) {
             console.log(error)
         }
     }
+
+    console.log(posts)
 
     const confirmDelete = async () => {
         if (!deleteConfirmation.id) return;
@@ -552,11 +612,43 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
                 {/* Post Title */}
                 {post.title && (
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h2>
+                    <h2 className="text-[16px] font-[500] text-gray-900 mb-2">{post.title}</h2>
                 )}
 
                 {/* Post Content */}
-                <p className="text-gray-700 mb-4">{post.body}</p>
+                <p className="text-[14px] font-[400] text-gray-700 mb-4">{post.body}</p>
+
+                {
+                    post.type === "event" && post.event_date && (
+                        <div className="mb-4 space-y-2 text-sm text-gray-700 flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">
+                                    <Calendar1 size={14} />
+                                </span>
+                                <span>{new Date(post.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                            </div>
+                            {post.location && (
+                                <div className="flex items-center gap-2 !mt-0">
+                                    <span className="text-lg">
+                                        <MapPin size={14} />
+                                    </span>
+                                    <span>{post.location}</span>
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
+
+                {
+                    post.type === "notice" && post.expire_time && (
+                        <div className="mb-4 space-y-2 text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">📅</span>
+                                <span>Expires: {new Date(post.expire_time).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.expire_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                            </div>
+                        </div>
+                    )
+                }
 
                 {/* Poll Options - Display if post has poll_options */}
                 {post.poll_options && post.poll_options.length > 0 && (
@@ -592,8 +684,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                 'grid grid-cols-2'
                         }`}>
                         {post.attachments.map((attachment, index) => {
-                            const isImage = attachment.document_content_type.startsWith('image/');
-                            const isVideo = attachment.document_content_type.startsWith('video/');
+                            const isImage = attachment?.document_content_type?.startsWith('image/');
+                            const isVideo = attachment.document_content_type?.startsWith('video/');
                             const shouldShowMore = post.attachments.length > 4 && index === 3;
 
                             return (
@@ -643,7 +735,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                     )}
 
                                     {/* Image Count Badge (if multiple images) */}
-                                    {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length > 1 && (
+                                    {post.attachments.filter(a => a?.document_content_type?.startsWith('image/')).length > 1 && (
                                         <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
@@ -658,36 +750,40 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 )}
 
                 {/* Reactions and Comments */}
-                <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
-                    {Object.entries(post.likes_with_emoji || {}).map(
-                        ([emojiKey, count]) => {
-                            const emoji = EMOJI_MAP[emojiKey];
+                {
+                    post.type === "post" && (
+                        <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
+                            {Object.entries(post.likes_with_emoji || {}).map(
+                                ([emojiKey, count]) => {
+                                    const emoji = EMOJI_MAP[emojiKey];
 
-                            if (!emoji || count === 0) return null;
+                                    if (!emoji || count === 0) return null;
 
-                            return (
-                                <button
-                                    key={emojiKey}
-                                    onClick={() => {
-                                        setReactionsModalData(post.likes_with_user_names);
-                                        setReactionsModalOpen(true);
-                                    }}
-                                    className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
-                                >
-                                    <span>{emoji.icon}</span>
-                                    <span className="text-sm font-medium">{count}</span>
-                                </button>
-                            );
-                        }
-                    )}
-                    <button
-                        className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
-                        onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
-                    >
-                        <MessageSquare size={14} />
-                        <span className="text-sm font-medium">{post.comments.length} comments</span>
-                    </button>
-                </div>
+                                    return (
+                                        <button
+                                            key={emojiKey}
+                                            onClick={() => {
+                                                setReactionsModalData(post.likes_with_user_names);
+                                                setReactionsModalOpen(true);
+                                            }}
+                                            className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
+                                        >
+                                            <span>{emoji.icon}</span>
+                                            <span className="text-sm font-medium">{count}</span>
+                                        </button>
+                                    );
+                                }
+                            )}
+                            <button
+                                className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
+                                onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
+                            >
+                                <MessageSquare size={14} />
+                                <span className="text-sm font-medium">{post?.comments?.length} comments</span>
+                            </button>
+                        </div>
+                    )
+                }
 
                 {/* Comments Section */}
                 {showCommentsForPost === post.id && post.comments && post.comments.length > 0 && (
