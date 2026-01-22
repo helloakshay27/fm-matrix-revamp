@@ -9,6 +9,7 @@ import {
   Copy,
   Move,
   Share2,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -94,7 +95,8 @@ export const DocumentDetailPage = () => {
   const [operationType, setOperationType] = useState<"move" | "copy">("move");
   const hostname = window.location.hostname;
 
-  const isPulseSite = hostname.includes("pulse.lockated.com");
+  const isPulseSite =
+    hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -229,7 +231,12 @@ export const DocumentDetailPage = () => {
   };
 
   const handleOpenEditor = () => {
-    setShowEditor(true);
+    // For pulse clients, open preview_url in new tab instead of editor
+    if (isPulseSite && document?.attachment?.preview_url) {
+      window.open(document.attachment.preview_url, "_blank");
+    } else {
+      setShowEditor(true);
+    }
   };
 
   const handleCloseEditor = () => {
@@ -422,18 +429,28 @@ export const DocumentDetailPage = () => {
       {/* Breadcrumb Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Document &gt; Document Detail
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/maintenance/documents")}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="text-sm text-gray-500">
+              Document &gt; Document Detail
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
-              title="Share Document"
-            >
-              <Share2 className="w-5 h-5 text-[#C72030]" />
-            </button>
+            {!isPulseSite && (
+              <button
+                onClick={handleShare}
+                className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
+                title="Share Document"
+              >
+                <Share2 className="w-5 h-5 text-[#C72030]" />
+              </button>
+            )}
             {/* Move Button */}
             <button
               onClick={handleMove}

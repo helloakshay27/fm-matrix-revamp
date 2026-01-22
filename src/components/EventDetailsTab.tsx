@@ -4,7 +4,7 @@ import { ArrowLeft, Pencil, QrCode, Share2, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
-import { fetchEventById } from '@/store/slices/eventSlice';
+import { fetchEventById, updateEvent } from '@/store/slices/eventSlice';
 import { format } from 'date-fns';
 import { Switch } from '@mui/material';
 
@@ -51,6 +51,7 @@ export const EventDetailsTab = () => {
     const token = localStorage.getItem("token");
 
     const [eventData, setEventData] = useState<Event>({} as Event);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -65,6 +66,38 @@ export const EventDetailsTab = () => {
 
         fetchEvent();
     }, [])
+
+    const handleStatusChange = async (checked: boolean) => {
+        const newStatus = checked ? 1 : 0;
+
+        // Store previous state for rollback
+        const previousStatus = eventData.active;
+
+        // Optimistic update
+        setUpdatingStatus(true);
+        setEventData((prev) => ({ ...prev, active: checked }));
+
+        try {
+            await dispatch(
+                updateEvent({
+                    id: eventData.id,
+                    data: { event: { active: newStatus } },
+                    baseUrl,
+                    token,
+                })
+            ).unwrap();
+
+            toast.success("Event status updated successfully");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update event status");
+
+            // Revert optimistic update on error
+            setEventData((prev) => ({ ...prev, active: previousStatus }));
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
 
     if (!eventData.id) {
         return <div className="p-6 bg-[#F6F7F7] min-h-screen flex items-center justify-center">Loading...</div>;
@@ -115,6 +148,8 @@ export const EventDetailsTab = () => {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={eventData.active}
+                                    onChange={(e) => handleStatusChange(e.target.checked)}
+                                    disabled={updatingStatus}
                                     sx={{
                                         '& .MuiSwitch-switchBase': {
                                             color: '#ef4444',

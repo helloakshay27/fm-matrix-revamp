@@ -176,11 +176,11 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             creator_full_name: notice.created_by,
             creator_image_url: null,
             resource_name: communityName,
-            attachments: notice.cover_image ? [{
-                id: notice.cover_image.id,
-                url: notice.cover_image.url,
-                document_content_type: "image/jpeg"
-            }] : [],
+            attachments: notice.attachments.map((doc: any) => ({
+                id: doc.id,
+                document_content_type: doc.document_content_type,
+                url: doc.url,
+            })),
             type: 'notice',
         }
     }
