@@ -4,6 +4,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { AmenityCategoryModal } from '@/components/AmenityCategoryModal';
+import { Switch } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'sonner';
 import {
@@ -38,6 +39,7 @@ const AmenityCategorySetup = () => {
     const [selectedRecord, setSelectedRecord] = useState<AmenityCategory | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<AmenityCategory | null>(null);
+    const [updatingStatus, setUpdatingStatus] = useState<Record<number, boolean>>({});
 
     const columns: ColumnConfig[] = [
         {
@@ -128,18 +130,77 @@ const AmenityCategorySetup = () => {
         }
     };
 
+    const handleStatusChange = async (item: AmenityCategory, checked: boolean) => {
+        const previousStatus = item.active;
+
+        // Optimistic update
+        setUpdatingStatus((prev) => ({ ...prev, [item.id]: true }));
+        setCategories((prev) =>
+            prev.map((cat) =>
+                cat.id === item.id ? { ...cat, active: checked } : cat
+            )
+        );
+
+        try {
+            await axios.patch(
+                `https://${baseUrl}/pms/admin/facility_categories/${item.id}`,
+                { facility_category: { active: checked } },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            toast.success('Status updated successfully');
+        } catch (error: any) {
+            console.error('Error updating status:', error);
+            toast.error(error.response?.data?.error || 'Failed to update status');
+
+            // Revert optimistic update on error
+            setCategories((prev) =>
+                prev.map((cat) =>
+                    cat.id === item.id ? { ...cat, active: previousStatus } : cat
+                )
+            );
+        } finally {
+            setUpdatingStatus((prev) => {
+                const newState = { ...prev };
+                delete newState[item.id];
+                return newState;
+            });
+        }
+    };
+
     const renderCell = (item: AmenityCategory, columnKey: string) => {
         switch (columnKey) {
             case 'active':
                 return (
-                    <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${item.active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}
-                    >
-                        {item.active ? 'Active' : 'Inactive'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            checked={item.active}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleStatusChange(item, e.target.checked)}
+                            disabled={updatingStatus[item.id]}
+                            size='small'
+                            sx={{
+                                '& .MuiSwitch-switchBase': {
+                                    color: '#ef4444',
+                                    '&.Mui-checked': {
+                                        color: '#22c55e',
+                                    },
+                                    '&.Mui-checked + .MuiSwitch-track': {
+                                        backgroundColor: '#22c55e',
+                                    },
+                                },
+                                '& .MuiSwitch-track': {
+                                    backgroundColor: '#ef4444',
+                                },
+                            }}
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                            {item.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
                 );
             case 'fac_type':
                 return (
