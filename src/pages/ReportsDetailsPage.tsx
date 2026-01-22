@@ -1128,7 +1128,7 @@ const ReportsDetailsPage = () => {
                         <div className="flex mt-auto">
                             <button
                                 onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
-                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
                             >
                                 No
                             </button>

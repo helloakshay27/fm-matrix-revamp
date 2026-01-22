@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, X, Building, Globe, Flag, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useApiConfig } from "@/hooks/useApiConfig";
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface AddOrganizationModalProps {
   isOpen: boolean;
@@ -40,6 +41,30 @@ interface OrganizationFormData {
   logo: File | null;
   powered_by_logo: File | null;
 }
+interface WelcomeDescription {
+  description: string;
+  active: boolean;
+}
+interface VisionItem {
+  description: string;
+  active: boolean;
+}
+interface MissionItem {
+  description: string;
+  active: boolean;
+}
+
+interface CEOInfo {
+  name: string;
+  designation: string;
+  description: string;
+  photo: File | null;
+  photoPreviewUrl: string | null;
+  video: File | null;
+  videoUrl: string | null;
+}
+
+
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -90,6 +115,115 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     powered_by_logo: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [welcomeDescriptions, setWelcomeDescriptions] = useState<WelcomeDescription[]>([
+    { description: "", active: false },
+  ]);
+
+  const addWelcomeDescription = () => {
+    setWelcomeDescriptions((prev) => [
+      ...prev,
+      { description: "", active: false },
+    ]);
+  };
+
+  const updateWelcomeDescription = (
+    index: number,
+    field: keyof WelcomeDescription,
+    value: string | boolean
+  ) => {
+    setWelcomeDescriptions((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const removeWelcomeDescription = (index: number) => {
+    setWelcomeDescriptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+
+  const [visionList, setVisionList] = useState<VisionItem[]>([
+    { description: "", active: false },
+  ]);
+  const addVision = () => {
+    setVisionList((prev) => [...prev, { description: "", active: false }]);
+  };
+
+  const updateVision = (
+    index: number,
+    field: keyof VisionItem,
+    value: string | boolean
+  ) => {
+    setVisionList((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const removeVision = (index: number) => {
+    setVisionList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const [missionList, setMissionList] = useState<MissionItem[]>([
+    { description: "", active: false },
+  ]);
+  const addMission = () => {
+    setMissionList((prev) => [...prev, { description: "", active: false }]);
+  };
+
+  const updateMission = (
+    index: number,
+    field: keyof MissionItem,
+    value: string | boolean
+  ) => {
+    setMissionList((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const removeMission = (index: number) => {
+    setMissionList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const [ceoInfo, setCeoInfo] = useState<CEOInfo>({
+    name: "",
+    designation: "CEO",
+    description: "",
+    photo: null,
+    photoPreviewUrl: null,
+    video: null,
+    videoUrl: null,
+  });
+
+  const handleCeoPhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (file) {
+      setCeoInfo((prev) => ({
+        ...prev,
+        photo: file,
+        photoPreviewUrl: URL.createObjectURL(file),
+      }));
+    } else {
+      setCeoInfo((prev) => ({ ...prev, photo: null, photoPreviewUrl: null }));
+    }
+  };
+
+  const handleCeoVideoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (file) {
+      setCeoInfo((prev) => ({
+        ...prev,
+        video: file,
+        videoUrl: URL.createObjectURL(file),
+      }));
+    } else {
+      setCeoInfo((prev) => ({ ...prev, video: null, videoUrl: null }));
+    }
+  };
 
   // Validate domains like example.com and with more segments (e.g., app.example.co.in)
   const isValidDomain = (value: string) => {
@@ -97,6 +231,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
     return domainRegex.test(value.trim());
   };
+
+
+  console.log("welcomeDescriptions:", welcomeDescriptions, visionList, missionList, ceoInfo);
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
@@ -169,6 +306,82 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
         formData.powered_by_logo
       );
     }
+
+    if (welcomeDescriptions && welcomeDescriptions.length > 0) {
+      welcomeDescriptions.forEach((desc, index) => {
+        submitFormData.append(
+          `organization[other_config][welcome][description][${index}][text]`,
+          desc.description
+        );
+        submitFormData.append(
+          `organization[other_config][welcome][description][${index}][bold]`,
+          desc.active.toString()
+        );
+      });
+    }
+
+    if (visionList && visionList.length > 0) {
+      visionList.forEach((desc, index) => {
+        submitFormData.append(
+          `organization[other_config][vision][description][${index}][text]`,
+          desc.description
+        );
+        submitFormData.append(
+          `organization[other_config][vision][description][${index}][bold]`,
+          desc.active.toString()
+        );
+      });
+    }
+
+    if (missionList && missionList.length > 0) {
+      missionList.forEach((desc, index) => {
+        submitFormData.append(
+          `organization[other_config][mission][description][${index}][text]`,
+          desc.description
+        );
+        submitFormData.append(
+          `organization[other_config][mission][description][${index}][bold]`,
+          desc.active.toString()
+        );
+      });
+    }
+
+    // ---------------------
+    // Add CEO info if present
+    // ---------------------
+    if (ceoInfo) {
+      submitFormData.append(
+        "organization[other_config][ceo_info][name]",
+        ceoInfo.name
+      );
+      submitFormData.append(
+        "organization[other_config][ceo_info][designation]",
+        "CEO" // or ceoInfo.designation if dynamic
+      );
+      submitFormData.append(
+        "organization[other_config][ceo_info][description]",
+        ceoInfo.description
+      );
+
+      // These are references; your API may use relation names for files
+      submitFormData.append(
+        "organization[other_config][ceo_info][photo_relation]",
+        "CEOPhoto"
+      );
+      submitFormData.append(
+        "organization[other_config][ceo_info][video_relation]",
+        "CEOVideo"
+      );
+
+      // Actual files
+      if (ceoInfo.photo) {
+        submitFormData.append("organization[ceo_photo]", ceoInfo.photo);
+      }
+      if (ceoInfo.video) {
+        submitFormData.append("organization[ceo_video]", ceoInfo.video);
+      }
+    }
+
 
     try {
       const response = await fetch(getFullUrl("/organizations.json"), {
@@ -294,6 +507,24 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     resetForm();
     onClose();
   };
+  const removeCeoPhoto = () => {
+    setCeoInfo((prev) => ({
+      ...prev,
+      photo: null,
+      photoPreviewUrl: null,
+    }));
+  };
+
+
+  const removeCeoVideo = () => {
+    setCeoInfo((prev) => ({
+      ...prev,
+      video: null,
+      videoUrl: null,
+    }));
+  };
+
+
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
@@ -616,7 +847,519 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 </div>
               </div>
             </div>
+
+
           </div>
+
+
+          {/* Welcome Description Section */}
+          <div>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Welcome Description
+            </h3>
+
+            <div className="space-y-4">
+              {welcomeDescriptions.map((item, index) => (
+                <div
+                  key={index}
+                  className="border rounded-lg p-4 bg-gray-50 space-y-3"
+                >
+                  <TextField
+                    label={`Paragraph ${index + 1}`}
+                    placeholder="Enter welcome description"
+                    value={item.description}
+                    onChange={(e) =>
+                      updateWelcomeDescription(index, "description", e.target.value)
+                    }
+                    fullWidth
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
+                    InputProps={{ sx: fieldStyles }}
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={item.active}
+                        onCheckedChange={(checked) =>
+                          updateWelcomeDescription(index, "active", checked)
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm text-gray-700">
+                        Show in bold
+                      </span>
+                    </div>
+
+
+                    {welcomeDescriptions.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeWelcomeDescription(index)}
+                        style={{ padding: 0, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <X style={{ color: 'red', width: 16, height: 16 }} />
+                      </Button>
+                    )}
+
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              onClick={addWelcomeDescription}
+              className="mt-4 bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              disabled={isSubmitting}
+            >
+              + Add Description
+            </Button>
+          </div>
+
+          {/* Vision Section */}
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Vision
+            </h3>
+
+            <div className="space-y-4">
+              {visionList.map((item, index) => (
+                <div
+                  key={index}
+                  className="border rounded-lg p-4 bg-gray-50 space-y-3"
+                >
+                  <TextField
+                    label={`Paragraph ${index + 1}`}
+                    placeholder="Enter vision description"
+                    value={item.description}
+                    onChange={(e) =>
+                      updateVision(index, "description", e.target.value)
+                    }
+                    fullWidth
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
+                    InputProps={{ sx: fieldStyles }}
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={item.active}
+                        onCheckedChange={(checked) =>
+                          updateVision(index, "active", checked)
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm text-gray-700">
+                        Show in bold
+                      </span>
+                    </div>
+
+                    {visionList.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeVision(index)}
+                        // className="text-red-600 hover:text-red-700"
+                        style={{ padding: 0, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        {/* Remove */}
+                        <X style={{ color: 'red', width: 16, height: 16 }} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              onClick={addVision}
+              className="mt-4 bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              disabled={isSubmitting}
+            >
+              + Add Vision
+            </Button>
+          </div>
+          {/* Mission Section */}
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Mission
+            </h3>
+
+            <div className="space-y-4">
+              {missionList.map((item, index) => (
+                <div
+                  key={index}
+                  className="border rounded-lg p-4 bg-gray-50 space-y-3"
+                >
+                  <TextField
+                    label={`Paragraph ${index + 1}`}
+                    placeholder="Enter mission description"
+                    value={item.description}
+                    onChange={(e) =>
+                      updateMission(index, "description", e.target.value)
+                    }
+                    fullWidth
+                    // multiline
+                    // rows={3}
+                    // variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+
+                    variant="outlined"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
+                    InputProps={{ sx: fieldStyles }}
+                    multiline
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={item.active}
+                        onCheckedChange={(checked) =>
+                          updateMission(index, "active", checked)
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm text-gray-700">
+                        Show in bold
+                      </span>
+                    </div>
+
+                    {missionList.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeMission(index)}
+                        // className="text-red-600 hover:text-red-700"
+                        style={{ padding: 0, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        {/* Remove */}
+                        <X style={{ color: 'red', width: 16, height: 16 }} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              onClick={addMission}
+              className="mt-4 bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              disabled={isSubmitting}
+            >
+              + Add Mission
+            </Button>
+          </div>
+
+          {/* CEO Info Section */}
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">CEO Info</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name */}
+              <TextField
+                label="Name"
+                placeholder="Enter CEO name"
+                value={ceoInfo.name}
+                onChange={(e) =>
+                  setCeoInfo((prev) => ({ ...prev, name: e.target.value }))
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                disabled={isSubmitting}
+              />
+
+              {/* Designation */}
+              <TextField
+                label="Designation"
+                value={ceoInfo.designation}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                disabled
+              />
+            </div>
+
+            {/* Description */}
+            {/* <div className="mt-4">
+              <TextField
+                label="Description"
+                placeholder="Enter CEO description"
+                value={ceoInfo.description}
+                onChange={(e) =>
+                  setCeoInfo((prev) => ({ ...prev, description: e.target.value }))
+                }
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                disabled={isSubmitting}
+              />
+            </div> */}
+
+            {/* CEO Description */}
+            <div className="mt-6">
+              <TextField
+                label="Description"
+                placeholder="Enter CEO description"
+                value={ceoInfo.description}
+                onChange={(e) =>
+                  setCeoInfo((prev) => ({ ...prev, description: e.target.value }))
+                }
+                fullWidth
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
+                InputProps={{ sx: fieldStyles }}
+                multiline
+                rows={3}
+                disabled={isSubmitting}
+              />
+            </div>
+
+
+            {/* Photo Upload */}
+            {/* <div className="mt-4">
+              <span className="text-sm font-medium">Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCeoPhotoChange}
+                disabled={isSubmitting}
+                className="block w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              />
+              {ceoInfo.photoPreviewUrl && (
+                <img
+                  src={ceoInfo.photoPreviewUrl}
+                  alt="CEO Photo Preview"
+                  className="mt-2 h-24 w-24 object-cover rounded border border-gray-200"
+                />
+              )}
+            </div> */}
+
+            {/* <div className="mt-4">
+              <span className="text-sm font-medium">Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCeoPhotoChange}
+                disabled={isSubmitting}
+                className="block w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              />
+
+              {ceoInfo.photoPreviewUrl && (
+                <div className="relative inline-block mt-2">
+                  <img
+                    src={ceoInfo.photoPreviewUrl}
+                    alt="CEO Photo Preview"
+                    className="h-24 w-24 object-cover rounded border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeCeoPhoto}
+                    className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                    aria-label="Remove photo"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </div> */}
+
+            <div className="mt-4 space-y-2">
+              <span className="text-sm font-medium">Photo</span>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCeoPhotoChange}
+                disabled={isSubmitting}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              />
+
+              {ceoInfo.photoPreviewUrl && (
+                <div className="flex items-center gap-3 flex-wrap mt-2">
+                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    CEO Photo
+                  </div>
+
+                  <div className="relative">
+                    <img
+                      src={ceoInfo.photoPreviewUrl}
+                      alt="CEO Photo Preview"
+                      className="h-16 w-16 object-cover border border-gray-200 rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeCeoPhoto}
+                      className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                      aria-label="Remove photo"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+
+
+            {/* Video Upload */}
+            {/* <div className="mt-4">
+              <span className="text-sm font-medium">Video</span>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleCeoVideoChange}
+                disabled={isSubmitting}
+                className="block w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              /> */}
+            {/* {ceoInfo.videoUrl && (
+                <video
+                  src={ceoInfo.videoUrl}
+                  controls
+                  className="mt-2 max-h-48 w-full object-cover rounded border border-gray-200"
+                />
+              )} */}
+            {/* </div> */}
+
+
+            <div className="mt-4 space-y-2">
+              <span className="text-sm font-medium">Video</span>
+
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleCeoVideoChange}
+                disabled={isSubmitting}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+              />
+
+              {(ceoInfo.videoUrl || ceoInfo.video) && (
+                <div className="flex items-center gap-3 flex-wrap mt-2">
+                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    CEO Video
+                  </div>
+
+                  <div className="relative">
+                    <div className="h-16 w-16 flex items-center justify-center border border-gray-200 rounded bg-gray-50 text-xs text-gray-600">
+                      MP4
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeCeoVideo}
+                      className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                      aria-label="Remove video"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {ceoInfo.videoUrl && !ceoInfo.video && (
+                    <a
+                      href={ceoInfo.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-black underline decoration-red-600 decoration-2 underline-offset-4"
+                    >
+                      Open
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+
+
         </div>
 
         {/* Action Buttons */}
