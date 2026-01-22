@@ -139,7 +139,7 @@ export const EmployeeUnifiedCalendar: React.FC<
         const baseUrl = API_CONFIG.BASE_URL;
 
         const response = await fetch(
-          `${baseUrl}${API_CONFIG.ENDPOINTS.COMBINED_CALENDAR_DATA}?access_token=${token}&id=${userId}`
+          `${baseUrl}${API_CONFIG.ENDPOINTS.USER_CALENDARS}?access_token=${token}&id=${userId}`
         );
 
         if (!response.ok) {
@@ -149,16 +149,34 @@ export const EmployeeUnifiedCalendar: React.FC<
         const data = await response.json();
 
         // Map API data to calendar event format
-        const mappedEvents = (data.calendar_data || []).map((item: any) => ({
-          id: item.id.toString(),
-          title: item.title,
-          start: item.start_date || item.start_time,
-          end: item.end_date || item.end_time,
-          type: item.type,
-          status: item.status,
-          description: item.description,
-          color: getColorForType(item.type),
-        }));
+        const mappedEvents = (data.user_calendars || []).map((item: any) => {
+          // Map type names from API to internal types
+          let eventType = item.type;
+          if (item.type === "FacilityBooking") {
+            eventType = "Facility";
+          } else if (item.type === "TaskManagement") {
+            eventType = "Task";
+          }
+
+          // Combine date and time for start and end
+          const startDateTime = item.start_time
+            ? `${item.start_date}T${item.start_time}:00`
+            : item.start_date;
+          const endDateTime = item.end_time
+            ? `${item.end_date}T${item.end_time}:00`
+            : item.end_date;
+
+          return {
+            id: item.id.toString(),
+            title: item.title || "Untitled Event",
+            start: startDateTime,
+            end: endDateTime,
+            type: eventType,
+            status: item.status,
+            description: item.description,
+            color: getColorForType(eventType),
+          };
+        });
 
         setEvents(mappedEvents);
       } catch (error) {
