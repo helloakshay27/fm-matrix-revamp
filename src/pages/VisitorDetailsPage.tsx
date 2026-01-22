@@ -729,6 +729,16 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
+                    {hasData(visitorData.remarks) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Remarks</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.remarks}
+                        </span>
+                      </div>
+                    )}
+
                     {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Additional Visitor</span>
