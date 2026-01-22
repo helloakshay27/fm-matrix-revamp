@@ -79,6 +79,10 @@ const BookingCalenderView = () => {
             const monthIndex = new Date(`${currentMonth} 1, ${currentYear}`).getMonth();
             const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
 
+            // Get today's date for comparison
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+
             const generatedDates = Array.from({ length: daysInMonth }, (_, i) => {
                 const dateObj = new Date(currentYear, monthIndex, i + 1);
                 const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
@@ -88,7 +92,12 @@ const BookingCalenderView = () => {
                 const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
                 const dd = String(dateObj.getDate()).padStart(2, "0");
                 const fullDate = `${yyyy}-${mm}-${dd}`;
-                return { date: formattedDate, day: dayName, isOff, fullDate, isBlocked: false };
+
+                // Check if date is in the past
+                dateObj.setHours(0, 0, 0, 0);
+                const isPastDate = dateObj < todayDate;
+
+                return { date: formattedDate, day: dayName, isOff, fullDate, isBlocked: false, isPast: isPastDate };
             });
 
             setDates(generatedDates);
@@ -365,18 +374,18 @@ const BookingCalenderView = () => {
                                             dateRefs.current[dateInfo.fullDate] = el;
                                         }
                                     }}
-                                    onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && (
+                                    onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && !dateInfo.isPast && (
                                         setSelectedDate(dateInfo.date),
                                         setSelectedDateForApi(dateInfo.fullDate)
                                     )}
                                     className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${selectedDate === dateInfo.date
                                         ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]'
-                                        : dateInfo.isOff || dateInfo.isBlocked
-                                            ? '!bg-gray-100 cursor-not-allowed'
+                                        : dateInfo.isOff || dateInfo.isBlocked || dateInfo.isPast
+                                            ? '!bg-gray-200 !text-gray-400 cursor-not-allowed opacity-60'
                                             : '!bg-white hover:bg-gray-50 cursor-pointer'
                                         }`}
                                 >
-                                    {selectedDate === dateInfo.date && !dateInfo.isBlocked && (
+                                    {selectedDate === dateInfo.date && !dateInfo.isBlocked && !dateInfo.isPast && (
                                         <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#C72030] border-r-[10px] border-r-transparent"></span>
                                     )}
                                     {dateInfo.isBlocked && (

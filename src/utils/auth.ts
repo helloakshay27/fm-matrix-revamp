@@ -213,7 +213,7 @@ export const getOrganizationsByEmail = async (
 
   // Default fallback for other sitess
   const response = await fetch(
-    `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {

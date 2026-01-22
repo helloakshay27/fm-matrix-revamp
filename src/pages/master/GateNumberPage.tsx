@@ -12,6 +12,7 @@ export interface GateNumber {
   gate_number: string;
   company_name: string;
   pms_site_name: string;
+  pms_site_id: number;
   building_name: string;
   active: boolean | null;
 }
@@ -123,6 +124,7 @@ const GateNumberPage = () => {
           { key: 'gate_number', label: 'Gate Number' },
           { key: 'company_name', label: 'Company' },
           { key: 'pms_site_name', label: 'Project' },
+          { key: 'pms_site_id', label: 'Site Number' },
           { key: 'building_name', label: 'Building' },
           { key: 'active', label: 'Status' },
         ]}
