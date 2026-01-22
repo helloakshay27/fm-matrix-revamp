@@ -39,7 +39,7 @@ const Index = () => {
     if (userType && isLocalhost) {
       // Navigate based on userType
       if (userType === "pms_organization_admin") {
-        navigate("/admin/dashboard", { replace: true });
+        navigate("/maintenance/asset", { replace: true });
         return;
       } else if (userType === "pms_occupant") {
         navigate("/vas/projects", { replace: true });
@@ -63,7 +63,7 @@ const Index = () => {
         }
       }
       // Fallback to default admin route for these companies
-      navigate("/admin/dashboard", { replace: true });
+      navigate("/maintenance/asset", { replace: true });
       return;
     }
 
