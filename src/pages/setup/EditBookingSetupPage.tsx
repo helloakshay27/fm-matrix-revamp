@@ -113,6 +113,7 @@ export const EditBookingSetupPage = () => {
         prepaid: false,
         payOnFacility: false,
         complimentary: false,
+        billToCompany: false,
         gstPercentage: "",
         sgstPercentage: "",
         igstPercentage: "",
@@ -127,6 +128,26 @@ export const EditBookingSetupPage = () => {
         termsConditions: "",
         cancellationText: "",
         amenities: {} as Record<number, boolean>,
+        staticAmenities: {
+            tv: { name: "TV", selected: false, tag_id: null },
+            whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
+            casting: { name: "Casting", selected: false, tag_id: null },
+            smartPenForTV: {
+                name: "Smart Pen for TV",
+                selected: false,
+                tag_id: null,
+            },
+            wirelessCharging: {
+                name: "Wireless Charging",
+                selected: false,
+                tag_id: null,
+            },
+            meetingRoomInventory: {
+                name: "Meeting Room Inventory",
+                selected: false,
+                tag_id: null,
+            },
+        },
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
@@ -273,6 +294,38 @@ export const EditBookingSetupPage = () => {
                     acc[accessory.pms_inventory_id] = true;
                     return acc;
                 }, {}) || {},
+                staticAmenities: {
+                    tv: {
+                        name: "TV",
+                        selected: responseData.amenity_info[0].selected,
+                        tag_id: responseData.amenity_info[0].tag_id
+                    },
+                    whiteboard: {
+                        name: "Whiteboard",
+                        selected: responseData.amenity_info[1].selected,
+                        tag_id: responseData.amenity_info[1].tag_id
+                    },
+                    casting: {
+                        name: "Casting",
+                        selected: responseData.amenity_info[2].selected,
+                        tag_id: responseData.amenity_info[2].tag_id
+                    },
+                    smartPenForTV: {
+                        name: "Smart Pen for TV",
+                        selected: responseData.amenity_info[3].selected,
+                        tag_id: responseData.amenity_info[3].tag_id
+                    },
+                    wirelessCharging: {
+                        name: "Wireless Charging",
+                        selected: responseData.amenity_info[4].selected,
+                        tag_id: responseData.amenity_info[4].tag_id
+                    },
+                    meetingRoomInventory: {
+                        name: "Meeting Room Inventory",
+                        selected: responseData.amenity_info[5].selected,
+                        tag_id: responseData.amenity_info[5].tag_id
+                    },
+                },
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
@@ -593,6 +646,10 @@ export const EditBookingSetupPage = () => {
                 "facility_setup[complementary]",
                 formData.complimentary ? "1" : "0"
             );
+            formDataToSend.append(
+                "facility_setup[bill_to_company]",
+                formData.billToCompany ? "1" : "0"
+            );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
             // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
@@ -834,6 +891,24 @@ export const EditBookingSetupPage = () => {
                     inventoryId.toString()
                 );
                 console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+            });
+
+            let index = 0;
+            Object.keys(formData.staticAmenities).forEach((key) => {
+                const amenity = formData.staticAmenities[key];
+                if (amenity.tag_id && !amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
+                    index++;
+                } else if (amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
+                    if (amenity.tag_id) {
+                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    }
+                    index++;
+                }
             });
 
             // Facility Slots
@@ -1352,29 +1427,33 @@ export const EditBookingSetupPage = () => {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-3">
-                                <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
-                                <TextField
-                                    size="small"
-                                    variant="outlined"
-                                    value={formData.chargeSetup.perSlotCharge}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        // Allow only positive integers (no decimals, no negatives)
-                                        if (value === '' || /^[1-9]\d*$/.test(value)) {
-                                            setFormData({
-                                                ...formData,
-                                                chargeSetup: {
-                                                    ...formData.chargeSetup,
-                                                    perSlotCharge: value,
-                                                },
-                                            });
-                                        }
-                                    }}
-                                    className="w-32"
-                                    placeholder="1"
-                                />
-                            </div>
+                            {
+                                formData.isBookable && (
+                                    <div className="flex items-center gap-3">
+                                        <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                                        <TextField
+                                            size="small"
+                                            variant="outlined"
+                                            value={formData.chargeSetup.perSlotCharge}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only positive integers (no decimals, no negatives)
+                                                if (value === '' || /^[1-9]\d*$/.test(value)) {
+                                                    setFormData({
+                                                        ...formData,
+                                                        chargeSetup: {
+                                                            ...formData.chargeSetup,
+                                                            perSlotCharge: value,
+                                                        },
+                                                    });
+                                                }
+                                            }}
+                                            className="w-32"
+                                            placeholder="1"
+                                        />
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
 
@@ -2007,46 +2086,59 @@ export const EditBookingSetupPage = () => {
 
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {/* <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="postpaid"
-                                        checked={formData.postpaid}
-                                        onCheckedChange={(checked) =>
-                                            setFormData({ ...formData, postpaid: !!checked })
-                                        }
-                                    />
-                                    <label htmlFor="postpaid">Postpaid</label>
-                                </div> */}
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="prepaid"
-                                        checked={formData.prepaid}
-                                        onCheckedChange={(checked) =>
-                                            setFormData({ ...formData, prepaid: !!checked })
-                                        }
-                                    />
-                                    <label htmlFor="prepaid">Prepaid</label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="payOnFacility"
-                                        checked={formData.payOnFacility}
-                                        onCheckedChange={(checked) =>
-                                            setFormData({ ...formData, payOnFacility: !!checked })
-                                        }
-                                    />
-                                    <label htmlFor="payOnFacility">Pay at Facility</label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="complimentary"
-                                        checked={formData.complimentary}
-                                        onCheckedChange={(checked) =>
-                                            setFormData({ ...formData, complimentary: !!checked })
-                                        }
-                                    />
-                                    <label htmlFor="complimentary">Complimentary</label>
-                                </div>
+                                {
+                                    formData.isBookable && (
+                                        <>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="prepaid"
+                                                    checked={formData.prepaid}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({ ...formData, prepaid: !!checked })
+                                                    }
+                                                />
+                                                <label htmlFor="prepaid">Prepaid</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="payOnFacility"
+                                                    checked={formData.payOnFacility}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({ ...formData, payOnFacility: !!checked })
+                                                    }
+                                                />
+                                                <label htmlFor="payOnFacility">Pay at Facility</label>
+                                            </div>
+                                        </>
+                                    )
+                                }
+
+                                {
+                                    !formData.isBookable && (
+                                        <>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="complimentary"
+                                                    checked={formData.complimentary}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({ ...formData, complimentary: !!checked })
+                                                    }
+                                                />
+                                                <label htmlFor="complimentary">Complimentary</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="billToCompany"
+                                                    checked={formData.billToCompany}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({ ...formData, billToCompany: !!checked })
+                                                    }
+                                                />
+                                                <label htmlFor="billToCompany">Bill to Company</label>
+                                            </div>
+                                        </>
+                                    )
+                                }
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <TextField
@@ -2514,7 +2606,7 @@ export const EditBookingSetupPage = () => {
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Tv className="w-4 h-4" />
                                     </div>
-                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
@@ -2550,7 +2642,43 @@ export const EditBookingSetupPage = () => {
                                     )}
                                 </div>
                             </div>
+
                             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                        <Tv className="w-4 h-4" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="staticAmenities">
+                                    {Object.keys(formData.staticAmenities).map((key) => (
+                                        <div key={key} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={key}
+                                                checked={formData.staticAmenities[key].selected}
+                                                onCheckedChange={(checked) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        staticAmenities: {
+                                                            ...formData.staticAmenities,
+                                                            [key]: {
+                                                                ...formData.staticAmenities[key],
+                                                                selected: !!checked,
+                                                            },
+                                                        },
+                                                    })
+                                                }
+                                            />
+                                            <label htmlFor={key}>
+                                                {formData.staticAmenities[key].name}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Armchair className="w-4 h-4" />
@@ -2676,7 +2804,7 @@ export const EditBookingSetupPage = () => {
                                         variant="outlined"
                                     />
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 

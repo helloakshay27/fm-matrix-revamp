@@ -4,7 +4,8 @@ import { fetchBookingDetails } from '@/store/slices/facilityBookingsSlice';
 import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { MenuItem, TextField } from '@mui/material';
 import axios from 'axios';
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner';
@@ -54,6 +55,8 @@ const EditFacilityBookingPage = () => {
     const [sgstPercentage, setSgstPercentage] = useState("")
     const [amountFull, setAmountFull] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [currentStatus, setCurrentStatus] = useState<string>("");
+    const [statusUpdating, setStatusUpdating] = useState(false);
     const gstAmount = (parseFloat(subTotal) * Number(gstPercentage)) / 100 || 0
     const sgstAmount = (parseFloat(subTotal) * Number(sgstPercentage)) / 100 || 0
     const grandTotal = parseFloat(subTotal) + gstAmount + sgstAmount || 0
@@ -106,6 +109,7 @@ const EditFacilityBookingPage = () => {
             setGstPercentage(bookingDetails.gst?.toString() || "");
             setSgstPercentage(bookingDetails.sgst?.toString() || "");
             setAmountFull(bookingDetails.amount_full || "");
+            setCurrentStatus(bookingDetails.current_status || "");
         } catch (error) {
             console.error("Error fetching booking details:", error);
             toast.error("Failed to fetch booking details");
@@ -162,17 +166,85 @@ const EditFacilityBookingPage = () => {
         }
     }
 
+    const handleStatusChange = async (newStatus: string) => {
+        setStatusUpdating(true);
+        try {
+            await axios.patch(
+                `https://${baseUrl}/pms/admin/facility_bookings/${id}.json`,
+                { current_status: newStatus.toLowerCase() },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setCurrentStatus(newStatus);
+            toast.success(`Booking status updated to ${newStatus}`);
+        } catch (error) {
+            console.error('Error updating booking status:', error);
+            toast.error('Failed to update booking status');
+        } finally {
+            setStatusUpdating(false);
+        }
+    };
+
     return (
         <div className="p-6 mx-auto">
             <div className="mb-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-1 hover:text-gray-800 transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Back</span>
-                    </button>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            <span>Back</span>
+                        </button>
+                    </div>
+                    {currentStatus && (
+                        <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-gray-200">
+                            <span className="text-sm text-gray-600">Status</span>
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                            <Select
+                                value={currentStatus}
+                                onValueChange={(newStatus) => handleStatusChange(newStatus)}
+                                disabled={statusUpdating}
+                            >
+                                <SelectTrigger className="border-none bg-transparent p-0 h-auto [&>svg]:hidden">
+                                    <div
+                                        className={`text-sm px-2 py-[2px] flex items-center gap-2 cursor-pointer font-medium ${currentStatus === "Cancelled"
+                                            ? "text-red-600 bg-red-50"
+                                            : currentStatus === "Confirmed"
+                                                ? "text-green-600 bg-green-50"
+                                                : "text-yellow-600 bg-yellow-50"
+                                            }`}
+                                        style={{ borderRadius: "4px" }}
+                                    >
+                                        <span
+                                            className={`rounded-full w-2 h-2 inline-block ${currentStatus === "Cancelled"
+                                                ? "bg-[#D92E14]"
+                                                : currentStatus === "Confirmed"
+                                                    ? "bg-[#16B364]"
+                                                    : "bg-[#D9CA20]"
+                                                }`}
+                                        ></span>
+                                        {currentStatus}
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pending">
+                                        Pending
+                                    </SelectItem>
+                                    <SelectItem value="Confirmed">
+                                        Confirmed
+                                    </SelectItem>
+                                    <SelectItem value="Cancelled">
+                                        Cancelled
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -330,32 +402,36 @@ const EditFacilityBookingPage = () => {
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
                             <div className="flex items-center gap-2">
                                 <span className="text-gray-700">GST</span>
+                            </div>
+                            <div className="flex items-center gap-6">
                                 <span className="text-sm text-gray-500">
                                     <input
                                         type="number"
                                         value={gstPercentage}
                                         onChange={(e) => setGstPercentage(e.target.value)}
-                                        className='w-14 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
+                                        className='w-16 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
                                     /> %
                                 </span>
+                                <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
                             </div>
-                            <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
                         </div>
 
                         {/* SGST */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
                             <div className="flex items-center gap-2">
                                 <span className="text-gray-700">SGST</span>
+                            </div>
+                            <div className="flex items-center gap-6">
                                 <span className="text-sm text-gray-500">
                                     <input
                                         type="number"
                                         value={sgstPercentage}
                                         onChange={(e) => setSgstPercentage(e.target.value)}
-                                        className='w-14 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
+                                        className='w-16 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
                                     /> %
                                 </span>
+                                <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
                             </div>
-                            <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
                         </div>
 
                         {/* Grand Total */}
