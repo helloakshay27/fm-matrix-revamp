@@ -8,9 +8,10 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
-import { fetchEvents } from '@/store/slices/eventSlice';
+import { fetchEvents, updateEvent } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
+import { Switch } from '@/components/ui/switch';
 
 const formatDateWithTimezone = (date: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -55,6 +56,7 @@ export const CRMEventsPage = () => {
     total_pages: 0,
   });
   const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
     total_events: "",
     upcoming_events: "",
@@ -82,6 +84,7 @@ export const CRMEventsPage = () => {
           event_location: event.event_at,
           amount: event.amount_per_member,
           member_capacity: event.capacity,
+          active: event.active,
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
@@ -179,6 +182,7 @@ export const CRMEventsPage = () => {
         event_location: event.event_at,
         amount: event.amount_per_member,
         member_capacity: event.capacity,
+        active: event.active,
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -208,6 +212,50 @@ export const CRMEventsPage = () => {
     navigate(`/pulse/events/edit/${id}`);
   }
 
+  const handleStatusChange = async (item: any, checked: boolean) => {
+    // 1: Published, 2: Disabled
+    const newStatus = checked ? 1 : 0;
+
+    // Optimistic update
+    setUpdatingStatus((prev) => ({ ...prev, [item.id]: true }));
+
+    // Update events list optimistically
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === item.id ? { ...event, active: newStatus } : event
+      )
+    );
+
+    try {
+      await dispatch(
+        updateEvent({
+          id: item.id,
+          data: { event: { active: newStatus } },
+          baseUrl,
+          token,
+        })
+      ).unwrap();
+
+      toast.success("Event status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update event status");
+
+      // Revert optimistic update on error
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === item.id ? { ...event, active: item.active } : event
+        )
+      );
+    } finally {
+      setUpdatingStatus((prev) => {
+        const newState = { ...prev };
+        delete newState[item.id];
+        return newState;
+      });
+    }
+  };
+
   // Render cell content
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
@@ -232,6 +280,20 @@ export const CRMEventsPage = () => {
       case 'amount':
         return (
           <span>{item.amount}</span>
+        );
+      case "status":
+        const isChecked = item.active;
+
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isChecked}
+              onCheckedChange={(checked) => handleStatusChange(item, checked)}
+              disabled={updatingStatus[item.id]}
+              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            {isChecked ? "Active" : "Inactive"}
+          </div>
         );
       case 'is_expired':
         return item.is_expired ? (
