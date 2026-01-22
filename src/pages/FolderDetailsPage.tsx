@@ -224,6 +224,10 @@ export const FolderDetailsPage = () => {
   const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const hostname = window.location.hostname;
+  const isPulseSite =
+    hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
+
   const folderName = folderData?.name || "Folder Details";
 
   // Fetch categories on mount
@@ -302,7 +306,9 @@ export const FolderDetailsPage = () => {
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
-        toast.error("Document created but could not open editor. Please try again.");
+        toast.error(
+          "Document created but could not open editor. Please try again."
+        );
         navigate("/maintenance/documents");
       }
     } catch (error: unknown) {
@@ -367,7 +373,8 @@ export const FolderDetailsPage = () => {
             {
               filename: "document.docx",
               content: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${pdfBase64}`,
-              content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              content_type:
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             },
           ],
         },
@@ -383,7 +390,9 @@ export const FolderDetailsPage = () => {
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
-        toast.error("Document created but could not open editor. Please try again.");
+        toast.error(
+          "Document created but could not open editor. Please try again."
+        );
         navigate("/maintenance/documents");
       }
     } catch (error: unknown) {
@@ -448,7 +457,8 @@ export const FolderDetailsPage = () => {
             {
               filename: "document.xlsx",
               content: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${pdfBase64}`,
-              content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              content_type:
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             },
           ],
         },
@@ -464,7 +474,9 @@ export const FolderDetailsPage = () => {
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
-        toast.error("Document created but could not open editor. Please try again.");
+        toast.error(
+          "Document created but could not open editor. Please try again."
+        );
         navigate("/maintenance/documents");
       }
     } catch (error: unknown) {
@@ -529,7 +541,8 @@ export const FolderDetailsPage = () => {
             {
               filename: "document.pptx",
               content: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${pdfBase64}`,
-              content_type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+              content_type:
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
             },
           ],
         },
@@ -545,7 +558,9 @@ export const FolderDetailsPage = () => {
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
-        toast.error("Document created but could not open editor. Please try again.");
+        toast.error(
+          "Document created but could not open editor. Please try again."
+        );
         navigate("/maintenance/documents");
       }
     } catch (error: unknown) {
@@ -654,21 +669,34 @@ export const FolderDetailsPage = () => {
     if (item?.type === "folder") {
       navigate(`/maintenance/documents/folder/${itemId}`);
     } else {
-      // Open preview for files
-      handlePreview(itemId);
+      // For pulse clients, open preview_url directly; otherwise use handlePreview
+      const doc = folderData?.documents?.find(
+        (d) => d.id.toString() === itemId
+      );
+      if (isPulseSite && doc?.attachment?.preview_url) {
+        window.open(doc.attachment.preview_url, "_blank");
+      } else {
+        handlePreview(itemId);
+      }
     }
   };
 
   const handlePreview = (itemId: string) => {
     const item = folderItems.find((i) => i.id.toString() === itemId);
     if (item) {
-      // Get the document from folderData to access attachment ID
+      // Get the document from folderData to access attachment
       const doc = folderData?.documents?.find(
         (d) => d.id.toString() === itemId
       );
-      if (doc?.attachment?.id) {
-        // Navigate to document editor with attachment ID
-        navigate(`/maintenance/documents/editor/${doc.attachment.id}`);
+      if (doc?.attachment) {
+        // For pulse clients, open preview_url in new tab; otherwise navigate to editor
+        if (isPulseSite && doc.attachment.preview_url) {
+          window.open(doc.attachment.preview_url, "_blank");
+        } else if (doc.attachment.id) {
+          navigate(`/maintenance/documents/editor/${doc.attachment.id}`);
+        } else {
+          toast.error("Document attachment not found");
+        }
       } else {
         toast.error("Document attachment not found");
       }
@@ -1106,17 +1134,19 @@ export const FolderDetailsPage = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => handlePreview(item.id.toString())}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </DropdownMenuItem>
+          {!isPulseSite && (
+            <DropdownMenuItem onClick={() => handlePreview(item.id.toString())}>
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => handleOpenDetail(item.id.toString())}
           >
             <FileText className="w-4 h-4 mr-2" />
             Open in Detail
           </DropdownMenuItem>
-          {item.type === "file" && (
+          {item.type === "file" && !isPulseSite && (
             <DropdownMenuItem onClick={() => handleShare(item.id.toString())}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -1172,7 +1202,7 @@ export const FolderDetailsPage = () => {
               renderCell={renderCell}
               renderActions={renderActions}
               onViewDetails={(itemId) => handleViewItem(itemId.toString())}
-              onFilterOpen={() => { }}
+              onFilterOpen={() => {}}
               onActionClick={() => setShowActionPanel(true)}
               selectedItems={selectedItems}
               onSelectionChange={setSelectedItems}
@@ -1192,7 +1222,7 @@ export const FolderDetailsPage = () => {
             onDelete={() => handleDelete()}
             onMove={handleMove}
             onCopy={handleCopy}
-            onShare={() => handleShare()}
+            onShare={!isPulseSite ? () => handleShare() : undefined}
             onClearSelection={handleClearSelection}
           />
         </div>

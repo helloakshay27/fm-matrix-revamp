@@ -94,6 +94,7 @@ export const AddDocumentDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const source = searchParams.get("source");
+  const folderName = searchParams.get("folderName") || "";
   const isFolderDisabled = source === "new";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,6 +121,10 @@ export const AddDocumentDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
+
+  const hostname = window.location.hostname;
+  const isPulseSite =
+    hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
 
   const [formData, setFormData] = useState({
     documentCategory: "",
@@ -476,7 +481,9 @@ export const AddDocumentDashboard = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Add New Document
+            {folderName
+              ? `Add Document to "${folderName}"`
+              : "Add New Document"}
           </h1>
         </div>
       </div>
@@ -567,9 +574,7 @@ export const AddDocumentDashboard = () => {
                   }}
                 >
                   <MenuItem value="" disabled>
-                    {isFolderDisabled
-                      ? "Folder will be created"
-                      : "Select Document Folder"}
+                    {isFolderDisabled ? folderName : "Select Document Folder"}
                   </MenuItem>
                   {folders.length === 0 ? (
                     <MenuItem disabled>Loading folders...</MenuItem>
@@ -712,7 +717,10 @@ export const AddDocumentDashboard = () => {
                 <div className="mt-4 flex items-center gap-2">
                   <span className="text-[#C72030] text-sm">
                     {selectedTechParks
-                      .map((_, i) => `Tech Parks ${i + 1}`)
+                      .map((parkId) => {
+                        const site = sites.find((s) => s.id === parkId);
+                        return site ? site.name : `Site ${parkId}`;
+                      })
                       .join(", ")}
                     .
                   </span>
@@ -742,26 +750,28 @@ export const AddDocumentDashboard = () => {
               )}
 
             {/* Share with People Button */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button
-                onClick={() => setShowShareModal(true)}
-                className="bg-[#C72030] hover:bg-[#A01828] text-white gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                Share with People
+            {!isPulseSite && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <Button
+                  onClick={() => setShowShareModal(true)}
+                  className="bg-[#C72030] hover:bg-[#A01828] text-white gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share with People
+                  {documentShares.length > 0 && (
+                    <span className="ml-2 bg-white text-[#C72030] px-2 py-0.5 rounded-full text-xs font-semibold">
+                      {documentShares.length}
+                    </span>
+                  )}
+                </Button>
                 {documentShares.length > 0 && (
-                  <span className="ml-2 bg-white text-[#C72030] px-2 py-0.5 rounded-full text-xs font-semibold">
-                    {documentShares.length}
-                  </span>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Shared with {documentShares.length}{" "}
+                    {documentShares.length === 1 ? "person" : "people"}
+                  </p>
                 )}
-              </Button>
-              {documentShares.length > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Shared with {documentShares.length}{" "}
-                  {documentShares.length === 1 ? "person" : "people"}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
