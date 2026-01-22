@@ -105,6 +105,7 @@ export const AddFacilityBookingPage = () => {
     id: number;
     name: string;
     inventoryId: number;
+    price: number;
   }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
@@ -250,7 +251,8 @@ export const AddFacilityBookingPage = () => {
           const accessories = response.data.facility_setup.facility_setup_accessories.map(item => ({
             id: item.facility_setup_accessory?.id || 0,
             name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
-            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0,
+            price: item.facility_setup_accessory?.cost || 0
           }));
           setAvailableAccessories(accessories);
         } else {
@@ -466,13 +468,21 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-      // --- Cost calculation based on per_slot_charge only ---
+      // --- Cost calculation based on per_slot_charge and accessories ---
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
       const slotsCount = selectedSlots.length;
 
-      // Calculate total based only on per_slot_charge
+      // Calculate slot total
       const slotTotal = slotsCount * perSlotCharge;
-      const subtotalBeforeDiscount = slotTotal;
+
+      // Calculate accessory total
+      const accessoryTotal = selectedAccessories.reduce((total, accessoryId) => {
+        const accessory = availableAccessories.find(a => a.id === accessoryId);
+        return total + (accessory?.price || 0);
+      }, 0);
+
+      // Subtotal includes slots and accessories
+      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -500,9 +510,17 @@ export const AddFacilityBookingPage = () => {
         const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
         const slotsCount = selectedSlots.length;
 
-        // Calculate total based only on per_slot_charge
+        // Calculate slot total
         const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = slotTotal;
+
+        // Calculate accessory total
+        const accessoryTotal = selectedAccessories.reduce((total, accessoryId) => {
+          const accessory = availableAccessories.find(a => a.id === accessoryId);
+          return total + (accessory?.price || 0);
+        }, 0);
+
+        // Subtotal includes slots and accessories
+        const subtotalBeforeDiscount = slotTotal + accessoryTotal;
         const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
         const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
         const gstPercentage = facilityDetails?.gst || 0;
@@ -512,6 +530,7 @@ export const AddFacilityBookingPage = () => {
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
         return {
           slotTotal,
+          accessoryTotal,
           subtotalBeforeDiscount,
           discountAmount,
           subtotalAfterDiscount,
@@ -859,9 +878,12 @@ export const AddFacilityBookingPage = () => {
                   />
                   <Label
                     htmlFor={`accessory-${accessory.id}`}
-                    className="cursor-pointer text-sm font-medium"
+                    className="cursor-pointer text-sm font-medium flex items-center gap-2"
                   >
-                    {accessory.name}
+                    <span>{accessory.name}</span>
+                    {accessory.price > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">₹{accessory.price.toFixed(2)}</span>
+                    )}
                   </Label>
                 </div>
               ))}
@@ -932,15 +954,24 @@ export const AddFacilityBookingPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on per_slot_charge only */}
+              {/* Calculate costs based on per_slot_charge and accessories */}
               {(() => {
                 const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
                 const slotsCount = selectedSlots.length;
                 const hasSlots = slotsCount > 0;
 
-                // Calculate total based only on per_slot_charge
+                // Calculate slot total
                 const slotTotal = slotsCount * perSlotCharge;
-                const subtotalBeforeDiscount = slotTotal;
+
+                // Calculate accessory total
+                const accessoryTotal = selectedAccessories.reduce((total, accessoryId) => {
+                  const accessory = availableAccessories.find(a => a.id === accessoryId);
+                  return total + (accessory?.price || 0);
+                }, 0);
+                const hasAccessories = accessoryTotal > 0;
+
+                // Subtotal includes slots and accessories
+                const subtotalBeforeDiscount = slotTotal + accessoryTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
 
@@ -969,6 +1000,17 @@ export const AddFacilityBookingPage = () => {
                           <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
                         </div>
                         <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Accessory Charges */}
+                    {hasAccessories && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Accessory Charges</span>
+                          <span className="text-sm text-gray-500">({selectedAccessories.length} items)</span>
+                        </div>
+                        <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
                       </div>
                     )}
 
