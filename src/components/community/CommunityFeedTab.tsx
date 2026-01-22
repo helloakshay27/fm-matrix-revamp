@@ -176,11 +176,11 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             creator_full_name: notice.created_by,
             creator_image_url: null,
             resource_name: communityName,
-            attachments: notice.cover_image ? [{
-                id: notice.cover_image.id,
-                url: notice.cover_image.url,
-                document_content_type: "image/jpeg"
-            }] : [],
+            attachments: notice.attachments.map((doc: any) => ({
+                id: doc.id,
+                document_content_type: doc.document_content_type,
+                url: doc.url,
+            })),
             type: 'notice',
         }
     }
@@ -1278,7 +1278,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                         <div className="flex mt-auto">
                             <button
                                 onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
-                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
                             >
                                 No
                             </button>
