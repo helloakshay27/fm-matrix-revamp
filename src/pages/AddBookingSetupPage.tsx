@@ -107,6 +107,7 @@ export const AddBookingSetupPage = () => {
     postpaid: false,
     prepaid: false,
     payOnFacility: false,
+    billToCompany: false,
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
@@ -1655,6 +1656,16 @@ export const AddBookingSetupPage = () => {
                     }
                   />
                   <label htmlFor="complimentary">Complimentary</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="billToCompany"
+                    checked={formData.billToCompany}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, billToCompany: !!checked })
+                    }
+                  />
+                  <label htmlFor="billToCompany">Bill to Company</label>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

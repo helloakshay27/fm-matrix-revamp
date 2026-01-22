@@ -185,6 +185,9 @@ export interface DocumentAttachment {
   created_at: string;
   updated_at: string;
   url: string;
+  file_type?: string;
+  preview_url?: string;
+  uuid?: string | null;
 }
 
 export interface Document {
