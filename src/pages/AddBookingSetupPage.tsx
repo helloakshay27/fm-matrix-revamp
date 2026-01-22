@@ -107,6 +107,7 @@ export const AddBookingSetupPage = () => {
     postpaid: false,
     prepaid: false,
     payOnFacility: false,
+    billToCompany: false,
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
@@ -122,6 +123,14 @@ export const AddBookingSetupPage = () => {
     termsConditions: "",
     cancellationText: "",
     amenities: {} as Record<number, boolean>,
+    staticAmenities: {
+      tv: false,
+      whiteboard: false,
+      casting: false,
+      smartPenForTV: false,
+      wirelessCharging: false,
+      meetingRoomInventory: false,
+    },
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -431,6 +440,10 @@ export const AddBookingSetupPage = () => {
         "facility_setup[complementary]",
         formData.complimentary ? "1" : "0"
       );
+      formDataToSend.append(
+        "facility_setup[bill_to_company]",
+        formData.billToCompany ? "1" : "0"
+      );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
       // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
@@ -586,6 +599,35 @@ export const AddBookingSetupPage = () => {
           inventoryId.toString()
         );
         console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+      });
+
+      const amenities = [];
+      if (formData.staticAmenities.tv) amenities.push("TV");
+      if (formData.staticAmenities.whiteboard) amenities.push("Whiteboard");
+      if (formData.staticAmenities.casting) amenities.push("Casting");
+      if (formData.staticAmenities.smartPenForTV) amenities.push("Smart Pen for TV");
+      if (formData.staticAmenities.wirelessCharging)
+        amenities.push("Wireless Charging");
+      if (formData.staticAmenities.meetingRoomInventory)
+        amenities.push("Meeting Room Inventory");
+
+      amenities.forEach((name, index) => {
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][tag_type]`,
+          "amenity_things"
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][category_name]`,
+          name
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][_destroy]`,
+          "0"
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][selected]`,
+          "1"
+        );
       });
 
       // Facility Slots
@@ -779,9 +821,21 @@ export const AddBookingSetupPage = () => {
                   <InputLabel className="bg-[#F6F7F7]">Category<span className="text-red-500">*</span></InputLabel>
                   <Select
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selectedCategoryId = e.target.value;
+                      const selectedCategory = categories.find((cat: any) => cat.id === selectedCategoryId);
+
+                      // Set isBookable based on fac_type
+                      // Assuming "bookable" fac_type = true, others = false
+                      const isBookableType = selectedCategory?.fac_type === "bookable";
+
+                      setFormData({
+                        ...formData,
+                        category: selectedCategoryId,
+                        isBookable: isBookableType,
+                        isRequest: !isBookableType,
+                      });
+                    }}
                     onFocus={fetchCategories}
                     label="Category"
                     displayEmpty
@@ -1043,29 +1097,33 @@ export const AddBookingSetupPage = () => {
                   placeholder="1"
                 />
               </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.perSlotCharge}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow only positive integers (no decimals, no negatives)
-                    if (value === '' || /^[1-9]\d*$/.test(value)) {
-                      setFormData({
-                        ...formData,
-                        chargeSetup: {
-                          ...formData.chargeSetup,
-                          perSlotCharge: value,
-                        },
-                      });
-                    }
-                  }}
-                  className="w-32"
-                  placeholder="1"
-                />
-              </div>
+              {
+                formData.isBookable && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                    <TextField
+                      size="small"
+                      variant="outlined"
+                      value={formData.chargeSetup.perSlotCharge}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only positive integers (no decimals, no negatives)
+                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            chargeSetup: {
+                              ...formData.chargeSetup,
+                              perSlotCharge: value,
+                            },
+                          });
+                        }
+                      }}
+                      className="w-32"
+                      placeholder="1"
+                    />
+                  </div>
+                )
+              }
             </div>
           </div>
 
@@ -1616,46 +1674,57 @@ export const AddBookingSetupPage = () => {
 
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, postpaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="postpaid">Postpaid</label>
-                </div> */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, prepaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="prepaid">Prepaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, payOnFacility: !!checked })
-                    }
-                  />
-                  <label htmlFor="payOnFacility">Pay at Facility</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, complimentary: !!checked })
-                    }
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div>
+                {/* Show Prepaid and Pay at Facility for Bookable */}
+                {formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="prepaid"
+                        checked={formData.prepaid}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, prepaid: !!checked })
+                        }
+                      />
+                      <label htmlFor="prepaid">Prepaid</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="payOnFacility"
+                        checked={formData.payOnFacility}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, payOnFacility: !!checked })
+                        }
+                      />
+                      <label htmlFor="payOnFacility">Pay at Facility</label>
+                    </div>
+                  </>
+                )}
+
+                {/* Show Complimentary and Bill to Company for Requestable */}
+                {!formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="complimentary"
+                        checked={formData.complimentary}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, complimentary: !!checked })
+                        }
+                      />
+                      <label htmlFor="complimentary">Complimentary</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="billToCompany"
+                        checked={formData.billToCompany}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, billToCompany: !!checked })
+                        }
+                      />
+                      <label htmlFor="billToCompany">Bill to Company</label>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField
@@ -2164,7 +2233,7 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
@@ -2269,9 +2338,9 @@ export const AddBookingSetupPage = () => {
                     </label>
                   </div>
                 </div>
-              </div> */}
+              </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Armchair className="w-4 h-4" />
@@ -2310,7 +2379,6 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* Floor Info */}
               <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -2391,7 +2459,7 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
