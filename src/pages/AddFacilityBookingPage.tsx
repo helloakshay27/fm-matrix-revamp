@@ -751,7 +751,6 @@ export const AddFacilityBookingPage = () => {
             <TextField
               type="date"
               label="Date"
-              required
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"
