@@ -791,7 +791,7 @@ import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
-import SafetyCheckAudit from './pages/SafetyCheckAudit';
+import SafetyCheckAudit from "./pages/SafetyCheckAudit";
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
@@ -806,6 +806,7 @@ import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboard";
 import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
+import OpeningBalance from "./pages/ClubManagement/OpeningBalance";
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
 import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
@@ -839,7 +840,7 @@ function App() {
   // Initialize global MUI Select search enhancer
   useEffect(() => {
     console.log(
-      "🚀 Initializing Global MUI Select Search Enhancer from App.tsx"
+      "🚀 Initializing Global MUI Select Search Enhancer from App.tsx",
     );
     const cleanup = initializeGlobalMUISelectSearchEnhancer();
 
@@ -866,7 +867,7 @@ function App() {
     const fetchCurrency = async () => {
       try {
         const response: any = await dispatch(
-          getCurrency({ baseUrl, token, id })
+          getCurrency({ baseUrl, token, id }),
         ).unwrap();
         const currency =
           Array.isArray(response) && response[0]?.currency
@@ -1646,9 +1647,10 @@ function App() {
                     element={<ChartOfAccountsDashboard />}
                   />
                   <Route
-                    path="/settings/tax-setup"
-                    element={<TaxSetup />}
+                    path="/settings/opening-balance"
+                    element={<OpeningBalance />}
                   />
+                  <Route path="/settings/tax-setup" element={<TaxSetup />} />
                   <Route
                     path="/settings/charge-setup"
                     element={<ChargeSetupDashboard />}
@@ -1670,36 +1672,32 @@ function App() {
                     path="/settings/bill-cycles/add"
                     element={<BillCyclesAdd />}
                   />
-                    <Route
+                  <Route
                     path="/settings/bill-cycles/details"
-                    element={<BillCyclesDetails/>}
+                    element={<BillCyclesDetails />}
                   />
 
                   <Route
                     path="/settings/Budget"
                     element={<BudgetDashboard />}
                   />
-                   <Route
-                    path="/settings/Budget/add"
-                    element={<BudgetAdd/>}
-                  />
-                    <Route
+                  <Route path="/settings/Budget/add" element={<BudgetAdd />} />
+                  <Route
                     path="/settings/reports/balance-sheet"
-                    element={<BalanceSheetReport/>}
+                    element={<BalanceSheetReport />}
                   />
-                    <Route
+                  <Route
                     path="/settings/reports/profit-and-loss"
-                    element={<ProfitAndLossReport/>}
+                    element={<ProfitAndLossReport />}
                   />
-                     <Route
+                  <Route
                     path="/settings/reports/tax-summary"
-                    element={<TaxSummaryReport/>}
+                    element={<TaxSummaryReport />}
                   />
-                   <Route
+                  <Route
                     path="/settings/reports/gst-payable"
-                    element={<GstPayableReport/>}
+                    element={<GstPayableReport />}
                   />
-
 
                   {/* Club Management - Occupant Users */}
                   <Route
@@ -1994,7 +1992,10 @@ function App() {
                     path="/safety/permit/details/:id"
                     element={<PermitDetails />}
                   />
-                  <Route path="/safety-check-audit" element={<SafetyCheckAudit />} />
+                  <Route
+                    path="/safety-check-audit"
+                    element={<SafetyCheckAudit />}
+                  />
 
                   <Route
                     path="/safety/permit/edit/:id"
@@ -3223,10 +3224,7 @@ function App() {
                   />
 
                   {/* VAS Booking Routes */}
-                  <Route
-                    path="/vas/booking/list"
-                    element={<BookingList />}
-                  />
+                  <Route path="/vas/booking/list" element={<BookingList />} />
                   <Route
                     path="/vas/booking/add"
                     element={<AddFacilityBookingPage />}
@@ -3429,7 +3427,6 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-
 
                   <Route
                     path="/maintenance/waste/generation/add"
