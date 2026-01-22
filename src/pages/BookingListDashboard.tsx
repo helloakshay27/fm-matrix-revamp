@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Plus, Download, X, Loader2 } from 'lucide-react';
+import { Eye, Plus, Download, X, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TextField, MenuItem, createTheme, ThemeProvider, Dialog, DialogContent, FormControl, InputLabel, Select as MuiSelect } from '@mui/material';
@@ -611,14 +611,31 @@ const BookingListDashboard = () => {
     navigate(`/vas/bookings/details/${id}`);
   };
 
+  const handleEdit = (id: number) => {
+    navigate(`/vas/booking/edit/${id}`);
+  };
+
   const renderActions = (item: BookingData) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleView(item.id)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleView(item.id)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      {
+        item.facilityType === "Request" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(item.id)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        )
+      }
+    </>
   );
 
   const handleFilterChange = (field: string, value: string) => {

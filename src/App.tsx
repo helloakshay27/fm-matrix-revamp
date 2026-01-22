@@ -920,6 +920,9 @@ import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
+import AccessoriesSetup from "./pages/AccessoriesSetup";
+import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
+import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3578,6 +3581,10 @@ function App() {
                       element={<AddFacilityBookingPage />}
                     />
                     <Route
+                      path="/vas/booking/edit/:id"
+                      element={<EditFacilityBookingPage />}
+                    />
+                    <Route
                       path="/vas/bookings/details/:id"
                       element={<BookingDetailsPage />}
                     />
@@ -4158,6 +4165,14 @@ function App() {
                     <Route
                       path="/settings/vas/booking/category-setup"
                       element={<AmenityCategorySetup />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/accessories-setup"
+                      element={<AccessoriesSetup />}
+                    />
+                    <Route
+                      path="/settings/accessories/:id"
+                      element={<AccessoriesDetailsPage />}
                     />
                     <Route
                       path="/settings/vas/booking/setup/add"
