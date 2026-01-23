@@ -760,22 +760,22 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                    {hasData(visitorData.guest_entry_time) && (
+                    {hasData(visitorData.guest_entry_time_show) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Check-in Time</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.guest_entry_time).toLocaleString()}
+                          {visitorData.guest_entry_time_show}
                         </span>
                       </div>
                     )}
 
-                    {hasData(visitorData.master_exit_time) && (
+                    {hasData(visitorData.master_exit_time_show) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Check-out Time</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.master_exit_time).toLocaleString()}
+                          {visitorData.master_exit_time_show}
                         </span>
                       </div>
                     )}
