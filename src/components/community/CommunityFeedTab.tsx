@@ -147,7 +147,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | null; id: number | null }>({ open: false, type: null, id: null });
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | 'document' | null; id: number | null }>({ open: false, type: null, id: null });
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselAttachments, setCarouselAttachments] = useState<Attachment[]>([]);
     const [carouselStartIndex, setCarouselStartIndex] = useState(0);
@@ -349,6 +349,24 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 );
                 toast.success('Comment deleted successfully');
                 await fetchPosts();
+            } else if (deleteConfirmation.type === 'document') {
+                await axios.post(
+                    `https://${baseUrl}/folders/update_permission.json`,
+                    {
+                        permissible_type: "Document",
+                        permissible_id: deleteConfirmation.id,
+                        access_to: "Community",
+                        remove_items: [Number(communityId)]
+                    },
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+                toast.success('Document deleted successfully');
+                await fetchPosts();
             }
         } catch (error) {
             console.error(`Error deleting ${deleteConfirmation.type}:`, error);
@@ -419,8 +437,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
-    const handleDeletePost = (postId: number) => {
-        setDeleteConfirmation({ open: true, type: 'post', id: postId });
+    const handleDeletePost = (postId: number, postType?: string) => {
+        setDeleteConfirmation({ open: true, type: postType === 'document' ? 'document' : 'post', id: postId });
     };
 
     const handleCreatePost = async () => {
@@ -701,10 +719,10 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                 )
                             }
                             <DropdownMenuItem
-                                onClick={() => handleDeletePost(post.id)}
+                                onClick={() => handleDeletePost(post.id, post.type)}
                                 className="text-red-600 focus:text-red-600"
                             >
-                                Delete Post
+                                Delete {post.type === 'document' ? 'Document' : 'Post'}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -1412,7 +1430,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
                     <div className="bg-white pt-12 text-center flex flex-col">
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
-                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : 'Comment'} ?
+                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : deleteConfirmation.type === 'document' ? 'Document' : 'Comment'} ?
                         </h2>
                         <div className="flex mt-auto">
                             <button

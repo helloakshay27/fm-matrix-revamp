@@ -2547,17 +2547,20 @@ export const EditBookingSetupPage = () => {
                                     </div>
 
                                     {/* Percentage Input */}
-                                    <TextField
-                                        placeholder="%"
-                                        size="small"
-                                        variant="outlined"
-                                        value={rule.deduction}
-                                        onChange={(e) => {
-                                            const newRules = [...cancellationRules];
-                                            newRules[index].deduction = e.target.value;
-                                            setCancellationRules(newRules);
-                                        }}
-                                    />
+                                    <div className="flex items-center gap-1">
+                                        <TextField
+                                            placeholder="%"
+                                            size="small"
+                                            variant="outlined"
+                                            value={rule.deduction}
+                                            onChange={(e) => {
+                                                const newRules = [...cancellationRules];
+                                                newRules[index].deduction = e.target.value;
+                                                setCancellationRules(newRules);
+                                            }}
+                                        />
+                                        <span>%</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>

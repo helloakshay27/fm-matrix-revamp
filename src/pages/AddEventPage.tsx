@@ -476,6 +476,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -596,6 +602,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -619,6 +631,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
