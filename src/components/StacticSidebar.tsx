@@ -1023,6 +1023,7 @@ const modulesByPackage = {
       icon: Users,
       subItems: [
         { name: "Manual Journals ", href: "/settings/manual-journal" },
+           { name: "Transactions ", href: "/settings/transactions" },
         { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
         { name: "Opening Balance", href: "/settings/opening-balance" },

@@ -824,6 +824,8 @@ import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
 import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
 import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
+import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
+import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1674,7 +1676,7 @@ function App() {
                   />
                   <Route
                     path="/settings/bill-cycles/details"
-                    element={<BillCyclesDetails />}
+                    element={<BillCyclesDetails  />}
                   />
 
                   <Route
@@ -1684,19 +1686,26 @@ function App() {
                   <Route path="/settings/Budget/add" element={<BudgetAdd />} />
                   <Route
                     path="/settings/reports/balance-sheet"
-                    element={<BalanceSheetReport />}
+                    element={<BalanceSheetReport  />}
                   />
+                  <Route
                   <Route
                     path="/settings/reports/profit-and-loss"
-                    element={<ProfitAndLossReport />}
+                    element={<ProfitAndLossReport  />}
                   />
+                  <Route
                   <Route
                     path="/settings/reports/tax-summary"
-                    element={<TaxSummaryReport />}
+                    element={<TaxSummaryReport  />}
                   />
                   <Route
+                  <Route
                     path="/settings/reports/gst-payable"
-                    element={<GstPayableReport />}
+                    element={<GstPayableReport  />}
+                  />
+                  <Route
+                    path="/settings/transactions"
+                    element={<TransactionsDashboard />}
                   />
 
                   {/* Club Management - Occupant Users */}
