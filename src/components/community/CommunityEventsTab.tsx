@@ -29,6 +29,7 @@ interface Document {
     }
     created_by: string;
     created_at: string;
+    document_category_name?: string;
 }
 
 interface Notice {
@@ -586,6 +587,9 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         if (columnKey === 'action') {
             return renderDocumentActions(document);
         }
+        if (columnKey === 'document_category_name') {
+            return document.document_category_name || "-";
+        }
         if (columnKey === 'format') {
             return document.attachment.file_type.charAt(0).toUpperCase() + document.attachment.file_type.slice(1).toLowerCase();
         }
@@ -813,6 +817,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                     hideTableSearch={true}
                     selectable={true}
                     enableSelection={true}
+                    storageKey="community_events"
                     onSelectItem={(itemId: string, checked: boolean) => {
                         if (checked) {
                             setSelectedEvents([...selectedEvents, itemId]);
@@ -849,6 +854,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                     hideTableSearch={true}
                     selectable={true}
                     enableSelection={true}
+                    storageKey="community_documents"
                     onSelectItem={(itemId: string, checked: boolean) => {
                         if (checked) {
                             setSelectedDocuments([...selectedDocuments, itemId]);
@@ -885,6 +891,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                     hideTableSearch={true}
                     selectable={true}
                     enableSelection={true}
+                    storageKey="community_notices"
                     onSelectItem={(itemId: string, checked: boolean) => {
                         if (checked) {
                             setSelectedNotices([...selectedNotices, itemId]);
