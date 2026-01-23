@@ -175,8 +175,8 @@ export const EditEventPage = () => {
             shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
           }));
 
-          if (event.site_ids) {
-            setSelectedTechParks(event.site_ids);
+          if (event.shared_sites) {
+            setSelectedTechParks(event.shared_sites.map((site: any) => site.id));
           }
 
           setIsActive(event.is_important === true || event.is_important === 1);
@@ -854,7 +854,7 @@ export const EditEventPage = () => {
               </div>
             </div>
 
-            {formData.shareWith === "individual" && selectedTechParks.length > 0 && (
+            {selectedTechParks.length > 0 && (
               <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
                 <span>
                   {techParks
