@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
-import { FileText, Eye, Star } from "lucide-react";
+import { FileText, Eye, Star, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+import Switch from "@mui/material/Switch";
 import { useAppDispatch } from "@/store/hooks";
 import { updateBroadcast } from "@/store/slices/broadcastSlice";
+import { updateEvent } from "@/store/slices/eventSlice";
 
 interface CommunityEventsTabProps {
     communityId?: string;
@@ -21,8 +22,13 @@ interface Document {
     folder: string;
     format: string;
     size: string;
+    active?: boolean;
+    attachment: {
+        file_type: string;
+        file_size: string;
+    }
     created_by: string;
-    created_on: string;
+    created_at: string;
 }
 
 interface Notice {
@@ -48,52 +54,10 @@ interface Event {
     location: string;
     created_by: string;
     is_starred: boolean;
+    is_paid: boolean;
+    active?: boolean;
     from_time: string;
 }
-
-// Mock data for Documents
-const mockDocuments: Document[] = [
-    {
-        id: 1,
-        title: "Lease Agreement",
-        category: "Lease / Legal",
-        folder: "Lease Agreements",
-        format: "PDF",
-        size: "1.2 MB",
-        created_by: "Rohan Desai",
-        created_on: "2025-01-05"
-    },
-    {
-        id: 2,
-        title: "Fire Safety Drill Report",
-        category: "Safety & Compliance",
-        folder: "Fire Safety Certificates",
-        format: "DOCX",
-        size: "320 KB",
-        created_by: "Priya Kulkarni",
-        created_on: "2025-01-03"
-    },
-    {
-        id: 3,
-        title: "Visitor Pass Template",
-        category: "Templates",
-        folder: "Visitor Pass Templates",
-        format: "PDF",
-        size: "450 KB",
-        created_by: "Admin System",
-        created_on: "2025-01-02"
-    },
-    {
-        id: 4,
-        title: "Maintenance Work Order",
-        category: "Maintenance",
-        folder: "Work Orders",
-        format: "XLSX",
-        size: "780 KB",
-        created_by: "Mahesh Patil",
-        created_on: "2025-01-01"
-    }
-];
 
 const documentColumns: ColumnConfig[] = [
     {
@@ -109,13 +73,13 @@ const documentColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'category',
+        key: 'document_category_name',
         label: 'Category',
         sortable: true,
         draggable: true
     },
     {
-        key: 'folder',
+        key: 'folder_name',
         label: 'Folder',
         sortable: true,
         draggable: true
@@ -133,7 +97,7 @@ const documentColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'created_by',
+        key: 'created_by_full_name',
         label: 'Created By',
         sortable: true,
         draggable: true
@@ -143,7 +107,13 @@ const documentColumns: ColumnConfig[] = [
         label: 'Created On',
         sortable: true,
         draggable: true
-    }
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        draggable: true
+    },
 ];
 
 const eventColumns: ColumnConfig[] = [
@@ -155,7 +125,7 @@ const eventColumns: ColumnConfig[] = [
     },
     {
         key: 'event_name',
-        label: 'Title',
+        label: 'Event Name',
         sortable: true,
         draggable: true
     },
@@ -172,8 +142,20 @@ const eventColumns: ColumnConfig[] = [
         draggable: true
     },
     {
+        key: 'event_category',
+        label: 'Event Category',
+        sortable: true,
+        draggable: true
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        draggable: true
+    },
+    {
         key: 'event_at',
-        label: 'Location',
+        label: 'Event Location',
         sortable: true,
         draggable: true
     },
@@ -191,6 +173,14 @@ const noticeColumns: ColumnConfig[] = [
         label: 'Action',
         sortable: false,
         draggable: false
+    },
+    {
+        key: 'sr_no',
+        label: 'Sr No',
+        sortable: true,
+        draggable: true,
+        hideable: true,
+        defaultVisible: true
     },
     {
         key: 'notice_heading',
@@ -250,13 +240,21 @@ const noticeColumns: ColumnConfig[] = [
     }
 ];
 
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+};
+
 const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    const [documents] = useState<Document[]>(mockDocuments);
+    const [documents, setDocuments] = useState<Document[]>([]);
     const [notices, setNotices] = useState<Notice[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
     const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
@@ -303,6 +301,28 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
             fetchEvents();
         }
     }, [communityId, baseUrl, token]);
+
+    useEffect(() => {
+        const fetchDocuments = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/folders/by_communities.json?community_ids=[${communityId}]`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+
+                setDocuments(response.data.folders.flatMap((folder: any) => folder.documents) || []);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        if (communityId) {
+            fetchDocuments();
+        }
+    }, [communityId, baseUrl, token])
+
+    console.log(documents)
 
     const handleNoticeImportantClick = async (item: any) => {
         const newStatus = item.is_important ? 0 : 1;
@@ -445,8 +465,46 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         }
     };
 
+    const handleDocumentStatusChange = async (item: any, checked: boolean) => {
+        const newStatus = checked ? 1 : 0;
+
+        setUpdatingStatus((prev) => ({ ...prev, [`doc_${item.id}`]: true }));
+
+        try {
+            await axios.patch(
+                `https://${baseUrl}/documents/${item.id}.json`,
+                { document: { active: newStatus } },
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            toast.success("Document status updated successfully");
+
+            // Refresh documents
+            const response = await axios.get(`https://${baseUrl}/folders/by_communities.json?community_ids=[${communityId}]`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setDocuments(response.data.folders.flatMap((folder: any) => folder.documents) || []);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update document status");
+        } finally {
+            setUpdatingStatus((prev) => {
+                const newState = { ...prev };
+                delete newState[`doc_${item.id}`];
+                return newState;
+            });
+        }
+    };
+
     const renderDocumentActions = (document: Document) => (
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/pulse/community/document/${document.id}`)}>
             <Eye className="w-4 h-4" />
         </Button>
     );
@@ -468,7 +526,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/pulse/notices/details/${notice.id}`)}
+                onClick={() => navigate(`/pulse/community/notice/${notice.id}`)}
             >
                 <Eye className="w-4 h-4" />
             </Button>
@@ -476,21 +534,112 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
     );
 
     const renderEventActions = (event: Event) => (
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/pulse/events/details/${event.id}`)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/pulse/community/event/${event.id}`)}>
             <Eye className="w-4 h-4" />
         </Button>
     );
+
+    const handleEventStatusChange = async (item: any, checked: boolean) => {
+        const newStatus = checked ? 1 : 0;
+
+        // Optimistic update
+        setUpdatingStatus((prev) => ({ ...prev, [`event_${item.id}`]: true }));
+
+        // Update events list optimistically
+        setEvents((prev) =>
+            prev.map((event) =>
+                event.id === item.id ? { ...event, active: checked } : event
+            )
+        );
+
+        try {
+            await dispatch(
+                updateEvent({
+                    id: item.id,
+                    data: { event: { active: newStatus } },
+                    baseUrl,
+                    token,
+                })
+            ).unwrap();
+
+            toast.success("Event status updated successfully");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update event status");
+
+            // Revert optimistic update on error
+            setEvents((prev) =>
+                prev.map((event) =>
+                    event.id === item.id ? { ...event, active: item.active !== false } : event
+                )
+            );
+        } finally {
+            setUpdatingStatus((prev) => {
+                const newState = { ...prev };
+                delete newState[`event_${item.id}`];
+                return newState;
+            });
+        }
+    };
 
     const renderDocumentCell = (document: Document, columnKey: string) => {
         if (columnKey === 'action') {
             return renderDocumentActions(document);
         }
-        return document[columnKey as keyof Document] || "-";
+        if (columnKey === 'format') {
+            return document.attachment.file_type.charAt(0).toUpperCase() + document.attachment.file_type.slice(1).toLowerCase();
+        }
+        if (columnKey === 'size') {
+            return formatFileSize(Number(document.attachment.file_size));
+        }
+        if (columnKey === 'created_on') {
+            return new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            }).format(new Date(document.created_at));
+        }
+        if (columnKey === 'status') {
+            const isChecked = document.active !== false;
+            return (
+                <div className="flex items-center gap-2">
+                    <Switch
+                        checked={isChecked}
+                        onChange={(e) => handleDocumentStatusChange(document, e.target.checked)}
+                        disabled={updatingStatus[`doc_${document.id}`]}
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
+                    />
+                    {isChecked ? "Active" : "Inactive"}
+                </div>
+            );
+        }
+        const value = document[columnKey as keyof Document];
+        if (typeof value === 'object' && value !== null) {
+            return "-";
+        }
+        return String(value) || "-";
     };
 
     const renderNoticeCell = (notice: Notice, columnKey: string) => {
         if (columnKey === 'action') {
             return renderNoticeActions(notice);
+        }
+        if (columnKey === 'sr_no') {
+            return (notices.indexOf(notice) + 1);
         }
         if (columnKey === 'created_at') {
             return new Intl.DateTimeFormat("en-GB", {
@@ -512,9 +661,23 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                 <div className="flex items-center gap-2">
                     <Switch
                         checked={isChecked}
-                        onCheckedChange={(checked) => handleNoticeStatusChange(notice, checked)}
+                        onChange={(e) => handleNoticeStatusChange(notice, e.target.checked)}
                         disabled={updatingStatus[notice.id]}
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
                     />
                     {isChecked ? "Active" : "Inactive"}
                 </div>
@@ -526,9 +689,23 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                 <div className="flex items-center gap-2">
                     <Switch
                         checked={isShowOnHomeScreenChecked}
-                        onCheckedChange={(checked) => handleShowOnHomeScreenChange(notice, checked)}
+                        onChange={(e) => handleShowOnHomeScreenChange(notice, e.target.checked)}
                         disabled={updatingStatus[`home_${notice.id}`]}
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
                     />
                     {isShowOnHomeScreenChecked ? "Active" : "Inactive"}
                 </div>
@@ -540,9 +717,23 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                 <div className="flex items-center gap-2">
                     <Switch
                         checked={isVisibleAfterExpireChecked}
-                        onCheckedChange={(checked) => handleVisibleAfterExpireChange(notice, checked)}
+                        onChange={(e) => handleVisibleAfterExpireChange(notice, e.target.checked)}
                         disabled={updatingStatus[`expire_${notice.id}`]}
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
                     />
                     {isVisibleAfterExpireChecked ? "Active" : "Inactive"}
                 </div>
@@ -569,6 +760,37 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                 hour12: true,
             }).format(new Date(event.from_time));
         }
+        if (columnKey === 'event_category') {
+            return event.is_paid ? "Paid" : "Complimentary";
+        }
+        if (columnKey === 'status') {
+            const isChecked = event.active !== false;
+            return (
+                <div className="flex items-center gap-2">
+                    <Switch
+                        checked={isChecked}
+                        onChange={(e) => handleEventStatusChange(event, e.target.checked)}
+                        disabled={updatingStatus[`event_${event.id}`]}
+                        size="small"
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#04A231',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                            },
+                        }}
+                    />
+                    {isChecked ? "Active" : "Inactive"}
+                </div>
+            );
+        }
         return event[columnKey as keyof Event] || "-";
     };
 
@@ -578,7 +800,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
             <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
                     <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <FileText size={16} />
+                        <File size={16} />
                     </div>
                     <span className="font-semibold text-lg text-gray-800">Events</span>
                 </div>
@@ -614,7 +836,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
             <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
                     <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <FileText size={16} />
+                        <File size={16} />
                     </div>
                     <span className="font-semibold text-lg text-gray-800">Documents</span>
                 </div>
@@ -650,7 +872,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
             <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
                     <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <FileText size={16} />
+                        <File size={16} />
                     </div>
                     <span className="font-semibold text-lg text-gray-800">Notices</span>
                 </div>
