@@ -154,6 +154,43 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
     const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
     const [reactionsModalData, setReactionsModalData] = useState<Like[]>([]);
+    const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+
+    // Skeleton Loader Component
+    const PostSkeleton = () => (
+        <div className="bg-white rounded-[10px] border border-gray-200 p-6 mb-4 w-[80%] animate-pulse">
+            {/* Header Skeleton */}
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3 flex-1">
+                    <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+                    <div className="flex-1">
+                        <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-48"></div>
+                    </div>
+                </div>
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+            </div>
+
+            {/* Title Skeleton */}
+            <div className="h-5 bg-gray-300 rounded w-3/4 mb-3"></div>
+
+            {/* Content Skeleton */}
+            <div className="space-y-2 mb-4">
+                <div className="h-4 bg-gray-300 rounded w-full"></div>
+                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-300 rounded w-4/6"></div>
+            </div>
+
+            {/* Image Skeleton */}
+            <div className="h-64 bg-gray-300 rounded-lg mb-4"></div>
+
+            {/* Reactions Skeleton */}
+            <div className="flex gap-4 border-t border-b border-gray-200 py-3">
+                <div className="h-4 bg-gray-300 rounded w-16"></div>
+                <div className="h-4 bg-gray-300 rounded w-20"></div>
+            </div>
+        </div>
+    );
 
     const transformedEvent = (event: any) => {
         return {
@@ -240,6 +277,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     }
 
     const fetchPosts = async () => {
+        setIsLoadingPosts(true);
         try {
             const response = await axios.get(`https://${baseUrl}/communities/${communityId}/posts.json`, {
                 headers: {
@@ -274,6 +312,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             setPosts(combined);
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsLoadingPosts(false);
         }
     }
 
@@ -999,7 +1039,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
             {/* Feed Posts */}
             <div>
-                {posts.length > 0 ? (
+                {isLoadingPosts ? (
+                    <div className="space-y-4">
+                        <PostSkeleton />
+                        <PostSkeleton />
+                        <PostSkeleton />
+                    </div>
+                ) : posts.length > 0 ? (
                     posts.map((post) => (
                         <PostCard key={post.id} post={post} />
                     ))
