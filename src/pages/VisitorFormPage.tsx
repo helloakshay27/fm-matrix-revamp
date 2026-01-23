@@ -621,10 +621,53 @@ export const VisitorFormPage = () => {
 
     setIsSubmitting(true);
     try {
+      // Debug: Log the raw state values first
+      console.log('🔍 RAW STATE VALUES:', {
+        capturedPhoto_exists: !!capturedPhoto,
+        capturedPhoto_length: capturedPhoto ? capturedPhoto.length : 0,
+        capturedPhoto_preview: capturedPhoto ? capturedPhoto.substring(0, 80) : 'null',
+        visitorInfo_exists: !!visitorInfo,
+        visitorInfo_image: visitorInfo?.image || 'null',
+        isPhotoSaved: isPhotoSaved
+      });
+      
+      // Determine which photo to send: newly captured or existing visitor photo
+      const photoToSend = capturedPhoto || (visitorInfo?.image || null);
+      
+      // Debug: Check photo state before submission
+      console.log('🔍 DEBUG - Photo state at submission:', {
+        capturedPhoto: {
+          exists: !!capturedPhoto,
+          type: typeof capturedPhoto,
+          isBase64: capturedPhoto ? capturedPhoto.startsWith('data:image/') : false,
+          length: capturedPhoto ? capturedPhoto.length : 0,
+          preview: capturedPhoto ? capturedPhoto.substring(0, 50) + '...' : 'null'
+        },
+        visitorInfoImage: {
+          exists: !!visitorInfo?.image,
+          value: visitorInfo?.image || 'null'
+        },
+        photoToSend: {
+          exists: !!photoToSend,
+          type: typeof photoToSend,
+          isBase64: photoToSend ? photoToSend.startsWith('data:image/') : false,
+          isURL: photoToSend ? (photoToSend.startsWith('http://') || photoToSend.startsWith('https://')) : false,
+          preview: photoToSend ? photoToSend.substring(0, 50) + '...' : 'null'
+        },
+        isPhotoSaved: isPhotoSaved
+      });
+      
+      // Validate photo
+      if (!photoToSend) {
+        console.warn('⚠️ WARNING: No photo available - submitting without image');
+      } else {
+        console.log('✅ Photo will be included in submission');
+      }
+      
       // Prepare base visitor data
       const baseVisitorData = {
         ...formData,
-        capturedPhoto,
+        capturedPhoto: photoToSend,
         parentGkId: visitorInfo?.id || null,
         additionalVisitors: additionalVisitors.filter(
           (v) => v.name && v.mobile && v.passNo
@@ -646,11 +689,39 @@ export const VisitorFormPage = () => {
 
       console.log("📤 Sending visitor data:", visitorApiData);
       console.log("📋 Visitor visit type:", formData.visitorVisit);
-      console.log("� Expected_at field present:", 'expected_at' in visitorApiData);
+      console.log("📅 Expected_at field present:", 'expected_at' in visitorApiData);
+      console.log("📷 Photo being sent:", {
+        exists: !!visitorApiData.capturedPhoto,
+        source: capturedPhoto ? 'Newly captured' : visitorInfo?.image ? 'Existing visitor photo' : 'None',
+        isBase64: visitorApiData.capturedPhoto ? visitorApiData.capturedPhoto.startsWith('data:image/') : false,
+        isURL: visitorApiData.capturedPhoto ? (visitorApiData.capturedPhoto.startsWith('http://') || visitorApiData.capturedPhoto.startsWith('https://')) : false,
+        dataLength: visitorApiData.capturedPhoto ? visitorApiData.capturedPhoto.length : 0,
+        preview: visitorApiData.capturedPhoto ? visitorApiData.capturedPhoto.substring(0, 100) : 'null'
+      });
+      
+      console.log('🎯 FINAL CHECK - Photo in payload:', {
+        capturedPhoto_in_payload: 'capturedPhoto' in visitorApiData,
+        capturedPhoto_value_exists: !!visitorApiData.capturedPhoto,
+        capturedPhoto_type: typeof visitorApiData.capturedPhoto,
+        will_api_receive_photo: !!visitorApiData.capturedPhoto ? 'YES ✅' : 'NO ❌ - Photo will NOT be sent!'
+      });
+      
+      // CRITICAL: Warn if no photo will be sent
+      if (!visitorApiData.capturedPhoto) {
+        console.error('🚨 CRITICAL WARNING: No photo in payload! Check capturedPhoto state.');
+      }
 
       // Get site ID from Redux state with fallback
       const siteId = selectedSite?.id?.toString() || '';
       console.log("🏢 Using site ID for visitor creation:", siteId);
+      
+      // CRITICAL: Final check before API call
+      console.log('🚨 ABSOLUTE FINAL CHECK before API call:', {
+        visitorApiData_has_capturedPhoto: 'capturedPhoto' in visitorApiData,
+        visitorApiData_capturedPhoto_value: visitorApiData.capturedPhoto ? 'EXISTS' : 'NULL/UNDEFINED',
+        visitorApiData_capturedPhoto_length: visitorApiData.capturedPhoto ? visitorApiData.capturedPhoto.length : 0,
+        THIS_WILL_BE_SENT_TO_API: !!visitorApiData.capturedPhoto
+      });
 
       await ticketManagementAPI.createVisitor(visitorApiData, siteId);
       toast.success("Visitor created successfully!");
@@ -725,6 +796,11 @@ export const VisitorFormPage = () => {
   };
 
   const handleCameraClick = () => {
+    console.log('📸 Camera button clicked. Current state:', {
+      capturedPhoto_exists: !!capturedPhoto,
+      capturedPhoto_length: capturedPhoto ? capturedPhoto.length : 0,
+      visitorInfo_image_exists: !!visitorInfo?.image
+    });
     setShowCameraModal(true);
     initializeCamera();
   };
@@ -753,13 +829,35 @@ export const VisitorFormPage = () => {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL("image/jpeg", 0.8);
+        
+        console.log('📸 Photo captured successfully:', {
+          dataLength: imageData.length,
+          isBase64: imageData.startsWith('data:image/'),
+          preview: imageData.substring(0, 50)
+        });
+        
         setCapturedPhoto(imageData);
+        setIsPhotoSaved(true);
+        
+        console.log('✅ Photo saved to state:', {
+          capturedPhotoLength: imageData.length,
+          isPhotoSaved: true,
+          stateUpdated: true
+        });
 
         // Stop the camera stream
         stream.getTracks().forEach((track) => track.stop());
         setStream(null);
         setShowCameraModal(false);
+        
+        toast.success("Photo captured successfully!");
+      } else {
+        console.error('❌ Failed to capture - invalid video dimensions');
+        toast.error("Failed to capture photo. Please try again.");
       }
+    } else {
+      console.error('❌ Failed to capture - missing refs or stream');
+      toast.error("Camera not ready. Please try again.");
     }
   };
 
@@ -774,13 +872,35 @@ export const VisitorFormPage = () => {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL("image/jpeg", 0.8);
+        
+        console.log('📸 Photo captured via Allow this time:', {
+          dataLength: imageData.length,
+          isBase64: imageData.startsWith('data:image/'),
+          preview: imageData.substring(0, 50)
+        });
+        
         setCapturedPhoto(imageData);
+        setIsPhotoSaved(true);
+        
+        console.log('✅ Photo saved to state (Allow this time):', {
+          capturedPhotoLength: imageData.length,
+          isPhotoSaved: true,
+          stateUpdated: true
+        });
 
         // Stop the camera stream
         stream.getTracks().forEach((track) => track.stop());
         setStream(null);
         setShowCameraModal(false);
+        
+        toast.success("Photo captured successfully!");
+      } else {
+        console.error('❌ Failed to capture - invalid video dimensions');
+        toast.error("Failed to capture photo. Please try again.");
       }
+    } else {
+      console.error('❌ Failed to capture - missing refs or stream');
+      toast.error("Camera not ready. Please try again.");
     }
   };
 
@@ -938,6 +1058,10 @@ export const VisitorFormPage = () => {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
+                  {/* Visual indicator showing photo source */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs py-1 px-2">
+                    {capturedPhoto ? '✅ New Photo' : '📷 Existing Photo'}
+                  </div>
                 </div>
 
                 <Button
