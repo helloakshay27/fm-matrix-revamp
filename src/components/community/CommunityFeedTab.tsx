@@ -29,11 +29,13 @@ import {
     FileText,
     Calendar1,
     MapPin,
+    Folder,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { ImageCarouselModal } from "./ImageCarouselModal";
 import { ReactionsModal } from "./ReactionsModal";
+import { format } from "date-fns";
 
 interface CommunityFeedTabProps {
     communityId?: string;
@@ -110,12 +112,20 @@ interface Post {
     attachments: Attachment[];
     comments: Comment[];
     poll_options?: PollOption[];
-    type: 'post' | 'event' | 'notice';
+    type: 'post' | 'event' | 'notice' | 'document';
     event_date?: string;
     event_time?: string;
     event_location?: string;
     location?: string;
     expire_time?: string;
+    file_size?: string;
+    file_format?: string;
+    document_id?: number;
+    attachment?: {
+        file_size: string;
+        file_type: string;
+        url: string;
+    };
 }
 
 const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps) => {
@@ -185,6 +195,37 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     }
 
+    const transformedDocument = (document: any) => {
+        const formatFileSize = (bytes: number): string => {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        };
+
+        return {
+            id: document.id,
+            title: document.title,
+            body: document.folder_name || document.category || '',
+            active: document.active !== false,
+            created_at: document.created_at,
+            creator_full_name: document.created_by_full_name || 'Admin',
+            creator_image_url: null,
+            resource_name: communityName,
+            attachment: {
+                file_size: formatFileSize(parseInt(document.attachment?.file_size) || 0),
+                file_type: document.attachment?.file_type,
+                url: document.attachment?.file_url,
+            },
+            type: 'document',
+            file_size: formatFileSize(parseInt(document.attachment?.file_size) || 0),
+            file_format: document.attachment?.file_type || document.format || 'PDF',
+            document_id: document.id,
+        }
+    }
+
+
     const fetchData = async () => {
         try {
             const response = await axios.get(`https://${baseUrl}/communities/${communityId}.json`, {
@@ -212,7 +253,21 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             const events = response.data.events.map(transformedEvent)
             const notices = response.data.notices ? response.data.notices.map(transformedNotice) : []
 
-            const combined = [...posts, ...events, ...notices].sort(
+            // Fetch documents
+            let documents = [];
+            try {
+                const docResponse = await axios.get(`https://${baseUrl}/folders/by_communities.json?community_ids=[${communityId}]`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                const allDocuments = docResponse.data.folders.flatMap((folder: any) => folder.documents) || [];
+                documents = allDocuments.map(transformedDocument);
+            } catch (docError) {
+                console.log('Error fetching documents:', docError);
+            }
+
+            const combined = [...posts, ...events, ...notices, ...documents].sort(
                 (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
 
@@ -221,6 +276,7 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
             console.log(error)
         }
     }
+
 
     console.log(posts)
 
@@ -597,9 +653,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => handleEditPost(post)}>
-                                Edit Post
-                            </DropdownMenuItem>
+                            {
+                                post.type === "post" && (
+                                    <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                        Edit Post
+                                    </DropdownMenuItem>
+                                )
+                            }
                             <DropdownMenuItem
                                 onClick={() => handleDeletePost(post.id)}
                                 className="text-red-600 focus:text-red-600"
@@ -609,143 +669,176 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-
-                {/* Post Title */}
-                {post.title && (
-                    <h2 className="text-[16px] font-[500] text-gray-900 mb-2">{post.title}</h2>
-                )}
-
-                {/* Post Content */}
-                <p className="text-[14px] font-[400] text-gray-700 mb-4">{post.body}</p>
-
                 {
-                    post.type === "event" && post.event_date && (
-                        <div className="mb-4 space-y-2 text-sm text-gray-700 flex items-center gap-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">
-                                    <Calendar1 size={14} />
-                                </span>
-                                <span>{new Date(post.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                            </div>
-                            {post.location && (
-                                <div className="flex items-center gap-2 !mt-0">
-                                    <span className="text-lg">
-                                        <MapPin size={14} />
-                                    </span>
-                                    <span>{post.location}</span>
+                    post.type !== 'document' && (
+                        <>
+                            {/* Post Title */}
+                            {post.title && (
+                                <h2 className="text-[16px] font-[500] text-gray-900 mb-2">{post.title}</h2>
+                            )}
+
+                            {/* Post Content */}
+                            {
+                                post.body && (
+                                    <p className="text-[14px] font-[400] text-gray-700 mb-4">{post.body}</p>
+                                )
+                            }
+
+                            {
+                                post.type === "event" && post.event_date && (
+                                    <div className="mb-4 space-y-2 text-sm text-gray-700 flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">
+                                                <Calendar1 size={14} />
+                                            </span>
+                                            <span>{new Date(post.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                        </div>
+                                        {post.location && (
+                                            <div className="flex items-center gap-2 !mt-0">
+                                                <span className="text-lg">
+                                                    <MapPin size={14} />
+                                                </span>
+                                                <span>{post.location}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
+
+                            {
+                                post.type === "notice" && post.expire_time && (
+                                    <div className="mb-4 space-y-2 text-sm text-gray-700">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">📅</span>
+                                            <span>Expires: {new Date(post.expire_time).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.expire_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Poll Options - Display if post has poll_options */}
+                            {post.poll_options && post.poll_options.length > 0 && (
+                                <div className="mb-4 space-y-2">
+                                    {post.poll_options.map((option) => (
+                                        <div
+                                            key={option.id}
+                                            className="relative bg-[#fff] border border-gray-200 rounded-[5px] px-4 py-2 transition-colors overflow-hidden"
+                                        >
+                                            {/* Progress bar background */}
+                                            <div
+                                                className="absolute inset-0 bg-[rgba(196,184,157,0.13)] rounded-[5px]"
+                                                style={{ width: `${option.vote_percentage}%` }}
+                                            ></div>
+
+                                            <div className="relative flex items-center justify-between">
+                                                <span className="font-normal text-[#1F1F1F]">{option.name}</span>
+                                                <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
+                                                    <span>{option.total_votes} votes</span>
+                                                    <span className="text-[#C4B89D]">{option.vote_percentage}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
-                        </div>
+
+                            {/* Post Attachments - Instagram Style Carousel */}
+                            {post.attachments && post.attachments.length > 0 && (
+                                <div className={`mb-4 gap-1 ${post.attachments.length === 1 ? 'grid grid-cols-1' :
+                                    post.attachments.length === 2 ? 'grid grid-cols-2' :
+                                        post.attachments.length === 3 ? 'grid grid-cols-2' :
+                                            'grid grid-cols-2'
+                                    }`}>
+                                    {post.attachments.map((attachment, index) => {
+                                        const isImage = attachment?.document_content_type?.startsWith('image/');
+                                        const isVideo = attachment.document_content_type?.startsWith('video/');
+                                        const shouldShowMore = post.attachments.length > 4 && index === 3;
+
+                                        return (
+                                            <div
+                                                key={attachment.id}
+                                                className={`relative overflow-hidden rounded-lg cursor-pointer group ${post.attachments.length === 1 ? 'col-span-1' :
+                                                    post.attachments.length === 3 && index === 0 ? 'col-span-2' :
+                                                        post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
+                                                            ''
+                                                    }`}
+                                                style={{
+                                                    height: post.attachments.length === 1 ? '400px' :
+                                                        post.attachments.length === 2 ? '300px' :
+                                                            post.attachments.length === 3 && index === 0 ? '300px' :
+                                                                post.attachments.length === 3 ? '200px' :
+                                                                    post.attachments.length > 4 && index === 0 ? '400px' : '200px'
+                                                }}
+                                                onClick={() => {
+                                                    if (isImage || isVideo) {
+                                                        setCarouselAttachments(post.attachments);
+                                                        setCarouselStartIndex(index);
+                                                        setCarouselOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {isImage ? (
+                                                    <img
+                                                        src={attachment.url}
+                                                        alt="Post attachment"
+                                                        className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                                                    />
+                                                ) : isVideo ? (
+                                                    <video
+                                                        src={attachment.url}
+                                                        controls
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : null}
+
+                                                {/* Show count overlay for 5+ images */}
+                                                {shouldShowMore && (
+                                                    <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
+                                                        <span className="text-white text-3xl font-semibold">
+                                                            +{post.attachments.length - 4}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Image Count Badge (if multiple images) */}
+                                                {post.attachments.filter(a => a?.document_content_type?.startsWith('image/')).length > 1 && (
+                                                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                                                        </svg>
+                                                        {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }).slice(0, 4)}
+                                </div>
+                            )}
+                        </>
                     )
                 }
 
-                {
-                    post.type === "notice" && post.expire_time && (
-                        <div className="mb-4 space-y-2 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">📅</span>
-                                <span>Expires: {new Date(post.expire_time).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.expire_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                {/* Document Card Display */}
+                {post.type === 'document' && (
+                    <div
+                        className="bg-[#F6F4EE] rounded-lg p-4 cursor-pointer"
+                        onClick={() => navigate(`/pulse/community/document/${post.document_id}`)}
+                    >
+                        <div className="flex items-center gap-4">
+                            {/* Document Icon */}
+                            <div className="flex-shrink-0">
+                                <div className="flex items-center justify-center w-14 h-14 bg-[#E6E0D3] rounded-lg">
+                                    <Folder size={24} className="text-[#c72030]" />
+                                </div>
+                            </div>
+
+                            {/* Document Info */}
+                            <div className="flex-grow min-w-0">
+                                <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{post.title}</h3>
+                                {post.attachment?.file_size && <span className="text-sm text-gray-600">{post.attachment.file_size}</span>}
+                                <p className="text-gray-600 text-sm mt-1 truncate">Created: {post.created_at && new Date(post.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                             </div>
                         </div>
-                    )
-                }
-
-                {/* Poll Options - Display if post has poll_options */}
-                {post.poll_options && post.poll_options.length > 0 && (
-                    <div className="mb-4 space-y-2">
-                        {post.poll_options.map((option) => (
-                            <div
-                                key={option.id}
-                                className="relative bg-[#fff] border border-gray-200 rounded-[5px] px-4 py-2 transition-colors overflow-hidden"
-                            >
-                                {/* Progress bar background */}
-                                <div
-                                    className="absolute inset-0 bg-[rgba(196,184,157,0.13)] rounded-[5px]"
-                                    style={{ width: `${option.vote_percentage}%` }}
-                                ></div>
-
-                                <div className="relative flex items-center justify-between">
-                                    <span className="font-normal text-[#1F1F1F]">{option.name}</span>
-                                    <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
-                                        <span>{option.total_votes} votes</span>
-                                        <span className="text-[#C4B89D]">{option.vote_percentage}%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Post Attachments - Instagram Style Carousel */}
-                {post.attachments && post.attachments.length > 0 && (
-                    <div className={`mb-4 gap-1 ${post.attachments.length === 1 ? 'grid grid-cols-1' :
-                        post.attachments.length === 2 ? 'grid grid-cols-2' :
-                            post.attachments.length === 3 ? 'grid grid-cols-2' :
-                                'grid grid-cols-2'
-                        }`}>
-                        {post.attachments.map((attachment, index) => {
-                            const isImage = attachment?.document_content_type?.startsWith('image/');
-                            const isVideo = attachment.document_content_type?.startsWith('video/');
-                            const shouldShowMore = post.attachments.length > 4 && index === 3;
-
-                            return (
-                                <div
-                                    key={attachment.id}
-                                    className={`relative overflow-hidden rounded-lg cursor-pointer group ${post.attachments.length === 1 ? 'col-span-1' :
-                                        post.attachments.length === 3 && index === 0 ? 'col-span-2' :
-                                            post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
-                                                ''
-                                        }`}
-                                    style={{
-                                        height: post.attachments.length === 1 ? '400px' :
-                                            post.attachments.length === 2 ? '300px' :
-                                                post.attachments.length === 3 && index === 0 ? '300px' :
-                                                    post.attachments.length === 3 ? '200px' :
-                                                        post.attachments.length > 4 && index === 0 ? '400px' : '200px'
-                                    }}
-                                    onClick={() => {
-                                        if (isImage || isVideo) {
-                                            setCarouselAttachments(post.attachments);
-                                            setCarouselStartIndex(index);
-                                            setCarouselOpen(true);
-                                        }
-                                    }}
-                                >
-                                    {isImage ? (
-                                        <img
-                                            src={attachment.url}
-                                            alt="Post attachment"
-                                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
-                                        />
-                                    ) : isVideo ? (
-                                        <video
-                                            src={attachment.url}
-                                            controls
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : null}
-
-                                    {/* Show count overlay for 5+ images */}
-                                    {shouldShowMore && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
-                                            <span className="text-white text-3xl font-semibold">
-                                                +{post.attachments.length - 4}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Image Count Badge (if multiple images) */}
-                                    {post.attachments.filter(a => a?.document_content_type?.startsWith('image/')).length > 1 && (
-                                        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                                            </svg>
-                                            {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        }).slice(0, 4)}
                     </div>
                 )}
 
