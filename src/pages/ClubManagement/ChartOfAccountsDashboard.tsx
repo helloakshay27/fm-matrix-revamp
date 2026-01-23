@@ -1,16 +1,45 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import AddChartofAccountModal from './AddChartofAccountModal';
-import { Button } from '@/components/ui/button';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import AddChartofAccountModal from "./AddChartofAccountModal";
+import { Button } from "@/components/ui/button";
+import {
+  Eye,
+  Plus,
+  Download,
+  Filter,
+  QrCode,
+  Edit,
+  Trash2,
+  Users,
+  CreditCard,
+  ChevronRight,
+  ChevronDown,
+  ListTree,
+  LayoutList,
+  LayoutGrid,
+  Folder,
+  Settings2,
+  Search,
+  ArrowLeft,
+  Move,
+  Copy,
+  Share2,
+  FileText,
+  ToggleRight,
+  MoreVertical,
+  DownloadCloud,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Badge } from "@/components/ui/badge";
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
-import { API_CONFIG } from '@/config/apiConfig';
-import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { API_CONFIG } from "@/config/apiConfig";
+import {
+  ClubMembershipFilterDialog,
+  ClubMembershipFilters,
+} from "@/components/ClubMembershipFilterDialog";
 import {
   Dialog,
   DialogContent,
@@ -18,9 +47,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Pagination,
   PaginationContent,
@@ -49,8 +78,8 @@ interface ClubMember {
   user_mobile: string;
   identification_image: string | null;
   avatar: string;
-  attachments: any[];
-  snag_answers: any[];
+  attachments: unknown[];
+  snag_answers: unknown[];
   user: {
     id: number;
     email: string;
@@ -60,7 +89,7 @@ interface ClubMember {
     gender: string | null;
     birth_date: string | null;
     full_name: string;
-    addresses: any[];
+    addresses: unknown[];
   };
 }
 
@@ -92,6 +121,97 @@ interface GroupMembershipData {
     created_at: string;
     updated_at: string;
   } | null;
+  // Account specific fields for Tree View
+  account_name?: string;
+  account_code?: string;
+  account_type?: string;
+  parent_account_name?: string;
+  type?: "folder" | "file";
+  file_size?: string;
+  created_by?: string;
+}
+
+const DUMMY_ACCOUNTS: GroupMembershipData[] = [
+  {
+    id: 1001,
+    account_name: "Tendor Folder",
+    account_code: "TF-001",
+    account_type: "Folder",
+    type: "folder",
+    file_size: "0 B 0 Files",
+    club_members: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    pms_site_id: 1,
+    membership_plan_id: 1,
+    start_date: null,
+    end_date: null,
+  },
+  {
+    id: 1002,
+    account_name: "new test",
+    account_code: "NT-001",
+    account_type: "Folder",
+    type: "folder",
+    file_size: "1 MB 1 File",
+    club_members: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    pms_site_id: 1,
+    membership_plan_id: 1,
+    start_date: null,
+    end_date: null,
+  },
+  {
+    id: 10021,
+    account_name: "Test Pulse Document",
+    account_type: "Document",
+    type: "file",
+    parent_account_name: "new test",
+    created_by: "Sumitra Patil",
+    file_size: "13 KB",
+    club_members: [],
+    created_at: "2026-01-22T00:00:00.000Z",
+    updated_at: new Date().toISOString(),
+    pms_site_id: 1,
+    membership_plan_id: 1,
+    start_date: null,
+    end_date: null,
+  },
+  {
+    id: 1003,
+    account_name: "new folder 2026",
+    account_code: "NF-2026",
+    account_type: "Folder",
+    type: "folder",
+    file_size: "13 MB 13 Files",
+    club_members: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    pms_site_id: 1,
+    membership_plan_id: 1,
+    start_date: null,
+    end_date: null,
+  },
+  {
+    id: 1004,
+    account_name: "Identity_Documents",
+    account_code: "ID-DOC",
+    account_type: "Folder",
+    type: "folder",
+    file_size: "0 B 0 Files",
+    club_members: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    pms_site_id: 1,
+    membership_plan_id: 1,
+    start_date: null,
+    end_date: null,
+  },
+];
+
+interface TreeNode extends GroupMembershipData {
+  children: TreeNode[];
 }
 
 export const ChartOfAccountsDashboard = () => {
@@ -105,105 +225,131 @@ export const ChartOfAccountsDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
-  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
+  const [modalData, setModalData] = useState<{
+    isOpen: boolean;
+    title: string;
+    items: string[];
+  }>({ isOpen: false, title: "", items: [] });
+  const [viewType, setViewType] = useState<"table" | "tree">("table");
   const [filters, setFilters] = useState<ClubMembershipFilters>({
-    search: '',
-    clubMemberEnabled: '',
-    accessCardEnabled: '',
-    startDate: '',
-    endDate: ''
+    search: "",
+    clubMemberEnabled: "",
+    accessCardEnabled: "",
+    startDate: "",
+    endDate: "",
   });
 
   const perPage = 20;
 
   // Fetch memberships data
-  const fetchMemberships = useCallback(async (page: number = 1) => {
-    setLoading(true);
-    try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
+  const fetchMemberships = useCallback(
+    async (page: number = 1) => {
+      setLoading(true);
+      try {
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
 
-      console.log('Fetching club member allocations...', { baseUrl, hasToken: !!token, page });
+        console.log("Fetching club member allocations...", {
+          baseUrl,
+          hasToken: !!token,
+          page,
+        });
 
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
-      url.searchParams.append('access_token', token || '');
+        const url = new URL(
+          `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`,
+        );
+        url.searchParams.append("access_token", token || "");
 
-      // Add search filter
-      if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
-      }
+        // Add search filter
+        if (filters.search) {
+          url.searchParams.append(
+            "q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]",
+            filters.search,
+          );
+        }
 
-      // Add club member enabled filter
-      if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
-      }
+        // Add club member enabled filter
+        if (filters.clubMemberEnabled) {
+          url.searchParams.append(
+            "q[club_members_club_member_enabled_eq]",
+            filters.clubMemberEnabled,
+          );
+        }
 
-      // Add access card enabled filter
-      if (filters.accessCardEnabled) {
-        url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
-      }
+        // Add access card enabled filter
+        if (filters.accessCardEnabled) {
+          url.searchParams.append(
+            "q[club_members_access_card_enabled_eq]",
+            filters.accessCardEnabled,
+          );
+        }
 
-      // Add start date filter
-      if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
-      }
+        // Add start date filter
+        if (filters.startDate) {
+          const [year, month, day] = filters.startDate.split("-");
+          const formattedDate = `${day}/${month}/${year}`;
+          url.searchParams.append("q[start_date_eq]", formattedDate);
+        }
 
-      // Add end date filter
-      if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
-      }
+        // Add end date filter
+        if (filters.endDate) {
+          const [year, month, day] = filters.endDate.split("-");
+          const formattedDate = `${day}/${month}/${year}`;
+          url.searchParams.append("q[end_date_eq]", formattedDate);
+        }
 
-      // Pagination
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('per_page', perPage.toString());
+        // Pagination
+        url.searchParams.append("page", page.toString());
+        url.searchParams.append("per_page", perPage.toString());
 
-      console.log('API URL:', url.toString());
+        console.log("API URL:", url.toString());
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-      console.log('Response status:', response.status);
+        console.log("Response status:", response.status);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch club member allocations: ${response.status} ${response.statusText}`);
-      }
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch club member allocations: ${response.status} ${response.statusText}`,
+          );
+        }
 
-      const data = await response.json();
-      console.log('Received data:', data);
+        const data = await response.json();
+        console.log("Received data:", data);
 
-      if (Array.isArray(data.club_member_allocations)) {
-        setMemberships(data.club_member_allocations);
-        setTotalMembers(data.pagination?.total_count || 0);
-        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
-      } else {
+        if (Array.isArray(data.club_member_allocations)) {
+          setMemberships(data.club_member_allocations);
+          setTotalMembers(data.pagination?.total_count || 0);
+          setTotalPages(
+            Math.ceil((data.pagination?.total_count || 0) / perPage),
+          );
+        } else {
+          setMemberships([]);
+          setTotalMembers(0);
+          setTotalPages(1);
+        }
+      } catch (error) {
+        console.error("Error fetching memberships:", error);
+        toast.error("Failed to fetch membership data");
         setMemberships([]);
         setTotalMembers(0);
         setTotalPages(1);
+      } finally {
+        setLoading(false);
       }
-
-    } catch (error) {
-      console.error('Error fetching memberships:', error);
-      toast.error('Failed to fetch membership data');
-      setMemberships([]);
-      setTotalMembers(0);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, perPage]);
+    },
+    [filters, perPage],
+  );
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -212,77 +358,91 @@ export const ChartOfAccountsDashboard = () => {
 
   // Effect to handle debounced search
   useEffect(() => {
-    const currentSearch = filters.search || '';
+    const currentSearch = filters.search || "";
     const newSearch = debouncedSearchQuery.trim();
 
     if (currentSearch === newSearch) {
       return;
     }
 
-    setFilters(prevFilters => ({
+    setFilters((prevFilters) => ({
       ...prevFilters,
-      search: newSearch
+      search: newSearch,
     }));
 
     setCurrentPage(1);
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, filters.search]);
 
   // Fetch on mount and when dependencies change
   useEffect(() => {
-    console.log('Effect triggered - fetching memberships', {
+    console.log("Effect triggered - fetching memberships", {
       currentPage,
-      filters
+      filters,
     });
     fetchMemberships(currentPage);
   }, [currentPage, filters, fetchMemberships]);
 
   // Handle export
   const handleExport = async () => {
-    const loadingToast = toast.loading('Preparing Excel export...');
+    const loadingToast = toast.loading("Preparing Excel export...");
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
       // Build the export URL
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
-      url.searchParams.append('access_token', token || '');
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`,
+      );
+      url.searchParams.append("access_token", token || "");
 
       // Add the same filters that are applied to the table
       if (filters.search) {
-        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+        url.searchParams.append(
+          "q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]",
+          filters.search,
+        );
       }
 
       if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
+        url.searchParams.append(
+          "q[club_member_enabled_eq]",
+          filters.clubMemberEnabled,
+        );
       }
 
       if (filters.accessCardEnabled) {
-        url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+        url.searchParams.append(
+          "q[access_card_enabled_eq]",
+          filters.accessCardEnabled,
+        );
       }
 
       if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
+        const [year, month, day] = filters.startDate.split("-");
         const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
+        url.searchParams.append("q[start_date_eq]", formattedDate);
       }
 
       if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
+        const [year, month, day] = filters.endDate.split("-");
         const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
+        url.searchParams.append("q[end_date_eq]", formattedDate);
       }
 
-      console.log('Export URL:', url.toString());
+      console.log("Export URL:", url.toString());
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Export failed: ${response.status} ${response.statusText}`,
+        );
       }
 
       // Get the blob from response
@@ -290,11 +450,11 @@ export const ChartOfAccountsDashboard = () => {
 
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
 
       // Generate filename with current date
-      const date = new Date().toISOString().split('T')[0];
+      const date = new Date().toISOString().split("T")[0];
       link.download = `club_memberships_${date}.xlsx`;
 
       // Trigger download
@@ -305,18 +465,17 @@ export const ChartOfAccountsDashboard = () => {
       // Cleanup
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('Excel file downloaded successfully', { id: loadingToast });
-
+      toast.success("Excel file downloaded successfully", { id: loadingToast });
     } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error('Failed to export data', { id: loadingToast });
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data", { id: loadingToast });
     }
   };
 
   // Handle download society QR
   const handleDownloadSocietyQR = async () => {
     try {
-      toast.loading('Generating Society QR Code...');
+      toast.loading("Generating Society QR Code...");
 
       // TODO: Replace with actual API call
       // const response = await apiClient.get('/club-management/society-qr', {
@@ -325,18 +484,17 @@ export const ChartOfAccountsDashboard = () => {
 
       // Mock download
       setTimeout(() => {
-        toast.success('Society QR Code downloaded successfully');
+        toast.success("Society QR Code downloaded successfully");
       }, 1000);
-
     } catch (error) {
-      console.error('Error downloading Society QR:', error);
-      toast.error('Failed to download Society QR');
+      console.error("Error downloading Society QR:", error);
+      toast.error("Failed to download Society QR");
     }
   };
 
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
-    console.log('Applying filters:', newFilters);
+    console.log("Applying filters:", newFilters);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);
@@ -371,7 +529,7 @@ export const ChartOfAccountsDashboard = () => {
           >
             1
           </PaginationLink>
-        </PaginationItem>
+        </PaginationItem>,
       );
 
       // Ellipsis before current page
@@ -379,7 +537,7 @@ export const ChartOfAccountsDashboard = () => {
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
-          </PaginationItem>
+          </PaginationItem>,
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
@@ -393,7 +551,7 @@ export const ChartOfAccountsDashboard = () => {
               >
                 {i}
               </PaginationLink>
-            </PaginationItem>
+            </PaginationItem>,
           );
         }
       }
@@ -411,7 +569,7 @@ export const ChartOfAccountsDashboard = () => {
               >
                 {i}
               </PaginationLink>
-            </PaginationItem>
+            </PaginationItem>,
           );
         }
       }
@@ -421,7 +579,7 @@ export const ChartOfAccountsDashboard = () => {
         items.push(
           <PaginationItem key="ellipsis2">
             <PaginationEllipsis />
-          </PaginationItem>
+          </PaginationItem>,
         );
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
@@ -436,7 +594,7 @@ export const ChartOfAccountsDashboard = () => {
                 >
                   {i}
                 </PaginationLink>
-              </PaginationItem>
+              </PaginationItem>,
             );
           }
         }
@@ -454,7 +612,7 @@ export const ChartOfAccountsDashboard = () => {
             >
               {totalPages}
             </PaginationLink>
-          </PaginationItem>
+          </PaginationItem>,
         );
       }
     } else {
@@ -470,7 +628,7 @@ export const ChartOfAccountsDashboard = () => {
             >
               {i}
             </PaginationLink>
-          </PaginationItem>
+          </PaginationItem>,
         );
       }
     }
@@ -479,19 +637,20 @@ export const ChartOfAccountsDashboard = () => {
   };
 
   // Handle member selection
-  const handleMemberSelection = (memberIdString: string, isSelected: boolean) => {
+  const handleMemberSelection = (
+    memberIdString: string,
+    isSelected: boolean,
+  ) => {
     const memberId = parseInt(memberIdString);
-    setSelectedMembers(prev =>
-      isSelected
-        ? [...prev, memberId]
-        : prev.filter(id => id !== memberId)
+    setSelectedMembers((prev) =>
+      isSelected ? [...prev, memberId] : prev.filter((id) => id !== memberId),
     );
   };
 
   // Handle select all
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      const allMemberIds = memberships.map(m => m.id);
+      const allMemberIds = memberships.map((m) => m.id);
       setSelectedMembers(allMemberIds);
     } else {
       setSelectedMembers([]);
@@ -508,14 +667,18 @@ export const ChartOfAccountsDashboard = () => {
     setIsAddAccountOpen(true);
   };
 
-  const handleSaveAccount = (data: any) => {
+  const handleSaveAccount = (data: GroupMembershipData) => {
     // TODO: Implement save logic (API call)
     setIsAddAccountOpen(false);
-    toast.success('Account created successfully!');
+    toast.success("Account created successfully!");
   };
 
   // Render membership status badge
-  const renderStatusBadge = (startDate: string | null, endDate: string | null, accessCardEnabled: boolean) => {
+  const renderStatusBadge = (
+    startDate: string | null,
+    endDate: string | null,
+    accessCardEnabled: boolean,
+  ) => {
     if (!startDate && !endDate) {
       return (
         <Badge className="bg-red-100 text-red-800 border-0">
@@ -533,9 +696,7 @@ export const ChartOfAccountsDashboard = () => {
     }
 
     return (
-      <Badge className="bg-green-100 text-green-800 border-0">
-        Approved
-      </Badge>
+      <Badge className="bg-green-100 text-green-800 border-0">Approved</Badge>
     );
   };
 
@@ -543,8 +704,12 @@ export const ChartOfAccountsDashboard = () => {
   const renderCardAllocated = (allocated: boolean) => {
     return (
       <div className="flex items-center justify-center">
-        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-green-500' : 'bg-gray-300'}`}>
-          <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${allocated ? 'right-0.5' : 'left-0.5'}`} />
+        <div
+          className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? "bg-green-500" : "bg-gray-300"}`}
+        >
+          <div
+            className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${allocated ? "right-0.5" : "left-0.5"}`}
+          />
         </div>
       </div>
     );
@@ -552,40 +717,48 @@ export const ChartOfAccountsDashboard = () => {
 
   // Define columns for EnhancedTable
   const columns = [
-    { key: 'actions', label: 'Action', sortable: false },
-    { key: 'account_name', label: 'Account Name', sortable: true },
-    { key: 'account_code', label: 'Account Code', sortable: true },
-    { key: 'account_type', label: 'Account Type', sortable: true },
-    { key: 'documents', label: 'Documents', sortable: false },
-    { key: 'parent_account_name', label: 'Parent Account Name', sortable: true },
+    { key: "actions", label: "Action", sortable: false },
+    { key: "account_name", label: "Account Name", sortable: true },
+    { key: "account_code", label: "Account Code", sortable: true },
+    { key: "account_type", label: "Account Type", sortable: true },
+    { key: "documents", label: "Documents", sortable: false },
+    {
+      key: "parent_account_name",
+      label: "Parent Account Name",
+      sortable: true,
+    },
   ];
 
   // Render cell content
   const renderCell = (item: GroupMembershipData, columnKey: string) => {
-    if (columnKey === 'actions') {
+    if (columnKey === "actions") {
       return (
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
+            onClick={() =>
+              navigate(`/club-management/membership/group-details/${item.id}`)
+            }
             title="View Details"
-            className="p-0"
+            className="p-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
           >
-            {/* <Eye className="w-4 h-4" /> */}
+            <Eye className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
+            onClick={() =>
+              navigate(`/club-management/group-membership/${item.id}/edit`)
+            }
             title="Edit"
-            className="p-0"
+            className="p-1 h-8 w-8 text-gray-600 hover:bg-gray-100"
           >
-            {/* <Edit className="w-4 h-4" /> */}
+            <Edit className="w-4 h-4" />
           </Button>
         </div>
       );
     }
 
-    if (columnKey === 'member_count') {
+    if (columnKey === "member_count") {
       return (
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#C72030]" />
@@ -594,23 +767,26 @@ export const ChartOfAccountsDashboard = () => {
       );
     }
 
-    if (columnKey === 'member_names') {
-      const names = item.club_members?.map(m => m.user_name).filter(Boolean);
-      if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
-      
+    if (columnKey === "member_names") {
+      const names = item.club_members?.map((m) => m.user_name).filter(Boolean);
+      if (!names || names.length === 0)
+        return <span className="text-gray-400">-</span>;
+
       return (
         <div className="flex flex-col gap-1">
           {names.slice(0, 2).map((name, idx) => (
-            <span key={idx} className="text-sm">{name}</span>
+            <span key={idx} className="text-sm">
+              {name}
+            </span>
           ))}
           {names.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
-                  title: 'Member Names',
-                  items: names
+                  title: "Member Names",
+                  items: names,
                 });
               }}
             >
@@ -621,23 +797,28 @@ export const ChartOfAccountsDashboard = () => {
       );
     }
 
-    if (columnKey === 'member_emails') {
-      const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
-      if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
-      
+    if (columnKey === "member_emails") {
+      const emails = item.club_members
+        ?.map((m) => m.user_email)
+        .filter(Boolean);
+      if (!emails || emails.length === 0)
+        return <span className="text-gray-400">-</span>;
+
       return (
         <div className="flex flex-col gap-1">
           {emails.slice(0, 2).map((email, idx) => (
-            <span key={idx} className="text-sm">{email}</span>
+            <span key={idx} className="text-sm">
+              {email}
+            </span>
           ))}
           {emails.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
-                  title: 'Member Emails',
-                  items: emails
+                  title: "Member Emails",
+                  items: emails,
                 });
               }}
             >
@@ -648,23 +829,28 @@ export const ChartOfAccountsDashboard = () => {
       );
     }
 
-    if (columnKey === 'member_mobiles') {
-      const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
-      if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-      
+    if (columnKey === "member_mobiles") {
+      const mobiles = item.club_members
+        ?.map((m) => m.user_mobile)
+        .filter(Boolean);
+      if (!mobiles || mobiles.length === 0)
+        return <span className="text-gray-400">-</span>;
+
       return (
         <div className="flex flex-col gap-1">
           {mobiles.slice(0, 2).map((mobile, idx) => (
-            <span key={idx} className="text-sm">{mobile}</span>
+            <span key={idx} className="text-sm">
+              {mobile}
+            </span>
           ))}
           {mobiles.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
-                  title: 'Member Mobiles',
-                  items: mobiles
+                  title: "Member Mobiles",
+                  items: mobiles,
                 });
               }}
             >
@@ -675,69 +861,191 @@ export const ChartOfAccountsDashboard = () => {
       );
     }
 
-    if (columnKey === 'site_name') {
+    if (columnKey === "site_name") {
       const siteName = item.club_members?.[0]?.site_name;
       return siteName || <span className="text-gray-400">-</span>;
     }
 
-    if (columnKey === 'membershipStatus') {
+    if (columnKey === "membershipStatus") {
       return renderStatusBadge(item.start_date, item.end_date, false);
     }
 
-    if (columnKey === 'start_date' || columnKey === 'end_date') {
+    if (columnKey === "start_date" || columnKey === "end_date") {
       const dateValue = item[columnKey];
       if (!dateValue) return <span className="text-gray-400">-</span>;
-      return new Date(dateValue).toLocaleDateString('en-GB');
+      return new Date(dateValue).toLocaleDateString("en-GB");
     }
 
-    if (columnKey === 'created_at') {
+    if (columnKey === "created_at") {
       const createdAt = item.club_members?.[0]?.created_at;
       if (!createdAt) return <span className="text-gray-400">-</span>;
-      return new Date(createdAt).toLocaleDateString('en-GB');
+      return new Date(createdAt).toLocaleDateString("en-GB");
     }
 
-    if (columnKey === 'referred_by') {
+    if (columnKey === "referred_by") {
       return item.referred_by || <span className="text-gray-400">-</span>;
     }
 
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+    if (
+      !item[columnKey] ||
+      item[columnKey] === null ||
+      item[columnKey] === ""
+    ) {
       return <span className="text-gray-400">--</span>;
     }
 
     return item[columnKey];
   };
 
-  // Custom left actions
+  // Custom left actions for table
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
         onClick={handleAddAccount}
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add
+        Action
       </Button>
     </div>
   );
-      
 
-  // Custom right actions
+  // Custom right actions with view toggle
   const renderRightActions = () => (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
+      {/* Single Tree View Toggle Button */}
       <Button
-        variant="outline"
-        onClick={handleDownloadSocietyQR}
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        variant={viewType === "tree" ? "default" : "outline"}
+        size="sm"
+        onClick={() => setViewType(viewType === "tree" ? "table" : "tree")}
+        className={`h-9 w-9 p-0 transition-all duration-200 ${
+          viewType === "tree"
+            ? "bg-[#C72030] text-white hover:bg-[#a01a26]"
+            : "border-[#C72030] text-[#C72030] hover:bg-red-50"
+        }`}
       >
-        <QrCode className="w-4 h-4 " />
+        <ListTree className="w-4 h-4" />
       </Button>
     </div>
   );
+
+  // Tree building helper
+  const buildAccountTree = (data: GroupMembershipData[]): TreeNode[] => {
+    const combinedData = [...data, ...DUMMY_ACCOUNTS];
+    const map = new Map<string, TreeNode>();
+    const roots: TreeNode[] = [];
+
+    // Initialize map
+    combinedData.forEach((item) => {
+      if (item.account_name) {
+        map.set(item.account_name, { ...item, children: [] });
+      }
+    });
+
+    // Build hierarchy
+    combinedData.forEach((item) => {
+      if (item.account_name) {
+        const node = map.get(item.account_name)!;
+        if (item.parent_account_name && map.has(item.parent_account_name)) {
+          map.get(item.parent_account_name)!.children.push(node);
+        } else if (!item.parent_account_name) {
+          roots.push(node);
+        }
+      }
+    });
+
+    return roots;
+  };
+
+  const TreeViewNode = ({
+    node,
+    level = 0,
+  }: {
+    node: TreeNode;
+    level?: number;
+  }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const hasChildren = node.children.length > 0;
+    const isFile = node.type === "file";
+
+    const handleNodeClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!isFile && hasChildren) {
+        setIsExpanded(!isExpanded);
+      }
+    };
+
+    if (isFile) {
+      return (
+        <div className="flex flex-col animate-in fade-in slide-in-from-top-1 duration-300 relative">
+          {/* Vertical dash line connector from parent */}
+          <div className="absolute -left-5 top-0 bottom-1/2 w-4 border-l border-b border-dashed border-slate-300 rounded-bl-lg"></div>
+
+          <div
+            className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer group transition-all"
+            onClick={handleNodeClick}
+          >
+            <div className="w-8 h-8 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <span className="text-sm font-medium text-slate-700 group-hover:text-[#C72030] transition-colors">
+              {node.account_name}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col mb-2 animate-in fade-in slide-in-from-top-1 duration-300">
+        <div
+          className="flex items-center bg-[#fdfaf5] border border-[#f0e6d2] rounded-lg p-5 transition-all duration-200 hover:shadow-md cursor-pointer group"
+          onClick={handleNodeClick}
+        >
+          {/* Leading Icon Box */}
+          <div className="mr-6">
+            <div className="w-14 h-14 bg-[#f7efdf] rounded-lg border border-[#e8dac0] flex items-center justify-center shadow-sm group-hover:bg-[#f2e7d0] transition-colors">
+              <Folder className="w-7 h-7 text-[#C72030]" />
+            </div>
+          </div>
+
+          {/* Account Details */}
+          <div className="flex-1 flex flex-col justify-center">
+            <h4 className="text-lg font-bold text-slate-800 leading-tight mb-1">
+              {node.account_name}
+            </h4>
+            <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
+              <span>{node.file_size || "0 B 0 Files"}</span>
+              {/* <span className="w-1 h-1 rounded-full bg-slate-300" /> */}
+              {/* <span className="capitalize">{node.account_type || "Folder"}</span> */}
+            </div>
+          </div>
+
+          {/* Right Section: Expand/Collapse Chevron - Always show for folders */}
+          <div className="flex items-center gap-4">
+            <div
+              className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+            >
+              <ChevronDown className="w-6 h-6 text-slate-400 group-hover:text-slate-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Child Nodes Container */}
+        {isExpanded && hasChildren && (
+          <div className="mt-2 ml-10 pl-6 border-l border-dashed border-slate-300 flex flex-col gap-1">
+            {node.children.map((child) => (
+              <TreeViewNode key={child.id} node={child} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {/* Memberships Table */}
-      <div className="overflow-x-auto animate-fade-in">
+      <div className="animate-fade-in">
         {searchLoading && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">
@@ -746,60 +1054,94 @@ export const ChartOfAccountsDashboard = () => {
             </div>
           </div>
         )}
-        <EnhancedTable
-          data={memberships || []}
-          columns={columns}
-          renderCell={renderCell}
-          pagination={false}
-          enableExport={true}
-          exportFileName="club-group-memberships"
-          handleExport={handleExport}
-          storageKey="club-group-memberships-table"
-          leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
+
+        {viewType === "table" ? (
+          <EnhancedTable
+            data={memberships || []}
+            columns={columns}
+            renderCell={renderCell}
+            pagination={false}
+            enableExport={true}
+            exportFileName="club-group-memberships"
+            handleExport={handleExport}
+            storageKey="club-group-memberships-table"
+            leftActions={renderCustomActions()}
+            rightActions={renderRightActions()}
+            onFilterClick={() => setIsFilterOpen(true)}
+            searchPlaceholder="Search Group Memberships"
+            onSearchChange={handleSearch}
+            hideTableExport={false}
+            hideColumnsButton={true}
+            className="transition-all duration-500 ease-in-out"
+            loading={loading}
+            loadingMessage="Loading group memberships..."
+          />
+        ) : (
+          <div className="min-h-[500px]">
+            {/* Back button for tree view */}
+            <div className="mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewType("table")}
+                className="hover:bg-slate-100 text-slate-600 hover:text-[#C72030] transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Table
+              </Button>
             </div>
-          }
-          onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
-          searchPlaceholder="Search Group Memberships"
-          onSearchChange={handleSearch}
-          hideTableExport={false}
-          hideColumnsButton={true}
-          className="transition-all duration-500 ease-in-out"
-          loading={loading}
-          loadingMessage="Loading group memberships..."
-        />
 
-        {/* Pagination Section */}
-        {totalPages > 1 && (
-          <div className="flex flex-col items-center gap-4 mt-6 pb-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                {renderPaginationItems()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-
-            {/* Page Info */}
-            <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages} | Showing {memberships.length} of {totalMembers} members
+            <div className="flex flex-col gap-4">
+              <div className="max-h-[850px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3">
+                {buildAccountTree(memberships).map((root) => (
+                  <TreeViewNode key={root.id} node={root} />
+                ))}
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Pagination Section */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center gap-4 mt-6 pb-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  className={
+                    currentPage === 1 || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              {renderPaginationItems()}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                  className={
+                    currentPage === totalPages || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+
+          {/* Page Info */}
+          <div className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages} | Showing{" "}
+            {memberships.length +
+              (viewType === "tree" ? DUMMY_ACCOUNTS.length : 0)}{" "}
+            items
+          </div>
+        </div>
+      )}
       {/* Filter Dialog */}
       <ClubMembershipFilterDialog
         isOpen={isFilterOpen}
@@ -808,7 +1150,10 @@ export const ChartOfAccountsDashboard = () => {
       />
 
       {/* Member Details Modal */}
-      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+      <Dialog
+        open={modalData.isOpen}
+        onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}
+      >
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalData.title}</DialogTitle>
@@ -818,13 +1163,21 @@ export const ChartOfAccountsDashboard = () => {
           </DialogHeader>
           <div className="space-y-2 mt-4">
             {modalData.items.map((item, idx) => (
-              <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div
+                key={idx}
+                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
                 <span className="text-sm">{item}</span>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+            <Button
+              onClick={() =>
+                setModalData({ isOpen: false, title: "", items: [] })
+              }
+              variant="outline"
+            >
               Close
             </Button>
           </DialogFooter>
@@ -835,7 +1188,7 @@ export const ChartOfAccountsDashboard = () => {
       <AddChartofAccountModal
         open={isAddAccountOpen}
         // onClose={() => setIsAddAccountOpen(false)}
-          onOpenChange={setIsAddAccountOpen}
+        onOpenChange={setIsAddAccountOpen}
         onSave={handleSaveAccount}
       />
     </div>
