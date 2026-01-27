@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Download, Upload, Filter, Edit, RefreshCw, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 
@@ -196,11 +196,7 @@ export default function UtilityDailyReadingsDashboard() {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurements';
       setError(errorMessage);
       console.error('Failed to fetch measurements:', err);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -309,16 +305,9 @@ export default function UtilityDailyReadingsDashboard() {
   const handleRefresh = async () => {
     try {
       await fetchMeasurements(currentPage, activeFilters);
-      toast({
-        title: "Success",
-        description: "Data refreshed successfully",
-      });
+      toast.success('Data refreshed successfully');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to refresh data",
-        variant: "destructive",
-      });
+      toast.error('Failed to refresh data');
     }
   };
 
@@ -358,18 +347,11 @@ export default function UtilityDailyReadingsDashboard() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "Success",
-        description: "File exported successfully",
-      });
+      toast.success('File exported successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred while exporting';
       console.error('Export failed:', error);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     }
   };
 
@@ -381,10 +363,7 @@ export default function UtilityDailyReadingsDashboard() {
     // Refresh the data after successful import
     fetchMeasurements(1); // Reset to first page after import
     setCurrentPage(1);
-    toast({
-      title: "Success",
-      description: "Data imported successfully",
-    });
+    toast.success('Data imported successfully');
   };
 
   const handleFilterApply = (filters: FilterData) => {
@@ -395,10 +374,7 @@ export default function UtilityDailyReadingsDashboard() {
     // Fetch data with new filters
     fetchMeasurements(1, filters);
 
-    toast({
-      title: "Filters Applied",
-      description: "Data filtered successfully",
-    });
+    toast.success('Data filtered successfully');
   };
 
   const handleFilterOpen = () => {

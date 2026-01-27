@@ -64,9 +64,11 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       hostname.includes("lockated.gophygital.work");
 
     const isPulseSite =
-      hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
+      hostname.includes("pulse.lockated.com") ||
+      hostname.includes("localhost") ||
+      hostname.includes("pulse.gophygital.work") ||
+      hostname.includes("pulse-uat.panchshil.com");
 
-   
     // For employee users, don't auto-detect section changes
     // They manually select modules via EmployeeHeader
     if ((isEmployeeUser && isLocalhost) || isPulseSite) {

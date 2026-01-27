@@ -104,6 +104,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isPulseSite =
     hostname.includes("pulse.lockated.com") ||
     hostname.includes("pulse.gophygital.work") ||
+    hostname.includes("pulse-uat.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
     hostname.includes("localhost") ||
