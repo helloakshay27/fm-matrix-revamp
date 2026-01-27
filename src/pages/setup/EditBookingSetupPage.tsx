@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, Plus, ReceiptText, Settings, Share2, Trash2, Tv, Upload, User, X } from "lucide-react";
 import {
     TextField,
     Select,
@@ -127,7 +127,7 @@ export const EditBookingSetupPage = () => {
         description: "",
         termsConditions: "",
         cancellationText: "",
-        amenities: {} as Record<number, boolean>,
+        amenities: {} as Record<number, { selected: boolean; id: number | null }>,
         staticAmenities: {
             tv: { name: "TV", selected: false, tag_id: null },
             whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
@@ -153,6 +153,7 @@ export const EditBookingSetupPage = () => {
         sharedContentInfo: "",
         slots: [
             {
+                id: undefined,
                 startTime: { hour: "", minute: "" },
                 breakTimeStart: { hour: "", minute: "" },
                 breakTimeEnd: { hour: "", minute: "" },
@@ -160,6 +161,7 @@ export const EditBookingSetupPage = () => {
                 concurrentSlots: "",
                 slotBy: 15,
                 wrapTime: "",
+                _destroy: false,
             },
         ],
         chargeSetup: {
@@ -168,6 +170,7 @@ export const EditBookingSetupPage = () => {
             minimumPersonAllowed: "1",
             maximumPersonAllowed: "1",
             perSlotCharge: "",
+            facilityDurationCharges: [],
         },
         blockDays: [
             {
@@ -291,7 +294,10 @@ export const EditBookingSetupPage = () => {
                 cancellationText: responseData.cancellation_policy,
                 amenities: responseData.facility_setup_accessories?.reduce((acc, item) => {
                     const accessory = item.facility_setup_accessory;
-                    acc[accessory.pms_inventory_id] = true;
+                    acc[accessory.pms_inventory_id] = {
+                        selected: true,
+                        id: accessory.id
+                    };
                     return acc;
                 }, {}) || {},
                 staticAmenities: {
@@ -369,6 +375,11 @@ export const EditBookingSetupPage = () => {
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
                     perSlotCharge: responseData.facility_charge?.per_slot_charge,
+                    facilityDurationCharges: responseData.facility_duration_charges?.map((charge: any) => ({
+                        id: charge.facility_duration_charge.id,
+                        duration_hours: charge.facility_duration_charge.duration_hours,
+                        price: charge.facility_duration_charge.price,
+                    })) || [],
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
                     id: blocking.facility_blocking?.id || blocking.id,
@@ -707,6 +718,35 @@ export const EditBookingSetupPage = () => {
                 formData.chargeSetup.maximumPersonAllowed || "1"
             );
 
+            // Facility Duration Charges
+            formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+                if (charge.id) {
+                    formDataToSend.append(
+                        `facility_setup[facility_duration_charges_attributes][${index}][id]`,
+                        charge.id.toString()
+                    );
+                }
+                if (charge._destroy) {
+                    formDataToSend.append(
+                        `facility_setup[facility_duration_charges_attributes][${index}][_destroy]`,
+                        "true"
+                    );
+                } else {
+                    if (charge.duration_hours) {
+                        formDataToSend.append(
+                            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+                            charge.duration_hours
+                        );
+                    }
+                    if (charge.price) {
+                        formDataToSend.append(
+                            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+                            charge.price
+                        );
+                    }
+                }
+            });
+
             // Block Days - Handle multiple block day records
             console.log('=== Preparing Block Days Payload ===');
             formData.blockDays.forEach((blockDay, index) => {
@@ -876,21 +916,27 @@ export const EditBookingSetupPage = () => {
             });
 
             const selectedAccessories = Object.entries(formData.amenities)
-                .filter(([_, isSelected]) => isSelected)
-                .map(([inventoryId]) => parseInt(inventoryId));
+                .filter(([_, value]: [string, any]) => value.selected)
+                .map(([inventoryId, value]: [string, any]) => ({ inventoryId: parseInt(inventoryId), id: value.id }));
 
             console.log('=== Selected Accessories (Edit) ===');
             console.log('formData.amenities:', formData.amenities);
-            console.log('selectedAccessories IDs:', selectedAccessories);
+            console.log('selectedAccessories:', selectedAccessories);
             console.log('Total accessories selected:', selectedAccessories.length);
             console.log('====================================');
 
-            selectedAccessories.forEach((inventoryId, index) => {
+            selectedAccessories.forEach((accessory, index) => {
+                if (accessory.id) {
+                    formDataToSend.append(
+                        `facility_setup[facility_setup_accessories_attributes][${index}][id]`,
+                        accessory.id.toString()
+                    );
+                }
                 formDataToSend.append(
                     `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
-                    inventoryId.toString()
+                    accessory.inventoryId.toString()
                 );
-                console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+                console.log(`Appending accessory [${index}]: id = ${accessory.id}, pms_inventory_id = ${accessory.inventoryId}`);
             });
 
             let index = 0;
@@ -1036,6 +1082,7 @@ export const EditBookingSetupPage = () => {
 
     const addSlot = () => {
         const newSlot = {
+            id: undefined,
             startTime: { hour: "00", minute: "00" },
             breakTimeStart: { hour: "00", minute: "00" },
             breakTimeEnd: { hour: "00", minute: "00" },
@@ -1043,6 +1090,7 @@ export const EditBookingSetupPage = () => {
             concurrentSlots: "",
             slotBy: 15,
             wrapTime: "",
+            _destroy: false,
         };
         setFormData({ ...formData, slots: [...formData.slots, newSlot] });
     };
@@ -1459,6 +1507,123 @@ export const EditBookingSetupPage = () => {
                                 )
                             }
                         </div>
+
+                        {/* Facility Duration Charges Table */}
+                        {!formData.isBookable && (
+                            <div className="mt-8">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
+                                    <Button
+                                        onClick={() => {
+                                            setFormData({
+                                                ...formData,
+                                                chargeSetup: {
+                                                    ...formData.chargeSetup,
+                                                    facilityDurationCharges: [
+                                                        ...formData.chargeSetup.facilityDurationCharges,
+                                                        { duration_hours: "", price: "" }
+                                                    ]
+                                                }
+                                            });
+                                        }}
+                                        className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Add Row
+                                    </Button>
+                                </div>
+
+                                <div className="overflow-x-auto border rounded-lg">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Hours</th>
+                                                <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                                                <th className="border-b px-4 py-3 text-center font-semibold text-gray-700">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {formData.chargeSetup.facilityDurationCharges.filter((charge: any) => !charge._destroy).map((charge, index) => {
+                                                const actualIndex = formData.chargeSetup.facilityDurationCharges.findIndex((c: any) => c === charge);
+                                                return (
+                                                    <tr key={actualIndex} className="border-b hover:bg-gray-50">
+                                                        <td className="px-4 py-3">
+                                                            <TextField
+                                                                size="small"
+                                                                variant="outlined"
+                                                                type="number"
+                                                                placeholder="Enter hours"
+                                                                value={charge.duration_hours || ""}
+                                                                onChange={(e) => {
+                                                                    const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                                                    newCharges[actualIndex].duration_hours = e.target.value;
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        chargeSetup: {
+                                                                            ...formData.chargeSetup,
+                                                                            facilityDurationCharges: newCharges
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                inputProps={{
+                                                                    step: "0.5",
+                                                                    min: "0"
+                                                                }}
+                                                                className="w-full"
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <TextField
+                                                                size="small"
+                                                                variant="outlined"
+                                                                type="number"
+                                                                placeholder="Enter price"
+                                                                value={charge.price || ""}
+                                                                onChange={(e) => {
+                                                                    const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                                                    newCharges[actualIndex].price = e.target.value;
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        chargeSetup: {
+                                                                            ...formData.chargeSetup,
+                                                                            facilityDurationCharges: newCharges
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                inputProps={{
+                                                                    step: "0.01",
+                                                                    min: "0"
+                                                                }}
+                                                                className="w-full"
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                                                    newCharges[actualIndex] = { ...newCharges[actualIndex], _destroy: true };
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        chargeSetup: {
+                                                                            ...formData.chargeSetup,
+                                                                            facilityDurationCharges: newCharges
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
+                                                                title="Remove row"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -2623,7 +2788,7 @@ export const EditBookingSetupPage = () => {
                                         <div className="col-span-full text-center text-gray-500">No inventories available</div>
                                     ) : (
                                         inventories.map((inventory) => {
-                                            const isSelected = formData.amenities[inventory.id] || false;
+                                            const isSelected = formData.amenities[inventory.id]?.selected || false;
 
                                             return (
                                                 <div key={inventory.id} className="flex items-center space-x-2">
@@ -2635,7 +2800,7 @@ export const EditBookingSetupPage = () => {
                                                                 ...formData,
                                                                 amenities: {
                                                                     ...formData.amenities,
-                                                                    [inventory.id]: !!checked,
+                                                                    [inventory.id]: checked ? { selected: true, id: formData.amenities[inventory.id]?.id || null } : { selected: false, id: formData.amenities[inventory.id]?.id || null },
                                                                 },
                                                             })
                                                         }
