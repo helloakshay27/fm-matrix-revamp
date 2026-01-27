@@ -913,8 +913,13 @@ import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 import AmenityCategorySetup from "./pages/AmenityCategorySetup";
 import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
+import IssuesMobileView from "./pages/IssuesMobileView";
+import IssueDetailsMobile from "./pages/IssueDetailsMobile";
+import AddIssueMobileView from "./pages/AddIssueMobileView";
 import MilestoneMobileView from "./pages/MilestoneMobileView";
 import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
+import TasksMobileView from "./pages/TasksMobileView";
+import TaskDetailsMobile from "./pages/TaskDetailsMobile";
 import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
@@ -4452,6 +4457,18 @@ function App() {
                     element={<ProjectsMobileView />}
                   />
                   <Route
+                    path="/mobile-issues"
+                    element={<IssuesMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/add"
+                    element={<AddIssueMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/:id"
+                    element={<IssueDetailsMobile />}
+                  />
+                  <Route
                     path="/mobile-projects/:id/milestones"
                     element={<MilestoneMobileView />}
                   />
@@ -4470,6 +4487,14 @@ function App() {
                   <Route
                     path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetailsMobile />}
+                  />
+                  <Route
+                    path="/mobile-tasks"
+                    element={<TasksMobileView />}
+                  />
+                  <Route
+                    path="/mobile-tasks/:taskId"
+                    element={<TaskDetailsMobile />}
                   />
 
                   {/* Mail Inbound Routes */}

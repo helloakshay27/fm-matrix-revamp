@@ -804,7 +804,7 @@ export const AddBookingSetupPage = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    if (/^[a-zA-Z0-9\s]*$/.test(value)) {
                       setFormData({ ...formData, facilityName: value });
                     }
                   }}
@@ -2233,112 +2233,116 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                    <Tv className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
-                </div>
+              {
+                !formData.isBookable && (
+                  <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <Tv className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                    </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tv"
-                      checked={formData.amenities.tv}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: { ...formData.amenities, tv: !!checked },
-                        })
-                      }
-                    />
-                    <label htmlFor="tv">TV</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="tv"
+                          checked={formData.staticAmenities.tv}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: { ...formData.staticAmenities, tv: !!checked },
+                            })
+                          }
+                        />
+                        <label htmlFor="tv">TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="whiteboard"
+                          checked={formData.staticAmenities.whiteboard}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                whiteboard: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="whiteboard">Whiteboard</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="casting"
+                          checked={formData.staticAmenities.casting}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                casting: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="casting">Casting</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="smartPenForTV"
+                          checked={formData.staticAmenities.smartPenForTV}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                smartPenForTV: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="wirelessCharging"
+                          checked={formData.staticAmenities.wirelessCharging}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                wirelessCharging: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="wirelessCharging">Wireless Charging</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="meetingRoomInventory"
+                          checked={formData.staticAmenities.meetingRoomInventory}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                meetingRoomInventory: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="meetingRoomInventory">
+                          Meeting Room Inventory
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="whiteboard"
-                      checked={formData.amenities.whiteboard}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            whiteboard: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="whiteboard">Whiteboard</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="casting"
-                      checked={formData.amenities.casting}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            casting: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="casting">Casting</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="smartPenForTV"
-                      checked={formData.amenities.smartPenForTV}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            smartPenForTV: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="wirelessCharging"
-                      checked={formData.amenities.wirelessCharging}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            wirelessCharging: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="wirelessCharging">Wireless Charging</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="meetingRoomInventory"
-                      checked={formData.amenities.meetingRoomInventory}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            meetingRoomInventory: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="meetingRoomInventory">
-                      Meeting Room Inventory
-                    </label>
-                  </div>
-                </div>
-              </div>
+                )
+              }
 
               {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
