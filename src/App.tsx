@@ -4417,6 +4417,18 @@ function App() {
                     element={<ProjectsMobileView />}
                   />
                   <Route
+                    path="/mobile-issues"
+                    element={<IssuesMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/add"
+                    element={<AddIssueMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/:id"
+                    element={<IssueDetailsMobile />}
+                  />
+                  <Route
                     path="/mobile-projects/:id/milestones"
                     element={<MilestoneMobileView />}
                   />
@@ -4435,18 +4447,6 @@ function App() {
                   <Route
                     path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetailsMobile />}
-                  />
-                  <Route
-                    path="/mobile-issues"
-                    element={<IssuesMobileView />}
-                  />
-                  <Route
-                    path="/mobile-issues/add"
-                    element={<AddIssueMobileView />}
-                  />
-                  <Route
-                    path="/mobile-issues/:id"
-                    element={<IssueDetailsMobile />}
                   />
                   <Route
                     path="/mobile-tasks"
