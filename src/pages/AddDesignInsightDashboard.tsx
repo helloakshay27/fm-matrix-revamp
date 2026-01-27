@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { BasicDetailsSection } from '@/components/BasicDetailsSection';
 import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { ActionButtons } from '@/components/ActionButtons';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 
 export const AddDesignInsightDashboard = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -105,22 +107,15 @@ export const AddDesignInsightDashboard = () => {
         throw new Error(responseBody?.error || 'Failed to save Design Insight');
       }
       console.log('POST success:', responseBody);
-      toast({
-        title: "Success",
-        description: "Design Insight saved successfully!",
-      });
+      toast.success('Design Insight saved successfully!');
       navigate('/transitioning/design-insight');
     } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || 'Failed to save Design Insight',
-        variant: 'destructive',
-      });
+      toast.error(err.message || 'Failed to save Design Insight');
     }
   };
 
   const handleBack = () => {
-    navigate('/transitioning/design-insight');
+    navigate(-1);
   };
 
   const handleMustHaveChange = (checked: boolean | "indeterminate") => {
@@ -130,10 +125,31 @@ export const AddDesignInsightDashboard = () => {
   return (
     <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <p className="text-gray-600 mb-2 text-sm">Design Insight &gt; NEW Design Insight</p>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW DESIGN INSIGHT</h1>
-      </div>
+      </div> */}
+      {/* Header */}
+<div className="mb-6 flex items-center gap-3">
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={handleBack}
+    className="hover:bg-gray-100"
+  >
+    <ArrowLeft className="h-5 w-5 text-gray-700" />
+  </Button>
+
+  <div>
+    <p className="text-gray-600 mb-1 text-sm">
+      Design Insight &gt; NEW Design Insight
+    </p>
+    <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">
+      NEW DESIGN INSIGHT
+    </h1>
+  </div>
+</div>
+
 
       {/* Basic Details Section */}
       <BasicDetailsSection

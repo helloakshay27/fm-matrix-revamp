@@ -519,7 +519,22 @@ export const AddAssetAuditPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       {/* Title */}
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">NEW AUDIT</h1>
+      {/* <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">NEW AUDIT</h1> */}
+      <div className="flex items-center gap-3 mb-4">
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => navigate(-1)}
+    className="hover:bg-gray-200"
+  >
+    <ArrowLeft className="h-5 w-5" />
+  </Button>
+
+  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+    NEW AUDIT
+  </h1>
+</div>
+
 
       <div className="space-y-6">
 

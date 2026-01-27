@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileChartLine } from 'lucide-react';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, CircularProgress } from '@mui/material';
+import { toast } from 'sonner';
 
 interface UtilizationFormData {
   entity: string;
@@ -189,7 +190,7 @@ export const AddUtilityRequestPage = () => {
     // Form validation
     if (!formData.entity || !formData.plantDetail || !formData.fromDate ||
       !formData.toDate || !formData.totalConsumption || !formData.rate || !formData.readingType) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -249,13 +250,13 @@ export const AddUtilityRequestPage = () => {
       console.log('Utilization submitted successfully:', responseData);
 
       // Show success message
-      alert('Utilization compiled successfully!');
+      toast.success('Utilization compiled successfully!');
 
       // Navigate back to the utility requests page
       navigate('/utility/utility-request');
     } catch (error) {
       console.error('Error submitting utilization:', error);
-      alert(`Failed to submit utilization: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to submit utilization: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
