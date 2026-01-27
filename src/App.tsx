@@ -826,6 +826,7 @@ import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
 import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
 import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
+import { ManualJournalDetails } from "./pages/ClubManagement/manualJournalDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1631,6 +1632,10 @@ function App() {
                     path="/settings/manual-journal/add"
                     element={<ManualJournalAdd />}
                   />
+                   <Route
+                    path="/settings/manual-journal/details/:id"
+                    element={<ManualJournalDetails />}
+                  />
 
                   <Route
                     path="/settings/recurring-journal"
@@ -1688,17 +1693,17 @@ function App() {
                     path="/settings/reports/balance-sheet"
                     element={<BalanceSheetReport  />}
                   />
-                  <Route
+                  {/* <Route */}
                   <Route
                     path="/settings/reports/profit-and-loss"
                     element={<ProfitAndLossReport  />}
                   />
-                  <Route
+                  {/* <Route */}
                   <Route
                     path="/settings/reports/tax-summary"
                     element={<TaxSummaryReport  />}
                   />
-                  <Route
+                  {/* <Route */}
                   <Route
                     path="/settings/reports/gst-payable"
                     element={<GstPayableReport  />}
@@ -1706,6 +1711,10 @@ function App() {
                   <Route
                     path="/settings/transactions"
                     element={<TransactionsDashboard />}
+                  />
+                  <Route
+                    path="/settings/transactions/add"
+                    element={<TransactionsAdd />}
                   />
 
                   {/* Club Management - Occupant Users */}

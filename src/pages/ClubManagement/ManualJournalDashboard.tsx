@@ -1,29 +1,8 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input';
-// Example usage of Input for your form fields:
-// <Input
-//   label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="date"
-//   value={date}
-//   onChange={e => setDate(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="number"
-//   value={journalNo}
-//   onChange={e => setJournalNo(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label="Reference#"
-//   value={reference}
-//   onChange={e => setReference(e.target.value)}
-//   className="w-full"
-// />
+import axios from 'axios';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -117,12 +96,37 @@ interface GroupMembershipData {
   } | null;
 }
 
+// Manual Journal API interfaces
+interface ManualJournalRecord {
+  id: number;
+  ledger_id: number;
+  ledger_name: string;
+  tr_type: string;
+  amount: number;
+  cost_centre_id: number | null;
+}
+
+interface ManualJournalTransaction {
+  id: number;
+  lock_account_id: number;
+  transaction_type: string;
+  reference: string | null;
+  voucher_number: string | null;
+  transaction_date: string;
+  description: string;
+  records: ManualJournalRecord[];
+  created_at: string;
+  updated_at: string;
+}
+
 export const ManualJournalDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
   // State management
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
+  // const [journals, setJournals] = useState([]);
+  const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,95 +149,36 @@ export const ManualJournalDashboard = () => {
 
   const perPage = 20;
 
-  // Fetch memberships data
-  const fetchMemberships = useCallback(async (page: number = 1) => {
+  // Fetch journal entries
+  const fetchJournals = useCallback(async () => {
     setLoading(true);
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-
-      console.log('Fetching club member allocations...', { baseUrl, hasToken: !!token, page });
-
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
-      url.searchParams.append('access_token', token || '');
-
-      // Add search filter
-      if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
-      }
-
-      // Add club member enabled filter
-      if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
-      }
-
-      // Add access card enabled filter
-      if (filters.accessCardEnabled) {
-        url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
-      }
-
-      // Add start date filter
-      if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
-      }
-
-      // Add end date filter
-      if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
-      }
-
-      // Pagination
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('per_page', perPage.toString());
-
-      console.log('API URL:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
+      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+      const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch club member allocations: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Received data:', data);
-
-      if (Array.isArray(data.club_member_allocations)) {
-        setMemberships(data.club_member_allocations);
-        setTotalMembers(data.pagination?.total_count || 0);
-        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
-      } else {
-        setMemberships([]);
-        setTotalMembers(0);
-        setTotalPages(1);
-      }
-
+      setJournals(response.data.lock_account_transactions || []);
+      setMembershipType(response.data.lock_account_transactions || [])
     } catch (error) {
-      console.error('Error fetching memberships:', error);
-      toast.error('Failed to fetch membership data');
-      setMemberships([]);
-      setTotalMembers(0);
-      setTotalPages(1);
+      console.error('Error fetching journal entries:', error);
+      toast.error('Failed to fetch journal entries');
+      setJournals([]);
     } finally {
       setLoading(false);
     }
-  }, [filters, perPage]);
+  }, []);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
+  console.log("journals data:", journals);
   // Effect to handle debounced search
   useEffect(() => {
     const currentSearch = filters.search || '';
@@ -257,8 +202,8 @@ export const ManualJournalDashboard = () => {
       currentPage,
       filters
     });
-    fetchMemberships(currentPage);
-  }, [currentPage, filters, fetchMemberships]);
+    fetchJournals();
+  }, [currentPage, filters]);
 
   // Handle export
   const handleExport = async () => {
@@ -587,11 +532,11 @@ export const ManualJournalDashboard = () => {
 
 const columns = [
   { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'journal', label: 'Journal', sortable: true },
-  { key: 'reference_number', label: 'Reference Number', sortable: true },
+  { key: 'transaction_date', label: 'Date', sortable: true },
+  { key: 'transaction_type', label: 'Journal', sortable: true },
+  { key: 'reference', label: 'Reference', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
-  { key: 'notes', label: 'Notes', sortable: false },
+  { key: 'description', label: 'Notes', sortable: false },
   { key: 'amount', label: 'Amount', sortable: true },
   { key: 'reporting_method', label: 'Reporting Method', sortable: true }
 ];
@@ -599,150 +544,64 @@ const columns = [
   
 
   // Render cell content
-  const renderCell = (item: GroupMembershipData, columnKey: string) => {
+  // Render cell content for journal table
+  const renderCell = (item: ManualJournalTransaction, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
+            onClick={() => navigate(`/settings/manual-journal/details/${item.id}`)}
             title="View Details"
             className="p-0"
           >
-            {/* <Eye className="w-4 h-4" /> */}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
-            title="Edit"
-            className="p-0"
-          >
-            {/* <Edit className="w-4 h-4" /> */}
+            <Eye className="w-4 h-4" />
           </Button>
         </div>
       );
     }
 
-    if (columnKey === 'member_count') {
-      return (
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-[#C72030]" />
-          <span className="font-medium">{item.club_members?.length || 0}</span>
-        </div>
-      );
+    if (columnKey === 'transaction_date') {
+      return item.transaction_date ? new Date(item.transaction_date).toLocaleDateString('en-GB') : '--';
     }
 
-    if (columnKey === 'member_names') {
-      const names = item.club_members?.map(m => m.user_name).filter(Boolean);
-      if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {names.slice(0, 2).map((name, idx) => (
-            <span key={idx} className="text-sm">{name}</span>
-          ))}
-          {names.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Names',
-                  items: names
-                });
-              }}
-            >
-              +{names.length - 2} more
-            </span>
-          )}
-        </div>
-      );
+    if (columnKey === 'transaction_type') {
+      return item.transaction_type || '--';
     }
 
-    if (columnKey === 'member_emails') {
-      const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
-      if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {emails.slice(0, 2).map((email, idx) => (
-            <span key={idx} className="text-sm">{email}</span>
-          ))}
-          {emails.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Emails',
-                  items: emails
-                });
-              }}
-            >
-              +{emails.length - 2} more
-            </span>
-          )}
-        </div>
-      );
+    if (columnKey === 'reference') {
+      return item.reference || '--';
     }
 
-    if (columnKey === 'member_mobiles') {
-      const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
-      if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-      
-      return (
-        <div className="flex flex-col gap-1">
-          {mobiles.slice(0, 2).map((mobile, idx) => (
-            <span key={idx} className="text-sm">{mobile}</span>
-          ))}
-          {mobiles.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
-              onClick={() => {
-                setModalData({
-                  isOpen: true,
-                  title: 'Member Mobiles',
-                  items: mobiles
-                });
-              }}
-            >
-              +{mobiles.length - 2} more
-            </span>
-          )}
-        </div>
-      );
+    if (columnKey === 'status') {
+      // If you have a status field, otherwise show a badge for Journal Entry/Bill Payment
+      return item.status || '--';
+      // return (
+      //   <Badge className={item.transaction_type === 'Journal Entry' ? 'bg-green-100 text-green-800 border-0' : 'bg-blue-100 text-blue-800 border-0'}>
+      //     {item.transaction_type}
+      //   </Badge>
+      // );
     }
 
-    if (columnKey === 'site_name') {
-      const siteName = item.club_members?.[0]?.site_name;
-      return siteName || <span className="text-gray-400">-</span>;
+    if (columnKey === 'description') {
+      return item.description || '--';
     }
 
-    if (columnKey === 'membershipStatus') {
-      return renderStatusBadge(item.start_date, item.end_date, false);
+    if (columnKey === 'amount') {
+      // Sum all records amounts for this transaction
+      return item.amount || '--';
+      // const total = Array.isArray(item.records)
+      //   ? item.records.reduce((sum, rec) => sum + (typeof rec.amount === 'number' ? rec.amount : 0), 0)
+      //   : 0;
+      // return total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
     }
 
-    if (columnKey === 'start_date' || columnKey === 'end_date') {
-      const dateValue = item[columnKey];
-      if (!dateValue) return <span className="text-gray-400">-</span>;
-      return new Date(dateValue).toLocaleDateString('en-GB');
+    if (columnKey === 'reporting_method') {
+      // Not present in API, so show --
+      return '--';
     }
 
-    if (columnKey === 'created_at') {
-      const createdAt = item.club_members?.[0]?.created_at;
-      if (!createdAt) return <span className="text-gray-400">-</span>;
-      return new Date(createdAt).toLocaleDateString('en-GB');
-    }
-
-    if (columnKey === 'referred_by') {
-      return item.referred_by || <span className="text-gray-400">-</span>;
-    }
-
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
-      return <span className="text-gray-400">--</span>;
-    }
-
-    return item[columnKey];
+    return item[columnKey] || '--';
   };
 
   // Custom left actions
@@ -761,13 +620,13 @@ const columns = [
   // Custom right actions
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button
+      {/* <Button
         variant="outline"
         onClick={handleDownloadSocietyQR}
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
       >
         <QrCode className="w-4 h-4 " />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -779,12 +638,12 @@ const columns = [
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-sm">Searching members...</span>
+              <span className="text-sm">Searching...</span>
             </div>
           </div>
         )}
         <EnhancedTable
-          data={memberships || []}
+          data={journals || []}
           columns={columns}
           renderCell={renderCell}
           pagination={false}
@@ -797,12 +656,12 @@ const columns = [
               {renderCustomActions()}
             </div>
           }
-          onFilterClick={() => setIsFilterOpen(true)}
+          // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
-          searchPlaceholder="Search Group Memberships"
+          searchPlaceholder="Search "
           onSearchChange={handleSearch}
-          hideTableExport={false}
-          hideColumnsButton={true}
+          hideTableExport={true}
+          hideColumnsButton={false} 
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           loadingMessage="Loading group memberships..."
@@ -838,11 +697,11 @@ const columns = [
       </div>
 
       {/* Filter Dialog */}
-      <ClubMembershipFilterDialog
+      {/* <ClubMembershipFilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
-      />
+      /> */}
 
       {/* Member Details Modal */}
       <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>

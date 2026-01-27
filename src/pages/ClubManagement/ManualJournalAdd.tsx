@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -11,20 +12,49 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
+import { API_CONFIG } from '@/config/apiConfig';
+import { toast } from 'sonner';
+import { useParams, useNavigate } from 'react-router-dom';
 
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
 
+
+
+
 const ManualJournalAdd = () => {
 	const [date, setDate] = useState('');
+	 const navigate = useNavigate();
 	const [journalNo, setJournalNo] = useState('');
 	const [reference, setReference] = useState('');
 	const [notes, setNotes] = useState('');
 	const [reportingMethod, setReportingMethod] = useState('Accrual and Cash');
 	const [currency, setCurrency] = useState('INR- Indian Rupee');
-	const [rows, setRows] = useState([{ ...initialRow }]);
+	const [rows, setRows] = useState([{ ...initialRow }, { ...initialRow }]);
 	const [attachments, setAttachments] = useState([]);
+	const [accountOptions, setAccountOptions] = useState([]);
 	const fileInputRef = useRef(null);
+	// Fetch account options from API using axios, with baseUrl and token
+	useEffect(() => {
+		const fetchAccounts = async () => {
+			const baseUrl = API_CONFIG.BASE_URL;
+			const token = API_CONFIG.TOKEN;
+			try {
+				const url = `${baseUrl}/lock_accounts/1/lock_account_ledgers.json`;
+				const response = await axios.get(url, {
+					headers: {
+					'Content-Type': 'application/json',
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+					// If API expects token as query param, use params: { access_token: token }
+				},
+				});
+				setAccountOptions(response.data);
+			} catch (error) {
+				console.error('Error fetching account options:', error);
+			}
+		};
+		fetchAccounts();
+	}, []);
 
 	const handleRowChange = (idx, field, value) => {
 		const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
@@ -46,9 +76,53 @@ const ManualJournalAdd = () => {
 		setAttachments(prev => prev.filter((_, i) => i !== index));
 	};
 
-	const handleSubmit = (e) => {
+
+	// Helper to build the payload for API
+	const buildJournalPayload = () => {
+		return {
+			lock_account_transaction: {
+				transaction_type: 'Journal Entry',
+				transaction_date: date,
+				voucher_number: journalNo,
+				description: notes,
+				reference: reference,
+				publish: false, // Set true if publishing
+				lock_account_id: 1, // You may want to make this dynamic
+			},
+			lock_account_transaction_records: rows.map(row => {
+				const record = {
+					ledger_id: row.account ? Number(row.account) : undefined,
+					cost_centre_id: 1, // Set as needed or make dynamic
+				};
+				if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
+				if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
+				return record;
+			}).filter(r => r.ledger_id),
+		};
+	};
+
+	const handleSubmit = async (e) => {
 		e.preventDefault();
-		// Submit logic here
+		const payload = buildJournalPayload();
+		console.log('Payload to send:', payload);
+		const baseUrl = API_CONFIG.BASE_URL;
+		const token = API_CONFIG.TOKEN;
+		try {
+			const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+			const response = await axios.post(url, payload, {
+				headers: {
+					'Content-Type': 'application/json',
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+				},
+			});
+			console.log('API response:', response.data);
+			 navigate('/settings/manual-journal');
+			// Optionally show success message or redirect
+		} catch (error) {
+			console.error('Error submitting journal entry:', error);
+			toast.error('Failed to create journal entry');
+			// Optionally show error message
+		}
 	};
 
 		return (
@@ -174,9 +248,9 @@ const ManualJournalAdd = () => {
 															inputProps={{ 'aria-label': 'Select Account' }}
 														>
 															<MenuItem value=""><em>Select an account</em></MenuItem>
-															{/* Replace with your account options */}
-															<MenuItem value="Account1">Account 1</MenuItem>
-															<MenuItem value="Account2">Account 2</MenuItem>
+															{accountOptions.map(option => (
+																<MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+															))}
 														</Select>
 													</FormControl>
 												</td>
@@ -230,7 +304,7 @@ const ManualJournalAdd = () => {
 													/>
 												</td>
 												<td className="border border-gray-300 px-4 py-3">
-													{rows.length > 1 && (
+													{rows.length > 2 && (
 														<button type="button" className="text-red-500" onClick={() => removeRow(idx)}>✕</button>
 													)}
 												</td>
