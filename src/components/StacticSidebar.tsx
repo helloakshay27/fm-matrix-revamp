@@ -1023,8 +1023,8 @@ const modulesByPackage = {
       icon: Users,
       subItems: [
         { name: "Manual Journals ", href: "/settings/manual-journal" },
-           { name: "Transactions ", href: "/settings/transactions" },
-        { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        { name: "Transactions ", href: "/settings/transactions" },
+        // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
         { name: "Opening Balance", href: "/settings/opening-balance" },
         { name: "Budget", href: "/settings/budget" },
@@ -1331,9 +1331,8 @@ export const StacticSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
-                                nestedItem.color || "text-[#1a1a1a]"
-                              }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
+                                }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1349,9 +1348,8 @@ export const StacticSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                        subItem.color || "text-[#1a1a1a]"
-                      }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
+                        }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1475,11 +1473,10 @@ export const StacticSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-          }`}
+            }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -1487,15 +1484,13 @@ export const StacticSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${
-                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-              }`}
+              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+                }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${
-                3 - level
-              } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${3 - level
+                } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -1514,9 +1509,8 @@ export const StacticSidebar = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1539,15 +1533,15 @@ export const StacticSidebar = () => {
         {!isSidebarCollapsed &&
           (isOnTemplateRoute
             ? location.pathname &&
-              templatePaths.some((t) => location.pathname.startsWith(t))
+            templatePaths.some((t) => location.pathname.startsWith(t))
             : currentSection) && (
             <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
               <h3
                 className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
               >
                 {isOnTemplateRoute &&
-                location.pathname &&
-                templatePaths.some((t) => location.pathname.startsWith(t))
+                  location.pathname &&
+                  templatePaths.some((t) => location.pathname.startsWith(t))
                   ? "Settings"
                   : currentSection}
               </h3>
@@ -1583,22 +1577,20 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                    isActiveRoute(module.href, "prefix")
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                  }`}
+                    }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${
-                      isActiveRoute(module.href, "prefix")
+                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                    }`}
+                      }`}
                   />
                 </button>
               ))}

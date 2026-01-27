@@ -256,6 +256,7 @@ export const AddGroupMembershipPage = () => {
                 accessCardId: '',
                 membershipType: '',
                 referredBy: '',
+                houseId: '',
             },
             idCardFile: null,
             residentPhotoFile: null,
@@ -1077,6 +1078,7 @@ export const AddGroupMembershipPage = () => {
                     email: member.formData.email,
                     gender: member.formData.gender || '',
                     birth_date: member.formData.dateOfBirth || '',
+                    society_flat_id: member.formData.houseId || null,
                     user_type: 'ClubMember',
                     club_member: {
                         club_member_enabled: true,
@@ -1092,7 +1094,8 @@ export const AddGroupMembershipPage = () => {
                             state: member.formData.state,
                             country: member.formData.country,
                             pin_code: member.formData.pin_code,
-                            address_type: member.formData.address_type || 'residential'
+                            address_type: member.formData.address_type || 'residential',
+                            
                         }
                     ],
                     permissions: [
@@ -1358,6 +1361,7 @@ export const AddGroupMembershipPage = () => {
             accessCardId: '',
             membershipType: '',
             referredBy: '',
+            houseId: '',
         },
         idCardFile: null,
         residentPhotoFile: null,
@@ -1846,6 +1850,21 @@ export const AddGroupMembershipPage = () => {
                                                             error={member.formData.email !== '' && !validateEmail(member.formData.email)}
                                                             helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
                                                         />
+
+                                                        <FormControl fullWidth sx={fieldStyles}>
+                                                        <InputLabel>House</InputLabel>
+                                                        <Select
+                                                            label="House"
+                                                            value={member.formData.houseId || ''}
+                                                            onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
+                                                        >
+                                                            <MenuItem value=""><em>Select House</em></MenuItem>
+                                                            <MenuItem value="1">Tower 1</MenuItem>
+                                                            <MenuItem value="2">Tower 2</MenuItem>
+                                                            <MenuItem value="3">Building 1</MenuItem>
+                                                            <MenuItem value="4">Building 2</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
                                                     </div>
                                                 </div>
                                             )}

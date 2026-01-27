@@ -107,6 +107,7 @@ export const AddMembershipPlanPage = () => {
     userLimit: "",
     renewalTerms: "",
     payment_plan_id: "",
+    hsnCode: "",
     usageLimits: "Unlimited",
     discountEligibility: "No",
     amenities: [] as string[],
@@ -117,7 +118,7 @@ export const AddMembershipPlanPage = () => {
       price: string;
       allowMultipleSlots: boolean;
       multipleSlots: string;
-    }>,
+    }> ,
   });
 
   const getAmenities = async () => {
@@ -176,6 +177,10 @@ export const AddMembershipPlanPage = () => {
         toast.error("Please select Payment Plan");
         return false;
       }
+      if (!formData.hsnCode) {
+        toast.error("Please enter HSN Code");
+        return false;
+      }
       if (formData.amenities.length === 0) {
         toast.error("Please select at least one amenity");
         return false;
@@ -196,6 +201,7 @@ export const AddMembershipPlanPage = () => {
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
           payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
+          hsn_code: formData.hsnCode,
           usage_limits: formData.usageLimits,
           discount_eligibility: formData.discountEligibility,
           active: true,
@@ -264,6 +270,7 @@ export const AddMembershipPlanPage = () => {
               </h3>
             </div>
 
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextField
                 label="Plan Name*"
@@ -308,6 +315,8 @@ export const AddMembershipPlanPage = () => {
                 placeholder="0"
               />
 
+              
+
               <FormControl variant="outlined">
                 <InputLabel>Membership Type*</InputLabel>
                 <Select
@@ -346,6 +355,20 @@ export const AddMembershipPlanPage = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              <TextField
+                label="HSN Code*"
+                value={formData.hsnCode}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only numbers and letters (alphanumeric)
+                  if (/^[a-zA-Z0-9]*$/.test(value)) {
+                    setFormData({ ...formData, hsnCode: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="Enter HSN Code"
+              />
             </div>
           </div>
 
