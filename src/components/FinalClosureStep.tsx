@@ -972,7 +972,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
               </div>
             )}
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Final Corrective Action Summary</label>
               <Textarea
                 value={finalClosureCorrectiveDescription}
@@ -980,7 +980,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                 placeholder="Provide the final summary of all corrective actions taken..."
                 className="bg-white min-h-[100px]"
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Preventive Actions */}
@@ -1047,7 +1047,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
               </div>
             )}
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Final Preventive Action Summary</label>
               <Textarea
                 value={finalClosurePreventiveDescription}
@@ -1055,7 +1055,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                 placeholder="Provide the final summary of all preventive actions implemented..."
                 className="bg-white min-h-[100px]"
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Schedule Next Review */}

@@ -69,6 +69,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
+import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
@@ -1059,233 +1060,233 @@ export const ScheduledTaskDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {/* Header Section */}
+    <>
+      <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+        {/* Header Section */}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        defaultValue="list"
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
-          <TabsTrigger
-            value="list"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <List className="w-4 h-4" />
-            Task List
-          </TabsTrigger>
-          <TabsTrigger
-            value="calendar"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <CalendarIcon className="w-4 h-4" />
-            Calendar
-          </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent
-          value="list"
-          className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          defaultValue="list"
+          className="w-full"
         >
-          {/* Quick Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-            {statusCards.map((card, index) => {
-              const getStatusCount = (status: string) => {
-                switch (status) {
-                  case "Scheduled":
-                    return statusCounts.scheduled_count;
-                  case "Open":
-                    return statusCounts.open_count;
-                  case "Work In Progress":
-                    return statusCounts.wip_count;
-                  case "Closed":
-                    return statusCounts.closed_count;
-                  case "Overdue":
-                    return statusCounts.overdue_count;
-                  default:
-                    return 0;
-                }
-              };
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
+            <TabsTrigger
+              value="list"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <List className="w-4 h-4" />
+              Task List
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendar"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <CalendarIcon className="w-4 h-4" />
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
-              return (
-                <div
-                  key={index}
-                  className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
-                    selectedStatus === card.status
+          <TabsContent
+            value="list"
+            className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+          >
+            {/* Quick Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+              {statusCards.map((card, index) => {
+                const getStatusCount = (status: string) => {
+                  switch (status) {
+                    case "Scheduled":
+                      return statusCounts.scheduled_count;
+                    case "Open":
+                      return statusCounts.open_count;
+                    case "Work In Progress":
+                      return statusCounts.wip_count;
+                    case "Closed":
+                      return statusCounts.closed_count;
+                    case "Overdue":
+                      return statusCounts.overdue_count;
+                    default:
+                      return 0;
+                  }
+                };
+
+                return (
+                  <div
+                    key={index}
+                    className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedStatus === card.status
                       ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
                       : ""
-                  }`}
-                  onClick={() => handleStatusCardClick(card.status)}
-                >
-                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                    <card.icon className="w-6 h-6 text-[#C72030]" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-[#1A1A1A]">
-                      {getStatusCount(card.status)}
+                      }`}
+                    onClick={() => handleStatusCardClick(card.status)}
+                  >
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                      <card.icon className="w-6 h-6 text-[#C72030]" />
                     </div>
-                    <div className="text-sm font-medium text-[#1A1A1A]">
-                      {card.title}
+                    <div>
+                      <div className="text-2xl font-semibold text-[#1A1A1A]">
+                        {getStatusCount(card.status)}
+                      </div>
+                      <div className="text-sm font-medium text-[#1A1A1A]">
+                        {card.title}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          {/* Task Table */}
-          <div className="rounded-lg">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">Loading tasks...</div>
-              </div>
-            ) : error ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-red-500">{error}</div>
-                <Button
-                  onClick={() =>
-                    fetchTasks(
-                      currentFilters,
-                      currentPage,
-                      debouncedSearchQuery
-                    )
-                  }
-                  variant="outline"
-                  className="ml-4"
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Debug info */}
-                {console.log(
-                  "Rendering table with data:",
-                  taskData.length,
-                  "items"
-                )}
-                {console.log("Search query state:", searchQuery)}{" "}
-                {/* Additional debug */}
-                <EnhancedTaskTable
-                  data={taskData}
-                  columns={[
-                    {
-                      key: "actions",
-                      label: "Action",
-                      sortable: false,
-                      hideable: false,
-                      draggable: false,
-                    },
-                    {
-                      key: "id",
-                      label: "ID",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "checklist",
-                      label: "Checklist",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "type",
-                      label: "Type",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "schedule",
-                      label: "Schedule",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "assignTo",
-                      label: "Assign to",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "status",
-                      label: "Status",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "scheduleFor",
-                      label: "Schedule For",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "assetsServices",
-                      label: "Assets/Services",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "site",
-                      label: "Site",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "location",
-                      label: "Location",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "supplier",
-                      label: "Supplier",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "graceTime",
-                      label: "Grace Time",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "duration",
-                      label: "Duration",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    {
-                      key: "percentage",
-                      label: "%",
-                      sortable: true,
-                      hideable: true,
-                      draggable: true,
-                    },
-                    // Conditionally add columns for Closed status only
-                    ...(selectedStatus === "Closed"
-                      ? [
+            {/* Task Table */}
+            <div className="rounded-lg">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-gray-500">Loading tasks...</div>
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-red-500">{error}</div>
+                  <Button
+                    onClick={() =>
+                      fetchTasks(
+                        currentFilters,
+                        currentPage,
+                        debouncedSearchQuery
+                      )
+                    }
+                    variant="outline"
+                    className="ml-4"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Debug info */}
+                  {console.log(
+                    "Rendering table with data:",
+                    taskData.length,
+                    "items"
+                  )}
+                  {console.log("Search query state:", searchQuery)}{" "}
+                  {/* Additional debug */}
+                  <EnhancedTaskTable
+                    data={taskData}
+                    columns={[
+                      {
+                        key: "actions",
+                        label: "Action",
+                        sortable: false,
+                        hideable: false,
+                        draggable: false,
+                      },
+                      {
+                        key: "id",
+                        label: "ID",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "checklist",
+                        label: "Checklist",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "type",
+                        label: "Type",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "schedule",
+                        label: "Schedule",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "assignTo",
+                        label: "Assign to",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "status",
+                        label: "Status",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "scheduleFor",
+                        label: "Schedule For",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "assetsServices",
+                        label: "Assets/Services",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "site",
+                        label: "Site",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "location",
+                        label: "Location",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "supplier",
+                        label: "Supplier",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "graceTime",
+                        label: "Grace Time",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "duration",
+                        label: "Duration",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      {
+                        key: "percentage",
+                        label: "%",
+                        sortable: true,
+                        hideable: true,
+                        draggable: true,
+                      },
+                      // Conditionally add columns for Closed status only
+                      ...(selectedStatus === "Closed"
+                        ? [
                           {
                             key: "task_approved_at",
                             label: "Approved At",
@@ -1301,334 +1302,339 @@ export const ScheduledTaskDashboard = () => {
                             draggable: true,
                           },
                         ]
-                      : []),
-                  ].filter(Boolean)}
-                  renderRow={(task) => ({
-                    actions: (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewTask(task.id);
-                        }}
-                        className="p-2 h-8 w-8 hover:bg-accent"
-                      >
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      </Button>
-                    ),
-                    id: task.id,
-                    checklist: task.checklist,
-                    type: task.type,
-                    schedule: task.schedule,
-                    assignTo: task.assignTo || "-",
-                    status: (
-                      <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
-                        {task.status}
-                      </span>
-                    ),
-                    scheduleFor: task.scheduleFor,
-                    assetsServices: task.assetsServices,
-                    site: task.site,
-                    location: (
-                      <div className="max-w-xs truncate" title={task.location}>
-                        {task.location}
-                      </div>
-                    ),
-                    supplier: task.supplier || "-",
-                    graceTime: task.graceTime,
-                    duration: task.duration || "-",
-                    percentage: task.percentage || "-",
-                    // Conditionally add fields for Closed status only
-                    ...(selectedStatus === "Closed"
-                      ? {
+                        : []),
+                    ].filter(Boolean)}
+                    renderRow={(task) => ({
+                      actions: (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewTask(task.id);
+                          }}
+                          className="p-2 h-8 w-8 hover:bg-accent"
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      ),
+                      id: task.id,
+                      checklist: task.checklist,
+                      type: task.type,
+                      schedule: task.schedule,
+                      assignTo: task.assignTo || "-",
+                      status: (
+                        <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
+                          {task.status}
+                        </span>
+                      ),
+                      scheduleFor: task.scheduleFor,
+                      assetsServices: task.assetsServices,
+                      site: task.site,
+                      location: (
+                        <div className="max-w-xs truncate" title={task.location}>
+                          {task.location}
+                        </div>
+                      ),
+                      supplier: task.supplier || "-",
+                      graceTime: task.graceTime,
+                      duration: task.duration || "-",
+                      percentage: task.percentage || "-",
+                      // Conditionally add fields for Closed status only
+                      ...(selectedStatus === "Closed"
+                        ? {
                           task_approved_at: task.task_approved_at || "-",
                           task_approved_by: task.task_approved_by || "-",
                         }
-                      : {}),
-                  })}
-                  enableSearch={true}
-                  enableSelection={true}
-                  selectable={true}
-                  enableExport={true}
-                  hideTableSearch={false}
-                  storageKey="scheduled-tasks-table"
-                  onFilterClick={() => setShowTaskFilter(true)}
-                  handleExport={() => handleDownloadTasks(selectedStatus)}
-                  searchTerm={searchQuery}
-                  onSearchChange={handleSearch}
-                  emptyMessage="No scheduled tasks found"
-                  searchPlaceholder="Search tasks by checklist..."
-                  exportFileName="scheduled-tasks"
-                  selectedItems={selectedTasks}
-                  getItemId={(task) => task.id}
-                  onSelectItem={(taskId, checked) => {
-                    const newSelected = checked
-                      ? [...selectedTasks, taskId]
-                      : selectedTasks.filter((id) => id !== taskId);
-                    setSelectedTasks(newSelected);
-                    setShowSelectionPanel(newSelected.length > 0);
-                  }}
-                  onSelectAll={(checked) => {
-                    setSelectedTasks(
-                      checked ? taskData.map((task) => task.id) : []
-                    );
-                    setShowSelectionPanel(checked && taskData.length > 0);
-                  }}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        handlePageChange(Math.max(1, currentPage - 1))
-                      }
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  {renderPaginationItems()}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        handlePageChange(Math.min(totalPages, currentPage + 1))
-                      }
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+                        : {}),
+                    })}
+                    enableSearch={true}
+                    enableSelection={true}
+                    selectable={true}
+                    enableExport={true}
+                    hideTableSearch={false}
+                    storageKey="scheduled-tasks-table"
+                    onFilterClick={() => setShowTaskFilter(true)}
+                    handleExport={() => handleDownloadTasks(selectedStatus)}
+                    searchTerm={searchQuery}
+                    onSearchChange={handleSearch}
+                    emptyMessage="No scheduled tasks found"
+                    searchPlaceholder="Search tasks by checklist..."
+                    exportFileName="scheduled-tasks"
+                    selectedItems={selectedTasks}
+                    getItemId={(task) => task.id}
+                    onSelectItem={(taskId, checked) => {
+                      const newSelected = checked
+                        ? [...selectedTasks, taskId]
+                        : selectedTasks.filter((id) => id !== taskId);
+                      setSelectedTasks(newSelected);
+                      setShowSelectionPanel(newSelected.length > 0);
+                    }}
+                    onSelectAll={(checked) => {
+                      setSelectedTasks(
+                        checked ? taskData.map((task) => task.id) : []
+                      );
+                      setShowSelectionPanel(checked && taskData.length > 0);
+                    }}
+                  />
+                </>
+              )}
             </div>
-          )}
 
-          {/* Pagination Info */}
-          {totalPages > 1 && (
-            <div className="text-center mt-2 text-sm text-gray-600">
-              Showing page {currentPage} of {totalPages} ({totalCount} total
-              tasks)
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="calendar" className="mt-4 sm:mt-6">
-          <ScheduledTaskCalendar
-            events={calendarEvents}
-            isLoading={calendarLoading}
-            onDateRangeChange={(start, end) => {
-              setCalendarFilters((prev) => ({
-                ...prev,
-                dateFrom: start,
-                dateTo: end,
-              }));
-            }}
-            onFiltersChange={(filters) => {
-              console.log("Filters changed:", filters);
-              setCalendarFilters(filters);
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent
-          value="analytics"
-          className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
-        >
-          {/* Header Section with Filter and Selector */}
-          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-            {/* Drag info indicator */}
-
-            <div className="flex gap-2 items-center">
-              <Button
-                variant="outline"
-                onClick={() => setShowAnalyticsFilter(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
-              >
-                <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-                </span>
-                <FilterIcon className="w-4 h-4 text-gray-600" />
-              </Button>
-              <TaskAnalyticsSelector
-                onSelectionChange={handleAnalyticsSelectionChange}
-                dateRange={getDateRangeForComponents()}
-              />
-            </div>
-          </div>
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {chartOrder.map((analyticsType) => {
-                  if (!selectedAnalytics.includes(analyticsType)) return null;
-
-                  if (
-                    analyticsType === "technical" &&
-                    (technicalData || loadingStates.technical)
-                  ) {
-                    return (
-                      <SortableChartItem key="technical" id="technical">
-                        <SectionLoader loading={loadingStates.technical}>
-                          <TaskAnalyticsCard
-                            title="Technical Checklist"
-                            data={technicalData?.response || []}
-                            type="technical"
-                            dateRange={getDateRangeForComponents()}
-                          />
-                        </SectionLoader>
-                      </SortableChartItem>
-                    );
-                  }
-
-                  if (
-                    analyticsType === "nonTechnical" &&
-                    (nonTechnicalData || loadingStates.nonTechnical)
-                  ) {
-                    return (
-                      <SortableChartItem key="nonTechnical" id="nonTechnical">
-                        <SectionLoader loading={loadingStates.nonTechnical}>
-                          <TaskAnalyticsCard
-                            title="Non-Technical Checklist"
-                            data={nonTechnicalData?.response || []}
-                            type="nonTechnical"
-                            dateRange={getDateRangeForComponents()}
-                          />
-                        </SectionLoader>
-                      </SortableChartItem>
-                    );
-                  }
-
-                  if (
-                    analyticsType === "topTen" &&
-                    (topTenData || loadingStates.topTen)
-                  ) {
-                    return (
-                      <SortableChartItem key="topTen" id="topTen">
-                        <SectionLoader loading={loadingStates.topTen}>
-                          <TaskAnalyticsCard
-                            title="Top 10 Checklist Types"
-                            data={topTenData?.response || []}
-                            type="topTen"
-                            dateRange={getDateRangeForComponents()}
-                          />
-                        </SectionLoader>
-                      </SortableChartItem>
-                    );
-                  }
-
-                  if (
-                    analyticsType === "siteWise" &&
-                    (siteWiseData || loadingStates.siteWise)
-                  ) {
-                    return (
-                      <SortableChartItem key="siteWise" id="siteWise">
-                        <SectionLoader loading={loadingStates.siteWise}>
-                          <TaskAnalyticsCard
-                            title="Site-wise Checklist Status"
-                            data={siteWiseData?.response || []}
-                            type="siteWise"
-                            dateRange={getDateRangeForComponents()}
-                          />
-                        </SectionLoader>
-                      </SortableChartItem>
-                    );
-                  }
-
-                  return null;
-                })}{" "}
-                {/* No selection message */}
-                {selectedAnalytics.length === 0 && (
-                  <div className="col-span-2 flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        No analytics selected. Please select at least one report
-                        to view.
-                      </p>
-                    </div>
-                  </div>
-                )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          handlePageChange(Math.max(1, currentPage - 1))
+                        }
+                        className={
+                          currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems()}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          handlePageChange(Math.min(totalPages, currentPage + 1))
+                        }
+                        className={
+                          currentPage === totalPages
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
-            </SortableContext>
-          </DndContext>
-        </TabsContent>
-      </Tabs>
+            )}
 
-      {/* Task Selection Panel */}
-      {showSelectionPanel && selectedTasks.length > 0 && (
-        <TaskSelectionPanel
-          selectedCount={selectedTasks.length}
-          selectedTasks={selectedTaskObjects}
-          onSubmit={handleSubmitTasks}
-          onReassign={handleReassignTasks}
-          onReschedule={handleRescheduleTasks}
-          onClearSelection={handleClearSelection}
-          onRefreshData={() =>
-            fetchTasks(
-              currentFilters,
-              currentPage,
-              debouncedSearchQuery,
-              selectedStatus
-            )
-          }
+            {/* Pagination Info */}
+            {totalPages > 1 && (
+              <div className="text-center mt-2 text-sm text-gray-600">
+                Showing page {currentPage} of {totalPages} ({totalCount} total
+                tasks)
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="calendar" className="mt-4 sm:mt-6">
+            <ScheduledTaskCalendar
+              events={calendarEvents}
+              isLoading={calendarLoading}
+              onDateRangeChange={(start, end) => {
+                setCalendarFilters((prev) => ({
+                  ...prev,
+                  dateFrom: start,
+                  dateTo: end,
+                }));
+              }}
+              onFiltersChange={(filters) => {
+                console.log("Filters changed:", filters);
+                setCalendarFilters(filters);
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="analytics"
+            className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+          >
+                  <AIAssistantWidget allowedModuleId={3} />
+
+            {/* Header Section with Filter and Selector */}
+            <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+              {/* Drag info indicator */}
+
+              <div className="flex gap-2 items-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAnalyticsFilter(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                >
+                  <CalendarIcon className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                  </span>
+                  <FilterIcon className="w-4 h-4 text-gray-600" />
+                </Button>
+                <TaskAnalyticsSelector
+                  onSelectionChange={handleAnalyticsSelectionChange}
+                  dateRange={getDateRangeForComponents()}
+                />
+              </div>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {chartOrder.map((analyticsType) => {
+                    if (!selectedAnalytics.includes(analyticsType)) return null;
+
+                    if (
+                      analyticsType === "technical" &&
+                      (technicalData || loadingStates.technical)
+                    ) {
+                      return (
+                        <SortableChartItem key="technical" id="technical">
+                          <SectionLoader loading={loadingStates.technical}>
+                            <TaskAnalyticsCard
+                              title="Technical Checklist"
+                              data={technicalData?.response || []}
+                              type="technical"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
+                        </SortableChartItem>
+                      );
+                    }
+
+                    if (
+                      analyticsType === "nonTechnical" &&
+                      (nonTechnicalData || loadingStates.nonTechnical)
+                    ) {
+                      return (
+                        <SortableChartItem key="nonTechnical" id="nonTechnical">
+                          <SectionLoader loading={loadingStates.nonTechnical}>
+                            <TaskAnalyticsCard
+                              title="Non-Technical Checklist"
+                              data={nonTechnicalData?.response || []}
+                              type="nonTechnical"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
+                        </SortableChartItem>
+                      );
+                    }
+
+                    if (
+                      analyticsType === "topTen" &&
+                      (topTenData || loadingStates.topTen)
+                    ) {
+                      return (
+                        <SortableChartItem key="topTen" id="topTen">
+                          <SectionLoader loading={loadingStates.topTen}>
+                            <TaskAnalyticsCard
+                              title="Top 10 Checklist Types"
+                              data={topTenData?.response || []}
+                              type="topTen"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
+                        </SortableChartItem>
+                      );
+                    }
+
+                    if (
+                      analyticsType === "siteWise" &&
+                      (siteWiseData || loadingStates.siteWise)
+                    ) {
+                      return (
+                        <SortableChartItem key="siteWise" id="siteWise">
+                          <SectionLoader loading={loadingStates.siteWise}>
+                            <TaskAnalyticsCard
+                              title="Site-wise Checklist Status"
+                              data={siteWiseData?.response || []}
+                              type="siteWise"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
+                        </SortableChartItem>
+                      );
+                    }
+
+                    return null;
+                  })}{" "}
+                  {/* No selection message */}
+                  {selectedAnalytics.length === 0 && (
+                    <div className="col-span-2 flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          No analytics selected. Please select at least one report
+                          to view.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </TabsContent>
+        </Tabs>
+
+        {/* Task Selection Panel */}
+        {showSelectionPanel && selectedTasks.length > 0 && (
+          <TaskSelectionPanel
+            selectedCount={selectedTasks.length}
+            selectedTasks={selectedTaskObjects}
+            onSubmit={handleSubmitTasks}
+            onReassign={handleReassignTasks}
+            onReschedule={handleRescheduleTasks}
+            onClearSelection={handleClearSelection}
+            onRefreshData={() =>
+              fetchTasks(
+                currentFilters,
+                currentPage,
+                debouncedSearchQuery,
+                selectedStatus
+              )
+            }
+          />
+        )}
+
+        {/* Task Filter Dialog */}
+        <TaskFilterDialog
+          isOpen={showTaskFilter}
+          onClose={() => setShowTaskFilter(false)}
+          onApply={handleApplyFilters}
+          showAll={showAll}
+          onShowAllChange={handleShowAllChange}
         />
-      )}
 
-      {/* Task Filter Dialog */}
-      <TaskFilterDialog
-        isOpen={showTaskFilter}
-        onClose={() => setShowTaskFilter(false)}
-        onApply={handleApplyFilters}
-        showAll={showAll}
-        onShowAllChange={handleShowAllChange}
-      />
+        {/* Advanced Filter Dialog - Keep existing for backward compatibility */}
+        <TaskAdvancedFilterDialog
+          open={showAdvancedFilter}
+          onOpenChange={setShowAdvancedFilter}
+          onApply={handleAdvancedFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          searchTaskId={searchTaskId}
+          searchChecklist={searchChecklist}
+        />
 
-      {/* Advanced Filter Dialog - Keep existing for backward compatibility */}
-      <TaskAdvancedFilterDialog
-        open={showAdvancedFilter}
-        onOpenChange={setShowAdvancedFilter}
-        onApply={handleAdvancedFilter}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        searchTaskId={searchTaskId}
-        searchChecklist={searchChecklist}
-      />
+        <TaskAnalyticsFilterDialog
+          isOpen={showAnalyticsFilter}
+          onClose={() => setShowAnalyticsFilter(false)}
+          onApplyFilters={handleAnalyticsFilterApply}
+          currentStartDate={(() => {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            const [day, month, year] = analyticsDateRange.startDate.split("/");
+            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+          })()}
+          currentEndDate={(() => {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            const [day, month, year] = analyticsDateRange.endDate.split("/");
+            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+          })()}
+        />
 
-      <TaskAnalyticsFilterDialog
-        isOpen={showAnalyticsFilter}
-        onClose={() => setShowAnalyticsFilter(false)}
-        onApplyFilters={handleAnalyticsFilterApply}
-        currentStartDate={(() => {
-          // Convert DD/MM/YYYY to YYYY-MM-DD
-          const [day, month, year] = analyticsDateRange.startDate.split("/");
-          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-        })()}
-        currentEndDate={(() => {
-          // Convert DD/MM/YYYY to YYYY-MM-DD
-          const [day, month, year] = analyticsDateRange.endDate.split("/");
-          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-        })()}
-      />
+        {/* Sonner Toaster for notifications */}
+        <Toaster position="top-right" richColors closeButton />
+      </div>
 
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
-    </div>
+      {/* AI Assistant Widget - Checklist/Tasks Module */}
+    </>
   );
 };

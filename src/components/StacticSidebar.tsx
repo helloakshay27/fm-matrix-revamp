@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { getUser, isAssetRestrictedUser } from "@/utils/auth";
 import {
   Users,
   Settings,
@@ -1413,6 +1414,8 @@ export const StacticSidebar = () => {
     isSidebarCollapsed,
     setIsSidebarCollapsed,
   } = useLayout();
+  const user = getUser();
+  const assetRestricted = isAssetRestrictedUser(user);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
@@ -1490,7 +1493,12 @@ export const StacticSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
-  const currentModules = modulesByPackage[currentSection] || [];
+  let currentModules = modulesByPackage[currentSection] || [];
+  if (currentSection === "Maintenance" && assetRestricted) {
+    currentModules = currentModules.filter(
+      (module: any) => module.href !== "/maintenance/asset"
+    );
+  }
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
     const currentPath = location.pathname;
