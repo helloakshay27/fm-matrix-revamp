@@ -244,14 +244,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         organizationId
       );
 
-      if (
-        hostname !== "pulse.lockated.com" &&
-        hostname !== "localhost" &&
-        !response.is_login
-      ) {
-        toast.error("You are not approved to login.");
-        return;
-      }
+      // if (
+      //   hostname !== "pulse.lockated.com" &&
+      //   hostname !== "localhost" &&
+      //   !response.is_login
+      // ) {
+      //   toast.error("You are not approved to login.");
+      //   return;
+      // }
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
