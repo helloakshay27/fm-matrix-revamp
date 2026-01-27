@@ -64,7 +64,7 @@ import {
   ENDPOINTS,
 } from '@/config/apiConfig';
 import { toast } from 'sonner';
-import { getUser } from '@/utils/auth';
+import { getUser, isAssetRestrictedUser } from '@/utils/auth';
 import {
   DndContext,
   closestCenter,
@@ -146,6 +146,13 @@ export const AssetDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+  const isAssetRestricted = isAssetRestrictedUser(user);
+
+  useEffect(() => {
+    if (isAssetRestricted) {
+      navigate('/maintenance/ticket');
+    }
+  }, [isAssetRestricted, navigate]);
 
   // Redux state
   const {

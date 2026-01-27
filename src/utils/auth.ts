@@ -240,6 +240,18 @@ export const getOrganizationsByEmail = async (
   return data.organizations || [];
 };
 
+// Asset module access restrictions for specific users
+const ASSET_RESTRICTED_EMAILS = [
+  "reception1@gmail.com",
+  "reception.pune@zycus.com",
+  "reception.blr@zycus.com",
+].map((email) => email.toLowerCase());
+
+export const isAssetRestrictedUser = (user: User | null | undefined): boolean => {
+  if (!user?.email) return false;
+  return ASSET_RESTRICTED_EMAILS.includes(user.email.toLowerCase());
+};
+
 export const loginUser = async (
   email: string,
   password: string,

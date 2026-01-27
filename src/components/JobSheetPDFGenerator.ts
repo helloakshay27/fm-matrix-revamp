@@ -353,7 +353,7 @@ export class JobSheetPDFGenerator {
             img.style.cssText += "display: block !important; opacity: 1 !important; max-width: 100% !important; height: auto !important;";
           });
         },
-      });
+      } as any);
 
       const imgData = canvas.toDataURL("image/jpeg", 0.8); // Slightly higher quality
       const imgWidth = 210; // A4 width in mm
@@ -411,12 +411,20 @@ export class JobSheetPDFGenerator {
 
   private generateHeader(data: any): string {
     const logoHtml = this.getLogoForSite();
+    const jobSheet = data?.data?.job_sheet || data?.job_sheet;
+    const checklistName = jobSheet?.task_details?.task_name || "";
 
     return `
       <div class="header">
         <div class="left-logo">
           ${logoHtml}
         </div>
+        ${
+          checklistName
+            ? `<div class="pdf-checklist-title-wrapper"><div class="pdf-checklist-title">${checklistName}</div></div>`
+            : ""
+        }
+        <div class="header-right-spacer"></div>
       </div>
     `;
   }
