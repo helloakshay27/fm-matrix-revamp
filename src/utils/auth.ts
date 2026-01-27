@@ -156,7 +156,9 @@ const isFmSite =
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
-const isPulseSite = hostname.includes("pulse.lockated.com");
+const isPulseSite = hostname === "pulse.lockated.com";
+
+const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -202,6 +204,19 @@ export const getOrganizationsByEmail = async (
   if (isPulseSite) {
     const response = await fetch(
       `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isPanchshilUatSite) {
+    const response = await fetch(
+      `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
@@ -527,6 +542,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm.gophygital.work");
 
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
+  const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
   let apiUrl = "";
 
@@ -536,6 +552,8 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isDevSite) {
     apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+  } else if (isPanchshilUatSite) {
+    apiUrl = `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else {
     // Default fallback
     apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
