@@ -394,7 +394,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           hostname.includes("fm-matrix.lockated.com");
         const isPulseSite =
           hostname.includes("pulse.lockated.com") ||
-          hostname.includes("pulse.gophygital.work");
+          hostname.includes("pulse.gophygital.work") ||
+          hostname.includes("pulse-uat.panchshil.com");
 
         // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
         if (userRole) {
