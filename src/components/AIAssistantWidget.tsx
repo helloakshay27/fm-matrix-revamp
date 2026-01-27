@@ -272,7 +272,7 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({
           className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 bg-[#DBC2A9] hover:bg-[#C4B89D] z-50 group border-2 border-[#C4B89D]"
           size="icon"
         >
-          <Bot className="h-8 w-8 text-[#1A1A1A] group-hover:scale-105 transition-transform" />
+          <Bot className="h-6 w-6 text-[#1A1A1A] group-hover:scale-105 transition-transform" />
         </Button>
       )}
 
