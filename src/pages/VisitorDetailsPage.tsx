@@ -36,6 +36,18 @@ interface DocumentItem {
   document_url: string;
 }
 
+interface ItemDetail {
+  id: number;
+  name: string | null;
+  number: string;
+}
+
+interface ItemMovement {
+  id: number;
+  movement_type: string | null;
+  item_details: ItemDetail[];
+}
+
 interface AssetItem {
   id: number;
   asset_category_name?: string;
@@ -118,6 +130,7 @@ interface VisitorData {
   visitor_host_email?: string;
   building_name?: string;
   encrypted_gatekeeper_id?: string;
+  item_movements?: ItemMovement[];
 }
 
 export const VisitorDetailsPage = () => {
@@ -688,6 +701,14 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
+                    {hasData(visitorData.pass_number) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Pass Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.pass_number}</span>
+                      </div>
+                    )}
+
                     {hasData(visitorData.expected_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
@@ -738,6 +759,51 @@ export const VisitorDetailsPage = () => {
                         </span>
                       </div>
                     )}
+
+                    {hasData(visitorData.guest_entry_time_show) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Check-in Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.guest_entry_time_show}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.master_exit_time_show) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Check-out Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.master_exit_time_show}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.entry_gate) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Entry Gate</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.entry_gate}</span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.exit_gate) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Exit Gate</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.exit_gate}</span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.time_since_in) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Time Since Check-in</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.time_since_in}</span>
+                      </div>
+                    )}
+                  
 
                     {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
                       <div className="flex items-start">
@@ -839,7 +905,7 @@ export const VisitorDetailsPage = () => {
             )}
 
             {/* Check-in/Check-out Information Card */}
-            {(hasData(visitorData.guest_entry_time) ||
+            {/* {(hasData(visitorData.guest_entry_time) ||
               hasData(visitorData.master_exit_time) ||
               hasData(visitorData.entry_gate) ||
               hasData(visitorData.exit_gate)) && (
@@ -900,7 +966,7 @@ export const VisitorDetailsPage = () => {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
           </TabsContent>
 
           {/* Tab 2: Additional Details */}
@@ -929,6 +995,14 @@ export const VisitorDetailsPage = () => {
                           <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
                           <span className="text-gray-500 mx-2">:</span>
                           <span className="text-gray-900 font-medium">{visitor.mobile}</span>
+                        </div>
+                      )}
+
+                       {hasData(visitor?.pass_number) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Pass Number</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{visitor.pass_number}</span>
                         </div>
                       )}
 
@@ -976,6 +1050,60 @@ export const VisitorDetailsPage = () => {
 
           {/* Tab 3: Asset Details */}
           <TabsContent value="assets" className="p-6 space-y-6">
+            {/* Item Movements Section */}
+            {visitorData.item_movements && visitorData.item_movements.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  Item Movements
+                </h2>
+                {visitorData.item_movements.map((movement: ItemMovement, index: number) => (
+                  <div key={movement.id || index} className="border rounded-lg p-6 bg-gray-50">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">
+                      Movement {index + 1}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
+                      {hasData(movement?.movement_type) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Movement Type</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{movement.movement_type}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item Details */}
+                    {movement.item_details && movement.item_details.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Items</h4>
+                        <div className="space-y-3">
+                          {movement.item_details.map((item: ItemDetail, itemIndex: number) => (
+                            <div key={item.id || itemIndex} className="border-l-4 border-[#C72030] bg-white p-4 rounded">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {hasData(item?.name) && (
+                                  <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[100px]">Item Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">{item.name}</span>
+                                  </div>
+                                )}
+                                {hasData(item?.number) && (
+                                  <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[100px]">Item Number</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">{item.number}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Main Visitor's Assets */}
             {visitorData.assets && visitorData.assets.length > 0 && (
               <div className="space-y-6">
@@ -1136,7 +1264,7 @@ export const VisitorDetailsPage = () => {
               ))
             )}
 
-            {!visitorData.assets?.length && !visitorData.additional_visitors?.some(v => v.assets?.length) && (
+            {!visitorData.item_movements?.length && !visitorData.assets?.length && !visitorData.additional_visitors?.some(v => v.assets?.length) && (
               <div className="text-center py-12 text-gray-500">
                 No asset details found
               </div>

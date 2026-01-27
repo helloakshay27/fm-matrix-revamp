@@ -163,9 +163,8 @@ export const CRMEventsFilterModal = ({ open, onOpenChange, onApply }: CRMEventsF
                                     displayEmpty
                                 >
                                     <MenuItem value=""><em>Select Status</em></MenuItem>
-                                    <MenuItem value="1">Published</MenuItem>
-                                    <MenuItem value="2">Disabled</MenuItem>
-                                    <MenuItem value="0">Rejected</MenuItem>
+                                    <MenuItem value="true">Active</MenuItem>
+                                    <MenuItem value="false">Inactive</MenuItem>
                                 </Select>
                             </FormControl>
                         </div>

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Car, CheckCircle, AlertTriangle, MapPin, Bike, Plus, Download, Upload, Search, Eye, Filter, X, XCircle, Calendar } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import {
   Pagination,
   PaginationContent,
@@ -1924,245 +1925,77 @@ const ParkingBookingListSiteWise = () => {
       {/* Filters Section */}
       {/* Filters are now in a modal - see below */}
 
-      {/* Data Table */}
-      <SectionLoader loading={loading && cards !== null} className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              {isColumnVisible('sr_no') && <TableHead className="font-semibold">Sr No.</TableHead>}
-              {isColumnVisible('id') && <TableHead className="font-semibold">Parking ID</TableHead>}
-              {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
-              {isColumnVisible('employee_email') && <TableHead className="font-semibold">Employee Email ID</TableHead>}
-              {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
-              {isColumnVisible('booking_schedule_time') && <TableHead className="font-semibold">Booking Time</TableHead>}
-              {isColumnVisible('booking_schedule_slot_time') && <TableHead className="font-semibold">Booking Slots</TableHead>}
-              {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
-              {isColumnVisible('building') && <TableHead className="font-semibold">Building</TableHead>}
-              {isColumnVisible('floor') && <TableHead className="font-semibold">Floor</TableHead>}
-              {isColumnVisible('designation') && <TableHead className="font-semibold">Designation</TableHead>}
-              {isColumnVisible('department') && <TableHead className="font-semibold">Department</TableHead>}
-              {/* {isColumnVisible('slot_parking_no') && <TableHead className="font-semibold">Slot & Parking No.</TableHead>} */}
-              {isColumnVisible('status') && <TableHead className="font-semibold">Status</TableHead>}
-              {isColumnVisible('checked_in_at') && <TableHead className="font-semibold">Checked In At</TableHead>}
-              {isColumnVisible('checked_out_at') && <TableHead className="font-semibold">Checked Out At</TableHead>}
-              {isColumnVisible('created_on') && <TableHead className="font-semibold">Created On</TableHead>}
-              {isColumnVisible('cancel') && <TableHead className="font-semibold">Cancel</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && !cards ? (
-              // Show loading text only on initial load
-              <TableRow>
-                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  Loading parking booking data...
-                </TableCell>
-              </TableRow>
-            ) : paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  {error ? error :
-                   searchTerm.trim() ? (
-                     <div>
-                       <p>No bookings found matching "<strong>{searchTerm}</strong>"</p>
-                       <p className="text-sm mt-1 text-gray-400">
-                         Searched in: Employee Name, Designation, Department, Category, Building, Floor, Status, and Slot Number
-                       </p>
-                     </div>
-                   ) : 'No parking booking data available'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row, index) => (
-                <TableRow key={row.id} className="hover:bg-gray-50">
-                  {isColumnVisible('sr_no') && <TableCell className="font-medium">{(currentApiPage - 1) * apiPagination.per_page + index + 1}</TableCell>}
-                  {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>}
-                  {isColumnVisible('employee_name') && (
-                    <TableCell>{row.employee_name}</TableCell>
-                  )}
-                  {isColumnVisible('employee_email') && (
-                    <TableCell>{row.employee_email}</TableCell>
-                  )}
-                  {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
-                  {isColumnVisible('booking_schedule_time') && <TableCell>{row.booking_schedule_time}</TableCell>}
-                  {isColumnVisible('booking_schedule_slot_time') && <TableCell>{row.booking_schedule_slot_time}</TableCell>}
-                  {isColumnVisible('category') && (
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {/* {row.category === 'Two Wheeler' ? <Bike className="w-4 h-4" /> : <Car className="w-4 h-4" />} */}
-                        {row.category}
-                      </div>
-                    </TableCell>
-                  )}
-                  {isColumnVisible('building') && <TableCell>{row.building}</TableCell>}
-                  {isColumnVisible('floor') && <TableCell>{row.floor}</TableCell>}
-                  {isColumnVisible('designation') && <TableCell>{row.designation}</TableCell>}
-                  {isColumnVisible('department') && <TableCell>{row.department || '-'}</TableCell>}
-                  {/* {isColumnVisible('slot_parking_no') && <TableCell>{row.slot_parking_no}</TableCell>} */}
-                  {isColumnVisible('status') && (
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        row.status.toLowerCase() === 'confirmed' || row.status.toLowerCase() === 'approved'
-                          ? 'bg-green-100 text-green-800' 
-                          : row.status.toLowerCase() === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {capitalizeStatus(row.status)}
-                      </span>
-                    </TableCell>
-                  )}
-                  {isColumnVisible('checked_in_at') && <TableCell>{row.checked_in_at || '-'}</TableCell>}
-                  {isColumnVisible('checked_out_at') && <TableCell>{row.checked_out_at || '-'}</TableCell>}
-                  {isColumnVisible('created_on') && <TableCell>{row.created_on}</TableCell>}
-                  {isColumnVisible('cancel') && (
-                    <TableCell>
-                      {row.cancel && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
-                          onClick={() => handleCancelBooking(row.id)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </SectionLoader>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            {/* <div className="text-sm text-gray-700">
-              Showing page {apiPagination.current_page} of {apiPagination.total_pages} 
-              ({apiPagination.total_count} total items)
-            </div> */}
-          </div>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => {
-                    if (currentApiPage > 1) {
-                      handlePageChange(currentApiPage - 1);
-                    }
+      {/* Data Table with EnhancedTable */}
+      <div className="overflow-x-auto animate-fade-in">
+        <EnhancedTable
+          data={paginatedData || []}
+          columns={columns}
+          renderCell={(item, columnKey) => {
+            if (columnKey === 'sr_no') {
+              const index = paginatedData.findIndex(booking => booking.id === item.id);
+              return (currentApiPage - 1) * apiPagination.per_page + index + 1;
+            }
+            if (columnKey === 'status') {
+              return (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  item.status.toLowerCase() === 'confirmed' || item.status.toLowerCase() === 'approved'
+                    ? 'bg-green-100 text-green-800' 
+                    : item.status.toLowerCase() === 'cancelled'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {capitalizeStatus(item.status)}
+                </span>
+              );
+            }
+            if (columnKey === 'category') {
+              return (
+                <div className="flex items-center gap-1">
+                  {item.category}
+                </div>
+              );
+            }
+            if (columnKey === 'department') {
+              return item.department || '-';
+            }
+            if (columnKey === 'checked_in_at') {
+              return item.checked_in_at || '-';
+            }
+            if (columnKey === 'checked_out_at') {
+              return item.checked_out_at || '-';
+            }
+            if (columnKey === 'cancel') {
+              return item.cancel ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancelBooking(item.id);
                   }}
-                  className={
-                    currentApiPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-
-              {(() => {
-                // Calculate pagination range
-                const maxVisiblePages = 10;
-                let startPage = 1;
-                let endPage = Math.min(totalPages, maxVisiblePages);
-
-                if (totalPages > maxVisiblePages) {
-                  // Calculate start and end pages to center around current page
-                  const halfRange = Math.floor(maxVisiblePages / 2);
-                  startPage = Math.max(1, currentApiPage - halfRange);
-                  endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                  
-                  // Adjust start page if we're near the end
-                  if (endPage - startPage + 1 < maxVisiblePages) {
-                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                  }
-                }
-
-                const pages = [];
-                
-                // Show first page and ellipsis if needed
-                if (startPage > 1) {
-                  pages.push(
-                    <PaginationItem key={1}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(1)}
-                        isActive={currentApiPage === 1}
-                      >
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                  
-                  if (startPage > 2) {
-                    pages.push(
-                      <PaginationItem key="ellipsis-start">
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    );
-                  }
-                }
-
-                // Show visible page range
-                for (let page = startPage; page <= endPage; page++) {
-                  // Skip page 1 if we already added it
-                  if (page === 1 && startPage > 1) continue;
-                  
-                  pages.push(
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentApiPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-
-                // Show ellipsis and last page if needed
-                if (endPage < totalPages) {
-                  if (endPage < totalPages - 1) {
-                    pages.push(
-                      <PaginationItem key="ellipsis-end">
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    );
-                  }
-                  
-                  pages.push(
-                    <PaginationItem key={totalPages}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(totalPages)}
-                        isActive={currentApiPage === totalPages}
-                      >
-                        {totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-
-                return pages;
-              })()}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => {
-                    if (currentApiPage < totalPages) {
-                      handlePageChange(currentApiPage + 1);
-                    }
-                  }}
-                  className={
-                    currentApiPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+                >
+                  Cancel
+                </Button>
+              ) : null;
+            }
+            return item[columnKey];
+          }}
+          selectable={false}
+          pagination={true}
+          currentPage={currentApiPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          enableExport={false}
+          storageKey="parking-bookings-table"
+          loading={loading && cards !== null}
+          loadingMessage="Loading parking booking data..."
+          hideTableExport={true}
+          hideColumnsButton={true}
+          hideTableSearch={true}
+          className="transition-all duration-500 ease-in-out"
+        />
+      </div>
 
       <BulkUploadModal 
         isOpen={isBulkUploadOpen} 

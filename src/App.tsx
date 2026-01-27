@@ -913,8 +913,13 @@ import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 import AmenityCategorySetup from "./pages/AmenityCategorySetup";
 import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
+import IssuesMobileView from "./pages/IssuesMobileView";
+import IssueDetailsMobile from "./pages/IssueDetailsMobile";
+import AddIssueMobileView from "./pages/AddIssueMobileView";
 import MilestoneMobileView from "./pages/MilestoneMobileView";
 import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
+import TasksMobileView from "./pages/TasksMobileView";
+import TaskDetailsMobile from "./pages/TaskDetailsMobile";
 import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
@@ -925,6 +930,9 @@ import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
 import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
+import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
+import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
+import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3925,6 +3933,18 @@ function App() {
                       path="/pulse/community/:communityId/reports/details/:id"
                       element={<ReportsDetailsPage />}
                     />
+                    <Route
+                      path="/pulse/community/notice/:id"
+                      element={<CommunityNoticeDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/event/:id"
+                      element={<CommunityEventDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/document/:id"
+                      element={<CommunityDocumentDetails />}
+                    />
 
                     <Route
                       path="/pulse/visitor"
@@ -4437,6 +4457,18 @@ function App() {
                     element={<ProjectsMobileView />}
                   />
                   <Route
+                    path="/mobile-issues"
+                    element={<IssuesMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/add"
+                    element={<AddIssueMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/:id"
+                    element={<IssueDetailsMobile />}
+                  />
+                  <Route
                     path="/mobile-projects/:id/milestones"
                     element={<MilestoneMobileView />}
                   />
@@ -4455,6 +4487,14 @@ function App() {
                   <Route
                     path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetailsMobile />}
+                  />
+                  <Route
+                    path="/mobile-tasks"
+                    element={<TasksMobileView />}
+                  />
+                  <Route
+                    path="/mobile-tasks/:taskId"
+                    element={<TaskDetailsMobile />}
                   />
 
                   {/* Mail Inbound Routes */}

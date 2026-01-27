@@ -28,9 +28,11 @@ import {
   updateDocument,
   getCategories,
   getFoldersTree,
+  getAllSites,
   UpdateDocumentPayload,
   Category,
   Folder,
+  Site,
   fileToBase64,
 } from "@/services/documentService";
 
@@ -108,6 +110,7 @@ export const EditDocumentPage = () => {
   const [loading, setLoading] = useState(true);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [showTechParkModal, setShowTechParkModal] = useState(false);
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
@@ -119,6 +122,7 @@ export const EditDocumentPage = () => {
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
 
   const [formData, setFormData] = useState({
     documentCategory: "",
@@ -132,12 +136,14 @@ export const EditDocumentPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [categoriesData, foldersData] = await Promise.all([
+        const [categoriesData, foldersData, sitesData] = await Promise.all([
           getCategories(),
           getFoldersTree(),
+          getAllSites(),
         ]);
         setCategories(categoriesData);
         setFolders(foldersData.folders);
+        setSites(sitesData.sites);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load categories and folders");
@@ -254,9 +260,99 @@ export const EditDocumentPage = () => {
   const handleCoverImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setCoverImage(file);
+    const files = event.target.files;
+    if (files && files[0]) {
+      setCoverImage(files[0]);
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      const file = files[0];
+      const allowedTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ];
+
+      if (allowedTypes.includes(file.type) || file.type.startsWith("image/")) {
+        setCoverImage(file);
+        toast.success(`File "${file.name}" uploaded successfully`);
+      } else {
+        toast.error(
+          "Please upload a valid document file (PDF, DOC, XLS, PPT, or Image)"
+        );
+      }
+    }
+  };
+
+  // Get file extension and icon
+  const getFileIcon = (file: File) => {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    const fileType = file.type.toLowerCase();
+
+    // Define icon colors and types aligned with design
+    if (fileType.includes("pdf") || extension === "pdf") {
+      return { color: "text-[#C72030]", bg: "bg-red-50", label: "PDF" };
+    } else if (
+      fileType.includes("word") ||
+      ["doc", "docx"].includes(extension)
+    ) {
+      return { color: "text-[#2563eb]", bg: "bg-blue-50", label: "DOC" };
+    } else if (
+      fileType.includes("excel") ||
+      fileType.includes("spreadsheet") ||
+      ["xls", "xlsx"].includes(extension)
+    ) {
+      return { color: "text-[#16a34a]", bg: "bg-green-50", label: "XLS" };
+    } else if (
+      fileType.includes("powerpoint") ||
+      fileType.includes("presentation") ||
+      ["ppt", "pptx"].includes(extension)
+    ) {
+      return { color: "text-[#ea580c]", bg: "bg-orange-50", label: "PPT" };
+    } else if (fileType.includes("image")) {
+      return {
+        color: "text-[#9333ea]",
+        bg: "bg-purple-50",
+        label: "IMG",
+        isImage: true,
+      };
+    } else if (fileType.includes("text") || extension === "txt") {
+      return { color: "text-gray-600", bg: "bg-gray-50", label: "TXT" };
+    } else {
+      return {
+        color: "text-gray-600",
+        bg: "bg-gray-50",
+        label: extension.toUpperCase().substring(0, 3),
+      };
     }
   };
 
@@ -284,17 +380,24 @@ export const EditDocumentPage = () => {
     try {
       setIsSubmitting(true);
 
-      // Convert attached files to base64
-      const attachments = await Promise.all(
-        attachedFiles.map(async (file) => {
-          const base64Content = await fileToBase64(file);
-          return {
-            filename: file.name,
+      // Handle file upload logic:
+      // - If new file uploaded (coverImage exists), replace existing file
+      // - If no new file (coverImage is null), keep existing files
+      let attachments = [];
+
+      if (coverImage) {
+        // New file uploaded - this will replace the existing file
+        const base64Content = await fileToBase64(coverImage);
+        attachments = [
+          {
+            filename: coverImage.name,
             content: base64Content,
-            content_type: file.type,
-          };
-        })
-      );
+            content_type: coverImage.type,
+          },
+        ];
+      }
+      // If coverImage is null and existingFiles exist, we don't need to send attachments
+      // The existing file will remain unchanged
 
       // Build permissions array
       const permissions = [];
@@ -358,7 +461,7 @@ export const EditDocumentPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/maintenance/documents")}
@@ -371,7 +474,7 @@ export const EditDocumentPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full mx-auto p-6 space-y-6">
+      <div className="w-full mx-auto p-6 space-y-4">
         {/* Document Details Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
@@ -549,7 +652,10 @@ export const EditDocumentPage = () => {
                 <div className="mt-4 flex items-center gap-2">
                   <span className="text-[#C72030] text-sm">
                     {selectedTechParks
-                      .map((_, i) => `Tech Parks ${i + 1}`)
+                      .map((parkId) => {
+                        const site = sites.find((s) => s.id === parkId);
+                        return site ? site.name : `Site ${parkId}`;
+                      })
                       .join(", ")}
                     .
                   </span>
@@ -594,137 +700,148 @@ export const EditDocumentPage = () => {
           </div>
 
           <div className="p-6">
-            <div className="space-y-6">
-              {/* Existing Files */}
-              {existingFiles.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
-                    Current Files ({existingFiles.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {existingFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200"
-                      >
-                        <span className="text-sm text-gray-700">
-                          {file.name}
-                        </span>
-                        <button
-                          onClick={() => removeExistingFile(index)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Remove
-                        </button>
+            <h3 className="text-base font-semibold text-[#1a1a1a] mb-4">
+              Upload Document
+            </h3>
+
+            {/* Upload Area or File Display */}
+            {!coverImage ? (
+              <div
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+                  isDragging
+                    ? "border-[#C72030] bg-red-50"
+                    : "border-gray-300 bg-white"
+                }`}
+              >
+                <p className="text-sm text-gray-500 mb-4">
+                  {isDragging
+                    ? "Drop your file here"
+                    : "Choose a file or drag & drop it here"}
+                </p>
+                <label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,.ppt,.pptx"
+                    onChange={handleCoverImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document
+                        .querySelector<HTMLInputElement>('input[type="file"]')
+                        ?.click()
+                    }
+                    className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Browse
+                  </button>
+                </label>
+              </div>
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {getFileIcon(coverImage).isImage ? (
+                      <div className="w-12 h-12 rounded overflow-hidden bg-gray-100">
+                        <img
+                          src={URL.createObjectURL(coverImage)}
+                          alt={coverImage.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    ))}
+                    ) : (
+                      <div
+                        className={`w-12 h-12 ${getFileIcon(coverImage).bg} rounded flex items-center justify-center`}
+                      >
+                        <svg
+                          className={`w-8 h-8 ${getFileIcon(coverImage).color}`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                            clipRule="evenodd"
+                          />
+                          <text
+                            x="10"
+                            y="14"
+                            fontSize="5"
+                            fill="white"
+                            textAnchor="middle"
+                            fontWeight="bold"
+                          >
+                            {getFileIcon(coverImage).label}
+                          </text>
+                        </svg>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-700 font-medium block truncate">
+                        {coverImage.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {(coverImage.size / 1024).toFixed(2)} KB
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Upload Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Cover Image */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <p className="text-sm text-gray-600 mb-4">Cover Image</p>
-                  <label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverImageUpload}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        document
-                          .querySelectorAll<HTMLInputElement>(
-                            'input[type="file"]'
-                          )[0]
-                          ?.click()
-                      }
-                      className="px-6 py-2 bg-white border border-gray-300 rounded text-[#C72030] hover:bg-gray-50 transition-colors"
-                    >
-                      Browse
-                    </button>
-                  </label>
-                  {coverImage && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      {coverImage.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Add New Button */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex items-center justify-center">
-                  <label>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const inputs =
-                          document.querySelectorAll<HTMLInputElement>(
-                            'input[type="file"]'
-                          );
-                        inputs[1]?.click();
-                      }}
-                      className="px-6 py-2 bg-[#FFF5F5] text-[#C72030] rounded hover:bg-[#FFE5E5] transition-colors"
-                    >
-                      Add New Files
-                    </button>
-                  </label>
+                  <button
+                    onClick={() => setCoverImage(null)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
               </div>
+            )}
 
-              {/* Newly Attached Files List */}
-              {attachedFiles.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
-                    New Files to Upload ({attachedFiles.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {attachedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-green-50 rounded border border-green-200"
+            {/* Existing Files Display */}
+            {existingFiles.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  Current Files ({existingFiles.length})
+                </h4>
+                <div className="space-y-2">
+                  {existingFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200"
+                    >
+                      <span className="text-sm text-gray-700">{file.name}</span>
+                      <button
+                        onClick={() => removeExistingFile(index)}
+                        className="text-red-600 hover:text-red-800 text-sm"
                       >
-                        <span className="text-sm text-gray-700">
-                          {file.name}
-                        </span>
-                        <button
-                          onClick={() => removeFile(index)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 pt-4">
-          <button
-            onClick={() => navigate("/maintenance/documents")}
-            className="px-12 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-          >
-            Cancel
-          </button>
+        <div className="flex flex-col justify-center sm:flex-row gap-4 pt-6 border-t">
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-12 py-3 bg-[#C72030] text-white rounded-lg hover:bg-[#A01828] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-11 w-40 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Updating..." : "Update Document"}
+            {isSubmitting ? "Updating..." : "Update"}
+          </button>
+          <button
+            onClick={() => navigate("/maintenance/documents")}
+            disabled={isSubmitting}
+            className="w-40 h-11 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-50 transition-colors"
+          >
+            Cancel
           </button>
         </div>
       </div>

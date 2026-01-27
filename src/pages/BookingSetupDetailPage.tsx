@@ -803,7 +803,7 @@ export const BookingSetupDetailPage = () => {
                       {formData.canCancelBefore.day}d {formData.canCancelBefore.hour}h {formData.canCancelBefore.minute}m
                     </span>
                   </div>
-                  <div className="flex items-start">
+                  {/* <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Allow Multiple Slots</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
@@ -818,7 +818,7 @@ export const BookingSetupDetailPage = () => {
                         {formData.maximumSlots || "-"}
                       </span>
                     </div>
-                  )}
+                  )} */}
                   <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Facility Booked Times Per Day</span>
                     <span className="text-gray-500 mx-2">:</span>

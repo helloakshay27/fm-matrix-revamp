@@ -476,6 +476,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -502,6 +508,9 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -525,6 +534,9 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: formData.fromDate || new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -596,6 +608,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -619,6 +637,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -956,6 +980,7 @@ export const AddEventPage = () => {
                       ref={attachmentInputRef}
                       onChange={handleFileChange}
                       className="hidden"
+                      accept="image/*"
                     />
 
                     <div className="text-center text-gray-500 text-sm">
