@@ -208,16 +208,16 @@ export const EnergyDashboard = () => {
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-8 h-4" />
             List
           </TabsTrigger>
-          <TabsTrigger
+          {/* <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             <Settings className="w-4 h-4" />
             Analytics
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="list" className="mt-6">
@@ -421,7 +421,7 @@ export const EnergyDashboard = () => {
           </div>
         </div>
 
-        <TabsContent value="analytics" className="mt-6">
+        {/* <TabsContent value="analytics" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Energy Consumption Overview</h3>
@@ -462,7 +462,7 @@ export const EnergyDashboard = () => {
               </div>
             </div>
           </div>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

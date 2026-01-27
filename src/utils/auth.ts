@@ -149,10 +149,10 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work");
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "localhost";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" ;
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -238,6 +238,18 @@ export const getOrganizationsByEmail = async (
 
   const data = await response.json();
   return data.organizations || [];
+};
+
+// Asset module access restrictions for specific users
+const ASSET_RESTRICTED_EMAILS = [
+  "reception1@gmail.com",
+  "reception.pune@zycus.com",
+  "reception.blr@zycus.com",
+].map((email) => email.toLowerCase());
+
+export const isAssetRestrictedUser = (user: User | null | undefined): boolean => {
+  if (!user?.email) return false;
+  return ASSET_RESTRICTED_EMAILS.includes(user.email.toLowerCase());
 };
 
 export const loginUser = async (

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, FileChartColumnIncreasing, RefreshCw } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Interface definitions for API response
@@ -112,11 +112,7 @@ export default function EditMeasurementPage() {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurement';
       setError(errorMessage);
       console.error('Failed to fetch measurement:', err);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -137,11 +133,7 @@ export default function EditMeasurementPage() {
     e.preventDefault();
 
     if (!id) {
-      toast({
-        title: "Error",
-        description: "Measurement ID is missing",
-        variant: "destructive",
-      });
+      toast.error('Measurement ID is missing');
       return;
     }
 
@@ -170,20 +162,13 @@ export default function EditMeasurementPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast({
-        title: "Success",
-        description: "Measurement updated successfully",
-      });
+      toast.success('Measurement updated successfully');
 
       navigate('/utility/daily-readings');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while updating measurement';
       console.error('Failed to update measurement:', err);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
