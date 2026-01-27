@@ -826,7 +826,7 @@ import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
 import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
 import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
-import { ManualJournalDetails } from "./pages/ClubManagement/manualJournalDetails";
+import { ManualJournalDetails } from "./pages/ClubManagement/ManualJournalDetails";
 import { TransactionsDetails } from "./pages/ClubManagement/TransationsDetails";
 import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
 import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
