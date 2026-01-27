@@ -11,28 +11,7 @@ import { toast } from 'sonner';
 import { fetchEvents, updateEvent } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
-import { Switch } from '@/components/ui/switch';
-
-const formatDateWithTimezone = (date: Date) => {
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  const seconds = pad(date.getSeconds());
-  const millis = String(date.getMilliseconds()).padStart(3, "0");
-
-  const offset = -date.getTimezoneOffset();
-  const sign = offset >= 0 ? "+" : "-";
-  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
-  const offsetMinutes = pad(Math.abs(offset) % 60);
-
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${millis}${sign}${offsetHours}:${offsetMinutes}`;
-};
-
+import { Switch as MuiSwitch } from '@mui/material';
 
 export const CRMEventsPage = () => {
   const dispatch = useAppDispatch();
@@ -153,7 +132,7 @@ export const CRMEventsPage = () => {
     const filterParams: any = {};
 
     if (filterData.status) {
-      filterParams["q[publish_in]"] = filterData.status;
+      filterParams["q[active_eq]"] = filterData.status;
     }
 
     if (filterData.created_at) {
@@ -286,11 +265,25 @@ export const CRMEventsPage = () => {
 
         return (
           <div className="flex items-center gap-2">
-            <Switch
+            <MuiSwitch
               checked={isChecked}
-              onCheckedChange={(checked) => handleStatusChange(item, checked)}
+              onChange={(e) => handleStatusChange(item, e.target.checked)}
               disabled={updatingStatus[item.id]}
-              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              size="small"
+              sx={{
+                '& .MuiSwitch-switchBase': {
+                  color: '#ef4444',
+                  '&.Mui-checked': {
+                    color: '#22c55e',
+                  },
+                  '&.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#22c55e',
+                  },
+                },
+                '& .MuiSwitch-track': {
+                  backgroundColor: '#ef4444',
+                },
+              }}
             />
             {isChecked ? "Active" : "Inactive"}
           </div>
