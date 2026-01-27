@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, Plus, ReceiptText, Settings, Share, Share2, Trash2, Tv, Upload, User, X } from "lucide-react";
 import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 import {
   TextField,
@@ -152,6 +152,9 @@ export const AddBookingSetupPage = () => {
       maximumPersonAllowed: "1",
       perSlotCharge: "",
       gst: "0.0",
+      facilityDurationCharges: [
+        { hours: "", price: "" }
+      ],
     },
     blockDays: {
       startDate: "",
@@ -499,6 +502,20 @@ export const AddBookingSetupPage = () => {
         "facility_setup[max_people]",
         formData.chargeSetup.maximumPersonAllowed || "1"
       );
+
+      // Facility Duration Charges
+      formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+        if (charge.hours || charge.price) {
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+            charge.hours
+          );
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+            charge.price
+          );
+        }
+      });
 
       formDataToSend.append(
         "facility_setup[description]",
@@ -1125,6 +1142,119 @@ export const AddBookingSetupPage = () => {
                 )
               }
             </div>
+
+            {/* Facility Duration Charges Table */}
+            {!formData.isBookable && (
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
+                  <Button
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          facilityDurationCharges: [
+                            ...formData.chargeSetup.facilityDurationCharges,
+                            { hours: "", price: "" }
+                          ]
+                        }
+                      });
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Row
+                  </Button>
+                </div>
+
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Hours</th>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                        <th className="border-b px-4 py-3 text-center font-semibold text-gray-700">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.chargeSetup.facilityDurationCharges.map((charge, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter hours"
+                              value={charge.hours}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].hours = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.5",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter price"
+                              value={charge.price}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].price = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.01",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => {
+                                const newCharges = formData.chargeSetup.facilityDurationCharges.filter((_, i) => i !== index);
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges.length > 0 ? newCharges : [{ hours: "", price: "" }]
+                                  }
+                                });
+                              }}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
+                              title="Remove row"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
