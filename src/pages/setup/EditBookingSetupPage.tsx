@@ -1077,9 +1077,13 @@ export const EditBookingSetupPage = () => {
                                     label="Facility Name*"
                                     placeholder="Enter Facility Name"
                                     value={formData.facilityName}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, facilityName: e.target.value })
-                                    }
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Allow letters, numbers, and spaces
+                                        if (/^[a-zA-Z0-9\s]*$/.test(value)) {
+                                            setFormData({ ...formData, facilityName: value });
+                                        }
+                                    }}
                                     variant="outlined"
                                 />
                                 <FormControl>
@@ -2646,40 +2650,44 @@ export const EditBookingSetupPage = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                        <Tv className="w-4 h-4" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="staticAmenities">
-                                    {Object.keys(formData.staticAmenities).map((key) => (
-                                        <div key={key} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={key}
-                                                checked={formData.staticAmenities[key].selected}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        staticAmenities: {
-                                                            ...formData.staticAmenities,
-                                                            [key]: {
-                                                                ...formData.staticAmenities[key],
-                                                                selected: !!checked,
-                                                            },
-                                                        },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor={key}>
-                                                {formData.staticAmenities[key].name}
-                                            </label>
+                            {
+                                !formData.isBookable && (
+                                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                                <Tv className="w-4 h-4" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="staticAmenities">
+                                            {Object.keys(formData.staticAmenities).map((key) => (
+                                                <div key={key} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={key}
+                                                        checked={formData.staticAmenities[key].selected}
+                                                        onCheckedChange={(checked) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                staticAmenities: {
+                                                                    ...formData.staticAmenities,
+                                                                    [key]: {
+                                                                        ...formData.staticAmenities[key],
+                                                                        selected: !!checked,
+                                                                    },
+                                                                },
+                                                            })
+                                                        }
+                                                    />
+                                                    <label htmlFor={key}>
+                                                        {formData.staticAmenities[key].name}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            }
 
                             {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
