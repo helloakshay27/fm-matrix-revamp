@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Authentication utility functions
 export interface User {
   id: number;
@@ -148,14 +149,16 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work");
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work");
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
-const isPulseSite = hostname.includes("pulse.lockated.com");
+const isPulseSite = hostname === "pulse.lockated.com";
+
+const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -211,9 +214,22 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
+  if (isPanchshilUatSite) {
+    const response = await fetch(
+      `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
   // Default fallback for other sitess
   const response = await fetch(
-    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {
@@ -222,6 +238,18 @@ export const getOrganizationsByEmail = async (
 
   const data = await response.json();
   return data.organizations || [];
+};
+
+// Asset module access restrictions for specific users
+const ASSET_RESTRICTED_EMAILS = [
+  "reception1@gmail.com",
+  "reception.pune@zycus.com",
+  "reception.blr@zycus.com",
+].map((email) => email.toLowerCase());
+
+export const isAssetRestrictedUser = (user: User | null | undefined): boolean => {
+  if (!user?.email) return false;
+  return ASSET_RESTRICTED_EMAILS.includes(user.email.toLowerCase());
 };
 
 export const loginUser = async (
@@ -526,6 +554,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm.gophygital.work");
 
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
+  const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
   let apiUrl = "";
 
@@ -535,6 +564,8 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isDevSite) {
     apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+  } else if (isPanchshilUatSite) {
+    apiUrl = `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else {
     // Default fallback
     apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;

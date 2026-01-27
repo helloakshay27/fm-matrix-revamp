@@ -666,13 +666,13 @@ export const BookingSetupDetailPage = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Member Adult Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.member.adult || "-"}
                 </span>
-              </div>
+              </div> */}
               {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Adult Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -680,13 +680,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.chargeSetup.guest.adult || "-"}
                 </span>
               </div> */}
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Member Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.member.child || "-"}
                 </span>
-              </div>
+              </div> */}
               {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>

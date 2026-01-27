@@ -553,7 +553,7 @@ export const EditEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Amount Per Person<span className="text-[#C72030]">*</span></>}
+                  label={<>Event Amount Per Person</>}
                   id="amountPerPerson"
                   name="amountPerPerson"
                   type="number"

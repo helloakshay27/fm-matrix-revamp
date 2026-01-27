@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileChartColumnIncreasing } from 'lucide-react';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, CircularProgress } from '@mui/material';
+import { toast } from 'sonner';
 
 interface UtilizationFormData {
     entity: string;
@@ -265,12 +266,12 @@ export const EditUtilityRequestPage = () => {
         // Form validation
         if (!formData.entity || !formData.plantDetail || !formData.fromDate ||
             !formData.toDate || !formData.totalConsumption || !formData.rate || !formData.readingType) {
-            alert('Please fill in all required fields');
+            toast.error('Please fill in all required fields');
             return;
         }
 
         if (!id) {
-            alert('No utilization ID found');
+            toast.error('No utilization ID found');
             return;
         }
 
@@ -330,13 +331,13 @@ export const EditUtilityRequestPage = () => {
             console.log('Utilization updated successfully:', responseData);
 
             // Show success message
-            alert('Utilization updated successfully!');
+            toast.success('Utilization updated successfully!');
 
             // Navigate back to the utility requests page
             navigate('/utility/utility-request');
         } catch (error) {
             console.error('Error updating utilization:', error);
-            alert(`Failed to update utilization: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to update utilization: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsSubmitting(false);
         }
