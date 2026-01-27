@@ -920,6 +920,11 @@ import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
+import TaskDetailsMobile from "./pages/TaskDetailsMobile";
+import TasksMobileView from "./pages/TasksMobileView";
+import IssuesMobileView from "./pages/IssuesMobileView";
+import AddIssueMobileView from "./pages/AddIssueMobileView";
+import IssueDetailsMobile from "./pages/IssueDetailsMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -973,7 +978,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -4420,6 +4425,18 @@ function App() {
                     element={<ProjectsMobileView />}
                   />
                   <Route
+                    path="/mobile-issues"
+                    element={<IssuesMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/add"
+                    element={<AddIssueMobileView />}
+                  />
+                  <Route
+                    path="/mobile-issues/:id"
+                    element={<IssueDetailsMobile />}
+                  />
+                  <Route
                     path="/mobile-projects/:id/milestones"
                     element={<MilestoneMobileView />}
                   />
@@ -4438,6 +4455,14 @@ function App() {
                   <Route
                     path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetailsMobile />}
+                  />
+                  <Route
+                    path="/mobile-tasks"
+                    element={<TasksMobileView />}
+                  />
+                  <Route
+                    path="/mobile-tasks/:taskId"
+                    element={<TaskDetailsMobile />}
                   />
 
                   {/* Mail Inbound Routes */}
