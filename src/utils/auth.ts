@@ -149,10 +149,10 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work");
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "localhost";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" ;
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
