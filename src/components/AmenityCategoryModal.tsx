@@ -117,6 +117,7 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
         payload.append('facility_category[description]', formData.description);
         payload.append('facility_category[active]', record?.active === false ? "0" : "1");
         payload.append('facility_category[fac_type]', formData.fac_type);
+        payload.append('facility_category[site_id]', localStorage.getItem('selectedSiteId') || '');
 
         if (coverImage) {
             payload.append('cover_image', coverImage);

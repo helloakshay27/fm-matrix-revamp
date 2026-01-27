@@ -27,11 +27,15 @@ import {
     MessageSquare,
     MoreVertical,
     FileText,
+    Calendar1,
+    MapPin,
+    Folder,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { ImageCarouselModal } from "./ImageCarouselModal";
 import { ReactionsModal } from "./ReactionsModal";
+import { format } from "date-fns";
 
 interface CommunityFeedTabProps {
     communityId?: string;
@@ -108,6 +112,20 @@ interface Post {
     attachments: Attachment[];
     comments: Comment[];
     poll_options?: PollOption[];
+    type: 'post' | 'event' | 'notice' | 'document';
+    event_date?: string;
+    event_time?: string;
+    event_location?: string;
+    location?: string;
+    expire_time?: string;
+    file_size?: string;
+    file_format?: string;
+    document_id?: number;
+    attachment?: {
+        file_size: string;
+        file_type: string;
+        url: string;
+    };
 }
 
 const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps) => {
@@ -129,13 +147,121 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | null; id: number | null }>({ open: false, type: null, id: null });
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | 'document' | null; id: number | null }>({ open: false, type: null, id: null });
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselAttachments, setCarouselAttachments] = useState<Attachment[]>([]);
     const [carouselStartIndex, setCarouselStartIndex] = useState(0);
     const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
     const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
     const [reactionsModalData, setReactionsModalData] = useState<Like[]>([]);
+    const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+
+    // Skeleton Loader Component
+    const PostSkeleton = () => (
+        <div className="bg-white rounded-[10px] border border-gray-200 p-6 mb-4 w-[80%] animate-pulse">
+            {/* Header Skeleton */}
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3 flex-1">
+                    <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+                    <div className="flex-1">
+                        <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-48"></div>
+                    </div>
+                </div>
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+            </div>
+
+            {/* Title Skeleton */}
+            <div className="h-5 bg-gray-300 rounded w-3/4 mb-3"></div>
+
+            {/* Content Skeleton */}
+            <div className="space-y-2 mb-4">
+                <div className="h-4 bg-gray-300 rounded w-full"></div>
+                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-300 rounded w-4/6"></div>
+            </div>
+
+            {/* Image Skeleton */}
+            <div className="h-64 bg-gray-300 rounded-lg mb-4"></div>
+
+            {/* Reactions Skeleton */}
+            <div className="flex gap-4 border-t border-b border-gray-200 py-3">
+                <div className="h-4 bg-gray-300 rounded w-16"></div>
+                <div className="h-4 bg-gray-300 rounded w-20"></div>
+            </div>
+        </div>
+    );
+
+    const transformedEvent = (event: any) => {
+        return {
+            id: event.id,
+            title: event.event_name,
+            body: event.description,
+            active: event.active,
+            created_at: event.created_at,
+            creator_full_name: event.created_by,
+            creator_image_url: null,
+            resource_name: communityName,
+            attachments: event.documents.map((doc: any) => ({
+                id: doc.id,
+                document_content_type: doc.doctype,
+                url: doc.document,
+            })),
+            type: 'event',
+            event_date: event.from_time,
+            location: event.event_at,
+        }
+    }
+
+    const transformedNotice = (notice: any) => {
+        return {
+            id: notice.id,
+            title: notice.notice_heading,
+            body: notice.notice_text || '',
+            active: notice.active,
+            created_at: notice.created_at,
+            creator_full_name: notice.created_by,
+            creator_image_url: null,
+            resource_name: communityName,
+            attachments: notice.attachments.map((doc: any) => ({
+                id: doc.id,
+                document_content_type: doc.document_content_type,
+                url: doc.url,
+            })),
+            type: 'notice',
+        }
+    }
+
+    const transformedDocument = (document: any) => {
+        const formatFileSize = (bytes: number): string => {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        };
+
+        return {
+            id: document.id,
+            title: document.title,
+            body: document.folder_name || document.category || '',
+            active: document.active !== false,
+            created_at: document.created_at,
+            creator_full_name: document.created_by_full_name || 'Admin',
+            creator_image_url: null,
+            resource_name: communityName,
+            attachment: {
+                file_size: formatFileSize(parseInt(document.attachment?.file_size) || 0),
+                file_type: document.attachment?.file_type,
+                url: document.attachment?.file_url,
+            },
+            type: 'document',
+            file_size: formatFileSize(parseInt(document.attachment?.file_size) || 0),
+            file_format: document.attachment?.file_type || document.format || 'PDF',
+            document_id: document.id,
+        }
+    }
+
 
     const fetchData = async () => {
         try {
@@ -151,18 +277,48 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
     }
 
     const fetchPosts = async () => {
+        setIsLoadingPosts(true);
         try {
             const response = await axios.get(`https://${baseUrl}/communities/${communityId}/posts.json`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
+            const posts = response.data.posts.map(post => ({
+                ...post,
+                type: 'post'
+            }))
+            const events = response.data.events.map(transformedEvent)
+            const notices = response.data.notices ? response.data.notices.map(transformedNotice) : []
 
-            setPosts(response.data.posts);
+            // Fetch documents
+            let documents = [];
+            try {
+                const docResponse = await axios.get(`https://${baseUrl}/folders/by_communities.json?community_ids=[${communityId}]`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                const allDocuments = docResponse.data.folders.flatMap((folder: any) => folder.documents) || [];
+                documents = allDocuments.map(transformedDocument);
+            } catch (docError) {
+                console.log('Error fetching documents:', docError);
+            }
+
+            const combined = [...posts, ...events, ...notices, ...documents].sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            setPosts(combined);
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsLoadingPosts(false);
         }
     }
+
+
+    console.log(posts)
 
     const confirmDelete = async () => {
         if (!deleteConfirmation.id) return;
@@ -192,6 +348,24 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                     }
                 );
                 toast.success('Comment deleted successfully');
+                await fetchPosts();
+            } else if (deleteConfirmation.type === 'document') {
+                await axios.post(
+                    `https://${baseUrl}/folders/update_permission.json`,
+                    {
+                        permissible_type: "Document",
+                        permissible_id: deleteConfirmation.id,
+                        access_to: "Community",
+                        remove_items: [Number(communityId)]
+                    },
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+                toast.success('Document deleted successfully');
                 await fetchPosts();
             }
         } catch (error) {
@@ -263,8 +437,8 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
         }
     };
 
-    const handleDeletePost = (postId: number) => {
-        setDeleteConfirmation({ open: true, type: 'post', id: postId });
+    const handleDeletePost = (postId: number, postType?: string) => {
+        setDeleteConfirmation({ open: true, type: postType === 'document' ? 'document' : 'post', id: postId });
     };
 
     const handleCreatePost = async () => {
@@ -537,157 +711,230 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => handleEditPost(post)}>
-                                Edit Post
-                            </DropdownMenuItem>
+                            {
+                                post.type === "post" && (
+                                    <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                        Edit Post
+                                    </DropdownMenuItem>
+                                )
+                            }
                             <DropdownMenuItem
-                                onClick={() => handleDeletePost(post.id)}
+                                onClick={() => handleDeletePost(post.id, post.type)}
                                 className="text-red-600 focus:text-red-600"
                             >
-                                Delete Post
+                                Delete {post.type === 'document' ? 'Document' : 'Post'}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
+                {
+                    post.type !== 'document' && (
+                        <>
+                            {/* Post Title */}
+                            {post.title && (
+                                <h2 className="text-[16px] font-[500] text-gray-900 mb-2">{post.title}</h2>
+                            )}
 
-                {/* Post Title */}
-                {post.title && (
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h2>
-                )}
+                            {/* Post Content */}
+                            {
+                                post.body && (
+                                    <p className="text-[14px] font-[400] text-gray-700 mb-4">{post.body}</p>
+                                )
+                            }
 
-                {/* Post Content */}
-                <p className="text-gray-700 mb-4">{post.body}</p>
-
-                {/* Poll Options - Display if post has poll_options */}
-                {post.poll_options && post.poll_options.length > 0 && (
-                    <div className="mb-4 space-y-2">
-                        {post.poll_options.map((option) => (
-                            <div
-                                key={option.id}
-                                className="relative bg-[#fff] border border-gray-200 rounded-[5px] px-4 py-2 transition-colors overflow-hidden"
-                            >
-                                {/* Progress bar background */}
-                                <div
-                                    className="absolute inset-0 bg-[rgba(196,184,157,0.13)] rounded-[5px]"
-                                    style={{ width: `${option.vote_percentage}%` }}
-                                ></div>
-
-                                <div className="relative flex items-center justify-between">
-                                    <span className="font-normal text-[#1F1F1F]">{option.name}</span>
-                                    <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
-                                        <span>{option.total_votes} votes</span>
-                                        <span className="text-[#C4B89D]">{option.vote_percentage}%</span>
+                            {
+                                post.type === "event" && post.event_date && (
+                                    <div className="mb-4 space-y-2 text-sm text-gray-700 flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">
+                                                <Calendar1 size={14} />
+                                            </span>
+                                            <span>{new Date(post.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                        </div>
+                                        {post.location && (
+                                            <div className="flex items-center gap-2 !mt-0">
+                                                <span className="text-lg">
+                                                    <MapPin size={14} />
+                                                </span>
+                                                <span>{post.location}</span>
+                                            </div>
+                                        )}
                                     </div>
+                                )
+                            }
+
+                            {
+                                post.type === "notice" && post.expire_time && (
+                                    <div className="mb-4 space-y-2 text-sm text-gray-700">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">📅</span>
+                                            <span>Expires: {new Date(post.expire_time).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} @ {new Date(post.expire_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Poll Options - Display if post has poll_options */}
+                            {post.poll_options && post.poll_options.length > 0 && (
+                                <div className="mb-4 space-y-2">
+                                    {post.poll_options.map((option) => (
+                                        <div
+                                            key={option.id}
+                                            className="relative bg-[#fff] border border-gray-200 rounded-[5px] px-4 py-2 transition-colors overflow-hidden"
+                                        >
+                                            {/* Progress bar background */}
+                                            <div
+                                                className="absolute inset-0 bg-[rgba(196,184,157,0.13)] rounded-[5px]"
+                                                style={{ width: `${option.vote_percentage}%` }}
+                                            ></div>
+
+                                            <div className="relative flex items-center justify-between">
+                                                <span className="font-normal text-[#1F1F1F]">{option.name}</span>
+                                                <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
+                                                    <span>{option.total_votes} votes</span>
+                                                    <span className="text-[#C4B89D]">{option.vote_percentage}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Post Attachments - Instagram Style Carousel */}
+                            {post.attachments && post.attachments.length > 0 && (
+                                <div className={`mb-4 gap-1 ${post.attachments.length === 1 ? 'grid grid-cols-1' :
+                                    post.attachments.length === 2 ? 'grid grid-cols-2' :
+                                        post.attachments.length === 3 ? 'grid grid-cols-2' :
+                                            'grid grid-cols-2'
+                                    }`}>
+                                    {post.attachments.map((attachment, index) => {
+                                        const isImage = attachment?.document_content_type?.startsWith('image/');
+                                        const isVideo = attachment.document_content_type?.startsWith('video/');
+                                        const shouldShowMore = post.attachments.length > 4 && index === 3;
+
+                                        return (
+                                            <div
+                                                key={attachment.id}
+                                                className={`relative overflow-hidden rounded-lg cursor-pointer group ${post.attachments.length === 1 ? 'col-span-1' :
+                                                    post.attachments.length === 3 && index === 0 ? 'col-span-2' :
+                                                        post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
+                                                            ''
+                                                    }`}
+                                                style={{
+                                                    height: post.attachments.length === 1 ? '400px' :
+                                                        post.attachments.length === 2 ? '300px' :
+                                                            post.attachments.length === 3 && index === 0 ? '300px' :
+                                                                post.attachments.length === 3 ? '200px' :
+                                                                    post.attachments.length > 4 && index === 0 ? '400px' : '200px'
+                                                }}
+                                                onClick={() => {
+                                                    if (isImage || isVideo) {
+                                                        setCarouselAttachments(post.attachments);
+                                                        setCarouselStartIndex(index);
+                                                        setCarouselOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {isImage ? (
+                                                    <img
+                                                        src={attachment.url}
+                                                        alt="Post attachment"
+                                                        className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                                                    />
+                                                ) : isVideo ? (
+                                                    <video
+                                                        src={attachment.url}
+                                                        controls
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : null}
+
+                                                {/* Show count overlay for 5+ images */}
+                                                {shouldShowMore && (
+                                                    <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
+                                                        <span className="text-white text-3xl font-semibold">
+                                                            +{post.attachments.length - 4}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Image Count Badge (if multiple images) */}
+                                                {post.attachments.filter(a => a?.document_content_type?.startsWith('image/')).length > 1 && (
+                                                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                                                        </svg>
+                                                        {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }).slice(0, 4)}
+                                </div>
+                            )}
+                        </>
+                    )
+                }
+
+                {/* Document Card Display */}
+                {post.type === 'document' && (
+                    <div
+                        className="bg-[#F6F4EE] rounded-lg p-4 cursor-pointer"
+                        onClick={() => navigate(`/pulse/community/document/${post.document_id}`)}
+                    >
+                        <div className="flex items-center gap-4">
+                            {/* Document Icon */}
+                            <div className="flex-shrink-0">
+                                <div className="flex items-center justify-center w-14 h-14 bg-[#E6E0D3] rounded-lg">
+                                    <Folder size={24} className="text-[#c72030]" />
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
 
-                {/* Post Attachments - Instagram Style Carousel */}
-                {post.attachments && post.attachments.length > 0 && (
-                    <div className={`mb-4 gap-1 ${post.attachments.length === 1 ? 'grid grid-cols-1' :
-                        post.attachments.length === 2 ? 'grid grid-cols-2' :
-                            post.attachments.length === 3 ? 'grid grid-cols-2' :
-                                'grid grid-cols-2'
-                        }`}>
-                        {post.attachments.map((attachment, index) => {
-                            const isImage = attachment.document_content_type.startsWith('image/');
-                            const isVideo = attachment.document_content_type.startsWith('video/');
-                            const shouldShowMore = post.attachments.length > 4 && index === 3;
-
-                            return (
-                                <div
-                                    key={attachment.id}
-                                    className={`relative overflow-hidden rounded-lg cursor-pointer group ${post.attachments.length === 1 ? 'col-span-1' :
-                                        post.attachments.length === 3 && index === 0 ? 'col-span-2' :
-                                            post.attachments.length > 4 && index === 0 ? 'col-span-2 row-span-2' :
-                                                ''
-                                        }`}
-                                    style={{
-                                        height: post.attachments.length === 1 ? '400px' :
-                                            post.attachments.length === 2 ? '300px' :
-                                                post.attachments.length === 3 && index === 0 ? '300px' :
-                                                    post.attachments.length === 3 ? '200px' :
-                                                        post.attachments.length > 4 && index === 0 ? '400px' : '200px'
-                                    }}
-                                    onClick={() => {
-                                        if (isImage || isVideo) {
-                                            setCarouselAttachments(post.attachments);
-                                            setCarouselStartIndex(index);
-                                            setCarouselOpen(true);
-                                        }
-                                    }}
-                                >
-                                    {isImage ? (
-                                        <img
-                                            src={attachment.url}
-                                            alt="Post attachment"
-                                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
-                                        />
-                                    ) : isVideo ? (
-                                        <video
-                                            src={attachment.url}
-                                            controls
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : null}
-
-                                    {/* Show count overlay for 5+ images */}
-                                    {shouldShowMore && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
-                                            <span className="text-white text-3xl font-semibold">
-                                                +{post.attachments.length - 4}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Image Count Badge (if multiple images) */}
-                                    {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length > 1 && (
-                                        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                                            </svg>
-                                            {post.attachments.filter(a => a.document_content_type.startsWith('image/')).length}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        }).slice(0, 4)}
+                            {/* Document Info */}
+                            <div className="flex-grow min-w-0">
+                                <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{post.title}</h3>
+                                {post.attachment?.file_size && <span className="text-sm text-gray-600">{post.attachment.file_size}</span>}
+                                <p className="text-gray-600 text-sm mt-1 truncate">Created: {post.created_at && new Date(post.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {/* Reactions and Comments */}
-                <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
-                    {Object.entries(post.likes_with_emoji || {}).map(
-                        ([emojiKey, count]) => {
-                            const emoji = EMOJI_MAP[emojiKey];
+                {
+                    post.type === "post" && (
+                        <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
+                            {Object.entries(post.likes_with_emoji || {}).map(
+                                ([emojiKey, count]) => {
+                                    const emoji = EMOJI_MAP[emojiKey];
 
-                            if (!emoji || count === 0) return null;
+                                    if (!emoji || count === 0) return null;
 
-                            return (
-                                <button
-                                    key={emojiKey}
-                                    onClick={() => {
-                                        setReactionsModalData(post.likes_with_user_names);
-                                        setReactionsModalOpen(true);
-                                    }}
-                                    className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
-                                >
-                                    <span>{emoji.icon}</span>
-                                    <span className="text-sm font-medium">{count}</span>
-                                </button>
-                            );
-                        }
-                    )}
-                    <button
-                        className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
-                        onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
-                    >
-                        <MessageSquare size={14} />
-                        <span className="text-sm font-medium">{post.comments.length} comments</span>
-                    </button>
-                </div>
+                                    return (
+                                        <button
+                                            key={emojiKey}
+                                            onClick={() => {
+                                                setReactionsModalData(post.likes_with_user_names);
+                                                setReactionsModalOpen(true);
+                                            }}
+                                            className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
+                                        >
+                                            <span>{emoji.icon}</span>
+                                            <span className="text-sm font-medium">{count}</span>
+                                        </button>
+                                    );
+                                }
+                            )}
+                            <button
+                                className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
+                                onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
+                            >
+                                <MessageSquare size={14} />
+                                <span className="text-sm font-medium">{post?.comments?.length} comments</span>
+                            </button>
+                        </div>
+                    )
+                }
 
                 {/* Comments Section */}
                 {showCommentsForPost === post.id && post.comments && post.comments.length > 0 && (
@@ -810,7 +1057,13 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
 
             {/* Feed Posts */}
             <div>
-                {posts.length > 0 ? (
+                {isLoadingPosts ? (
+                    <div className="space-y-4">
+                        <PostSkeleton />
+                        <PostSkeleton />
+                        <PostSkeleton />
+                    </div>
+                ) : posts.length > 0 ? (
                     posts.map((post) => (
                         <PostCard key={post.id} post={post} />
                     ))
@@ -1177,12 +1430,12 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                 <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
                     <div className="bg-white pt-12 text-center flex flex-col">
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
-                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : 'Comment'} ?
+                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : deleteConfirmation.type === 'document' ? 'Document' : 'Comment'} ?
                         </h2>
                         <div className="flex mt-auto">
                             <button
                                 onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
-                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
                             >
                                 No
                             </button>

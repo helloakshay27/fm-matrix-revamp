@@ -89,7 +89,24 @@ export const AddFacilityBookingPage = () => {
     };
     gst?: number;
     sgst?: number;
+    facility_setup_accessories?: Array<{
+      facility_setup_accessory: {
+        id: number;
+        pms_inventory_id: number;
+        pms_inventory?: {
+          id: number;
+          name: string;
+        };
+      };
+    }>;
   } | null>(null);
+  const [selectedAccessories, setSelectedAccessories] = useState<{ [id: number]: number }>({});
+  const [availableAccessories, setAvailableAccessories] = useState<Array<{
+    id: number;
+    name: string;
+    inventoryId: number;
+    price: number;
+  }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
     id: number;
@@ -227,6 +244,20 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
+        setSelectedAccessories({}); // Reset selected accessories
+
+        // Extract and set available accessories from facility setup
+        if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
+          const accessories = response.data.facility_setup.facility_setup_accessories.map(item => ({
+            id: item.facility_setup_accessory?.id || 0,
+            name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0,
+            price: item.facility_setup_accessory?.cost || 0
+          }));
+          setAvailableAccessories(accessories);
+        } else {
+          setAvailableAccessories([]);
+        }
 
         // Initialize people table based on max_people
         const maxPeople = response.data.facility_setup.max_people || 1;
@@ -241,6 +272,8 @@ export const AddFacilityBookingPage = () => {
     } catch (error) {
       console.error('Error fetching facility details:', error);
       setFacilityDetails(null);
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -252,6 +285,8 @@ export const AddFacilityBookingPage = () => {
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -295,12 +330,6 @@ export const AddFacilityBookingPage = () => {
 
   // Call amenity booking API when member user type is selected with user and facility
   useEffect(() => {
-    console.log('=== Amenity API Check ===');
-    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
-    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
-    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
-    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
-    console.log('========================');
     const token = localStorage.getItem('token')
     console.log('Token for Amenity API:', token);
     if (selectedUser && selectedFacility) {
@@ -378,6 +407,19 @@ export const AddFacilityBookingPage = () => {
     });
   };
 
+  // Handle accessory quantity change
+  const handleAccessoryQuantityChange = (accessoryId: number, quantity: number) => {
+    setSelectedAccessories(prev => {
+      if (quantity <= 0) {
+        const newState = { ...prev };
+        delete newState[accessoryId];
+        return newState;
+      } else {
+        return { ...prev, [accessoryId]: quantity };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -428,13 +470,21 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-      // --- Cost calculation based on per_slot_charge only ---
+      // --- Cost calculation based on per_slot_charge and accessories ---
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
       const slotsCount = selectedSlots.length;
 
-      // Calculate total based only on per_slot_charge
+      // Calculate slot total
       const slotTotal = slotsCount * perSlotCharge;
-      const subtotalBeforeDiscount = slotTotal;
+
+      // Calculate accessory total with quantities
+      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+        return total + ((accessory?.price || 0) * (quantity || 0));
+      }, 0);
+
+      // Subtotal includes slots and accessories
+      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -462,9 +512,17 @@ export const AddFacilityBookingPage = () => {
         const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
         const slotsCount = selectedSlots.length;
 
-        // Calculate total based only on per_slot_charge
+        // Calculate slot total
         const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = slotTotal;
+
+        // Calculate accessory total with quantities
+        const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+          const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+          return total + ((accessory?.price || 0) * (quantity || 0));
+        }, 0);
+
+        // Subtotal includes slots and accessories
+        const subtotalBeforeDiscount = slotTotal + accessoryTotal;
         const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
         const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
         const gstPercentage = facilityDetails?.gst || 0;
@@ -474,6 +532,7 @@ export const AddFacilityBookingPage = () => {
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
         return {
           slotTotal,
+          accessoryTotal,
           subtotalBeforeDiscount,
           discountAmount,
           subtotalAfterDiscount,
@@ -498,6 +557,14 @@ export const AddFacilityBookingPage = () => {
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
+          accessories: Object.entries(selectedAccessories).map(([accessoryId, quantity]) => {
+            const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+            return {
+              id: parseInt(accessoryId),
+              quantity: quantity,
+              total_price: (accessory?.price || 0) * quantity
+            };
+          }),
           entity_id: selectedCompany,
           member_charges: 0,
           guest_charges: 0,
@@ -693,7 +760,6 @@ export const AddFacilityBookingPage = () => {
             <TextField
               type="date"
               label="Date"
-              required
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"
@@ -804,6 +870,60 @@ export const AddFacilityBookingPage = () => {
           )}
         </div>
 
+        {/* Select Accessories Section */}
+        {availableAccessories.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Select Accessories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableAccessories.map((accessory) => (
+                <div key={accessory.id} className="flex flex-col space-y-2 p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`accessory-${accessory.id}`}
+                      checked={selectedAccessories[accessory.id] ? true : false}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          handleAccessoryQuantityChange(accessory.id, 1);
+                        } else {
+                          handleAccessoryQuantityChange(accessory.id, 0);
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <Label
+                      htmlFor={`accessory-${accessory.id}`}
+                      className="cursor-pointer text-sm font-medium flex-1"
+                    >
+                      <span>{accessory.name}</span>
+                    </Label>
+                    {accessory.price > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">₹{accessory.price.toFixed(2)}</span>
+                    )}
+                  </div>
+
+                  {/* Quantity Input - Only show if selected */}
+                  {selectedAccessories[accessory.id] && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <Label className="text-xs text-gray-600">Quantity:</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={selectedAccessories[accessory.id]}
+                        onChange={(e) => handleAccessoryQuantityChange(accessory.id, Math.max(1, parseInt(e.target.value) || 0))}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                      <span className="text-xs text-gray-600 ml-auto">
+                        Total: ₹{(accessory.price * selectedAccessories[accessory.id]).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Payment Method Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Payment Method<span className="text-red-500"> *</span></h2>
@@ -867,15 +987,24 @@ export const AddFacilityBookingPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on per_slot_charge only */}
+              {/* Calculate costs based on per_slot_charge and accessories */}
               {(() => {
                 const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
                 const slotsCount = selectedSlots.length;
                 const hasSlots = slotsCount > 0;
 
-                // Calculate total based only on per_slot_charge
+                // Calculate slot total
                 const slotTotal = slotsCount * perSlotCharge;
-                const subtotalBeforeDiscount = slotTotal;
+
+                // Calculate accessory total with quantities
+                const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                  const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                  return total + ((accessory?.price || 0) * (quantity || 0));
+                }, 0);
+                const hasAccessories = accessoryTotal > 0;
+
+                // Subtotal includes slots and accessories
+                const subtotalBeforeDiscount = slotTotal + accessoryTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
 
@@ -904,6 +1033,17 @@ export const AddFacilityBookingPage = () => {
                           <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
                         </div>
                         <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Accessory Charges */}
+                    {hasAccessories && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Accessory Charges</span>
+                          <span className="text-sm text-gray-500">({Object.values(selectedAccessories).reduce((sum, qty) => sum + qty, 0)} items)</span>
+                        </div>
+                        <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
                       </div>
                     )}
 

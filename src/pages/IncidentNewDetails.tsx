@@ -3001,7 +3001,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
@@ -3166,6 +3166,8 @@ export const IncidentNewDetails = () => {
         contactNo: '',
         company: '',
     });
+
+    const [reportDownloadLoading, setReportDownloadLoading] = useState(false);
 
     // Fetch functions
     const fetchInternalUsers = useCallback(async () => {
@@ -3443,7 +3445,8 @@ export const IncidentNewDetails = () => {
                 }
 
                 // Property damage
-                if (incidentData.property_damage === 'true' || incidentData.property_damage === '1' || incidentData.property_damage === true || incidentData.property_damage === 'Yes') {
+                const propertyDamageValue = String(incidentData.property_damage).toLowerCase();
+                if (propertyDamageValue === 'true' || propertyDamageValue === '1' || propertyDamageValue === 'yes') {
                     setHasPropertyDamage(true);
                     if (incidentData.property_damage_id) {
                         setSelectedPropertyDamage(incidentData.property_damage_id.toString());
@@ -3622,6 +3625,51 @@ export const IncidentNewDetails = () => {
             navigate(-1);
         }
     }, [currentStep, navigate]);
+
+    const handleDownloadIncidentReport = useCallback(async () => {
+        if (!id) {
+            toast.error('Incident ID not found');
+            return;
+        }
+
+        try {
+            setReportDownloadLoading(true);
+
+            let baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+
+            if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+            }
+
+            const response = await fetch(`${baseUrl}/pms/incidents/${id}/incident_report?access_token=${token}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `incident-report-${id}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                toast.success('Incident report downloaded successfully');
+            } else {
+                toast.error('Failed to download incident report');
+            }
+        } catch (error) {
+            console.error('Error downloading incident report:', error);
+            toast.error('Failed to download incident report. Please try again.');
+        } finally {
+            setReportDownloadLoading(false);
+        }
+    }, [id]);
 
     const handleNext = useCallback(async () => {
         try {
@@ -4070,11 +4118,23 @@ export const IncidentNewDetails = () => {
     return (
         <div className="flex flex-col h-screen bg-white">
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b">
-                <button onClick={handleBack}>
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <h1 className="text-lg font-semibold">Incident Details</h1>
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
+                <div className="flex items-center gap-3">
+                    <button onClick={handleBack}>
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <h1 className="text-lg font-semibold">Incident Details</h1>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadIncidentReport}
+                    disabled={reportDownloadLoading}
+                    className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                >
+                    <Download className="w-4 h-4" />
+                    {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
+                </Button>
             </div>
 
             {/* Progress Stepper */}

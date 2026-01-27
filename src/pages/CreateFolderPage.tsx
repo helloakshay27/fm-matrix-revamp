@@ -217,7 +217,10 @@ export const CreateFolderPage = () => {
     };
     sessionStorage.setItem("folderSettings", JSON.stringify(folderSettings));
 
-    navigate("/maintenance/documents/add?source=new");
+    // Pass folder name in URL
+    navigate(
+      `/maintenance/documents/add?source=new&folderName=${encodeURIComponent(title)}`
+    );
   };
 
   const handleSubmit = async () => {

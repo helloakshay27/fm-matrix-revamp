@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Pencil, QrCode, Share2, Info } from 'lucide-react';
+import { ArrowLeft, Pencil, QrCode, Share2, Info, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
@@ -42,7 +42,7 @@ interface Event {
     communities?: { name: string }[];
 }
 
-export const EventDetailsTab = () => {
+export const CommunityEventDetails = () => {
     const dispatch = useAppDispatch();
     const { id } = useParams();
     const navigate = useNavigate();
@@ -104,24 +104,17 @@ export const EventDetailsTab = () => {
     }
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white min-h-screen p-6">
+            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4"><Link to={'/pulse/community'}>Community</Link> <span className="font-normal">{">"}</span> Events</h1>
             {/* Top Header */}
             <div className="flex items-center justify-end gap-4 mb-6">
-                <div className="flex gap-2">
-                    <Button
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-2 hover:bg-transparent"
-                    >
-                        <QrCode size={18} />
-                        View QR
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate(`/pulse/events/edit/${id}`)}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-2 hover:bg-transparent"
-                    >
-                        <Pencil className="w-4 h-4" />
-                    </Button>
-                </div>
+                <Button
+                    variant="outline"
+                    // onClick={() => navigate(`/pulse/events/edit/${id}`)}
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-3 hover:bg-transparent"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
             </div>
 
             {/* Main Content Card: Event Details */}

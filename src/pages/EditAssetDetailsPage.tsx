@@ -3039,9 +3039,14 @@ export const EditAssetDetailsPage = () => {
 
           if (isExisting) {
             console.log(`Updating existing custom field ID: ${field.id} for ${field.name}`);
+
+            // Find the original attribute to get the correct field_name (key)
+            const originalAttr = (originalExtraFieldsAttributes || []).find((attr: any) => attr.id === field.id);
+            const correctFieldName = originalAttr ? originalAttr.field_name : field.name;
+
             addOrReplace({
               id: field.id,
-              field_name: field.name,
+              field_name: correctFieldName,
               field_value: field.value,
               group_name: sectionKey,
               field_description: "custom_field",

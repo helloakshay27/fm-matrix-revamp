@@ -1207,6 +1207,11 @@ export const ticketManagementAPI = {
     try {
       console.log('🔍 Creating visitor with data:', visitorData);
       console.log('🏢 Using site_id:', currentUserSiteId);
+      console.log('📷 capturedPhoto in visitorData:', {
+        exists: !!visitorData.capturedPhoto,
+        length: visitorData.capturedPhoto ? visitorData.capturedPhoto.length : 0,
+        type: visitorData.capturedPhoto ? (visitorData.capturedPhoto.startsWith('data:') ? 'base64' : 'url') : 'none'
+      });
       
       const formData = new FormData();
       
@@ -1371,21 +1376,99 @@ export const ticketManagementAPI = {
         formData.append('item_movement_type_id', visitorData.goodsData.selectType || '1');
       }
       
-      // Add photo if captured
+      // Add photo if captured or from existing visitor
       if (visitorData.capturedPhoto) {
+        const isBase64 = visitorData.capturedPhoto.startsWith('data:image/');
+        const isURL = visitorData.capturedPhoto.startsWith('http://') || visitorData.capturedPhoto.startsWith('https://');
+        
+        console.log('📷 Processing photo for upload...', {
+          type: isBase64 ? 'Base64 (newly captured)' : isURL ? 'URL (existing visitor photo)' : 'Unknown',
+          dataLength: visitorData.capturedPhoto.length,
+          preview: visitorData.capturedPhoto.substring(0, 80) + '...'
+        });
+        
         try {
-          console.log('📷 Processing captured photo for upload...');
-          // Convert base64 to blob
-          const base64Response = await fetch(visitorData.capturedPhoto);
-          const blob = await base64Response.blob();
-          formData.append('gatekeeper[image]', blob, 'visitor_photo.jpg');
-          console.log('✅ Photo successfully added to form data');
+          let blob: Blob;
+          
+          if (isBase64) {
+            // For base64 data URLs (newly captured photos), convert directly to blob
+            console.log('📷 Converting base64 to blob directly...');
+            
+            // Extract the base64 data after the comma
+            const base64Data = visitorData.capturedPhoto.split(',')[1];
+            
+            // Extract MIME type from data URL
+            const mimeMatch = visitorData.capturedPhoto.match(/data:([^;]+);/);
+            const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+            
+            // Convert base64 to binary
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Create blob from binary data
+            blob = new Blob([bytes], { type: mimeType });
+            
+            console.log('📷 Base64 converted to blob:', {
+              blobSize: blob.size,
+              blobType: blob.type,
+              mimeType: mimeType
+            });
+          } else if (isURL) {
+            // For URLs (existing visitor photos), fetch and convert to blob
+            console.log('📷 Fetching photo from URL...');
+            const response = await fetch(visitorData.capturedPhoto);
+            
+            if (!response.ok) {
+              throw new Error(`Failed to fetch photo: ${response.status} ${response.statusText}`);
+            }
+            
+            blob = await response.blob();
+            
+            console.log('📷 URL photo converted to blob:', {
+              blobSize: blob.size,
+              blobType: blob.type
+            });
+          } else {
+            throw new Error('Unknown photo format - must be base64 data URL or HTTP(S) URL');
+          }
+          
+          if (blob.size === 0) {
+            throw new Error('Photo blob is empty (0 bytes)');
+          }
+          
+          console.log('📷 Photo conversion successful:', {
+            blobSize: blob.size,
+            blobType: blob.type
+          });
+          
+          // Append the photo to FormData with proper filename and MIME type
+          const fileName = 'visitor_photo.jpg';
+          formData.append('gatekeeper[image]', blob, fileName);
+          
+          console.log('✅ Photo successfully added to FormData as gatekeeper[image]');
+          console.log('📷 Photo blob details:', {
+            size: blob.size,
+            type: blob.type,
+            formDataKey: 'gatekeeper[image]',
+            fileName: fileName
+          });
         } catch (photoError) {
-          console.error('❌ Error processing photo:', photoError);
-          // Continue without photo if there's an error
+          console.error('❌ CRITICAL ERROR processing photo:', photoError);
+          console.error('❌ Photo details that failed:', {
+            capturedPhotoExists: !!visitorData.capturedPhoto,
+            capturedPhotoLength: visitorData.capturedPhoto?.length,
+            capturedPhotoPreview: visitorData.capturedPhoto?.substring(0, 100),
+            errorMessage: photoError instanceof Error ? photoError.message : String(photoError)
+          });
+          // Re-throw the error to prevent submission without photo
+          throw new Error(`Failed to process photo: ${photoError instanceof Error ? photoError.message : String(photoError)}`);
         }
       } else {
-        console.log('⚠️ No photo captured - skipping image upload');
+        console.log('⚠️ No photo provided - skipping image upload');
+        console.warn('⚠️ WARNING: Submitting visitor without photo!');
       }
 
       // Add visitor documents if uploaded (multiple files support)
@@ -1425,12 +1508,26 @@ export const ticketManagementAPI = {
       
       // Log FormData contents for debugging
       console.log('📋 FormData entries:');
+      let imageFound = false;
       for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
+        if (key === 'gatekeeper[image]') {
+          imageFound = true;
+          if (value instanceof Blob) {
+            console.log(`  🖼️  ${key}: [Blob] ${value.size} bytes, ${value.type} ✅ IMAGE WILL BE SENT!`);
+          } else {
+            console.log(`  ❌ ${key}: ${value}`);
+          }
+        } else if (value instanceof File) {
           console.log(`  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`);
         } else {
           console.log(`  ${key}: ${value}`);
         }
+      }
+      
+      if (!imageFound) {
+        console.error('🚨 CRITICAL: gatekeeper[image] NOT FOUND in FormData!');
+      } else {
+        console.log('✅ CONFIRMED: gatekeeper[image] is present in FormData and will be sent to API');
       }
       
       console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);

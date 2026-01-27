@@ -115,11 +115,7 @@ export const getFMUsers = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch fm users";
-      return rejectWithValue(message);
+      return rejectWithValue(error);
     }
   }
 );

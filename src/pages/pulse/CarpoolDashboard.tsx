@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Car,
   Users,
@@ -11,6 +11,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import carGrayImage from "@/assets/car_gray.png";
+import carRedImage from "@/assets/car_red.png";
+import carBlackImage from "@/assets/car_black.png";
+import carBeigeImage from "@/assets/car_beige.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
   PaginationContent,
@@ -63,6 +68,16 @@ interface RideRecord {
   bookingDate?: string;
   seat?: string;
   pricePerPerson?: string;
+}
+
+interface UserRecord {
+  id: string;
+  accessCardNumber: string;
+  name: string;
+  mobileNumber: string;
+  emailAddress: string;
+  employeeNumber: string;
+  gender: string;
 }
 
 interface CalendarDay {
@@ -180,7 +195,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "scheduled",
   },
   {
@@ -190,7 +205,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "scheduled",
   },
   {
@@ -200,7 +215,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "scheduled",
   },
   {
@@ -210,7 +225,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "scheduled",
   },
 ];
@@ -290,7 +305,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "active",
   },
   {
@@ -300,7 +315,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "active",
   },
   {
@@ -310,7 +325,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "active",
   },
   {
@@ -320,7 +335,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "active",
   },
 ];
@@ -421,17 +436,102 @@ const mockSOSAlerts: RideRecord[] = [
   },
 ];
 
+const mockUsers: UserRecord[] = [
+  {
+    id: "1",
+    accessCardNumber: "54647",
+    name: "Hamza",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "2",
+    accessCardNumber: "54647",
+    name: "Shahab",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "3",
+    accessCardNumber: "54647",
+    name: "Yukta",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Female",
+  },
+  {
+    id: "4",
+    accessCardNumber: "54647",
+    name: "Rahul",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+];
+
+const mockPendingKYC: UserRecord[] = [
+  {
+    id: "1",
+    accessCardNumber: "54647",
+    name: "Hamza",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "2",
+    accessCardNumber: "54647",
+    name: "Shahab",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "3",
+    accessCardNumber: "54647",
+    name: "Yukta",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Female",
+  },
+  {
+    id: "4",
+    accessCardNumber: "54647",
+    name: "Rahul",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+];
+
 export const CarpoolDashboard = () => {
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<string>("today");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewParam = searchParams.get("view") || "";
+  const [activeView, setActiveView] = useState<string>(viewParam);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ridesData, setRidesData] = useState<RideRecord[]>(mockTodayRides);
+  const [usersData, setUsersData] = useState<UserRecord[]>(mockUsers);
+  const [pendingKYCData, setPendingKYCData] =
+    useState<UserRecord[]>(mockPendingKYC);
   const [selectedReportStatus, setSelectedReportStatus] = useState<{
     [key: string]: string;
   }>({});
   const [selectedRides, setSelectedRides] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [activeReportTab, setActiveReportTab] =
+    useState<string>("Under Review");
   const itemsPerPage = 10;
 
   // Calendar states
@@ -553,6 +653,14 @@ export const CarpoolDashboard = () => {
     setCurrentPage(1);
   }, [activeView]);
 
+  // Sync activeView with URL parameter
+  useEffect(() => {
+    const viewParam = searchParams.get("view") || "";
+    if (viewParam !== activeView) {
+      setActiveView(viewParam);
+    }
+  }, [searchParams]);
+
   // Fetch calendar data when month/year changes
   useEffect(() => {
     if (calendarMonth && calendarYear) {
@@ -579,6 +687,12 @@ export const CarpoolDashboard = () => {
 
   const handleStatusCardClick = (status: string) => {
     setActiveView(status);
+    setSearchParams({ view: status });
+  };
+
+  const handleBackToDashboard = () => {
+    setActiveView("");
+    setSearchParams({});
   };
 
   const handleSearch = (query: string) => {
@@ -768,111 +882,145 @@ export const CarpoolDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-        {statusCards.map((card, index) => (
-          <div
-            key={index}
-            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
-              activeView === card.status ? "!shadow-lg" : ""
-            }`}
-            onClick={() => handleStatusCardClick(card.status)}
-          >
-            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-              <card.icon className="w-6 h-6 text-[#C72030]" />
-            </div>
-            <div>
-              <div className="text-2xl font-semibold text-[#1A1A1A]">
-                {card.count.toLocaleString()}
-              </div>
-              <div className="text-sm font-medium text-[#1A1A1A]">
-                {card.title}
-              </div>
-            </div>
+      {/* Breadcrumb Navigation - Show when a specific view is active */}
+      {activeView !== "" && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <button
+              onClick={handleBackToDashboard}
+              className="hover:text-gray-900 transition-colors cursor-pointer"
+            >
+              Carpool
+            </button>
+            <span>&gt;</span>
+            <span className="text-gray-900 font-medium">{getViewTitle()}</span>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Calendar Dates Filter */}
-      <div className="flex flex-col gap-0 mb-6">
-        <div
-          ref={datesContainerRef}
-          className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-        >
-          <div className="min-w-fit flex">
-            <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-10">
-              <div className="flex items-center justify-between gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleMonthChange("prev")}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="text-[#C72030] font-semibold text-sm">
-                  {calendarMonth}
+      {/* Page Title - Show when a specific view is active */}
+      {activeView !== "" && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {getViewTitle()}
+          </h1>
+        </div>
+      )}
+
+      {/* Status Cards - Only show when no specific view is active */}
+      {activeView === "" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          {statusCards.map((card, index) => (
+            <div
+              key={index}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                activeView === card.status ? "!shadow-lg" : ""
+              }`}
+              onClick={() => handleStatusCardClick(card.status)}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <card.icon className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {card.count.toLocaleString()}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleMonthChange("next")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  {card.title}
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <div className="flex-1 flex">
-              {calendarDates.map((dateInfo, idx) => (
-                <div
-                  key={idx}
-                  ref={(el) => {
-                    if (el && dateInfo.fullDate) {
-                      dateRefs.current[dateInfo.fullDate] = el;
-                    }
-                  }}
-                  onClick={() =>
-                    !dateInfo.isOff &&
-                    (setSelectedCalendarDate(dateInfo.date),
-                    setSelectedCalendarDateForApi(dateInfo.fullDate))
-                  }
-                  className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${
-                    selectedCalendarDate === dateInfo.date
-                      ? "bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]"
-                      : dateInfo.isOff
-                        ? "!bg-gray-100 cursor-not-allowed"
-                        : "!bg-white hover:bg-gray-50 cursor-pointer"
-                  }`}
-                >
-                  {selectedCalendarDate === dateInfo.date && (
-                    <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#C72030] border-r-[10px] border-r-transparent"></span>
-                  )}
-                  <div className="text-xs">{dateInfo.date}</div>
-                  <div className="text-sm font-medium">
-                    {dateInfo.day}
-                    {dateInfo.isOff && (
-                      <span className="text-xs text-gray-500 ml-2">OFF</span>
-                    )}
+      {/* Calendar Dates Filter - Only show when no specific view is active */}
+      {activeView === "" && (
+        <div className="flex flex-col mb-6">
+          <div
+            ref={datesContainerRef}
+            className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+          >
+            <div className="min-w-fit flex bg-[#efe9dd] border border-[#c9c2b8] h-[40px] items-center">
+              {/* Month Section */}
+              <div className="w-36 flex-shrink-0 bg-[#efe9dd] border-r border-[#c9c2b8] px-3 py-0.5 sticky left-0 z-10">
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-transparent"
+                    onClick={() => handleMonthChange("prev")}
+                  >
+                    <ChevronLeft className="w-4 h-4 text-black" />
+                  </Button>
+
+                  <div className="text-[#C72030] font-semibold text-sm">
+                    {calendarMonth}
                   </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-transparent"
+                    onClick={() => handleMonthChange("next")}
+                  >
+                    <ChevronRight className="w-4 h-4 text-black" />
+                  </Button>
                 </div>
-              ))}
+              </div>
+
+              {/* Dates */}
+              <div className="flex">
+                {calendarDates.map((dateInfo, idx) => (
+                  <div
+                    key={idx}
+                    ref={(el) => {
+                      if (el && dateInfo.fullDate) {
+                        dateRefs.current[dateInfo.fullDate] = el;
+                      }
+                    }}
+                    onClick={() =>
+                      !dateInfo.isOff &&
+                      (setSelectedCalendarDate(dateInfo.date),
+                      setSelectedCalendarDateForApi(dateInfo.fullDate))
+                    }
+                    className={`border-r border-[#c9c2b8] w-[115px] px-1 py-0.5 text-center cursor-pointer transition-all
+              ${
+                selectedCalendarDate === dateInfo.date
+                  ? "bg-[#f5f1ea] border-b-2 border-b-[#C72030]"
+                  : dateInfo.isOff
+                    ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
+                    : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
+              }`}
+                  >
+                    <div className="text-xs font-medium">{dateInfo.date}</div>
+
+                    <div className="text-[11px] font-semibold leading-none">
+                      {new Date(dateInfo.fullDate).toLocaleDateString("en-US", {
+                        weekday: "long",
+                      })}
+                      {dateInfo.isOff && (
+                        <span className="block text-[11px] text-gray-500">
+                          OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Table View */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {getViewTitle()}
-        </h2>
-      </div>
+      )}
 
       {/* Table Views */}
-      {(activeView === "today" || activeView === "total") && (
+      {(activeView === "" ||
+        activeView === "today" ||
+        activeView === "total") && (
         <>
+          {/* Section title for main dashboard */}
+          {activeView === "" && <div className="mb-4"></div>}
+
           <EnhancedTaskTable
             data={currentRides}
             columns={[
@@ -928,11 +1076,25 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                  }}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -941,11 +1103,11 @@ export const CarpoolDashboard = () => {
               leavingFrom: ride.leavingFrom,
               destination: ride.destination,
             })}
-            enableSearch={false}
+            enableSearch={true}
             enableSelection={false}
             selectable={false}
             enableExport={true}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-rides-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
@@ -1040,8 +1202,10 @@ export const CarpoolDashboard = () => {
                 </Badge>
               ),
             })}
-            enableSearch={false}
+            enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
             hideTableSearch={true}
@@ -1113,11 +1277,25 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                  }}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -1126,8 +1304,9 @@ export const CarpoolDashboard = () => {
               leavingFrom: ride.leavingFrom,
               destination: ride.destination,
             })}
-            enableSearch={false}
+            enableSearch={true}
             enableSelection={false}
+            hideColumnsButton={true}
             selectable={false}
             enableExport={false}
             hideTableSearch={true}
@@ -1151,16 +1330,44 @@ export const CarpoolDashboard = () => {
         <div className="space-y-4">
           {/* Tab Navigation */}
           <div className="flex gap-4 border-b border-gray-200">
-            <button className="px-4 py-2 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
+            <button
+              onClick={() => setActiveReportTab("Under Review")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeReportTab === "Under Review"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
               Under Review
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            <button
+              onClick={() => setActiveReportTab("Action in Progress")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeReportTab === "Action in Progress"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
               Action in Progress
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            <button
+              onClick={() => setActiveReportTab("Resolved")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeReportTab === "Resolved"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
               Resolved
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            <button
+              onClick={() => setActiveReportTab("Closed")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeReportTab === "Closed"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
               Closed
             </button>
           </div>
@@ -1227,7 +1434,15 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(report) => ({
               actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                  }}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
@@ -1271,8 +1486,10 @@ export const CarpoolDashboard = () => {
                 </div>
               ),
             })}
-            enableSearch={false}
+            enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
             hideTableSearch={true}
@@ -1297,7 +1514,7 @@ export const CarpoolDashboard = () => {
             {currentRides.map((alert) => (
               <Card
                 key={alert.id}
-                className="border-2 border-[#DC143C] bg-[#FFF5F5]"
+                className="border-2 border-[#F2C6C3] bg-[#FAF1F0]"
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -1421,6 +1638,178 @@ export const CarpoolDashboard = () => {
             Showing page {currentPage} of {totalPages} ({filteredRides.length}{" "}
             total rides)
           </div>
+        </>
+      )}
+
+      {/* Total Users View */}
+      {activeView === "users" && (
+        <>
+          <EnhancedTaskTable
+            data={usersData}
+            columns={[
+              {
+                key: "actions",
+                label: "Action",
+                sortable: false,
+                hideable: false,
+                draggable: false,
+              },
+              {
+                key: "accessCardNumber",
+                label: "Access card Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "name",
+                label: "Name",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "mobileNumber",
+                label: "Mobile Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "emailAddress",
+                label: "Email Address",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "employeeNumber",
+                label: "Employee Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+            ]}
+            renderRow={(user) => ({
+              actions: (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+              accessCardNumber: user.accessCardNumber,
+              name: user.name,
+              mobileNumber: user.mobileNumber,
+              emailAddress: user.emailAddress,
+              employeeNumber: user.employeeNumber,
+              gender: user.gender,
+            })}
+            enableSearch={true}
+            hideTableExport={true}
+            enableSelection={false}
+            hideColumnsButton={true}
+            selectable={false}
+            enableExport={true}
+            hideTableSearch={true}
+            storageKey="carpool-users-table"
+            searchTerm={searchQuery}
+            onSearchChange={handleSearch}
+            emptyMessage="No users found"
+            searchPlaceholder="Search users..."
+            exportFileName="carpool-users"
+          />
+        </>
+      )}
+
+      {/* Pending KYC View */}
+      {activeView === "kyc" && (
+        <>
+          <EnhancedTaskTable
+            data={pendingKYCData}
+            columns={[
+              {
+                key: "actions",
+                label: "Action",
+                sortable: false,
+                hideable: false,
+                draggable: false,
+              },
+              {
+                key: "accessCardNumber",
+                label: "Access card Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "name",
+                label: "Name",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "mobileNumber",
+                label: "Mobile Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "emailAddress",
+                label: "Email Address",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "employeeNumber",
+                label: "Employee Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+            ]}
+            renderRow={(user) => ({
+              actions: (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+              accessCardNumber: user.accessCardNumber,
+              name: user.name,
+              mobileNumber: user.mobileNumber,
+              emailAddress: user.emailAddress,
+              employeeNumber: user.employeeNumber,
+              gender: user.gender,
+            })}
+            enableSearch={true}
+            hideColumnsButton={true}
+            enableSelection={false}
+            hideTableExport={true}
+            selectable={false}
+            enableExport={true}
+            hideTableSearch={true}
+            storageKey="carpool-pending-kyc-table"
+            searchTerm={searchQuery}
+            onSearchChange={handleSearch}
+            emptyMessage="No pending KYC found"
+            searchPlaceholder="Search pending KYC..."
+            exportFileName="carpool-pending-kyc"
+          />
         </>
       )}
     </div>

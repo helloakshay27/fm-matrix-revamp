@@ -244,6 +244,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         organizationId
       );
 
+      if (
+        hostname !== "pulse.lockated.com" &&
+        hostname !== "localhost" &&
+        !response.is_login
+      ) {
+        toast.error("You are not approved to login.");
+        return;
+      }
+
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
@@ -399,7 +408,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // PRIORITY 2: Localhost with userType-based routing
         if (userType && isLocalhost) {
           if (userType === "pms_organization_admin") {
-            navigate("/admin/dashboard", { replace: true });
+            navigate("/maintenance/asset", { replace: true });
             return;
           } else if (userType === "pms_occupant") {
             navigate("/vas/projects", { replace: true });
@@ -423,7 +432,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             }
           }
           // Fallback to default admin route for these companies
-          navigate("/admin/dashboard", { replace: true });
+          navigate("/maintenance/asset", { replace: true });
           return;
         }
 

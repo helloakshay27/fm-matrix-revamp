@@ -3,6 +3,7 @@ import { EmployeeHeader } from "@/components/EmployeeHeader";
 import { EmployeeUnifiedCalendar } from "@/components/employee/EmployeeUnifiedCalendar";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Briefcase, CheckSquare, Users } from "lucide-react";
+import { EmployeeHeaderStatic } from "@/components/EmployeeHeaderStatic";
 
 export const EmployeeCalendarPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export const EmployeeCalendarPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <EmployeeHeader />
+      <EmployeeHeaderStatic />
 
       <main className="pt-6 pb-8 px-6 max-w-[1600px] mx-auto">
         {/* Page Header */}

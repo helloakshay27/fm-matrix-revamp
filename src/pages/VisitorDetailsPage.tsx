@@ -36,6 +36,18 @@ interface DocumentItem {
   document_url: string;
 }
 
+interface ItemDetail {
+  id: number;
+  name: string | null;
+  number: string;
+}
+
+interface ItemMovement {
+  id: number;
+  movement_type: string | null;
+  item_details: ItemDetail[];
+}
+
 interface AssetItem {
   id: number;
   asset_category_name?: string;
@@ -118,6 +130,7 @@ interface VisitorData {
   visitor_host_email?: string;
   building_name?: string;
   encrypted_gatekeeper_id?: string;
+  item_movements?: ItemMovement[];
 }
 
 export const VisitorDetailsPage = () => {
@@ -688,6 +701,14 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
+                    {hasData(visitorData.pass_number) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Pass Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.pass_number}</span>
+                      </div>
+                    )}
+
                     {hasData(visitorData.expected_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
@@ -728,6 +749,61 @@ export const VisitorDetailsPage = () => {
                         </span>
                       </div>
                     )}
+
+                    {hasData(visitorData.remarks) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Remarks</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.remarks}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.guest_entry_time_show) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Check-in Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.guest_entry_time_show}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.master_exit_time_show) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Check-out Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.master_exit_time_show}
+                        </span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.entry_gate) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Entry Gate</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.entry_gate}</span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.exit_gate) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Exit Gate</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.exit_gate}</span>
+                      </div>
+                    )}
+
+                    {hasData(visitorData.time_since_in) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Time Since Check-in</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.time_since_in}</span>
+                      </div>
+                    )}
+                  
 
                     {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
                       <div className="flex items-start">
@@ -829,7 +905,7 @@ export const VisitorDetailsPage = () => {
             )}
 
             {/* Check-in/Check-out Information Card */}
-            {(hasData(visitorData.guest_entry_time) ||
+            {/* {(hasData(visitorData.guest_entry_time) ||
               hasData(visitorData.master_exit_time) ||
               hasData(visitorData.entry_gate) ||
               hasData(visitorData.exit_gate)) && (
@@ -890,7 +966,7 @@ export const VisitorDetailsPage = () => {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
           </TabsContent>
 
           {/* Tab 2: Additional Details */}
@@ -919,6 +995,14 @@ export const VisitorDetailsPage = () => {
                           <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
                           <span className="text-gray-500 mx-2">:</span>
                           <span className="text-gray-900 font-medium">{visitor.mobile}</span>
+                        </div>
+                      )}
+
+                       {hasData(visitor?.pass_number) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Pass Number</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{visitor.pass_number}</span>
                         </div>
                       )}
 
@@ -966,6 +1050,60 @@ export const VisitorDetailsPage = () => {
 
           {/* Tab 3: Asset Details */}
           <TabsContent value="assets" className="p-6 space-y-6">
+            {/* Item Movements Section */}
+            {visitorData.item_movements && visitorData.item_movements.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  Item Movements
+                </h2>
+                {visitorData.item_movements.map((movement: ItemMovement, index: number) => (
+                  <div key={movement.id || index} className="border rounded-lg p-6 bg-gray-50">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">
+                      Movement {index + 1}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
+                      {hasData(movement?.movement_type) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Movement Type</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{movement.movement_type}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item Details */}
+                    {movement.item_details && movement.item_details.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Items</h4>
+                        <div className="space-y-3">
+                          {movement.item_details.map((item: ItemDetail, itemIndex: number) => (
+                            <div key={item.id || itemIndex} className="border-l-4 border-[#C72030] bg-white p-4 rounded">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {hasData(item?.name) && (
+                                  <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[100px]">Item Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">{item.name}</span>
+                                  </div>
+                                )}
+                                {hasData(item?.number) && (
+                                  <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[100px]">Item Number</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">{item.number}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Main Visitor's Assets */}
             {visitorData.assets && visitorData.assets.length > 0 && (
               <div className="space-y-6">
@@ -1126,7 +1264,7 @@ export const VisitorDetailsPage = () => {
               ))
             )}
 
-            {!visitorData.assets?.length && !visitorData.additional_visitors?.some(v => v.assets?.length) && (
+            {!visitorData.item_movements?.length && !visitorData.assets?.length && !visitorData.additional_visitors?.some(v => v.assets?.length) && (
               <div className="text-center py-12 text-gray-500">
                 No asset details found
               </div>
@@ -1135,8 +1273,61 @@ export const VisitorDetailsPage = () => {
 
           {/* Tab 4: Identity Verification */}
           <TabsContent value="identity" className="p-6 space-y-6">
+            {/* Main Visitor's Documents */}
+            {visitorData.visitor_documents && visitorData.visitor_documents.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
+                  {visitorData?.guest_name ? `${visitorData.guest_name}'s Documents` : 'Visitor Documents'}
+                  <span className="ml-2 text-sm font-normal text-gray-600">
+                    (Primary Visitor)
+                  </span>
+                </h2>
+                <div className="border rounded-lg p-6 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900 mb-4">
+                    Uploaded Documents
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {visitorData.visitor_documents.map((doc, index) => (
+                      <div
+                        key={doc.id}
+                        className="relative group cursor-pointer"
+                        onClick={() => {
+                          setSelectedDoc({
+                            id: doc.id,
+                            document_name: `Document ${index + 1}`,
+                            url: doc.document_url,
+                          });
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-[#C72030] transition-colors">
+                          <img
+                            src={doc.document_url}
+                            alt={`Document ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "/placeholder.svg";
+                            }}
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                          <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                            View
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-2 text-center">
+                          Document {index + 1}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Main Visitor's Identity */}
-            {visitorData.visitor_identity && visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 && (
+            {visitorData.visitor_identity && (hasData(visitorData.visitor_identity.identity_type) || hasData(visitorData.visitor_identity.government_id_number) || (visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0)) && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
                   {visitorData?.guest_name ? `${visitorData.guest_name}'s Identity Details` : 'Main Visitor Identity'}
@@ -1166,7 +1357,7 @@ export const VisitorDetailsPage = () => {
                   )}
                 </div>
 
-                {visitorData.visitor_identity.documents.length > 0 && (
+                {visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Documents</h4>
                     <div className="flex flex-wrap gap-4">
@@ -1231,7 +1422,7 @@ export const VisitorDetailsPage = () => {
             {/* Additional Visitors' Identities */}
             {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
               visitorData.additional_visitors.map((visitor: AdditionalVisitor, visitorIndex: number) => (
-                visitor.identity && visitor.identity.documents && visitor.identity.documents.length > 0 && (
+                visitor.identity && (hasData(visitor.identity.identity_type) || hasData(visitor.identity.government_id_number) || (visitor.identity.documents && visitor.identity.documents.length > 0)) && (
                   <div key={visitor.id || visitorIndex}>
                     <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
                       {visitor?.name ? `${visitor.name}'s Identity Details` : `Visitor ${visitorIndex + 1} Identity`}
@@ -1258,7 +1449,7 @@ export const VisitorDetailsPage = () => {
                         )}
                       </div>
 
-                      {visitor.identity.documents.length > 0 && (
+                      {visitor.identity.documents && visitor.identity.documents.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Documents</h4>
                           <div className="flex flex-wrap gap-4">
@@ -1322,7 +1513,9 @@ export const VisitorDetailsPage = () => {
               ))
             )}
 
-            {!visitorData.visitor_identity?.documents?.length && !visitorData.additional_visitors?.some(v => v.identity?.documents?.length) && (
+            {!visitorData.visitor_documents?.length && 
+             !visitorData.visitor_identity && 
+             !visitorData.additional_visitors?.some(v => v.identity) && (
               <div className="text-center py-12 text-gray-500">
                 No identity verification documents found
               </div>

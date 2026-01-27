@@ -42,8 +42,8 @@ export const BookingSetupDashboard = () => {
 
   // Format dhm object to string like "0D • 0H • 4M"
   const formatDHM = (dhm: { d: number; h: number; m: number } | null) => {
-    if (!dhm) return "0D • 0H • 0M";
-    return `${dhm.d ?? 0}D • ${dhm.h ?? 0}H • ${dhm.m ?? 0}M`;
+    if (!dhm) return "0 DD • 0 HH • 0 MM";
+    return `${dhm.d ?? 0} DD • ${dhm.h ?? 0} HH • ${dhm.m ?? 0} MM`;
   };
 
   // Format date string to "22-11-2022" format

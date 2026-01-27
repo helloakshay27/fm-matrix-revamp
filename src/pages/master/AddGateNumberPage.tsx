@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { gateNumberService } from '@/services/gateNumberService';
 import { SectionCard } from '@/components/survey/SectionCard';
 import { ArrowLeft } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 interface GateNumberFormValues {
   gate_number: string;
@@ -32,6 +34,9 @@ const AddGateNumberPage = () => {
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
   const [sites, setSites] = useState<DropdownOption[]>([]);
   const [projects, setProjects] = useState<DropdownOption[]>([]);
+  
+  // Get selected site from Redux state (from header)
+  const { selectedSite } = useSelector((state: RootState) => state.site);
 
   const {
     control,
@@ -58,10 +63,15 @@ const AddGateNumberPage = () => {
       ]);
       setCompanies(companiesData);
       setSites(sitesData);
+      
+      // Set selected site from header as default if available
+      if (selectedSite?.id && sitesData.some(site => site.id === selectedSite.id)) {
+        setValue('pms_site_id', selectedSite.id);
+      }
     } catch (error) {
       toast.error("Failed to load initial data.");
     }
-  }, []);
+  }, [selectedSite, setValue]);
 
   useEffect(() => {
     fetchDropdownData();
