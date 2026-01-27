@@ -827,6 +827,9 @@ import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
 import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
 import { ManualJournalDetails } from "./pages/ClubManagement/manualJournalDetails";
+import { TransactionsDetails } from "./pages/ClubManagement/TransationsDetails";
+import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
+import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1632,9 +1635,13 @@ function App() {
                     path="/settings/manual-journal/add"
                     element={<ManualJournalAdd />}
                   />
-                   <Route
+                  <Route
                     path="/settings/manual-journal/details/:id"
                     element={<ManualJournalDetails />}
+                  />
+                  <Route
+                    path="/settings/manual-journal/edit/:id"
+                    element={<ManualJournalEdit />}
                   />
 
                   <Route
@@ -1681,7 +1688,7 @@ function App() {
                   />
                   <Route
                     path="/settings/bill-cycles/details"
-                    element={<BillCyclesDetails  />}
+                    element={<BillCyclesDetails />}
                   />
 
                   <Route
@@ -1691,22 +1698,22 @@ function App() {
                   <Route path="/settings/Budget/add" element={<BudgetAdd />} />
                   <Route
                     path="/settings/reports/balance-sheet"
-                    element={<BalanceSheetReport  />}
+                    element={<BalanceSheetReport />}
                   />
                   {/* <Route */}
                   <Route
                     path="/settings/reports/profit-and-loss"
-                    element={<ProfitAndLossReport  />}
+                    element={<ProfitAndLossReport />}
                   />
                   {/* <Route */}
                   <Route
                     path="/settings/reports/tax-summary"
-                    element={<TaxSummaryReport  />}
+                    element={<TaxSummaryReport />}
                   />
                   {/* <Route */}
                   <Route
                     path="/settings/reports/gst-payable"
-                    element={<GstPayableReport  />}
+                    element={<GstPayableReport />}
                   />
                   <Route
                     path="/settings/transactions"
@@ -1715,6 +1722,14 @@ function App() {
                   <Route
                     path="/settings/transactions/add"
                     element={<TransactionsAdd />}
+                  />
+                  <Route
+                    path="/settings/transactions/details/:id"
+                    element={<TransactionsDetails />}
+                  />
+                  <Route
+                    path="/settings/transactions/Edit/:id"
+                    element={<TransactionsEdit />}
                   />
 
                   {/* Club Management - Occupant Users */}

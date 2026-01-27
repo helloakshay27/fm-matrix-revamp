@@ -138,7 +138,7 @@ export const ManualJournalDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
-  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
+  const [modalData, setModalData] = useState<{ isOpen: boolean, title: string, items: string[] }>({ isOpen: false, title: '', items: [] });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -530,18 +530,18 @@ export const ManualJournalDashboard = () => {
   //   { key: 'created_at', label: 'Created On', sortable: true }
   // ];
 
-const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'transaction_date', label: 'Date', sortable: true },
-  { key: 'transaction_type', label: 'Journal', sortable: true },
-  { key: 'reference', label: 'Reference', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
-  { key: 'description', label: 'Notes', sortable: false },
-  { key: 'amount', label: 'Amount', sortable: true },
-  { key: 'reporting_method', label: 'Reporting Method', sortable: true }
-];
+  const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'transaction_date', label: 'Date', sortable: true },
+    { key: 'transaction_type', label: 'Journal', sortable: true },
+    { key: 'reference', label: 'Reference', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'description', label: 'Notes', sortable: false },
+    { key: 'amount', label: 'Amount', sortable: true },
+    { key: 'reporting_method', label: 'Reporting Method', sortable: true }
+  ];
 
-  
+
 
   // Render cell content
   // Render cell content for journal table
@@ -556,6 +556,14 @@ const columns = [
             className="p-0"
           >
             <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/settings/manual-journal/edit/${item.id || item.actions}`)}
+            title="Edit"
+            className="p-0"
+          >
+            <Edit className="w-4 h-4" />
           </Button>
         </div>
       );
@@ -661,7 +669,7 @@ const columns = [
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
           hideTableExport={true}
-          hideColumnsButton={false} 
+          hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           loadingMessage="Loading group memberships..."
@@ -704,7 +712,7 @@ const columns = [
       /> */}
 
       {/* Member Details Modal */}
-      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalData.title}</DialogTitle>
@@ -720,7 +728,7 @@ const columns = [
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+            <Button onClick={() => setModalData({ isOpen: false, title: '', items: [] })} variant="outline">
               Close
             </Button>
           </DialogFooter>

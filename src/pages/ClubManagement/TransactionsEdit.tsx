@@ -21,7 +21,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
 
-const TransactionsAdd = () => {
+const TransactionsEdit = () => {
     const [date, setDate] = useState('');
     const navigate = useNavigate();
     const [journalNo, setJournalNo] = useState('');
@@ -34,6 +34,47 @@ const TransactionsAdd = () => {
     const fileInputRef = useRef(null);
     const [transactionType, setTransactionType] = useState('');
     const [accountOptions, setAccountOptions] = useState([]);
+    const { id } = useParams();
+    const [loading, setLoading] = useState(false);
+
+
+    useEffect(() => {
+        const fetchDetails = async () => {
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+            try {
+                if (!id) return;
+                const url = `${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`;
+                const response = await axios.get(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                });
+                const data = response.data;
+                setTransactionType(data.transaction_type || '');
+                setDate(data.transaction_date || '');
+                setJournalNo(data.voucher_number || '');
+                setReference(data.reference || '');
+                setNotes(data.description || '');
+                // reportingMethod and currency not in API, keep defaults
+                setRows(
+                    Array.isArray(data.records)
+                        ? data.records.map((rec) => ({
+                            account: rec.ledger_id ? String(rec.ledger_id) : '',
+                            description: rec.description || '',
+                            contact: '', // Not present in API
+                            debit: rec.tr_type === 'dr' ? rec.amount.toFixed(2) : '',
+                            credit: rec.tr_type === 'cr' ? rec.amount.toFixed(2) : '',
+                        }))
+                        : [{ ...initialRow }, { ...initialRow }]
+                );
+            } catch (error) {
+                console.error('Error fetching journal details:', error);
+            }
+        };
+        fetchDetails();
+    }, [id]);
 
     // Fetch account options from API using axios, with baseUrl and token
     useEffect(() => {
@@ -77,54 +118,54 @@ const TransactionsAdd = () => {
     const handleRemoveFile = (index) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
-console.log('Rows transation type:', transactionType);
+    console.log('Rows transation type:', transactionType);
     // Helper to build the payload for API
-        const buildJournalPayload = () => {
-            return {
-                lock_account_transaction: {
-                    transaction_type: transactionType,
-                    transaction_date: date,
-                    voucher_number: journalNo,
-                    description: notes,
-                    reference: reference,
-                    publish: false, // Set true if publishing
-                    lock_account_id: 1, // You may want to make this dynamic
+    const buildJournalPayload = () => {
+        return {
+            lock_account_transaction: {
+                transaction_type: transactionType,
+                transaction_date: date,
+                voucher_number: journalNo,
+                description: notes,
+                reference: reference,
+                publish: false, // Set true if publishing
+                lock_account_id: 1, // You may want to make this dynamic
+            },
+            lock_account_transaction_records: rows.map(row => {
+                const record = {
+                    ledger_id: row.account ? Number(row.account) : undefined,
+                    cost_centre_id: 1, // Set as needed or make dynamic
+                };
+                if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
+                if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
+                return record;
+            }).filter(r => r.ledger_id),
+        };
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const payload = buildJournalPayload();
+        console.log('Payload to send:', payload);
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+        try {
+            const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+            const response = await axios.post(url, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                lock_account_transaction_records: rows.map(row => {
-                    const record = {
-                        ledger_id: row.account ? Number(row.account) : undefined,
-                        cost_centre_id: 1, // Set as needed or make dynamic
-                    };
-                    if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
-                    if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
-                    return record;
-                }).filter(r => r.ledger_id),
-            };
-        };
-    
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            const payload = buildJournalPayload();
-            console.log('Payload to send:', payload);
-            const baseUrl = API_CONFIG.BASE_URL;
-            const token = API_CONFIG.TOKEN;
-            try {
-                const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-                const response = await axios.post(url, payload, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                });
-                console.log('API response:', response.data);
-                 navigate('/settings/transactions');
-                // Optionally show success message or redirect
-            } catch (error) {
-                console.error('Error submitting journal entry:', error);
-                toast.error('Failed to create journal entry');
-                // Optionally show error message
-            }
-        };
+            });
+            console.log('API response:', response.data);
+            navigate('/settings/transactions');
+            // Optionally show success message or redirect
+        } catch (error) {
+            console.error('Error submitting journal entry:', error);
+            toast.error('Failed to create journal entry');
+            // Optionally show error message
+        }
+    };
 
     // const handleSubmit = (e) => {
     //     e.preventDefault();
@@ -134,7 +175,7 @@ console.log('Rows transation type:', transactionType);
     return (
         <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
             <div className="w-full max-w-full px-8 py-8 mx-auto">
-                <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Transaction</h2>
+                <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">Edit Transaction</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Transaction Type Dropdown */}
@@ -496,7 +537,7 @@ console.log('Rows transation type:', transactionType);
                             type="submit"
                             className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
                         >
-                            Save and Publish
+                            Update and Publish
                         </Button>
                         <Button
                             variant="outline"
@@ -521,4 +562,4 @@ console.log('Rows transation type:', transactionType);
     );
 };
 
-export default TransactionsAdd;
+export default TransactionsEdit;
