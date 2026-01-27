@@ -933,6 +933,7 @@ import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
 import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
 import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
+import SupersetDashboardMobile from "./pages/SupersetDashboardMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -4495,6 +4496,10 @@ function App() {
                   <Route
                     path="/mobile-tasks/:taskId"
                     element={<TaskDetailsMobile />}
+                  />
+                  <Route
+                    path="/superset-dashboard-mobile"
+                    element={<SupersetDashboardMobile />}
                   />
 
                   {/* Mail Inbound Routes */}
