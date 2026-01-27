@@ -1115,8 +1115,8 @@ export const EditBookingSetupPage = () => {
                                     value={formData.location}
                                     onChange={(e) => {
                                         const value = e.target.value;
-                                        // Only allow letters and spaces, no numbers
-                                        if (/^[a-zA-Z\s]*$/.test(value)) {
+                                        // Allow address-friendly characters
+                                        if (/^[a-zA-Z0-9\s,.\-/#]*$/.test(value)) {
                                             setFormData({ ...formData, location: value });
                                         }
                                     }}
