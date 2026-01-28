@@ -4090,6 +4090,345 @@ export const IncidentNewDetails = () => {
         { number: 4, label: 'Final Closure' },
     ];
 
+    // Closed Incident Summary View with Numbered Sections
+    const ClosedIncidentSummaryView = () => {
+        const SectionBadge = ({ number }: { number: number }) => (
+            <div className="flex items-center justify-center w-8 h-8 bg-[#BF213E] text-white rounded-full text-xs font-bold">
+                {number}
+            </div>
+        );
+
+        return (
+            <div className="p-4 space-y-6 overflow-y-auto flex-1 bg-gray-50">
+                {/* Section 1: Report Details */}
+                <div className="bg-white rounded-md shadow-sm">
+                    <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                        <SectionBadge number={1} />
+                        <h3 className="text-base font-semibold text-[#BF213E] uppercase">Report Details</h3>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Incident ID</label>
+                                <p className="text-sm text-gray-900 font-medium">{incident?.id || '-'}</p>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Status</label>
+                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold w-fit">
+                                    ✓ {incident?.current_status || 'Closed'}
+                                </span>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Reported By</label>
+                                <p className="text-sm text-gray-900 font-medium">{incident?.created_by || '-'}</p>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Building</label>
+                                <p className="text-sm text-gray-900 font-medium">{incident?.building_name || '-'}</p>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Occurred On</label>
+                                <p className="text-sm text-gray-900 font-medium">
+                                    {incident?.inc_time ? new Date(incident.inc_time).toLocaleString() : '-'}
+                                </p>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Reported On</label>
+                                <p className="text-sm text-gray-900 font-medium">
+                                    {incident?.created_at ? new Date(incident.created_at).toLocaleString() : '-'}
+                                </p>
+                            </div>
+                        </div>
+                        {/* Description */}
+                        <div className="pt-4 border-t border-gray-200">
+                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Description</label>
+                            <p className="text-sm text-gray-700 mt-2">{incident?.description || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 2: Category & Investigation */}
+                <div className="bg-white rounded-md shadow-sm">
+                    <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                        <SectionBadge number={2} />
+                        <h3 className="text-base font-semibold text-[#BF213E] uppercase">Incident Category</h3>
+                    </div>
+                    <div className="p-6 space-y-6">
+                        {/* Primary Category */}
+                        {(incident?.category_name || incident?.sub_category_name) && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 mb-4">Primary Category</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {incident?.category_name && (
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Category</label>
+                                            <p className="text-sm text-gray-900 font-medium">{incident.category_name}</p>
+                                        </div>
+                                    )}
+                                    {incident?.sub_category_name && (
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Sub-Category</label>
+                                            <p className="text-sm text-gray-900 font-medium">{incident.sub_category_name}</p>
+                                        </div>
+                                    )}
+                                    {incident?.sub_sub_category_name && (
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Sub-Sub-Category</label>
+                                            <p className="text-sm text-gray-900 font-medium">{incident.sub_sub_category_name}</p>
+                                        </div>
+                                    )}
+                                    {incident?.sub_sub_sub_category_name && (
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Sub-Sub-Sub-Category</label>
+                                            <p className="text-sm text-gray-900 font-medium">{incident.sub_sub_sub_category_name}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Incident Level */}
+                        <div className="pt-4 border-t border-gray-200">
+                            <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Incident Level</label>
+                            <p className="text-sm text-gray-900 font-medium">{incident?.inc_level_name || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 3: Investigation Details */}
+                {(Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0) ||
+                (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
+                    <div className="bg-white rounded-md shadow-sm">
+                        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                            <SectionBadge number={3} />
+                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Investigation</h3>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {/* Investigators */}
+                            {Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Investigators</h4>
+                                    <div className="space-y-3">
+                                        {incident.incident_investigations.map((inv, idx) => (
+                                            <div key={idx} className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Name</label>
+                                                        <p className="text-sm text-gray-900 font-medium">{inv.name || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Mobile</label>
+                                                        <p className="text-sm text-gray-900 font-medium">{inv.mobile || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Designation</label>
+                                                        <p className="text-sm text-gray-900 font-medium">{inv.designation || '-'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Root Causes */}
+                            {Array.isArray(incident?.root_causes) && incident.root_causes.length > 0 && (
+                                <div className={Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0 ? "pt-4 border-t border-gray-200" : ""}>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Root Causes Analysis</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-300 bg-gray-50">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Category</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.root_causes.map((rc, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{rc.rca_category_name || rc.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-700">{rc.description || '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
+
+                {/* Section 4: Injuries & Property */}
+                {(Array.isArray(incident?.injuries) && incident.injuries.length > 0) ||
+                (Array.isArray(incident?.property_damages) && incident.property_damages.length > 0) ? (
+                    <div className="bg-white rounded-md shadow-sm">
+                        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                            <SectionBadge number={4} />
+                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Impact Assessment</h3>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {/* Injuries */}
+                            {Array.isArray(incident?.injuries) && incident.injuries.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Injuries</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-300 bg-gray-50">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Name</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Age</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Type</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Role</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Injury Type</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.injuries.map((injury, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{injury.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{injury.age || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{injury.injured_user_type || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{injury.role || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{injury.injury_type || '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Property Damages */}
+                            {Array.isArray(incident?.property_damages) && incident.property_damages.length > 0 && (
+                                <div className={Array.isArray(incident?.injuries) && incident.injuries.length > 0 ? "pt-4 border-t border-gray-200" : ""}>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Property Damages</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-300 bg-gray-50">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Property Type</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.property_damages.map((pd, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{pd.property_type_name || pd.name || '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
+
+                {/* Section 5: Actions */}
+                {(Array.isArray(incident?.corrective_fields) && incident.corrective_fields.length > 0) ||
+                (Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0) ? (
+                    <div className="bg-white rounded-md shadow-sm">
+                        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                            <SectionBadge number={5} />
+                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Actions & Follow-up</h3>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {/* Corrective Actions */}
+                            {Array.isArray(incident?.corrective_fields) && incident.corrective_fields.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Corrective Actions</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-300 bg-gray-50">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Action</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Target Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.corrective_fields.map((action, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Preventive Actions */}
+                            {Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0 && (
+                                <div className={Array.isArray(incident?.corrective_fields) && incident.corrective_fields.length > 0 ? "pt-4 border-t border-gray-200" : ""}>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Preventive Actions</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-300 bg-gray-50">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Action</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Target Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.preventive_fields.map((action, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
+
+                {/* Section 6: Next Review (if exists) */}
+                {incident?.next_review_date && (
+                    <div className="bg-white rounded-md shadow-sm">
+                        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+                            <SectionBadge number={6} />
+                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Next Review</h3>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="flex flex-col">
+                                    <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Review Date</label>
+                                    <p className="text-sm text-gray-900 font-medium">
+                                        {new Date(incident.next_review_date).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                {incident.next_review_responsible_person_id && (
+                                    <div className="flex flex-col">
+                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Responsible Person</label>
+                                        <p className="text-sm text-gray-900 font-medium">
+                                            {incident.next_review_responsible_person_id}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer Spacing */}
+                <div className="h-4" />
+            </div>
+        );
+    };
+
     const ProgressStepper = () => (
         <div className="flex items-center justify-between px-4 py-4 bg-white border-b">
             {steps.map((step, index) => (
@@ -4137,11 +4476,17 @@ export const IncidentNewDetails = () => {
                 </Button>
             </div>
 
-            {/* Progress Stepper */}
-            <ProgressStepper />
+            {/* Check if incident is closed or in final closure */}
+            {incident && (incident.current_status?.toLowerCase() === 'final_closure' || incident.current_status?.toLowerCase() === 'closed' || incident.current_status === 'Final_closure') ? (
+                // Closed Incident Summary View
+                <ClosedIncidentSummaryView />
+            ) : (
+                <>
+                    {/* Progress Stepper */}
+                    <ProgressStepper />
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto">
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto">
                 {currentStep === 1 && (
                     <ReportStep
                         loading={loading}
@@ -4292,6 +4637,8 @@ export const IncidentNewDetails = () => {
                     </Button>
                 )}
             </div>
+                </>
+            )}
         </div>
     );
 };
