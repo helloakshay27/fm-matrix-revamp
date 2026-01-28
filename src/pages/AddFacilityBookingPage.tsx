@@ -212,8 +212,11 @@ export const AddFacilityBookingPage = () => {
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+
   // Helper: Get max people allowed from facility details
   const maxPeople = facilityDetails?.max_people || 0;
   const [peopleTable, setPeopleTable] = useState<Array<{
@@ -620,32 +623,55 @@ export const AddFacilityBookingPage = () => {
 
       // Use cost summary calculation (from UI) for payload values
       const costSummary = (() => {
-        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-        const slotsCount = selectedSlots.length;
-
-        // Calculate slot total
-        const slotTotal = slotsCount * perSlotCharge;
-
         // Calculate accessory total with quantities
         const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
           const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
           return total + ((accessory?.price || 0) * (quantity || 0));
         }, 0);
 
-        // Subtotal includes slots and accessories
-        const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-        const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-        const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-        const gstPercentage = facilityDetails?.gst || 0;
-        const sgstPercentage = facilityDetails?.sgst || 0;
+        let basePrice = 0;
+
+        // For requestable type, use slab_price from API; for others, use slot charges
+        if (isRequestableType && flexiblePriceData) {
+          basePrice = flexiblePriceData.slab_price;
+        } else {
+          const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+          const slotsCount = selectedSlots.length;
+          basePrice = slotsCount * perSlotCharge;
+        }
+
+        // Subtotal includes base price and accessories
+        const subtotalBeforeDiscount = basePrice + accessoryTotal;
+
+        // Calculate discount based on type
+        const calculatedDiscountAmount = discountType === 'percentage'
+          ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+          : (discountAmount || 0);
+
+        const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
+
+        let gstPercentage = 0;
+        let sgstPercentage = 0;
+
+        // For requestable type, use API values; for others, use facility setup values
+        if (isRequestableType && flexiblePriceData) {
+          // Extract percentages from API response if available, otherwise use facility defaults
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        } else {
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        }
+
         const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
         const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+
         return {
-          slotTotal,
+          basePrice,
           accessoryTotal,
           subtotalBeforeDiscount,
-          discountAmount,
+          discountAmount: calculatedDiscountAmount,
           subtotalAfterDiscount,
           gstPercentage,
           sgstPercentage,
@@ -654,6 +680,8 @@ export const AddFacilityBookingPage = () => {
           amountFull
         };
       })();
+
+      console.log(costSummary)
 
       const payload = {
         facility_booking: {
@@ -706,9 +734,6 @@ export const AddFacilityBookingPage = () => {
           'Content-Type': 'application/json',
         },
       });
-      console.log(response)
-
-      console.log('Response received:', response.status, response.data);
 
       if (response.data.error) {
         toast.error(response.data.error);
@@ -1120,17 +1145,27 @@ export const AddFacilityBookingPage = () => {
                       return total + ((accessory?.price || 0) * (quantity || 0));
                     }, 0);
                     const subtotalWithAccessories = flexiblePriceData.slab_price + accessoryTotal;
-                    const discountAmount = (subtotalWithAccessories * (discountPercentage || 0)) / 100;
-                    const subtotalAfterDiscount = subtotalWithAccessories - discountAmount;
+                    const calculatedDiscountAmount = discountType === 'percentage'
+                      ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
+                      : (discountAmount || 0);
+                    const subtotalAfterDiscount = subtotalWithAccessories - calculatedDiscountAmount;
                     const grandTotal = subtotalAfterDiscount + flexiblePriceData.cgst_amount + flexiblePriceData.sgst_amount;
 
                     return (
                       <>
                         {/* Slab Price */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">Slab Price</span>
+                          <span className="text-gray-700">Base Price</span>
                           <span className="font-medium">₹{flexiblePriceData.slab_price.toFixed(2)}</span>
                         </div>
+
+                        {/* Booking Duration */}
+                        {flexiblePriceData.used_slab && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700">Booking Duration</span>
+                            <span className="font-medium">{flexiblePriceData.used_slab.duration_hours} hour{flexiblePriceData.used_slab.duration_hours > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
 
                         {/* Accessory Charges */}
                         {accessoryTotal > 0 && (
@@ -1154,36 +1189,51 @@ export const AddFacilityBookingPage = () => {
                           <div className="flex items-center gap-2">
                             <span className="text-gray-700">Discount</span>
                             <div className="flex items-center gap-1">
-                              <TextField
-                                type="number"
-                                size="small"
-                                value={discountPercentage}
-                                onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                                variant="outlined"
-                                sx={{
-                                  width: '80px',
-                                  '& .MuiOutlinedInput-root': {
-                                    height: '36px',
-                                    '& input': {
-                                      textAlign: 'right',
-                                      padding: '8px 12px'
+                              <div className="flex gap-1 items-center">
+                                <select
+                                  value={discountType}
+                                  onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                  className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                  style={{ height: '36px' }}
+                                >
+                                  <option value="percentage">%</option>
+                                  <option value="amount">₹</option>
+                                </select>
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                  onChange={(e) => {
+                                    if (discountType === 'percentage') {
+                                      setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                    } else {
+                                      setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
                                     }
-                                  }
-                                }}
-                                inputProps={{
-                                  min: 0,
-                                  max: 100,
-                                  step: 0.1
-                                }}
-                              />
-                              <span className="text-gray-500">%</span>
+                                  }}
+                                  variant="outlined"
+                                  sx={{
+                                    width: '80px',
+                                    '& .MuiOutlinedInput-root': {
+                                      height: '36px',
+                                      '& input': {
+                                        textAlign: 'right',
+                                        padding: '8px 12px'
+                                      }
+                                    }
+                                  }}
+                                  inputProps={{
+                                    min: 0,
+                                    step: discountType === 'percentage' ? 0.1 : 1
+                                  }}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <span className="font-medium">₹{discountAmount.toFixed(2)}</span>
+                          <span className="font-medium">₹{calculatedDiscountAmount.toFixed(2)}</span>
                         </div>
 
                         {/* Subtotal After Discount */}
-                        {discountAmount > 0 && (
+                        {calculatedDiscountAmount > 0 && (
                           <div className="flex justify-between items-center py-2 border-b border-gray-200">
                             <span className="text-gray-700 font-medium">Subtotal After Discount</span>
                             <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
@@ -1231,8 +1281,10 @@ export const AddFacilityBookingPage = () => {
 
                   // Subtotal includes slots and accessories
                   const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-                  const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-                  const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+                  const calculatedDiscountAmount = discountType === 'percentage'
+                    ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+                    : (discountAmount || 0);
+                  const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
 
                   const gstPercentage = facilityDetails.gst || 0;
                   const sgstPercentage = facilityDetails.sgst || 0;
@@ -1284,36 +1336,51 @@ export const AddFacilityBookingPage = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-gray-700">Discount</span>
                           <div className="flex items-center gap-1">
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={discountPercentage}
-                              onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                              variant="outlined"
-                              sx={{
-                                width: '80px',
-                                '& .MuiOutlinedInput-root': {
-                                  height: '36px',
-                                  '& input': {
-                                    textAlign: 'right',
-                                    padding: '8px 12px'
+                            <div className="flex gap-1 items-center">
+                              <select
+                                value={discountType}
+                                onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                style={{ height: '36px' }}
+                              >
+                                <option value="percentage">%</option>
+                                <option value="amount">₹</option>
+                              </select>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                onChange={(e) => {
+                                  if (discountType === 'percentage') {
+                                    setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                  } else {
+                                    setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
                                   }
-                                }
-                              }}
-                              inputProps={{
-                                min: 0,
-                                max: 100,
-                                step: 0.1
-                              }}
-                            />
-                            <span className="text-gray-500">%</span>
+                                }}
+                                variant="outlined"
+                                sx={{
+                                  width: '80px',
+                                  '& .MuiOutlinedInput-root': {
+                                    height: '36px',
+                                    '& input': {
+                                      textAlign: 'right',
+                                      padding: '8px 12px'
+                                    }
+                                  }
+                                }}
+                                inputProps={{
+                                  min: 0,
+                                  step: discountType === 'percentage' ? 0.1 : 1
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
-                        <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
+                        <span className="font-medium"> ₹{calculatedDiscountAmount.toFixed(2)}</span>
                       </div>
 
                       {/* Subtotal After Discount */}
-                      {discountAmount > 0 && (
+                      {calculatedDiscountAmount > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
                           <span className="text-gray-700 font-medium">Subtotal After Discount</span>
                           <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
