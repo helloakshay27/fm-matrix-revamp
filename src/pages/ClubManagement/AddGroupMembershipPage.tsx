@@ -1079,13 +1079,14 @@ export const AddGroupMembershipPage = () => {
                     email: member.formData.email,
                     gender: member.formData.gender || '',
                     birth_date: member.formData.dateOfBirth || '',
-                    society_flat_id: member.formData.houseId || null,
+
                     user_type: 'ClubMember',
                     club_member: {
                         club_member_enabled: true,
                         access_card_enabled: cardAllocated,
                         access_card_id: cardAllocated ? member.formData.accessCardId : null,
-                        emergency_contact_name: emergencyContactName
+                        emergency_contact_name: emergencyContactName,
+                        society_flat_id: member.formData.houseId || null,
                     },
                     addresses: [
                         {
@@ -1096,7 +1097,7 @@ export const AddGroupMembershipPage = () => {
                             country: member.formData.country,
                             pin_code: member.formData.pin_code,
                             address_type: member.formData.address_type || 'residential',
-                            
+
                         }
                     ],
                     permissions: [
@@ -1875,24 +1876,24 @@ export const AddGroupMembershipPage = () => {
                                                         />
 
                                                         <FormControl fullWidth sx={fieldStyles}>
-                                                        <InputLabel>House</InputLabel>
-                                                        <Select
-                                                            label="House"
-                                                            value={member.formData.houseId || ''}
-                                                            onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
-                                                        >
-                                                            <MenuItem value=""><em>Select House</em></MenuItem>
-                                                            {flatsLoading ? (
-                                                                <MenuItem value="" disabled>Loading...</MenuItem>
-                                                            ) : flatOptions.length === 0 ? (
-                                                                <MenuItem value="" disabled>No flats found</MenuItem>
-                                                            ) : (
-                                                                flatOptions.map(flat => (
-                                                                    <MenuItem key={flat.id} value={flat.id}>{flat.flat_no}</MenuItem>
-                                                                ))
-                                                            )}
-                                                        </Select>
-                                                    </FormControl>
+                                                            <InputLabel>House</InputLabel>
+                                                            <Select
+                                                                label="House"
+                                                                value={member.formData.houseId || ''}
+                                                                onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
+                                                            >
+                                                                <MenuItem value=""><em>Select House</em></MenuItem>
+                                                                {flatsLoading ? (
+                                                                    <MenuItem value="" disabled>Loading...</MenuItem>
+                                                                ) : flatOptions.length === 0 ? (
+                                                                    <MenuItem value="" disabled>No flats found</MenuItem>
+                                                                ) : (
+                                                                    flatOptions.map(flat => (
+                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.flat_no}</MenuItem>
+                                                                    ))
+                                                                )}
+                                                            </Select>
+                                                        </FormControl>
                                                     </div>
                                                 </div>
                                             )}

@@ -1151,6 +1151,11 @@ export const ClubGroupMembershipDetails = () => {
                           {selectedMember.face_added ? 'Yes' : 'No'}
                         </Badge>
                       </div>
+                      {/* <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">House</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user?.flat_no || '-'}</span>
+                      </div> */}
                     </div>
                   </TabsContent>
 
@@ -1194,6 +1199,11 @@ export const ClubGroupMembershipDetails = () => {
                         <span className="text-gray-500 min-w-[140px]">Referred By</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">House</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.flat_no|| '-'}</span>
                       </div>
                     </div>
                   </TabsContent>
