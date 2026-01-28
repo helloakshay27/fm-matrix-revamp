@@ -110,6 +110,11 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
             return;
         }
 
+        if (!formData.fac_type) {
+            toast.error('Please select facility type');
+            return;
+        }
+
         setIsSubmitting(true);
         const payload = new FormData();
 
@@ -184,7 +189,14 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
                         variant="outlined"
                         value={formData.name}
                         onChange={handleFormChange}
-                        InputLabelProps={{ shrink: true }}
+                        InputLabelProps={{
+                            shrink: true,
+                            sx: {
+                                '& .MuiFormLabel-asterisk': {
+                                    color: 'red',
+                                },
+                            },
+                        }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
                         required
@@ -222,9 +234,9 @@ export const AmenityCategoryModal = ({ isOpen, onClose, fetchData, isEditing, re
                     />
 
                     <FormControl fullWidth variant="outlined">
-                        <InputLabel shrink>Facility Type</InputLabel>
+                        <InputLabel shrink>Facility Type<span className='text-red-500'>*</span></InputLabel>
                         <Select
-                            label="Facility Type"
+                            label={"Facility Type"}
                             name="fac_type"
                             value={formData.fac_type}
                             onChange={handleFormChange}

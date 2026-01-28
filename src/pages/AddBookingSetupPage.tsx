@@ -504,18 +504,18 @@ export const AddBookingSetupPage = () => {
       );
 
       // Facility Duration Charges
-      // formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
-      //   if (charge.hours || charge.price) {
-      //     formDataToSend.append(
-      //       `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
-      //       charge.hours
-      //     );
-      //     formDataToSend.append(
-      //       `facility_setup[facility_duration_charges_attributes][${index}][price]`,
-      //       charge.price
-      //     );
-      //   }
-      // });
+      formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+        if (charge.hours || charge.price) {
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+            charge.hours
+          );
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+            charge.price
+          );
+        }
+      });
 
       formDataToSend.append(
         "facility_setup[description]",
@@ -1144,7 +1144,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             {/* Facility Duration Charges Table */}
-            {/* {!formData.isBookable && (
+            {!formData.isBookable && (
               <div className="mt-8">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
@@ -1254,7 +1254,7 @@ export const AddBookingSetupPage = () => {
                   </table>
                 </div>
               </div>
-            )} */}
+            )}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
