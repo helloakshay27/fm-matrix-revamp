@@ -127,10 +127,15 @@ const ProfitAndLossReport: React.FC = () => {
                 {ledger.ledger_name}
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
-                {Math.abs(ledger.total).toLocaleString(undefined, {
+                {/* {Math.abs(ledger.total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} */}
+                {Number(ledger.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
+
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
                 -
@@ -158,7 +163,11 @@ const ProfitAndLossReport: React.FC = () => {
                 {child.group_name}
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
-                {Math.abs(child.total).toLocaleString(undefined, {
+                {/* {Math.abs(child.total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} */}
+                {Number(child.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -203,7 +212,11 @@ const ProfitAndLossReport: React.FC = () => {
                 {group.group_name}
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
-                {Math.abs(group.total).toLocaleString(undefined, {
+                {/* {Math.abs(group.total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} */}
+                {Number(group.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -221,7 +234,11 @@ const ProfitAndLossReport: React.FC = () => {
                 Total {title}
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
-                {Math.abs(group.total).toLocaleString(undefined, {
+                {/* {Math.abs(group.total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} */}
+                {Number(group.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -256,7 +273,7 @@ const ProfitAndLossReport: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/1/lock_account_transactions/pnl`,
+        `https://${baseUrl}/lock_accounts/1/lock_account_transactions/pnl.json`,
         {
           params: {
             start_date: filters.fromDate,
@@ -338,10 +355,9 @@ const ProfitAndLossReport: React.FC = () => {
                   setActiveBalanceTab(tab as "Expenditure" | "Income")
                 }
                 className={`px-4 py-3 text-sm font-semibold transition-colors
-                  ${
-                    activeBalanceTab === tab
-                      ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  ${activeBalanceTab === tab
+                    ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }
                 `}
               >
@@ -371,7 +387,7 @@ const ProfitAndLossReport: React.FC = () => {
           </div>
 
           {/* Totals Section matching ManualJournalDetails style */}
-          {pnlData && !loading && (
+          {/* {pnlData && !loading && (
             <div className="flex justify-end mt-10">
               <div className="bg-white rounded-lg border-2 p-6 min-w-[320px] max-w-[500px] w-full space-y-3">
                 <div className="flex justify-between border-b pb-2">
@@ -402,11 +418,10 @@ const ProfitAndLossReport: React.FC = () => {
                       : "Net Loss"}
                   </span>
                   <span
-                    className={`font-bold text-lg ${
-                      pnlData.totals.net_profit_loss >= 0
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
+                    className={`font-bold text-lg ${pnlData.totals.net_profit_loss >= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                      }`}
                   >
                     ₹{" "}
                     {Math.abs(pnlData.totals.net_profit_loss).toLocaleString(
@@ -417,7 +432,7 @@ const ProfitAndLossReport: React.FC = () => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </ThemeProvider>
