@@ -194,14 +194,7 @@ export const CrmCustomerDetails = () => {
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.company_code || '-'}</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <label className="w-32 text-sm font-medium text-gray-700">Color Code</label>
-                            <span className="text-sm">:</span>
-                            <div
-                                className="w-6 h-6 rounded border border-gray-300"
-                                style={{ backgroundColor: customer?.color_code || '#ffffff' }}
-                            ></div>
-                        </div>
+                      
                     </div>
 
                     <div className="space-y-4">
@@ -215,10 +208,18 @@ export const CrmCustomerDetails = () => {
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.company_code}</span>
                         </div>
-                        <div className="flex items-center gap-4">
+                        {/* <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Code</label>
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.ext_customer_code || '-'}</span>
+                        </div> */}
+                          <div className="flex items-center gap-4">
+                            <label className="w-32 text-sm font-medium text-gray-700">Color Code</label>
+                            <span className="text-sm">:</span>
+                            <div
+                                className="w-6 h-6 rounded border border-gray-300"
+                                style={{ backgroundColor: customer?.color_code || '#ffffff' }}
+                            ></div>
                         </div>
                     </div>
                 </div>

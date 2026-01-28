@@ -354,7 +354,7 @@ export const EditCrmCustomer = () => {
                                 />
                             </div>
                             <div>
-                                <TextField
+                                {/* <TextField
                                     label="Customer Code"
                                     variant="outlined"
                                     fullWidth
@@ -369,7 +369,7 @@ export const EditCrmCustomer = () => {
                                             borderRadius: "8px",
                                         },
                                     }}
-                                />
+                                /> */}
                             </div>
                             <div>
                                 <TextField
