@@ -215,10 +215,28 @@ interface TreeNode extends GroupMembershipData {
 }
 
 export const ChartOfAccountsDashboard = () => {
+      // Render cell content for Lock Account Ledgers table
+      const renderLockLedgerCell = (item: any, columnKey: string) => {
+        if (columnKey === "created_at" || columnKey === "updated_at") {
+          return item[columnKey] ? new Date(item[columnKey]).toLocaleString() : "--";
+        }
+        return item[columnKey] ?? "--";
+      };
+    // Columns for Lock Account Ledgers table
+    const lockLedgerColumns = [
+      { key: "id", label: "ID", sortable: true },
+      { key: "name", label: "Ledger Name", sortable: true },
+      { key: "account_code", label: "Account Code", sortable: true },
+      { key: "lock_account_group_id", label: "Group ID", sortable: true },
+      { key: "created_at", label: "Created At", sortable: true },
+      { key: "updated_at", label: "Updated At", sortable: true },
+    ];
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
   // State management
+  // Add lockLedgers state
+  const [lockLedgers, setLockLedgers] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -245,6 +263,29 @@ export const ChartOfAccountsDashboard = () => {
   });
 
   const perPage = 20;
+
+  // Fetch lock account ledgers
+  useEffect(() => {
+    const fetchLockLedgers = async () => {
+      try {
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+        const url = new URL(`${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts.json`);
+        url.searchParams.append("access_token", token || "");
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error(`Failed to fetch lock accounts: ${response.status}`);
+        const data = await response.json();
+        setLockLedgers(data.lock_account_ledgers || []);
+      } catch (error) {
+        console.error("Error fetching lock account ledgers:", error);
+        setLockLedgers([]);
+      }
+    };
+    fetchLockLedgers();
+  }, []);
 
   // Fetch memberships data
   const fetchMemberships = useCallback(
@@ -929,32 +970,43 @@ export const ChartOfAccountsDashboard = () => {
     </div>
   );
 
-  // Tree building helper
-  const buildAccountTree = (data: GroupMembershipData[]): TreeNode[] => {
-    const combinedData = [...data, ...DUMMY_ACCOUNTS];
-    const map = new Map<string, TreeNode>();
-    const roots: TreeNode[] = [];
-
-    // Initialize map
-    combinedData.forEach((item) => {
-      if (item.account_name) {
-        map.set(item.account_name, { ...item, children: [] });
-      }
-    });
-
-    // Build hierarchy
-    combinedData.forEach((item) => {
-      if (item.account_name) {
-        const node = map.get(item.account_name)!;
-        if (item.parent_account_name && map.has(item.parent_account_name)) {
-          map.get(item.parent_account_name)!.children.push(node);
-        } else if (!item.parent_account_name) {
-          roots.push(node);
-        }
-      }
-    });
-
-    return roots;
+  // Tree building helper: show all lock account ledgers directly inside the main folder (no group folders)
+  const buildAccountTree = (_data: GroupMembershipData[], ledgers: LockAccountLedger[]): TreeNode[] => {
+    const MAIN_FOLDER_NAME = "Recess Club Management";
+    // All ledgers as direct children of the main folder
+    const children = ledgers.map((ledger) => ({
+      id: ledger.id,
+      account_name: ledger.name,
+      account_code: ledger.account_code || '',
+      account_type: 'Ledger',
+      type: 'file',
+      file_size: '',
+      club_members: [],
+      created_at: ledger.created_at,
+      updated_at: ledger.updated_at,
+      membership_plan_id: 0,
+      pms_site_id: 0,
+      start_date: null,
+      end_date: null,
+      children: [],
+    }));
+    const mainAccount: TreeNode = {
+      id: 1,
+      account_name: MAIN_FOLDER_NAME,
+      account_code: '',
+      account_type: 'Main',
+      type: 'folder',
+      file_size: '',
+      club_members: [],
+      created_at: '',
+      updated_at: '',
+      membership_plan_id: 0,
+      pms_site_id: 0,
+      start_date: null,
+      end_date: null,
+      children,
+    };
+    return [mainAccount];
   };
 
   const TreeViewNode = ({
@@ -1015,7 +1067,7 @@ export const ChartOfAccountsDashboard = () => {
               {node.account_name}
             </h4>
             <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
-              <span>{node.file_size || "0 B 0 Files"}</span>
+              {/* <span>{node.file_size || "0 B 0 Files"}</span> */}
               {/* <span className="w-1 h-1 rounded-full bg-slate-300" /> */}
               {/* <span className="capitalize">{node.account_type || "Folder"}</span> */}
             </div>
@@ -1050,55 +1102,85 @@ export const ChartOfAccountsDashboard = () => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-sm">Searching members...</span>
+              <span className="text-sm">Searching ...</span>
             </div>
           </div>
         )}
 
-        {viewType === "table" ? (
-          <EnhancedTable
-            data={memberships || []}
-            columns={columns}
-            renderCell={renderCell}
-            pagination={false}
-            enableExport={true}
-            exportFileName="club-group-memberships"
-            handleExport={handleExport}
-            storageKey="club-group-memberships-table"
-            leftActions={renderCustomActions()}
-            rightActions={renderRightActions()}
-            onFilterClick={() => setIsFilterOpen(true)}
-            searchPlaceholder="Search Group Memberships"
-            onSearchChange={handleSearch}
-            hideTableExport={false}
-            hideColumnsButton={true}
-            className="transition-all duration-500 ease-in-out"
-            loading={loading}
-            loadingMessage="Loading group memberships..."
-          />
-        ) : (
-          <div className="min-h-[500px]">
-            {/* Back button for tree view */}
-            <div className="mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewType("table")}
-                className="hover:bg-slate-100 text-slate-600 hover:text-[#C72030] transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Table
-              </Button>
-            </div>
+        {/* Toggle for Lock Ledgers Table/Tree View */}
+        <div className="mb-4 flex gap-2">
+          <Button
+            variant={viewType === "table" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewType("table")}
+            className={viewType === "table" ? "bg-[#C72030] text-white" : "border-[#C72030] text-[#C72030]"}
+          >
+            Table View
+          </Button>
+          <Button
+            variant={viewType === "tree" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewType("tree")}
+            className={viewType === "tree" ? "bg-[#C72030] text-white" : "border-[#C72030] text-[#C72030]"}
+          >
+            Tree View
+          </Button>
+        </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="max-h-[850px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3">
-                {buildAccountTree(memberships).map((root) => (
-                  <TreeViewNode key={root.id} node={root} />
-                ))}
-              </div>
+        {viewType === "table" ? (
+          <>
+            <h3 className="text-lg font-semibold mb-2">Lock Account Ledgers</h3>
+            <EnhancedTable
+              data={lockLedgers}
+              columns={lockLedgerColumns}
+              renderCell={renderLockLedgerCell}
+              pagination={false}
+              enableExport={true}
+              exportFileName="lock-account-ledgers"
+              storageKey="lock-account-ledgers-table"
+              hideTableExport={false}
+              hideColumnsButton={true}
+              className="transition-all duration-500 ease-in-out mb-8"
+              loading={false}
+              loadingMessage="Loading lock ledgers..."
+            />
+            <h3 className="text-lg font-semibold mb-2">Group Memberships</h3>
+            <EnhancedTable
+              data={memberships || []}
+              columns={columns}
+              renderCell={renderCell}
+              pagination={false}
+              enableExport={true}
+              exportFileName="club-group-memberships"
+              handleExport={handleExport}
+              storageKey="club-group-memberships-table"
+              leftActions={renderCustomActions()}
+              rightActions={renderRightActions()}
+              onFilterClick={() => setIsFilterOpen(true)}
+              searchPlaceholder="Search Group Memberships"
+              onSearchChange={handleSearch}
+              hideTableExport={false}
+              hideColumnsButton={true}
+              className="transition-all duration-500 ease-in-out"
+              loading={loading}
+              loadingMessage="Loading group memberships..."
+            />
+          </>
+        ) : (
+          <>
+            <h3 className="text-lg font-semibold mb-2">Chart Of Accounts (Tree View)</h3>
+            <div className="min-h-[300px] max-h-[600px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3 mb-8">
+              {buildAccountTree([], lockLedgers).map((root) => (
+                <TreeViewNode key={root.id} node={root} />
+              ))}
             </div>
-          </div>
+            {/* <h3 className="text-lg font-semibold mb-2">Group Memberships (Tree View)</h3>
+            <div className="min-h-[300px] max-h-[600px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3">
+              {buildAccountTree(memberships, []).map((root) => (
+                <TreeViewNode key={root.id} node={root} />
+              ))}
+            </div> */}
+          </>
         )}
       </div>
 

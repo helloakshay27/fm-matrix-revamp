@@ -93,24 +93,24 @@ const AMENITIES_OPTIONS = [
     "Bar",
 ];
 interface ManualJournalRecord {
-  id: number;
-  ledger_id: number;
-  ledger_name: string;
-  tr_type: string;
-  amount: number;
-  cost_centre_id: number | null;
+    id: number;
+    ledger_id: number;
+    ledger_name: string;
+    tr_type: string;
+    amount: number;
+    cost_centre_id: number | null;
 }
 interface ManualJournalTransaction {
-  id: number;
-  lock_account_id: number;
-  transaction_type: string;
-  reference: string | null;
-  voucher_number: string | null;
-  transaction_date: string;
-  description: string;
-  records: ManualJournalRecord[];
-  created_at: string;
-  updated_at: string;
+    id: number;
+    lock_account_id: number;
+    transaction_type: string;
+    reference: string | null;
+    voucher_number: string | null;
+    transaction_date: string;
+    description: string;
+    records: ManualJournalRecord[];
+    created_at: string;
+    updated_at: string;
 }
 
 export const ManualJournalDetails = () => {
@@ -124,7 +124,7 @@ export const ManualJournalDetails = () => {
 
     const [amenities, setAmenities] = useState([])
     const [formData, setFormData] = useState({
-      
+
         date: "",
         journalNo: "",
         referenceNo: "",
@@ -168,8 +168,8 @@ export const ManualJournalDetails = () => {
             const data = response.data;
             setFormData({
                 date: data.transaction_date
-  ? data.transaction_date.split("-").reverse().join("-")
-  : "",
+                    ? data.transaction_date.split("-").reverse().join("-")
+                    : "",
                 journalNo: data.voucher_number || "",
                 referenceNo: data.reference || "",
                 notes: data.description || "",
