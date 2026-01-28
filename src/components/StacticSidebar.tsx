@@ -1493,11 +1493,39 @@ export const StacticSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
+  // Helper function to recursively filter out asset-related items
+  const filterAssetItems = (items: any[]): any[] => {
+    if (!assetRestricted) return items;
+    
+    return items
+      .filter((item: any) => {
+        // Filter out direct asset links
+        if (item.href === "/maintenance/asset" || 
+            item.href === "/maintenance/audit/assets" ||
+            item.href?.startsWith("/settings/asset-setup")) {
+          return false;
+        }
+        // Filter out items named "Asset Setup" or "Assets"
+        if (item.name === "Asset Setup" || item.name === "Assets") {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => {
+        // Recursively filter subItems if they exist
+        if (item.subItems && Array.isArray(item.subItems)) {
+          return {
+            ...item,
+            subItems: filterAssetItems(item.subItems),
+          };
+        }
+        return item;
+      });
+  };
+
   let currentModules = modulesByPackage[currentSection] || [];
-  if (currentSection === "Maintenance" && assetRestricted) {
-    currentModules = currentModules.filter(
-      (module: any) => module.href !== "/maintenance/asset"
-    );
+  if (assetRestricted) {
+    currentModules = filterAssetItems(currentModules);
   }
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
