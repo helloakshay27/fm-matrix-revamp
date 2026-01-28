@@ -1838,20 +1838,30 @@ export const AddBookingSetupPage = () => {
                         id="complimentary"
                         checked={formData.complimentary}
                         onCheckedChange={(checked) =>
-                          setFormData({ ...formData, complimentary: !!checked })
+                          setFormData({
+                            ...formData,
+                            complimentary: !!checked,
+                            billToCompany: !!checked ? false : formData.billToCompany
+                          })
                         }
+                        disabled={formData.billToCompany}
                       />
-                      <label htmlFor="complimentary">Complimentary</label>
+                      <label htmlFor="complimentary" className={formData.billToCompany ? "text-gray-400" : ""}>Complimentary</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="billToCompany"
                         checked={formData.billToCompany}
                         onCheckedChange={(checked) =>
-                          setFormData({ ...formData, billToCompany: !!checked })
+                          setFormData({
+                            ...formData,
+                            billToCompany: !!checked,
+                            complimentary: !!checked ? false : formData.complimentary
+                          })
                         }
+                        disabled={formData.complimentary}
                       />
-                      <label htmlFor="billToCompany">Bill to Company</label>
+                      <label htmlFor="billToCompany" className={formData.complimentary ? "text-gray-400" : ""}>Bill to Company</label>
                     </div>
                   </>
                 )}
