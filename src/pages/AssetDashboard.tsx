@@ -56,7 +56,7 @@ import { DonutChartGrid } from '@/components/DonutChartGrid';
 import { AssetAnalyticsComponents } from '@/components/AssetAnalyticsComponents';
 import { AssetAnalyticsFilterDialog } from '@/components/AssetAnalyticsFilterDialog';
 import { assetAnalyticsDownloadAPI } from '@/services/assetAnalyticsDownloadAPI';
-import { AIAssistantWidget } from '@/components/AIAssistantWidget';
+// import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { useAssetSearch } from '@/hooks/useAssetSearch';
 import {
   API_CONFIG,
@@ -844,7 +844,9 @@ export const AssetDashboard = () => {
               showSelector={true}
               layout="grid"
             />
-                  <AIAssistantWidget allowedModuleId={1} />
+                  
+                  
+                 
 
           </TabsContent>
 
