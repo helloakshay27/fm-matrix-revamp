@@ -78,7 +78,7 @@ import {
     Circle,
 } from "lucide-react";
 import { template } from "lodash";
-import { getUser } from "../utils/auth";
+import { getUser, isAssetRestrictedUser } from "../utils/auth";
 
 const navigationStructure = {
     Settings: {
@@ -1025,6 +1025,7 @@ export const ZycusSidebar = () => {
     const [selectedRole, setSelectedDepartment] = useState("");
     const user = getUser();
     const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+    const assetRestricted = isAssetRestrictedUser(user);
 
     // Helper function to find the deepest navigable sub-item
     const findDeepestNavigableItem = (item: any): string | null => {
@@ -1099,7 +1100,42 @@ export const ZycusSidebar = () => {
         }
     }, [location.pathname, setCurrentSection]);
 
+    // Helper function to recursively filter out asset-related items
+    const filterAssetItems = (items: any[]): any[] => {
+        if (!assetRestricted) return items;
+        
+        return items
+            .filter((item: any) => {
+                // Filter out direct asset links
+                if (item.href === "/maintenance/asset" || 
+                    item.href === "/maintenance/audit/assets" ||
+                    item.href?.startsWith("/settings/asset-setup")) {
+                    return false;
+                }
+                // Filter out items named "Asset Setup" or "Assets"
+                if (item.name === "Asset Setup" || item.name === "Assets") {
+                    return false;
+                }
+                return true;
+            })
+            .map((item: any) => {
+                // Recursively filter subItems if they exist
+                if (item.subItems && Array.isArray(item.subItems)) {
+                    return {
+                        ...item,
+                        subItems: filterAssetItems(item.subItems),
+                    };
+                }
+                return item;
+            });
+    };
+
     let currentModules = modulesByPackage[currentSection] || [];
+    
+    // Apply asset restriction filtering
+    if (assetRestricted) {
+        currentModules = filterAssetItems(currentModules);
+    }
 
     if (isRestrictedUser) {
         if (currentSection === 'Maintenance') {
@@ -1142,6 +1178,11 @@ export const ZycusSidebar = () => {
                 currentSectionItems = [];
             }
         }
+        
+        // Apply asset restriction filtering
+        if (assetRestricted && currentSectionItems) {
+            currentSectionItems = filterAssetItems(currentSectionItems);
+        }
 
         const itemsToExpand = [];
 
@@ -1181,7 +1222,7 @@ export const ZycusSidebar = () => {
             // Update expanded items state with only the active path
             setExpandedItems(itemsToExpand);
         }
-    }, [currentSection, location.pathname, isRestrictedUser]);
+    }, [currentSection, location.pathname, isRestrictedUser, assetRestricted]);
 
     const renderMenuItem = (item: any, level: number = 0) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;

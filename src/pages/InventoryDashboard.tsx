@@ -73,6 +73,7 @@ import bio from "@/assets/bio.png";
 import { InventorySelectionPanel } from "@/components/InventorySelectionPanel";
 import { toast } from "sonner";
 import { StatsCard } from "@/components/StatsCard";
+import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -1150,302 +1151,308 @@ export const InventoryDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6">
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        defaultValue="list"
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger
-            value="list"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <Package className="w-4 h-4" />
-            <span className="hidden sm:inline">Inventory List</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Analytics</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent
-          value="analytics"
-          className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+    <>
+      <div className="p-2 sm:p-4 lg:p-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          defaultValue="list"
+          className="w-full"
         >
-          <div className="flex justify-end items-center gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setIsAnalyticsFilterOpen(true)}
-                variant="outline"
-                className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-              >
-                <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {getAnalyticsDateRangeLabel()}
-                </span>
-                <Filter className="w-4 h-4 text-gray-600" />
-              </Button>
-            </div>
-            <InventoryAnalyticsSelector
-              onSelectionChange={(options) => setSelectedAnalyticsOptions(options)}
-            />
-          </div>
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger
+              value="list"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <Package className="w-4 h-4" />
+              <span className="hidden sm:inline">Inventory List</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+          </TabsList>
 
-          {analyticsLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="text-gray-600">Loading analytics data...</div>
+          <TabsContent
+            value="analytics"
+            className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+          >
+            <div className="flex justify-end items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setIsAnalyticsFilterOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+                >
+                  <CalendarIcon className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {getAnalyticsDateRangeLabel()}
+                  </span>
+                  <Filter className="w-4 h-4 text-gray-600" />
+                </Button>
+              </div>
+              <InventoryAnalyticsSelector
+                onSelectionChange={(options) => setSelectedAnalyticsOptions(options)}
+              />
             </div>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
-              <SortableContext items={analyticsCardOrder} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {analyticsCardOrder.filter(id => selectedAnalyticsOptions.includes(id)).map((id) => {
-                    const config: Record<string, { title: string; data: any; type: any }> = {
-                      items_status: { title: 'Items Status', data: analyticsData.statusData, type: 'itemsStatus' },
-                      category_wise: { title: 'Category Wise Items', data: analyticsData.categoryData, type: 'categoryWise' },
-                      green_consumption: { title: 'Green Consumption', data: analyticsData.greenConsumption, type: 'greenConsumption' },
-                      consumption_report_green: { title: 'Consumption Report Green', data: analyticsData.consumptionReportGreen, type: 'consumptionReportGreen' },
-                      consumption_report_non_green: { title: 'Consumption Report Non-Green', data: analyticsData.consumptionReportNonGreen, type: 'consumptionReportNonGreen' },
-                      current_minimum_stock_green: { title: 'Current Minimum Stock Green', data: analyticsData.minimumStockGreen, type: 'currentMinimumStockGreen' },
-                      current_minimum_stock_non_green: { title: 'Current Minimum Stock Non-Green', data: analyticsData.minimumStockNonGreen, type: 'currentMinimumStockNonGreen' },
-                      inventory_cost_over_month: { title: 'Inventory Cost Over Month', data: analyticsData.inventoryCostOverMonth, type: 'inventoryCostOverMonth' },
-                      inventory_consumption_over_site: { title: 'Inventory Consumption Over Site', data: analyticsData.inventoryConsumptionOverSite, type: 'inventoryConsumptionOverSite' },
-                    };
-                    const card = config[id];
-                    if (!card) return null;
-                    const spanFull = id === 'current_minimum_stock_non_green';
-                    return (
-                      <div key={id} className={spanFull ? 'col-span-1 lg:col-span-2' : ''}>
-                        <SortableChartItem id={id}>
-                          {id === 'inventory_cost_over_month' && !card.data ? (
-                            <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
-                              <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
-                              <div className="flex-1 bg-gray-100 rounded" />
-                            </div>
-                          ) : card.data ? (
-                            <InventoryAnalyticsCard
-                              title={card.title}
-                              data={card.data}
-                              type={card.type}
-                              dateRange={dateRange}
-                            />
-                          ) : null}
-                        </SortableChartItem>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </TabsContent>
-        <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              Error loading inventory data: {error}
-            </div>
-          )}
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
-              <StatsCard
-                title="Total Inventories"
-                value={baselineCounts.totalInventories}
-                selected={selectedSummary === 'total'}
-                icon={<Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
-                // selected={selectedSummary === 'total'}
-                onClick={() => {
-                  setActiveFilters({});
-                  setSelectedSummary('total');
-                  setLocalCurrentPage(1);
-                }}
-              />
-              <StatsCard
-                title="Active Inventory"
-                value={baselineCounts.activeCount}
-                selected={selectedSummary === 'active'}
-                icon={<BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
-                // selected={selectedSummary === 'active'}
-                onClick={() => {
-                  const nf = { 'q[active_eq]': true as any } as Record<string, string>;
-                  setActiveFilters(nf);
-                  setSelectedSummary('active');
-                  setLocalCurrentPage(1);
-                }}
-              />
-              <StatsCard
-                title="Inactive Inventory"
-                value={baselineCounts.inactiveCount}
-                selected={selectedSummary === 'inactive'}
-                icon={<CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
-                // selected={selectedSummary === 'inactive'}
-                onClick={() => {
-                  const nf = { 'q[active_eq]': false as any } as Record<string, string>;
-                  setActiveFilters(nf);
-                  setSelectedSummary('inactive');
-                  setLocalCurrentPage(1);
-                }}
-              />
-              <StatsCard
-                title="Ecofriendly"
-                value={baselineCounts.greenInventories}
-                selected={selectedSummary === 'green'}
-                icon={
-                  <img
-                    src={bio}
-                    alt="Green Product"
-                    className="w-8 h-8 sm:w-10 sm:h-10"
-                    style={{
-                      filter:
-                        "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
-                    }}
-                  />
-                }
 
-                // selected={selectedSummary === 'green'}
-                onClick={() => {
-                  const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
-                  setActiveFilters(nf);
-                  setSelectedSummary('green');
-                  setLocalCurrentPage(1);
-                }}
-              />
-            </div>
-            {showActionPanel && (
-              <InventorySelectionPanel
-                selectedIds={selectedItems}
-                printing={downloadingQR}
-                onPrintQR={handlePrintQR}
-                onAddConsumable={() => {
-                  const firstId = selectedItems[0];
-                  if (!firstId) return;
-                  console.log(paginatedData)
-                  if (paginatedData.find(item => item.id === firstId)?.active === "Inactive") {
-                    toast.dismiss()
-                    toast.error("Inactive inventory cannot be consumed or add")
-                    return;
-                  }
-                  const now = new Date();
-                  const year = now.getFullYear();
-                  const month = String(now.getMonth() + 1).padStart(2, '0');
-                  const day = String(now.getDate()).padStart(2, '0');
-                  const startDateStr = `${year}-${month}-01`;
-                  const endDateStr = `${year}-${month}-${day}`;
-                  navigate(`/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`);
-                }}
-                onAdd={handleAddInventory}
-                onImport={handleImportClick}
-                onClose={() => {
-                  // Close panel and clear selection as requested
-                  setShowActionPanel(false);
-                  setSelectedItems([]); // unselect all checkboxes
-                  setPanelManuallyClosed(false);
-                  setKeepOpenWithoutSelection(false); // reset manual open state
-                }}
-              />
+            {analyticsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="text-gray-600">Loading analytics data...</div>
+              </div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
+                <SortableContext items={analyticsCardOrder} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {analyticsCardOrder.filter(id => selectedAnalyticsOptions.includes(id)).map((id) => {
+                      const config: Record<string, { title: string; data: any; type: any }> = {
+                        items_status: { title: 'Items Status', data: analyticsData.statusData, type: 'itemsStatus' },
+                        category_wise: { title: 'Category Wise Items', data: analyticsData.categoryData, type: 'categoryWise' },
+                        green_consumption: { title: 'Green Consumption', data: analyticsData.greenConsumption, type: 'greenConsumption' },
+                        consumption_report_green: { title: 'Consumption Report Green', data: analyticsData.consumptionReportGreen, type: 'consumptionReportGreen' },
+                        consumption_report_non_green: { title: 'Consumption Report Non-Green', data: analyticsData.consumptionReportNonGreen, type: 'consumptionReportNonGreen' },
+                        current_minimum_stock_green: { title: 'Current Minimum Stock Green', data: analyticsData.minimumStockGreen, type: 'currentMinimumStockGreen' },
+                        current_minimum_stock_non_green: { title: 'Current Minimum Stock Non-Green', data: analyticsData.minimumStockNonGreen, type: 'currentMinimumStockNonGreen' },
+                        inventory_cost_over_month: { title: 'Inventory Cost Over Month', data: analyticsData.inventoryCostOverMonth, type: 'inventoryCostOverMonth' },
+                        inventory_consumption_over_site: { title: 'Inventory Consumption Over Site', data: analyticsData.inventoryConsumptionOverSite, type: 'inventoryConsumptionOverSite' },
+                      };
+                      const card = config[id];
+                      if (!card) return null;
+                      const spanFull = id === 'current_minimum_stock_non_green';
+                      return (
+                        <div key={id} className={spanFull ? 'col-span-1 lg:col-span-2' : ''}>
+                          <SortableChartItem id={id}>
+                            {id === 'inventory_cost_over_month' && !card.data ? (
+                              <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
+                                <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
+                                <div className="flex-1 bg-gray-100 rounded" />
+                              </div>
+                            ) : card.data ? (
+                              <InventoryAnalyticsCard
+                                title={card.title}
+                                data={card.data}
+                                type={card.type}
+                                dateRange={dateRange}
+                              />
+                            ) : null}
+                          </SortableChartItem>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
-            <EnhancedTable
-              handleExport={handleExport}
-              data={paginatedData}
-              columns={columns}
-              renderCell={renderCell}
-              bulkActions={bulkActions}
-              showBulkActions={true}
-              selectable={true}
-              selectedItems={selectedItems}
-              onSelectItem={handleSelectItem}
-              onSelectAll={handleSelectAll}
-              pagination={false}
-              enableExport={true}
-              exportFileName="inventory"
-              onRowClick={handleViewItem}
-              storageKey="inventory-table"
-              loading={loading}
-              emptyMessage={
-                loading ? "Loading inventory data..." : "No inventory items found"
-              }
-              leftActions={renderCustomActions()}
-              onFilterClick={handleFiltersClick}
-              enableGlobalSearch={true}
-              onGlobalSearch={handleGlobalNameSearch}
-              searchPlaceholder="Search name..."
-            />
-          </div>
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+            <AIAssistantWidget allowedModuleId={4} />
+
+          </TabsContent>
+          <TabsContent value="list" className="space-y-4 sm:space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                Error loading inventory data: {error}
+              </div>
+            )}
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
+                <StatsCard
+                  title="Total Inventories"
+                  value={baselineCounts.totalInventories}
+                  selected={selectedSummary === 'total'}
+                  icon={<Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  // selected={selectedSummary === 'total'}
+                  onClick={() => {
+                    setActiveFilters({});
+                    setSelectedSummary('total');
+                    setLocalCurrentPage(1);
+                  }}
+                />
+                <StatsCard
+                  title="Active Inventory"
+                  value={baselineCounts.activeCount}
+                  selected={selectedSummary === 'active'}
+                  icon={<BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  // selected={selectedSummary === 'active'}
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setSelectedSummary('active');
+                    setLocalCurrentPage(1);
+                  }}
+                />
+                <StatsCard
+                  title="Inactive Inventory"
+                  value={baselineCounts.inactiveCount}
+                  selected={selectedSummary === 'inactive'}
+                  icon={<CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  // selected={selectedSummary === 'inactive'}
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setSelectedSummary('inactive');
+                    setLocalCurrentPage(1);
+                  }}
+                />
+                <StatsCard
+                  title="Ecofriendly"
+                  value={baselineCounts.greenInventories}
+                  selected={selectedSummary === 'green'}
+                  icon={
+                    <img
+                      src={bio}
+                      alt="Green Product"
+                      className="w-8 h-8 sm:w-10 sm:h-10"
+                      style={{
+                        filter:
+                          "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
+                      }}
+                    />
+                  }
+
+                  // selected={selectedSummary === 'green'}
+                  onClick={() => {
+                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setSelectedSummary('green');
+                    setLocalCurrentPage(1);
+                  }}
+                />
+              </div>
+              {showActionPanel && (
+                <InventorySelectionPanel
+                  selectedIds={selectedItems}
+                  printing={downloadingQR}
+                  onPrintQR={handlePrintQR}
+                  onAddConsumable={() => {
+                    const firstId = selectedItems[0];
+                    if (!firstId) return;
+                    console.log(paginatedData)
+                    if (paginatedData.find(item => item.id === firstId)?.active === "Inactive") {
+                      toast.dismiss()
+                      toast.error("Inactive inventory cannot be consumed or add")
+                      return;
                     }
-                  />
-                </PaginationItem>
-                {renderPaginationItems()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      handlePageChange(Math.min(totalPages, currentPage + 1))
-                    }
-                    className={
-                      currentPage === totalPages
-                        ? 'pointer-events-none opacity-50'
-                        : ''
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </TabsContent>
-      </Tabs>
-      <InventoryBulkUploadDialog
-        open={showBulkUpload}
-        onOpenChange={setShowBulkUpload}
-        title="Bulk Upload"
-        onImported={() => dispatch(fetchInventoryData({ page: currentPage, pageSize, filters: activeFilters }))}
-      />
-      <InventoryFilterDialog
-        open={showFilter}
-        onOpenChange={setShowFilter}
-        onApply={handleFilter}
-      />
-      <DateFilterModal
-        open={showDateFilter}
-        onOpenChange={setShowDateFilter}
-        onApply={(range) => {
-          setDateRange(range);
-          setSelectedSummary(null);
-          dispatch(
-            fetchInventoryData({
-              filters: { startDate: range.startDate, endDate: range.endDate },
-            })
-          );
-        }}
-      />
-      <InventoryAnalyticsFilterDialog
-        isOpen={isAnalyticsFilterOpen}
-        onClose={() => setIsAnalyticsFilterOpen(false)}
-        currentStartDate={dateRange.startDate}
-        currentEndDate={dateRange.endDate}
-        onApplyFilters={(filters) => {
-          // Parse DD/MM/YYYY to Date objects
-          const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
-          const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
-          const startDate = new Date(startYear, startMonth - 1, startDay);
-          const endDate = new Date(endYear, endMonth - 1, endDay);
-          // Set time to start of day for startDate and end of day for endDate
-          startDate.setHours(0, 0, 0, 0);
-          endDate.setHours(23, 59, 59, 999);
-          setDateRange({ startDate, endDate });
-        }}
-      />
-    </div>
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const startDateStr = `${year}-${month}-01`;
+                    const endDateStr = `${year}-${month}-${day}`;
+                    navigate(`/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`);
+                  }}
+                  onAdd={handleAddInventory}
+                  onImport={handleImportClick}
+                  onClose={() => {
+                    // Close panel and clear selection as requested
+                    setShowActionPanel(false);
+                    setSelectedItems([]); // unselect all checkboxes
+                    setPanelManuallyClosed(false);
+                    setKeepOpenWithoutSelection(false); // reset manual open state
+                  }}
+                />
+              )}
+              <EnhancedTable
+                handleExport={handleExport}
+                data={paginatedData}
+                columns={columns}
+                renderCell={renderCell}
+                bulkActions={bulkActions}
+                showBulkActions={true}
+                selectable={true}
+                selectedItems={selectedItems}
+                onSelectItem={handleSelectItem}
+                onSelectAll={handleSelectAll}
+                pagination={false}
+                enableExport={true}
+                exportFileName="inventory"
+                onRowClick={handleViewItem}
+                storageKey="inventory-table"
+                loading={loading}
+                emptyMessage={
+                  loading ? "Loading inventory data..." : "No inventory items found"
+                }
+                leftActions={renderCustomActions()}
+                onFilterClick={handleFiltersClick}
+                enableGlobalSearch={true}
+                onGlobalSearch={handleGlobalNameSearch}
+                searchPlaceholder="Search name..."
+              />
+            </div>
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      className={
+                        currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                      }
+                    />
+                  </PaginationItem>
+                  {renderPaginationItems()}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        handlePageChange(Math.min(totalPages, currentPage + 1))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? 'pointer-events-none opacity-50'
+                          : ''
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </TabsContent>
+        </Tabs>
+        <InventoryBulkUploadDialog
+          open={showBulkUpload}
+          onOpenChange={setShowBulkUpload}
+          title="Bulk Upload"
+          onImported={() => dispatch(fetchInventoryData({ page: currentPage, pageSize, filters: activeFilters }))}
+        />
+        <InventoryFilterDialog
+          open={showFilter}
+          onOpenChange={setShowFilter}
+          onApply={handleFilter}
+        />
+        <DateFilterModal
+          open={showDateFilter}
+          onOpenChange={setShowDateFilter}
+          onApply={(range) => {
+            setDateRange(range);
+            setSelectedSummary(null);
+            dispatch(
+              fetchInventoryData({
+                filters: { startDate: range.startDate, endDate: range.endDate },
+              })
+            );
+          }}
+        />
+        <InventoryAnalyticsFilterDialog
+          isOpen={isAnalyticsFilterOpen}
+          onClose={() => setIsAnalyticsFilterOpen(false)}
+          currentStartDate={dateRange.startDate}
+          currentEndDate={dateRange.endDate}
+          onApplyFilters={(filters) => {
+            // Parse DD/MM/YYYY to Date objects
+            const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
+            const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
+            const startDate = new Date(startYear, startMonth - 1, startDay);
+            const endDate = new Date(endYear, endMonth - 1, endDay);
+            // Set time to start of day for startDate and end of day for endDate
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+            setDateRange({ startDate, endDate });
+          }}
+        />
+      </div>
+
+      {/* AI Assistant Widget - Inventory Module */}
+    </>
   );
 };
