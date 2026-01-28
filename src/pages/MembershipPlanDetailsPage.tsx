@@ -109,6 +109,7 @@ export const MembershipPlanDetailsPage = () => {
     paymentFrequency: "",
     usageLimits: "",
     discountEligibility: "",
+    hsnCode: "",
     amenities: [] as string[],
     amenityDetails: {} as Record<string, {
       frequency: string;
@@ -176,6 +177,7 @@ export const MembershipPlanDetailsPage = () => {
         active: data.active,
         createdAt: data.created_at,
         createdBy: data.created_by,
+        hsnCode: data.hsn_code || "-",
       })
     } catch (error) {
       console.log(error)
@@ -278,13 +280,13 @@ export const MembershipPlanDetailsPage = () => {
                   {formData.paymentFrequency ? formData.paymentFrequency.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "-"}
                 </span>
               </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Usage Limits</span>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">HSN Code</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.usageLimits || "-"}
+                  {formData.hsnCode|| "-"}
                 </span>
-              </div> */}
+              </div>
               {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Discount Eligibility</span>
                 <span className="text-gray-500 mx-2">:</span>

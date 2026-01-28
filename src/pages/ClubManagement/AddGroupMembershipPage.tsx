@@ -174,6 +174,7 @@ interface MemberData {
         firstName: string;
         lastName: string;
         dateOfBirth: string;
+        houseId: string;
         gender: string;
         email: string;
         mobile: string;
@@ -1539,6 +1540,28 @@ export const AddGroupMembershipPage = () => {
         }
     }, [isEditMode, selectedPlanId, membershipPlans]);
 
+    // State for house/flat options
+    const [flatOptions, setFlatOptions] = useState<{ id: number; flat_no: string }[]>([]);
+    const [flatsLoading, setFlatsLoading] = useState(false);
+
+    // Fetch flats on mount
+    useEffect(() => {
+        const fetchFlats = async () => {
+            setFlatsLoading(true);
+            try {
+                const response = await fetch("https://club-uat-api.lockated.com/society_flats/society_flats_list.json?token=z0Vz7MWHrLM59gu-ureFRdkqq1x8L0nSiKOcaM1pumE");
+                if (!response.ok) throw new Error("Failed to fetch flats");
+                const data = await response.json();
+                setFlatOptions(Array.isArray(data.flats) ? data.flats : []);
+            } catch (err) {
+                setFlatOptions([]);
+            } finally {
+                setFlatsLoading(false);
+            }
+        };
+        fetchFlats();
+    }, []);
+
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="p-6 bg-gray-50 min-h-screen">
@@ -1859,10 +1882,15 @@ export const AddGroupMembershipPage = () => {
                                                             onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
                                                         >
                                                             <MenuItem value=""><em>Select House</em></MenuItem>
-                                                            <MenuItem value="1">Tower 1</MenuItem>
-                                                            <MenuItem value="2">Tower 2</MenuItem>
-                                                            <MenuItem value="3">Building 1</MenuItem>
-                                                            <MenuItem value="4">Building 2</MenuItem>
+                                                            {flatsLoading ? (
+                                                                <MenuItem value="" disabled>Loading...</MenuItem>
+                                                            ) : flatOptions.length === 0 ? (
+                                                                <MenuItem value="" disabled>No flats found</MenuItem>
+                                                            ) : (
+                                                                flatOptions.map(flat => (
+                                                                    <MenuItem key={flat.id} value={flat.id}>{flat.flat_no}</MenuItem>
+                                                                ))
+                                                            )}
                                                         </Select>
                                                     </FormControl>
                                                     </div>

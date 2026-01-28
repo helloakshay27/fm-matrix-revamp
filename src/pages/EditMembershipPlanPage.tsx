@@ -111,6 +111,7 @@ export const EditMembershipPlanPage = () => {
     userLimit: "",
     renewalTerms: "",
     payment_plan_id: "",
+    hsnCode: "",
     amenities: [] as any[],
     amenityDetails: {} as Record<string, {
       frequency: string;
@@ -191,6 +192,7 @@ export const EditMembershipPlanPage = () => {
         payment_plan_id: data.payment_plan_id?.toString() || "",
         amenities: data.plan_amenities,
         amenityDetails: amenityDetailsMap,
+        hsnCode: data.hsn_code || "",
       })
     } catch (error) {
       console.error("Error fetching membership plan details:", error);
@@ -223,6 +225,10 @@ export const EditMembershipPlanPage = () => {
       toast.error("Please select Renewal Terms");
       return false;
     }
+    if (!formData.hsnCode) {
+      toast.error("Please enter HSN Code");
+      return false;
+    }
     return true;
   };
 
@@ -238,6 +244,7 @@ export const EditMembershipPlanPage = () => {
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
           payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
+          hsn_code: formData.hsnCode,
           active: true,
           plan_amenities_attributes: [
             ...formData.amenities.map(amenity => {
@@ -406,7 +413,7 @@ export const EditMembershipPlanPage = () => {
                   <MenuItem value="quaterly">Quarterly</MenuItem>
                   <MenuItem value="half_yearly">Half Yearly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
-                  
+
                 </Select>
               </FormControl>
 
@@ -429,6 +436,20 @@ export const EditMembershipPlanPage = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              <TextField
+                label="HSN Code*"
+                value={formData.hsnCode}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only numbers and letters (alphanumeric)
+                  if (/^[a-zA-Z0-9]*$/.test(value)) {
+                    setFormData({ ...formData, hsnCode: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="Enter HSN Code"
+              />
             </div>
           </div>
 
