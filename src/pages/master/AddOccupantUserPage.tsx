@@ -225,10 +225,14 @@ export const AddOccupantUserPage: React.FC = () => {
       toast.error("Last Name is required.");
       return false;
     }
-    if (!formData.mobileNumber) {
-      toast.error("Mobile Number is required.");
-      return false;
-    } else if (!mobileRegex.test(formData.mobileNumber)) {
+    // if (!formData.mobileNumber) {
+    //   toast.error("Mobile Number is required.");
+    //   return false;
+    // } else if (!mobileRegex.test(formData.mobileNumber)) {
+    //   toast.error("Mobile Number must be 10 digits.");
+    //   return false;
+    // }
+    if (formData.mobileNumber && !mobileRegex.test(formData.mobileNumber)) {
       toast.error("Mobile Number must be 10 digits.");
       return false;
     }
@@ -410,7 +414,7 @@ export const AddOccupantUserPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
+                label={<><span>Mobile Number</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}

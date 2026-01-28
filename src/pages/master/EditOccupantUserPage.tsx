@@ -235,7 +235,7 @@ export const EditOccupantUserPage: React.FC = () => {
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
-    mobileNumber: false,
+    // mobileNumber: false,
     email: false,
     userType: false,
     accessLevel: false,
@@ -261,7 +261,7 @@ export const EditOccupantUserPage: React.FC = () => {
   const handleSubmit = async () => {
     const hasFirstName = formData.firstName.trim() !== '';
     const hasLastName = formData.lastName.trim() !== '';
-    const hasMobile = formData.mobileNumber.trim() !== '';
+    // const hasMobile = formData.mobileNumber.trim() !== '';
     const hasEmail = formData.email.trim() !== '';
     const hasUserType = formData.userType !== '';
     const hasAccess = formData.accessLevel !== '';
@@ -272,7 +272,6 @@ export const EditOccupantUserPage: React.FC = () => {
     setErrors({
       firstName: !hasFirstName,
       lastName: !hasLastName,
-      mobileNumber: !hasMobile,
       email: !hasEmail,
       userType: !hasUserType,
       accessLevel: !hasAccess,
@@ -280,7 +279,9 @@ export const EditOccupantUserPage: React.FC = () => {
       selectedCompanies: needCompanies,
     });
 
-    if (!hasFirstName || !hasLastName || !hasMobile || !hasEmail || !hasUserType || !hasAccess || needSites || needCompanies) {
+    // mobileNumber: !hasMobile,
+
+    if (!hasFirstName || !hasLastName  || !hasEmail || !hasUserType || !hasAccess || needSites || needCompanies) {
       return;
     }
 
@@ -521,14 +522,14 @@ export const EditOccupantUserPage: React.FC = () => {
               />
 
               <TextField
-                label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
+                label={<><span>Mobile Number</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
-                error={errors.mobileNumber}
-                helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
+                // error={errors.mobileNumber}
+                // helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
