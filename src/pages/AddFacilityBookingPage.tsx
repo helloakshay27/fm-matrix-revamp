@@ -77,6 +77,7 @@ export const AddFacilityBookingPage = () => {
   const [comment, setComment] = useState('');
   const [users, setUsers] = useState([])
   const [facilityDetails, setFacilityDetails] = useState<{
+    bill_to_company: number;
     postpaid: number;
     prepaid: number;
     pay_on_facility: number;
@@ -1067,6 +1068,12 @@ export const AddFacilityBookingPage = () => {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="complementary" id="complementary" />
                   <Label htmlFor="complementary">Complementary</Label>
+                </div>
+              )}
+              {facilityDetails.bill_to_company && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="bill_to_company" id="bill_to_company" />
+                  <Label htmlFor="bill_to_company">Bill to Company</Label>
                 </div>
               )}
             </RadioGroup>
