@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { getUser, isAssetRestrictedUser } from "@/utils/auth";
 import {
   Users,
   Settings,
@@ -1413,6 +1414,8 @@ export const StacticSidebar = () => {
     isSidebarCollapsed,
     setIsSidebarCollapsed,
   } = useLayout();
+  const user = getUser();
+  const assetRestricted = isAssetRestrictedUser(user);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
@@ -1490,7 +1493,40 @@ export const StacticSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
-  const currentModules = modulesByPackage[currentSection] || [];
+  // Helper function to recursively filter out asset-related items
+  const filterAssetItems = (items: any[]): any[] => {
+    if (!assetRestricted) return items;
+    
+    return items
+      .filter((item: any) => {
+        // Filter out direct asset links
+        if (item.href === "/maintenance/asset" || 
+            item.href === "/maintenance/audit/assets" ||
+            item.href?.startsWith("/settings/asset-setup")) {
+          return false;
+        }
+        // Filter out items named "Asset Setup" or "Assets"
+        if (item.name === "Asset Setup" || item.name === "Assets") {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => {
+        // Recursively filter subItems if they exist
+        if (item.subItems && Array.isArray(item.subItems)) {
+          return {
+            ...item,
+            subItems: filterAssetItems(item.subItems),
+          };
+        }
+        return item;
+      });
+  };
+
+  let currentModules = modulesByPackage[currentSection] || [];
+  if (assetRestricted) {
+    currentModules = filterAssetItems(currentModules);
+  }
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
     const currentPath = location.pathname;

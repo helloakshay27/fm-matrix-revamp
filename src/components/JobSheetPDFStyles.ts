@@ -87,7 +87,7 @@ export class JobSheetPDFStyles {
         .header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           margin-bottom: 20px;
           padding: 18px;
           width: 100%;
@@ -97,10 +97,11 @@ export class JobSheetPDFStyles {
         }
 
         .left-logo {
-          width: 50%;
+          width: 30%;
           padding-right: 20px;
           height: auto;
           display: flex;
+          flex-direction: row;
           align-items: center;
           justify-content: flex-start;
         }
@@ -110,6 +111,24 @@ export class JobSheetPDFStyles {
           max-height: 60px;
           width: auto;
           max-width: 100%;
+        }
+
+        .pdf-checklist-title-wrapper {
+          width: 40%;
+          text-align: center;
+        }
+
+        .header-right-spacer {
+          width: 30%;
+        }
+
+        .pdf-checklist-title {
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          color: #000000;
+          line-height: 1.2;
+          text-transform: none;
         }
 
         .arabic-text {
