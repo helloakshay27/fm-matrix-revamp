@@ -915,16 +915,21 @@ export const EditBookingSetupPage = () => {
                 formDataToSend.append(`image_remove[]`, id);
             });
 
-            const selectedAccessories = Object.entries(formData.amenities)
-                .filter(([_, value]: [string, any]) => value.selected)
-                .map(([inventoryId, value]: [string, any]) => ({ inventoryId: parseInt(inventoryId), id: value.id }));
+            const allAccessories = Object.entries(formData.amenities)
+                .map(([inventoryId, value]: [string, any]) => ({ inventoryId: parseInt(inventoryId), id: value.id, selected: value.selected }));
 
-            console.log('=== Selected Accessories (Edit) ===');
+            const selectedAccessories = allAccessories.filter(acc => acc.selected);
+            const deselectedAccessories = allAccessories.filter(acc => !acc.selected && acc.id);
+
+            console.log('=== Accessories (Edit) ===');
             console.log('formData.amenities:', formData.amenities);
             console.log('selectedAccessories:', selectedAccessories);
+            console.log('deselectedAccessories:', deselectedAccessories);
             console.log('Total accessories selected:', selectedAccessories.length);
-            console.log('====================================');
+            console.log('Total accessories deselected:', deselectedAccessories.length);
+            console.log('===========================');
 
+            // Append selected accessories
             selectedAccessories.forEach((accessory, index) => {
                 if (accessory.id) {
                     formDataToSend.append(
@@ -937,6 +942,20 @@ export const EditBookingSetupPage = () => {
                     accessory.inventoryId.toString()
                 );
                 console.log(`Appending accessory [${index}]: id = ${accessory.id}, pms_inventory_id = ${accessory.inventoryId}`);
+            });
+
+            // Append deselected accessories with _destroy flag
+            deselectedAccessories.forEach((accessory, index) => {
+                const destroyIndex = selectedAccessories.length + index;
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${destroyIndex}][id]`,
+                    accessory.id.toString()
+                );
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${destroyIndex}][_destroy]`,
+                    "1"
+                );
+                console.log(`Marking accessory [${destroyIndex}] for deletion: id = ${accessory.id}, _destroy = 1`);
             });
 
             let index = 0;
