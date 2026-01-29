@@ -111,7 +111,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isLocalhost =
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
-    hostname.includes("fm-matrix.lockated.com");
+    hostname.includes("fm-matrix.lockated.com") ||
+    userEmail === "ubaid.hashmat@lockated.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -336,7 +337,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 300 ||
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
-        selectedCompany?.id === 199 ? (
+        selectedCompany?.id === 199 ||
+        userEmail === "ubaid.hashmat@lockated.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
