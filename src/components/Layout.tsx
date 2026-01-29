@@ -48,6 +48,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
+  const currentUser = getUser();
+  const userEmail = currentUser?.email || "No email";
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -145,6 +147,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const storedToken = localStorage.getItem("token");
     const hasToken = hasTokenParam || storedToken;
 
+    if (
+      selectedCompany?.id === 300 ||
+      selectedCompany?.id === 295 ||
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 199 ||
+      userEmail === "ubaid.hashmat@lockated.com"
+    ) {
+      return <ActionSidebar />;
+    }
+
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanSidebar />;
@@ -177,15 +189,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <PulseSidebar />;
     }
 
-    if (
-      selectedCompany?.id === 300 ||
-      selectedCompany?.id === 295 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199
-    ) {
-      return <ActionSidebar />;
-    }
-
     // Use company ID-based layout
     switch (layoutConfig.sidebarComponent) {
       case "oman":
@@ -206,6 +209,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Employees don't need dynamic header, they use EmployeeHeader instead
     if (isEmployeeUser && isLocalhost) {
       return null; // No dynamic header for employees
+    }
+
+    if (
+      selectedCompany?.id === 300 ||
+      selectedCompany?.id === 295 ||
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 199 ||
+      userEmail === "ubaid.hashmat@lockated.com"
+    ) {
+      return <ActionHeader />;
     }
 
     // Domain-based logic takes precedence for backward compatibility
@@ -232,15 +245,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Pulse Privilege - Company ID 305 OR isPulseSite fallback
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
-    }
-
-    if (
-      selectedCompany?.id === 300 ||
-      selectedCompany?.id === 295 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199
-    ) {
-      return <ActionHeader />;
     }
 
     // Use company ID-based layout
