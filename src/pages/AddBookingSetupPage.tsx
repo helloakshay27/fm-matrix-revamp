@@ -587,9 +587,9 @@ export const AddBookingSetupPage = () => {
         formDataToSend.append(`cover_image`, file);
       });
 
-      selectedBookingFiles.forEach((file) => {
-        formDataToSend.append(`attachments[]`, file);
-      });
+      // selectedBookingFiles.forEach((file) => {
+      //   formDataToSend.append(`attachments[]`, file);
+      // });
 
       selectedGalleryImages.forEach((image: any, index: number) => {
         // Convert aspect ratio to format: 16_9, 9_16, 1_1, 3_2
@@ -1963,7 +1963,7 @@ export const AddBookingSetupPage = () => {
               )}
             </div>
 
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <Image className="w-4 h-4" />
@@ -2018,7 +2018,7 @@ export const AddBookingSetupPage = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Gallery Images Card */}
