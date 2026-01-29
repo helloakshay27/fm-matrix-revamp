@@ -387,6 +387,7 @@ import { AddPermitPage } from "./pages/AddPermitPage";
 // Import Operational Audit pages
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { AddOperationalAuditSchedulePage } from "./pages/AddOperationalAuditSchedulePage";
+import { ViewOperationalAuditSchedulePage } from "./pages/ViewOperationalAuditSchedulePage";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
 
@@ -2215,6 +2216,10 @@ function App() {
                     <Route
                       path="/maintenance/audit/operational/scheduled/add"
                       element={<AddOperationalAuditSchedulePage />}
+                    />
+                    <Route
+                      path="/maintenance/audit/operational/scheduled/view/:id"
+                      element={<ViewOperationalAuditSchedulePage />}
                     />
                     <Route
                       path="/maintenance/audit/operational/conducted"

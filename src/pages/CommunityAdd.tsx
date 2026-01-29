@@ -11,7 +11,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
 import axios from "axios";
 
 const CommunityAdd = () => {
@@ -21,12 +20,12 @@ const CommunityAdd = () => {
     const coverImageInputRef = useRef<HTMLInputElement>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isActive, setIsActive] = useState(true);
     const [formData, setFormData] = useState({
         communityName: "",
         description: "",
         coverImage: null as File | null,
         category: "play",
+        communityCategory: "open",
     });
 
     const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
@@ -96,6 +95,7 @@ const CommunityAdd = () => {
             formDataToSend.append("community[description]", formData.description);
             formDataToSend.append("community[status]", "true");
             formDataToSend.append("community[category]", formData.category);
+            // formDataToSend.append("community[community_type]", formData.communityCategory);
 
             if (formData.coverImage) {
                 formDataToSend.append("community[attachment]", formData.coverImage);
@@ -135,15 +135,6 @@ const CommunityAdd = () => {
                             </div>
                             <span className="font-semibold text-lg text-gray-800">Details</span>
                         </div>
-                        {/* <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                            <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
-                            <Switch
-                                checked={isActive}
-                                onCheckedChange={setIsActive}
-                                className="data-[state=checked]:bg-green-500"
-                            />
-                        </div> */}
                     </div>
 
                     <div className="p-6 bg-white">
@@ -186,7 +177,7 @@ const CommunityAdd = () => {
                                     name="category"
                                     value={formData.category}
                                     onChange={handleInputChange}
-                                    className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
+                                    className="flex flex-wrap items-center gap-y-1 text-sm"
                                 >
                                     <FormControlLabel
                                         value="play"
@@ -229,6 +220,46 @@ const CommunityAdd = () => {
                                     />
                                 </RadioGroup>
                             </div>
+
+                            {/* <div className="flex items-center ml-4 gap-3">
+                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                    Community Category:
+                                </span>
+                                <RadioGroup
+                                    row
+                                    name="communityCategory"
+                                    value={formData.communityCategory}
+                                    onChange={handleInputChange}
+                                    className="flex flex-wrap items-center gap-y-1 text-sm"
+                                >
+                                    <FormControlLabel
+                                        value="open"
+                                        control={
+                                            <Radio
+                                                size="small"
+                                                sx={{
+                                                    color: "#C72030",
+                                                    "&.Mui-checked": { color: "#C72030" },
+                                                }}
+                                            />
+                                        }
+                                        label={<span className="text-sm text-gray-900">Open to all</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="requestable"
+                                        control={
+                                            <Radio
+                                                size="small"
+                                                sx={{
+                                                    color: "#C72030",
+                                                    "&.Mui-checked": { color: "#C72030" },
+                                                }}
+                                            />
+                                        }
+                                        label={<span className="text-sm text-gray-900">Requestable</span>}
+                                    />
+                                </RadioGroup>
+                            </div> */}
                         </div>
 
                         {/* Description */}

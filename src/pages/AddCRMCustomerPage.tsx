@@ -15,6 +15,8 @@ import { TextField } from "@mui/material";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { createCustomer } from "@/store/slices/cusomerSlice";
 import { toast } from "sonner";
+import ReactSelect from 'react-select';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export const AddCRMCustomerPage = () => {
   const dispatch = useAppDispatch();
@@ -53,9 +55,48 @@ export const AddCRMCustomerPage = () => {
     },
   ]);
 
+  const [sites, setSites] = useState<{ id: number; name: string }[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<number[]>([]);
+
   useEffect(() => {
     setCurrentSection("CRM");
+    fetchSites();
   }, [setCurrentSection]);
+
+  const fetchSites = async () => {
+    try {
+      const userData = localStorage.getItem('user');
+      let userId = '12437'; // default fallback
+      
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          userId = parsedUser.id || parsedUser.user_id || '12437';
+        } catch (e) {
+          console.warn('Could not parse user data from localStorage');
+        }
+      }
+
+      const response = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${userId}`), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.sites && Array.isArray(data.sites)) {
+          setSites(data.sites);
+        } else {
+          setSites([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      toast.error('Failed to fetch sites');
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -121,8 +162,12 @@ export const AddCRMCustomerPage = () => {
       toast.error("Customer name is required");
       return false;
     }
-    if (!formData.customerCode) {
-      toast.error("Customer code is required");
+    // if (!formData.customerCode) {
+    //   toast.error("Customer code is required");
+    //   return false;
+    // }
+    if (selectedSiteIds.length === 0) {
+      toast.error("Please select at least one site");
       return false;
     }
     return true;
@@ -131,6 +176,7 @@ export const AddCRMCustomerPage = () => {
   const handleSave = async () => {
     if (!validateForm()) return;
     const payload = {
+      site_ids: selectedSiteIds,
       entity: {
         name: formData.customerName,
         email: formData.email || undefined,
@@ -299,24 +345,6 @@ export const AddCRMCustomerPage = () => {
               </div>
               <div>
                 <TextField
-                  label="Customer Code*"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.customerCode}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    handleInputChange("customerCode", value);
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <TextField
                   label="Company Code"
                   variant="outlined"
                   fullWidth
@@ -332,8 +360,24 @@ export const AddCRMCustomerPage = () => {
                     },
                   }}
                 />
+                {/* <TextField
+                  label="Customer Code*"
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  value={formData.customerCode}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleInputChange("customerCode", value);
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                /> */}
               </div>
-              <div>
+               <div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <input
@@ -363,6 +407,79 @@ export const AddCRMCustomerPage = () => {
                   </div>
                 </div>
               </div>
+              
+             
+            </div>
+
+            {/* Enable Sites Multi-Select */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Enable Sites <span className="text-red-500">*</span>
+              </label>
+              <ReactSelect
+                isMulti
+                options={sites.map(site => ({
+                  value: site.id,
+                  label: site.name
+                }))}
+                onChange={(selected) => {
+                  if (!selected || selected.length === 0) {
+                    setSelectedSiteIds([]);
+                    return;
+                  }
+                  const siteIds = selected.map(s => s.value);
+                  setSelectedSiteIds(siteIds);
+                }}
+                value={sites
+                  .filter(site => selectedSiteIds.includes(site.id))
+                  .map(site => ({
+                    value: site.id,
+                    label: site.name
+                  }))
+                }
+                placeholder="Select sites..."
+                noOptionsMessage={() => "No sites available"}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: '40px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      border: '1px solid #cbd5e1'
+                    }
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: '#f1f5f9',
+                    borderRadius: '4px'
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: '#334155'
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: '#64748b',
+                    borderRadius: '0px',
+                    '&:hover': {
+                      backgroundColor: '#e2e8f0',
+                      color: '#475569'
+                    }
+                  })
+                }}
+              />
             </div>
           </div>
         </div>
