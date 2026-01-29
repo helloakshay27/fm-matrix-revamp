@@ -96,7 +96,13 @@ export const OperationalAuditScheduledDashboard = () => {
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
-        <Button variant="ghost" size="sm" onClick={() => console.log('View audit:', item.id)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/maintenance/audit/operational/scheduled/view/${item.id}`, {
+            state: { formCode: item.custom_form_code }
+          })}
+        >
           <Eye className="w-4 h-4" />
         </Button>
       );
