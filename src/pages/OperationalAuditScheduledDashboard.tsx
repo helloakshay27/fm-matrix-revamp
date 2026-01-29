@@ -1,36 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+interface ScheduleItem {
+  id: number;
+  form_name: string;
+  no_of_associations: number;
+  create_ticket: string;
+  task_assigned_to: string | null;
+  created_at: string;
+  custom_form_code: string;
+  description: string;
+  checklist_for: string;
+  schedule_type: string;
+  tasks_count: number;
+}
+
+interface PaginationData {
+  current_page: number;
+  per_page: number;
+  total_pages: number;
+  total_entries: number;
+}
 
 export const OperationalAuditScheduledDashboard = () => {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationData>({
+    current_page: 1,
+    per_page: 20,
+    total_pages: 1,
+    total_entries: 0
+  });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Sample data matching the image
-  const scheduleData = [
-    { id: "11600", activityName: "clean", noOfAssociation: 1, task: "No", taskAssignedTo: "", createdOn: "02/01/2025, 01:41 PM" },
-    { id: "11549", activityName: "Engineering Audit Checklist 2", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "10/12/2024, 06:21 PM" },
-    { id: "11496", activityName: "This is test Audit", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "24/10/2024, 12:17 PM" },
-    { id: "11491", activityName: "This is test Audit", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "23/10/2024, 06:33 PM" },
-    { id: "11091", activityName: "Short Audit Process Report 1", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "16/05/2024, 12:13 PM" },
-    { id: "11089", activityName: "Short Audit Process Report", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "15/05/2024, 01:39 PM" },
-    { id: "11088", activityName: "Engineering Audit Report", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "15/05/2024, 01:36 PM" },
-    { id: "10079", activityName: "Allow observation", noOfAssociation: 0, task: "No", taskAssignedTo: "", createdOn: "23/11/2023, 06:01 PM" },
-    { id: "9182", activityName: "Short check list", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "08/04/2023, 12:20 AM" },
-    { id: "9145", activityName: "Engineering Audit Checklist 2", noOfAssociation: 0, task: "Yes", taskAssignedTo: "sanket Patil", createdOn: "27/03/2023, 11:31 AM" },
-    { id: "8935", activityName: "Engineer audit", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "13/02/2023, 05:14 PM" },
-  ];
+  useEffect(() => {
+    fetchScheduleData(currentPage);
+  }, [currentPage]);
+
+  const fetchScheduleData = async (page: number) => {
+    try {
+      setLoading(true);
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+
+      if (!baseUrl || !token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const response = await fetch(
+        `https://${baseUrl}/pms/custom_forms/audit_checklists.json?page=${page}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch schedule data');
+      }
+
+      const data = await response.json();
+      setScheduleData(data.schedule_list || []);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.error('Error fetching schedule data:', error);
+      toast.error('Failed to load schedule data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: 'id', label: 'ID', sortable: true, draggable: true },
-    { key: 'activityName', label: 'Activity Name', sortable: true, draggable: true },
-    { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, draggable: true },
-    { key: 'task', label: 'Task', sortable: true, draggable: true },
-    { key: 'taskAssignedTo', label: 'Task Assigned To', sortable: true, draggable: true },
-    { key: 'createdOn', label: 'Created on', sortable: true, draggable: true },
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true },
+    { key: 'id', label: 'ID', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'form_name', label: 'Activity Name', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'no_of_associations', label: 'No. Of Association', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'create_ticket', label: 'Task', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'task_assigned_to', label: 'Task Assigned To', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Created on', sortable: true, draggable: true, defaultVisible: true },
   ];
 
   const handleAddSchedule = () => {
@@ -40,7 +96,13 @@ export const OperationalAuditScheduledDashboard = () => {
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
-        <Button variant="ghost" size="sm" onClick={() => console.log('View audit:', item.id)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/maintenance/audit/operational/scheduled/view/${item.id}`, {
+            state: { formCode: item.custom_form_code }
+          })}
+        >
           <Eye className="w-4 h-4" />
         </Button>
       );
@@ -48,12 +110,15 @@ export const OperationalAuditScheduledDashboard = () => {
     if (columnKey === 'id') {
       return <span className="text-blue-600 font-medium">{item.id}</span>;
     }
+    if (columnKey === 'task_assigned_to') {
+      return item.task_assigned_to || '-';
+    }
     return item[columnKey];
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(scheduleData.map(item => item.id));
+      setSelectedItems(scheduleData.map(item => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -67,15 +132,19 @@ export const OperationalAuditScheduledDashboard = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
         <div>
-          
+
           <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULE LIST</h1>
         </div>
       </div>
-      
+
 
       <div className="overflow-x-auto">
         <EnhancedTable
@@ -86,11 +155,19 @@ export const OperationalAuditScheduledDashboard = () => {
           selectedItems={selectedItems}
           onSelectAll={handleSelectAll}
           onSelectItem={handleSelectItem}
-          getItemId={(item) => item.id}
+          getItemId={(item) => item.id.toString()}
           storageKey="schedule-list-table"
           className="w-full"
+          loading={loading}
+          pagination={{
+            currentPage: pagination.current_page,
+            totalPages: pagination.total_pages,
+            totalEntries: pagination.total_entries,
+            perPage: pagination.per_page,
+            onPageChange: handlePageChange
+          }}
           leftActions={
-            <Button 
+            <Button
               onClick={handleAddSchedule}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:opacity-90 flex items-center gap-2"

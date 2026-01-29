@@ -953,10 +953,10 @@ const CommunityFeedTab = ({ communityId, communityName }: CommunityFeedTabProps)
                                                 <h4 className="font-semibold text-gray-900">{comment.commentor_full_name}</h4>
                                                 {comment.reports_count && comment.reports_count > 0 && (
                                                     <span
-                                                        className="bg-[rgba(199,32,48,0.5)] text-white text-xs font-bold px-3 py-1 rounded-[4px] flex items-center gap-1 cursor-pointer hover:bg-[#c72030] transition-colors"
+                                                        className="bg-[rgba(199,32,48,0.5)] text-white text-xs px-2 py-1 rounded-[4px] flex items-center gap-1 cursor-pointer hover:bg-[#c72030] transition-colors w-[125px]"
                                                         onClick={() => navigate(`/pulse/community/${communityId}/reports?resourceType=Comment&resourceId=${comment.id}`)}
                                                     >
-                                                        <FileText size={13} />{comment.reports_count} Report{comment.reports_count > 1 ? 's' : ''}
+                                                        <FileText size={12} />{comment.reports_count} Report{comment.reports_count > 1 ? 's' : ''}
                                                     </span>
                                                 )}
                                             </div>

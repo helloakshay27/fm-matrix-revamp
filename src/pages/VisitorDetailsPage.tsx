@@ -780,13 +780,13 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                    {hasData(visitorData.entry_gate) && (
+                    {/* {hasData(visitorData.entry_gate) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Entry Gate</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{visitorData.entry_gate}</span>
                       </div>
-                    )}
+                    )} */}
 
                     {hasData(visitorData.exit_gate) && (
                       <div className="flex items-start">

@@ -758,10 +758,10 @@ const ReportsDetailsPage = () => {
                                     <p className="text-gray-700 mb-3">{reportDetails.comment.body}</p>
                                     <div className="flex items-center justify-between border-t pt-3">
                                         <div className="flex items-center gap-4">
-                                            <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
+                                            {/* <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
                                                 <Heart size={16} />
                                                 <span className="text-sm font-medium">0</span>
-                                            </button>
+                                            </button> */}
                                         </div>
                                         <Button variant="ghost" size="sm" className="border border-[#c72030] rounded-[5px] text-[#c72030]" onClick={() => deleteComment(reportDetails.comment.id)}>
                                             <Trash2 size={18} color="#c72030" /> Delete
