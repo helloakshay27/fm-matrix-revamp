@@ -279,6 +279,7 @@ export const EditBookingSetupPage = () => {
                 prepaid: responseData.prepaid,
                 payOnFacility: responseData.pay_on_facility,
                 complimentary: responseData.complementary,
+                billToCompany: responseData.bill_to_company,
                 gstPercentage: responseData.gst,
                 sgstPercentage: responseData.sgst,
                 igstPercentage: responseData.igst,
@@ -719,33 +720,33 @@ export const EditBookingSetupPage = () => {
             );
 
             // Facility Duration Charges
-            // formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
-            //     if (charge.id) {
-            //         formDataToSend.append(
-            //             `facility_setup[facility_duration_charges_attributes][${index}][id]`,
-            //             charge.id.toString()
-            //         );
-            //     }
-            //     if (charge._destroy) {
-            //         formDataToSend.append(
-            //             `facility_setup[facility_duration_charges_attributes][${index}][_destroy]`,
-            //             "true"
-            //         );
-            //     } else {
-            //         if (charge.duration_hours) {
-            //             formDataToSend.append(
-            //                 `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
-            //                 charge.duration_hours
-            //             );
-            //         }
-            //         if (charge.price) {
-            //             formDataToSend.append(
-            //                 `facility_setup[facility_duration_charges_attributes][${index}][price]`,
-            //                 charge.price
-            //             );
-            //         }
-            //     }
-            // });
+            formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+                if (charge.id) {
+                    formDataToSend.append(
+                        `facility_setup[facility_duration_charges_attributes][${index}][id]`,
+                        charge.id.toString()
+                    );
+                }
+                if (charge._destroy) {
+                    formDataToSend.append(
+                        `facility_setup[facility_duration_charges_attributes][${index}][_destroy]`,
+                        "true"
+                    );
+                } else {
+                    if (charge.duration_hours) {
+                        formDataToSend.append(
+                            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+                            charge.duration_hours
+                        );
+                    }
+                    if (charge.price) {
+                        formDataToSend.append(
+                            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+                            charge.price
+                        );
+                    }
+                }
+            });
 
             // Block Days - Handle multiple block day records
             console.log('=== Preparing Block Days Payload ===');
@@ -894,11 +895,11 @@ export const EditBookingSetupPage = () => {
             }
 
             // Append booking files (multiple files)
-            selectedBookingFiles.forEach(({ file }) => {
-                if (typeof file !== "string") {
-                    formDataToSend.append(`attachments[]`, file);
-                }
-            });
+            // selectedBookingFiles.forEach(({ file }) => {
+            //     if (typeof file !== "string") {
+            //         formDataToSend.append(`attachments[]`, file);
+            //     }
+            // });
 
             // Append gallery images
             selectedGalleryImages.forEach((image: any, index: number) => {
@@ -1528,7 +1529,7 @@ export const EditBookingSetupPage = () => {
                         </div>
 
                         {/* Facility Duration Charges Table */}
-                        {/* {!formData.isBookable && (
+                        {!formData.isBookable && (
                             <div className="mt-8">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
@@ -1642,7 +1643,7 @@ export const EditBookingSetupPage = () => {
                                     </table>
                                 </div>
                             </div>
-                        )} */}
+                        )}
                     </div>
 
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -2309,20 +2310,30 @@ export const EditBookingSetupPage = () => {
                                                     id="complimentary"
                                                     checked={formData.complimentary}
                                                     onCheckedChange={(checked) =>
-                                                        setFormData({ ...formData, complimentary: !!checked })
+                                                        setFormData({
+                                                            ...formData,
+                                                            complimentary: !!checked,
+                                                            billToCompany: !!checked ? false : formData.billToCompany
+                                                        })
                                                     }
+                                                    disabled={formData.billToCompany}
                                                 />
-                                                <label htmlFor="complimentary">Complimentary</label>
+                                                <label htmlFor="complimentary" className={formData.billToCompany ? "text-gray-400" : ""}>Complimentary</label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <Checkbox
                                                     id="billToCompany"
                                                     checked={formData.billToCompany}
                                                     onCheckedChange={(checked) =>
-                                                        setFormData({ ...formData, billToCompany: !!checked })
+                                                        setFormData({
+                                                            ...formData,
+                                                            billToCompany: !!checked,
+                                                            complimentary: !!checked ? false : formData.complimentary
+                                                        })
                                                     }
+                                                    disabled={formData.complimentary}
                                                 />
-                                                <label htmlFor="billToCompany">Bill to Company</label>
+                                                <label htmlFor="billToCompany" className={formData.complimentary ? "text-gray-400" : ""}>Bill to Company</label>
                                             </div>
                                         </>
                                     )
@@ -2427,7 +2438,7 @@ export const EditBookingSetupPage = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+                        {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                     <Image className="w-4 h-4" />
@@ -2489,7 +2500,7 @@ export const EditBookingSetupPage = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Gallery Images Card */}

@@ -30,6 +30,11 @@ interface Lease {
     paid_parking: string | boolean;
 }
 
+interface Domain {
+    id: number;
+    domain: string;
+}
+
 interface WalletTransaction {
     transactionId: string;
     bookingId: string;
@@ -45,6 +50,7 @@ interface WalletTransaction {
 interface CustomerResponse {
     entity: Customer;
     customer_leases: Lease[];
+    domains: Domain[];
 }
 
 interface LayoutContextType {
@@ -103,6 +109,7 @@ export const CrmCustomerDetails = () => {
     const [topUpAmount, setTopUpAmount] = useState('');
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [lease, setLease] = useState<Lease[]>([]);
+    const [domains, setDomains] = useState<Domain[]>([]);
 
     useEffect(() => {
         const fetchCustomer = async () => {
@@ -110,6 +117,7 @@ export const CrmCustomerDetails = () => {
                 const response = await dispatch(getCustomerById({ id: Number(id), baseUrl, token })).unwrap() as CustomerResponse;
                 setCustomer(response.entity);
                 setLease(response.customer_leases);
+                setDomains(response.domains || []);
             } catch (error: unknown) {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customer';
                 console.error(errorMessage);
@@ -186,14 +194,7 @@ export const CrmCustomerDetails = () => {
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.company_code || '-'}</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <label className="w-32 text-sm font-medium text-gray-700">Color Code</label>
-                            <span className="text-sm">:</span>
-                            <div
-                                className="w-6 h-6 rounded border border-gray-300"
-                                style={{ backgroundColor: customer?.color_code || '#ffffff' }}
-                            ></div>
-                        </div>
+                      
                     </div>
 
                     <div className="space-y-4">
@@ -207,10 +208,18 @@ export const CrmCustomerDetails = () => {
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.company_code}</span>
                         </div>
-                        <div className="flex items-center gap-4">
+                        {/* <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Code</label>
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.ext_customer_code || '-'}</span>
+                        </div> */}
+                          <div className="flex items-center gap-4">
+                            <label className="w-32 text-sm font-medium text-gray-700">Color Code</label>
+                            <span className="text-sm">:</span>
+                            <div
+                                className="w-6 h-6 rounded border border-gray-300"
+                                style={{ backgroundColor: customer?.color_code || '#ffffff' }}
+                            ></div>
                         </div>
                     </div>
                 </div>
@@ -227,6 +236,25 @@ export const CrmCustomerDetails = () => {
                     hideColumnsButton={true}
                     hideTableSearch={true}
                 />
+            </div>
+
+            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Domains</h3>
+                {domains.length > 0 ? (
+                    <div className="space-y-2">
+                        {domains.map((domain) => (
+                            <div
+                                key={domain.id}
+                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                            >
+                                <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
+                                <span className="text-sm text-gray-900">{domain.domain}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">No domains found</p>
+                )}
             </div>
 
             <Dialog

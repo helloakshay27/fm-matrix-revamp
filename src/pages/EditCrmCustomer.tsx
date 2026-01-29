@@ -16,6 +16,12 @@ interface Lease {
     paidParking: string;
 }
 
+interface Domain {
+    id?: number;
+    domain: string;
+    _destroy?: boolean;
+}
+
 export const EditCrmCustomer = () => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
@@ -42,6 +48,7 @@ export const EditCrmCustomer = () => {
             paidParking: "",
         },
     ]);
+    const [domains, setDomains] = useState<Domain[]>([{ domain: "" }]);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -68,6 +75,14 @@ export const EditCrmCustomer = () => {
                         freeParking: lease.free_parking,
                         paidParking: lease.paid_parking,
                     }))
+                );
+                setDomains(
+                    response.domains && response.domains.length > 0
+                        ? response.domains.map((domain) => ({
+                              id: domain.id,
+                              domain: domain.domain,
+                          }))
+                        : [{ domain: "" }]
                 );
             } catch (error: unknown) {
                 const errorMessage =
@@ -121,6 +136,31 @@ export const EditCrmCustomer = () => {
         }
     };
 
+    const handleDomainChange = (index: number, value: string) => {
+        setDomains((prev) =>
+            prev.map((domain, i) => (i === index ? { ...domain, domain: value } : domain))
+        );
+    };
+
+    const addNewDomain = () => {
+        setDomains((prev) => [...prev, { domain: "" }]);
+    };
+
+    const removeDomain = (index: number) => {
+        const domain = domains[index];
+        if (domain.id) {
+            // Mark existing domain for deletion
+            setDomains((prev) =>
+                prev.map((d, i) => (i === index ? { ...d, _destroy: true } : d))
+            );
+        } else {
+            // Remove new domain
+            if (domains.filter((d) => !d._destroy).length > 1) {
+                setDomains((prev) => prev.filter((_, i) => i !== index));
+            }
+        }
+    };
+
     const validateForm = () => {
         if (!formData.customerName) {
             toast.error("Customer name is required");
@@ -134,24 +174,24 @@ export const EditCrmCustomer = () => {
             toast.error("Mobile number is required");
             return false;
         }
-        for (const lease of leases) {
-            if (!lease.leaseStartDate) {
-                toast.error("Lease start date is required");
-                return false;
-            }
-            if (!lease.leaseEndDate) {
-                toast.error("Lease end date is required");
-                return false;
-            }
-            if (!lease.freeParking) {
-                toast.error("Free parking is required");
-                return false;
-            }
-            if (!lease.paidParking) {
-                toast.error("Paid parking is required");
-                return false;
-            }
-        }
+        // for (const lease of leases) {
+        //     if (!lease.leaseStartDate) {
+        //         toast.error("Lease start date is required");
+        //         return false;
+        //     }
+        //     if (!lease.leaseEndDate) {
+        //         toast.error("Lease end date is required");
+        //         return false;
+        //     }
+        //     if (!lease.freeParking) {
+        //         toast.error("Free parking is required");
+        //         return false;
+        //     }
+        //     if (!lease.paidParking) {
+        //         toast.error("Paid parking is required");
+        //         return false;
+        //     }
+        // }
         return true
     }
 
@@ -177,6 +217,13 @@ export const EditCrmCustomer = () => {
                     free_parking: lease.freeParking,
                     paid_parking: lease.paidParking,
                 })),
+                entity_domains_attributes : domains
+                    .filter((domain) => domain.domain.trim() !== "" || domain._destroy)
+                    .map((domain) => ({
+                        ...(domain.id != null && { id: domain.id }),
+                        domain: domain.domain,
+                        ...(domain._destroy && { _destroy: true }),
+                    })),
             },
         };
 
@@ -307,7 +354,7 @@ export const EditCrmCustomer = () => {
                                 />
                             </div>
                             <div>
-                                <TextField
+                                {/* <TextField
                                     label="Customer Code"
                                     variant="outlined"
                                     fullWidth
@@ -322,7 +369,7 @@ export const EditCrmCustomer = () => {
                                             borderRadius: "8px",
                                         },
                                     }}
-                                />
+                                /> */}
                             </div>
                             <div>
                                 <TextField
@@ -394,7 +441,7 @@ export const EditCrmCustomer = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div>
                                             <TextField
-                                                label="Lease Start Date*"
+                                                label="Lease Start Date"
                                                 variant="outlined"
                                                 fullWidth
                                                 size="small"
@@ -474,6 +521,65 @@ export const EditCrmCustomer = () => {
                                 onClick={addNewLease}
                             >
                                 Add Lease
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Calendar className="w-5 h-5" />
+                            <h3 className="text-lg font-semibold">DOMAINS</h3>
+                        </div>
+                        {domains
+                            .filter((domain) => !domain._destroy)
+                            .map((domain, index) => {
+                                const actualIndex = domains.findIndex((d, i) => d === domain);
+                                return (
+                                    <Card
+                                        key={actualIndex}
+                                        sx={{
+                                            mb: 3,
+                                            borderRadius: "8px",
+                                            border: "1px solid #e5e7eb",
+                                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 3 }}>
+                                            <div className="flex items-center gap-4">
+                                                <TextField
+                                                    label={`Domain ${index + 1}`}
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    size="small"
+                                                    value={domain.domain}
+                                                    onChange={(e) => handleDomainChange(actualIndex, e.target.value)}
+                                                    placeholder="e.g., example.com"
+                                                    sx={{
+                                                        "& .MuiOutlinedInput-root": {
+                                                            borderRadius: "8px",
+                                                        },
+                                                    }}
+                                                />
+                                                {domains.filter((d) => !d._destroy).length > 1 && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        className="p-2 h-10"
+                                                        onClick={() => removeDomain(actualIndex)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        <div className="mt-4">
+                            <Button
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg"
+                                onClick={addNewDomain}
+                            >
+                                Add Domain
                             </Button>
                         </div>
                     </div>

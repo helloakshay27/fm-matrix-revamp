@@ -1,10 +1,10 @@
-import EventApprovedList from './EventApprovedList';
-import EventPendingList from './EventPendingList';
-import EventWaitingList from './EventWaitingList';
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { useState } from 'react'
+import CommunityWaitingList from "./CommunityWaitingList";
+import CommunityApprovedList from "./CommunityApprovedList";
+import CommunityPendingList from "./CommunityPendingList";
 
-const EventParticipantsTab = () => {
+const CommunityPendingRequestTab = ({ communityId }: { communityId: string }) => {
     const [activeTab, setActiveTab] = useState("waitingList");
 
     return (
@@ -17,19 +17,19 @@ const EventParticipantsTab = () => {
                 </TabsList>
 
                 <TabsContent value="waitingList">
-                    <EventWaitingList />
+                    <CommunityWaitingList />
                 </TabsContent>
 
                 <TabsContent value="approved">
-                    <EventApprovedList />
+                    <CommunityApprovedList />
                 </TabsContent>
 
                 <TabsContent value="pending">
-                    <EventPendingList />
+                    <CommunityPendingList communityId={communityId} />
                 </TabsContent>
             </Tabs>
         </div>
     )
 }
 
-export default EventParticipantsTab
+export default CommunityPendingRequestTab
