@@ -95,7 +95,7 @@ const CommunityAdd = () => {
             formDataToSend.append("community[description]", formData.description);
             formDataToSend.append("community[status]", "true");
             formDataToSend.append("community[category]", formData.category);
-            // formDataToSend.append("community[community_type]", formData.communityCategory);
+            formDataToSend.append("community[community_type]", formData.communityCategory);
 
             if (formData.coverImage) {
                 formDataToSend.append("community[attachment]", formData.coverImage);
@@ -221,7 +221,7 @@ const CommunityAdd = () => {
                                 </RadioGroup>
                             </div>
 
-                            {/* <div className="flex items-center ml-4 gap-3">
+                            <div className="flex items-center ml-4 gap-3">
                                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     Community Category:
                                 </span>
@@ -259,7 +259,7 @@ const CommunityAdd = () => {
                                         label={<span className="text-sm text-gray-900">Requestable</span>}
                                     />
                                 </RadioGroup>
-                            </div> */}
+                            </div>
                         </div>
 
                         {/* Description */}

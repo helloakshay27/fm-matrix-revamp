@@ -30,6 +30,7 @@ const CommunityEdit = () => {
     description: "",
     category: "play",
     coverImage: null as File | null,
+    communityCategory: "open",
   });
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ const CommunityEdit = () => {
           description: community?.description || "",
           category: community?.category || "play",
           coverImage: null,
+          communityCategory: community?.community_type || "open",
         });
         setIsActive(Boolean(community?.status));
         setCoverImagePreview(community?.icon || community?.cover_image || null);
@@ -116,6 +118,7 @@ const CommunityEdit = () => {
       fd.append("community[name]", formData.communityName);
       fd.append("community[description]", formData.description);
       fd.append("community[category]", formData.category);
+      fd.append("community[community_type]", formData.communityCategory);
       if (formData.coverImage) {
         fd.append("community[attachment]", formData.coverImage);
       }
@@ -240,7 +243,7 @@ const CommunityEdit = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                  className="flex flex-wrap items-center gap-y-1 text-sm"
                 >
                   <FormControlLabel
                     value="play"
@@ -280,6 +283,46 @@ const CommunityEdit = () => {
                       />
                     }
                     label={<span className="text-sm text-gray-900">Persuit</span>}
+                  />
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center ml-4 gap-3">
+                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  Community Category:
+                </span>
+                <RadioGroup
+                  row
+                  name="communityCategory"
+                  value={formData.communityCategory}
+                  onChange={handleInputChange}
+                  className="flex flex-wrap items-center gap-y-1 text-sm"
+                >
+                  <FormControlLabel
+                    value="open"
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: "#C72030",
+                          "&.Mui-checked": { color: "#C72030" },
+                        }}
+                      />
+                    }
+                    label={<span className="text-sm text-gray-900">Open to all</span>}
+                  />
+                  <FormControlLabel
+                    value="requestable"
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: "#C72030",
+                          "&.Mui-checked": { color: "#C72030" },
+                        }}
+                      />
+                    }
+                    label={<span className="text-sm text-gray-900">Requestable</span>}
                   />
                 </RadioGroup>
               </div>
