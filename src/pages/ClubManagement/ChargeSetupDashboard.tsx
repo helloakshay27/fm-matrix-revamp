@@ -1,29 +1,30 @@
+// Charge Setup interface for API data
+export interface ChargeSetup {
+  id: number;
+  name: string;
+  value: number | null;
+  description: string;
+  charge_category_id: number;
+  charge_category: string;
+  flat_category_id: number | null;
+  gst_applicable: boolean;
+  basis: string;
+  hsn_code: string;
+  igst_rate: number;
+  cgst_rate: number;
+  sgst_rate: number;
+  uom: string;
+  active: number;
+  society_id: number | null;
+  created_by: number;
+  edited_by: number | null;
+  deleted_by: number | null;
+  created_at: string;
+  updated_at: string;
+}
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
-// Example usage of Input for your form fields:
-// <Input
-//   label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="date"
-//   value={date}
-//   onChange={e => setDate(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="number"
-//   value={journalNo}
-//   onChange={e => setJournalNo(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label="Reference#"
-//   value={reference}
-//   onChange={e => setReference(e.target.value)}
-//   className="w-full"
-// />
+import { Input } from '@/components/ui/input';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -134,7 +135,7 @@ export const ChargeSetupDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
-  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
+  const [modalData, setModalData] = useState<{ isOpen: boolean, title: string, items: string[] }>({ isOpen: false, title: '', items: [] });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -145,94 +146,34 @@ export const ChargeSetupDashboard = () => {
 
   const perPage = 20;
 
-  // Fetch memberships data
-  const fetchMemberships = useCallback(async (page: number = 1) => {
+  // Fetch charge setups data
+  const [chargeSetups, setChargeSetups] = useState<ChargeSetup[]>([]);
+  const fetchChargeSetups = useCallback(async () => {
     setLoading(true);
     try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-
-      console.log('Fetching club member allocations...', { baseUrl, hasToken: !!token, page });
-
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
-      url.searchParams.append('access_token', token || '');
-
-      // Add search filter
-      if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
-      }
-
-      // Add club member enabled filter
-      if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
-      }
-
-      // Add access card enabled filter
-      if (filters.accessCardEnabled) {
-        url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
-      }
-
-      // Add start date filter
-      if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
-      }
-
-      // Add end date filter
-      if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
-      }
-
-      // Pagination
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('per_page', perPage.toString());
-
-      console.log('API URL:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
+      const token = localStorage.getItem('token');
+      const res = await fetch('https://club-uat-api.lockated.com/account/charge_setups.json', {
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : undefined,
         },
       });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch club member allocations: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Received data:', data);
-
-      if (Array.isArray(data.club_member_allocations)) {
-        setMemberships(data.club_member_allocations);
-        setTotalMembers(data.pagination?.total_count || 0);
-        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
-      } else {
-        setMemberships([]);
-        setTotalMembers(0);
-        setTotalPages(1);
-      }
-
-    } catch (error) {
-      console.error('Error fetching memberships:', error);
-      toast.error('Failed to fetch membership data');
-      setMemberships([]);
-      setTotalMembers(0);
-      setTotalPages(1);
+      if (!res.ok) throw new Error('Failed to fetch charge setups');
+      const data = await res.json();
+      setChargeSetups(Array.isArray(data.charge_setups) ? data.charge_setups : []);
+    } catch (err) {
+      toast.error('Failed to fetch charge setups');
+      setChargeSetups([]);
     } finally {
       setLoading(false);
     }
-  }, [filters, perPage]);
+  }, []);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
+
+  console.log("chargeSetups", chargeSetups);
 
   // Effect to handle debounced search
   useEffect(() => {
@@ -251,14 +192,10 @@ export const ChargeSetupDashboard = () => {
     setCurrentPage(1);
   }, [debouncedSearchQuery]);
 
-  // Fetch on mount and when dependencies change
+  // Fetch charge setups on mount
   useEffect(() => {
-    console.log('Effect triggered - fetching memberships', {
-      currentPage,
-      filters
-    });
-    fetchMemberships(currentPage);
-  }, [currentPage, filters, fetchMemberships]);
+    fetchChargeSetups();
+  }, [fetchChargeSetups]);
 
   // Handle export
   const handleExport = async () => {
@@ -585,232 +522,237 @@ export const ChargeSetupDashboard = () => {
   //   { key: 'created_at', label: 'Created On', sortable: true }
   // ];
 
-// const columns = [
-//   { key: 'actions', label: 'Actions', sortable: false },
-//   { key: 'date', label: 'Date', sortable: true },
-//   { key: 'journal', label: 'Journal', sortable: true },
-//   { key: 'reference_number', label: 'Reference Number', sortable: true },
-//   { key: 'status', label: 'Status', sortable: true },
-//   { key: 'notes', label: 'Notes', sortable: false },
-//   { key: 'amount', label: 'Amount', sortable: true },
-//   { key: 'reporting_method', label: 'Reporting Method', sortable: true }
-// ];
+  // const columns = [
+  //   { key: 'actions', label: 'Actions', sortable: false },
+  //   { key: 'date', label: 'Date', sortable: true },
+  //   { key: 'journal', label: 'Journal', sortable: true },
+  //   { key: 'reference_number', label: 'Reference Number', sortable: true },
+  //   { key: 'status', label: 'Status', sortable: true },
+  //   { key: 'notes', label: 'Notes', sortable: false },
+  //   { key: 'amount', label: 'Amount', sortable: true },
+  //   { key: 'reporting_method', label: 'Reporting Method', sortable: true }
+  // ];
 
 
-const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'charge_name', label: 'Charge Name', sortable: true },
-  { key: 'charge_type', label: 'Charge Type', sortable: true },
-  { key: 'gst_applicable', label: 'GST Applicable', sortable: true },
-  { key: 'created_by', label: 'Created By', sortable: true },
-  { key: 'created_on', label: 'Created On', sortable: true }
-];
+  const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'charge_category', label: 'Category', sortable: true },
+    { key: 'gst_applicable', label: 'GST Applicable', sortable: true },
+    // { key: 'value', label: 'Value', sortable: true },
+    // { key: 'description', label: 'Description', sortable: false },
+    // { key: 'hsn_code', label: 'HSN Code', sortable: false },
+    // { key: 'basis', label: 'Basis', sortable: false },
+    // { key: 'igst_rate', label: 'IGST', sortable: false },
+    // { key: 'cgst_rate', label: 'CGST', sortable: false },
+    // { key: 'sgst_rate', label: 'SGST', sortable: false },
+    // { key: 'uom', label: 'UOM', sortable: false },
+    // { key: 'active', label: 'Active', sortable: false },
+    { key: 'created_by', label: 'Created By', sortable: true },
+    { key: 'created_at', label: 'Created At', sortable: true },
+  ];
 
-  
+
 
   // Render cell content
-//   const renderCell = (item: GroupMembershipData, columnKey: string) => {
-//     if (columnKey === 'actions') {
-//       return (
-//         <div className="flex gap-2">
-//           <Button
-//             variant="ghost"
-//             onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
-//             title="View Details"
-//             className="p-0"
-//           >
-//             {/* <Eye className="w-4 h-4" /> */}
-//           </Button>
-//           <Button
-//             variant="ghost"
-//             onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
-//             title="Edit"
-//             className="p-0"
-//           >
-//             {/* <Edit className="w-4 h-4" /> */}
-//           </Button>
-//         </div>
-//       );
-//     }
+  //   const renderCell = (item: GroupMembershipData, columnKey: string) => {
+  //     if (columnKey === 'actions') {
+  //       return (
+  //         <div className="flex gap-2">
+  //           <Button
+  //             variant="ghost"
+  //             onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
+  //             title="View Details"
+  //             className="p-0"
+  //           >
+  //             {/* <Eye className="w-4 h-4" /> */}
+  //           </Button>
+  //           <Button
+  //             variant="ghost"
+  //             onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
+  //             title="Edit"
+  //             className="p-0"
+  //           >
+  //             {/* <Edit className="w-4 h-4" /> */}
+  //           </Button>
+  //         </div>
+  //       );
+  //     }
 
-//     if (columnKey === 'member_count') {
-//       return (
-//         <div className="flex items-center gap-2">
-//           <Users className="w-4 h-4 text-[#C72030]" />
-//           <span className="font-medium">{item.club_members?.length || 0}</span>
-//         </div>
-//       );
-//     }
+  //     if (columnKey === 'member_count') {
+  //       return (
+  //         <div className="flex items-center gap-2">
+  //           <Users className="w-4 h-4 text-[#C72030]" />
+  //           <span className="font-medium">{item.club_members?.length || 0}</span>
+  //         </div>
+  //       );
+  //     }
 
-//     if (columnKey === 'member_names') {
-//       const names = item.club_members?.map(m => m.user_name).filter(Boolean);
-//       if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
-      
-//       return (
-//         <div className="flex flex-col gap-1">
-//           {names.slice(0, 2).map((name, idx) => (
-//             <span key={idx} className="text-sm">{name}</span>
-//           ))}
-//           {names.length > 2 && (
-//             <span 
-//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-//               onClick={() => {
-//                 setModalData({
-//                   isOpen: true,
-//                   title: 'Member Names',
-//                   items: names
-//                 });
-//               }}
-//             >
-//               +{names.length - 2} more
-//             </span>
-//           )}
-//         </div>
-//       );
-//     }
+  //     if (columnKey === 'member_names') {
+  //       const names = item.club_members?.map(m => m.user_name).filter(Boolean);
+  //       if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
 
-//     if (columnKey === 'member_emails') {
-//       const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
-//       if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
-      
-//       return (
-//         <div className="flex flex-col gap-1">
-//           {emails.slice(0, 2).map((email, idx) => (
-//             <span key={idx} className="text-sm">{email}</span>
-//           ))}
-//           {emails.length > 2 && (
-//             <span 
-//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-//               onClick={() => {
-//                 setModalData({
-//                   isOpen: true,
-//                   title: 'Member Emails',
-//                   items: emails
-//                 });
-//               }}
-//             >
-//               +{emails.length - 2} more
-//             </span>
-//           )}
-//         </div>
-//       );
-//     }
+  //       return (
+  //         <div className="flex flex-col gap-1">
+  //           {names.slice(0, 2).map((name, idx) => (
+  //             <span key={idx} className="text-sm">{name}</span>
+  //           ))}
+  //           {names.length > 2 && (
+  //             <span 
+  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+  //               onClick={() => {
+  //                 setModalData({
+  //                   isOpen: true,
+  //                   title: 'Member Names',
+  //                   items: names
+  //                 });
+  //               }}
+  //             >
+  //               +{names.length - 2} more
+  //             </span>
+  //           )}
+  //         </div>
+  //       );
+  //     }
 
-//     if (columnKey === 'member_mobiles') {
-//       const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
-//       if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-      
-//       return (
-//         <div className="flex flex-col gap-1">
-//           {mobiles.slice(0, 2).map((mobile, idx) => (
-//             <span key={idx} className="text-sm">{mobile}</span>
-//           ))}
-//           {mobiles.length > 2 && (
-//             <span 
-//               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-//               onClick={() => {
-//                 setModalData({
-//                   isOpen: true,
-//                   title: 'Member Mobiles',
-//                   items: mobiles
-//                 });
-//               }}
-//             >
-//               +{mobiles.length - 2} more
-//             </span>
-//           )}
-//         </div>
-//       );
-//     }
+  //     if (columnKey === 'member_emails') {
+  //       const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
+  //       if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
 
-//     if (columnKey === 'site_name') {
-//       const siteName = item.club_members?.[0]?.site_name;
-//       return siteName || <span className="text-gray-400">-</span>;
-//     }
+  //       return (
+  //         <div className="flex flex-col gap-1">
+  //           {emails.slice(0, 2).map((email, idx) => (
+  //             <span key={idx} className="text-sm">{email}</span>
+  //           ))}
+  //           {emails.length > 2 && (
+  //             <span 
+  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+  //               onClick={() => {
+  //                 setModalData({
+  //                   isOpen: true,
+  //                   title: 'Member Emails',
+  //                   items: emails
+  //                 });
+  //               }}
+  //             >
+  //               +{emails.length - 2} more
+  //             </span>
+  //           )}
+  //         </div>
+  //       );
+  //     }
 
-//     if (columnKey === 'membershipStatus') {
-//       return renderStatusBadge(item.start_date, item.end_date, false);
-//     }
+  //     if (columnKey === 'member_mobiles') {
+  //       const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
+  //       if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
 
-//     if (columnKey === 'start_date' || columnKey === 'end_date') {
-//       const dateValue = item[columnKey];
-//       if (!dateValue) return <span className="text-gray-400">-</span>;
-//       return new Date(dateValue).toLocaleDateString('en-GB');
-//     }
+  //       return (
+  //         <div className="flex flex-col gap-1">
+  //           {mobiles.slice(0, 2).map((mobile, idx) => (
+  //             <span key={idx} className="text-sm">{mobile}</span>
+  //           ))}
+  //           {mobiles.length > 2 && (
+  //             <span 
+  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
+  //               onClick={() => {
+  //                 setModalData({
+  //                   isOpen: true,
+  //                   title: 'Member Mobiles',
+  //                   items: mobiles
+  //                 });
+  //               }}
+  //             >
+  //               +{mobiles.length - 2} more
+  //             </span>
+  //           )}
+  //         </div>
+  //       );
+  //     }
 
-//     if (columnKey === 'created_at') {
-//       const createdAt = item.club_members?.[0]?.created_at;
-//       if (!createdAt) return <span className="text-gray-400">-</span>;
-//       return new Date(createdAt).toLocaleDateString('en-GB');
-//     }
+  //     if (columnKey === 'site_name') {
+  //       const siteName = item.club_members?.[0]?.site_name;
+  //       return siteName || <span className="text-gray-400">-</span>;
+  //     }
 
-//     if (columnKey === 'referred_by') {
-//       return item.referred_by || <span className="text-gray-400">-</span>;
-//     }
+  //     if (columnKey === 'membershipStatus') {
+  //       return renderStatusBadge(item.start_date, item.end_date, false);
+  //     }
 
-//     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
-//       return <span className="text-gray-400">--</span>;
-//     }
+  //     if (columnKey === 'start_date' || columnKey === 'end_date') {
+  //       const dateValue = item[columnKey];
+  //       if (!dateValue) return <span className="text-gray-400">-</span>;
+  //       return new Date(dateValue).toLocaleDateString('en-GB');
+  //     }
 
-//     return item[columnKey];
-//   };
+  //     if (columnKey === 'created_at') {
+  //       const createdAt = item.club_members?.[0]?.created_at;
+  //       if (!createdAt) return <span className="text-gray-400">-</span>;
+  //       return new Date(createdAt).toLocaleDateString('en-GB');
+  //     }
 
-  const renderCell = (item: any, columnKey: string) => {
-  if (columnKey === 'actions') {
-    return (
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/settings/charge-setup/details`)}
-          title="View"
-          className="p-0"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+  //     if (columnKey === 'referred_by') {
+  //       return item.referred_by || <span className="text-gray-400">-</span>;
+  //     }
 
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/charges/${item.id}/edit`)}
-          title="Edit"
-          className="p-0"
-        >
-          {/* <Edit className="w-4 h-4" /> */}
-        </Button>
-      </div>
-    );
-  }
+  //     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+  //       return <span className="text-gray-400">--</span>;
+  //     }
 
-  if (columnKey === 'charge_name') {
-    return item.charge_name || <span className="text-gray-400">--</span>;
-  }
+  //     return item[columnKey];
+  //   };
 
-  if (columnKey === 'charge_type') {
-    return item.charge_type || <span className="text-gray-400">--</span>;
-  }
+  const renderCell = (item: ChargeSetup, columnKey: string) => {
+    if (columnKey === 'actions') {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/settings/charge-setup/details/${item.id}`)}
+            title="View"
+            className="p-0"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/settings/charge-setup/edit/${item.id}`)}
+            title="Edit"
+            className="p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
+    // ✅ GST Applicable
+    if (columnKey === 'gst_applicable') {
+      return item.gst_applicable ? (
+        <span className="text-green-600 font-medium">Yes</span>
+      ) : (
+        <span className="text-red-600 font-medium">No</span>
+      );
+    }
+    // if (columnKey === 'active') {
+    //   return item.active ? <span className="text-green-600 font-medium">Yes</span> : <span className="text-red-600 font-medium">No</span>;
+    // }
+    if (columnKey === 'created_at') {
+      // return item.created_at ? new Date(item.created_at).toLocaleString() : '--';
+      if (!item.created_at) return '--';
 
-  if (columnKey === 'gst_applicable') {
-    return (
-      <span
-        className={`font-medium ${
-          item.gst_applicable ? 'text-green-600' : 'text-red-600'
-        }`}
-      >
-        {item.gst_applicable ? 'Yes' : 'No'}
-      </span>
-    );
-  }
+      const date = new Date(item.created_at);
 
-  if (columnKey === 'created_by') {
-    return item.created_by || <span className="text-gray-400">--</span>;
-  }
+      const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')
+        }/${date.getFullYear()}`;
 
-  if (columnKey === 'created_on') {
-    if (!item.created_on) return <span className="text-gray-400">--</span>;
-    return new Date(item.created_on).toLocaleDateString('en-GB');
-  }
+      const formattedTime = date.toLocaleTimeString(); // keeps time as-is
 
-  return <span className="text-gray-400">--</span>;
-};
+      return `${formattedDate} ${formattedTime}`;
+    }
+    if (columnKey === 'value') {
+      return item.value !== null && item.value !== undefined ? item.value : '--';
+    }
+    return item[columnKey] !== null && item[columnKey] !== undefined && item[columnKey] !== '' ? item[columnKey] : <span className="text-gray-400">--</span>;
+  };
 
 
   // Custom left actions
@@ -852,28 +794,17 @@ const columns = [
           </div>
         )}
         <EnhancedTable
-          data={memberships || []}
+          data={chargeSetups}
           columns={columns}
           renderCell={renderCell}
           pagination={false}
-          enableExport={true}
-          exportFileName="club-group-memberships"
-          handleExport={handleExport}
-          storageKey="club-group-memberships-table"
-          leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
-            </div>
-          }
-          onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
-          searchPlaceholder="Search Group Memberships"
-          onSearchChange={handleSearch}
-          hideTableExport={false}
-          hideColumnsButton={true}
+          enableExport={false}
+          exportFileName="charge-setups"
+          storageKey="charge-setups-table"
           className="transition-all duration-500 ease-in-out"
           loading={loading}
-          loadingMessage="Loading group memberships..."
+          hideColumnsButton={true}
+          loadingMessage="Loading charge setups..."
         />
 
         {/* Pagination Section */}
@@ -913,7 +844,7 @@ const columns = [
       />
 
       {/* Member Details Modal */}
-      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalData.title}</DialogTitle>
@@ -929,7 +860,7 @@ const columns = [
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+            <Button onClick={() => setModalData({ isOpen: false, title: '', items: [] })} variant="outline">
               Close
             </Button>
           </DialogFooter>

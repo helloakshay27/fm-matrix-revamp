@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -9,6 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { FileCog } from "lucide-react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Chip from '@mui/material/Chip';
+import { useNavigate, useParams } from "react-router-dom";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -72,6 +76,10 @@ const muiTheme = createTheme({
 });
 
 const ChargeSetupAdd: React.FC = () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
+
     const [form, setForm] = useState({
         chargeName: "",
         description: "",
@@ -81,25 +89,208 @@ const ChargeSetupAdd: React.FC = () => {
         basis: "",
         hsnCode: "",
         chargeType: "",
-
+        uom: "",
+        chargeCategoryId: "", // for category selection
+        value: "", // for value input
+        ledgers: [] as number[], // for Expense Based multi-select
     });
+    const [categories, setCategories] = useState<{ id: number; category: string }[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
+    const [ledgers, setLedgers] = useState<{ id: number; name: string }[]>([]);
+    const [ledgersLoading, setLedgersLoading] = useState(false);
+
+    // Fetch charge categories on mount (with axios, baseUrl, token)
+    useEffect(() => {
+        const fetchCategories = async () => {
+            setCategoriesLoading(true);
+            try {
+                const url = `https://${baseUrl}/account/charge_setups/charge_categories.json`;
+                const response = await axios.get(url, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                    },
+                });
+                const data = response.data;
+                setCategories(Array.isArray(data.categories) ? data.categories : []);
+            } catch (err) {
+                setCategories([]);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // Fetch ledgers for Expense Based multi-select
+    useEffect(() => {
+        if (!form.chargeCategoryId) return;
+        // Find selected category
+        const selectedCat = categories.find(cat => cat.id === Number(form.chargeCategoryId));
+        if (!selectedCat || selectedCat.category !== 'Expense Based') return;
+        setLedgersLoading(true);
+        const fetchLedgers = async () => {
+            try {
+                // You may want to update the endpoint as per your API
+                const url = `https://${baseUrl}/lock_accounts/1/lock_account_ledgers.json`;
+                const response = await axios.get(url, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                    },
+                });
+                // Assume API returns array of ledgers with id and name
+                setLedgers(Array.isArray(response.data) ? response.data : []);
+            } catch (err) {
+                setLedgers([]);
+            } finally {
+                setLedgersLoading(false);
+            }
+        };
+        fetchLedgers();
+    }, [form.chargeCategoryId, categories, baseUrl, token]);
     const [description, setDescription] = useState("");
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value, type, checked } = e.target;
-        setForm((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
-        if (name === "description") {
-            setDescription(value);
+    // Use correct event types for TextField and Select
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        // If chargeCategoryId is changed, reset value and ledgers appropriately
+        if (name === "chargeCategoryId") {
+            // Find the selected category
+            const selectedCat = categories.find(cat => cat.id === Number(value));
+            if (selectedCat) {
+                if (["Fixed", "Equal", "Per Square Feet"].includes(selectedCat.category)) {
+                    setForm((prev) => ({
+                        ...prev,
+                        [name]: value,
+                        value: "",
+                        ledgers: [],
+                    }));
+                } else if (selectedCat.category === "Expense Based") {
+                    setForm((prev) => ({
+                        ...prev,
+                        [name]: value,
+                        value: "",
+                        ledgers: [],
+                    }));
+                } else {
+                    setForm((prev) => ({
+                        ...prev,
+                        [name]: value,
+                        value: "",
+                        ledgers: [],
+                    }));
+                }
+            } else {
+                setForm((prev) => ({
+                    ...prev,
+                    [name]: value,
+                    value: "",
+                    ledgers: [],
+                }));
+            }
+        } else {
+            setForm((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+            if (name === "description") {
+                setDescription(value);
+            }
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // For Expense Based ledger multi-select
+    const handleLedgerChange = (event: any) => {
+        const value = event.target.value;
+        setForm(prev => ({
+            ...prev,
+            ledgers: Array.isArray(value) ? value : [],
+            value: "", // Reset value when ledgers are selected
+        }));
+    };
+
+    const payload = {
+        charge_setup: {
+            name: form.chargeName,
+            value: form.value !== "" ? Number(form.value) : null,
+            charge_category_id: Number(form.chargeCategoryId) || 1,
+            gst_applicable: true,
+            basis: form.basis,
+            hsn_code: form.hsnCode,
+            igst_rate: Number(form.igstRate) || 0,
+            cgst_rate: Number(form.cgstRate) || 0,
+            sgst_rate: Number(form.sgstRate) || 0,
+            uom: form.uom || "per_kwh",
+            assigned_ledgers: form.ledgers,
+            description: form.description || "",
+        },
+        charge_setup_flats: [
+            // { flat_type_id: 1, amount: 500.0 },
+            // { flat_type_id: 2, amount: 750.0 },
+        ],
+
+    };
+    // For debugging
+    console.log("Payload to be sent:", payload);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Submit logic here
-        alert("Saved!");
+        // Build payload
+        // const payload = {
+        //     charge_setup: {
+        //         name: form.chargeName,
+        //         value: form.value !== "" ? Number(form.value) : null,
+        //         charge_category_id: Number(form.chargeCategoryId) || 1,
+        //         gst_applicable: true,
+        //         basis: form.basis,
+        //         hsn_code: form.hsnCode,
+        //         igst_rate: Number(form.igstRate) || 0,
+        //         cgst_rate: Number(form.cgstRate) || 0,
+        //         sgst_rate: Number(form.sgstRate) || 0,
+        //         uom: form.uom || "per_kwh",
+        //         ledgers: form.ledgers,
+        //     },
+        //     charge_setup_flats: [
+        //         // { flat_type_id: 1, amount: 500.0 },
+        //         // { flat_type_id: 2, amount: 750.0 },
+        //     ],
+
+        // };
+
+        const payload = {
+            charge_setup: {
+                name: form.chargeName,
+                value: form.value !== "" ? Number(form.value) : null,
+                charge_category_id: Number(form.chargeCategoryId) || 1,
+                gst_applicable: true,
+                basis: form.basis,
+                hsn_code: form.hsnCode,
+                igst_rate: Number(form.igstRate) || 0,
+                cgst_rate: Number(form.cgstRate) || 0,
+                sgst_rate: Number(form.sgstRate) || 0,
+                uom: form.uom || "per_kwh",
+                assigned_ledgers: form.ledgers,
+                description: form.description || "",
+            },
+            charge_setup_flats: [
+                // { flat_type_id: 1, amount: 500.0 },
+                // { flat_type_id: 2, amount: 750.0 },
+            ],
+
+        };
+        try {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const url = `https://${baseUrl}/account/charge_setups.json`;
+            const res = await axios.post(url, payload, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                },
+            });
+            toast.success("Charge setup created successfully!");
+            navigate(`/settings/charge-setup`);
+        } catch (err: any) {
+            toast.error("Failed to create charge setup");
+        }
     };
 
     return (
@@ -126,9 +317,7 @@ const ChargeSetupAdd: React.FC = () => {
                             value={form.chargeName}
                             onChange={handleChange}
                             className="w-full"
-                            required
                         />
-
                         <TextField
                             label={<span>Igst Rate (%)</span>}
                             size="small"
@@ -177,22 +366,124 @@ const ChargeSetupAdd: React.FC = () => {
                             onChange={handleChange}
                             className="w-full"
                         />
+                        <TextField
+                            label={<span>UOM</span>}
+                            size="small"
+                            variant="outlined"
+                            name="uom"
+                            value={form.uom}
+                            onChange={handleChange}
+                            className="w-full"
+                        />
                         <FormControl size="small" fullWidth>
-                            <InputLabel id="charge-type-label">Charge Type <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                            <InputLabel id="charge-category-label">Charge Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                             <Select
-                                labelId="charge-type-label"
-                                id="charge-type-select"
-                                name="chargeType"
-                                value={form.chargeType}
+                                labelId="charge-category-label"
+                                id="charge-category-select"
+                                name="chargeCategoryId"
+                                value={form.chargeCategoryId || ""}
                                 label={<span>Charge Type <span style={{ color: '#C72030' }}>*</span></span>}
                                 onChange={handleChange}
                                 required
                             >
                                 <MenuItem value=""><span style={{ color: '#888' }}>Select</span></MenuItem>
-                                <MenuItem value="recurring">Recurring</MenuItem>
-                                <MenuItem value="one-time">One Time</MenuItem>
+                                {categoriesLoading ? (
+                                    <MenuItem value="" disabled>Loading...</MenuItem>
+                                ) : categories.length === 0 ? (
+                                    <MenuItem value="" disabled>No categories found</MenuItem>
+                                ) : (
+                                    categories.map(cat => (
+                                        <MenuItem key={cat.id} value={cat.id}>{cat.category}</MenuItem>
+                                    ))
+                                )}
                             </Select>
                         </FormControl>
+                        {/* Conditionally show value input or ledger multi-select */}
+                        {(() => {
+                            const selectedCat = categories.find(cat => cat.id === Number(form.chargeCategoryId));
+                            if (!selectedCat) return null;
+                            if (["Fixed", "Equal", "Per Square Feet"].includes(selectedCat.category)) {
+                                return (
+                                    <TextField
+                                        label={<span>Value <span className="text-red-600">*</span></span>}
+                                        size="small"
+                                        variant="outlined"
+                                        name="value"
+                                        value={form.value}
+                                        onChange={handleChange}
+                                        className="w-full"
+                                        type="number"
+                                    // required
+                                    />
+                                );
+                            }
+                            if (selectedCat.category === "Expense Based") {
+                                return (
+                                    <FormControl fullWidth >
+                                        <InputLabel id="ledger-multiselect-label">Select Ledgers</InputLabel>
+                                        <Select
+                                            labelId="ledger-multiselect-label"
+                                            multiple
+                                            value={form.ledgers}
+                                            onChange={handleLedgerChange}
+                                            input={
+                                                <OutlinedInput
+                                                    label="Select Ledgers"
+                                                    sx={{
+                                                        minHeight: 40,
+                                                        height: 'auto',
+                                                        paddingTop: '8px',
+                                                        paddingBottom: '8px',
+                                                        '& .MuiSelect-multiple': {
+                                                            minHeight: 40,
+                                                            height: 'auto',
+                                                        },
+                                                    }}
+                                                />
+                                            }
+                                            renderValue={(selected) => (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: 4,
+                                                        minHeight: 40,
+                                                        alignItems: 'flex-start',
+                                                        width: '100%',
+                                                        maxHeight: 40, // approx one line of chips
+                                                        overflowY: 'auto',
+                                                    }}
+                                                >
+                                                    {(selected as number[]).map((id) => {
+                                                        const ledger = ledgers.find(l => l.id === id);
+                                                        return ledger ? <Chip key={id} label={ledger.name} /> : null;
+                                                    })}
+                                                </div>
+                                            )}
+                                            sx={{ minWidth: 320, width: '100%', minHeight: 40, height: 'auto' }}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    style: {
+                                                        maxHeight: 300,
+                                                    },
+                                                },
+                                            }}
+                                        >
+                                            {ledgersLoading ? (
+                                                <MenuItem value="" disabled>Loading...</MenuItem>
+                                            ) : ledgers.length === 0 ? (
+                                                <MenuItem value="" disabled>No ledgers found</MenuItem>
+                                            ) : (
+                                                ledgers.map(ledger => (
+                                                    <MenuItem key={ledger.id} value={ledger.id}>{ledger.name}</MenuItem>
+                                                ))
+                                            )}
+                                        </Select>
+                                    </FormControl>
+                                );
+                            }
+                            return null;
+                        })()}
                     </div>
                     {/* Description field in a separate row */}
                     <div className="mt-6">
@@ -239,11 +530,11 @@ const ChargeSetupAdd: React.FC = () => {
                     >
                         Save
                     </Button>
-                     <Button
+                    <Button
                         type="submit"
                         className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
                     >
-                         Save & Configure New Charge
+                        Save & Configure New Charge
                     </Button>
                     <Button
                         variant="outline"

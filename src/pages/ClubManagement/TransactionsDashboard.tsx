@@ -668,7 +668,7 @@ export const TransactionsDashboard = () => {
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
           hideTableExport={true}
-          hideColumnsButton={false}
+          hideColumnsButton={true}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           loadingMessage="Loading group memberships..."

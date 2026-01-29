@@ -1674,7 +1674,7 @@ function App() {
                     element={<ChargeSetupAdd />}
                   />
                   <Route
-                    path="/settings/charge-setup/details"
+                    path="/settings/charge-setup/details/:id"
                     element={<ChargeSetupDetails />}
                   />
                   <Route
