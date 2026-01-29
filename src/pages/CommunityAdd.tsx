@@ -95,7 +95,7 @@ const CommunityAdd = () => {
             formDataToSend.append("community[description]", formData.description);
             formDataToSend.append("community[status]", "true");
             formDataToSend.append("community[category]", formData.category);
-            // formDataToSend.append("community[community_type]", formData.communityCategory);
+            formDataToSend.append("community[community_type]", formData.communityCategory);
 
             if (formData.coverImage) {
                 formDataToSend.append("community[attachment]", formData.coverImage);
@@ -139,9 +139,9 @@ const CommunityAdd = () => {
 
                     <div className="p-6 bg-white">
                         {/* Community Name + Pulse Category */}
-                        <div className="mb-6 flex items-center gap-4">
+                        <div className="mb-6 flex items-center justify-between gap-5">
                             {/* Community Name */}
-                            <div className="w-[350px]">
+                            <div className="w-[320px]">
                                 <TextField
                                     label={
                                         <>
@@ -168,8 +168,8 @@ const CommunityAdd = () => {
                             </div>
 
                             {/* Pulse Category */}
-                            <div className="flex items-center ml-4 gap-3">
-                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                                <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
                                     Pulse Category:
                                 </span>
                                 <RadioGroup
@@ -190,7 +190,7 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-sm text-gray-900">Play</span>}
+                                        label={<span className="text-[12px] text-gray-900">Play</span>}
                                     />
                                     <FormControlLabel
                                         value="panasche"
@@ -203,7 +203,7 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-sm text-gray-900">Panasche</span>}
+                                        label={<span className="text-[12px] text-gray-900">Panasche</span>}
                                     />
                                     <FormControlLabel
                                         value="persuit"
@@ -216,13 +216,13 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-sm text-gray-900">Persuit</span>}
+                                        label={<span className="text-[12px] text-gray-900">Persuit</span>}
                                     />
                                 </RadioGroup>
                             </div>
 
-                            {/* <div className="flex items-center ml-4 gap-3">
-                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                                <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
                                     Community Category:
                                 </span>
                                 <RadioGroup
@@ -243,7 +243,7 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-sm text-gray-900">Open to all</span>}
+                                        label={<span className="text-[12px] text-gray-900">Open to all</span>}
                                     />
                                     <FormControlLabel
                                         value="requestable"
@@ -256,10 +256,10 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-sm text-gray-900">Requestable</span>}
+                                        label={<span className="text-[12px] text-gray-900">Requestable</span>}
                                     />
                                 </RadioGroup>
-                            </div> */}
+                            </div>
                         </div>
 
                         {/* Description */}
