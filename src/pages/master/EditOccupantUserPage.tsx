@@ -55,6 +55,7 @@ export const EditOccupantUserPage: React.FC = () => {
     email: '',
     gender: '',
     employeeId: '',
+    accessCardNumber: '',
     userType: '',
     selectEntity: '',
     accessLevel: '',
@@ -206,6 +207,7 @@ export const EditOccupantUserPage: React.FC = () => {
           email: u.email || '',
           gender: u.gender || '',
           employeeId: lup.employee_id || '',
+          accessCardNumber: u.access_card_number || '',
           userType: u.user_type || lup.user_type || '',
           selectEntity: u.entity_id ? String(u.entity_id) : '',
           accessLevel: accessLevel,
@@ -345,6 +347,7 @@ export const EditOccupantUserPage: React.FC = () => {
       formDataPayload.append("user[entity_id]", formData.selectEntity);
       formDataPayload.append("user[user_category_id]", formData.selectUserCategory);
       formDataPayload.append("user[report_to_id]", formData.reportsTo);
+      formDataPayload.append("user[access_card_number]", formData.accessCardNumber);
 
       // ---- LOCK USER PERMISSIONS (index 0) ----
       if (lockId) {
@@ -876,6 +879,18 @@ export const EditOccupantUserPage: React.FC = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
+                  <div>
+                    <TextField
+                      fullWidth
+                      label="Access Card Number"
+                      variant="outlined"
+                      value={formData.accessCardNumber}
+                      onChange={(e) =>
+                        handleInputChange("accessCardNumber", e.target.value)
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-8 mt-4">
