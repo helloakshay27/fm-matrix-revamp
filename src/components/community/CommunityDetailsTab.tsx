@@ -325,32 +325,49 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                             </div>
 
                             {/* Community Info Grid */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="flex gap-4">
-                                        <p className="text-sm text-gray-500 mb-1">Community Name</p>
-                                        <p className="text-sm font-semibold text-gray-900">{communityData.name}</p>
+                            <div className="grid grid-cols-7">
+                                <div className="grid grid-cols-3 col-span-6 gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Community Name</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.name}
+                                        </p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <p className="text-sm text-gray-500 mb-1">Members</p>
-                                        <p className="text-sm font-semibold text-gray-900">{communityData?.all_members?.length}</p>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Members</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData?.all_members?.length}
+                                        </p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <p className="text-sm text-gray-500 mb-1">Created On</p>
-                                        <p className="text-sm font-semibold text-gray-900">{
-                                            communityData.created_at ? new Intl.DateTimeFormat("en-GB", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            }).format(new Date(communityData.created_at)) : "-"
-                                        }</p>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Pending Requests</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            21
+                                        </p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <p className="text-sm text-gray-500 mb-1">Created By</p>
-                                        <p className="text-sm font-semibold text-gray-900">{communityData.created_by}</p>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Created On</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.created_at
+                                                ? new Intl.DateTimeFormat("en-GB", {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                }).format(new Date(communityData.created_at))
+                                                : "-"}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Created By</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.created_by}
+                                        </p>
                                     </div>
                                 </div>
-                                <div></div>
                             </div>
                         </div>
                     </div>

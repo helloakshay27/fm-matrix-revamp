@@ -1327,177 +1327,550 @@ export const CarpoolDashboard = () => {
 
       {/* Active Reports View */}
       {activeView === "reports" && (
-        <div className="space-y-4">
-          {/* Tab Navigation */}
-          <div className="flex gap-4 border-b border-gray-200">
-            <button
-              onClick={() => setActiveReportTab("Under Review")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeReportTab === "Under Review"
-                  ? "text-gray-900 border-b-2 border-gray-900"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+        <Tabs
+          value={activeReportTab}
+          onValueChange={setActiveReportTab}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
+            <TabsTrigger
+              value="Under Review"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Under Review
-            </button>
-            <button
-              onClick={() => setActiveReportTab("Action in Progress")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeReportTab === "Action in Progress"
-                  ? "text-gray-900 border-b-2 border-gray-900"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="Action in Progress"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Action in Progress
-            </button>
-            <button
-              onClick={() => setActiveReportTab("Resolved")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeReportTab === "Resolved"
-                  ? "text-gray-900 border-b-2 border-gray-900"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="Resolved"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Resolved
-            </button>
-            <button
-              onClick={() => setActiveReportTab("Closed")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeReportTab === "Closed"
-                  ? "text-gray-900 border-b-2 border-gray-900"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="Closed"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Closed
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
-          <EnhancedTaskTable
-            data={currentRides}
-            columns={[
-              {
-                key: "actions",
-                label: "Action",
-                sortable: false,
-                hideable: false,
-                draggable: false,
-              },
-              {
-                key: "reportedBy",
-                label: "Reported by",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportedAgainst",
-                label: "Reported Against",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "issueDescription",
-                label: "Issue Description",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportTime",
-                label: "Report Time",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportDate",
-                label: "Report Date",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "statusBadge",
-                label: "Status",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "statusDropdown",
-                label: "Change Status",
-                sortable: false,
-                hideable: false,
-                draggable: false,
-              },
-            ]}
-            renderRow={(report) => ({
-              actions: (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
-                  }}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              ),
-              reportedBy: report.reportedBy,
-              reportedAgainst: report.reportedAgainst,
-              issueDescription: (
-                <div className="max-w-[250px]">{report.issueDescription}</div>
-              ),
-              reportTime: report.reportTime,
-              reportDate: report.reportDate,
-              statusBadge: (
-                <Badge variant="secondary" className="bg-gray-100">
-                  Active
-                </Badge>
-              ),
-              statusDropdown: (
-                <div className="relative">
-                  <select
-                    value={selectedReportStatus[report.id] || report.status}
-                    onChange={(e) =>
-                      handleStatusChange(report.id, e.target.value)
-                    }
-                    className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+          <TabsContent value="Under Review">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
                   >
-                    <option value="Under Review">Under Review</option>
-                    <option value="Action in Progress">
-                      Action in Progress
-                    </option>
-                    <option value="Resolve">Resolve</option>
-                    <option value="Closed">Closed</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
                     >
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-              ),
-            })}
-            enableSearch={true}
-            hideColumnsButton={true}
-            enableSelection={false}
-            hideTableExport={true}
-            selectable={false}
-            enableExport={true}
-            hideTableSearch={true}
-            storageKey="carpool-reports-table"
-            emptyMessage="No reports found"
-            exportFileName="carpool-reports"
-          />
-        </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Action in Progress">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Resolved">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Closed">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Active SOS View */}

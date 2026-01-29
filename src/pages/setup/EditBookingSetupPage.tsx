@@ -279,6 +279,7 @@ export const EditBookingSetupPage = () => {
                 prepaid: responseData.prepaid,
                 payOnFacility: responseData.pay_on_facility,
                 complimentary: responseData.complementary,
+                billToCompany: responseData.bill_to_company,
                 gstPercentage: responseData.gst,
                 sgstPercentage: responseData.sgst,
                 igstPercentage: responseData.igst,
@@ -894,11 +895,11 @@ export const EditBookingSetupPage = () => {
             }
 
             // Append booking files (multiple files)
-            selectedBookingFiles.forEach(({ file }) => {
-                if (typeof file !== "string") {
-                    formDataToSend.append(`attachments[]`, file);
-                }
-            });
+            // selectedBookingFiles.forEach(({ file }) => {
+            //     if (typeof file !== "string") {
+            //         formDataToSend.append(`attachments[]`, file);
+            //     }
+            // });
 
             // Append gallery images
             selectedGalleryImages.forEach((image: any, index: number) => {
@@ -915,16 +916,21 @@ export const EditBookingSetupPage = () => {
                 formDataToSend.append(`image_remove[]`, id);
             });
 
-            const selectedAccessories = Object.entries(formData.amenities)
-                .filter(([_, value]: [string, any]) => value.selected)
-                .map(([inventoryId, value]: [string, any]) => ({ inventoryId: parseInt(inventoryId), id: value.id }));
+            const allAccessories = Object.entries(formData.amenities)
+                .map(([inventoryId, value]: [string, any]) => ({ inventoryId: parseInt(inventoryId), id: value.id, selected: value.selected }));
 
-            console.log('=== Selected Accessories (Edit) ===');
+            const selectedAccessories = allAccessories.filter(acc => acc.selected);
+            const deselectedAccessories = allAccessories.filter(acc => !acc.selected && acc.id);
+
+            console.log('=== Accessories (Edit) ===');
             console.log('formData.amenities:', formData.amenities);
             console.log('selectedAccessories:', selectedAccessories);
+            console.log('deselectedAccessories:', deselectedAccessories);
             console.log('Total accessories selected:', selectedAccessories.length);
-            console.log('====================================');
+            console.log('Total accessories deselected:', deselectedAccessories.length);
+            console.log('===========================');
 
+            // Append selected accessories
             selectedAccessories.forEach((accessory, index) => {
                 if (accessory.id) {
                     formDataToSend.append(
@@ -937,6 +943,20 @@ export const EditBookingSetupPage = () => {
                     accessory.inventoryId.toString()
                 );
                 console.log(`Appending accessory [${index}]: id = ${accessory.id}, pms_inventory_id = ${accessory.inventoryId}`);
+            });
+
+            // Append deselected accessories with _destroy flag
+            deselectedAccessories.forEach((accessory, index) => {
+                const destroyIndex = selectedAccessories.length + index;
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${destroyIndex}][id]`,
+                    accessory.id.toString()
+                );
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${destroyIndex}][_destroy]`,
+                    "1"
+                );
+                console.log(`Marking accessory [${destroyIndex}] for deletion: id = ${accessory.id}, _destroy = 1`);
             });
 
             let index = 0;
@@ -2290,20 +2310,30 @@ export const EditBookingSetupPage = () => {
                                                     id="complimentary"
                                                     checked={formData.complimentary}
                                                     onCheckedChange={(checked) =>
-                                                        setFormData({ ...formData, complimentary: !!checked })
+                                                        setFormData({
+                                                            ...formData,
+                                                            complimentary: !!checked,
+                                                            billToCompany: !!checked ? false : formData.billToCompany
+                                                        })
                                                     }
+                                                    disabled={formData.billToCompany}
                                                 />
-                                                <label htmlFor="complimentary">Complimentary</label>
+                                                <label htmlFor="complimentary" className={formData.billToCompany ? "text-gray-400" : ""}>Complimentary</label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <Checkbox
                                                     id="billToCompany"
                                                     checked={formData.billToCompany}
                                                     onCheckedChange={(checked) =>
-                                                        setFormData({ ...formData, billToCompany: !!checked })
+                                                        setFormData({
+                                                            ...formData,
+                                                            billToCompany: !!checked,
+                                                            complimentary: !!checked ? false : formData.complimentary
+                                                        })
                                                     }
+                                                    disabled={formData.complimentary}
                                                 />
-                                                <label htmlFor="billToCompany">Bill to Company</label>
+                                                <label htmlFor="billToCompany" className={formData.complimentary ? "text-gray-400" : ""}>Bill to Company</label>
                                             </div>
                                         </>
                                     )
@@ -2408,7 +2438,7 @@ export const EditBookingSetupPage = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+                        {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                     <Image className="w-4 h-4" />
@@ -2470,7 +2500,7 @@ export const EditBookingSetupPage = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Gallery Images Card */}

@@ -130,6 +130,7 @@ export const BookingSetupDetailPage = () => {
     prepaid: false,
     payOnFacility: false,
     complimentary: false,
+    billToCompany: false,
     gstPercentage: "",
     sgstPercentage: "",
     igstPercentage: "",
@@ -337,6 +338,7 @@ export const BookingSetupDetailPage = () => {
         prepaid: response.prepaid,
         payOnFacility: response.pay_on_facility,
         complimentary: response.complementary,
+        billToCompany: response.bill_to_company,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
         igstPercentage: response.igst,
@@ -1061,56 +1063,63 @@ export const BookingSetupDetailPage = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Prepaid</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.prepaid ? "Yes" : "No"}
-                </span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Show Prepaid and Pay at Facility for Bookable */}
+                {formData.isBookable && (
+                  <>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Prepaid</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.prepaid ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Pay at Facility</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.payOnFacility ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Show Complimentary and Bill to Company for Request */}
+                {!formData.isBookable && (
+                  <>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Complimentary</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.complimentary ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Bill to Company</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.billToCompany ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formData.sgstPercentage || "-"}
+                  </span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">GST (%)</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formData.gstPercentage || "-"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Pay at Facility</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.payOnFacility ? "Yes" : "No"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Complimentary</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.complimentary ? "Yes" : "No"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.sgstPercentage || "-"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">GST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.gstPercentage || "-"}
-                </span>
-              </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">IGST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.igstPercentage || "-"}
-                </span>
-              </div> */}
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.perSlotCharge || "-"}
-                </span>
-              </div> */}
             </div>
           </div>
 
@@ -1139,7 +1148,7 @@ export const BookingSetupDetailPage = () => {
                 )}
               </div>
             </div>
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <Image className="w-4 h-4" />
@@ -1164,7 +1173,7 @@ export const BookingSetupDetailPage = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Gallery Images */}
@@ -1418,7 +1427,7 @@ export const BookingSetupDetailPage = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Armchair className="w-4 h-4" />
@@ -1521,7 +1530,7 @@ export const BookingSetupDetailPage = () => {
                     InputProps={{ readOnly: true }}
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
