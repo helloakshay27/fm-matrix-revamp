@@ -471,11 +471,7 @@ export const EditFMUserPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => location.pathname.includes("/club-management/") ? (
-            navigate("/club-management/users/fm-users")
-          ) : (
-            navigate("/master/user/fm-users")
-          )}
+          onClick={() => navigate("/master/user/fm-users")}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>

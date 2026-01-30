@@ -1593,7 +1593,7 @@ export const TicketDashboard = () => {
                 <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
               </div>
             </div>
-            <AIAssistantWidget allowedModuleId={2} />
+                  <AIAssistantWidget allowedModuleId={2} />
 
           </TabsContent>
 

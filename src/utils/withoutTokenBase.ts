@@ -77,24 +77,17 @@ baseClient.interceptors.request.use(
         hostname === "fm-uat.gophygital.work" ||
         hostname === "fm.gophygital.work" ||
         hostname === "fm-matrix.lockated.com";
-      const isClubSite =
-        hostname.includes("club-uat-api.lockated.com") ||
-        hostname.includes("club.lockated.com");
 
       const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
       // Build API URL based on site type and available parameters
       let apiUrl = "";
 
-      if (isClubSite && email && organizationId) {
-        // Club site: use organization_id if available
-        apiUrl = `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
-        console.log("🔍 Using email for Club site:", email);
-      } else if (isOmanSite || isFmSite) {
+      if (isOmanSite || isFmSite) {
         // FM/Oman sites: prefer org_id, fallback to email
         if (organizationId) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for FM/Oman site:", organizationId);
+          console.log("🔍 Using org_id for FM/Oman site:", orgId);
         } else if (orgId) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for FM/Oman site:", orgId);
@@ -108,9 +101,10 @@ baseClient.interceptors.request.use(
         }
       } else if (isViSite) {
         // VI sites: use email
+
         if (organizationId) {
           apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for VI site:", organizationId);
+          console.log("🔍 Using org_id for VI site:", orgId);
         } else if (orgId) {
           apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for VI site:", orgId);
@@ -122,9 +116,10 @@ baseClient.interceptors.request.use(
         }
       } else if (isDevSite) {
         // Dev sites: use email
+
         if (organizationId) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for Dev site:", organizationId);
+          console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (orgId) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
@@ -136,13 +131,13 @@ baseClient.interceptors.request.use(
         // Default fallback: prefer org_id, fallback to email
         if (organizationId) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for default site:", organizationId);
+          console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (orgId) {
           apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-          console.log("🔍 Using org_id for default site:", orgId);
+          console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
-          console.log("🔍 Using email for default site:", email);
+          console.log("🔍 Using email for Dev site:", email);
         }
       }
 

@@ -277,19 +277,11 @@ export const FMUserMasterDashboard = () => {
     fmUsersData.filter((user) => user.appDownloaded).length;
 
   const handleAddUser = () => {
-    location.pathname.includes("/club-management/") ? (
-      navigate(`/club-management/users/fm-users/add`)
-    ) : (
-      navigate(`/master/user/fm-users/add`)
-    );
+    navigate("/master/user/fm-users/add");
   };
 
   const handleViewUser = (id: string) => {
-    location.pathname.includes("/club-management/") ? (
-      navigate(`/club-management/users/fm-users/view/${id}`)
-    ) : (
-      navigate(`/master/user/fm-users/view/${id}`)
-    );
+    navigate(`/master/user/fm-users/view/${id}`);
   };
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
@@ -504,16 +496,16 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  const handleResetFilters = async () => {
+  const handleResetFilters = () => {
     setFilters({
       name: "",
       email: "",
-      status: "",
-      downloaded: undefined,
     });
-    setSearchTerm("");
-    await fetchUsers(1);
-    setFilterDialogOpen(false);
+    setFilteredFMUsersData(fmUsersData);
+    setPagination({
+      ...pagination,
+      current_page: 1,
+    });
   };
 
   const handleFilterChange = (field: "name" | "email", value: string) => {
@@ -769,6 +761,12 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">
+          FM User Master
+        </h1>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Users"

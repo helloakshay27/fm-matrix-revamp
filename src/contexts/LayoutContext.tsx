@@ -69,17 +69,6 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
 
-    // Template routes should be treated as Settings
-    const templatePaths = [
-      '/master/communication-template',
-      '/master/template/root-cause-analysis',
-      '/master/template/preventive-action',
-      '/master/template/short-term-impact',
-      '/master/template/long-term-impact',
-      '/master/template/corrective-action'
-    ];
-    const isTemplatePath = templatePaths.some(t => path.startsWith(t));
-
     // For employee users, don't auto-detect section changes
     // They manually select modules via EmployeeHeader
     if ((isEmployeeUser && isLocalhost) || isPulseSite) {
@@ -98,9 +87,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
 
     // Define route patterns and their corresponding sections
     // Keep this in sync with the sidebar logic
-    if (isTemplatePath) {
-      newSection = "Settings";
-    } else if (path.startsWith("/utility")) {
+    if (path.startsWith("/utility")) {
       newSection = "Utility";
     } else if (path.startsWith("/transitioning")) {
       newSection = "Transitioning";
@@ -118,8 +105,6 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       newSection = "CRM";
     } else if (path.startsWith("/market-place")) {
       newSection = "Market Place";
-    } else if (path.startsWith("/club-management")) {
-      newSection = "Club Management";
     } else if (path.startsWith("/master")) {
       newSection = "Master";
     } else if (path.startsWith("/settings")) {
@@ -128,9 +113,6 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       newSection = "Dashboard";
     } else if (path.startsWith("/pulse")) {
       newSection = "Pulse Privilege";
-    } else {
-      // For any other route, default to Dashboard
-      newSection = "Dashboard";
     }
 
     // Always update the section when route changes
@@ -138,7 +120,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       `🔄 Section change: ${currentSection} → ${newSection} (path: ${path})`
     );
     setCurrentSection(newSection);
-  }, [location.pathname]);
+  }, [location.pathname]); // Removed currentSection from dependency to prevent circular updates
 
   // Save sidebar collapsed state to localStorage whenever it changes
   useEffect(() => {

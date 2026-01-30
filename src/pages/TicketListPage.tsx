@@ -228,9 +228,7 @@ export const TicketListPage = () => {
   };
 
   const handleAdd = () => {
-    location.pathname.includes("/club-management/")
-      ? navigate('/club-management/helpdesk/add')
-      : navigate('/maintenance/ticket/add');
+    navigate('/maintenance/ticket/add');
   };
 
   const getStatusBadge = (status: string) => {
