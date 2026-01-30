@@ -180,7 +180,8 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
             <div className="grid grid-cols-2 gap-4">
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel shrink>
-                  Fixed State<span style={{ color: '#C72030' }}>*</span>
+                  Fixed State
+                  <span style={{ color: '#C72030' }}>*</span>
                 </InputLabel>
                 <Select
                   value={formData.fixedState}
