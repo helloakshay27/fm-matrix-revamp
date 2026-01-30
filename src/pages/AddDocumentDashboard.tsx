@@ -677,102 +677,63 @@ export const AddDocumentDashboard = () => {
           </div>
 
           <div className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="flex items-center gap-4">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
-                  Share With:
-                </Label>
-                <RadioGroup
-                  row
-                  name="shareWith"
-                  value={formData.shareWith}
-                  onChange={(e) =>
-                    handleRadioChange("shareWith", e.target.value)
-                  }
-                  className="gap-2"
-                >
-                  <FormControlLabel
-                    value="all"
-                    control={
-                      <Radio
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                          "& .MuiSvgIcon-root": { fontSize: 16 },
-                        }}
-                      />
+            {isPulseSite && (
+              <div className="flex flex-col md:flex-row md:items-center gap-8">
+                <div className="flex items-center gap-4">
+                  <Label className="text-sm text-gray-700 whitespace-nowrap">
+                    Share With:
+                  </Label>
+                  <RadioGroup
+                    row
+                    name="shareWith"
+                    value={formData.shareWith}
+                    onChange={(e) =>
+                      handleRadioChange("shareWith", e.target.value)
                     }
-                    label={
-                      <span className="text-sm text-gray-600">
-                        All Tech Park
-                      </span>
-                    }
-                  />
-                  <FormControlLabel
-                    value="individual"
-                    control={
-                      <Radio
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                          "& .MuiSvgIcon-root": { fontSize: 16 },
-                        }}
-                      />
-                    }
-                    label={
-                      <span className="text-sm text-gray-600">
-                        Individual Tech Park
-                      </span>
-                    }
-                  />
-                </RadioGroup>
+                    className="gap-2"
+                  >
+                    <FormControlLabel
+                      value="all"
+                      control={
+                        <Radio
+                          sx={{
+                            color: "#C72030",
+                            "&.Mui-checked": { color: "#C72030" },
+                            "& .MuiSvgIcon-root": { fontSize: 16 },
+                          }}
+                        />
+                      }
+                      label={
+                        <span className="text-sm text-gray-600">
+                          All Tech Park
+                        </span>
+                      }
+                    />
+                    <FormControlLabel
+                      value="individual"
+                      control={
+                        <Radio
+                          sx={{
+                            color: "#C72030",
+                            "&.Mui-checked": { color: "#C72030" },
+                            "& .MuiSvgIcon-root": { fontSize: 16 },
+                          }}
+                        />
+                      }
+                      label={
+                        <span className="text-sm text-gray-600">
+                          Individual Tech Park
+                        </span>
+                      }
+                    />
+                  </RadioGroup>
+                </div>
               </div>
-
-              <div className="flex items-center gap-4">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
-                  Share With Communities:
-                </Label>
-                <RadioGroup
-                  row
-                  name="shareWithCommunities"
-                  value={formData.shareWithCommunities}
-                  onChange={(e) =>
-                    handleRadioChange("shareWithCommunities", e.target.value)
-                  }
-                  className="gap-2"
-                >
-                  <FormControlLabel
-                    value="yes"
-                    control={
-                      <Radio
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                          "& .MuiSvgIcon-root": { fontSize: 16 },
-                        }}
-                      />
-                    }
-                    label={<span className="text-sm text-gray-600">Yes</span>}
-                  />
-                  <FormControlLabel
-                    value="no"
-                    control={
-                      <Radio
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                          "& .MuiSvgIcon-root": { fontSize: 16 },
-                        }}
-                      />
-                    }
-                    label={<span className="text-sm text-gray-600">No</span>}
-                  />
-                </RadioGroup>
-              </div>
-            </div>
+            )}
 
             {/* Selected Tech Parks Display */}
-            {formData.shareWith === "individual" &&
+            {isPulseSite &&
+              formData.shareWith === "individual" &&
               selectedTechParks.length > 0 && (
                 <div className="mt-4 flex items-center gap-2">
                   <span className="text-[#C72030] text-sm">
@@ -793,25 +754,9 @@ export const AddDocumentDashboard = () => {
                 </div>
               )}
 
-            {/* Selected Communities Display */}
-            {formData.shareWithCommunities === "yes" &&
-              selectedCommunities.length > 0 && (
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="text-[#C72030] text-sm">
-                    {selectedCommunities.map((c) => c.name).join(", ")}.
-                  </span>
-                  <button
-                    onClick={() => setShowCommunityModal(true)}
-                    className="text-gray-500 hover:text-[#C72030] transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
             {/* Share with People Button */}
             {!isPulseSite && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className=" border-gray-200">
                 <Button
                   onClick={() => setShowShareModal(true)}
                   className="bg-[#C72030] hover:bg-[#A01828] text-white gap-2"
