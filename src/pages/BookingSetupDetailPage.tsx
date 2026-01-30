@@ -124,12 +124,13 @@ export const BookingSetupDetailPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    department: "",
+    facility_name: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
     payOnFacility: false,
     complimentary: false,
+    billToCompany: false,
     gstPercentage: "",
     sgstPercentage: "",
     igstPercentage: "",
@@ -322,24 +323,22 @@ export const BookingSetupDetailPage = () => {
   }
 
   const fetchFacilityBookingDetails = async () => {
-    console.log('🔍 fetchFacilityBookingDetails CALLED');
     try {
-      console.log('🚀 Fetching facility booking details...');
       const response = await dispatch(
         facilityBookingSetupDetails({ baseUrl, token, id })
       ).unwrap();
-      console.log('✅ API Response received:', response);
-      console.log('📦 facility_blockings from response:', response?.facility_blockings);
+      console.log(response.cover_image?.document)
       setFormData({
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
         isRequest: response.fac_type === "request" ? true : false,
-        department: response.department_id ?? "",
+        facility_name: response.facility_name ?? "",
         appKey: response.app_key,
         postpaid: response.postpaid,
         prepaid: response.prepaid,
         payOnFacility: response.pay_on_facility,
         complimentary: response.complementary,
+        billToCompany: response.bill_to_company,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
         igstPercentage: response.igst,
@@ -397,32 +396,20 @@ export const BookingSetupDetailPage = () => {
           selectedSlots: blocking.facility_blocking?.block_slot || [],
         })) || [],
       });
-      
-      console.log('=== Block Days Debug ===');
-      console.log('Raw facility_blockings from API:', response?.facility_blockings);
-      console.log('Total facility_blockings count:', response?.facility_blockings?.length);
-      console.log('Mapped blockDays:', response?.facility_blockings?.map((blocking: any) => ({
-        id: blocking.facility_blocking?.id,
-        startDate: blocking.facility_blocking?.ondate,
-        dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
-        blockReason: blocking.facility_blocking?.reason,
-        selectedSlots: blocking.facility_blocking?.block_slot,
-      })));
-      console.log('======================');
-      
+
       // Fetch slots for ALL block days (so we can display them in the UI)
       response?.facility_blockings?.forEach((blocking: any, index: number) => {
         const ondate = blocking.facility_blocking?.ondate;
-        
+
         if (ondate) {
-          console.log(`Fetching slots for block day ${index}:`, { 
-            date: ondate, 
+          console.log(`Fetching slots for block day ${index}:`, {
+            date: ondate,
             blockSlotIds: blocking.facility_blocking?.block_slot
           });
           fetchBlockDaySlots(id!, ondate, index);
         }
       });
-      
+
       const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
@@ -436,12 +423,12 @@ export const BookingSetupDetailPage = () => {
       setCancellationRules([...transformedRules]);
 
       const slots = response.facility_slots.map(slot => (
-        slot?.facility_slot?.slot_times.map(time => ({
-          id: time.slot_time.id,
-          isPremium: time.slot_time.is_premium,
-          premium_percentage: time.slot_time.premium_percentage || 0,
-          startTime: { hour: time.slot_time.start_hour, minute: time.slot_time.start_minute },
-          endTime: { hour: time.slot_time.end_hour, minute: time.slot_time.end_minute },
+        slot?.facility_slot?.setup_slot_times?.map(time => ({
+          id: time.setup_slot_time.id,
+          isPremium: time.setup_slot_time.is_premium,
+          premium_percentage: time.setup_slot_time.premium_percentage || 0,
+          startTime: { hour: time.setup_slot_time.start_hour, minute: time.setup_slot_time.start_minute },
+          endTime: { hour: time.setup_slot_time.end_hour, minute: time.setup_slot_time.end_minute },
         }))
       ));
       setSlotsConfigured(slots);
@@ -456,9 +443,8 @@ export const BookingSetupDetailPage = () => {
       });
       setIsPremiumSlots(premiumMap);
       setPremiumPercentage(percentageMap);
-
       // setCancellationRules(response.cancellation_rules)
-      setSelectedFile(response?.cover_image?.document);
+      setSelectedFile(response.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
       );
@@ -466,7 +452,7 @@ export const BookingSetupDetailPage = () => {
 
       // Setup gallery images
       const allGalleryImages: any[] = [];
-      
+
       // 1:1 images
       if (response?.gallery_image_1_by_1 && Array.isArray(response.gallery_image_1_by_1)) {
         response.gallery_image_1_by_1.forEach((item: any) => {
@@ -480,7 +466,7 @@ export const BookingSetupDetailPage = () => {
           }
         });
       }
-      
+
       // 16:9 images
       if (response?.gallery_image_16_by_9 && Array.isArray(response.gallery_image_16_by_9)) {
         response.gallery_image_16_by_9.forEach((item: any) => {
@@ -494,7 +480,7 @@ export const BookingSetupDetailPage = () => {
           }
         });
       }
-      
+
       // 9:16 images
       if (response?.gallery_image_9_by_16 && Array.isArray(response.gallery_image_9_by_16)) {
         response.gallery_image_9_by_16.forEach((item: any) => {
@@ -508,7 +494,7 @@ export const BookingSetupDetailPage = () => {
           }
         });
       }
-      
+
       // 3:2 images
       if (response?.gallery_image_3_by_2 && Array.isArray(response.gallery_image_3_by_2)) {
         response.gallery_image_3_by_2.forEach((item: any) => {
@@ -522,7 +508,7 @@ export const BookingSetupDetailPage = () => {
           }
         });
       }
-      
+
       setGalleryImages(allGalleryImages);
     } catch (error) {
       console.error("Error fetching facility details:", error);
@@ -530,7 +516,7 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
-  console.log(slotsConfigured)
+  console.log(selectedFile)
 
   const handleSlotCheckboxChange = (slotId: string) => {
     setIsPremiumSlots(prev => ({
@@ -660,13 +646,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
                 </span>
               </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Department</span>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Category Type</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
+                  {formData.facility_name || "-"}
                 </span>
-              </div> */}
+              </div>
             </div>
           </div>
 
@@ -682,34 +668,34 @@ export const BookingSetupDetailPage = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Member Adult Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.member.adult || "-"}
                 </span>
-              </div>
-              <div className="flex items-start">
+              </div> */}
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Adult Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.guest.adult || "-"}
                 </span>
-              </div>
-              <div className="flex items-start">
+              </div> */}
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Member Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.member.child || "-"}
                 </span>
-              </div>
-              <div className="flex items-start">
+              </div> */}
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Guest Child Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.guest.child || "-"}
                 </span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Minimum Person Allowed</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -819,7 +805,7 @@ export const BookingSetupDetailPage = () => {
                       {formData.canCancelBefore.day}d {formData.canCancelBefore.hour}h {formData.canCancelBefore.minute}m
                     </span>
                   </div>
-                  <div className="flex items-start">
+                  {/* <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Allow Multiple Slots</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
@@ -834,7 +820,7 @@ export const BookingSetupDetailPage = () => {
                         {formData.maximumSlots || "-"}
                       </span>
                     </div>
-                  )}
+                  )} */}
                   <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Facility Booked Times Per Day</span>
                     <span className="text-gray-500 mx-2">:</span>
@@ -979,7 +965,7 @@ export const BookingSetupDetailPage = () => {
                 {formData.blockDays.map((blockDay, index) => (
                   <div key={blockDay.id || index} className="p-4 border rounded-lg space-y-4">
                     <h4 className="text-sm font-semibold text-gray-700">Block Day {index + 1}</h4>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <TextField
                         label="Date"
@@ -1077,49 +1063,63 @@ export const BookingSetupDetailPage = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Prepaid</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.prepaid ? "Yes" : "No"}
-                </span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Show Prepaid and Pay at Facility for Bookable */}
+                {formData.isBookable && (
+                  <>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Prepaid</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.prepaid ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Pay at Facility</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.payOnFacility ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Show Complimentary and Bill to Company for Request */}
+                {!formData.isBookable && (
+                  <>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Complimentary</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.complimentary ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Bill to Company</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.billToCompany ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formData.sgstPercentage || "-"}
+                  </span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">GST (%)</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formData.gstPercentage || "-"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Pay on Facility</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.payOnFacility ? "Yes" : "No"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.sgstPercentage || "-"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">GST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.gstPercentage || "-"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">IGST (%)</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.igstPercentage || "-"}
-                </span>
-              </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {formData.perSlotCharge || "-"}
-                </span>
-              </div> */}
             </div>
           </div>
 
@@ -1148,7 +1148,7 @@ export const BookingSetupDetailPage = () => {
                 )}
               </div>
             </div>
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <Image className="w-4 h-4" />
@@ -1173,7 +1173,7 @@ export const BookingSetupDetailPage = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Gallery Images */}
@@ -1373,7 +1373,7 @@ export const BookingSetupDetailPage = () => {
             </div>
           </div>
 
-          {/* /* Additional Setup */ }
+          {/* /* Additional Setup */}
           <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? "h-auto" : "h-[6rem]"}`}>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
@@ -1400,7 +1400,7 @@ export const BookingSetupDetailPage = () => {
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
                   {loadingInventories ? (
@@ -1462,9 +1462,9 @@ export const BookingSetupDetailPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <LampFloor className="w-4 h-4" />
@@ -1499,8 +1499,8 @@ export const BookingSetupDetailPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              </div>
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Share2 className="w-4 h-4" />
@@ -1514,8 +1514,8 @@ export const BookingSetupDetailPage = () => {
                     readOnly
                   />
                 </div>
-              </div> */}
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              </div>
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <BookKey className="w-4 h-4" />

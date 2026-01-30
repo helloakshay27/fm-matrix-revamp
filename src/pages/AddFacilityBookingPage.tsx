@@ -14,11 +14,36 @@ import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
 
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '0.375rem',
+    backgroundColor: 'white',
+    height: {
+      xs: '36px',
+      sm: '45px'
+    },
+    '& fieldset': {
+      borderColor: '#d1d5db',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#3b82f6',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#3b82f6',
+    },
+  },
+};
+
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  
+
   // Get URL parameters
   const urlFacilityId = searchParams.get('facility_id');
   const urlDate = searchParams.get('date');
@@ -35,9 +60,6 @@ export const AddFacilityBookingPage = () => {
   const [guestUsers, setGuestUsers] = useState([]);
   const [guestUsersLoading, setGuestUsersLoading] = useState(false);
   const [guestUsersError, setGuestUsersError] = useState(null);
-  const [selectedGuest, setSelectedGuest] = useState('');
-
-  console.log(occupantUsersState)
 
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
@@ -47,17 +69,21 @@ export const AddFacilityBookingPage = () => {
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('occupant');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [userType, setUserType] = useState('self');
+  const [selectedUser, setSelectedUser] = useState(JSON.parse(localStorage.getItem('user') || '{}').id);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
+  const [users, setUsers] = useState([])
   const [facilityDetails, setFacilityDetails] = useState<{
+    bill_to_company: number;
     postpaid: number;
     prepaid: number;
     pay_on_facility: number;
     complementary: number;
+    fac_type?: string;
+    max_people?: number;
     facility_charge?: {
       adult_member_charge?: number;
       adult_guest_charge?: number;
@@ -67,7 +93,24 @@ export const AddFacilityBookingPage = () => {
     };
     gst?: number;
     sgst?: number;
+    facility_setup_accessories?: Array<{
+      facility_setup_accessory: {
+        id: number;
+        pms_inventory_id: number;
+        pms_inventory?: {
+          id: number;
+          name: string;
+        };
+      };
+    }>;
   } | null>(null);
+  const [selectedAccessories, setSelectedAccessories] = useState<{ [id: number]: number }>({});
+  const [availableAccessories, setAvailableAccessories] = useState<Array<{
+    id: number;
+    name: string;
+    inventoryId: number;
+    price: number;
+  }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
     id: number;
@@ -89,38 +132,91 @@ export const AddFacilityBookingPage = () => {
   const [bookingRuleData, setBookingRuleData] = useState<{
     can_book: boolean;
     rate: number;
+    multiple_bookings?: boolean;
+    multiple_booking_count?: number;
+    concurrent_slots?: number;
+  } | null>(null);
+  const [flexiblePriceData, setFlexiblePriceData] = useState<{
+    success: boolean;
+    total_minutes: number;
+    total_hours_charged: number;
+    slab_price: number;
+    cgst_amount: number;
+    sgst_amount: number;
+    total_amount: number;
+    used_slab: {
+      id: number;
+      duration_hours: number;
+      price: string;
+    };
   } | null>(null);
 
-  // Helper: Check if slot selection is allowed
-  const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
-  // Helper: Max slots user can select
-  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
-  // Helper: Max concurrent slots
-  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+  // Helper: Check if facility is requestable type
+  const isRequestableType = facilityDetails?.fac_type === 'request';
 
-  // Helper: Check if a slot can be selected (enforce concurrent rule)
+  // Helper: Check if slot selection is allowed
+  const canSelectSlots = (facilityDetails?.fac_type === 'request' && bookingRuleData) ? bookingRuleData.can_book !== false : true;
+  // Helper: Max slots user can select
+  const maxSelectableSlots = isRequestableType
+    ? Infinity // For requestable, allow unlimited consecutive slots
+    : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+  // Helper: Max concurrent slots
+  const maxConcurrentSlots = isRequestableType
+    ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
+    : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+
+  // Helper: Check if consecutive selection is valid
+  const isConsecutiveSelection = (slots: number[]) => {
+    if (slots.length === 0) return true;
+    const sorted = [...slots].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] !== sorted[i - 1] + 1) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Helper: Check if a slot can be selected (enforce consecutive rule for requestable)
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect
-    if (selectedSlots.length >= maxSelectableSlots) return false;
-    // Check concurrent rule: sort selected + candidate, check max consecutive
-    const all = [...selectedSlots, slotId].sort((a, b) => a - b);
-    let maxConsec = 1, curr = 1;
-    for (let i = 1; i < all.length; i++) {
-      if (all[i] === all[i - 1] + 1) {
-        curr++;
-        maxConsec = Math.max(maxConsec, curr);
-      } else {
-        curr = 1;
+
+    if (isRequestableType) {
+      // For requestable type, enforce consecutive slots only
+      const newSelection = [...selectedSlots, slotId];
+
+      // Check if adding this slot maintains consecutive pattern
+      if (!isConsecutiveSelection(newSelection)) return false;
+
+      // Check if total doesn't exceed max
+      if (newSelection.length > maxSelectableSlots) return false;
+
+      return true;
+    } else {
+      // For bookable type, use existing logic
+      if (selectedSlots.length >= maxSelectableSlots) return false;
+      const all = [...selectedSlots, slotId].sort((a, b) => a - b);
+      let maxConsec = 1, curr = 1;
+      for (let i = 1; i < all.length; i++) {
+        if (all[i] === all[i - 1] + 1) {
+          curr++;
+          maxConsec = Math.max(maxConsec, curr);
+        } else {
+          curr = 1;
+        }
       }
+      return maxConsec <= maxConcurrentSlots;
     }
-    return maxConsec <= maxConcurrentSlots;
   };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+
   // Helper: Get max people allowed from facility details
   const maxPeople = facilityDetails?.max_people || 0;
   const [peopleTable, setPeopleTable] = useState<Array<{
@@ -152,18 +248,26 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
+  const getUsers = async () => {
+    try {
+      const reseponse = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      setUsers(reseponse.data.users)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   // Fetch data on component mount
   useEffect(() => {
-    if (userType === 'occupant') {
-      dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
-      dispatch(fetchEntities());
-    } else if (userType === 'guest') {
-      fetchGuestUsers();
-    } else {
-      dispatch(fetchFMUsers());
-    }
+    // dispatch(fetchFMUsers());
+    getUsers()
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
-  }, [dispatch, userType]);
+  }, [dispatch]);
 
   // Load all user types when facility is selected for the people table
   useEffect(() => {
@@ -212,7 +316,21 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
-        
+        setSelectedAccessories({}); // Reset selected accessories
+
+        // Extract and set available accessories from facility setup
+        if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
+          const accessories = response.data.facility_setup.facility_setup_accessories.map(item => ({
+            id: item.facility_setup_accessory?.id || 0,
+            name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0,
+            price: item.facility_setup_accessory?.cost || 0
+          }));
+          setAvailableAccessories(accessories);
+        } else {
+          setAvailableAccessories([]);
+        }
+
         // Initialize people table based on max_people
         const maxPeople = response.data.facility_setup.max_people || 1;
         const initialTable = Array.from({ length: maxPeople }, (_, index) => ({
@@ -226,6 +344,8 @@ export const AddFacilityBookingPage = () => {
     } catch (error) {
       console.error('Error fetching facility details:', error);
       setFacilityDetails(null);
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -237,6 +357,8 @@ export const AddFacilityBookingPage = () => {
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -246,12 +368,12 @@ export const AddFacilityBookingPage = () => {
       const params: any = {
         on_date: formattedDate
       };
-      
+
       // Only add user_id if it's provided
       if (userId) {
         params.user_id = userId;
       }
-      
+
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
         params
       });
@@ -260,34 +382,47 @@ export const AddFacilityBookingPage = () => {
         setSlots(response.data.slots);
         setSelectedSlots([]); // Reset selected slots when new slots are fetched
       }
-
-      // Call amenity booking API for members
-      // if (userType === 'occupant' && userId && facilityId) {
-      //   try {
-      //     const token = localStorage.getItem('token');
-      //     const amenityResponse = await apiClient.get('/club_members/amenity_booking_by_club_plan', {
-      //       params: {
-      //         user_id: userId,
-      //         facility_setup_id: facilityId
-      //       },
-      //       headers: {
-      //         'Authorization': `Bearer ${token}`
-      //       }
-      //     });
-      //     console.log('Amenity Booking by Club Plan Response:', amenityResponse.data);
-      //   } catch (amenityError) {
-      //     console.error('Error fetching amenity booking by club plan:', amenityError);
-      //   }
-      // }
     } catch (error) {
       console.error('Error fetching slots:', error);
       setSlots([]);
     }
   };
 
+  // Fetch flexible pricing for requestable facilities
+  const fetchFlexiblePrice = async (facilityId: string, slotIds: number[]) => {
+    if (!isRequestableType || slotIds.length === 0) {
+      setFlexiblePriceData(null);
+      return;
+    }
+
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/calculate_flexible_price.json`,
+        { slot_ids: slotIds },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data && response.data.success) {
+        console.log('Flexible Price Response:', response.data);
+        setFlexiblePriceData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching flexible price:', error);
+      setFlexiblePriceData(null);
+    }
+  };
+
   // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
-   
+
     if (selectedFacility && selectedDate) {
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       fetchSlots(facilityId, selectedDate, selectedUser || undefined);
@@ -297,16 +432,20 @@ export const AddFacilityBookingPage = () => {
     }
   }, [selectedFacility, selectedDate, selectedUser]);
 
+  // Effect to fetch flexible pricing when slots are selected for requestable facilities
+  useEffect(() => {
+    if (isRequestableType && selectedSlots.length > 0 && selectedFacility) {
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      fetchFlexiblePrice(facilityId, selectedSlots);
+    } else if (!isRequestableType) {
+      setFlexiblePriceData(null);
+    }
+  }, [selectedSlots, isRequestableType, selectedFacility]);
+
   // Call amenity booking API when member user type is selected with user and facility
   useEffect(() => {
-    console.log('=== Amenity API Check ===');
-    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
-    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
-    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
-    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
-    console.log('========================');
-     const token= localStorage.getItem('token') 
-     console.log('Token for Amenity API:', token);
+    const token = localStorage.getItem('token')
+    console.log('Token for Amenity API:', token);
     if (selectedUser && selectedFacility) {
       const fetchAmenityBooking = async () => {
         try {
@@ -347,29 +486,22 @@ export const AddFacilityBookingPage = () => {
     }
   }, [userType, selectedUser, selectedFacility]);
 
-  // Auto-select slot from URL parameter when slots are loaded
   useEffect(() => {
     if (urlSlotTime && slots.length > 0 && selectedSlots.length === 0) {
-      // Decode the URL slot time (e.g., "9:00AM - 9:15AM")
       const decodedSlotTime = decodeURIComponent(urlSlotTime);
-      
-      // Find the slot that matches the clicked time
-      // The slot.ampm format is like "09:00 AM to 09:15 AM"
-      // The URL format is like "9:00AM - 9:15AM"
       const matchingSlot = slots.find(slot => {
-        // Normalize both formats for comparison
         const slotTimeNormalized = slot.ampm
-          .replace(/\s+/g, '') // Remove all spaces
-          .replace('to', '-')  // Replace 'to' with '-'
+          .replace(/\s+/g, '')
+          .replace('to', '-')
           .toLowerCase();
-        
+
         const urlTimeNormalized = decodedSlotTime
-          .replace(/\s+/g, '') // Remove all spaces
+          .replace(/\s+/g, '')
           .toLowerCase();
-        
+
         return slotTimeNormalized === urlTimeNormalized;
       });
-      
+
       if (matchingSlot) {
         setSelectedSlots([matchingSlot.id]);
       }
@@ -389,51 +521,17 @@ export const AddFacilityBookingPage = () => {
     });
   };
 
-  // Handle people table changes
-  const handlePeopleTableChange = (index: number, field: 'role' | 'user' | 'level', value: string) => {
-    setPeopleTable(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      
-      // If role is changed and it matches the pre-selected user, auto-select that user
-      if (field === 'role' && selectedUser) {
-        // Check if the selected user exists in the users for this role
-        const roleUsers = getUsersForRole(value);
-        const userExists = roleUsers.some((u: any) => u.id.toString() === selectedUser.toString());
-        
-        if (userExists) {
-          updated[index].user = selectedUser;
-        } else {
-          updated[index].user = ''; // Reset user if not found in role users
-        }
-      } else if (field === 'role' && !selectedUser && value === 'guest' && selectedGuest) {
-        // Special case for guest when no selectedUser but selectedGuest exists
-        updated[index].user = selectedGuest;
-      } else if (field === 'role' && !selectedUser) {
-        updated[index].user = ''; // Reset user if no pre-selection
+  // Handle accessory quantity change
+  const handleAccessoryQuantityChange = (accessoryId: number, quantity: number) => {
+    setSelectedAccessories(prev => {
+      if (quantity <= 0) {
+        const newState = { ...prev };
+        delete newState[accessoryId];
+        return newState;
+      } else {
+        return { ...prev, [accessoryId]: quantity };
       }
-      
-      return updated;
     });
-  };
-
-  // Get users based on role
-  const getUsersForRole = (role: string) => {
-    if (!role) return [];
-    
-    switch (role) {
-      case 'staff':
-        console.log('Staff users:', fmUsers);
-        return fmUsers || [];
-      case 'member':
-        console.log('Member users:', occupantUsers);
-        return occupantUsers || [];
-      case 'guest':
-        console.log('Guest users:', guestUsers);
-        return guestUsers || [];
-      default:
-        return [];
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -485,36 +583,22 @@ export const AddFacilityBookingPage = () => {
       }
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-      
-      // --- UI-aligned cost calculation (slot-by-slot, with premiums, for all user types) ---
-      const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
-      const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
+
+      // --- Cost calculation based on per_slot_charge and accessories ---
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-      const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
       const slotsCount = selectedSlots.length;
-      const hasSlots = slotsCount > 0;
-      let totalUserCharge = 0;
-      let totalGuestCharge = 0;
-      if (hasSlots) {
-        selectedSlots.forEach((slotId) => {
-          const slot = slots.find((s) => s.id === slotId);
-          let memberPremium = 0;
-          let guestPremium = 0;
-          if (slot && slot.is_premium && slot.premium_percentage) {
-            memberPremium = userType === 'occupant' ? Math.round((memberRate * slot.premium_percentage) / 100) : 0;
-            guestPremium = (userType === 'guest' || userType === 'fm') ? Math.round((adultGuestCharge * slot.premium_percentage) / 100) : 0;
-          }
-          // Add for each slot
-          totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-          totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-        });
-      } else {
-        // No slots selected, use base charge
-        totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-        totalGuestCharge = numberOfGuests * adultGuestCharge;
-      }
-      const slotTotal = selectedSlots.length * perSlotCharge;
-      const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+
+      // Calculate slot total
+      const slotTotal = slotsCount * perSlotCharge;
+
+      // Calculate accessory total with quantities
+      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+        return total + ((accessory?.price || 0) * (quantity || 0));
+      }, 0);
+
+      // Subtotal includes slots and accessories
+      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -522,97 +606,72 @@ export const AddFacilityBookingPage = () => {
       const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
       const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
       const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
-      
+
       // Build booked_members_attributes array from people table
       const bookedMembersAttributes = peopleTable
         .filter(row => row.role && row.user) // Only include rows with both role and user selected
         .map(row => {
-          // Calculate individual charge based on role
-          let totalCharge = 0;
-          if (row.role === 'staff' || row.role === 'member') {
-            totalCharge = adultMemberCharge;
-          } else if (row.role === 'guest') {
-            totalCharge = adultGuestCharge;
-          }
-          
+          // Set charge to 0 since we're only using per_slot_charge
+          const totalCharge = 0;
+
           return {
             user_id: parseInt(row.user),
             oftype: row.level, // 'primary' or 'secondary'
             total_charge: totalCharge
           };
         });
-      
-      // Prepare guest premium details for payload (slot-wise breakdown)
-      let guestPremiumDetails: Array<{ slotLabel: string; slotPremiumPercent: number; guestPremium: number; total: number }> = [];
-      if (selectedSlots.length > 0) {
-        selectedSlots.forEach((slotId) => {
-          const slot = slots.find((s) => s.id === slotId);
-          let guestPremium = 0;
-          let slotPremiumPercent = 0;
-          if (slot && slot.is_premium && slot.premium_percentage) {
-            slotPremiumPercent = slot.premium_percentage;
-            guestPremium = (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) * slot.premium_percentage / 100;
-          }
-          guestPremiumDetails.push({
-            slotLabel: slot ? slot.ampm : '',
-            slotPremiumPercent,
-            guestPremium,
-            total: (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) + guestPremium
-          });
-        });
-      }
 
       // Use cost summary calculation (from UI) for payload values
       const costSummary = (() => {
-        const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
-        const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
-        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-        const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
-        const slotsCount = selectedSlots.length;
-        const hasSlots = slotsCount > 0;
-        let totalUserCharge = 0;
-        let totalGuestCharge = 0;
-        let slotPremiumDetails = [];
-        if (hasSlots) {
-          selectedSlots.forEach((slotId) => {
-            const slot = slots.find((s) => s.id === slotId);
-            let memberPremium = 0;
-            let guestPremium = 0;
-            let slotPremiumPercent = 0;
-            if (slot && slot.is_premium && slot.premium_percentage) {
-              slotPremiumPercent = slot.premium_percentage;
-              memberPremium = (memberRate * slot.premium_percentage) / 100;
-              guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
-            }
-            slotPremiumDetails.push({
-              slotLabel: slot ? slot.ampm : '',
-              slotPremiumPercent,
-              memberPremium,
-              guestPremium
-            });
-            totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-            totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-          });
+        // Calculate accessory total with quantities
+        const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+          const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+          return total + ((accessory?.price || 0) * (quantity || 0));
+        }, 0);
+
+        let basePrice = 0;
+
+        // For requestable type, use slab_price from API; for others, use slot charges
+        if (isRequestableType && flexiblePriceData) {
+          basePrice = flexiblePriceData.slab_price;
         } else {
-          totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-          totalGuestCharge = numberOfGuests * adultGuestCharge;
+          const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+          const slotsCount = selectedSlots.length;
+          basePrice = slotsCount * perSlotCharge;
         }
-        const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
-        const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-        const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-        const gstPercentage = facilityDetails?.gst || 0;
-        const sgstPercentage = facilityDetails?.sgst || 0;
+
+        // Subtotal includes base price and accessories
+        const subtotalBeforeDiscount = basePrice + accessoryTotal;
+
+        // Calculate discount based on type
+        const calculatedDiscountAmount = discountType === 'percentage'
+          ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+          : (discountAmount || 0);
+
+        const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
+
+        let gstPercentage = 0;
+        let sgstPercentage = 0;
+
+        // For requestable type, use API values; for others, use facility setup values
+        if (isRequestableType && flexiblePriceData) {
+          // Extract percentages from API response if available, otherwise use facility defaults
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        } else {
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        }
+
         const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
         const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+
         return {
-          totalUserCharge,
-          totalGuestCharge,
-          slotPremiumDetails,
-          slotTotal,
+          basePrice,
+          accessoryTotal,
           subtotalBeforeDiscount,
-          discountAmount,
+          discountAmount: calculatedDiscountAmount,
           subtotalAfterDiscount,
           gstPercentage,
           sgstPercentage,
@@ -621,6 +680,8 @@ export const AddFacilityBookingPage = () => {
           amountFull
         };
       })();
+
+      console.log(costSummary)
 
       const payload = {
         facility_booking: {
@@ -635,10 +696,18 @@ export const AddFacilityBookingPage = () => {
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
+          accessories: Object.entries(selectedAccessories).map(([accessoryId, quantity]) => {
+            const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+            return {
+              id: parseInt(accessoryId),
+              quantity: quantity,
+              total_price: (accessory?.price || 0) * quantity
+            };
+          }),
           entity_id: selectedCompany,
-          member_charges: costSummary.totalUserCharge,
-          guest_charges: costSummary.totalGuestCharge,
-          guest_premium_details: guestPremiumDetails,
+          member_charges: 0,
+          guest_charges: 0,
+          guest_premium_details: [],
           discount: costSummary.discountAmount,
           cgst_amount: costSummary.gstAmount,
           sgst_amount: costSummary.sgstAmount,
@@ -666,9 +735,26 @@ export const AddFacilityBookingPage = () => {
         },
       });
 
-      console.log('Response received:', response.status, response.data);
+      if (response.data.error) {
+        toast.error(response.data.error);
+        return;
+      }
 
-      if (response.status === 200 || response.status === 201) {
+      // Check if payment method is prepaid
+      if (paymentMethod === 'prepaid') {
+        // Get the booking ID from response
+        const bookingId = response.data.facility_booking?.id || response.data.id;
+        const token = localStorage.getItem('token');
+
+        if (bookingId && token) {
+          toast.success('Booking created successfully! Redirecting to payment gateway...');
+          // Navigate to payment gateway redirection page with booking ID and token
+          navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
+        } else {
+          toast.error('Booking created but payment redirection failed. Please contact support.');
+          navigate(-1);
+        }
+      } else {
         toast.success('Booking created successfully!');
         navigate(-1);
       }
@@ -684,31 +770,6 @@ export const AddFacilityBookingPage = () => {
 
   const handleBackToList = () => {
     navigate(-1);
-  };
-
-  const fieldStyles = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '0.375rem',
-      backgroundColor: 'white',
-      height: {
-        xs: '36px',
-        sm: '45px'
-      },
-      '& fieldset': {
-        borderColor: '#d1d5db',
-      },
-      '&:hover fieldset': {
-        borderColor: '#9ca3af',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#3b82f6',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      '&.Mui-focused': {
-        color: '#3b82f6',
-      },
-    },
   };
 
   return (
@@ -736,65 +797,21 @@ export const AddFacilityBookingPage = () => {
         {/* User Type Selection */}
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
-            
+
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Members</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="guest" id="guest" />
-              <Label htmlFor="guest">Guest</Label>
+              <RadioGroupItem value="self" id="self" />
+              <Label htmlFor="self">Self</Label>
             </div>
 
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fm" id="fm" />
-              <Label htmlFor="fm">Staff</Label>
+              <RadioGroupItem value="user" id="user" />
+              <Label htmlFor="user">Users</Label>
             </div>
           </RadioGroup>
         </div>
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Client Dropdown - only for occupant users */}
-          {/* {userType === 'occupant' && (
-            <div className="space-y-2">
-              <TextField
-                select
-                label="Client"
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                SelectProps={{ displayEmpty: true }}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                disabled={entitiesLoading}
-                helperText={entitiesError ? "Error loading companies" : ""}
-                error={!!entitiesError}
-              >
-                <MenuItem value="" disabled>
-                  <em>
-                    Select Client
-                  </em>
-                </MenuItem>
-                {entitiesLoading && (
-                  <MenuItem value="" disabled>
-                    Loading companies...
-                  </MenuItem>
-                )}
-                {!entitiesLoading && !entitiesError && entities.length === 0 && (
-                  <MenuItem value="" disabled>
-                    No companies available
-                  </MenuItem>
-                )}
-                {entities.map((entity) => (
-                  <MenuItem key={entity.id} value={entity.id.toString()}>
-                    {entity.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
-          )} */}
 
           {/* User Selection - occupant, fm, or guest users */}
           <div className="space-y-2">
@@ -814,58 +831,14 @@ export const AddFacilityBookingPage = () => {
                 shrink: true
               }}
               sx={fieldStyles}
-              disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
-              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : userType === 'guest' ? (guestUsersError ? "Error loading guest users" : "") : (fmUsersError ? "Error loading users" : "")}
-              error={userType === 'occupant' ? !!occupantUsersError : userType === 'guest' ? !!guestUsersError : !!fmUsersError}
+              disabled={userType === 'self'}
             >
               <MenuItem value="" disabled>
                 <em>
                   Select User
                 </em>
               </MenuItem>
-              {userType === 'occupant' && occupantUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'occupant' && !occupantUsersLoading && !occupantUsersError && occupantUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'occupant' && occupantUsers.map((user) => (
-                <MenuItem key={user.id} value={user.id.toString()}>
-                  {user.name}
-                </MenuItem>
-              ))}
-
-              {userType === 'guest' && guestUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading guest users...
-                </MenuItem>
-              )}
-              {userType === 'guest' && !guestUsersLoading && !guestUsersError && guestUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No guest users available
-                </MenuItem>
-              )}
-              {userType === 'guest' && guestUsers.map((guest) => (
-                <MenuItem key={guest.id} value={guest.id.toString()}>
-                  {guest.firstname} {guest.lastname}
-                </MenuItem>
-              ))}
-
-              {userType === 'fm' && fmUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading users...
-                </MenuItem>
-              )}
-              {userType === 'fm' && !fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No users available
-                </MenuItem>
-              )}
-              {userType === 'fm' && fmUsers.map((user) => (
+              {users.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.full_name}
                 </MenuItem>
@@ -923,7 +896,6 @@ export const AddFacilityBookingPage = () => {
             <TextField
               type="date"
               label="Date"
-              required
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"
@@ -1024,15 +996,75 @@ export const AddFacilityBookingPage = () => {
           {bookingRuleData && !canSelectSlots && (
             <div className="mt-2 text-red-600 text-sm font-medium">You are not allowed to book slots for this user.</div>
           )}
-          {bookingRuleData && canSelectSlots && (
+          {canSelectSlots && (
             <div className="mt-2 text-gray-600 text-xs">
-              {bookingRuleData.multiple_bookings
-                ? `You can select up to ${maxSelectableSlots} slots. `
-                : 'You can select only one slot. '}
-              {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+              {isRequestableType ? (
+                `You can select multiple consecutive slots. Selected slots must be continuous.`
+              ) : (
+                <>
+                  {bookingRuleData?.multiple_bookings
+                    ? `You can select up to ${maxSelectableSlots} slots. `
+                    : 'You can select only one slot. '}
+                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                </>
+              )}
             </div>
           )}
         </div>
+
+        {/* Select Accessories Section */}
+        {availableAccessories.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Select Accessories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableAccessories.map((accessory) => (
+                <div key={accessory.id} className="flex flex-col space-y-2 p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`accessory-${accessory.id}`}
+                      checked={selectedAccessories[accessory.id] ? true : false}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          handleAccessoryQuantityChange(accessory.id, 1);
+                        } else {
+                          handleAccessoryQuantityChange(accessory.id, 0);
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <Label
+                      htmlFor={`accessory-${accessory.id}`}
+                      className="cursor-pointer text-sm font-medium flex-1"
+                    >
+                      <span>{accessory.name}</span>
+                    </Label>
+                    {accessory.price > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">₹{accessory.price.toFixed(2)}</span>
+                    )}
+                  </div>
+
+                  {/* Quantity Input - Only show if selected */}
+                  {selectedAccessories[accessory.id] && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <Label className="text-xs text-gray-600">Quantity:</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={selectedAccessories[accessory.id]}
+                        onChange={(e) => handleAccessoryQuantityChange(accessory.id, Math.max(1, parseInt(e.target.value) || 0))}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                      <span className="text-xs text-gray-600 ml-auto">
+                        Total: ₹{(accessory.price * selectedAccessories[accessory.id]).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Payment Method Section */}
         <div>
@@ -1063,12 +1095,18 @@ export const AddFacilityBookingPage = () => {
                   <Label htmlFor="complementary">Complementary</Label>
                 </div>
               )}
+              {facilityDetails.bill_to_company && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="bill_to_company" id="bill_to_company" />
+                  <Label htmlFor="bill_to_company">Bill to Company</Label>
+                </div>
+              )}
             </RadioGroup>
           )}
           {!facilityDetails && selectedFacility && (
             <p className="text-gray-500">Please select a facility to see available payment methods</p>
           )}
-          
+
           {/* Complementary Reason Input */}
           {paymentMethod === 'complementary' && (
             <div className="mt-4">
@@ -1092,431 +1130,296 @@ export const AddFacilityBookingPage = () => {
           )}
         </div>
 
-        {/* Charge Details Table */}
-        {facilityDetails?.facility_charge && (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Charge Details</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#E5E0D3]">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User Type</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Charge</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {facilityDetails.facility_charge.adult_member_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">1</td>
-                      <td className="border border-gray-300 px-4 py-3">Adult Member</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_member_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.child_member_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">2</td>
-                      <td className="border border-gray-300 px-4 py-3">Child Member</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_member_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.adult_guest_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">3</td>
-                      <td className="border border-gray-300 px-4 py-3">Adult Guest</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_guest_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {facilityDetails.facility_charge.child_guest_charge != null && (
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">4</td>
-                      <td className="border border-gray-300 px-4 py-3">Child Guest</td>
-                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_guest_charge.toFixed(2)}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-
-        {/* People Table Section
-        {facilityDetails && peopleTable.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Invited User</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#E5E0D3]">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Role</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Level</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {peopleTable.map((row, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">{row.srNo}</td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.role}
-                          onChange={(e) => handlePeopleTableChange(index, 'role', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                        >
-                          <MenuItem value="">Select Role</MenuItem>
-                          <MenuItem value="staff">Staff</MenuItem>
-                          <MenuItem value="member">Member</MenuItem>
-                          <MenuItem value="guest">Guest</MenuItem>
-                        </TextField>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.user}
-                          onChange={(e) => handlePeopleTableChange(index, 'user', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          disabled={!row.role}
-                          SelectProps={{
-                            displayEmpty: true,
-                          }}
-                        >
-                          <MenuItem value="">
-                            {!row.role 
-                              ? 'Select Role First' 
-                              : (row.role === 'staff' && fmUsersLoading) ||
-                                (row.role === 'member' && occupantUsersLoading) ||
-                                (row.role === 'guest' && guestUsersLoading)
-                              ? 'Loading users...'
-                              : 'Select User'
-                            }
-                          </MenuItem>
-                          {row.role && getUsersForRole(row.role).map((user: any) => (
-                            <MenuItem key={user.id} value={user.id}>
-                              {row.role === 'staff' 
-                                ? user.full_name 
-                                : row.role === 'member' 
-                                  ? user.name 
-                                  : row.role === 'guest' 
-                                    ? `${user.firstname || ''} ${user.lastname || ''}`.trim() 
-                                    : user.name || user.username || `User ${user.id}`
-                              }
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <TextField
-                          select
-                          size="small"
-                          value={row.level}
-                          onChange={(e) => handlePeopleTableChange(index, 'level', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          disabled
-                          // sx={{
-                          //   '& .MuiInputBase-input.Mui-disabled': {
-                          //     WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)',
-                          //     color: 'rgba(0, 0, 0, 0.87)'
-                          //   }
-                          // }}
-                        >
-                          <MenuItem value="primary">Primary</MenuItem>
-                          <MenuItem value="secondary">Secondary</MenuItem>
-                        </TextField>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-         )}  */}
-
         {/* Cost Summary Section */}
-        { selectedUser  && facilityDetails && (
+        {selectedUser && facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on initially selected user */}
-              {(() => {
-                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
-                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
-                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
+              {/* For Requestable Type - Use Flexible Price API Response */}
+              {isRequestableType && flexiblePriceData ? (
+                <>
+                  {/* Calculate accessory total */}
+                  {(() => {
+                    const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                      const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                      return total + ((accessory?.price || 0) * (quantity || 0));
+                    }, 0);
+                    const subtotalWithAccessories = flexiblePriceData.slab_price + accessoryTotal;
+                    const calculatedDiscountAmount = discountType === 'percentage'
+                      ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
+                      : (discountAmount || 0);
+                    const subtotalAfterDiscount = subtotalWithAccessories - calculatedDiscountAmount;
+                    const grandTotal = subtotalAfterDiscount + flexiblePriceData.cgst_amount + flexiblePriceData.sgst_amount;
 
-                // Use booking rule rate for members if available (even if 0), otherwise use facility charge
-                const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
-
-                // Number of slots selected
-                const slotsCount = selectedSlots.length;
-                const hasSlots = slotsCount > 0;
-
-                // Restore userCharge for use in JSX
-                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                // Prepare slot premium details for display
-                let slotPremiumDetails = [];
-                let totalUserCharge = 0;
-                let totalGuestCharge = 0;
-                if (hasSlots) {
-                  selectedSlots.forEach((slotId) => {
-                    const slot = slots.find((s) => s.id === slotId);
-                    let memberPremium = 0;
-                    let guestPremium = 0;
-                    let slotPremiumPercent = 0;
-                    if (slot && slot.is_premium && slot.premium_percentage) {
-                        slotPremiumPercent = slot.premium_percentage;
-                        memberPremium = (memberRate * slot.premium_percentage) / 100;
-                        guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
-                    }
-                    slotPremiumDetails.push({
-                      slotLabel: slot ? slot.ampm : '',
-                      slotPremiumPercent,
-                      memberPremium,
-                      guestPremium
-                    });
-                    // Add for each slot
-                    totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-                    totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-                  });
-                } else {
-                  // No slots selected, use base charge
-                  totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                  totalGuestCharge = numberOfGuests * adultGuestCharge;
-                }
-
-                const slotTotal = selectedSlots.length * perSlotCharge;
-                const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
-                const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-                const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-
-                const gstPercentage = facilityDetails.gst || 0;
-                const sgstPercentage = facilityDetails.sgst || 0;
-                const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-                const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-                const totalTax = gstAmount + sgstAmount;
-                const grandTotal = subtotalAfterDiscount + totalTax;
-
-                return (
-                  <>
-                    {/* Slots Count - Only show when slots are selected */}
-                    {hasSlots && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
-                        <span className="text-gray-700 font-medium">Number of Slots Selected</span>
-                        <span className="font-semibold text-blue-600">{slotsCount}</span>
-                      </div>
-                    )}
-
-                    {/* Member Charge - Always show for occupant users, even if zero */}
-                    {userType === 'occupant' && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex flex-col gap-1 w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-700">Member Charge</span>
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
-                            )}
-                          </div>
-                          {/* Show member premium calculation per slot as a table */}
-                          {hasSlots && (
-                            <div className="flex justify-start">
-                              <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                                <thead>
-                                  <tr className="bg-gray-50">
-                                    <th className="border px-2 py-1 text-left">Slot</th>
-                                    <th className="border px-2 py-1 text-left">Premium %</th>
-                                    <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                    <th className="border px-2 py-1 text-left">Total Charge</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {slotPremiumDetails.map((slot, idx) => {
-                                    const base = memberRate;
-                                    const total = base + slot.memberPremium;
-                                    return (
-                                      <tr key={idx}>
-                                        <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                        <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                        <td className="border px-2 py-1 text-purple-700">₹{slot.memberPremium.toFixed(2)}</td>
-                                        <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                    return (
+                      <>
+                        {/* Slab Price */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700">Base Price</span>
+                          <span className="font-medium">₹{flexiblePriceData.slab_price.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Guest Charge */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Guest Charge</span>
-                          <div className="flex items-center gap-1">
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={numberOfGuests}
-                              onChange={(e) => {
-                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                setNumberOfGuests(val > maxPeople ? maxPeople : val);
-                              }}
-                              variant="outlined"
-                              placeholder="No. of guests"
-                              sx={{
-                                width: '100px',
-                                '& .MuiOutlinedInput-root': {
-                                  height: '36px',
-                                  '& input': {
-                                    textAlign: 'right',
-                                    padding: '8px 12px'
-                                  }
-                                }
-                              }}
-                              inputProps={{
-                                min: 0,
-                                step: 1
-                              }}
-                            />
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Show guest premium calculation per slot as a table */}
-                        {hasSlots && (
-                          <div className="flex justify-start">
-                            <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                              <thead>
-                                <tr className="bg-gray-50">
-                                  <th className="border px-2 py-1 text-left">Slot</th>
-                                  <th className="border px-2 py-1 text-left">Premium %</th>
-                                  <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                  <th className="border px-2 py-1 text-left">Total Charge</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {slotPremiumDetails.map((slot, idx) => {
-                                  const base = adultGuestCharge;
-                                  const total = base + slot.guestPremium;
-                                  return (
-                                    <tr key={idx}>
-                                      <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                      <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                      <td className="border px-2 py-1 text-blue-700">₹{slot.guestPremium.toFixed(2)}</td>
-                                      <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                        {/* Booking Duration */}
+                        {flexiblePriceData.used_slab && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700">Booking Duration</span>
+                            <span className="font-medium">{flexiblePriceData.used_slab.duration_hours} hour{flexiblePriceData.used_slab.duration_hours > 1 ? 's' : ''}</span>
                           </div>
                         )}
-                      </div>
-                      <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
-                    </div>
 
-                    {/* Slot Charges */}
-                    {selectedSlots.length > 0 && perSlotCharge > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Slot Charges</span>
-                          <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                        {/* Accessory Charges */}
+                        {accessoryTotal > 0 && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-700">Accessory Charges</span>
+                              <span className="text-sm text-gray-500">({Object.values(selectedAccessories).reduce((sum, qty) => sum + qty, 0)} items)</span>
+                            </div>
+                            <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {/* Subtotal (Slab Price + Accessories) */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 font-semibold">
+                          <span className="text-gray-700">Subtotal</span>
+                          <span className="font-medium">₹{subtotalWithAccessories.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Subtotal Before Discount */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-gray-700 font-medium">Subtotal</span>
-                      <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
-                    </div>
-
-                    {/* Discount - Editable */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Discount</span>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={discountPercentage}
-                            onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                            variant="outlined"
-                            sx={{
-                              width: '80px',
-                              '& .MuiOutlinedInput-root': {
-                                height: '36px',
-                                '& input': {
-                                  textAlign: 'right',
-                                  padding: '8px 12px'
-                                }
-                              }
-                            }}
-                            inputProps={{
-                              min: 0,
-                              max: 100,
-                              step: 0.1
-                            }}
-                          />
-                          <span className="text-gray-500">%</span>
+                        {/* Discount - Editable */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Discount</span>
+                            <div className="flex items-center gap-1">
+                              <div className="flex gap-1 items-center">
+                                <select
+                                  value={discountType}
+                                  onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                  className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                  style={{ height: '36px' }}
+                                >
+                                  <option value="percentage">%</option>
+                                  <option value="amount">₹</option>
+                                </select>
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                  onChange={(e) => {
+                                    if (discountType === 'percentage') {
+                                      setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                    } else {
+                                      setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
+                                    }
+                                  }}
+                                  variant="outlined"
+                                  sx={{
+                                    width: '80px',
+                                    '& .MuiOutlinedInput-root': {
+                                      height: '36px',
+                                      '& input': {
+                                        textAlign: 'right',
+                                        padding: '8px 12px'
+                                      }
+                                    }
+                                  }}
+                                  inputProps={{
+                                    min: 0,
+                                    step: discountType === 'percentage' ? 0.1 : 1
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-medium">₹{calculatedDiscountAmount.toFixed(2)}</span>
                         </div>
-                      </div>
-                      <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
-                    </div>
 
-                    {/* Subtotal After Discount */}
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <span className="text-gray-700 font-medium">Subtotal After Discount</span>
-                        <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
+                        {/* Subtotal After Discount */}
+                        {calculatedDiscountAmount > 0 && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                            <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                          </div>
+                        )}
 
-                    {/* GST */}
-                    {gstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">GST</span>
-                          <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                        {/* CGST from API */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700">CGST</span>
+                          <span className="font-medium">₹{flexiblePriceData.cgst_amount.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* SGST */}
-                    {sgstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
+                        {/* SGST from API */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
                           <span className="text-gray-700">SGST</span>
-                          <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          <span className="font-medium">₹{flexiblePriceData.sgst_amount.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Grand Total */}
-                    <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
-                    </div>
-                  </>
-                );
-              })()}
+                        {/* Grand Total */}
+                        <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                          <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                          <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </>
+              ) : isRequestableType && selectedSlots.length === 0 ? (
+                <p className="text-gray-500 text-sm">Select slots to calculate pricing</p>
+              ) : !isRequestableType ? (
+                (() => {
+                  const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
+                  const slotsCount = selectedSlots.length;
+                  const hasSlots = slotsCount > 0;
+
+                  // Calculate slot total
+                  const slotTotal = slotsCount * perSlotCharge;
+
+                  // Calculate accessory total with quantities
+                  const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                    const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                    return total + ((accessory?.price || 0) * (quantity || 0));
+                  }, 0);
+                  const hasAccessories = accessoryTotal > 0;
+
+                  // Subtotal includes slots and accessories
+                  const subtotalBeforeDiscount = slotTotal + accessoryTotal;
+                  const calculatedDiscountAmount = discountType === 'percentage'
+                    ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+                    : (discountAmount || 0);
+                  const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
+
+                  const gstPercentage = facilityDetails.gst || 0;
+                  const sgstPercentage = facilityDetails.sgst || 0;
+                  const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                  const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                  const totalTax = gstAmount + sgstAmount;
+                  const grandTotal = subtotalAfterDiscount + totalTax;
+
+                  return (
+                    <>
+                      {/* Slots Count - Only show when slots are selected */}
+                      {hasSlots && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                          <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                          <span className="font-semibold text-blue-600">{slotsCount}</span>
+                        </div>
+                      )}
+
+                      {/* Slot Charges */}
+                      {hasSlots && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Slot Charges</span>
+                            <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                          </div>
+                          <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Accessory Charges */}
+                      {hasAccessories && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Accessory Charges</span>
+                            <span className="text-sm text-gray-500">({Object.values(selectedAccessories).reduce((sum, qty) => sum + qty, 0)} items)</span>
+                          </div>
+                          <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Subtotal Before Discount */}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700 font-medium">Subtotal</span>
+                        <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Discount - Editable */}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Discount</span>
+                          <div className="flex items-center gap-1">
+                            <div className="flex gap-1 items-center">
+                              <select
+                                value={discountType}
+                                onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                style={{ height: '36px' }}
+                              >
+                                <option value="percentage">%</option>
+                                <option value="amount">₹</option>
+                              </select>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                onChange={(e) => {
+                                  if (discountType === 'percentage') {
+                                    setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                  } else {
+                                    setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
+                                  }
+                                }}
+                                variant="outlined"
+                                sx={{
+                                  width: '80px',
+                                  '& .MuiOutlinedInput-root': {
+                                    height: '36px',
+                                    '& input': {
+                                      textAlign: 'right',
+                                      padding: '8px 12px'
+                                    }
+                                  }
+                                }}
+                                inputProps={{
+                                  min: 0,
+                                  step: discountType === 'percentage' ? 0.1 : 1
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <span className="font-medium"> ₹{calculatedDiscountAmount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Subtotal After Discount */}
+                      {calculatedDiscountAmount > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                          <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* GST */}
+                      {gstPercentage > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">GST</span>
+                            <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* SGST */}
+                      {sgstPercentage > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">SGST</span>
+                            <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Grand Total */}
+                      <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                        <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                        <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()
+              ) : (
+                <p className="text-gray-500 text-sm">Loading cost information...</p>
+              )}
             </div>
           </div>
         )}
