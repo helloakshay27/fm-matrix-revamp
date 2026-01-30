@@ -1296,10 +1296,8 @@ export const BookingSetupDetailPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS*</h3>
               </div>
               <div>
-                <Textarea
-                  value={formData.termsConditions}
-                  className="min-h-[100px]"
-                  readOnly
+                <div className="border rounded bg-gray-50 p-4 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: formData.termsConditions || "<p className='text-gray-500'>No terms and conditions provided</p>" }}
                 />
               </div>
             </div>
@@ -1398,11 +1396,8 @@ export const BookingSetupDetailPage = () => {
               <div className="font-medium text-gray-700">
                 Cancellation Policy<span>*</span>
               </div>
-              <Textarea
-                placeholder="Enter cancellation text"
-                value={formData.cancellationText}
-                disabled
-                className="min-h-[100px]"
+              <div className="border rounded bg-gray-50 p-4 prose prose-sm max-w-none min-h-[140px]"
+                dangerouslySetInnerHTML={{ __html: formData.cancellationText || "<p className='text-gray-500'>No cancellation policy provided</p>" }}
               />
             </div>
           </div>
