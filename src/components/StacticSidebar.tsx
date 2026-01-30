@@ -348,7 +348,7 @@ const modulesByPackage = {
     {
       name: "Amenities Booking",
       icon: Calendar,
-      href: "/club-management/amenities-booking",
+      href: "/club-management/amenities-booking-club",
     },
     {
       name: "Broadcast",
@@ -945,7 +945,7 @@ const modulesByPackage = {
     {
       name: "Amenities Setup",
       icon: Calculator,
-      href: "/settings/vas/booking/setup",
+      href: "/settings/vas/booking-club/setup",
     },
     {
       name: "Membership Plan Setup",

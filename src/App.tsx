@@ -830,6 +830,13 @@ import { ManualJournalDetails } from "./pages/ClubManagement/ManualJournalDetail
 import { TransactionsDetails } from "./pages/ClubManagement/TransationsDetails";
 import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
 import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
+import { BookingSetupClubDashboard } from "./pages/ClubManagement/AmenityBookingSetupClub";
+import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
+import { BookingSetupDetailClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubDetails";
+import { EditBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubEdit";
+import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
+import { AddFacilityBookingClubPage } from "./pages/ClubManagement/AmenityBookingAdd";
+import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBookingDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1535,6 +1542,26 @@ function App() {
                     path="/settings/vas/booking/setup/edit/:id"
                     element={<EditBookingSetupPage />}
                   />
+
+{/* new rountes for amenity setup for recess */}
+                   <Route
+                    path="/settings/vas/booking-club/setup"
+                    element={<BookingSetupClubDashboard />}
+                  />
+                  <Route
+                    path="/settings/vas/booking-club/setup/add"
+                    element={<AddBookingSetupClubPage />}
+                  />
+                  <Route
+                    path="/settings/vas/booking-club/setup/details/:id"
+                    element={<BookingSetupDetailClubPage />}
+                  />
+                  <Route
+                    path="/settings/vas/booking-club/setup/edit/:id"
+                    element={<EditBookingSetupClubPage />}
+                  />
+                  {/* .... */}
+
                   <Route
                     path="/settings/vas/membership-plan/setup"
                     element={<MembershipPlanDashboard />}
@@ -1803,6 +1830,32 @@ function App() {
                     path="/club-management/amenities-booking/:id"
                     element={<BookingDetailsPage />}
                   />
+
+
+                    {/* Club Management - Amenities Booking seperate routes for recess */}
+                  <Route
+                    path="/club-management/amenities-booking-club"
+                    element={<AmenityBookingListClub />}
+                  />
+                  <Route
+                    path="/club-management/amenities-booking-club/add"
+                    element={<AddFacilityBookingClubPage />}
+                  />
+                  <Route
+                    path="/club-management/amenities-booking-club/:id"
+                    element={<AmenityBookingDetailsClubPage />}
+                  />
+
+                  <Route path="/vas/booking-club/list" element={<AmenityBookingListClub />} />
+                  <Route
+                    path="/vas/booking-club/add"
+                    element={<AddFacilityBookingClubPage />}
+                  />
+                  <Route
+                    path="/vas/bookings-club/details/:id"
+                    element={<AmenityBookingDetailsClubPage/>}
+                  />
+                 
 
                   {/* Club Management - Broadcast */}
                   <Route
