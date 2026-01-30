@@ -837,6 +837,7 @@ import { EditBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingS
 import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
 import { AddFacilityBookingClubPage } from "./pages/ClubManagement/AmenityBookingAdd";
 import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBookingDetails";
+import { ViewClubOccupantUser } from "./pages/master/ViewClubOccupantUser";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1543,8 +1544,8 @@ function App() {
                     element={<EditBookingSetupPage />}
                   />
 
-{/* new rountes for amenity setup for recess */}
-                   <Route
+                  {/* new rountes for amenity setup for recess */}
+                  <Route
                     path="/settings/vas/booking-club/setup"
                     element={<BookingSetupClubDashboard />}
                   />
@@ -1770,7 +1771,7 @@ function App() {
                   />
                   <Route
                     path="/club-management/users/occupant-users/view/:id"
-                    element={<ViewOccupantUserPage />}
+                    element={<ViewClubOccupantUser />}
                   />
                   <Route
                     path="/club-management/users/occupant-users/edit/:id"
@@ -1832,7 +1833,7 @@ function App() {
                   />
 
 
-                    {/* Club Management - Amenities Booking seperate routes for recess */}
+                  {/* Club Management - Amenities Booking seperate routes for recess */}
                   <Route
                     path="/club-management/amenities-booking-club"
                     element={<AmenityBookingListClub />}
@@ -1853,9 +1854,9 @@ function App() {
                   />
                   <Route
                     path="/vas/bookings-club/details/:id"
-                    element={<AmenityBookingDetailsClubPage/>}
+                    element={<AmenityBookingDetailsClubPage />}
                   />
-                 
+
 
                   {/* Club Management - Broadcast */}
                   <Route
