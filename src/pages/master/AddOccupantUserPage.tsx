@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { getUser } from '@/utils/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Select } from '@mui/material';
@@ -8,12 +9,43 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchFMUsers, fetchRoles } from '@/store/slices/fmUserSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, FileText, Upload } from 'lucide-react'
+
+const uploadSections = [
+  {
+    id: 'onBoardingFile',
+    label: 'On Boarding',
+    description: 'Upload onboarding documentation',
+  },
+  {
+    id: 'employeeHandbookFile',
+    label: 'Employee Handbook',
+    description: 'Company policies and guidelines',
+  },
+  {
+    id: 'employeeCompensationFile',
+    label: 'Employee Compensation',
+    description: 'Salary and benefits information',
+  },
+  {
+    id: 'exitProcessFile',
+    label: 'Exit Process',
+    description: 'Offboarding procedures',
+  },
+  {
+    id: 'managementFile',
+    label: 'Employee Management & Record Keeping',
+    description: 'HR records and documentation',
+  },
+];
 
 export const AddOccupantUserPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -32,6 +64,15 @@ export const AddOccupantUserPage: React.FC = () => {
     altMobileNumber: '',
     designation: '',
     selectUserCategory: '',
+    selectRole: '',
+    shift: '',
+    reportsTo: '',
+    workType: '',
+    onBoardingFile: null,
+    employeeHandbookFile: null,
+    employeeCompensationFile: null,
+    exitProcessFile: null,
+    managementFile: null,
   });
 
   const [userCategories, setUserCategories] = useState([])
@@ -42,9 +83,43 @@ export const AddOccupantUserPage: React.FC = () => {
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+  const {
+    data: roles,
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state) => state.fetchRoles);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+  const [shifts, setShifts] = useState([])
+  const [users, setUsers] = useState([])
+
+  const fetchShifts = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setShifts(response.data.user_shifts);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchShifts();
+    getUsers();
+  }, [])
 
   const fetchUserCategories = async () => {
     try {
@@ -61,6 +136,10 @@ export const AddOccupantUserPage: React.FC = () => {
   }
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate('/maintenance/asset');
+      return;
+    }
     dispatch(fetchEntities());
     try {
       const userStr = localStorage.getItem('user');
@@ -68,8 +147,9 @@ export const AddOccupantUserPage: React.FC = () => {
       if (userId) dispatch(fetchAllowedSites(userId));
     } catch { }
     dispatch(fetchAllowedCompanies());
+    dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
-  }, [dispatch]);
+  }, [dispatch, isRestrictedUser, navigate]);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -100,7 +180,6 @@ export const AddOccupantUserPage: React.FC = () => {
     fetchDepartments();
   }, []);
 
-  const [emailError, setEmailError] = useState('');
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
@@ -113,28 +192,27 @@ export const AddOccupantUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    
-    // Clear email error when user starts typing
-    if (field === 'email') {
-      setEmailError('');
-    }
-  };
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleEmailBlur = () => {
-    if (formData.email && !validateEmail(formData.email)) {
-      setEmailError('Please enter a valid email address');
+    // Allow only alphabetic characters (including spaces) for firstName and lastName
+    if (field === 'firstName' || field === 'lastName') {
+      const stringValue = typeof value === 'string' ? value : '';
+      const alphabeticValue = stringValue.replace(/[^A-Za-z\s]/g, '');
+      setFormData((prev) => ({ ...prev, [field]: alphabeticValue }));
     } else {
-      setEmailError('');
+      setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
 
   const handleCancel = () => navigate('/master/user/occupant-users');
+
+  const handleFileChange = (e, fieldName) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        [fieldName]: file,
+      }));
+    }
+  };
 
   const validateForm = () => {
     const mobileRegex = /^[0-9]{10}$/;
@@ -158,11 +236,10 @@ export const AddOccupantUserPage: React.FC = () => {
       toast.error("Email is required.");
       return false;
     }
-    if (!validateEmail(formData.email)) {
-      toast.error("Please enter a valid email address.");
+    if (!formData.userType) {
+      toast.error("User Type is required.");
       return false;
     }
-   
     if (!formData.accessLevel) {
       toast.error("Access Level is required.");
       return false;
@@ -181,6 +258,8 @@ export const AddOccupantUserPage: React.FC = () => {
     return true;
   };
 
+  console.log(formData.selectedCompanies)
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -190,40 +269,75 @@ export const AddOccupantUserPage: React.FC = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',
-          lock_user_permissions_attributes: [
-            {
-              account_id: accountId,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_type: 'pms_occupant',
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-              status: "pending"
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory
-        },
-      };
+      const accessToValue = formData.accessLevel === 'Company'
+        ? formData.selectedCompanies.map(c => Number(c))
+        : formData.selectedSites.map(s => Number(s));
+
+      console.log('access_to value:', accessToValue);
+      console.log('access_to format check:', JSON.stringify(accessToValue));
+
+      // Create FormData for multipart/form-data
+      const formDataPayload = new FormData();
+
+      // Add basic user fields
+      formDataPayload.append('user[site_id]', siteId || '');
+      formDataPayload.append('user[registration_source]', 'Web');
+      formDataPayload.append('user[firstname]', formData.firstName);
+      formDataPayload.append('user[lastname]', formData.lastName);
+      formDataPayload.append('user[mobile]', formData.mobileNumber);
+      formDataPayload.append('user[email]', formData.email);
+      formDataPayload.append('user[gender]', formData.gender);
+      formDataPayload.append('user[alternate_address]', formData.address);
+      formDataPayload.append('user[alternate_mobile]', formData.altMobileNumber);
+      formDataPayload.append('user[birth_date]', formData.birthDate);
+      formDataPayload.append('user[entity_id]', formData.selectEntity);
+      formDataPayload.append('user[user_category_id]', formData.selectUserCategory);
+      formDataPayload.append('user[report_to_id]', formData.reportsTo);
+
+      // Add lock_user_permissions_attributes
+      formDataPayload.append('user[lock_user_permissions_attributes][0][account_id]', accountId || '');
+      formDataPayload.append('user[lock_user_permissions_attributes][0][user_shift_id]', formData.shift);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][work_type]', formData.workType);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][employee_id]', formData.employeeId);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][designation]', formData.designation);
+      if (formData.department) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][department_id]', formData.department);
+      }
+      formDataPayload.append('user[lock_user_permissions_attributes][0][user_type]', formData.userType);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][access_level]', formData.accessLevel);
+
+      // Add access_to as array - Rails expects array notation with []
+      accessToValue.forEach((value) => {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][access_to][]', value.toString());
+      });
+
+      formDataPayload.append('user[lock_user_permissions_attributes][0][status]', 'pending');
+      if (formData.selectRole) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][lock_role_id]', formData.selectRole);
+      }
+
+      // Add file attachments
+      if (formData.onBoardingFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][on_boarding_attachments_attributes][0][document]', formData.onBoardingFile);
+      }
+      if (formData.employeeHandbookFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][handbook_attachments_attributes][0][document]', formData.employeeHandbookFile);
+      }
+      if (formData.employeeCompensationFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][compensation_attachments_attributes][0][document]', formData.employeeCompensationFile);
+      }
+      if (formData.exitProcessFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][exit_process_attachments_attributes][0][document]', formData.exitProcessFile);
+      }
+      if (formData.managementFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][management_record_attachments_attributes][0][document]', formData.managementFile);
+      }
 
       const url = `https://${baseUrl}/pms/users.json`;
-      const response = await axios.post(url, payload, {
+      const response = await axios.post(url, formDataPayload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
 
@@ -247,6 +361,8 @@ export const AddOccupantUserPage: React.FC = () => {
     },
   } as const;
 
+  if (isRestrictedUser) return null;
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -254,15 +370,11 @@ export const AddOccupantUserPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => location.pathname.includes("/club-management/") ? (
-            navigate("/club-management/users/occupant-users")
-          ) : (
-            navigate("/master/user/occupant-users")
-          )}
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Members</h1>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Occupant User</h1>
       </div>
 
       {/* Basic Details */}
@@ -277,13 +389,7 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>First Name</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter First Name"
                 value={formData.firstName}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Only allow letters and spaces
-                  if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                    handleInputChange('firstName', value);
-                  }
-                }}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
                 fullWidth
                 variant="outlined"
                 error={errors.firstName}
@@ -295,13 +401,7 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>Last Name</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter Last Name"
                 value={formData.lastName}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Only allow letters and spaces
-                  if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                    handleInputChange('lastName', value);
-                  }
-                }}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
                 fullWidth
                 variant="outlined"
                 error={errors.lastName}
@@ -313,13 +413,7 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Only allow digits and max 10 characters
-                  if (value === '' || /^\d{0,10}$/.test(value)) {
-                    handleInputChange('mobileNumber', value);
-                  }
-                }}
+                onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
                 error={errors.mobileNumber}
@@ -328,8 +422,8 @@ export const AddOccupantUserPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
                 inputProps={{
                   maxLength: 10,
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
+                  inputMode: "numeric",
+                  pattern: "[0-9]*",
                 }}
               />
 
@@ -339,11 +433,10 @@ export const AddOccupantUserPage: React.FC = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                onBlur={handleEmailBlur}
                 fullWidth
                 variant="outlined"
-                error={errors.email || !!emailError}
-                helperText={emailError || (errors.email ? 'E-mail ID is required' : '')}
+                error={errors.email}
+                helperText={errors.email ? 'E-mail ID is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -361,9 +454,60 @@ export const AddOccupantUserPage: React.FC = () => {
                   <MenuItem value="Female">Female</MenuItem>
                 </MuiSelect>
               </FormControl>
-          
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Select Entity</InputLabel>
+                <MuiSelect
+                  value={formData.selectEntity}
+                  onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
+                  label="Select Entity"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select Entity</MenuItem>
+                  {entitiesLoading && (
+                    <MenuItem value="" disabled>Loading...</MenuItem>
+                  )}
+                  {entitiesError && (
+                    <MenuItem value="" disabled>Error loading entities</MenuItem>
+                  )}
+                  {entitiesData?.entities?.map((entity: Entity) => (
+                    <MenuItem key={entity.id} value={String(entity.id)}>
+                      {entity.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-             
+              <TextField
+                label="Employee ID"
+                placeholder="Enter Employee ID"
+                value={formData.employeeId}
+                onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{ inputLabel: { shrink: true } }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select User Type<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
+                  value={formData.userType}
+                  onChange={(e) => handleInputChange('userType', e.target.value as string)}
+                  label="Select User Type"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select User Type</MenuItem>
+                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
+                  <MenuItem value="pms_occupant">Member</MenuItem>
+                  <MenuItem value="pms_guest">Guest</MenuItem>
+                </MuiSelect>
+                {errors.userType && (
+                  <p className="text-red-600 text-xs mt-1">User Type is required</p>
+                )}
+              </FormControl>
               <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
                   Select Access Level<span className='text-red-600'>*</span>
@@ -452,6 +596,26 @@ export const AddOccupantUserPage: React.FC = () => {
                 </FormControl>
               )}
               <div>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Role</InputLabel>
+                  <Select
+                    value={formData.selectRole}
+                    onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                    label="Select Role"
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Role</MenuItem>
+                    {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
+                    {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                    {Array.isArray(roles) && roles?.map((role: any) => (
+                      <MenuItem key={role.id} value={role.id}>
+                        {role.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>
                   <Select
@@ -486,53 +650,180 @@ export const AddOccupantUserPage: React.FC = () => {
             </div>
 
             {showAdditional && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <TextField
-                  label="Birth Date"
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                  inputProps={{
-                    max: new Date().toISOString().split('T')[0]
-                  }}
-                />
-                <TextField
-                  label="Address"
-                  placeholder="Enter Address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <TextField
-                  label="Alternate Mobile Number"
-                  placeholder="Enter Alternate Mobile Number"
-                  value={formData.altMobileNumber}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Only allow digits and max 10 characters
-                    if (value === '' || /^\d{0,10}$/.test(value)) {
-                      handleInputChange('altMobileNumber', value);
-                    }
-                  }}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                  inputProps={{
-                    maxLength: 10,
-                    inputMode: 'numeric',
-                    pattern: '[0-9]*',
-                  }}
-                />
- 
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <TextField
+                    label="Birth Date"
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Address"
+                    placeholder="Enter Address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Alternate Mobile Number"
+                    placeholder="Enter Alternate Mobile Number"
+                    value={formData.altMobileNumber}
+                    onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Department</InputLabel>
+                    <MuiSelect
+                      value={formData.department}
+                      onChange={(e) => handleInputChange('department', e.target.value as string)}
+                      label="Select Department"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Department</MenuItem>
+                      {departmentsLoading && (
+                        <MenuItem value="" disabled>Loading...</MenuItem>
+                      )}
+                      {departmentsError && (
+                        <MenuItem value="" disabled>{departmentsError}</MenuItem>
+                      )}
+                      {departments?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <TextField
+                    label="Designation"
+                    placeholder="Enter Designation"
+                    value={formData.designation}
+                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Shift</InputLabel>
+                    <MuiSelect
+                      value={formData.shift}
+                      onChange={(e) => handleInputChange('shift', e.target.value as string)}
+                      label="Select Shift"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Shift</MenuItem>
+                      {shifts?.map((s: any) => (
+                        <MenuItem key={s.id} value={String(s.id)}>{s.timings}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <MuiSelect
+                      value={formData.reportsTo}
+                      onChange={(e) => handleInputChange('reportsTo', e.target.value as string)}
+                      label="Reports To"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.full_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Work Type</InputLabel>
+                    <MuiSelect
+                      value={formData.workType}
+                      onChange={(e) => handleInputChange('workType', e.target.value as string)}
+                      label="Work Type"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Work Type</MenuItem>
+                      {[
+                        { label: 'Work from Office', value: 'Work from Office' },
+                        { label: 'Work from Home/Office', value: 'Work from Home/Office' },
+                      ]?.map((d) => (
+                        <MenuItem key={d.value} value={String(d.value)}>{d.label}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                <div className="mb-8 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {uploadSections.map((section) => (
+                      <div
+                        key={section.id}
+                        className="group relative border-2 border-gray-200 rounded-[10px] p-6 hover:shadow-md transition-all duration-200 bg-white"
+                      >
+                        <label className="block text-base font-semibold text-gray-800 mb-1">
+                          {section.label}
+                        </label>
+                        <p className="text-xs text-gray-500 mb-4">{section.description}</p>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {formData[section.id] ? (
+                              <>
+                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate font-medium">
+                                  {formData[section.id].name}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-500 italic">No file chosen</span>
+                              </>
+                            )}
+                          </div>
+
+                          <label className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md cursor-pointer transition-colors duration-200 flex-shrink-0">
+                            <Upload className="w-4 h-4" />
+                            Choose
+                            <input
+                              type="file"
+                              onChange={(e) => handleFileChange(e, section.id)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        {formData[section.id] && (
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Size: {(formData[section.id].size / 1024).toFixed(1)} KB</span>
+                              <button
+                                onClick={() => setFormData((prev) => ({ ...prev, [section.id]: null }))}
+                                className="text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </Box>
         </CardContent>

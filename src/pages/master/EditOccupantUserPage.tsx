@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getUser } from '@/utils/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select } from '@mui/material';
@@ -8,14 +9,45 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails, fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, Upload } from 'lucide-react';
+
+const uploadSections = [
+  {
+    id: 'onBoardingFile',
+    label: 'On Boarding',
+    description: 'Upload onboarding documentation',
+  },
+  {
+    id: 'employeeHandbookFile',
+    label: 'Employee Handbook',
+    description: 'Company policies and guidelines',
+  },
+  {
+    id: 'employeeCompensationFile',
+    label: 'Employee Compensation',
+    description: 'Salary and benefits information',
+  },
+  {
+    id: 'exitProcessFile',
+    label: 'Exit Process',
+    description: 'Offboarding procedures',
+  },
+  {
+    id: 'managementFile',
+    label: 'Employee Management & Record Keeping',
+    description: 'HR records and documentation',
+  },
+];
 
 export const EditOccupantUserPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -23,6 +55,7 @@ export const EditOccupantUserPage: React.FC = () => {
     email: '',
     gender: '',
     employeeId: '',
+    accessCardNumber: '',
     userType: '',
     selectEntity: '',
     accessLevel: '',
@@ -34,6 +67,15 @@ export const EditOccupantUserPage: React.FC = () => {
     altMobileNumber: '',
     designation: '',
     selectUserCategory: '',
+    selectRole: '',
+    shift: '',
+    reportsTo: '',
+    workType: '',
+    onBoardingFile: null,
+    employeeHandbookFile: null,
+    employeeCompensationFile: null,
+    exitProcessFile: null,
+    managementFile: null,
   });
   const [showAdditional, setShowAdditional] = useState(true);
   const dispatch = useAppDispatch();
@@ -42,10 +84,18 @@ export const EditOccupantUserPage: React.FC = () => {
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+  const {
+    data: roles,
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state) => state.fetchRoles);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
   const [userCategories, setUserCategories] = useState([])
+  const [lockId, setLockId] = useState<number | undefined>();
+  const [shifts, setShifts] = useState([])
+  const [users, setUsers] = useState([])
 
   const fetchUserCategories = async () => {
     try {
@@ -61,7 +111,33 @@ export const EditOccupantUserPage: React.FC = () => {
     }
   }
 
+  const fetchShifts = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setShifts(response.data.user_shifts);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate('/maintenance/asset');
+      return;
+    }
     dispatch(fetchEntities());
     try {
       const userStr = localStorage.getItem('user');
@@ -69,8 +145,11 @@ export const EditOccupantUserPage: React.FC = () => {
       if (userId) dispatch(fetchAllowedSites(userId));
     } catch { }
     dispatch(fetchAllowedCompanies());
+    dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
-  }, [dispatch]);
+    fetchShifts();
+    getUsers();
+  }, [dispatch, isRestrictedUser, navigate]);
 
   // Fetch departments using selectedCompanyId from localStorage
   useEffect(() => {
@@ -115,6 +194,8 @@ export const EditOccupantUserPage: React.FC = () => {
         const u = resp.data?.user || resp.data || {};
         const lup = u.lock_user_permission || {};
 
+        setLockId(lup?.id);
+
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
 
@@ -126,6 +207,7 @@ export const EditOccupantUserPage: React.FC = () => {
           email: u.email || '',
           gender: u.gender || '',
           employeeId: lup.employee_id || '',
+          accessCardNumber: u.access_card_number || '',
           userType: u.user_type || lup.user_type || '',
           selectEntity: u.entity_id ? String(u.entity_id) : '',
           accessLevel: accessLevel,
@@ -137,6 +219,10 @@ export const EditOccupantUserPage: React.FC = () => {
           altMobileNumber: u.alternate_mobile || '',
           designation: lup.designation || '',
           selectUserCategory: u.user_category_id || '',
+          selectRole: lup.lock_role_id ? String(lup.lock_role_id) : '',
+          workType: lup.work_type || '',
+          reportsTo: u.report_to_id ? String(u.report_to_id) : '',
+          shift: lup.user_shift_id ? String(lup.user_shift_id) : '',
         }));
       } catch (e) {
         console.error('Error fetching user for edit', e);
@@ -163,51 +249,42 @@ export const EditOccupantUserPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCancel = () => navigate(`/master/user/occupant-users/view/${id}`);
-  
-  const validateForm = () => {
-    const mobileRegex = /^[0-9]{10}$/;
-
-    if (!formData.firstName) {
-      toast.error("First Name is required.");
-      return false;
+  const handleFileChange = (e, fieldName) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        [fieldName]: file,
+      }));
     }
-    if (!formData.lastName) {
-      toast.error("Last Name is required.");
-      return false;
-    }
-    if (!formData.mobileNumber) {
-      toast.error("Mobile Number is required.");
-      return false;
-    } else if (!mobileRegex.test(formData.mobileNumber)) {
-      toast.error("Mobile Number must be 10 digits.");
-      return false;
-    }
-    if (!formData.email) {
-      toast.error("Email is required.");
-      return false;
-    }
-   
-    if (!formData.accessLevel) {
-      toast.error("Access Level is required.");
-      return false;
-    }
-
-    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
-      toast.error("Select at least one company.");
-      return false;
-    }
-
-    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
-      toast.error("Select at least one site.");
-      return false;
-    }
-
-    return true;
   };
 
+  const handleCancel = () => navigate(`/master/user/occupant-users/view/${id}`);
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    const hasFirstName = formData.firstName.trim() !== '';
+    const hasLastName = formData.lastName.trim() !== '';
+    const hasMobile = formData.mobileNumber.trim() !== '';
+    const hasEmail = formData.email.trim() !== '';
+    const hasUserType = formData.userType !== '';
+    const hasAccess = formData.accessLevel !== '';
+
+    const needSites = formData.accessLevel === 'Site' && formData.selectedSites.length === 0;
+    const needCompanies = formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0;
+
+    setErrors({
+      firstName: !hasFirstName,
+      lastName: !hasLastName,
+      mobileNumber: !hasMobile,
+      email: !hasEmail,
+      userType: !hasUserType,
+      accessLevel: !hasAccess,
+      selectedSites: needSites,
+      selectedCompanies: needCompanies,
+    });
+
+    if (!hasFirstName || !hasLastName || !hasMobile || !hasEmail || !hasUserType || !hasAccess || needSites || needCompanies) {
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token') || '';
@@ -215,40 +292,170 @@ export const EditOccupantUserPage: React.FC = () => {
       const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',              lock_user_permissions_attributes: [
-            {
-              account_id: accountId,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_type: 'pms_occupant',
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory,
-        },
-      };
+      // const payload = {
+      //   user: {
+      //     site_id: siteId,
+      //     registration_source: 'Web',
+      //     lock_user_permissions_attributes: [
+      //       {
+      //         id: lockId,
+      //         account_id: accountId,
+      //         employee_id: formData.employeeId,
+      //         designation: formData.designation,
+      //         department_id: formData.department || undefined,
+      //         user_shift_id: formData.shift,
+      //         work_type: formData.workType,
+      //         user_type: formData.userType,
+      //         access_level: formData.accessLevel,
+      //         access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+      //         lock_role_id: formData.selectRole || undefined,
+      //         on_boarding_attachments_attributes: formData.onBoardingFile ? [{ document: formData.onBoardingFile }] : [],
+      //         handbook_attachments_attributes: formData.employeeHandbookFile ? [{ document: formData.employeeHandbookFile }] : [],
+      //         compensation_attachments_attributes: formData.employeeCompensationFile ? [{ document: formData.employeeCompensationFile }] : [],
+      //         exit_process_attachments_attributes: formData.exitProcessFile ? [{ document: formData.exitProcessFile }] : [],
+      //         management_record_attachments_attributes: formData.managementFile ? [{ document: formData.managementFile }] : [],
+      //       },
+      //     ],
+      //     firstname: formData.firstName,
+      //     lastname: formData.lastName,
+      //     mobile: formData.mobileNumber,
+      //     email: formData.email,
+      //     gender: formData.gender,
+      //     alternate_address: formData.address,
+      //     alternate_mobile: formData.altMobileNumber,
+      //     birth_date: formData.birthDate,
+      //     entity_id: formData.selectEntity,
+      //     user_category_id: formData.selectUserCategory,
+      //     report_to_id: formData.reportsTo,
+      //   },
+      // };
+
+      const formDataPayload = new FormData();
+
+      // ---- USER LEVEL FIELDS ----
+      formDataPayload.append("user[site_id]", siteId);
+      formDataPayload.append("user[registration_source]", "Web");
+      formDataPayload.append("user[firstname]", formData.firstName);
+      formDataPayload.append("user[lastname]", formData.lastName);
+      formDataPayload.append("user[mobile]", formData.mobileNumber);
+      formDataPayload.append("user[email]", formData.email);
+      formDataPayload.append("user[gender]", formData.gender);
+      formDataPayload.append("user[alternate_address]", formData.address);
+      formDataPayload.append("user[alternate_mobile]", formData.altMobileNumber);
+      formDataPayload.append("user[birth_date]", formData.birthDate);
+      formDataPayload.append("user[entity_id]", formData.selectEntity);
+      formDataPayload.append("user[user_category_id]", formData.selectUserCategory);
+      formDataPayload.append("user[report_to_id]", formData.reportsTo);
+      formDataPayload.append("user[access_card_number]", formData.accessCardNumber);
+
+      // ---- LOCK USER PERMISSIONS (index 0) ----
+      if (lockId) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][id]",
+          String(lockId)
+        );
+      }
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][account_id]",
+        accountId
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][employee_id]",
+        formData.employeeId
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][designation]",
+        formData.designation
+      );
+
+      if (formData.department) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][department_id]",
+          formData.department
+        );
+      }
+
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][user_shift_id]",
+        formData.shift
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][work_type]",
+        formData.workType
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][user_type]",
+        formData.userType
+      );
+      formDataPayload.append(
+        "user[lock_user_permissions_attributes][0][access_level]",
+        formData.accessLevel
+      );
+
+      if (formData.selectRole) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][lock_role_id]",
+          formData.selectRole
+        );
+      }
+
+      // ---- ACCESS TO (ARRAY – IMPORTANT) ----
+      const accessToValues =
+        formData.accessLevel === "Company"
+          ? formData.selectedCompanies
+          : formData.selectedSites;
+
+      accessToValues.forEach((value) => {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][access_to][]",
+          String(value)
+        );
+      });
+
+      // ---- ATTACHMENTS ----
+      if (formData.onBoardingFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][on_boarding_attachments_attributes][0][document]",
+          formData.onBoardingFile
+        );
+      }
+
+      if (formData.employeeHandbookFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][handbook_attachments_attributes][0][document]",
+          formData.employeeHandbookFile
+        );
+      }
+
+      if (formData.employeeCompensationFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][compensation_attachments_attributes][0][document]",
+          formData.employeeCompensationFile
+        );
+      }
+
+      if (formData.exitProcessFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][exit_process_attachments_attributes][0][document]",
+          formData.exitProcessFile
+        );
+      }
+
+      if (formData.managementFile) {
+        formDataPayload.append(
+          "user[lock_user_permissions_attributes][0][management_record_attachments_attributes][0][document]",
+          formData.managementFile
+        );
+      }
+
 
       if (!id) throw new Error('Missing user id');
 
       const url = `https://${baseUrl}/pms/users/${id}.json`;
-      await axios.put(url, payload, {
+      await axios.put(url, formDataPayload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
       toast.success('Occupant user updated successfully');
@@ -265,6 +472,8 @@ export const EditOccupantUserPage: React.FC = () => {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   } as const;
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
@@ -356,7 +565,61 @@ export const EditOccupantUserPage: React.FC = () => {
                 </MuiSelect>
               </FormControl>
 
-            
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Select Entity</InputLabel>
+                <MuiSelect
+                  value={formData.selectEntity}
+                  onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
+                  label="Select Entity"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select Entity</MenuItem>
+                  {entitiesLoading && (
+                    <MenuItem value="" disabled>Loading...</MenuItem>
+                  )}
+                  {entitiesError && (
+                    <MenuItem value="" disabled>Error loading entities</MenuItem>
+                  )}
+                  {entitiesData?.entities?.map((entity: Entity) => (
+                    <MenuItem key={entity.id} value={String(entity.id)}>
+                      {entity.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <TextField
+                label="Employee ID"
+                placeholder="Enter Employee ID"
+                value={formData.employeeId}
+                onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{ inputLabel: { shrink: true } }}
+                InputProps={{ sx: fieldStyles }}
+              />
+
+              <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select User Type<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
+                  value={formData.userType}
+                  onChange={(e) => handleInputChange('userType', e.target.value as string)}
+                  label="Select User Type"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select User Type</MenuItem>
+                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
+                  <MenuItem value="pms_occupant">Member</MenuItem>
+                  <MenuItem value="pms_guest">Guest</MenuItem>
+                </MuiSelect>
+                {errors.userType && (
+                  <p className="text-red-600 text-xs mt-1">User Type is required</p>
+                )}
+              </FormControl>
 
               <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
@@ -447,6 +710,26 @@ export const EditOccupantUserPage: React.FC = () => {
                 </FormControl>
               )}
               <div>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Role</InputLabel>
+                  <Select
+                    value={formData.selectRole}
+                    onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                    label="Select Role"
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Role</MenuItem>
+                    {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
+                    {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                    {Array.isArray(roles) && roles?.map((role: any) => (
+                      <MenuItem key={role.id} value={role.id}>
+                        {role.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>
                   <Select
@@ -481,40 +764,192 @@ export const EditOccupantUserPage: React.FC = () => {
             </div>
 
             {showAdditional && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <TextField
-                  label="Birth Date"
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <TextField
-                  label="Address"
-                  placeholder="Enter Address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <TextField
-                  label="Alternate Mobile Number"
-                  placeholder="Enter Alternate Mobile Number"
-                  value={formData.altMobileNumber}
-                  onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-               
-             
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <TextField
+                    label="Birth Date"
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Address"
+                    placeholder="Enter Address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Alternate Mobile Number"
+                    placeholder="Enter Alternate Mobile Number"
+                    value={formData.altMobileNumber}
+                    onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Department</InputLabel>
+                    <MuiSelect
+                      value={formData.department}
+                      onChange={(e) => handleInputChange('department', e.target.value as string)}
+                      label="Select Department"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Department</MenuItem>
+                      {departmentsLoading && (
+                        <MenuItem value="" disabled>Loading...</MenuItem>
+                      )}
+                      {departmentsError && (
+                        <MenuItem value="" disabled>{departmentsError}</MenuItem>
+                      )}
+                      {departments?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <TextField
+                    label="Designation"
+                    placeholder="Enter Designation"
+                    value={formData.designation}
+                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Shift</InputLabel>
+                    <MuiSelect
+                      value={formData.shift}
+                      onChange={(e) => handleInputChange('shift', e.target.value as string)}
+                      label="Select Shift"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Shift</MenuItem>
+                      {shifts?.map((s: any) => (
+                        <MenuItem key={s.id} value={String(s.id)}>{s.timings}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <MuiSelect
+                      value={formData.reportsTo}
+                      onChange={(e) => handleInputChange('reportsTo', e.target.value as string)}
+                      label="Reports To"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.full_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Work Type</InputLabel>
+                    <MuiSelect
+                      value={formData.workType}
+                      onChange={(e) => handleInputChange('workType', e.target.value as string)}
+                      label="Work Type"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Work Type</MenuItem>
+                      {[
+                        { label: 'Work from Office', value: 'Work from Office' },
+                        { label: 'Work from Home/Office', value: 'Work from Home/Office' },
+                      ]?.map((d) => (
+                        <MenuItem key={d.value} value={String(d.value)}>{d.label}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <div>
+                    <TextField
+                      fullWidth
+                      label="Access Card Number"
+                      variant="outlined"
+                      value={formData.accessCardNumber}
+                      onChange={(e) =>
+                        handleInputChange("accessCardNumber", e.target.value)
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-8 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {uploadSections.map((section) => (
+                      <div
+                        key={section.id}
+                        className="group relative border-2 border-gray-200 rounded-[10px] p-6 hover:shadow-md transition-all duration-200 bg-white"
+                      >
+                        <label className="block text-base font-semibold text-gray-800 mb-1">
+                          {section.label}
+                        </label>
+                        <p className="text-xs text-gray-500 mb-4">{section.description}</p>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {formData[section.id] ? (
+                              <>
+                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate font-medium">
+                                  {formData[section.id].name}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-500 italic">No file chosen</span>
+                              </>
+                            )}
+                          </div>
+
+                          <label className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md cursor-pointer transition-colors duration-200 flex-shrink-0">
+                            <Upload className="w-4 h-4" />
+                            Choose
+                            <input
+                              type="file"
+                              onChange={(e) => handleFileChange(e, section.id)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        {formData[section.id] && (
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Size: {(formData[section.id].size / 1024).toFixed(1)} KB</span>
+                              <button
+                                onClick={() => setFormData((prev) => ({ ...prev, [section.id]: null }))}
+                                className="text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </Box>
         </CardContent>

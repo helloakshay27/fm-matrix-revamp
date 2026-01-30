@@ -838,6 +838,8 @@ import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
 import { AddFacilityBookingClubPage } from "./pages/ClubManagement/AmenityBookingAdd";
 import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBookingDetails";
 import { ViewClubOccupantUser } from "./pages/master/ViewClubOccupantUser";
+import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
+import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1767,7 +1769,7 @@ function App() {
                   />
                   <Route
                     path="/club-management/users/occupant-users/add"
-                    element={<AddOccupantUserPage />}
+                    element={<ClubAddOccupantUserPage />}
                   />
                   <Route
                     path="/club-management/users/occupant-users/view/:id"
@@ -1775,7 +1777,7 @@ function App() {
                   />
                   <Route
                     path="/club-management/users/occupant-users/edit/:id"
-                    element={<EditOccupantUserPage />}
+                    element={<ClubEditOccupantUserPage />}
                   />
                   <Route
                     path="/club-management/users/occupant-users/:id"
