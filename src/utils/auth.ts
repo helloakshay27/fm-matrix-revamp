@@ -160,12 +160,14 @@ const isPulseSite = hostname === "pulse.lockated.com";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
+const isClubSite = hostname === "club.lockated.com";
+
 export const getOrganizationsByEmail = async (
   email: string
 ): Promise<Organization[]> => {
   if (isOmanSite || isFmSite) {
     const response = await fetch(
-      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
@@ -217,6 +219,19 @@ export const getOrganizationsByEmail = async (
   if (isPanchshilUatSite) {
     const response = await fetch(
       `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isClubSite) {
+    const response = await fetch(
+      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
