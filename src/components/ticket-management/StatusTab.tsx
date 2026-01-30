@@ -103,7 +103,7 @@ export const StatusTab: React.FC = () => {
   const fetchReopenData = async () => {
     try {
       const url = getFullUrl('/pms/admin/reopen_data.json');
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -114,7 +114,7 @@ export const StatusTab: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Check if data exists and populate the form
         if (data && data.period_type && data.time_period) {
           setAllowReopen(true);
@@ -147,18 +147,23 @@ export const StatusTab: React.FC = () => {
     const colorCodeInput = document.querySelector('input[placeholder="#000000"]') as HTMLInputElement;
     const positionInput = document.querySelector('input[type="number"]') as HTMLInputElement;
     const fixedStateValue = form.getValues('fixedState');
-    
+
     // Check for required fields with specific messages
     if (!statusNameInput?.value?.trim()) {
       toast.error('Please enter a status name');
       return;
     }
-    
+
+    // if (!fixedStateValue) {
+    //   toast.error('Please select a fixed state');
+    //   return;
+    // }
+
     if (!colorCodeInput?.value?.trim()) {
       toast.error('Please enter a color code');
       return;
     }
-    
+
     if (!positionInput?.value?.trim()) {
       toast.error('Please enter an order number');
       return;
@@ -167,7 +172,7 @@ export const StatusTab: React.FC = () => {
     // Get the form data
     const data: StatusFormData = {
       name: statusNameInput.value.trim(),
-      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete',
+      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete' | '',
       colorCode: colorCodeInput.value.trim(),
       position: parseInt(positionInput.value) || 0,
     };
@@ -214,7 +219,7 @@ export const StatusTab: React.FC = () => {
   const handleAllowReopenChange = async (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
     setAllowReopen(isChecked);
-    
+
     // If unchecking, clear the period values
     if (!isChecked) {
       setPeriodType('days');
@@ -230,7 +235,7 @@ export const StatusTab: React.FC = () => {
 
     try {
       const url = getFullUrl('/pms/admin/create_reopen.json');
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -279,11 +284,11 @@ export const StatusTab: React.FC = () => {
     if (!confirm('Are you sure you want to delete this status?')) {
       return;
     }
-    
+
     try {
       // Use apiConfig for baseURL and token
       const url = getFullUrl('/pms/admin/modify_complaint_status.json');
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -379,7 +384,9 @@ export const StatusTab: React.FC = () => {
                   name="fixedState"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fixed State</FormLabel>
+                      <FormLabel>Fixed State
+                        {/* <span className="text-red-500">*</span> */}
+                      </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -395,11 +402,11 @@ export const StatusTab: React.FC = () => {
                         </SelectContent>
                       </Select>
                       <FormMessage />
-                    </FormItem>
+                    </FormItem >
                   )}
                 />
 
-                <FormField
+                < FormField
                   control={form.control}
                   name="colorCode"
                   render={({ field }) => (
@@ -423,7 +430,7 @@ export const StatusTab: React.FC = () => {
                   )}
                 />
 
-                <FormField
+                < FormField
                   control={form.control}
                   name="position"
                   render={({ field }) => (
@@ -441,10 +448,10 @@ export const StatusTab: React.FC = () => {
                     </FormItem>
                   )}
                 />
-              </div>
+              </div >
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   onClick={handleCreateSubmit}
                   disabled={isSubmitting || loading}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8"
@@ -452,8 +459,8 @@ export const StatusTab: React.FC = () => {
                   {isSubmitting || loading ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
-            </div>
-          </Form>
+            </div >
+          </Form >
 
           <div className="mt-6 pt-6 border-t">
             <div className="space-y-4">
@@ -505,7 +512,7 @@ export const StatusTab: React.FC = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
+                    <Button
                       onClick={handleSaveReopen}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
@@ -524,8 +531,8 @@ export const StatusTab: React.FC = () => {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </CardContent >
+      </Card >
 
       <Card>
         <CardHeader>
@@ -554,6 +561,6 @@ export const StatusTab: React.FC = () => {
         status={selectedStatus}
         onUpdate={handleStatusUpdated}
       />
-    </div>
+    </div >
   );
 };
