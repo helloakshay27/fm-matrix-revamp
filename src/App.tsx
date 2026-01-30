@@ -6296,6 +6296,7 @@ function App() {
                     },
                   }}
                 />{" "}
+              </ActionLayoutProvider>
             </PermissionsProvider>
           </LayoutProvider>
         </EnhancedSelectProvider>
