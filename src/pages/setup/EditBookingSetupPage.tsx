@@ -379,7 +379,7 @@ export const EditBookingSetupPage = () => {
                     facilityDurationCharges: responseData.facility_duration_charges?.map((charge: any) => ({
                         id: charge.facility_duration_charge.id,
                         duration_hours: charge.facility_duration_charge.duration_hours,
-                        price: charge.facility_duration_charge.price,
+                        price: Number(charge.facility_duration_charge.price)?.toFixed(2),
                     })) || [],
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
