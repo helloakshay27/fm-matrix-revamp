@@ -1189,7 +1189,13 @@ export const FolderDetailsPage = () => {
       {/* Main Content */}
       <div className="w-full p-6">
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative folder-details-table">
+          <style>{`
+            .folder-details-table [title="Filter"],
+            .folder-details-table button:has(svg.lucide-filter) {
+              display: none !important;
+            }
+          `}</style>
           {/* Render View based on mode */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
