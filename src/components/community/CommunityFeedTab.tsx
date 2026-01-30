@@ -903,10 +903,12 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                                     />
                                                 ) : isVideo ? (
                                                     <video
-                                                        src={attachment.url}
+                                                        // src={attachment.url}
                                                         controls
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                        className="w-full h-full object-contain"
+                                                    >
+                                                        <source src={attachment.url} type="video/mp4" />
+                                                    </video>
                                                 ) : null}
 
                                                 {/* Show count overlay for 5+ images */}
