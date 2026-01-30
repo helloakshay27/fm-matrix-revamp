@@ -12,6 +12,7 @@ import { toast } from "sonner";
 interface CommunityDetailsTabProps {
     communityId?: string;
     setCommunityName?: (name: string) => void;
+    setCommunityImg?: (img: string) => void;
 }
 
 const memberColumns: ColumnConfig[] = [
@@ -71,7 +72,7 @@ const memberColumns: ColumnConfig[] = [
     },
 ];
 
-const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetailsTabProps) => {
+const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }: CommunityDetailsTabProps) => {
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
@@ -170,6 +171,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
             setIsActive(response.data.active)
             setCommunityData(response.data)
             setCommunityName(response.data.name)
+            setCommunityImg(response.data.icon)
             setMembers(response.data.all_members || [])
         } catch (error) {
             console.log(error)
