@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import {
   Dialog,
@@ -13,8 +13,15 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import { toast } from "sonner";
+import {
+  getCategories,
+  getFoldersTree,
+  Category,
+  Folder,
+} from "@/services/documentService";
 
 interface DocumentFilterModalProps {
   isOpen: boolean;
@@ -65,6 +72,33 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
   const [dateError, setDateError] = useState<string>("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+
+  // Fetch categories and folders on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const categoriesData = await getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+
+      try {
+        const foldersData = await getFoldersTree();
+        setFolders(foldersData.folders || []);
+      } catch (error) {
+        console.warn(
+          "Folders endpoint not available - continuing without folders"
+        );
+        setFolders([]);
+      }
+    };
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
@@ -173,41 +207,69 @@ export const DocumentFilterModal: React.FC<DocumentFilterModalProps> = ({
               Organization & Status
             </h3>
             <div className="grid grid-cols-3 gap-6">
-              <TextField
-                label="Folder Name"
-                placeholder="Search by folder name..."
-                value={localFilters.folderName || ""}
-                onChange={(e) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    folderName: e.target.value,
-                  })
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <TextField
-                label="Category Name"
-                placeholder="Search by category..."
-                value={localFilters.categoryName || ""}
-                onChange={(e) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    categoryName: e.target.value,
-                  })
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Folder Name</InputLabel>
+                <MuiSelect
+                  value={localFilters.folderName || ""}
+                  onChange={(e: SelectChangeEvent) =>
+                    setLocalFilters({
+                      ...localFilters,
+                      folderName: e.target.value,
+                    })
+                  }
+                  label="Folder Name"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>All Folders</em>
+                  </MenuItem>
+                  {folders.length === 0 ? (
+                    <MenuItem disabled>Loading folders...</MenuItem>
+                  ) : (
+                    folders.map((folder) => (
+                      <MenuItem key={folder.id} value={folder.name}>
+                        {folder.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </MuiSelect>
+              </FormControl>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Category Name</InputLabel>
+                <MuiSelect
+                  value={localFilters.categoryName || ""}
+                  onChange={(e: SelectChangeEvent) =>
+                    setLocalFilters({
+                      ...localFilters,
+                      categoryName: e.target.value,
+                    })
+                  }
+                  label="Category Name"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {categories.length === 0 ? (
+                    <MenuItem disabled>Loading categories...</MenuItem>
+                  ) : (
+                    categories.map((category) => (
+                      <MenuItem key={category.id} value={category.name}>
+                        {category.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </MuiSelect>
+              </FormControl>
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Status</InputLabel>
                 <MuiSelect
                   value={localFilters.status || ""}
-                  onChange={(e) =>
+                  onChange={(e: SelectChangeEvent) =>
                     setLocalFilters({ ...localFilters, status: e.target.value })
                   }
                   label="Status"
