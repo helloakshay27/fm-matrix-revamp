@@ -274,13 +274,9 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.guest_email) setEmail(String(data.guest_email));
         else if (data.email) setEmail(String(data.email));
         if (data.expected_at) {
-          const [d, t] = String(data.expected_at).split("T");
+          const [d, t, f] = String(data.expected_at).split(" ");
           if (d) setExpectedDate(d);
-          if (t) {
-            // t may contain seconds, milliseconds and timezone like "11:08:00.000+05:30"
-            const m = t.match(/(\d{2}:\d{2})/);
-            setExpectedTime(m ? m[1] : t.replace(/Z$/, ""));
-          }
+          if (t) setExpectedTime(t + " " + f);
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
@@ -525,7 +521,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                 .additional_visitors
             )
               ? (data as unknown as { additional_visitors?: unknown })
-                  .additional_visitors
+                .additional_visitors
               : [];
             (addVisArr as unknown[]).forEach((avUnknown, idx: number) => {
               const id = idx + 1; // matches visitors[] mapping (primary = 0)
@@ -912,7 +908,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
 
         // missing only if: no type OR (no gov id AND no file)
-  const missing = !hasType || (!hasGov && !hasImage);
+        const missing = !hasType || (!hasGov && !hasImage);
         errs[id] = missing;
         if (missing) hasMissing = true;
       });
@@ -1311,8 +1307,8 @@ const VisitorSharingFormWeb: React.FC = () => {
       // append token using & if baseUrl already contains query params
       const url = token
         ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(
-            token
-          )}`
+          token
+        )}`
         : baseUrl;
 
       const expectedIso =
@@ -1353,12 +1349,12 @@ const VisitorSharingFormWeb: React.FC = () => {
         })),
         identity: identityByVisitor[0]
           ? {
-              identity_type: identityByVisitor[0].type,
-              government_id_number: identityByVisitor[0].govId,
-              documents: (identityByVisitor[0].documents || [])
-                .map((d) => d.file!)
-                .filter(Boolean),
-            }
+            identity_type: identityByVisitor[0].type,
+            government_id_number: identityByVisitor[0].govId,
+            documents: (identityByVisitor[0].documents || [])
+              .map((d) => d.file!)
+              .filter(Boolean),
+          }
           : undefined,
       };
 
@@ -1396,12 +1392,12 @@ const VisitorSharingFormWeb: React.FC = () => {
         })),
         identity: identityByVisitor[vis.id]
           ? {
-              identity_type: identityByVisitor[vis.id].type,
-              government_id_number: identityByVisitor[vis.id].govId,
-              documents: (identityByVisitor[vis.id].documents || [])
-                .map((d) => d.file!)
-                .filter(Boolean),
-            }
+            identity_type: identityByVisitor[vis.id].type,
+            government_id_number: identityByVisitor[vis.id].govId,
+            documents: (identityByVisitor[vis.id].documents || [])
+              .map((d) => d.file!)
+              .filter(Boolean),
+          }
           : undefined,
       }));
 
@@ -1595,13 +1591,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className={`h-2 rounded-full ${
-                    i === step
-                      ? "bg-[#C72030]"
-                      : i < step
-                        ? "bg-[#d9d0bf]"
-                        : "bg-gray-200"
-                  }`}
+                  className={`h-2 rounded-full ${i === step
+                    ? "bg-[#C72030]"
+                    : i < step
+                      ? "bg-[#d9d0bf]"
+                      : "bg-gray-200"
+                    }`}
                 />
               ))}
             </div>
@@ -1920,11 +1915,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                             key={i}
                             type="button"
                             disabled
-                            className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
-                              selected
-                                ? "bg-[#d8d3c6] border-[#d8d3c6]"
-                                : "bg-gray-100 border-gray-200"
-                            }`}
+                            className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${selected
+                              ? "bg-[#d8d3c6] border-[#d8d3c6]"
+                              : "bg-gray-100 border-gray-200"
+                              }`}
                           >
                             {label}
                           </button>
@@ -2459,13 +2453,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </span>
                         </div>
                         {first.notes && (
-                        
+
                           <div className="flex justify-between">
-                          <span className="text-gray-500">Notes:</span>
-                          <span className="text-gray-900 font-medium">
-                            {first.notes || "N/A"}
-                          </span>
-                        </div>
+                            <span className="text-gray-500">Notes:</span>
+                            <span className="text-gray-900 font-medium">
+                              {first.notes || "N/A"}
+                            </span>
+                          </div>
                         )}
                       </>
                     );
@@ -3321,12 +3315,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     [v.id]: (s[v.id] || []).map((x) =>
                                       x.id === a.id
                                         ? {
-                                            ...x,
-                                            attachments: [
-                                              ...(x.attachments || []),
-                                              { name: file.name, url, file },
-                                            ],
-                                          }
+                                          ...x,
+                                          attachments: [
+                                            ...(x.attachments || []),
+                                            { name: file.name, url, file },
+                                          ],
+                                        }
                                         : x
                                     ),
                                   }));
