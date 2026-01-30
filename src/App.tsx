@@ -846,6 +846,7 @@ import { ClubBroadcastDashboard } from "./pages/ClubBroadcastDashboard";
 import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
 import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
+import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1698,6 +1699,10 @@ function App() {
                       element={<ChartOfAccountsDashboard />}
                     />
                     <Route
+                    path="/settings/chart-journal/details/:id"
+                    element={<ChartOfAccountDetails />}
+                  />
+                  <Route
                       path="/settings/opening-balance"
                       element={<OpeningBalance />}
                     />

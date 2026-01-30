@@ -59,6 +59,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import AddChartofAccountGroupModal from "./AddChartofAccountGroupModal";
 
 interface ClubMember {
   id: number;
@@ -286,6 +287,7 @@ export const ChartOfAccountsDashboard = () => {
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+  const [isAddAccountOpenGroup, setIsAddAccountOpenGroup] = useState(false);
   const [modalData, setModalData] = useState<{
     isOpen: boolean;
     title: string;
@@ -767,11 +769,20 @@ export const ChartOfAccountsDashboard = () => {
   const handleAddAccount = () => {
     setIsAddAccountOpen(true);
   };
+  const handleAddAccountGroup = () => {
+    setIsAddAccountOpenGroup(true);
+  };
 
   const handleSaveAccount = (data: GroupMembershipData) => {
     // TODO: Implement save logic (API call)
     setIsAddAccountOpen(false);
     toast.success("Account created successfully!");
+  };
+
+  const handleSaveAccountGroup = (data: GroupMembershipData) => {
+    // TODO: Implement save logic (API call)
+    setIsAddAccountOpenGroup(false);
+    toast.success("Group created successfully!");
   };
 
   // Render membership status badge
@@ -1003,10 +1014,17 @@ export const ChartOfAccountsDashboard = () => {
     <div className="flex gap-3">
       <Button
         className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
+        onClick={handleAddAccountGroup}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Group
+      </Button>
+       <Button
+        className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
         onClick={handleAddAccount}
       >
         <Plus className="w-4 h-4 mr-2" />
-        Action
+        Add Account
       </Button>
     </div>
   );
@@ -1101,7 +1119,8 @@ export const ChartOfAccountsDashboard = () => {
 
           <div
             className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer group transition-all"
-            onClick={handleNodeClick}
+            onClick={() => navigate(`/settings/chart-journal/details/${node.id}`)}
+            title="View Ledger Details"
           >
             <div className="w-8 h-8 flex items-center justify-center">
               <FileText className="w-5 h-5 text-[#C72030]" />
@@ -1209,6 +1228,11 @@ export const ChartOfAccountsDashboard = () => {
               className="transition-all duration-500 ease-in-out mb-8"
               loading={false}
               loadingMessage="Loading lock ledgers..."
+               leftActions={
+            <div className="flex gap-3">
+              {renderCustomActions()}
+            </div>
+          }
             />
           </>
         ) : (
@@ -1311,6 +1335,13 @@ export const ChartOfAccountsDashboard = () => {
         // onClose={() => setIsAddAccountOpen(false)}
         onOpenChange={setIsAddAccountOpen}
         onSave={handleSaveAccount}
+      />
+       {/* Add Account Modal */}
+      <AddChartofAccountGroupModal
+        open={isAddAccountOpenGroup}
+        // onClose={() => setIsAddAccountOpen(false)}
+        onOpenChange={setIsAddAccountOpenGroup}
+        onSave={handleSaveAccountGroup}
       />
     </div>
   );

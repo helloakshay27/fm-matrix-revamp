@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, DollarSign ,NotepadText,FileCog } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
-import { toast } from "sonner";
+import { ArrowLeft, FileCog } from "lucide-react";
+import { ThemeProvider, createTheme } from "@mui/material";
 import axios from "axios";
-import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -98,95 +95,36 @@ export const ChargeSetupDetails = () => {
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    // const [loading, setLoading] = useState(false);
+
     const [loading, setLoading] = useState(false);
+    const [chargeSetup, setChargeSetup] = useState<any | null>(null);
 
-    const [amenities, setAmenities] = useState([])
-    const [formData, setFormData] = useState({
-        name: "",
-        price: "",
-        userLimit: "",
-        renewalTerms: "",
-        paymentFrequency: "",
-        usageLimits: "",
-        discountEligibility: "",
-        amenities: [] as string[],
-        amenityDetails: {} as Record<string, {
-            frequency: string;
-            slotLimit: string;
-            canBookAfterSlotLimit: boolean;
-            price: string;
-            allowMultipleSlots: boolean;
-            multipleSlots: string;
-        }>,
-        active: true,
-        createdAt: "",
-        createdBy: "",
-    });
-
-    const getAmenities = async () => {
-        try {
-            const response = await axios.get(`https://${baseUrl}/membership_plans/amenitiy_list.json`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-            setAmenities(response.data.ameneties)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-    useEffect(() => {
-        getAmenities()
-    }, [])
-
-    const fetchMembershipPlanDetails = async () => {
+    // Fetch charge setup details
+    const fetchChargeSetupDetails = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`https://${baseUrl}/membership_plans/${id}.json`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
+            const response = await axios.get(
+                `https://${baseUrl}/account/charge_setups/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
                 }
-            })
-
-            const data = response.data;
-            const amenityDetailsMap = {};
-            data.plan_amenities.forEach((amenity) => {
-                amenityDetailsMap[amenity.facility_setup_id] = {
-                    frequency: amenity.frequency || "",
-                    slotLimit: amenity.slot_limit || "",
-                    canBookAfterSlotLimit: amenity.can_book_after_slot_limit || false,
-                    price: amenity.price || "",
-                    allowMultipleSlots: amenity.allow_multiple_slots || false,
-                    multipleSlots: amenity.multiple_slots || "",
-                };
-            });
-
-            setFormData({
-                name: data.name,
-                price: data.price,
-                userLimit: data.user_limit,
-                renewalTerms: data.renewal_terms,
-                paymentFrequency: data.payment_plan?.name || "",
-                usageLimits: data.usage_limits || "",
-                discountEligibility: data.discount_eligibility || "",
-                amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),
-                amenityDetails: amenityDetailsMap,
-                active: data.active,
-                createdAt: data.created_at,
-                createdBy: data.created_by,
-            })
+            );
+            setChargeSetup(response.data.charge_setup);
         } catch (error) {
-            console.log(error)
+            setChargeSetup(null);
+            console.error(error);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        fetchMembershipPlanDetails();
-    }, [id])
+        fetchChargeSetupDetails();
+    }, [id]);
 
     const handleEditClick = () => {
         navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
@@ -219,15 +157,6 @@ export const ChargeSetupDetails = () => {
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Charge Setup List
                         </Button>
-                        {/* <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={handleEditClick}
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                            >
-                                Edit
-                            </Button>
-                        </div> */}
                     </div>
                 </div>
 
@@ -246,37 +175,62 @@ export const ChargeSetupDetails = () => {
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Charge Name</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.chargeName || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.name || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Charge Category</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.charge_category || '-'}</span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">IGST Rate (%)</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.igstRate || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.igst_rate ?? '-'}</span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">CGST Rate (%)</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.cgstRate || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.cgst_rate ?? '-'}</span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">SGST Rate (%)</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.sgstRate || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.sgst_rate ?? '-'}</span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Basis</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.basis || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.basis || '-'}</span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">HSN Code</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.hsnCode || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.hsn_code || '-'}</span>
                             </div>
                             <div className="flex items-start">
-                                <span className="text-gray-500 min-w-[140px]">Charge Type</span>
+                                <span className="text-gray-500 min-w-[140px]">UOM</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.chargeType ? (form.chargeType === 'recurring' ? 'Recurring' : 'One Time') : '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.uom || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Value</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.value || '-'}</span>
+                            </div>
+                             <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Selected Ledgers</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.ledgers || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">GST Applicable</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.gst_applicable ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Active</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.active ? 'Yes' : 'No'}</span>
                             </div>
                         </div>
                         {/* Description field in a separate row */}
@@ -284,13 +238,10 @@ export const ChargeSetupDetails = () => {
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Description</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-medium">{formData.description || '-'}</span>
+                                <span className="text-gray-900 font-medium">{chargeSetup?.description || '-'}</span>
                             </div>
                         </div>
                     </div>
-
-                    
-
                 </div>
             </div>
         </ThemeProvider>

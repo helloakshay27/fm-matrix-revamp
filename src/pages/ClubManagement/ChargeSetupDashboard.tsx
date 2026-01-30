@@ -719,7 +719,7 @@ export const ChargeSetupDashboard = () => {
             title="Edit"
             className="p-0"
           >
-            <Edit className="w-4 h-4" />
+            {/* <Edit className="w-4 h-4" /> */}
           </Button>
         </div>
       );
@@ -804,7 +804,12 @@ export const ChargeSetupDashboard = () => {
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           hideColumnsButton={true}
+          
           loadingMessage="Loading charge setups..."
+             leftActions={
+            <div className="flex gap-3">
+              {renderCustomActions()}
+            </div>}
         />
 
         {/* Pagination Section */}
