@@ -129,8 +129,7 @@ export const AddFMUserPage = () => {
 
   console.log(userAccount);
 
-  const [loadingSubmitting, setLoadingSubmitting] = useState(false)
-  const [emailError, setEmailError] = useState('')
+  const [loadingSubmitting, setLoadingSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -165,24 +164,6 @@ export const AddFMUserPage = () => {
       ...prev,
       [field]: value,
     }));
-
-    // Clear email error when user starts typing
-    if (field === 'emailAddress') {
-      setEmailError('');
-    }
-  };
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleEmailBlur = () => {
-    if (formData.emailAddress && !validateEmail(formData.emailAddress)) {
-      setEmailError('Please enter a valid email address');
-    } else {
-      setEmailError('');
-    }
   };
 
   const handleMobileNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,11 +197,8 @@ export const AddFMUserPage = () => {
       toast.error("Mobile number must be exactly 10 digits");
       return false;
     } else if (!formData.emailAddress) {
-      toast.error('Please enter email address')
-      return false
-    } else if (!validateEmail(formData.emailAddress)) {
-      toast.error('Please enter a valid email address')
-      return false
+      toast.error("Please enter email address");
+      return false;
     } else if (!formData.selectUserType) {
       toast.error("Please select user type");
       return false;
@@ -357,17 +335,11 @@ export const AddFMUserPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() =>
-            location.pathname.includes("/club-management/") ? (
-              navigate('/club-management/users/fm-users')
-            ) : (
-              navigate('/master/user/fm-users')
-            )
-          }
+          onClick={() => navigate("/master/user/fm-users")}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Staff</h1>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add FM User</h1>
       </div>
 
       {/* Form Section */}
@@ -379,51 +351,46 @@ export const AddFMUserPage = () => {
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Row 1 */}
-                <div>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    variant="outlined"
-                    value={formData.firstName}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Only allow letters and spaces
-                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                        handleInputChange('firstName', value);
-                      }
-                    }}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    variant="outlined"
-                    value={formData.lastName}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Only allow letters and spaces
-                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                        handleInputChange('lastName', value);
-                      }
-                    }}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  variant="outlined"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("firstName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  variant="outlined"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("lastName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
                 <div>
                   <TextField
                     fullWidth
@@ -454,10 +421,9 @@ export const AddFMUserPage = () => {
                     variant="outlined"
                     type="email"
                     value={formData.emailAddress}
-                    onChange={(e) => handleInputChange('emailAddress', e.target.value)}
-                    onBlur={handleEmailBlur}
-                    error={!!emailError}
-                    helperText={emailError}
+                    onChange={(e) =>
+                      handleInputChange("emailAddress", e.target.value)
+                    }
                     required
                     InputLabelProps={{
                       classes: {
