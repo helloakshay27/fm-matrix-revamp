@@ -840,6 +840,11 @@ import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBoo
 import { ViewClubOccupantUser } from "./pages/master/ViewClubOccupantUser";
 import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
 import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
+import { ClubEventsPage } from "./pages/ClubEventPage";
+import { AddClubEventPage } from "./pages/AddClubEventPage";
+import { ClubBroadcastDashboard } from "./pages/ClubBroadcastDashboard";
+import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
+import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1863,25 +1868,25 @@ function App() {
                   {/* Club Management - Broadcast */}
                   <Route
                     path="/club-management/broadcast"
-                    element={<BroadcastDashboard />}
+                    element={<ClubBroadcastDashboard />}
                   />
                   <Route
                     path="/club-management/broadcast/add"
-                    element={<AddBroadcastPage />}
+                    element={<AddClubBroadcastPage />}
                   />
                   <Route
                     path="/club-management/broadcast/details/:id"
-                    element={<BroadcastDetailsPage />}
+                    element={<ClubBroadcastDetailsPage />}
                   />
 
                   {/* Club Management - Events */}
                   <Route
                     path="/club-management/events"
-                    element={<CRMEventsPage />}
+                    element={<ClubEventsPage />}
                   />
                   <Route
                     path="/club-management/events/add"
-                    element={<AddEventPage />}
+                    element={<AddClubEventPage />}
                   />
                   <Route
                     path="/club-management/events/details/:id"
