@@ -142,7 +142,7 @@ export const EventDetailsTab = () => {
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-500">Seat's Remaining</span>
                                 <span className="text-sm font-medium text-gray-900">
-                                    {eventData.remaining_seats ?? 0}/{eventData.capacity ?? 0}
+                                    {eventData.total_registed_count ?? 0}/{eventData.capacity ?? 0}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
