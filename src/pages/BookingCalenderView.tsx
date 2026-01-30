@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
-import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
+import { FormControlLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import axios from "axios";
 import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -79,6 +79,10 @@ const BookingCalenderView = () => {
             const monthIndex = new Date(`${currentMonth} 1, ${currentYear}`).getMonth();
             const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
 
+            // Get today's date for comparison
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+
             const generatedDates = Array.from({ length: daysInMonth }, (_, i) => {
                 const dateObj = new Date(currentYear, monthIndex, i + 1);
                 const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
@@ -88,7 +92,12 @@ const BookingCalenderView = () => {
                 const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
                 const dd = String(dateObj.getDate()).padStart(2, "0");
                 const fullDate = `${yyyy}-${mm}-${dd}`;
-                return { date: formattedDate, day: dayName, isOff, fullDate, isBlocked: false };
+
+                // Check if date is in the past
+                dateObj.setHours(0, 0, 0, 0);
+                const isPastDate = dateObj < todayDate;
+
+                return { date: formattedDate, day: dayName, isOff, fullDate, isBlocked: false, isPast: isPastDate };
             });
 
             setDates(generatedDates);
@@ -238,7 +247,7 @@ const BookingCalenderView = () => {
             // Navigate to add facility booking page with dynamic parameters
             const currentPath = window.location.pathname;
             const queryParams = `facility_id=${facilityId}&date=${selectedDate}&slot_time=${encodeURIComponent(slot.time_text)}`;
-            
+
             if (currentPath.includes("bookings")) {
                 navigate(`/bookings/add?${queryParams}`);
             } else if (currentPath.includes("club-management")) {
@@ -279,12 +288,6 @@ const BookingCalenderView = () => {
 
     return (
         <div className="pt-2 space-y-6">
-            <div className="flex items-center justify-end">
-                <Button variant="outline" className="w-[40px] h-[40px]">
-                    <Bell className="w-5 h-5" />
-                </Button>
-            </div>
-
             {/* Header Controls */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
@@ -317,10 +320,6 @@ const BookingCalenderView = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input placeholder="Search..." className="pl-10 pr-10" />
                     </div>
-                    <Button className="text-[14px]">
-                        <ArrowUpDown size={16} />
-                        Advance Search
-                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -328,6 +327,9 @@ const BookingCalenderView = () => {
                         title="Filter"
                     >
                         <Filter className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" className="w-[40px] h-[40px]">
+                        <Bell className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
@@ -372,18 +374,18 @@ const BookingCalenderView = () => {
                                             dateRefs.current[dateInfo.fullDate] = el;
                                         }
                                     }}
-                                    onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && (
+                                    onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && !dateInfo.isPast && (
                                         setSelectedDate(dateInfo.date),
                                         setSelectedDateForApi(dateInfo.fullDate)
                                     )}
                                     className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${selectedDate === dateInfo.date
                                         ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]'
-                                        : dateInfo.isOff || dateInfo.isBlocked
-                                            ? '!bg-gray-100 cursor-not-allowed'
+                                        : dateInfo.isOff || dateInfo.isBlocked || dateInfo.isPast
+                                            ? '!bg-gray-200 !text-gray-400 cursor-not-allowed opacity-60'
                                             : '!bg-white hover:bg-gray-50 cursor-pointer'
                                         }`}
                                 >
-                                    {selectedDate === dateInfo.date && !dateInfo.isBlocked && (
+                                    {selectedDate === dateInfo.date && !dateInfo.isBlocked && !dateInfo.isPast && (
                                         <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#C72030] border-r-[10px] border-r-transparent"></span>
                                     )}
                                     {dateInfo.isBlocked && (
@@ -473,7 +475,7 @@ const BookingCalenderView = () => {
                                                         const slotBooked = !!bookedSlot;
                                                         const isSlotBlocked = facilityBookings.is_blocked || bookedSlot?.is_blocked || false;
 
-                                                        return (
+                                                        const slotElement = (
                                                             <div
                                                                 key={slot.id}
                                                                 onClick={() => !isSlotBlocked && handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
@@ -481,7 +483,7 @@ const BookingCalenderView = () => {
                                                                     ${selectedDateInfo?.isOff || isSlotBlocked
                                                                         ? "bg-gray-100 cursor-not-allowed"
                                                                         : slotBooked
-                                                                            ? "bg-gray-400 cursor-pointer hover:bg-gray-500"
+                                                                            ? "bg-gray-300 cursor-pointer hover:bg-gray-400"
                                                                             : "bg-white hover:bg-blue-50 cursor-pointer"
                                                                     }
                                                                     ${slot.quarter === 0 ? 'border-l border-l-gray-400' : ''}
@@ -494,6 +496,14 @@ const BookingCalenderView = () => {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                        );
+
+                                                        return slotBooked && bookedSlot?.booked_by_name ? (
+                                                            <Tooltip key={slot.id} title={`Booked by: ${bookedSlot.booked_by_name}`} arrow>
+                                                                {slotElement}
+                                                            </Tooltip>
+                                                        ) : (
+                                                            slotElement
                                                         );
                                                     })}
                                                 </div>
