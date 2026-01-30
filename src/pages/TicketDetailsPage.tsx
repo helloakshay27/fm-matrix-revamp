@@ -1440,15 +1440,7 @@ export const TicketDetailsPage = () => {
 
 
   const handleBackToList = () => {
-        const currentPath = window.location.pathname;
-  
- if (currentPath.includes("/club-management/helpdesk")) {
-      navigate(`/club-management/helpdesk`);
-    } else if (currentPath.includes("tickets")) {
-      navigate(`/tickets`);
-    } else {
-      navigate(`/maintenance/tickets`);
-    }
+    navigate(-1);
   };
 
   const handleFeeds = () => {

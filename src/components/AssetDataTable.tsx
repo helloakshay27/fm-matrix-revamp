@@ -600,7 +600,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         );
       case "category":
         return (
-          <span className="text-sm text-gray-600">{asset.category.name || "-"}</span>
+          <span className="text-sm text-gray-600">{asset.category || "-"}</span>
         );
       case "allocationType":
         return (
