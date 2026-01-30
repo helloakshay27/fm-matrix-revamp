@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
-import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 import {
   TextField,
   Select,
@@ -16,6 +15,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
+import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -725,7 +725,7 @@ export const AddBookingSetupClubPage = () => {
     setFormData({ ...formData, slots: [...formData.slots, newSlot] });
   };
 
-  
+
   return (
     <ThemeProvider theme={muiTheme}>
       <div className="p-6 bg-white">
@@ -2359,7 +2359,7 @@ export const AddBookingSetupClubPage = () => {
 
       {/* Gallery Image Upload Modal */}
       {galleryModalOpen && (
-        <GalleryImageUpload
+        <ClubGalleryImageUpload
           showAsModal={galleryModalOpen}
           onClose={handleGalleryModalClose}
           onContinue={handleGalleryModalContinue}

@@ -36,7 +36,7 @@ interface GalleryImageUploadProps {
     selectedRatioProp?: string[];
 }
 
-export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
+export const ClubGalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
     label = 'Upload Gallery Images',
     description = 'Upload images supporting multiple aspect ratios.',
     ratios = [
@@ -56,10 +56,13 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
 }) => {
     const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>(initialImages);
     const [selectedRatio, setSelectedRatio] = useState<RatioOption | null>(null);
+    const [cropperImage, setCropperImage] = useState<{
+        file: File;
+        dataURL: string;
+        targetRatio: RatioOption;
+    } | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [cropperOpen, setCropperOpen] = useState(false);
-    const [currentImage, setCurrentImage] = useState<string>('');
-    const [currentFile, setCurrentFile] = useState<File | null>(null);
 
     const handleRatioClick = (ratio: RatioOption) => {
         setSelectedRatio(ratio);
@@ -84,32 +87,35 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             return;
         }
 
-        // Read image and open cropper
+        // For images, proceed with cropping flow
         const reader = new FileReader();
         reader.onload = (e) => {
-            const base64 = e.target?.result as string;
-            setCurrentImage(base64);
-            setCurrentFile(file);
-            setCropperOpen(true);
+            if (enableCropping) {
+                setCropperImage({
+                    file,
+                    dataURL: e.target?.result as string,
+                    targetRatio: selectedRatio,
+                });
+                setShowCropper(true);
+            } else {
+                handleCropComplete({ base64: e.target?.result as string, file });
+            }
         };
-
         reader.readAsDataURL(file);
+
         event.target.value = '';
     };
 
     const handleCropComplete = (result: { base64: string; file: File } | null) => {
-        setCropperOpen(false);
-
         if (!result || !selectedRatio) {
+            setShowCropper(false);
+            setCropperImage(null);
             setSelectedRatio(null);
-            setCurrentImage('');
-            setCurrentFile(null);
             return;
         }
 
         const { base64, file } = result;
         const img = new Image();
-
         img.onload = () => {
             const actualRatio = img.width / img.height;
             const targetRatio = selectedRatio.ratio;
@@ -117,13 +123,14 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             const detectedRatio = ratios.find(r => Math.abs(actualRatio - r.ratio) < 0.1)?.label ||
                 actualRatio.toFixed(2);
 
-            if (!isValidRatio && !includeInvalidRatios) {
+            if (!isValidRatio) {
                 toast.error(
                     `Invalid image ratio. Detected: ${detectedRatio}, Expected: ${selectedRatio.label}`
                 );
+                // Don't add image if ratio validation fails
+                setShowCropper(false);
+                setCropperImage(null);
                 setSelectedRatio(null);
-                setCurrentImage('');
-                setCurrentFile(null);
                 return;
             }
 
@@ -131,7 +138,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                 id: Date.now(),
                 name: file.name,
                 file,
-                size: file.size / (1024 * 1024),
+                size: file.size / (1024 * 1024), // MB
                 ratio: selectedRatio.label,
                 isValidRatio,
                 uploadTime: new Date().toLocaleTimeString(),
@@ -142,12 +149,10 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             const updated = [...uploadedImages, newImage];
             setUploadedImages(updated);
             onImagesChange(updated);
+            setShowCropper(false);
+            setCropperImage(null);
             setSelectedRatio(null);
-            setCurrentImage('');
-            setCurrentFile(null);
-            toast.success(`Image uploaded for ${selectedRatio.label}`);
         };
-
         img.src = base64;
     };
 
@@ -406,8 +411,8 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn {
-          background: #f2eee9;
-          color: #dc2626;
+          background: #de7007;
+          color: white;
           border: none;
           padding: 12px 24px;
           border-radius: 6px;
@@ -418,7 +423,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn:hover {
-          background: #f2eee9;
+          background: #c45a05;
         }
 
         @media (max-width: 768px) {
@@ -460,6 +465,16 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                 style={{ display: 'none' }}
             />
 
+            {showCropper && cropperImage && (
+                <ImageCropperr
+                    open={showCropper}
+                    image={cropperImage.dataURL}
+                    originalFile={cropperImage.file}
+                    onComplete={handleCropComplete}
+                    selectedRatio={cropperImage.targetRatio}
+                />
+            )}
+
             {displayedImages.length > 0 && (
                 <>
                     <div className="section-divider" />
@@ -484,7 +499,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                                         </div>
                                         <div className="image-details">
                                             <span className="image-ratio">{image.ratio}</span>
-                                            <span className="image-size">{image.size.toFixed(2)} MB</span>
+                                            <span className="image-size">{typeof image.size === 'number' && !isNaN(image.size) ? image.size.toFixed(2) : 'N/A'} MB</span>
                                             {!image.isValidRatio && (
                                                 <span className="invalid-badge">Invalid Ratio</span>
                                             )}
@@ -514,20 +529,6 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                         </div>
                     </div>
                 </>
-            )}
-
-            {/* Image Cropper - Always render outside conditional */}
-            {selectedRatio && currentFile && (
-                <ImageCropperr
-                    open={cropperOpen}
-                    image={currentImage}
-                    onComplete={handleCropComplete}
-                    originalFile={currentFile}
-                    selectedRatio={{
-                        label: selectedRatio.label,
-                        ratio: selectedRatio.ratio,
-                    }}
-                />
             )}
         </div>
     );

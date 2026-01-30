@@ -15,7 +15,7 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
-import { GalleryImageUpload } from "@/components/GalleryImageUpload";
+import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -334,7 +334,7 @@ export const EditBookingSetupClubPage = () => {
                         },
                     ],
             }));
-            
+
             console.log('=== Block Days Loaded ===');
             console.log('Raw facility_blockings:', responseData?.facility_blockings);
             console.log('Mapped blockDays:', responseData?.facility_blockings?.map((blocking: any) => ({
@@ -344,17 +344,17 @@ export const EditBookingSetupClubPage = () => {
                 block_slot_raw: blocking.facility_blocking?.block_slot,
                 selectedSlots_parsed: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)),
             })));
-            
+
             // Fetch slots for all block days that have dates (so slots can be displayed)
             responseData?.facility_blockings?.forEach((blocking: any, index: number) => {
                 const ondate = blocking.facility_blocking?.ondate;
                 const blockSlot = blocking.facility_blocking?.block_slot;
                 const dayType = blockSlot && blockSlot.length > 0 ? "selectedSlots" : "entireDay";
-                
+
                 // Only fetch slots if it's a selectedSlots type (or if we want to show available slots for potential editing)
                 if (ondate && dayType === "selectedSlots") {
-                    console.log(`Fetching slots for block day ${index}:`, { 
-                        date: ondate, 
+                    console.log(`Fetching slots for block day ${index}:`, {
+                        date: ondate,
                         blockSlotIds: blockSlot,
                         willPreselect: blockSlot?.map((slotId: string) => parseInt(slotId))
                     });
@@ -651,7 +651,7 @@ export const EditBookingSetupClubPage = () => {
                     selectedSlots: blockDay.selectedSlots,
                     selectedSlotsCount: blockDay.selectedSlots?.length || 0
                 });
-                
+
                 // Include ID only if it exists (existing block day from API)
                 if (blockDay.id) {
                     console.log(`Block day ${index} has ID: ${blockDay.id} - will update existing record`);
@@ -2646,7 +2646,7 @@ export const EditBookingSetupClubPage = () => {
 
             {/* Gallery Image Upload Modal */}
             {galleryModalOpen && (
-                <GalleryImageUpload
+                <ClubGalleryImageUpload
                     showAsModal={galleryModalOpen}
                     onClose={handleGalleryModalClose}
                     onContinue={handleGalleryModalContinue}
