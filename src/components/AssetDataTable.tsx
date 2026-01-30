@@ -7,6 +7,8 @@ import { StatusBadge } from "./StatusBadge";
 import type { Asset } from "@/hooks/useAssets";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { getUser } from "@/utils/auth";
 
 // Asset interface now imported from useAssets hook
 
@@ -43,6 +45,10 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   loading,
   availableCustomFields = [],
 }) => {
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
+  const user = getUser();
+  const isRestrictedUser = user?.email?.toLowerCase().trim() === 'karan.balsara@zycus.com';
 
   console.log("AssetDataTable rendered with assets:", assets);
   console.log("Available custom fields:", availableCustomFields);
@@ -104,20 +110,52 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   //   }
   // };
 
-
-  const handleExcelExport = async (columnVisibility?: Record<string, boolean>) => {
+  const handleExcelExport = async (
+    columnVisibility?: Record<string, boolean>
+  ) => {
     try {
       const currentVisibility = columnVisibility || visibleColumns;
 
       // Transform keys:
-      const visibleColumnKeys = Object.keys(currentVisibility)
-        .filter(key => currentVisibility[key] === true)
+      const customKeyToFieldMap = new Map();
+      availableCustomFields.forEach(field => {
+        const colKey = `custom_${field.key.replace(/\s+/g, '_')}`;
+        customKeyToFieldMap.set(colKey, field.key);
+      });
+
+      console.log("Custom Field Map:", Object.fromEntries(customKeyToFieldMap));
+      console.log("Visible Keys before processing:", Object.keys(currentVisibility).filter(k => currentVisibility[k]));
+
+      // Transform keys:
+      // 1. Get all currently defined column keys from the `columns` prop
+      const definedColumnKeys = new Set(columns.map(col => col.key));
+
+      // 2. Intersect currentVisibility with definedColumnKeys to ensure we only export valid, existing columns
+      const validVisibleKeys = Object.keys(currentVisibility).filter(key =>
+        currentVisibility[key] === true && definedColumnKeys.has(key)
+      );
+
+      // Transform keys:
+      const visibleColumnKeys = validVisibleKeys
         // remove "actions"
-        .filter(key => key !== "actions")
+        .filter((key) => key !== "actions")
         // convert camelCase → snake_case
-        .map(key =>
-          key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase()
-        );
+        .map((key) => {
+          // Check if it's a custom field column
+          if (key.startsWith("custom_")) {
+            // Use the lookup map
+            if (customKeyToFieldMap.has(key)) {
+              return customKeyToFieldMap.get(key);
+            }
+            // Fallback: This is likely where 'PO_Number' comes from if lookup fails
+            return key.replace("custom_", "");
+          }
+
+          // Standard fields: convert camelCase to snake_case
+          return key
+            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+            .toLowerCase();
+        });
 
       // ✅ Pass as a JSON string in the `fields` query parameter
       const fieldsParam = encodeURIComponent(JSON.stringify(visibleColumnKeys));
@@ -158,16 +196,16 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     }
   };
 
-
-
-  const selectionActions = [
-    {
-      label: "Add Schedule",
-      icon: Plus,
-      onClick: handleAddSchedule,
-      variant: "primary" as const,
-    },
-  ];
+  const selectionActions = shouldShow("assets", "schedule")
+    ? [
+      {
+        label: "Add Schedule",
+        icon: Plus,
+        onClick: handleAddSchedule,
+        variant: "primary" as const,
+      },
+    ]
+    : [];
 
   const columns: ColumnConfig[] = [
     {
@@ -288,6 +326,20 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.category,
+    },
+    {
+      key: "allocationType",
+      label: "Allocation Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocationType,
+    },
+    {
+      key: "allocatedTo",
+      label: "Allocated To",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocatedTo,
     },
     // Required fields that were missing
     {
@@ -417,8 +469,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       defaultVisible: false,
     },
     // Dynamic custom field columns
-    ...availableCustomFields.map(field => ({
-      key: `custom_${field.key}`,
+    ...availableCustomFields.map((field) => ({
+      key: `custom_${field.key.replace(/\s+/g, '_')}`,
       label: field.title,
       sortable: true,
       hideable: true,
@@ -427,32 +479,43 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   ];
 
   console.log("Total columns:", columns.length);
-  console.log("Column keys:", columns.map(col => col.key));
-  console.log("Custom field columns:", columns.filter(col => col.key.startsWith('custom_')));
+  console.log(
+    "Column keys:",
+    columns.map((col) => col.key)
+  );
+  console.log(
+    "Custom field columns:",
+    columns.filter((col) => col.key.startsWith("custom_"))
+  );
 
   const renderCell = (asset: Asset, columnKey: string) => {
     switch (columnKey) {
       case "critical":
         return (
           <span className="text-sm text-gray-600">
-            {asset.critical === null ? "-" : asset.critical ? "Critical" : "Non-Critical"}
-
+            {asset.critical === null
+              ? "-"
+              : asset.critical
+                ? "Critical"
+                : "Non-Critical"}
           </span>
         );
       case "actions":
-        return (
+        return shouldShow("assets", "view") ? (
           <Button
             variant="ghost"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
+              if (asset.disabled) return;
               onViewAsset(asset.id);
             }}
             className="p-1 h-8 w-8"
+            disabled={asset.disabled}
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "serialNumber":
         return (
           <span className="text-sm text-gray-600">{asset.serialNumber}</span>
@@ -475,6 +538,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             status={asset.status}
             assetId={asset.id}
             onStatusUpdate={onRefreshData}
+            disabled={asset.disabled}
           />
         );
       case "siteName":
@@ -492,7 +556,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           </span>
         );
       case "floor":
-        return <span className="text-sm text-gray-600">{asset?.floor?.name || "-"}</span>;
+        return (
+          <span className="text-sm text-gray-600">
+            {asset?.floor?.name || "-"}
+          </span>
+        );
         {
           /* Floor not in API response */
         }
@@ -523,13 +591,27 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "assetType":
         return (
           <span className="text-sm text-gray-600">
-            {asset.assetType === null ? "-" : asset.assetType ? "Comprehensive" : "Non-Comprehensive"}
+            {asset.assetType === null
+              ? "-"
+              : asset.assetType
+                ? "Comprehensive"
+                : "Non-Comprehensive"}
           </span>
         );
       case "category":
         return (
+          <span className="text-sm text-gray-600">{asset.category.name || "-"}</span>
+        );
+      case "allocationType":
+        return (
           <span className="text-sm text-gray-600">
-            {asset.category?.name || "-"}
+            {asset.allocation_type || "-"}
+          </span>
+        );
+      case "allocatedTo":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocated_to || "-"}
           </span>
         );
       case "purchaseDate":
@@ -571,7 +653,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "accumDepreciation":
         return (
           <span className="text-sm text-gray-600">
-            {asset.accumulated_depreciation ? `₹${asset.accumulated_depreciation}` : "-"}
+            {asset.accumulated_depreciation
+              ? `₹${asset.accumulated_depreciation}`
+              : "-"}
           </span>
         );
       case "currentBookValue":
@@ -601,7 +685,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "criticality":
         return (
           <span className="text-sm text-gray-600">
-            {asset.critical === null ? "-" : asset.critical ? "Critical" : "Non-Critical"}
+            {asset.critical === null
+              ? "-"
+              : asset.critical
+                ? "Critical"
+                : "Non-Critical"}
           </span>
         );
       case "commissioningDate":
@@ -643,11 +731,23 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       default:
         // Handle custom fields
         if (columnKey.startsWith("custom_")) {
-          const fieldKey = columnKey.replace("custom_", "");
-          const customFieldValue = asset[fieldKey];
+          // Priority 1: Check if the key exists directly (from updated AssetDashboard logic)
+          let customFieldValue = asset[columnKey];
+
+          // Priority 2: Fallback to stripping "custom_" (old logic)
+          if (customFieldValue === undefined) {
+            const fieldKey = columnKey.replace("custom_", "");
+            customFieldValue = asset[fieldKey];
+          }
+
+          let displayValue = customFieldValue;
+          if (customFieldValue && typeof customFieldValue === 'object') {
+            displayValue = customFieldValue.name || customFieldValue.field_value || '';
+          }
+
           return (
             <span className="text-sm text-gray-600">
-              {customFieldValue || "-"}
+              {displayValue || "-"}
             </span>
           );
         }
@@ -659,14 +759,19 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     setShowActionPanel(true);
   };
 
+  const getRowClassName = (asset: Asset) =>
+    asset.disabled ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed" : "";
+
+  const isRowDisabled = (asset: Asset) => !!asset.disabled;
+
   return (
     <>
       {showActionPanel && (
         <SelectionPanel
           actions={selectionActions}
-          onAdd={handleAddAsset}
+          onAdd={shouldShow("assets", "add") ? handleAddAsset : undefined}
           onClearSelection={() => setShowActionPanel(false)}
-          onImport={handleImport}
+          onImport={shouldShow("assets", "import") ? handleImport : undefined}
         // onChecklist={onChecklist}
         />
       )}
@@ -682,21 +787,23 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         onSelectItem={onSelectAsset}
         getItemId={(asset) => asset.id}
         selectAllLabel="Select all assets"
-        onFilterClick={onFilterOpen}
-        enableExport={true}
+        onFilterClick={
+          shouldShow("assets", "filter") ? onFilterOpen : undefined
+        }
+        enableExport={shouldShow("assets", "export")}
         onSearchChange={onSearch}
         handleExport={handleExcelExport}
         loading={loading}
-        key={`asset-table-${availableCustomFields.length}`} // Force re-render when custom fields change
+        rowClassName={getRowClassName}
+        isRowDisabled={isRowDisabled}
+        key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          <Button
-            size="sm"
-            className="mr-2"
-            onClick={handleActionClick}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
+          shouldShow("assets", "add") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
+            <Button size="sm" className="mr-2" onClick={handleActionClick}>
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          ) : null
         }
       />
     </>
