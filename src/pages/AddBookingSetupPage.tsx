@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, Plus, ReceiptText, Settings, Share, Share2, Trash2, Tv, Upload, User, X } from "lucide-react";
 import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 import {
   TextField,
@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
+import axios from "axios";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -99,12 +100,14 @@ export const AddBookingSetupPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
+    location: "",
     active: "1",
-    department: "",
+    category: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
     payOnFacility: false,
+    billToCompany: false,
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
@@ -120,6 +123,14 @@ export const AddBookingSetupPage = () => {
     termsConditions: "",
     cancellationText: "",
     amenities: {} as Record<number, boolean>,
+    staticAmenities: {
+      tv: false,
+      whiteboard: false,
+      casting: false,
+      smartPenForTV: false,
+      wirelessCharging: false,
+      meetingRoomInventory: false,
+    },
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -139,7 +150,11 @@ export const AddBookingSetupPage = () => {
       guest: { selected: false, adult: "", child: "" },
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
+      perSlotCharge: "",
       gst: "0.0",
+      facilityDurationCharges: [
+        { hours: "", price: "" }
+      ],
     },
     blockDays: {
       startDate: "",
@@ -149,7 +164,8 @@ export const AddBookingSetupPage = () => {
     },
   });
 
-  const [departments, setDepartments] = useState([]);
+  // const [departments, setDepartments] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
 
   const [cancellationRules, setCancellationRules] = useState([
@@ -218,13 +234,13 @@ export const AddBookingSetupPage = () => {
     setAdditionalOpen(!additionalOpen);
   };
 
-  const fetchDepartments = async () => {
-    if (departments.length > 0) return; // Don't fetch if already loaded
+  const fetchCategories = async () => {
+    if (categories.length > 0) return; // Don't fetch if already loaded
 
     setLoadingDepartments(true);
     try {
-      const response = await fetch(
-        `https://${baseUrl}/pms/departments.json`,
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_categories.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -232,23 +248,11 @@ export const AddBookingSetupPage = () => {
           },
         }
       );
-      const data = await response.json();
 
-      // Handle different response structures
-      let departmentsList = [];
-      if (Array.isArray(data)) {
-        departmentsList = data;
-      } else if (Array.isArray(data.departments)) {
-        departmentsList = data.departments;
-      } else if (data && data.length !== undefined) {
-        // Handle case where data might be array-like
-        departmentsList = Array.from(data);
-      }
-
-      setDepartments(departmentsList);
+      setCategories(response.data);
     } catch (error) {
       console.error("Error fetching departments:", error);
-      setDepartments([]);
+      setCategories([]);
     } finally {
       setLoadingDepartments(false);
     }
@@ -284,7 +288,7 @@ export const AddBookingSetupPage = () => {
   };
 
   useEffect(() => {
-    fetchDepartments();
+    fetchCategories();
     fetchInventories();
   }, []);
 
@@ -292,10 +296,18 @@ export const AddBookingSetupPage = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
       return false;
-    } else if (!formData.facilityBookedTimes) {
-      toast.error("Please enter how many times facility can be booked per day");
+    } else if (!formData.category) {
+      toast.error("Please select Category");
       return false;
-    } else if (!formData.termsConditions) {
+    } else if (!formData.location) {
+      toast.error("Please enter Location");
+      return false;
+    }
+    // else if (!formData.facilityBookedTimes) {
+    //   toast.error("Please enter how many times facility can be booked per day");
+    //   return false;
+    // } 
+    else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
     } else if (!formData.cancellationText) {
@@ -312,29 +324,29 @@ export const AddBookingSetupPage = () => {
       const endHour = parseInt(slot.endTime.hour);
 
       if (slot.startTime.hour !== "00") {
-        if (
-          slot.breakTimeStart.hour === "00" ||
-          slot.breakTimeEnd.hour === "00" ||
-          slot.endTime.hour === "00"
-        ) {
-          toast.error(
-            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
-          );
-          return false;
-        }
+        // if (
+        //   slot.breakTimeStart.hour === "00" ||
+        //   slot.breakTimeEnd.hour === "00" ||
+        //   slot.endTime.hour === "00"
+        // ) {
+        //   toast.error(
+        //     `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+        //   );
+        //   return false;
+        // }
 
-        if (breakStartHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
-        if (breakEndHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
+        // if (breakStartHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
+        // if (breakEndHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
         if (endHour < startHour) {
           toast.error(
             `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`
@@ -400,18 +412,19 @@ export const AddBookingSetupPage = () => {
         formData.isBookable ? "bookable" : "request"
       );
       formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
+      formDataToSend.append("facility_setup[location]", formData.location);
       formDataToSend.append(
         "facility_setup[active]",
         formData.active
       );
 
       // Find department ID from selected department name
-      // if (formData.department) {
-      //   formDataToSend.append(
-      //     "facility_setup[department_id]",
-      //     formData.department
-      //   );
-      // }
+      if (formData.category) {
+        formDataToSend.append(
+          "facility_setup[facility_category_id]",
+          formData.category
+        );
+      }
 
       formDataToSend.append("facility_setup[app_key]", formData.appKey);
       // formDataToSend.append(
@@ -430,9 +443,13 @@ export const AddBookingSetupPage = () => {
         "facility_setup[complementary]",
         formData.complimentary ? "1" : "0"
       );
+      formDataToSend.append(
+        "facility_setup[bill_to_company]",
+        formData.billToCompany ? "1" : "0"
+      );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-      formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
+      // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
       // formDataToSend.append(
       //   "facility_setup[facility_charge_attributes][per_slot_charge]",
       //   formData.perSlotCharge
@@ -456,20 +473,25 @@ export const AddBookingSetupPage = () => {
       }
 
       // Charge Setup - Guest charges and boolean
+      // formDataToSend.append(
+      //   "facility_setup[facility_charge_attributes][guest]",
+      //   formData.chargeSetup.guest.selected ? "true" : "false"
+      // );
+      // if (formData.chargeSetup.guest.selected) {
+      //   formDataToSend.append(
+      //     "facility_setup[facility_charge_attributes][adult_guest_charge]",
+      //     formData.chargeSetup.guest.adult || "0"
+      //   );
+      //   formDataToSend.append(
+      //     "facility_setup[facility_charge_attributes][child_guest_charge]",
+      //     formData.chargeSetup.guest.child || "0"
+      //   );
+      // }
+
       formDataToSend.append(
-        "facility_setup[facility_charge_attributes][guest]",
-        formData.chargeSetup.guest.selected ? "true" : "false"
+        "facility_setup[facility_charge_attributes][per_slot_charge]",
+        formData.chargeSetup.perSlotCharge || "0"
       );
-      if (formData.chargeSetup.guest.selected) {
-        formDataToSend.append(
-          "facility_setup[facility_charge_attributes][adult_guest_charge]",
-          formData.chargeSetup.guest.adult || "0"
-        );
-        formDataToSend.append(
-          "facility_setup[facility_charge_attributes][child_guest_charge]",
-          formData.chargeSetup.guest.child || "0"
-        );
-      }
 
       // Charge Setup - Person limits and GST
       formDataToSend.append(
@@ -480,6 +502,20 @@ export const AddBookingSetupPage = () => {
         "facility_setup[max_people]",
         formData.chargeSetup.maximumPersonAllowed || "1"
       );
+
+      // Facility Duration Charges
+      formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+        if (charge.hours || charge.price) {
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+            charge.hours
+          );
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+            charge.price
+          );
+        }
+      });
 
       formDataToSend.append(
         "facility_setup[description]",
@@ -551,9 +587,9 @@ export const AddBookingSetupPage = () => {
         formDataToSend.append(`cover_image`, file);
       });
 
-      selectedBookingFiles.forEach((file) => {
-        formDataToSend.append(`attachments[]`, file);
-      });
+      // selectedBookingFiles.forEach((file) => {
+      //   formDataToSend.append(`attachments[]`, file);
+      // });
 
       selectedGalleryImages.forEach((image: any, index: number) => {
         // Convert aspect ratio to format: 16_9, 9_16, 1_1, 3_2
@@ -564,7 +600,6 @@ export const AddBookingSetupPage = () => {
         );
       });
 
-      // Facility Setup Accessories
       const selectedAccessories = Object.entries(formData.amenities)
         .filter(([_, isSelected]) => isSelected)
         .map(([inventoryId]) => parseInt(inventoryId));
@@ -581,6 +616,35 @@ export const AddBookingSetupPage = () => {
           inventoryId.toString()
         );
         console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+      });
+
+      const amenities = [];
+      if (formData.staticAmenities.tv) amenities.push("TV");
+      if (formData.staticAmenities.whiteboard) amenities.push("Whiteboard");
+      if (formData.staticAmenities.casting) amenities.push("Casting");
+      if (formData.staticAmenities.smartPenForTV) amenities.push("Smart Pen for TV");
+      if (formData.staticAmenities.wirelessCharging)
+        amenities.push("Wireless Charging");
+      if (formData.staticAmenities.meetingRoomInventory)
+        amenities.push("Meeting Room Inventory");
+
+      amenities.forEach((name, index) => {
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][tag_type]`,
+          "amenity_things"
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][category_name]`,
+          name
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][_destroy]`,
+          "0"
+        );
+        formDataToSend.append(
+          `facility_setup[generic_tags_attributes][${index}][selected]`,
+          "1"
+        );
       });
 
       // Facility Slots
@@ -634,10 +698,10 @@ export const AddBookingSetupPage = () => {
         "facility_setup[multi_slot]",
         formData.allowMultipleSlots ? "1" : "0"
       )
-      formDataToSend.append(
-        "facility_setup[max_slots]",
-        formData.maximumSlots
-      )
+      // formDataToSend.append(
+      //   "facility_setup[max_slots]",
+      //   formData.maximumSlots
+      // )
       formDataToSend.append(
         "facility_setup[booking_limit]", formData.facilityBookedTimes
       )
@@ -682,8 +746,6 @@ export const AddBookingSetupPage = () => {
         formData.sharedContentInfo || ""
       );
 
-
-      console.log("Form Data to be sent:", formDataToSend);
       const response = await fetch(
         `https://${baseUrl}/pms/admin/facility_setups.json`,
         {
@@ -725,7 +787,6 @@ export const AddBookingSetupPage = () => {
     setFormData({ ...formData, slots: [...formData.slots, newSlot] });
   };
 
-  
   return (
     <ThemeProvider theme={muiTheme}>
       <div className="p-6 bg-white">
@@ -760,7 +821,7 @@ export const AddBookingSetupPage = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    if (/^[a-zA-Z0-9\s]*$/.test(value)) {
                       setFormData({ ...formData, facilityName: value });
                     }
                   }}
@@ -773,28 +834,61 @@ export const AddBookingSetupPage = () => {
                     shrink: true,
                   }}
                 />
-                {/* <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
+                <FormControl>
+                  <InputLabel className="bg-[#F6F7F7]">Category<span className="text-red-500">*</span></InputLabel>
                   <Select
-                    value={formData.department}
-                    onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
-                    }
-                    onFocus={fetchDepartments}
-                    label="Department"
+                    value={formData.category}
+                    onChange={(e) => {
+                      const selectedCategoryId = e.target.value;
+                      const selectedCategory = categories.find((cat: any) => cat.id === selectedCategoryId);
+
+                      // Set isBookable based on fac_type
+                      // Assuming "bookable" fac_type = true, others = false
+                      const isBookableType = selectedCategory?.fac_type === "bookable";
+
+                      setFormData({
+                        ...formData,
+                        category: selectedCategoryId,
+                        isBookable: isBookableType,
+                        isRequest: !isBookableType,
+                      });
+                    }}
+                    onFocus={fetchCategories}
+                    label="Category"
                     displayEmpty
                   >
                     <MenuItem value="">
-                      {loadingDepartments ? "Loading..." : "All"}
+                      Select Category
                     </MenuItem>
-                    {Array.isArray(departments) &&
-                      departments.map((dept, index) => (
+                    {Array.isArray(categories) &&
+                      categories.map((dept, index) => (
                         <MenuItem key={index} value={dept.id}>
-                          {dept.department_name}
+                          {dept.name}
                         </MenuItem>
                       ))}
                   </Select>
-                </FormControl> */}
+                </FormControl>
+
+                <TextField
+                  label="Location"
+                  placeholder="Enter Location"
+                  value={formData.location}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow address-friendly characters
+                    if (/^[a-zA-Z0-9\s,.\-/#]*$/.test(value)) {
+                      setFormData({ ...formData, location: value });
+                    }
+                  }}
+                  variant="outlined"
+                  required
+                  InputLabelProps={{
+                    classes: {
+                      asterisk: "text-red-500", // Tailwind class for red color
+                    },
+                    shrink: true,
+                  }}
+                />
               </div>
 
               <div className="flex gap-6 px-1">
@@ -845,7 +939,7 @@ export const AddBookingSetupPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* <div className="overflow-x-auto">
               <table className="w-full border">
                 <thead>
                   <tr className="bg-gray-50">
@@ -961,115 +1055,9 @@ export const AddBookingSetupPage = () => {
                       </div>
                     </td>
                   </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.chargeSetup.guest.selected}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  selected: !!checked,
-                                },
-                              },
-                            })
-                          }
-                        />
-                        <span>Guest</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.adult}
-                          onCheckedChange={(checked) => {
-                            if (!checked) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: "",
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.adult}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.child}
-                          onCheckedChange={(checked) => {
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  child: checked ? formData.chargeSetup.guest.child || "" : "",
-                                },
-                              },
-                            });
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.child}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    child: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                  </tr>
                 </tbody>
               </table>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               <div className="flex items-center gap-3">
@@ -1126,7 +1114,147 @@ export const AddBookingSetupPage = () => {
                   placeholder="1"
                 />
               </div>
+              {
+                formData.isBookable && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                    <TextField
+                      size="small"
+                      variant="outlined"
+                      value={formData.chargeSetup.perSlotCharge}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only positive integers (no decimals, no negatives)
+                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            chargeSetup: {
+                              ...formData.chargeSetup,
+                              perSlotCharge: value,
+                            },
+                          });
+                        }
+                      }}
+                      className="w-32"
+                      placeholder="1"
+                    />
+                  </div>
+                )
+              }
             </div>
+
+            {/* Facility Duration Charges Table */}
+            {!formData.isBookable && (
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
+                  <Button
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          facilityDurationCharges: [
+                            ...formData.chargeSetup.facilityDurationCharges,
+                            { hours: "", price: "" }
+                          ]
+                        }
+                      });
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Row
+                  </Button>
+                </div>
+
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Hours</th>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                        <th className="border-b px-4 py-3 text-center font-semibold text-gray-700">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.chargeSetup.facilityDurationCharges.map((charge, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter hours"
+                              value={charge.hours}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].hours = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.5",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter price"
+                              value={charge.price}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].price = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.01",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => {
+                                const newCharges = formData.chargeSetup.facilityDurationCharges.filter((_, i) => i !== index);
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges.length > 0 ? newCharges : [{ hours: "", price: "" }]
+                                  }
+                                });
+                              }}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
+                              title="Remove row"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -1153,7 +1281,7 @@ export const AddBookingSetupPage = () => {
                 <div>End Time</div>
                 <div>Concurrent Slots</div>
                 <div>Slot by</div>
-                {/* <div>Wrap Time</div> */}
+                <div>Wrap Time</div>
                 <div>Action</div>
               </div>
 
@@ -1363,7 +1491,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
 
-                  {/* <TextField
+                  <TextField
                     size="small"
                     value={slot.wrapTime}
                     onChange={(e) => {
@@ -1376,7 +1504,7 @@ export const AddBookingSetupPage = () => {
                       }
                     }}
                     variant="outlined"
-                  /> */}
+                  />
 
                   <Button
                     size="sm"
@@ -1637,27 +1765,31 @@ export const AddBookingSetupPage = () => {
                   )}
                 </div> */}
 
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Facility can be booked</span>
-                  <TextField
-                    placeholder=""
-                    value={formData.facilityBookedTimes}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only positive integers (no decimals, no negatives)
-                      if (value === '' || /^[1-9]\d*$/.test(value)) {
-                        setFormData({
-                          ...formData,
-                          facilityBookedTimes: value,
-                        });
-                      }
-                    }}
-                    variant="outlined"
-                    size="small"
-                    style={{ width: "80px" }}
-                  />
-                  <span>times per day by User</span>
-                </div>
+                {
+                  formData.isBookable && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>Facility can be booked</span>
+                      <TextField
+                        placeholder=""
+                        value={formData.facilityBookedTimes}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow only positive integers (no decimals, no negatives)
+                          if (value === '' || /^[1-9]\d*$/.test(value)) {
+                            setFormData({
+                              ...formData,
+                              facilityBookedTimes: value,
+                            });
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        style={{ width: "80px" }}
+                      />
+                      <span>times per day by User</span>
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>
@@ -1672,48 +1804,69 @@ export const AddBookingSetupPage = () => {
 
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, postpaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="postpaid">Postpaid</label>
-                </div> */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, prepaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="prepaid">Prepaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, payOnFacility: !!checked })
-                    }
-                  />
-                  <label htmlFor="payOnFacility">Pay on Facility</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, complimentary: !!checked })
-                    }
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div>
+                {/* Show Prepaid and Pay at Facility for Bookable */}
+                {formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="prepaid"
+                        checked={formData.prepaid}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, prepaid: !!checked })
+                        }
+                      />
+                      <label htmlFor="prepaid">Prepaid</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="payOnFacility"
+                        checked={formData.payOnFacility}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, payOnFacility: !!checked })
+                        }
+                      />
+                      <label htmlFor="payOnFacility">Pay at Facility</label>
+                    </div>
+                  </>
+                )}
+
+                {/* Show Complimentary and Bill to Company for Requestable */}
+                {!formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="complimentary"
+                        checked={formData.complimentary}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            complimentary: !!checked,
+                            billToCompany: !!checked ? false : formData.billToCompany
+                          })
+                        }
+                        disabled={formData.billToCompany}
+                      />
+                      <label htmlFor="complimentary" className={formData.billToCompany ? "text-gray-400" : ""}>Complimentary</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="billToCompany"
+                        checked={formData.billToCompany}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            billToCompany: !!checked,
+                            complimentary: !!checked ? false : formData.complimentary
+                          })
+                        }
+                        disabled={formData.complimentary}
+                      />
+                      <label htmlFor="billToCompany" className={formData.complimentary ? "text-gray-400" : ""}>Bill to Company</label>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField
                   label="SGST(%)"
                   value={formData.sgstPercentage}
@@ -1737,7 +1890,7 @@ export const AddBookingSetupPage = () => {
                   }}
                   variant="outlined"
                 />
-                <TextField
+                {/* <TextField
                   label="IGST(%)"
                   value={formData.igstPercentage}
                   onChange={(e) => {
@@ -1747,7 +1900,7 @@ export const AddBookingSetupPage = () => {
                     }
                   }}
                   variant="outlined"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -1810,7 +1963,7 @@ export const AddBookingSetupPage = () => {
               )}
             </div>
 
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <Image className="w-4 h-4" />
@@ -1865,7 +2018,7 @@ export const AddBookingSetupPage = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Gallery Images Card */}
@@ -2117,24 +2270,27 @@ export const AddBookingSetupPage = () => {
                   </div>
 
                   {/* Percentage Input */}
-                  <TextField
-                    placeholder="%"
-                    size="small"
-                    variant="outlined"
-                    value={rule.deduction}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only non-negative numbers with max 2 decimal places and not more than 100
-                      if (
-                        value === '' ||
-                        (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= 100)
-                      ) {
-                        const newRules = [...cancellationRules];
-                        newRules[index].deduction = value;
-                        setCancellationRules(newRules);
-                      }
-                    }}
-                  />
+                  <div className="flex items-center gap-1">
+                    <TextField
+                      placeholder="%"
+                      size="small"
+                      variant="outlined"
+                      value={rule.deduction}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only non-negative numbers with max 2 decimal places and not more than 100
+                        if (
+                          value === '' ||
+                          (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= 100)
+                        ) {
+                          const newRules = [...cancellationRules];
+                          newRules[index].deduction = value;
+                          setCancellationRules(newRules);
+                        }
+                      }}
+                    />
+                    <span>%</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2217,6 +2373,117 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
+              {
+                !formData.isBookable && (
+                  <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <Tv className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="tv"
+                          checked={formData.staticAmenities.tv}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: { ...formData.staticAmenities, tv: !!checked },
+                            })
+                          }
+                        />
+                        <label htmlFor="tv">TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="whiteboard"
+                          checked={formData.staticAmenities.whiteboard}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                whiteboard: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="whiteboard">Whiteboard</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="casting"
+                          checked={formData.staticAmenities.casting}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                casting: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="casting">Casting</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="smartPenForTV"
+                          checked={formData.staticAmenities.smartPenForTV}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                smartPenForTV: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="wirelessCharging"
+                          checked={formData.staticAmenities.wirelessCharging}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                wirelessCharging: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="wirelessCharging">Wireless Charging</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="meetingRoomInventory"
+                          checked={formData.staticAmenities.meetingRoomInventory}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                meetingRoomInventory: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="meetingRoomInventory">
+                          Meeting Room Inventory
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
               {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -2254,10 +2521,9 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
+              </div>
 
-              {/* Floor Info */}
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <LampFloor className="w-4 h-4" />
@@ -2294,9 +2560,9 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Share2 className="w-4 h-4" />
@@ -2317,9 +2583,9 @@ export const AddBookingSetupPage = () => {
                     className="min-h-[100px]"
                   />
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <BookKey className="w-4 h-4" />
