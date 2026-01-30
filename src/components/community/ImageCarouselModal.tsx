@@ -74,7 +74,7 @@ export const ImageCarouselModal = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => onOpenChange(false)}
-                        className="bg-white/10 hover:bg-white/20 text-white rounded-full"
+                        className="bg-white/30 hover:bg-white/40 text-white rounded-full"
                     >
                         <X size={24} />
                     </Button>

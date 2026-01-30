@@ -86,35 +86,35 @@ export const ReactionsModal = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-sm bg-white rounded-[20px] p-0 flex flex-col border-0 shadow-lg max-h-[80vh] overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 pt-6">
+            <DialogContent className="max-w-[512px] bg-[#F8F6F3] !rounded-[8px] p-0 flex flex-col border-0 shadow-lg h-[600px] overflow-hidden">
+                {/* Header - Fixed */}
+                <div className="flex items-center justify-between px-6 pt-6 flex-shrink-0">
                     <div className="flex items-center gap-2">
                         <span className="text-2xl"><Heart color="#c72030" size={18} /></span>
                         <h2 className="font-semibold text-gray-900">Reactions</h2>
                     </div>
                     <button
                         onClick={() => onOpenChange(false)}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-[#1F1F1F] hover:text-gray-600"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
-                {/* Emoji Filter Tabs */}
-                <div className="flex gap-2 px-6 pb-4 overflow-x-auto">
+                {/* Emoji Filter Tabs - Fixed */}
+                <div className="flex gap-2 px-6 py-3 overflow-x-auto flex-shrink-0 border-b border-gray-200">
                     {/* All Tab */}
                     <button
                         onClick={() => setSelectedEmoji(null)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap font-medium transition-colors ${selectedEmoji === null
-                            ? "bg-[#a89968] text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-150"
+                            ? "bg-[#C4B89D] text-white"
+                            : "bg-[#F5F3F0] text-gray-700 hover:bg-gray-150"
                             }`}
                     >
                         <span className="text-sm">All</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selectedEmoji === null
-                            ? "bg-white text-[#a89968]"
-                            : "bg-white text-gray-700"
+                            ? "bg-[#FFFFFF] text-[#a89968]"
+                            : "bg-[#F5F3F0] text-gray-700"
                             }`}>
                             {reactions.length}
                         </span>
@@ -126,30 +126,33 @@ export const ReactionsModal = ({
                             key={emoji}
                             onClick={() => setSelectedEmoji(emoji)}
                             className={`flex items-center gap-2 px-3 py-1 rounded-full whitespace-nowrap transition-colors ${selectedEmoji === emoji
-                                ? "bg-gray-200"
-                                : "bg-gray-100 hover:bg-gray-150"
+                                ? "bg-[#C4B89D] text-white"
+                                : "bg-[#F5F3F0] hover:bg-gray-150"
                                 }`}
                         >
                             <span className="text-xl">{EMOJI_MAP[emoji] || emoji}</span>
-                            <span className="text-xs font-semibold text-gray-700 px-1.5">
+                            <span className={`text-xs font-semibold px-1.5 rounded-full ${selectedEmoji === emoji
+                                ? "bg-[#FFFFFF] text-[#a89968]"
+                                : "bg-[#F5F3F0] text-gray-700"
+                                }`}>
                                 {groupedReactions[emoji].length}
                             </span>
                         </button>
                     ))}
                 </div>
 
-                {/* Reactions List */}
+                {/* Reactions List - Scrollable */}
                 <div className="flex-1 overflow-y-auto px-6">
                     {selectedEmoji === null ? (
                         // All reactions
-                        <div className="space-y-4 py-4">
+                        <div className="space-y-4 pt-4 pb-4">
                             {reactions.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
                                     No reactions yet
                                 </div>
                             ) : (
                                 reactions.map((reaction) => (
-                                    <div key={reaction.id} className="flex items-center justify-between py-2">
+                                    <div key={reaction.id} className="flex items-center justify-between py-2 w-[90%]">
                                         <div className="flex items-center gap-3 flex-1">
                                             <img
                                                 src={
@@ -160,7 +163,7 @@ export const ReactionsModal = ({
                                                 className="w-12 h-12 rounded-full flex-shrink-0"
                                             />
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-900">
+                                                <p className="text-sm font-semibold text-[#1F1F1F]">
                                                     {reaction.user_name}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
@@ -168,7 +171,7 @@ export const ReactionsModal = ({
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-2xl flex-shrink-0">
+                                        <span className="text-xl flex-shrink-0">
                                             {EMOJI_MAP[reaction.emoji_name || "thumbs_up"] ||
                                                 reaction.emoji_name}
                                         </span>
@@ -178,14 +181,14 @@ export const ReactionsModal = ({
                         </div>
                     ) : (
                         // Filtered reactions
-                        <div className="space-y-4 py-4">
+                        <div className="space-y-4 pt-4 pb-4">
                             {currentReactions?.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
                                     No reactions
                                 </div>
                             ) : (
                                 currentReactions.map((reaction) => (
-                                    <div key={reaction.id} className="flex items-center justify-between py-2">
+                                    <div key={reaction.id} className="flex items-center justify-between py-2 w-[90%]">
                                         <div className="flex items-center gap-3 flex-1">
                                             <img
                                                 src={
@@ -204,7 +207,7 @@ export const ReactionsModal = ({
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-2xl flex-shrink-0">
+                                        <span className="text-xl flex-shrink-0">
                                             {EMOJI_MAP[reaction.emoji_name || "thumbs_up"] ||
                                                 reaction.emoji_name}
                                         </span>
@@ -215,8 +218,8 @@ export const ReactionsModal = ({
                     )}
                 </div>
 
-                {/* Footer - People reacted count */}
-                <div className="border-t border-gray-200 px-6 py-4 text-center">
+                {/* Footer - Fixed */}
+                <div className="border-t border-gray-200 px-6 py-4 text-center flex-shrink-0 bg-[#F8F6F3]">
                     <p className="text-sm text-gray-600 font-medium">
                         {reactions.length} {reactions.length === 1 ? 'person' : 'people'} reacted
                     </p>

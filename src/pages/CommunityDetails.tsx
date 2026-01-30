@@ -11,6 +11,9 @@ const CommunityDetails = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState("details");
     const [communityName, setCommunityName] = useState("");
+    const [communityImg, setCommunityImg] = useState("")
+
+    console.log(communityImg)
 
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
@@ -57,11 +60,12 @@ const CommunityDetails = () => {
                     <CommunityDetailsTab
                         communityId={id}
                         setCommunityName={setCommunityName}
+                        setCommunityImg={setCommunityImg}
                     />
                 </TabsContent>
 
                 <TabsContent value="feed">
-                    <CommunityFeedTab communityId={id} communityName={communityName} />
+                    <CommunityFeedTab communityId={id} communityName={communityName} communityImg={communityImg} />
                 </TabsContent>
 
                 <TabsContent value="reports">
