@@ -103,7 +103,7 @@ export const ImageCropperr: React.FC<ImageCropperrProps> = ({
                         Cancel
                     </button>
                     <button
-                        className="px-4 py-2 rounded bg-[#f2eee9] text-[#bf213e] hover:bg-[[#f2eee9]] font-medium transition"
+                        className="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 font-medium transition"
                         onClick={() => {
                             toast.dismiss();
                             onComplete({

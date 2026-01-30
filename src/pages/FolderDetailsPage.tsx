@@ -1293,7 +1293,9 @@ export const FolderDetailsPage = () => {
         onClose={() => setShowActionPanel(false)}
         onAddDocument={() => {
           setShowActionPanel(false);
-          navigate("/maintenance/documents/add");
+          navigate(
+            `/maintenance/documents/add?folderId=${id}&folderName=${encodeURIComponent(folderName)}`
+          );
         }}
         onCreateFolder={() => {
           setShowActionPanel(false);

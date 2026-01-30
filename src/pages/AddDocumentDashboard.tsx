@@ -94,8 +94,10 @@ export const AddDocumentDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const source = searchParams.get("source");
+  const folderId = searchParams.get("folderId");
   const folderName = searchParams.get("folderName") || "";
-  const isFolderDisabled = source === "new";
+  const isFolderDisabled = source === "new" || !!folderId;
+  const isDirectFolderInsert = !!folderId; // Adding to existing folder directly
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -128,7 +130,8 @@ export const AddDocumentDashboard = () => {
 
   const [formData, setFormData] = useState({
     documentCategory: "",
-    documentFolder: "",
+    documentFolder:
+      folderId || (isFolderDisabled && folderName ? folderName : ""),
     title: "",
     shareWith: "all",
     shareWithCommunities: "no",
@@ -333,7 +336,55 @@ export const AddDocumentDashboard = () => {
 
     setIsSubmitting(true);
     try {
-      if (isFolderDisabled) {
+      if (isDirectFolderInsert) {
+        // Direct document addition to existing folder
+        const attachmentBase64 = await fileToBase64(coverImage);
+        const contentType = coverImage.type || "application/pdf";
+
+        const permissions: FolderPermission[] = [
+          {
+            access_level: formData.shareWith === "all" ? "all" : "selected",
+            access_to: "Pms::Site",
+            access_ids:
+              formData.shareWith === "individual" ? selectedTechParks : [],
+          },
+          {
+            access_level:
+              formData.shareWithCommunities === "all" ? "all" : "selected",
+            access_to: "Community",
+            access_ids:
+              formData.shareWithCommunities === "yes"
+                ? selectedCommunities.map((c) => c.id)
+                : [],
+          },
+        ];
+
+        const payload: CreateDocumentPayload = {
+          document: {
+            title: formData.title,
+            folder_id: parseInt(folderId!, 10),
+            category_id: parseInt(formData.documentCategory, 10),
+            shares: documentShares.map((share) => ({
+              user_type: share.user_type,
+              user_id: share.user_id,
+              email: share.email,
+              access_level: share.access_level,
+            })),
+            attachments: [
+              {
+                filename: coverImage.name,
+                content: `data:${contentType};base64,${attachmentBase64}`,
+                content_type: contentType,
+              },
+            ],
+          },
+          permissions,
+        };
+
+        await createDocument(payload);
+        toast.success("Document added successfully!");
+        navigate(`/maintenance/documents/folder/${folderId}`);
+      } else if (isFolderDisabled) {
         // Convert file to base64 for sessionStorage
         const attachmentBase64 = coverImage
           ? await fileToBase64(coverImage)
@@ -448,7 +499,9 @@ export const AddDocumentDashboard = () => {
       "Are you sure you want to go back? Any unsaved changes will be lost."
     );
     if (confirmed) {
-      if (isFolderDisabled) {
+      if (isDirectFolderInsert) {
+        navigate(`/maintenance/documents/folder/${folderId}`);
+      } else if (isFolderDisabled) {
         navigate("/maintenance/documents/create-folder");
       } else {
         navigate("/maintenance/documents");
@@ -573,18 +626,25 @@ export const AddDocumentDashboard = () => {
                     },
                   }}
                 >
-                  <MenuItem value="" disabled>
-                    {isFolderDisabled ? folderName : "Select Document Folder"}
-                  </MenuItem>
-                  {folders.length === 0 ? (
-                    <MenuItem disabled>Loading folders...</MenuItem>
+                  {isFolderDisabled ? (
+                    <MenuItem value={folderId || folderName}>
+                      {folderName}
+                    </MenuItem>
                   ) : (
-                    folders.map((folder) => (
-                      <MenuItem key={folder.id} value={folder.id.toString()}>
-                        {folder.name}
-                      </MenuItem>
-                    ))
+                    <MenuItem value="" disabled>
+                      Select Document Folder
+                    </MenuItem>
                   )}
+                  {!isFolderDisabled &&
+                    (folders.length === 0 ? (
+                      <MenuItem disabled>Loading folders...</MenuItem>
+                    ) : (
+                      folders.map((folder) => (
+                        <MenuItem key={folder.id} value={folder.id.toString()}>
+                          {folder.name}
+                        </MenuItem>
+                      ))
+                    ))}
                 </MuiSelect>
               </FormControl>
 

@@ -113,6 +113,10 @@
   z-index: 10;
   transition: background-color 0.2s ease;
 }
+/* Table Row Hover Effect */
+/* tr:hover td {
+  background-color: rgba(196, 184, 157, 0.1) !important;
+} */
 
 /* Hover effect for resize handle */
 .column-resize-handle:hover {
