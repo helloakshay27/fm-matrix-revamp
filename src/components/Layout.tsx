@@ -32,6 +32,7 @@ import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
 import { ActionSidebar } from "./ActionSidebar";
 import { ActionHeader } from "./ActionHeader";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
+import { ClubSidebar } from "./ClubSidebar";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -50,6 +51,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const currentUser = getUser();
   const userEmail = currentUser?.email || "No email";
+  const hostname = window.location.hostname;
+
+  // Detect Club Management routes
+  const isClubManagementRoute = hostname === "club.lockated.com" || location.pathname.startsWith("/club-management");
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -82,7 +87,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   // Check if non-employee user needs to select project/site
-  const hostname = window.location.hostname;
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
@@ -90,6 +94,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Handle token-based authentication from URL parameters
   // Get current domain for backward compatibility
   const isOmanSite = hostname.includes("oig.gophygital.work");
+
+  const isFMSite = hostname === "fm-matrix.lockated.com" || hostname === "web.gophygital.work" || hostname === "lockated.gophygital.work" || hostname === "localhost";
 
   const isLockatedSite =
     hostname.includes("lockated.gophygital.work") ||
@@ -119,9 +125,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
   // - Other companies (193, 204): Static layout (Sidebar + StaticDynamicHeader)
   // - No company selected: Static layout (fallback)
+  // - Club Management routes: Separate Club Management layout
 
   // Render sidebar component based on configuration
   const renderSidebar = () => {
+    // Check if user is in Club Management route - render ClubSidebar
+    if (isClubManagementRoute) {
+      return <ClubSidebar />;
+    }
+
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Only show sidebar for "Project Task" module, hide for other modules
     if (isEmployeeUser && isLocalhost) {
@@ -206,6 +218,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render header component based on configuration
   const renderDynamicHeader = () => {
+    // Check if user is in Club Management route - render StaticDynamicHeader
+    if (isClubManagementRoute) {
+      return <StaticDynamicHeader />;
+    }
+
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
     if (isEmployeeUser && isLocalhost) {
@@ -220,6 +237,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "ubaid.hashmat@lockated.com"
     ) {
       return <ActionHeader />;
+    }
+
+    if (isFMSite) {
+      return <StaticDynamicHeader />
     }
 
     // Domain-based logic takes precedence for backward compatibility
@@ -247,6 +268,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
     }
+
+
 
     // Use company ID-based layout
     switch (layoutConfig.headerComponent) {
@@ -335,10 +358,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-        selectedCompany?.id === 295 ||
-        selectedCompany?.id === 298 ||
-        selectedCompany?.id === 199 ||
-        userEmail === "ubaid.hashmat@lockated.com" ? (
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          userEmail === "ubaid.hashmat@lockated.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
@@ -362,12 +385,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : "ml-64"
               : "ml-0" // No margin for other modules
             : // For action sidebar, add extra top padding and adjust left margin
-              isActionSidebarVisible
+            isActionSidebarVisible
               ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

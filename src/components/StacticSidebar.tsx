@@ -446,7 +446,7 @@ const modulesByPackage = {
         },
       ],
     },
-       {
+    {
       name: "Document",
       icon: FileText,
       href: "/master/document",
@@ -1496,13 +1496,13 @@ export const StacticSidebar = () => {
   // Helper function to recursively filter out asset-related items
   const filterAssetItems = (items: any[]): any[] => {
     if (!assetRestricted) return items;
-    
+
     return items
       .filter((item: any) => {
         // Filter out direct asset links
-        if (item.href === "/maintenance/asset" || 
-            item.href === "/maintenance/audit/assets" ||
-            item.href?.startsWith("/settings/asset-setup")) {
+        if (item.href === "/maintenance/asset" ||
+          item.href === "/maintenance/audit/assets" ||
+          item.href?.startsWith("/settings/asset-setup")) {
           return false;
         }
         // Filter out items named "Asset Setup" or "Assets"

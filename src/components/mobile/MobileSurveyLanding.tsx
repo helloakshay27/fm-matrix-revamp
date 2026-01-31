@@ -1942,11 +1942,13 @@ export const MobileSurveyLanding: React.FC = () => {
               {/* Normal View: Question by Question */}
               <div className="flex-1 flex flex-col justify-center">
                 {/* Survey Title for Normal View */}
-                <div className="text-center mb-6">
-                  <h1 className="text-xl font-bold text-black/100 mb-2">
-                    {surveyData.survey_title}
-                  </h1>
-                </div>
+                {currentQuestion && currentQuestion.qtype !== "emoji" && currentQuestion.qtype !== "smiley" && (
+                  <div className="text-center mb-6">
+                    <h1 className="text-xl font-bold text-black/100 mb-2">
+                      {surveyData.survey_title}
+                    </h1>
+                  </div>
+                )}
 
                 {/* Show Final Description Step */}
                 {isLastStep && isMultiQuestion && (
@@ -1993,7 +1995,9 @@ export const MobileSurveyLanding: React.FC = () => {
                   surveyData.snag_checklist.questions_count
                 )) &&
                   currentQuestion &&
-                  !showGenericTags && (
+                  !showGenericTags &&
+                  currentQuestion.qtype !== "emoji" &&
+                  currentQuestion.qtype !== "smiley" && (
                     <div className="text-center mb-4">
                       <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
                         <p className="text-lg text-gray-900 font-semibold">
@@ -2263,40 +2267,50 @@ export const MobileSurveyLanding: React.FC = () => {
                       {(currentQuestion.qtype === "emoji" ||
                         currentQuestion.qtype === "smiley") &&
                         !showGenericTags && (
-                          <div className="w-full mb-8 px-1 xs:px-2">
-                            <div className="flex justify-center items-stretch gap-1 xs:gap-1.5 sm:gap-3 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-300 shadow-lg p-2 xs:p-3 sm:p-4">
-                              {getEmojiOptions(currentQuestion).map(
-                                (option) => (
-                                  <button
-                                    type="button"
-                                    key={option.rating}
-                                    onClick={() =>
-                                      handleEmojiSelect(
-                                        option.rating,
-                                        option.emoji,
-                                        option.label
-                                      )
-                                    }
-                                    className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${selectedRating === option.rating
-                                      ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
-                                      : "bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
-                                      }`}
-                                  >
-                                    <div className="flex-1 flex items-center justify-center">
-                                      <span className="text-3xl xs:text-4xl sm:text-5xl">
-                                        {option.emoji}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center justify-center min-h-[28px] xs:min-h-[32px] sm:min-h-[36px]">
-                                      <span
-                                        className={`text-[9px] xs:text-[10px] sm:text-xs font-bold text-center leading-tight px-0.5 xs:px-1 ${selectedRating === option.rating ? "text-white" : "text-gray-900"}`}
-                                      >
-                                        {option.label}
-                                      </span>
-                                    </div>
-                                  </button>
-                                )
-                              )}
+                          <div className="fixed bottom-0 left-0 right-0 w-full px-2 pb-4 z-50">
+                            {/* Title Container */}
+                            <div className="mb-3 max-w-md mx-auto bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl px-4 py-3">
+                              <h2 className=" font-semibold text-white text-center">
+                                {surveyData.survey_title}
+                              </h2>
+                            </div>
+                            {/* Emoji Buttons Container */}
+                            <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl p-3 xs:p-4 sm:p-5 max-w-md mx-auto">
+                              {/* Emoji buttons */}
+                              <div className="flex justify-center items-stretch gap-1 xs:gap-1.5 sm:gap-3">
+                                {getEmojiOptions(currentQuestion).map(
+                                  (option) => (
+                                    <button
+                                      type="button"
+                                      key={option.rating}
+                                      onClick={() =>
+                                        handleEmojiSelect(
+                                          option.rating,
+                                          option.emoji,
+                                          option.label
+                                        )
+                                      }
+                                      className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${selectedRating === option.rating
+                                        ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
+                                        : "bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 hover:shadow-md hover:scale-[1.02]"
+                                        }`}
+                                    >
+                                      <div className="flex-1 flex items-center justify-center">
+                                        <span className="text-3xl xs:text-4xl sm:text-5xl">
+                                          {option.emoji}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-center min-h-[28px] xs:min-h-[32px] sm:min-h-[36px]">
+                                        <span
+                                          className={`text-[9px] xs:text-[10px] sm:text-xs font-bold text-center leading-tight px-0.5 xs:px-1 text-white`}
+                                        >
+                                          {option.label}
+                                        </span>
+                                      </div>
+                                    </button>
+                                  )
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}

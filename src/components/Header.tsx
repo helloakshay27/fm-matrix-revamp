@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import recessLogo from "../assets/recess-logo";
 import {
   Bell,
   User,
@@ -90,6 +91,11 @@ export const Header = () => {
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   const isWebSite = hostname.includes("web.gophygital.work");
+
+  const isClubSite = hostname === "club.lockated.com";
+  const isPulseSite =
+    hostname === "pulse.lockated.com" ||
+    hostname.includes("pulse-uat.panchshil.com");
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -405,6 +411,18 @@ export const Header = () => {
                 className="w-[130px] h-auto"
                 src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/12954122/original/zycus.jpeg"
                 alt=""
+              />
+            ) : isClubSite ? (
+              <img
+                src={recessLogo}
+                alt="Recess Logo"
+                style={{ height: 60, width: "auto", objectFit: "contain" }}
+              />
+            ) : isPulseSite ? (
+              <img
+                src="https://www.panchshil.com/assets/images/home/logo.png"
+                alt="Pulse Logo"
+                style={{ height: 60, width: "auto", objectFit: "contain" }}
               />
             ) : (
               <svg

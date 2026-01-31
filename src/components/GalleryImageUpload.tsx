@@ -92,14 +92,14 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             setCurrentFile(file);
             setCropperOpen(true);
         };
-        
+
         reader.readAsDataURL(file);
         event.target.value = '';
     };
 
     const handleCropComplete = (result: { base64: string; file: File } | null) => {
         setCropperOpen(false);
-        
+
         if (!result || !selectedRatio) {
             setSelectedRatio(null);
             setCurrentImage('');
@@ -109,7 +109,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
 
         const { base64, file } = result;
         const img = new Image();
-        
+
         img.onload = () => {
             const actualRatio = img.width / img.height;
             const targetRatio = selectedRatio.ratio;
@@ -147,7 +147,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             setCurrentFile(null);
             toast.success(`Image uploaded for ${selectedRatio.label}`);
         };
-        
+
         img.src = base64;
     };
 
