@@ -15,6 +15,8 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 
 // Custom theme for MUI components
@@ -86,6 +88,10 @@ export const EditBookingSetupPage = () => {
 
     const coverImageRef = useRef(null);
     const bookingImageRef = useRef(null);
+    const termsQuillRef = useRef<HTMLDivElement>(null);
+    const termsEditorRef = useRef<Quill | null>(null);
+    const cancellationQuillRef = useRef<HTMLDivElement>(null);
+    const cancellationEditorRef = useRef<Quill | null>(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
     const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
@@ -379,7 +385,7 @@ export const EditBookingSetupPage = () => {
                     facilityDurationCharges: responseData.facility_duration_charges?.map((charge: any) => ({
                         id: charge.facility_duration_charge.id,
                         duration_hours: charge.facility_duration_charge.duration_hours,
-                        price: charge.facility_duration_charge.price,
+                        price: Number(charge.facility_duration_charge.price)?.toFixed(2),
                     })) || [],
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
@@ -553,6 +559,78 @@ export const EditBookingSetupPage = () => {
         fetchInventories();
         fetchFacilityBookingDetails();
     }, [id]);
+
+    // Initialize Quill editors for Terms & Conditions and Cancellation Policy
+    useEffect(() => {
+        // Terms & Conditions editor
+        if (termsQuillRef.current && !termsEditorRef.current) {
+            termsEditorRef.current = new Quill(termsQuillRef.current, {
+                theme: "snow",
+                placeholder: "Enter terms and conditions...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote", "code-block"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link", "image"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            if (formData.termsConditions) {
+                termsEditorRef.current.root.innerHTML = formData.termsConditions;
+            }
+
+            termsEditorRef.current.on("text-change", () => {
+                const html = termsEditorRef.current?.root.innerHTML;
+                const sanitized = html && html !== '<p><br></p>' ? html : "";
+                setFormData((prev) => ({ ...prev, termsConditions: sanitized }));
+            });
+        }
+
+        // Cancellation Policy editor
+        if (cancellationQuillRef.current && !cancellationEditorRef.current) {
+            cancellationEditorRef.current = new Quill(cancellationQuillRef.current, {
+                theme: "snow",
+                placeholder: "Enter cancellation policy...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote", "code-block"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            if (formData.cancellationText) {
+                cancellationEditorRef.current.root.innerHTML = formData.cancellationText;
+            }
+
+            cancellationEditorRef.current.on("text-change", () => {
+                const html = cancellationEditorRef.current?.root.innerHTML;
+                const sanitized = html && html !== '<p><br></p>' ? html : "";
+                setFormData((prev) => ({ ...prev, cancellationText: sanitized }));
+            });
+        }
+    }, []);
+
+    // Sync updates from formData to editors (useful if formData is pre-filled)
+    useEffect(() => {
+        if (termsEditorRef.current && formData.termsConditions !== (termsEditorRef.current.root.innerHTML || "")) {
+            termsEditorRef.current.root.innerHTML = formData.termsConditions || "";
+        }
+    }, [formData.termsConditions]);
+
+    useEffect(() => {
+        if (cancellationEditorRef.current && formData.cancellationText !== (cancellationEditorRef.current.root.innerHTML || "")) {
+            cancellationEditorRef.current.root.innerHTML = formData.cancellationText || "";
+        }
+    }, [formData.cancellationText]);
 
     const handleCoverImageChange = (e) => {
         const file = e.target.files?.[0] || null;
@@ -2623,17 +2701,9 @@ export const EditBookingSetupPage = () => {
                             </div>
 
                             <div>
-                                <Textarea
-                                    placeholder="Enter terms and conditions"
-                                    value={formData.termsConditions}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            termsConditions: e.target.value,
-                                        })
-                                    }
-                                    className="min-h-[100px]"
-                                />
+                                <div className="border rounded">
+                                    <div ref={termsQuillRef} className="min-h-[160px] p-2 bg-white" />
+                                </div>
                             </div>
                         </div>
                         {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -2768,17 +2838,9 @@ export const EditBookingSetupPage = () => {
                             <div className="font-medium text-gray-700">
                                 Cancellation Policy <span>*</span>
                             </div>
-                            <Textarea
-                                placeholder="Enter cancellation text"
-                                value={formData.cancellationText}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        cancellationText: e.target.value,
-                                    })
-                                }
-                                className="min-h-[100px]"
-                            />
+                            <div className="border rounded">
+                                <div ref={cancellationQuillRef} className="min-h-[140px] p-2 bg-white" />
+                            </div>
                         </div>
                     </div>
                     <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>

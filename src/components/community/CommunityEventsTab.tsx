@@ -267,7 +267,11 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
     const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
     const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
     const [isDeletingDocuments, setIsDeletingDocuments] = useState(false);
+    const [isDeletingNotices, setIsDeletingNotices] = useState(false);
+    const [isDeletingEvents, setIsDeletingEvents] = useState(false);
     const [showDeleteDocumentDialog, setShowDeleteDocumentDialog] = useState(false);
+    const [showDeleteNoticeDialog, setShowDeleteNoticeDialog] = useState(false);
+    const [showDeleteEventDialog, setShowDeleteEventDialog] = useState(false);
 
     // Fetch notices from API
     useEffect(() => {
@@ -556,6 +560,106 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
 
     const handleClearDocumentSelection = () => {
         setSelectedDocuments([]);
+    };
+
+    const handleConfirmDeleteNotices = async () => {
+        setIsDeletingNotices(true);
+        const noticeIds = selectedNotices.map((id) => parseInt(id));
+        try {
+            // Update each selected notice by filtering out current communityId from community_ids
+            await Promise.all(
+                noticeIds.map(async (noticeId) => {
+                    try {
+                        // Fetch notice data to get community_ids
+                        const noticeResponse = await axios.get(
+                            `https://${baseUrl}/pms/admin/noticeboards/${noticeId}.json`,
+                            {
+                                headers: {
+                                    "Authorization": `Bearer ${token}`,
+                                    "Content-Type": "application/json"
+                                }
+                            }
+                        );
+
+                        const noticeData = noticeResponse.data;
+                        console.log(noticeData)
+                        const currentCommunityIds = noticeData.community_ids || [];
+
+                        // Filter out current communityId from the array
+                        const filteredCommunityIds = currentCommunityIds.filter(
+                            (cId: string | number) => String(cId) !== String(communityId)
+                        );
+
+                        // Update notice with filtered community_ids via updateBroadcast
+                        return dispatch(
+                            updateBroadcast({
+                                id: String(noticeId),
+                                data: { noticeboard: { community_ids: filteredCommunityIds } },
+                                baseUrl,
+                                token
+                            })
+                        ).unwrap();
+                    } catch (error) {
+                        console.error(`Error processing notice ${noticeId}:`, error);
+                        throw error;
+                    }
+                })
+            );
+
+            // Refresh notices list
+            const response = await axios.get(`https://${baseUrl}/communities/${communityId}/notices.json`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            setNotices(response.data.noticeboards || []);
+
+            toast.success("Notices removed successfully!");
+            setSelectedNotices([]);
+            setShowDeleteNoticeDialog(false);
+        } catch (error) {
+            console.error("Error removing notices:", error);
+            toast.error("Failed to remove notices. Please try again.");
+        } finally {
+            setIsDeletingNotices(false);
+        }
+    };
+
+    const handleClearNoticeSelection = () => {
+        setSelectedNotices([]);
+    };
+
+    const handleConfirmDeleteEvents = async () => {
+        setIsDeletingEvents(true);
+        const eventIds = selectedEvents.map((id) => parseInt(id));
+        try {
+            // Delete each selected event
+            await axios.put(
+                `https://${baseUrl}/communities/${communityId}.json`, { community: { event_ids: eventIds } }, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+
+            // Refresh events list
+            const response = await axios.get(`https://${baseUrl}/communities/${communityId}/events.json`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            setEvents(response.data.classifieds || []);
+
+            toast.success("Events deleted successfully!");
+            setSelectedEvents([]);
+            setShowDeleteEventDialog(false);
+        } catch (error) {
+            console.error("Error deleting events:", error);
+            toast.error("Failed to delete events. Please try again.");
+        } finally {
+            setIsDeletingEvents(false);
+        }
+    };
+
+    const handleClearEventSelection = () => {
+        setSelectedEvents([]);
     };
 
     const renderDocumentActions = (document: Document) => (
@@ -1045,6 +1149,178 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
                                 className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isDeletingDocuments ? "Deleting..." : "Yes"}
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Notice Selection Panel */}
+            {selectedNotices.length > 0 && (
+                <div
+                    className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+                    style={{ top: "50%", left: "35%", width: "563px", height: "105px" }}
+                >
+                    <div className="flex items-center justify-between w-full h-full pr-6">
+                        <div className="flex items-center gap-2">
+                            <div className="text-[#C72030] bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
+                                {selectedNotices.length}
+                            </div>
+                            <div className="flex flex-col justify-center px-3 py-2 flex-1">
+                                <span className="text-[16px] font-semibold text-[#1A1A1A] whitespace-nowrap leading-none">
+                                    Selection
+                                </span>
+                                <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
+                                    {selectedNotices.length === 1
+                                        ? notices.find((notice) => String(notice.id) === selectedNotices[0])?.title || "Notice"
+                                        : selectedNotices.length <= 3
+                                            ? selectedNotices.map((id) => notices.find((notice) => String(notice.id) === id)?.title || "Notice").join(", ")
+                                            : `${selectedNotices.slice(0, 3).map((id) => notices.find((notice) => String(notice.id) === id)?.title || "Notice").join(", ")} and ${selectedNotices.length - 3} more`
+                                    }
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center ml-10">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowDeleteNoticeDialog(true)}
+                                disabled={isDeletingNotices}
+                                className="text-gray-600 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+                            >
+                                {isDeletingNotices ? (
+                                    <Loader2 className="w-6 h-6 mt-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-5 h-5" />
+                                )}
+                                <span className="text-xs font-medium">Delete</span>
+                            </Button>
+
+                            <div className="w-px h-8 bg-gray-300 mr-5"></div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClearNoticeSelection}
+                                className="text-gray-600 hover:bg-gray-100"
+                                style={{ width: "44px", height: "44px" }}
+                            >
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Notice Confirmation Dialog */}
+            <Dialog open={showDeleteNoticeDialog} onOpenChange={(open) => {
+                if (!open) setShowDeleteNoticeDialog(false);
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to delete<br />the selected notice{selectedNotices.length > 1 ? 's' : ''}?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setShowDeleteNoticeDialog(false)}
+                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={handleConfirmDeleteNotices}
+                                disabled={isDeletingNotices}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingNotices ? "Deleting..." : "Yes"}
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Event Selection Panel */}
+            {selectedEvents.length > 0 && (
+                <div
+                    className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+                    style={{ top: "50%", left: "35%", width: "563px", height: "105px" }}
+                >
+                    <div className="flex items-center justify-between w-full h-full pr-6">
+                        <div className="flex items-center gap-2">
+                            <div className="text-[#C72030] bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
+                                {selectedEvents.length}
+                            </div>
+                            <div className="flex flex-col justify-center px-3 py-2 flex-1">
+                                <span className="text-[16px] font-semibold text-[#1A1A1A] whitespace-nowrap leading-none">
+                                    Selection
+                                </span>
+                                <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
+                                    {selectedEvents.length === 1
+                                        ? events.find((event) => String(event.id) === selectedEvents[0])?.title || "Event"
+                                        : selectedEvents.length <= 3
+                                            ? selectedEvents.map((id) => events.find((event) => String(event.id) === id)?.title || "Event").join(", ")
+                                            : `${selectedEvents.slice(0, 3).map((id) => events.find((event) => String(event.id) === id)?.title || "Event").join(", ")} and ${selectedEvents.length - 3} more`
+                                    }
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center ml-10">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowDeleteEventDialog(true)}
+                                disabled={isDeletingEvents}
+                                className="text-gray-600 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+                            >
+                                {isDeletingEvents ? (
+                                    <Loader2 className="w-6 h-6 mt-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-5 h-5" />
+                                )}
+                                <span className="text-xs font-medium">Delete</span>
+                            </Button>
+
+                            <div className="w-px h-8 bg-gray-300 mr-5"></div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClearEventSelection}
+                                className="text-gray-600 hover:bg-gray-100"
+                                style={{ width: "44px", height: "44px" }}
+                            >
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Event Confirmation Dialog */}
+            <Dialog open={showDeleteEventDialog} onOpenChange={(open) => {
+                if (!open) setShowDeleteEventDialog(false);
+            }}>
+                <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
+                    <div className="bg-white pt-12 text-center flex flex-col">
+                        <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
+                            Are you sure you want to delete<br />the selected event{selectedEvents.length > 1 ? 's' : ''}?
+                        </h2>
+                        <div className="flex mt-auto">
+                            <button
+                                onClick={() => setShowDeleteEventDialog(false)}
+                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={handleConfirmDeleteEvents}
+                                disabled={isDeletingEvents}
+                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingEvents ? "Deleting..." : "Yes"}
                             </button>
                         </div>
                     </div>
