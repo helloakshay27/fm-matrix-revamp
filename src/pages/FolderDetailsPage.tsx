@@ -1189,13 +1189,7 @@ export const FolderDetailsPage = () => {
       {/* Main Content */}
       <div className="w-full p-6">
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative folder-details-table">
-          <style>{`
-            .folder-details-table [title="Filter"],
-            .folder-details-table button:has(svg.lucide-filter) {
-              display: none !important;
-            }
-          `}</style>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
           {/* Render View based on mode */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -1299,9 +1293,7 @@ export const FolderDetailsPage = () => {
         onClose={() => setShowActionPanel(false)}
         onAddDocument={() => {
           setShowActionPanel(false);
-          navigate(
-            `/maintenance/documents/add?folderId=${id}&folderName=${encodeURIComponent(folderName)}`
-          );
+          navigate("/maintenance/documents/add");
         }}
         onCreateFolder={() => {
           setShowActionPanel(false);

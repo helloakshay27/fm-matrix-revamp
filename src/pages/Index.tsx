@@ -25,6 +25,7 @@ const Index = () => {
       hostname.includes("pulse.lockated.com") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
+    const isClubSite = hostname.includes("club.lockated.com");
 
     // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
     if (userRole) {
@@ -71,6 +72,8 @@ const Index = () => {
     // PRIORITY 4: Domain-specific fallback routing
     if (isViSite) {
       navigate("/safety/m-safe/internal", { replace: true });
+    } else if (isClubSite) {
+      navigate("/club-management/membership", { replace: true });
     } else if (isPulseSite) {
       navigate("/maintenance/ticket", { replace: true });
     } else {

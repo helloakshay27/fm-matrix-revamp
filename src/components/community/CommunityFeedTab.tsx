@@ -286,31 +286,12 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                     "Authorization": `Bearer ${token}`
                 }
             })
-
-            // Transform posts based on shared_from_type
-            const posts = response.data.posts.map((post: any) => {
-                let transformedPost: any = {
-                    ...post,
-                    type: 'post' // default type
-                };
-
-                // Check if this is a shared event or notice
-                if (post.shared_from_type === 'Event' && post.event) {
-                    transformedPost = {
-                        ...post,
-                        ...transformedEvent(post.event),
-                        type: 'event'
-                    };
-                } else if (post.shared_from_type === 'Noticeboard' && post.notice) {
-                    transformedPost = {
-                        ...post,
-                        ...transformedNotice(post.notice),
-                        type: 'notice'
-                    };
-                }
-
-                return transformedPost;
-            });
+            const posts = response.data.posts.map(post => ({
+                ...post,
+                type: 'post'
+            }))
+            const events = response.data.events.map(transformedEvent)
+            const notices = response.data.notices ? response.data.notices.map(transformedNotice) : []
 
             // Fetch documents
             let documents = [];
@@ -326,7 +307,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                 console.log('Error fetching documents:', docError);
             }
 
-            const combined = [...posts, ...documents].sort(
+            const combined = [...posts, ...events, ...notices, ...documents].sort(
                 (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
 
@@ -337,6 +318,9 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
             setIsLoadingPosts(false);
         }
     }
+
+
+    console.log(posts)
 
     const confirmDelete = async () => {
         if (!deleteConfirmation.id) return;
@@ -903,12 +887,10 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                                     />
                                                 ) : isVideo ? (
                                                     <video
-                                                        // src={attachment.url}
+                                                        src={attachment.url}
                                                         controls
-                                                        className="w-full h-full object-contain"
-                                                    >
-                                                        <source src={attachment.url} type="video/mp4" />
-                                                    </video>
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 ) : null}
 
                                                 {/* Show count overlay for 5+ images */}

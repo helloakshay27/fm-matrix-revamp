@@ -625,7 +625,7 @@ const BookingListDashboard = () => {
         <Eye className="w-4 h-4" />
       </Button>
       {
-        item.facilityType === "Request" && item.bookingStatus === 'Pending' && (
+        item.facilityType === "Request" && (
           <Button
             variant="ghost"
             size="sm"

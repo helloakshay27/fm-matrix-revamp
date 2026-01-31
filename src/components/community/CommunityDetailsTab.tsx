@@ -53,7 +53,7 @@ const memberColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'organization',
+        key: 'organisation',
         label: 'Organisation',
         sortable: true,
         draggable: true

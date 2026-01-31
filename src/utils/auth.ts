@@ -152,13 +152,16 @@ const isViSite =
   hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === 'fm-matrix.lockated.com';
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
 const isPulseSite = hostname === "pulse.lockated.com";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
+
+const isClubSite =
+  hostname.includes("club.lockated.com");
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -214,9 +217,35 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
+  if (isClubSite) {
+    const response = await fetch(
+      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
   if (isPanchshilUatSite) {
     const response = await fetch(
       `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isClubSite) {
+    const response = await fetch(
+      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

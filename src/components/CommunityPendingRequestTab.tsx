@@ -17,11 +17,11 @@ const CommunityPendingRequestTab = ({ communityId }: { communityId: string }) =>
                 </TabsList>
 
                 <TabsContent value="waitingList">
-                    <CommunityWaitingList communityId={communityId} />
+                    <CommunityWaitingList />
                 </TabsContent>
 
                 <TabsContent value="approved">
-                    <CommunityApprovedList communityId={communityId} />
+                    <CommunityApprovedList />
                 </TabsContent>
 
                 <TabsContent value="pending">
