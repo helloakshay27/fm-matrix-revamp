@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 // import { Button } from "./ui/button";
@@ -7,8 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useNavigate } from 'react-router-dom';
 
-const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null }) => {
+const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
@@ -20,35 +21,25 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         maxStockLevel: "",
         costPerUnit: "",
     });
-    const [accountTypes, setAccountTypes] = useState([]);
+    const [parentGroups, setParentGroups] = useState([]);
 
     useEffect(() => {
-        const fetchAccountTypes = async () => {
+        const fetchParentGroups = async () => {
             try {
                 const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setAccountTypes(res.data.data || []);
+                setParentGroups(res.data.data || []);
             } catch (e) {
-                setAccountTypes([]);
+                setParentGroups([]);
             }
         };
-        if (open) fetchAccountTypes();
+        if (open) fetchParentGroups();
     }, [open, baseUrl, token]);
 
-    // Helper to flatten tree for dropdown
-    const flattenGroups = (groups, prefix = '') => {
-        let result = [];
-        for (const group of groups) {
-            result.push({ id: group.id, group_name: prefix + group.group_name });
-            if (group.children && group.children.length > 0) {
-                result = result.concat(flattenGroups(group.children, prefix + group.group_name + ' > '));
-            }
-        }
-        return result;
-    };
+    const navigate = useNavigate();
 
     // Update form data when editingAccessory changes
     React.useEffect(() => {
@@ -94,39 +85,22 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         }));
     };
 
-    const ledgerData = {
-            lock_account_id: 2, // or get from context if dynamic
-            name: formData.accountName || '',
-            lock_account_group_id: formData.accountTypeId || '',
-            ledger_of: null,
-            ledger_of_id: null,
-            account_code: formData.accountCode || '',
-            description: formData.description || '',
-            active: true,
-            watchlist: formData.addToWatchlist || false,
-            is_locked: formData.locked || false
-        };
-        console.log('Submitting ledger data:', ledgerData);
-
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        const ledgerData = {
-            lock_account_id: 2, // or get from context if dynamic
-            name: formData.accountName || '',
-            lock_account_group_id: formData.accountTypeId || '',
-            ledger_of: null,
-            ledger_of_id: null,
-            account_code: formData.accountCode || '',
+        const groupData = {
+            group_name: formData.accountName || '',
+            parent_group_id: formData.parentAccountId || 1,
+            credit_rule: '-',
+            debit_rule: '+',
+            locked: formData.locked || false,
             description: formData.description || '',
-            active: true,
-            watchlist: formData.addToWatchlist || false,
-            is_locked: formData.locked || false
+            active: true
         };
-        console.log('Submitting ledger data:', ledgerData);
+        console.log('Submitting group data:', groupData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/2/lock_account_ledgers.json`,
-                { lock_account_ledger: ledgerData },
+                `https://${baseUrl}/lock_accounts/1/lock_account_groups.json`,
+                { lock_account_group: groupData },
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -134,21 +108,19 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                     },
                 }
             );
-            toast.success('Account created successfully');
+            toast.success('Group created successfully');
             onOpenChange(false); // Only close modal, do not navigate
         } catch (e) {
-            toast.error('Failed to create account');
+            toast.error('Failed to create group');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    
-
     return (
         <Dialog open={open} onClose={onOpenChange} fullWidth>
             <div className="flex items-center justify-between px-6 pt-6">
-                <h5 className="text-lg font-semibold">{editingAccessory ? "Edit Account" : "Create Account"}</h5>
+                <h5 className="text-lg font-semibold">{editingAccessory ? "Edit Group" : "Create Group"}</h5>
                 <Button
                     variant="ghost"
                     size="sm"
@@ -162,35 +134,29 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
             <DialogContent >
                 <form className="space-y-4">
                     <div className="flex gap-8">
-                        <div className="flex-1 space-y-4">
-                            <FormControl fullWidth margin="normal" sx={{ minWidth: 500 }}>
+                        <div className="flex-1 space-y-4" style={{ minWidth: 500 }}>
+                            {/* <FormControl fullWidth margin="normal" sx={{ minWidth: 500 }}>
                                 <InputLabel id="account-type-label" sx={{ color: '#C72030' }}>Account Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
                                     labelId="account-type-label"
                                     label="Account Type*"
-                                    value={formData.accountTypeId || ''}
-                                    onChange={e => setFormData(prev => ({ ...prev, accountTypeId: e.target.value }))}
+                                    value={formData.accountType || ''}
+                                    onChange={e => setFormData(prev => ({ ...prev, accountType: e.target.value }))}
                                     displayEmpty
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 300,
-                                                minWidth: 500,
-                                                maxWidth: 500,
-                                            },
-                                        },
-                                    }}
                                 >
                                     <MenuItem value="" disabled>
                                         Select Account Type
                                     </MenuItem>
-                                    {accountTypes.map(type => (
-                                        <MenuItem key={type.id} value={type.id} >
-                                            {type.group_name}
-                                        </MenuItem>
-                                    ))}
+                                    <MenuItem value="Other Asset">Other Asset</MenuItem>
+                                    <MenuItem value="Other Current Asset">Other Current Asset</MenuItem>
+                                    <MenuItem value="Cash">Cash</MenuItem>
+                                    <MenuItem value="Bank">Bank</MenuItem>
+                                    <MenuItem value="Expense">Expense</MenuItem>
+                                    <MenuItem value="Income">Income</MenuItem>
+                                    <MenuItem value="Liability">Liability</MenuItem>
+                                    <MenuItem value="Equity">Equity</MenuItem>
                                 </Select>
-                            </FormControl>
+                            </FormControl> */}
                             <TextField
                                 fullWidth
                                 margin="normal"
@@ -200,7 +166,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                                 onChange={e => setFormData(prev => ({ ...prev, accountName: e.target.value }))}
                             // required
                             />
-                            {/* <div className="flex items-center gap-2 pb-5">
+                            <div className="flex items-center gap-2 pb-5">
                                 <Checkbox
                                     id="isSubAccount"
                                     checked={formData.isSubAccount || false}
@@ -208,24 +174,34 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                                 />
                                 <label htmlFor="isSubAccount" className="text-sm">Make this a sub-account</label>
                                 <span className="text-xs text-gray-400 ml-1" title="A sub-account is nested under a parent account">?</span>
-                            </div> */}
+                            </div>
                             {formData.isSubAccount && (
-                                <FormControl fullWidth margin="normal">
+                                <FormControl fullWidth margin="normal" sx={{ minWidth: 300, maxWidth: 500 }}>
                                     <InputLabel id="parent-account-label" sx={{ color: '#C72030' }}>Parent Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                     <Select
                                         labelId="parent-account-label"
                                         label="Parent Account*"
-                                        value={formData.parentAccount || ''}
-                                        onChange={e => setFormData(prev => ({ ...prev, parentAccount: e.target.value }))}
+                                        value={formData.parentAccountId || ''}
+                                        onChange={e => setFormData(prev => ({ ...prev, parentAccountId: e.target.value }))}
                                         displayEmpty
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 300,
+                                                    minWidth: 500,
+                                                    maxWidth: 500,
+                                                },
+                                            },
+                                        }}
                                     >
                                         <MenuItem value="" disabled>
                                             Select Parent Account
                                         </MenuItem>
-                                        <MenuItem value="Employee Advance">Employee Advance</MenuItem>
-                                        <MenuItem value="Accounts Receivable">Accounts Receivable</MenuItem>
-                                        <MenuItem value="Bank Fees and Charges">Bank Fees and Charges</MenuItem>
-                                        <MenuItem value="Advertising and Marketing">Advertising and Marketing</MenuItem>
+                                        {parentGroups.map(group => (
+                                            <MenuItem key={group.id} value={group.id} >
+                                                {group.group_name}
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             )}
@@ -291,32 +267,23 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                                 error={(formData.description?.length || 0) > 500}
                             />
 
-                            <div className="flex items-center gap-6">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="addToWatchlist"
-                                        checked={formData.addToWatchlist || false}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, addToWatchlist: !!checked }))}
-                                    />
-                                    <label htmlFor="addToWatchlist" className="text-sm">Add to the watchlist on my dashboard</label>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="locked"
-                                        checked={formData.locked || false}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, locked: !!checked }))}
-                                    />
-                                    <label htmlFor="locked" className="text-sm">Locked</label>
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="addToWatchlist"
+                                    checked={formData.addToWatchlist || false}
+                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, addToWatchlist: !!checked }))}
+                                />
+                                <label htmlFor="addToWatchlist" className="text-sm">Add to the watchlist on my dashboard</label>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Checkbox
-                                    id="allowCostCenter"
-                                    checked={formData.allowCostCenter || false}
-                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowCostCenter: !!checked }))}
+                                    id="locked"
+                                    checked={formData.locked || false}
+                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, locked: !!checked }))}
                                 />
-                                <label htmlFor="allowCostCenter" className="text-sm">Allow Cost Center</label>
+                                <label htmlFor="locked" className="text-sm">Locked</label>
                             </div>
+
                         </div>
                         {/* Info box on the right */}
                         <div className="flex-1 flex items-start justify-end">
@@ -363,4 +330,4 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
     );
 };
 
-export default AddChartofAccountModal;
+export default AddChartofAccountGroupModal;
