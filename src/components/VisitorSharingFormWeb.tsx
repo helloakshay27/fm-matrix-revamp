@@ -136,6 +136,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   );
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [newlyAddedVisitorIds, setNewlyAddedVisitorIds] = useState<Set<number>>(new Set());
   const [visitorErrors, setVisitorErrors] = useState<
     Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>
   >({});
@@ -274,9 +275,9 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.guest_email) setEmail(String(data.guest_email));
         else if (data.email) setEmail(String(data.email));
         if (data.expected_at) {
-          const [d, t, f] = String(data.expected_at).split(" ");
+          const [d, t, a] = String(data.expected_at).split(" ");
           if (d) setExpectedDate(d);
-          if (t) setExpectedTime(t + " " + f);
+          if (t) setExpectedTime(t + " " + a);
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
@@ -759,6 +760,8 @@ const VisitorSharingFormWeb: React.FC = () => {
         vehicleNumber: "",
       },
     ]);
+    // Track this as a newly added visitor
+    setNewlyAddedVisitorIds((prev) => new Set([...prev, nextId]));
   };
 
   const removeVisitor = (id: number) =>
@@ -1317,17 +1320,17 @@ const VisitorSharingFormWeb: React.FC = () => {
           : "";
 
       const primaryVisitor: VisitorPayload = {
-        guest_type: guestType,
-        guest_number: contact,
-        guest_name: name,
-        guest_email: email,
+        // guest_type: guestType,
+        // guest_number: contact,
+        // guest_name: name,
+        // guest_email: email,
         guest_vehicle_number: primaryVehicleNumber,
         guest_vehicle_type: primaryVehicle || undefined,
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
+        // expected_at: expectedIso,
+        // visit_purpose: purpose,
+        // company_name: company,
         visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
+        // persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
         pass_holder: passHolder ? "true" : undefined,
@@ -1358,48 +1361,51 @@ const VisitorSharingFormWeb: React.FC = () => {
           : undefined,
       };
 
-      const additionalVisitors: VisitorPayload[] = visitors.map((vis) => ({
-        name: vis.name,
-        mobile: vis.contact,
-        email: vis.email,
-        vehicle_number: vis.vehicleNumber,
-        vehicle_type: vis.vehicle || undefined,
-        guest_type: "Once",
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
-        visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
-        plus_person: 0,
-        notes: "",
-        pass_holder: undefined,
-        pass_start_date: undefined,
-        pass_end_date: undefined,
-        pass_days: [],
-        assets: (assetsByVisitor[vis.id] || []).map((a) => ({
-          asset_category_name: a.category,
-          asset_name: a.name,
-          serial_model_number: a.serial,
-          notes: a.notes,
-          attachments: (a.attachments || []).map((att) => ({
-            name: att.name,
-            url: att.url,
-            file: (att as { file?: File })?.file,
-          })),
-          documents: (a.attachments || [])
-            .map((att) => att.file)
-            .filter(Boolean),
-        })),
-        identity: identityByVisitor[vis.id]
-          ? {
-            identity_type: identityByVisitor[vis.id].type,
-            government_id_number: identityByVisitor[vis.id].govId,
-            documents: (identityByVisitor[vis.id].documents || [])
-              .map((d) => d.file!)
+      // Only include newly added visitors in the payload (exclude pre-filled ones)
+      const additionalVisitors: VisitorPayload[] = visitors
+        .filter((vis) => newlyAddedVisitorIds.has(vis.id))
+        .map((vis) => ({
+          name: vis.name,
+          mobile: vis.contact,
+          email: vis.email,
+          vehicle_number: vis.vehicleNumber,
+          vehicle_type: vis.vehicle || undefined,
+          guest_type: "Once",
+          expected_at: expectedIso,
+          visit_purpose: purpose,
+          company_name: company,
+          visit_to: location,
+          persont_to_meet: personToMeetName || "Myself",
+          plus_person: 0,
+          notes: "",
+          pass_holder: undefined,
+          pass_start_date: undefined,
+          pass_end_date: undefined,
+          pass_days: [],
+          assets: (assetsByVisitor[vis.id] || []).map((a) => ({
+            asset_category_name: a.category,
+            asset_name: a.name,
+            serial_model_number: a.serial,
+            notes: a.notes,
+            attachments: (a.attachments || []).map((att) => ({
+              name: att.name,
+              url: att.url,
+              file: (att as { file?: File })?.file,
+            })),
+            documents: (a.attachments || [])
+              .map((att) => att.file)
               .filter(Boolean),
-          }
-          : undefined,
-      }));
+          })),
+          identity: identityByVisitor[vis.id]
+            ? {
+              identity_type: identityByVisitor[vis.id].type,
+              government_id_number: identityByVisitor[vis.id].govId,
+              documents: (identityByVisitor[vis.id].documents || [])
+                .map((d) => d.file!)
+                .filter(Boolean),
+            }
+            : undefined,
+        }));
 
       // Debug: inspect state and payload shapes to ensure File objects exist
       // eslint-disable-next-line no-console
