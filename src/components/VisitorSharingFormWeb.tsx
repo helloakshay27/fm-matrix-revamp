@@ -136,6 +136,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   );
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [newlyAddedVisitorIds, setNewlyAddedVisitorIds] = useState<Set<number>>(new Set());
   const [visitorErrors, setVisitorErrors] = useState<
     Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>
   >({});
@@ -274,13 +275,9 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.guest_email) setEmail(String(data.guest_email));
         else if (data.email) setEmail(String(data.email));
         if (data.expected_at) {
-          const [d, t] = String(data.expected_at).split("T");
+          const [d, t, a] = String(data.expected_at).split(" ");
           if (d) setExpectedDate(d);
-          if (t) {
-            // t may contain seconds, milliseconds and timezone like "11:08:00.000+05:30"
-            const m = t.match(/(\d{2}:\d{2})/);
-            setExpectedTime(m ? m[1] : t.replace(/Z$/, ""));
-          }
+          if (t) setExpectedTime(t + " " + a);
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
@@ -525,7 +522,7 @@ const VisitorSharingFormWeb: React.FC = () => {
                 .additional_visitors
             )
               ? (data as unknown as { additional_visitors?: unknown })
-                  .additional_visitors
+                .additional_visitors
               : [];
             (addVisArr as unknown[]).forEach((avUnknown, idx: number) => {
               const id = idx + 1; // matches visitors[] mapping (primary = 0)
@@ -763,6 +760,8 @@ const VisitorSharingFormWeb: React.FC = () => {
         vehicleNumber: "",
       },
     ]);
+    // Track this as a newly added visitor
+    setNewlyAddedVisitorIds((prev) => new Set([...prev, nextId]));
   };
 
   const removeVisitor = (id: number) =>
@@ -912,7 +911,7 @@ const VisitorSharingFormWeb: React.FC = () => {
         });
 
         // missing only if: no type OR (no gov id AND no file)
-  const missing = !hasType || (!hasGov && !hasImage);
+        const missing = !hasType || (!hasGov && !hasImage);
         errs[id] = missing;
         if (missing) hasMissing = true;
       });
@@ -1311,8 +1310,8 @@ const VisitorSharingFormWeb: React.FC = () => {
       // append token using & if baseUrl already contains query params
       const url = token
         ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(
-            token
-          )}`
+          token
+        )}`
         : baseUrl;
 
       const expectedIso =
@@ -1321,17 +1320,17 @@ const VisitorSharingFormWeb: React.FC = () => {
           : "";
 
       const primaryVisitor: VisitorPayload = {
-        guest_type: guestType,
-        guest_number: contact,
-        guest_name: name,
-        guest_email: email,
+        // guest_type: guestType,
+        // guest_number: contact,
+        // guest_name: name,
+        // guest_email: email,
         guest_vehicle_number: primaryVehicleNumber,
         guest_vehicle_type: primaryVehicle || undefined,
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
+        // expected_at: expectedIso,
+        // visit_purpose: purpose,
+        // company_name: company,
         visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
+        // persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
         pass_holder: passHolder ? "true" : undefined,
@@ -1353,57 +1352,60 @@ const VisitorSharingFormWeb: React.FC = () => {
         })),
         identity: identityByVisitor[0]
           ? {
-              identity_type: identityByVisitor[0].type,
-              government_id_number: identityByVisitor[0].govId,
-              documents: (identityByVisitor[0].documents || [])
-                .map((d) => d.file!)
-                .filter(Boolean),
-            }
+            identity_type: identityByVisitor[0].type,
+            government_id_number: identityByVisitor[0].govId,
+            documents: (identityByVisitor[0].documents || [])
+              .map((d) => d.file!)
+              .filter(Boolean),
+          }
           : undefined,
       };
 
-      const additionalVisitors: VisitorPayload[] = visitors.map((vis) => ({
-        name: vis.name,
-        mobile: vis.contact,
-        email: vis.email,
-        vehicle_number: vis.vehicleNumber,
-        vehicle_type: vis.vehicle || undefined,
-        guest_type: "Once",
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
-        visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
-        plus_person: 0,
-        notes: "",
-        pass_holder: undefined,
-        pass_start_date: undefined,
-        pass_end_date: undefined,
-        pass_days: [],
-        assets: (assetsByVisitor[vis.id] || []).map((a) => ({
-          asset_category_name: a.category,
-          asset_name: a.name,
-          serial_model_number: a.serial,
-          notes: a.notes,
-          attachments: (a.attachments || []).map((att) => ({
-            name: att.name,
-            url: att.url,
-            file: (att as { file?: File })?.file,
+      // Only include newly added visitors in the payload (exclude pre-filled ones)
+      const additionalVisitors: VisitorPayload[] = visitors
+        .filter((vis) => newlyAddedVisitorIds.has(vis.id))
+        .map((vis) => ({
+          name: vis.name,
+          mobile: vis.contact,
+          email: vis.email,
+          vehicle_number: vis.vehicleNumber,
+          vehicle_type: vis.vehicle || undefined,
+          guest_type: "Once",
+          expected_at: expectedIso,
+          visit_purpose: purpose,
+          company_name: company,
+          visit_to: location,
+          persont_to_meet: personToMeetName || "Myself",
+          plus_person: 0,
+          notes: "",
+          pass_holder: undefined,
+          pass_start_date: undefined,
+          pass_end_date: undefined,
+          pass_days: [],
+          assets: (assetsByVisitor[vis.id] || []).map((a) => ({
+            asset_category_name: a.category,
+            asset_name: a.name,
+            serial_model_number: a.serial,
+            notes: a.notes,
+            attachments: (a.attachments || []).map((att) => ({
+              name: att.name,
+              url: att.url,
+              file: (att as { file?: File })?.file,
+            })),
+            documents: (a.attachments || [])
+              .map((att) => att.file)
+              .filter(Boolean),
           })),
-          documents: (a.attachments || [])
-            .map((att) => att.file)
-            .filter(Boolean),
-        })),
-        identity: identityByVisitor[vis.id]
-          ? {
+          identity: identityByVisitor[vis.id]
+            ? {
               identity_type: identityByVisitor[vis.id].type,
               government_id_number: identityByVisitor[vis.id].govId,
               documents: (identityByVisitor[vis.id].documents || [])
                 .map((d) => d.file!)
                 .filter(Boolean),
             }
-          : undefined,
-      }));
+            : undefined,
+        }));
 
       // Debug: inspect state and payload shapes to ensure File objects exist
       // eslint-disable-next-line no-console
@@ -1595,13 +1597,12 @@ const VisitorSharingFormWeb: React.FC = () => {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className={`h-2 rounded-full ${
-                    i === step
-                      ? "bg-[#C72030]"
-                      : i < step
-                        ? "bg-[#d9d0bf]"
-                        : "bg-gray-200"
-                  }`}
+                  className={`h-2 rounded-full ${i === step
+                    ? "bg-[#C72030]"
+                    : i < step
+                      ? "bg-[#d9d0bf]"
+                      : "bg-gray-200"
+                    }`}
                 />
               ))}
             </div>
@@ -1920,11 +1921,10 @@ const VisitorSharingFormWeb: React.FC = () => {
                             key={i}
                             type="button"
                             disabled
-                            className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${
-                              selected
-                                ? "bg-[#d8d3c6] border-[#d8d3c6]"
-                                : "bg-gray-100 border-gray-200"
-                            }`}
+                            className={`w-8 h-8 rounded border flex items-center justify-center text-sm ${selected
+                              ? "bg-[#d8d3c6] border-[#d8d3c6]"
+                              : "bg-gray-100 border-gray-200"
+                              }`}
                           >
                             {label}
                           </button>
@@ -2459,13 +2459,13 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </span>
                         </div>
                         {first.notes && (
-                        
+
                           <div className="flex justify-between">
-                          <span className="text-gray-500">Notes:</span>
-                          <span className="text-gray-900 font-medium">
-                            {first.notes || "N/A"}
-                          </span>
-                        </div>
+                            <span className="text-gray-500">Notes:</span>
+                            <span className="text-gray-900 font-medium">
+                              {first.notes || "N/A"}
+                            </span>
+                          </div>
                         )}
                       </>
                     );
@@ -3321,12 +3321,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                                     [v.id]: (s[v.id] || []).map((x) =>
                                       x.id === a.id
                                         ? {
-                                            ...x,
-                                            attachments: [
-                                              ...(x.attachments || []),
-                                              { name: file.name, url, file },
-                                            ],
-                                          }
+                                          ...x,
+                                          attachments: [
+                                            ...(x.attachments || []),
+                                            { name: file.name, url, file },
+                                          ],
+                                        }
                                         : x
                                     ),
                                   }));
