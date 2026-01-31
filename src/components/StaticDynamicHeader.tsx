@@ -3,8 +3,17 @@ import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
-  "Club Management",
-  "Settings"
+  'Transitioning',
+  'Maintenance',
+  'Safety',
+  'Finance',
+  'CRM',
+  'Utility',
+  'Security',
+  'Value Added Services',
+  'Market Place',
+  'Master',
+  'Settings'
 ];
 
 export const StaticDynamicHeader = () => {
@@ -21,7 +30,7 @@ export const StaticDynamicHeader = () => {
       <div className="flex items-center h-full px-4 overflow-x-auto">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
-          <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start gap-10 whitespace-nowrap">
+          <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
             {packages.map((packageName) => (
               <button
                 key={packageName}

@@ -79,7 +79,6 @@ import {
   Circle,
 } from "lucide-react";
 import { template } from "lodash";
-import { subISOWeekYears } from "date-fns";
 
 const navigationStructure = {
   Settings: {
@@ -306,8 +305,159 @@ const navigationStructure = {
 
 const modulesByPackage = {
   Master: [
-    // ...existing code above...
-    // Template menu removed from here
+    {
+      name: "Location Master",
+      icon: MapPin,
+      href: "/master/location",
+      subItems: [
+        {
+          name: "Account",
+          href: "/master/location/account",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Building",
+          href: "/master/location/building",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Wing",
+          href: "/master/location/wing",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Area",
+          href: "/master/location/area",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Floor",
+          href: "/master/location/floor",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Unit",
+          href: "/master/location/unit",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Room",
+          href: "/master/location/room",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "User Master",
+      icon: Users,
+      href: "/master/user",
+      subItems: [
+        {
+          name: "Admin Users",
+          href: "/master/user/fm-users",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Occupant Users",
+          href: "/master/user/occupant-users",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Checklist Master",
+      icon: CheckSquare,
+      href: "/master/checklist",
+    },
+    {
+      name: "Question Bank",
+      icon: FileSpreadsheet,
+      href: "/master/survey/list",
+    },
+    {
+      name: "Address Master",
+      icon: MapPin,
+      href: "/master/address",
+    },
+    {
+      name: "Unit Master (By Default)",
+      icon: Package,
+      href: "/master/unit-default",
+    },
+    {
+      name: "Material Master -> EBom",
+      icon: FileText,
+      href: "/master/material-ebom",
+    },
+    {
+      name: 'Finance Master',
+      icon: Wallet,
+      href: '/master/finance'
+    },
+    {
+      name: "Gate Number",
+      icon: DoorOpen,
+      href: "/master/gate-number",
+    },
+    {
+      name: "Gate Pass Type",
+      icon: Ticket,
+      href: "/master/gate-pass-type",
+    },
+    {
+      name: "Inventory Type",
+      icon: Package,
+      href: "/master/inventory-type",
+    },
+    {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Document",
+      icon: FileText,
+      href: "/master/document",
+      subItems: [
+        {
+          name: "Category",
+          href: "/master/document-category",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
     // {
     //   name: 'Inventory Sub Type',
     //   icon: PackagePlus,
@@ -482,6 +632,7 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
+
     // {
     //   name: "Msafe Report",
     //   icon: Download,
@@ -514,6 +665,9 @@ const modulesByPackage = {
       ],
     },
 
+
+
+
     {
       name: "M-Safe",
       icon: User,
@@ -540,20 +694,12 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Report",
+      name: 'Report',
       icon: Download,
-      href: "/safety/report",
+      href: '/safety/report',
       subItems: [
-        {
-          name: "Msafe User Report",
-          icon: Download,
-          href: "/safety/report/msafe-report",
-        },
-        {
-          name: "Msafe Detail Report",
-          icon: Download,
-          href: "/safety/report/msafe-detail-report",
-        },
+        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
+        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
       ],
     },
     // {
@@ -946,75 +1092,134 @@ const modulesByPackage = {
   ],
   Settings: [
     {
-      name: "Amenities Setup",
-      icon: Calculator,
-      href: "/settings/vas/booking-club/setup",
-    },
-    {
-      name: "Membership Plan Setup",
-      icon: Calculator,
-      href: "/settings/vas/membership-plan/setup",
-    },
-    {
-      name: "Accessories Setup",
-      icon: Calculator,
-      href: "/settings/accessories",
-    },
-    {
-      name: "Payment Plan Setup",
-      icon: Calculator,
-      href: "/settings/payment-plan/setup",
-    },
-    {
-      name: "Templates",
-      icon: FileSpreadsheet,
-      href: "/master/communication-template",
+      name: "Account",
+      icon: Users,
+      href: "/settings/account",
       subItems: [
+        { name: "General", href: "/settings/account/general" },
         {
-          name: "Communication Template",
-          href: "/master/communication-template",
-          color: "text-[#1a1a1a]",
+          name: "Holiday Calendar",
+          href: "/settings/account/holiday-calendar",
         },
+        { name: "About", href: "/settings/account/about" },
+        { name: "Language", href: "/settings/account/language" },
         {
-          name: "Root Cause Analysis",
-          href: "/master/template/root-cause-analysis",
-          color: "text-[#1a1a1a]",
+          name: "Company Logo Upload",
+          href: "/settings/account/company-logo-upload",
         },
+        { name: "Report Setup", href: "/settings/account/report-setup" },
         {
-          name: "Preventive Action",
-          href: "/master/template/preventive-action",
-          color: "text-[#1a1a1a]",
+          name: "Notification Setup",
+          href: "/settings/account/notification-setup",
         },
+        { name: "Shift", href: "/settings/account/shift" },
+        { name: "Roster", href: "/settings/account/roster" },
+        { name: "Lock Module", href: "/settings/account/lock-module" },
+        { name: "Lock Function", href: "/settings/account/lock-function" },
         {
-          name: "Short-term Impact",
-          href: "/master/template/short-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Long-term Impact",
-          href: "/master/template/long-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Corrective Action",
-          href: "/master/template/corrective-action",
-          color: "text-[#1a1a1a]",
+          name: "Lock Sub Function",
+          href: "/settings/account/lock-sub-function",
         },
       ],
     },
-
     {
-      name: "Ticket Management",
-      icon: FileText,
+      name: "Roles (RACI)",
+      icon: UserCheck,
+      href: "/settings/roles",
       subItems: [
-        { name: "Setup", href: "/settings/ticket-management/setup" },
+        { name: "Department", href: "/settings/roles/department" },
+        { name: "Role", href: "/settings/roles/role" },
+        { name: "Approval Matrix", href: "/settings/approval-matrix/setup" },
+      ],
+    },
+    {
+      name: "Maintenance",
+      icon: Wrench,
+      href: "/settings/maintenance",
+      subItems: [
         {
-          name: "Escalation Matrix",
-          href: "/settings/ticket-management/escalation-matrix",
+          name: "Asset Setup",
+          href: "/settings/asset-setup/approval-matrix",
+          subItems: [
+            {
+              name: "Approval Matrix",
+              href: "/settings/asset-setup/approval-matrix",
+            },
+            {
+              name: "Asset Group & Sub Group",
+              href: "/settings/asset-setup/asset-groups",
+            },
+          ],
         },
         {
-          name: "Cost Approval",
-          href: "/settings/ticket-management/cost-approval",
+          name: "Checklist Setup",
+          href: "/settings/checklist-setup",
+          subItems: [
+            {
+              name: "Checklist Group & Sub Group",
+              href: "/settings/checklist-setup/groups",
+            },
+            {
+              name: "Email Rule",
+              href: "/settings/checklist-setup/email-rule",
+            },
+            {
+              name: "Task Escalation",
+              href: "/settings/checklist-setup/task-escalation",
+            },
+          ],
+        },
+        {
+          name: "Ticket Management",
+          href: "/settings/ticket-management",
+          subItems: [
+            { name: "Setup", href: "/settings/ticket-management/setup" },
+            {
+              name: "Escalation Matrix",
+              href: "/settings/ticket-management/escalation-matrix",
+            },
+            {
+              name: "Cost Approval",
+              href: "/settings/ticket-management/cost-approval",
+            },
+          ],
+        },
+        {
+          name: "Inventory Management",
+          href: "/settings/inventory-management",
+          subItems: [
+            {
+              name: "SAC/HSN Code",
+              href: "/settings/inventory-management/sac-hsn-code",
+            },
+            {
+              name: "Inventory Type",
+              href: "/settings/inventory-management/inventory-type",
+            },
+          ],
+        },
+        {
+          name: "Safety",
+          href: "/settings/safety",
+          subItems: [
+            { name: "Permit Setup", href: "/settings/safety/permit-setup" },
+            { name: "Incident Setup", href: "/settings/safety/incident" },
+          ],
+        },
+        {
+          name: "Waste Management",
+          href: "/settings/waste-management",
+          subItems: [
+            { name: "Setup", href: "/settings/waste-management/setup" },
+          ],
+        },
+
+        {
+          name: "Design Insight Setup",
+          icon: Target,
+          subItems: [
+            { name: "Setup", href: "/settings/design-insights/setup" },
+          ],
         },
       ],
     },
@@ -1179,52 +1384,23 @@ const modulesByPackage = {
       ]
     },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
+    // {
+    //   name: 'Currency',
+    //   icon: Currency,
+    //   href: '/settings/currency',
+    // }
 
     {
-      name: "Accountants",
-      icon: Users,
+      name: "Common Modules",
+      icon: IndianRupee,
       subItems: [
-        { name: "Manual Journals ", href: "/settings/manual-journal" },
-        { name: "Transactions ", href: "/settings/transactions" },
-        // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-        { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-        { name: "Opening Balance", href: "/settings/opening-balance" },
-        { name: "Budget", href: "/settings/budget" },
-        { name: "Tax Setup ", href: "/settings/tax-setup" },
-      ],
+        { name: "Currency", href: "/settings/currency" },
+      ]
     },
-
     {
-      name: "Configuration",
-      icon: Settings,
-      subItems: [
-        { name: "Charges ", href: "/settings/charge-setup" },
-        { name: "Bill Cycles ", href: "/settings/bill-cycles" },
-      ],
-    },
-
-    {
-      name: "Reports",
-      icon: FileText,
-      subItems: [
-        { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
-        {
-          name: "Profit & Loss",
-          href: "/settings/reports/profit-and-loss",
-        },
-        {
-          name: "GST Payable",
-          href: "/settings/reports/gst-payable",
-        },
-        {
-          name: "GST Receivable",
-          href: "/settings/reports/gst-receivable",
-        },
-        {
-          name: "Tax Summary",
-          href: "/settings/reports/tax-summary",
-        },
-      ],
+      icon: Circle,
+      name: "Circle",
+      href: "/safety/m-safe/circle",
     },
   ],
 };
@@ -1272,7 +1448,7 @@ export const StacticSidebar = () => {
     setExpandedItems((prev) =>
       prev.includes(itemName)
         ? prev.filter((name) => name !== itemName)
-        : [...prev, itemName],
+        : [...prev, itemName]
     );
   };
 
@@ -1292,18 +1468,6 @@ export const StacticSidebar = () => {
 
   React.useEffect(() => {
     const path = location.pathname;
-    const templatePaths = [
-      "/master/communication-template",
-      "/master/template/root-cause-analysis",
-      "/master/template/preventive-action",
-      "/master/template/short-term-impact",
-      "/master/template/long-term-impact",
-      "/master/template/corrective-action",
-    ];
-    if (templatePaths.some((t) => path.startsWith(t))) {
-      setCurrentSection("Settings");
-      return;
-    }
     if (path.startsWith("/settings")) {
       setCurrentSection("Settings");
     } else if (path.startsWith("/utility")) {
@@ -1326,25 +1490,8 @@ export const StacticSidebar = () => {
       setCurrentSection("Market Place");
     } else if (path.startsWith("/master")) {
       setCurrentSection("Master");
-    } else if (path.startsWith("/club-management")) {
-      setCurrentSection("Club Management");
-    } else if (path.startsWith("/setup")) {
-      setCurrentSection("Setup");
     }
   }, [location.pathname, setCurrentSection]);
-
-  // Template paths for route detection
-  const templatePaths = [
-    "/master/communication-template",
-    "/master/template/root-cause-analysis",
-    "/master/template/preventive-action",
-    "/master/template/short-term-impact",
-    "/master/template/long-term-impact",
-    "/master/template/corrective-action",
-  ];
-  const isOnTemplateRoute = templatePaths.some((t) =>
-    location.pathname.startsWith(t),
-  );
 
   // Helper function to recursively filter out asset-related items
   const filterAssetItems = (items: any[]): any[] => {
@@ -1376,12 +1523,7 @@ export const StacticSidebar = () => {
       });
   };
 
-  // Determine modules based on template route or current section
-  let currentModules = isOnTemplateRoute
-    ? modulesByPackage["Settings"] || []
-    : modulesByPackage[currentSection] || [];
-
-  // Apply asset restrictions if needed
+  let currentModules = modulesByPackage[currentSection] || [];
   if (assetRestricted) {
     currentModules = filterAssetItems(currentModules);
   }
@@ -1390,7 +1532,7 @@ export const StacticSidebar = () => {
     const currentPath = location.pathname;
     const exactMatch = currentPath === href;
     const prefixMatch = currentPath.startsWith(href + "/");
-    const isActive = mode === "prefix" ? exactMatch || prefixMatch : exactMatch;
+    const isActive = mode === "prefix" ? (exactMatch || prefixMatch) : exactMatch;
 
     // Debug logging for Services
     if (href === "/maintenance/service") {
@@ -1411,22 +1553,11 @@ export const StacticSidebar = () => {
   React.useEffect(() => {
     // Determine which items to expand based on current route
     const path = location.pathname;
-    const currentSectionItems = modulesByPackage[currentSection] || [];
+    const currentSectionItems = modulesByPackage[currentSection];
     const itemsToExpand = [];
 
-    // Always keep Templates expanded if on a Template route
-    const templatesMenuName = "Templates";
-    const templatePaths = [
-      "/master/communication-template",
-      "/master/template/root-cause-analysis",
-      "/master/template/preventive-action",
-      "/master/template/short-term-impact",
-      "/master/template/long-term-impact",
-      "/master/template/corrective-action",
-    ];
-    const isTemplatePath = templatePaths.some((t) => path.startsWith(t));
-
     if (currentSectionItems) {
+      // Find the active item and its parent
       currentSectionItems.forEach((item) => {
         if (item.href && path.startsWith(item.href)) {
           itemsToExpand.push(item.name);
@@ -1446,22 +1577,21 @@ export const StacticSidebar = () => {
                 });
               }
             } else if ((subItem as any).subItems) {
+              // Check nested items for parking management and other nested structures
               (subItem as any).subItems.forEach((nestedItem: any) => {
                 if (nestedItem.href && path.startsWith(nestedItem.href)) {
-                  itemsToExpand.push(item.name);
-                  itemsToExpand.push(subItem.name);
+                  itemsToExpand.push(item.name); // Add top parent (Value Added Services)
+                  itemsToExpand.push(subItem.name); // Add middle parent (Parking Management)
                 }
               });
             }
           });
         }
       });
-      // If on a Template route, always keep Templates expanded
-      if (isTemplatePath && !itemsToExpand.includes(templatesMenuName)) {
-        itemsToExpand.push(templatesMenuName);
-      }
+
+      // Update expanded items state with only the active path
+      setExpandedItems(itemsToExpand);
     }
-    setExpandedItems(itemsToExpand);
   }, [currentSection, location.pathname]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
@@ -1508,10 +1638,9 @@ export const StacticSidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {subItem.href &&
-                          isActiveRoute(subItem.href, "exact") && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                          )}
+                        {subItem.href && isActiveRoute(subItem.href, "exact") && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                        )}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? (
                           <ChevronDown className="w-4 h-4" />
@@ -1559,37 +1688,14 @@ export const StacticSidebar = () => {
       );
     }
 
-    // External link handling
-    if (item.blank && item.href) {
-      return (
-        <div key={item.name}>
-          <a
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}`}
-          >
-            {level === 0 && (
-              <>
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                )}
-                <item.icon className="w-5 h-5" />
-              </>
-            )}
-            {item.name}
-          </a>
-        </div>
-      );
-    }
-
     return (
       <div key={item.name}>
         <button
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+            }`}
         >
           {level === 0 && (
             <>
@@ -1601,6 +1707,7 @@ export const StacticSidebar = () => {
           )}
           {item.name}
         </button>
+
         {/* Show dropdowns for Roles (RACI) when on that page */}
         {showDropdowns && (
           <div className="mt-4 space-y-3 px-3">
@@ -1723,24 +1830,16 @@ export const StacticSidebar = () => {
         {/* Add background and border below the collapse button */}
         <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
-        {/* Show 'Settings' as section label for template routes, otherwise use currentSection */}
-        {!isSidebarCollapsed &&
-          (isOnTemplateRoute
-            ? location.pathname &&
-            templatePaths.some((t) => location.pathname.startsWith(t))
-            : currentSection) && (
-            <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
-              <h3
-                className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
-              >
-                {isOnTemplateRoute &&
-                  location.pathname &&
-                  templatePaths.some((t) => location.pathname.startsWith(t))
-                  ? "Settings"
-                  : currentSection}
-              </h3>
-            </div>
-          )}
+        {currentSection && (
+          <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
+            <h3
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
+                }`}
+            >
+              {isSidebarCollapsed ? "" : currentSection}
+            </h3>
+          </div>
+        )}
 
         <nav className="space-y-2">
           {currentSection === "Settings" ? (

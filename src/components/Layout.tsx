@@ -95,6 +95,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Get current domain for backward compatibility
   const isOmanSite = hostname.includes("oig.gophygital.work");
 
+  const isFMSite = hostname === "fm-matrix.lockated.com" || hostname === "web.gophygital.work" || hostname === "lockated.gophygital.work" || hostname === "localhost";
+
   const isLockatedSite =
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("localhost:5174");
@@ -237,6 +239,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ActionHeader />;
     }
 
+    if (isFMSite) {
+      return <StaticDynamicHeader />
+    }
+
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
@@ -262,6 +268,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
     }
+
+
 
     // Use company ID-based layout
     switch (layoutConfig.headerComponent) {
