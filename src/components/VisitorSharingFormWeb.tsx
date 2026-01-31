@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 
 type Visitor = {
   id: number;
+  apiId?: number; // Actual ID from API response for delete operations
   contact?: string;
   name?: string;
   email?: string;
@@ -504,6 +505,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               }
               return {
                 id: idx + 1,
+                apiId: (av as Record<string, unknown>)?.id as number | undefined,
                 contact: av.mobile || av.guest_number || "",
                 name: av.name || av.guest_name || "",
                 email: av.email || av.guest_email || "",
@@ -514,6 +516,8 @@ const VisitorSharingFormWeb: React.FC = () => {
             }
           );
           setVisitors(mapped);
+          // Clear newly added visitors set since we're loading pre-filled ones
+          setNewlyAddedVisitorIds(new Set());
           // Map identity for additional visitors (so Step 4 shows gov id and photos)
           try {
             const identitiesMap: Record<number, IdentityState> = {};
@@ -764,8 +768,59 @@ const VisitorSharingFormWeb: React.FC = () => {
     setNewlyAddedVisitorIds((prev) => new Set([...prev, nextId]));
   };
 
-  const removeVisitor = (id: number) =>
-    setVisitors((v) => v.filter((x) => x.id !== id));
+  const removeVisitor = async (id: number) => {
+    // If it's a newly added visitor, just remove from state without API call
+    if (newlyAddedVisitorIds.has(id)) {
+      setVisitors((v) => v.filter((x) => x.id !== id));
+      setNewlyAddedVisitorIds((prev) => {
+        const updated = new Set(prev);
+        updated.delete(id);
+        return updated;
+      });
+      return;
+    }
+
+    // For pre-filled visitors, call the delete API
+    if (!urlToken || !urlVisitorId) {
+      showToast("Missing token or visitor ID");
+      return;
+    }
+
+    // Find the visitor to get the API ID
+    const visitor = visitors.find((v) => v.id === id);
+    if (!visitor || !visitor.apiId) {
+      showToast("Unable to delete visitor - API ID not found");
+      return;
+    }
+
+    try {
+      const apiUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitor.apiId}/delete_additional_visitor.json?token=${encodeURIComponent(
+        urlToken
+      )}`;
+
+      const response = await fetch(apiUrl, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete visitor: ${response.statusText}`);
+      }
+
+      // Remove from state after successful API call
+      setVisitors((v) => v.filter((x) => x.id !== id));
+      showToast("Visitor deleted successfully");
+    } catch (error) {
+      console.error("Error deleting visitor:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete visitor"
+      );
+    }
+  };
 
   const updateVisitor = (id: number, patch: Partial<Visitor>) =>
     setVisitors((v) => v.map((x) => (x.id === id ? { ...x, ...patch } : x)));
@@ -2736,11 +2791,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Contact Number <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.contact}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { contact: e.target.value })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.contact ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.contact ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter number"
                       />
                       {visitorErrors[visitor.id]?.contact && (
@@ -2755,11 +2811,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Name <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.name}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { name: e.target.value })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.name ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.name ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter full name"
                       />
                       {visitorErrors[visitor.id]?.name && (
@@ -2772,11 +2829,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <div>
                       <div className="text-xs text-gray-600">Mail</div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.email}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { email: e.target.value })
                         }
-                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                        className={`mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""}`}
                         placeholder="Enter mail id"
                       />
                     </div>
@@ -2787,11 +2845,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <button
+                          disabled={!newlyAddedVisitorIds.has(visitor.id)}
                           type="button"
                           onClick={() =>
                             updateVisitor(visitor.id, { vehicle: "car" })
                           }
-                          className={`py-3 rounded border ${visitor.vehicle === "car" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
+                          className={`py-3 rounded border ${!newlyAddedVisitorIds.has(visitor.id) ? "opacity-50 cursor-not-allowed" : ""} ${visitor.vehicle === "car" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
                         >
                           <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                             <svg
@@ -2834,11 +2893,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </div>
                         </button>
                         <button
+                          disabled={!newlyAddedVisitorIds.has(visitor.id)}
                           type="button"
                           onClick={() =>
                             updateVisitor(visitor.id, { vehicle: "bike" })
                           }
-                          className={`py-3 rounded border ${visitor.vehicle === "bike" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
+                          className={`py-3 rounded border ${!newlyAddedVisitorIds.has(visitor.id) ? "opacity-50 cursor-not-allowed" : ""} ${visitor.vehicle === "bike" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
                         >
                           <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                             <svg
@@ -2888,13 +2948,14 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Vehicle Number <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.vehicleNumber}
                         onChange={(e) =>
                           updateVisitor(visitor.id, {
                             vehicleNumber: e.target.value,
                           })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.vehicleNumber ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.vehicleNumber ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter Vehicle Registration No."
                       />
                       {visitorErrors[visitor.id]?.vehicleNumber && (
