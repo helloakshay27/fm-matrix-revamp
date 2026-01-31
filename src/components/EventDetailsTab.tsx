@@ -108,12 +108,12 @@ export const EventDetailsTab = () => {
             {/* Top Header */}
             <div className="flex items-center justify-end gap-4 mb-6">
                 <div className="flex gap-2">
-                    <Button
+                    {/* <Button
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-2 hover:bg-transparent"
                     >
                         <QrCode size={18} />
                         View QR
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outline"
                         onClick={() => navigate(`/pulse/events/edit/${id}`)}
