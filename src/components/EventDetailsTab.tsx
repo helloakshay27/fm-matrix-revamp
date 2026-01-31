@@ -108,12 +108,12 @@ export const EventDetailsTab = () => {
             {/* Top Header */}
             <div className="flex items-center justify-end gap-4 mb-6">
                 <div className="flex gap-2">
-                    <Button
+                    {/* <Button
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-2 hover:bg-transparent"
                     >
                         <QrCode size={18} />
                         View QR
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outline"
                         onClick={() => navigate(`/pulse/events/edit/${id}`)}
@@ -142,7 +142,7 @@ export const EventDetailsTab = () => {
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-500">Seat's Remaining</span>
                                 <span className="text-sm font-medium text-gray-900">
-                                    {eventData.remaining_seats ?? 0}/{eventData.capacity ?? 0}
+                                    {eventData.total_registed_count ?? 0}/{eventData.capacity ?? 0}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
