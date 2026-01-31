@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import recessLogo from "../assets/recess-logo";
 import {
   Bell,
   User,
@@ -91,6 +92,8 @@ export const Header = () => {
 
   const isWebSite = hostname.includes("web.gophygital.work");
 
+  const isClubSite = hostname === "club.lockated.com";
+
   const isLocalhost =
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
@@ -182,7 +185,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -405,6 +408,12 @@ export const Header = () => {
                 className="w-[130px] h-auto"
                 src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/12954122/original/zycus.jpeg"
                 alt=""
+              />
+            ) : isClubSite ? (
+              <img
+                src={recessLogo}
+                alt="Recess Logo"
+                style={{ height: 60, width: "auto", objectFit: "contain" }}
               />
             ) : (
               <svg
@@ -691,17 +700,15 @@ export const Header = () => {
                             );
                           }
                         }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -787,7 +794,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
@@ -889,7 +896,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
-    </header>
+      </div >
+    </header >
   );
 };

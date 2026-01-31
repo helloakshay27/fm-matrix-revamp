@@ -51,3 +51,4 @@ release
 *.cache
 .cache
 clear-cache.js
+bun.lock
