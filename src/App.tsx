@@ -925,6 +925,8 @@ import TasksMobileView from "./pages/TasksMobileView";
 import IssueDetailsMobile from "./pages/IssueDetailsMobile";
 import AddIssueMobileView from "./pages/AddIssueMobileView";
 import IssuesMobileView from "./pages/IssuesMobileView";
+import AccessoriesSetup from "./pages/AccessoriesSetup";
+import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -4155,6 +4157,14 @@ function App() {
                     <Route
                       path="/settings/vas/booking/category-setup"
                       element={<AmenityCategorySetup />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/accessories-setup"
+                      element={<AccessoriesSetup />}
+                    />
+                    <Route
+                      path="/settings/accessories/:id"
+                      element={<AccessoriesDetailsPage />}
                     />
                     <Route
                       path="/settings/vas/booking/setup/add"
