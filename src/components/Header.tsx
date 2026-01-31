@@ -93,6 +93,9 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work");
 
   const isClubSite = hostname === "club.lockated.com";
+  const isPulseSite =
+    hostname === "pulse.lockated.com" ||
+    hostname.includes("pulse-uat.panchshil.com");
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -185,7 +188,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -413,6 +416,12 @@ export const Header = () => {
               <img
                 src={recessLogo}
                 alt="Recess Logo"
+                style={{ height: 60, width: "auto", objectFit: "contain" }}
+              />
+            ) : isPulseSite ? (
+              <img
+                src="https://www.panchshil.com/assets/images/home/logo.png"
+                alt="Pulse Logo"
                 style={{ height: 60, width: "auto", objectFit: "contain" }}
               />
             ) : (
@@ -700,15 +709,17 @@ export const Header = () => {
                             );
                           }
                         }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -794,7 +805,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
@@ -896,7 +907,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div >
-    </header >
+      </div>
+    </header>
   );
 };
