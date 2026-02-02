@@ -181,10 +181,10 @@ const Communtiy = () => {
         <>
             {!isSelectionMode && (
                 <Button
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white !px-6"
                     onClick={() => navigate("/pulse/community/add")}
                 >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     Add
                 </Button>
             )}

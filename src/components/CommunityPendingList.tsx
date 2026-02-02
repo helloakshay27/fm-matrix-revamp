@@ -138,7 +138,7 @@ const CommunityPendingList = ({ communityId }: { communityId: string }) => {
     const renderCell = (item: any, columnKey: string) => {
         if (columnKey === 'action') {
             return (
-                <Button variant="ghost" size="sm" onClick={() => navigate(`users/${item.id}`)}>
+                <Button variant="ghost" size="sm" onClick={() => navigate(`user/${item.id}`)}>
                     <Eye className="w-4 h-4" />
                 </Button>
             );

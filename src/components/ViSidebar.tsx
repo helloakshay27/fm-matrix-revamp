@@ -1,13 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User } from 'lucide-react';
 
-
-
+interface ModuleItem {
+    name: string;
+    icon?: any;
+    href?: string;
+    subItems?: ModuleItem[];
+    color?: string;
+}
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
-const modulesByPackage = {
+const modulesByPackage: Record<string, ModuleItem[]> = {
+    Maintainance: [
+        { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
+    ],
+    "Value Added Services": [
+        {
+            name: "Booking",
+            icon: Calendar,
+            href: "/vas/booking/list",
+        },
+        {
+            name: "Vi Miles",
+            icon: User,
+            href: "/safety/vi-miles",
+            subItems: [
+                {
+                    name: "Vehicle Details",
+                    href: "/safety/vi-miles/vehicle-details",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Vehicle Check In",
+                    href: "/safety/vi-miles/vehicle-check-in",
+                    color: "text-[#1a1a1a]",
+                },
+            ],
+        },
+    ],
+    Security: [
+        { name: "Visitor", icon: Users, href: "/security/visitor" },
+    ],
     Safety: [
         {
             name: 'M-Safe',
@@ -41,8 +76,8 @@ const modulesByPackage = {
         //         { name: 'Vehicle Check In', href: '/safety/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
         //     ],
         // },
-        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/safety/check-hierarchy-levels' },   
-        { name: 'Employee Deletion History', icon: Trash, href: '/safety/employee-deletion-history' },          
+        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/safety/check-hierarchy-levels' },
+        { name: 'Employee Deletion History', icon: Trash, href: '/safety/employee-deletion-history' },
         // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
@@ -84,7 +119,8 @@ const ViSidebar: React.FC = () => {
         if (isSidebarCollapsed) setExpandedItems([]);
     }, [isSidebarCollapsed]);
 
-    const currentModules = modulesByPackage['Safety'];
+    // Get modules based on current section
+    const currentModules = modulesByPackage[currentSection as keyof typeof modulesByPackage] || modulesByPackage['Safety'];
 
     const toggleExpanded = (name: string) =>
         setExpandedItems((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
@@ -192,7 +228,7 @@ const ViSidebar: React.FC = () => {
                         className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'
                             }`}
                     >
-                        {isSidebarCollapsed ? '' : 'Maintenance'}
+                        {isSidebarCollapsed ? '' : currentSection}
                     </h3>
                 </div>
 

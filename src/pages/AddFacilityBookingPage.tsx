@@ -1466,7 +1466,7 @@ export const AddFacilityBookingPage = () => {
             <div className="space-y-4">
               {
                 selectedFacility && typeof selectedFacility === 'object'
-                  ? selectedFacility.cancellation_policy || 'No cancellation policy available'
+                  ? <div dangerouslySetInnerHTML={{ __html: selectedFacility.terms || "<p className='text-gray-500'>No cancellation policy provided</p>" }} />
                   : 'No cancellation policy available'
               }
             </div>
@@ -1493,7 +1493,7 @@ export const AddFacilityBookingPage = () => {
             <div className="space-y-4">
               {
                 selectedFacility && typeof selectedFacility === 'object'
-                  ? selectedFacility.terms || 'No terms and conditions available'
+                  ? <div dangerouslySetInnerHTML={{ __html: selectedFacility.terms || "<p className='text-gray-500'>No terms and conditions provided</p>" }} />
                   : 'No terms and conditions available'
               }
             </div>
