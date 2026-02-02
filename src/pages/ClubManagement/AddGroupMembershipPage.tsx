@@ -233,7 +233,7 @@ export const AddGroupMembershipPage = () => {
     const [members, setMembers] = useState<MemberData[]>(() => {
         const initialMember: MemberData = {
             id: '1',
-            userSelectionMode: 'select',
+            userSelectionMode: 'manual',
             selectedUser: '',
             selectedUserId: null,
             formData: {
@@ -977,8 +977,12 @@ export const AddGroupMembershipPage = () => {
             }
 
             if (member.userSelectionMode === 'manual') {
-                if (!member.formData.firstName || !member.formData.lastName) {
-                    toast.error(`${memberLabel}: Please enter first name and last name`);
+                if (!member.formData.firstName 
+                    // || 
+                    // !member.formData.lastName
+                ) 
+                    {
+                    toast.error(`${memberLabel}: Please enter first name `);
                     return;
                 }
                 if (!member.formData.email) {
@@ -1686,11 +1690,11 @@ export const AddGroupMembershipPage = () => {
                                                         });
                                                     }}
                                                 >
-                                                    <FormControlLabel
+                                                    {/* <FormControlLabel
                                                         value="select"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
                                                         label="Select User"
-                                                    />
+                                                    /> */}
                                                     <FormControlLabel
                                                         value="manual"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
@@ -1767,16 +1771,17 @@ export const AddGroupMembershipPage = () => {
                                                             helperText={member.formData.firstName !== '' && !validateName(member.formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
                                                         />
                                                         <TextField
-                                                            label="Last Name *"
+                                                            label="Last Name "
                                                             value={member.formData.lastName}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
                                                                 // Only allow alphabets and spaces
                                                                 if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
                                                                     updateMember(member.id, { formData: { ...member.formData, lastName: value } });
-                                                                } else {
-                                                                    toast.error('Last name should contain only alphabets');
-                                                                }
+                                                                } 
+                                                                // else {
+                                                                //     toast.error('Last name should contain only alphabets');
+                                                                // }
                                                             }}
                                                             sx={fieldStyles}
                                                             fullWidth
