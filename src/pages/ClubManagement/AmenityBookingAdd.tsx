@@ -1491,7 +1491,7 @@ export const AddFacilityBookingClubPage = () => {
                     {gstPercentage > 0 && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-700">GST</span>
+                          <span className="text-gray-700">CGST</span>
                           <span className="text-sm text-gray-500">({gstPercentage}%)</span>
                         </div>
                         <span className="font-medium">₹{gstAmount.toFixed(2)}</span>

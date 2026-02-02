@@ -1729,7 +1729,7 @@ function App() {
                       element={<BillCyclesAdd />}
                     />
                     <Route
-                      path="/settings/bill-cycles/details"
+                      path="/settings/bill-cycles/details/:id"
                       element={<BillCyclesDetails />}
                     />
 

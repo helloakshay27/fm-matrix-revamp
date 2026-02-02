@@ -151,8 +151,12 @@ export const ChargeSetupDashboard = () => {
   const fetchChargeSetups = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('https://club-uat-api.lockated.com/account/charge_setups.json', {
+      // const token = localStorage.getItem('token');
+      // const baseUrl = localStorage.getItem("baseUrl");
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const res = await fetch(`${baseUrl}/account/charge_setups.json`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
