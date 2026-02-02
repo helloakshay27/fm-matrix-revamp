@@ -261,7 +261,7 @@ export const getOrganizationsByEmail = async (
   }
   if (isPanchshilClubSite) {
     const response = await fetch(
-      `http://recess-club-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://recess-club-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
