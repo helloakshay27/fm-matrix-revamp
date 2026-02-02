@@ -3,11 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User } from 'lucide-react';
 
-
-
+interface ModuleItem {
+    name: string;
+    icon?: any;
+    href?: string;
+    subItems?: ModuleItem[];
+    color?: string;
+}
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
-const modulesByPackage = {
+const modulesByPackage: Record<string, ModuleItem[]> = {
     Maintainance: [
         { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     ],
@@ -114,7 +119,8 @@ const ViSidebar: React.FC = () => {
         if (isSidebarCollapsed) setExpandedItems([]);
     }, [isSidebarCollapsed]);
 
-    const currentModules = modulesByPackage['Safety'];
+    // Get modules based on current section
+    const currentModules = modulesByPackage[currentSection as keyof typeof modulesByPackage] || modulesByPackage['Safety'];
 
     const toggleExpanded = (name: string) =>
         setExpandedItems((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
@@ -222,7 +228,7 @@ const ViSidebar: React.FC = () => {
                         className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'
                             }`}
                     >
-                        {isSidebarCollapsed ? '' : 'Maintenance'}
+                        {isSidebarCollapsed ? '' : currentSection}
                     </h3>
                 </div>
 
