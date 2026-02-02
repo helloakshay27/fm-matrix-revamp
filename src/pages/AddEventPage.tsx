@@ -466,7 +466,7 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Amount Per Person<span className="text-[#C72030]">*</span></>}
+                  label={<>Event Amount Per Person</>}
                   id="amountPerPerson"
                   name="amountPerPerson"
                   type="number"
@@ -476,6 +476,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -502,6 +508,9 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -525,6 +534,9 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: formData.fromDate || new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -561,7 +573,7 @@ export const AddEventPage = () => {
             </div>
 
             {/* Row 3: Event Location, Member Capacity, Per Member Limit */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -596,6 +608,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -619,6 +637,12 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -632,9 +656,9 @@ export const AddEventPage = () => {
             </div>
 
             {/* Radio Groups Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2 mb-4">
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Pulse Category:
                 </Label>
                 <RadioGroup
@@ -650,23 +674,23 @@ export const AddEventPage = () => {
                   <FormControlLabel
                     value="play"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Play</span>}
+                    label={<span className="text-[12px] text-gray-600">Play</span>}
                   />
                   <FormControlLabel
                     value="panasche"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Panasche</span>}
+                    label={<span className="text-[12px] text-gray-600">Panasche</span>}
                   />
                   <FormControlLabel
                     value="persuit"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Persuit</span>}
+                    label={<span className="text-[12px] text-gray-600">Persuit</span>}
                   />
                 </RadioGroup>
               </div>
 
-              <div className="flex items-center gap-2 ml-4">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   RSVP:
                 </Label>
                 <RadioGroup
@@ -679,18 +703,18 @@ export const AddEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
 
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Show On Home Screen:
                 </Label>
                 <RadioGroup
@@ -703,18 +727,18 @@ export const AddEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
 
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Approval Required:
                 </Label>
                 <RadioGroup
@@ -727,12 +751,12 @@ export const AddEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
@@ -740,7 +764,7 @@ export const AddEventPage = () => {
 
             {/* Event Description */}
             <div>
-              <div className="relative w-full mt-4">
+              <div className="relative w-full mt-6">
                 {/* Label */}
                 <label
                   className="
@@ -749,7 +773,7 @@ export const AddEventPage = () => {
       left-3
       bg-white
       px-1
-      text-sm
+      text-[12.5px]
       text-black
       pointer-events-none
     "
@@ -956,6 +980,7 @@ export const AddEventPage = () => {
                       ref={attachmentInputRef}
                       onChange={handleFileChange}
                       className="hidden"
+                      accept="image/*"
                     />
 
                     <div className="text-center text-gray-500 text-sm">

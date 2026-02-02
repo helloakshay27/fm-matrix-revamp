@@ -138,9 +138,24 @@ export const EmployeeUnifiedCalendar: React.FC<
         const token = API_CONFIG.TOKEN;
         const baseUrl = API_CONFIG.BASE_URL;
 
-        const response = await fetch(
-          `${baseUrl}${API_CONFIG.ENDPOINTS.COMBINED_CALENDAR_DATA}?access_token=${token}&id=${userId}`
-        );
+        // Build API URL with date filter parameters
+        let apiUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.USER_CALENDARS}?access_token=${token}&id=${userId}`;
+
+        // Add date filters to API call
+        if (activeFilters.dateFrom) {
+          apiUrl += `&date_from=${activeFilters.dateFrom}`;
+        }
+        if (activeFilters.dateTo) {
+          apiUrl += `&date_to=${activeFilters.dateTo}`;
+        }
+
+        console.log("📅 Fetching calendar data with filters:", {
+          dateFrom: activeFilters.dateFrom,
+          dateTo: activeFilters.dateTo,
+          apiUrl,
+        });
+
+        const response = await fetch(apiUrl);
 
         if (!response.ok) {
           throw new Error("Failed to fetch calendar data");
@@ -149,18 +164,37 @@ export const EmployeeUnifiedCalendar: React.FC<
         const data = await response.json();
 
         // Map API data to calendar event format
-        const mappedEvents = (data.calendar_data || []).map((item: any) => ({
-          id: item.id.toString(),
-          title: item.title,
-          start: item.start_date || item.start_time,
-          end: item.end_date || item.end_time,
-          type: item.type,
-          status: item.status,
-          description: item.description,
-          color: getColorForType(item.type),
-        }));
+        const mappedEvents = (data.user_calendars || []).map((item: any) => {
+          // Map type names from API to internal types
+          let eventType = item.type;
+          if (item.type === "FacilityBooking") {
+            eventType = "Facility";
+          } else if (item.type === "TaskManagement") {
+            eventType = "Task";
+          }
+
+          // Combine date and time for start and end
+          const startDateTime = item.start_time
+            ? `${item.start_date}T${item.start_time}:00`
+            : item.start_date;
+          const endDateTime = item.end_time
+            ? `${item.end_date}T${item.end_time}:00`
+            : item.end_date;
+
+          return {
+            id: item.id.toString(),
+            title: item.title || "Untitled Event",
+            start: startDateTime,
+            end: endDateTime,
+            type: eventType,
+            status: item.status,
+            description: item.description,
+            color: getColorForType(eventType),
+          };
+        });
 
         setEvents(mappedEvents);
+        console.log("✅ Fetched events:", mappedEvents.length);
       } catch (error) {
         console.error("Error fetching calendar data:", error);
         toast.error("Failed to load calendar events");
@@ -170,7 +204,7 @@ export const EmployeeUnifiedCalendar: React.FC<
     };
 
     fetchCalendarData();
-  }, []);
+  }, [userId, activeFilters.dateFrom, activeFilters.dateTo]);
 
   // Event hover/click states
   const [hoveredEvent, setHoveredEvent] = useState<any>(null);
@@ -210,12 +244,31 @@ export const EmployeeUnifiedCalendar: React.FC<
   // Filter events based on active filters
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
+      // Filter by event type
       if (!activeFilters.showTasks && event.type === "Task") return false;
       if (!activeFilters.showIssues && event.type === "Issue") return false;
       if (!activeFilters.showMeetings && event.type === "Meeting") return false;
       if (!activeFilters.showFacilities && event.type === "Facility")
         return false;
       if (!activeFilters.showTodos && event.type === "Todo") return false;
+
+      // Filter by date range
+      if (activeFilters.dateFrom && activeFilters.dateTo) {
+        const eventDate = moment(event.start);
+        const filterDateFrom = moment(
+          activeFilters.dateFrom,
+          "DD/MM/YYYY"
+        ).startOf("day");
+        const filterDateTo = moment(activeFilters.dateTo, "DD/MM/YYYY").endOf(
+          "day"
+        );
+
+        // Check if event date is within the filter range
+        if (!eventDate.isBetween(filterDateFrom, filterDateTo, null, "[]")) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [events, activeFilters]);

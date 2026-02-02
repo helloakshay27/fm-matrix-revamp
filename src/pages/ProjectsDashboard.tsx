@@ -34,6 +34,7 @@ import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 import ProjectFilterModal from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import axios from "axios";
 import { useDebounce } from "@/hooks/useDebounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
@@ -252,6 +253,7 @@ export const ProjectsDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+  const { shouldShow } = useDynamicPermissions();
 
   const view = localStorage.getItem("selectedView");
   const urlToken = searchParams.get("token");
@@ -684,22 +686,26 @@ export const ProjectsDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/details/${item.id}`) : navigate(`/mobile-projects/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${item.id}/milestones`) : navigate(`/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`)}
-      >
-        <LogOut className="w-4 h-4" />
-      </Button>
+      {shouldShow("employee_projects", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/details/${item.id}`) : navigate(`/mobile-projects/${item.id}`)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
+      {shouldShow("employee_projects", "update") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${item.id}/milestones`) : navigate(`/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`)}
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 
@@ -991,13 +997,15 @@ export const ProjectsDashboard = () => {
 
   const leftActions = (
     <>
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => setShowActionPanel(true)}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Action
-      </Button>
+      {shouldShow("employee_projects", "create") && (
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          onClick={() => setShowActionPanel(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Action
+        </Button>
+      )}
     </>
   );
 

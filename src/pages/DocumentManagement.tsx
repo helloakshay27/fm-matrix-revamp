@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -201,6 +202,7 @@ const documentColumns: ColumnConfig[] = [
 
 export const DocumentManagement = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -330,26 +332,30 @@ export const DocumentManagement = () => {
   const renderActions = (document: Document) => {
     return (
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleViewDetails(document.id)}
-          className="p-1 h-8 w-8"
-          title="View Details"
-        >
-          <Eye className="w-4 h-4 text-[#C72030]" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            navigate(`/maintenance/documents/folder/edit/${document.id}`)
-          }
-          className="p-1 h-8 w-8"
-          title="Edit Folder"
-        >
-          <Edit className="w-4 h-4 text-[#C72030]" />
-        </Button>
+        {shouldShow("employee_project_documents", "show") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewDetails(document.id)}
+            className="p-1 h-8 w-8"
+            title="View Details"
+          >
+            <Eye className="w-4 h-4 text-[#C72030]" />
+          </Button>
+        )}
+        {shouldShow("employee_project_documents", "update") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              navigate(`/maintenance/documents/folder/edit/${document.id}`)
+            }
+            className="p-1 h-8 w-8"
+            title="Edit Folder"
+          >
+            <Edit className="w-4 h-4 text-[#C72030]" />
+          </Button>
+        )}
       </div>
     );
   };

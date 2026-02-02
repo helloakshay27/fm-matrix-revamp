@@ -204,7 +204,7 @@ export const BookingDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 min-w-[140px]">CGST</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {bookings?.gst || "-"}
@@ -274,7 +274,7 @@ export const BookingDetailsPage = () => {
     <div className="p-[30px] min-h-screen bg-transparent">
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/pulse/amenity`)}
           className="flex items-center gap-1 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

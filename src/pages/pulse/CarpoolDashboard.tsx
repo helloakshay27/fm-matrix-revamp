@@ -11,6 +11,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import carGrayImage from "@/assets/car_gray.png";
+import carRedImage from "@/assets/car_red.png";
+import carBlackImage from "@/assets/car_black.png";
+import carBeigeImage from "@/assets/car_beige.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
   PaginationContent,
@@ -63,6 +68,16 @@ interface RideRecord {
   bookingDate?: string;
   seat?: string;
   pricePerPerson?: string;
+}
+
+interface UserRecord {
+  id: string;
+  accessCardNumber: string;
+  name: string;
+  mobileNumber: string;
+  emailAddress: string;
+  employeeNumber: string;
+  gender: string;
 }
 
 interface CalendarDay {
@@ -157,12 +172,12 @@ const statusCards = [
     icon: AlertCircle,
     status: "reports",
   },
-  {
-    title: "Pending KYC",
-    count: 23,
-    icon: Users,
-    status: "kyc",
-  },
+  // {
+  //   title: "Pending KYC",
+  //   count: 23,
+  //   icon: Users,
+  //   status: "kyc",
+  // },
   {
     title: "Active SOS",
     count: 1,
@@ -180,7 +195,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "scheduled",
   },
   {
@@ -190,7 +205,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "scheduled",
   },
   {
@@ -200,7 +215,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "scheduled",
   },
   {
@@ -210,7 +225,7 @@ const mockTodayRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "scheduled",
   },
 ];
@@ -290,7 +305,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carGrayImage,
     status: "active",
   },
   {
@@ -300,7 +315,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBlackImage,
     status: "active",
   },
   {
@@ -310,7 +325,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚙",
+    carImage: carRedImage,
     status: "active",
   },
   {
@@ -320,7 +335,7 @@ const mockActiveNowRides: RideRecord[] = [
     passengers: "Raj, Tiwari, Pooja, Rohan",
     leavingFrom: "Panchshil Tech Park One",
     destination: "Pune Rly Station",
-    carImage: "🚗",
+    carImage: carBeigeImage,
     status: "active",
   },
 ];
@@ -421,17 +436,152 @@ const mockSOSAlerts: RideRecord[] = [
   },
 ];
 
+const mockUsers: UserRecord[] = [
+  {
+    id: "1",
+    accessCardNumber: "54647",
+    name: "Hamza",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "2",
+    accessCardNumber: "54647",
+    name: "Shahab",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "3",
+    accessCardNumber: "54647",
+    name: "Yukta",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Female",
+  },
+  {
+    id: "4",
+    accessCardNumber: "54647",
+    name: "Rahul",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+];
+
+const mockPendingKYC: UserRecord[] = [
+  {
+    id: "1",
+    accessCardNumber: "54647",
+    name: "Hamza",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "2",
+    accessCardNumber: "54647",
+    name: "Shahab",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+  {
+    id: "3",
+    accessCardNumber: "54647",
+    name: "Yukta",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Female",
+  },
+  {
+    id: "4",
+    accessCardNumber: "54647",
+    name: "Rahul",
+    mobileNumber: "+91 1234567890",
+    emailAddress: "hamza.quazi@lookated.com",
+    employeeNumber: "346347",
+    gender: "Male",
+  },
+];
+
+// Mock data for live tracking
+const mockTrackingRides = [
+  {
+    id: "1",
+    registrationNumber: "MH 01 AB 2345",
+    gender: "Male",
+    driver: "Hamza",
+    route: "Panchshil Tech Park → Pune Rly Station",
+    currentLocation: "Domlur Junction",
+    eta: "5 mins",
+    progress: 45,
+    passengers: ["Raj", "Tiwari", "Pooja"],
+    status: "Active",
+  },
+  {
+    id: "2",
+    registrationNumber: "MH 12 CD 6789",
+    gender: "Male",
+    driver: "Shahab",
+    route: "Panchshil Tech Park → Pune Rly Station",
+    currentLocation: "Spice Garden Signal",
+    eta: "5 mins",
+    progress: 75,
+    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
+    status: "Active",
+  },
+  {
+    id: "3",
+    registrationNumber: "MH 04 GH 4455",
+    gender: "Female",
+    driver: "Yukta",
+    route: "Panchshil Tech Park → Pune Rly Station",
+    currentLocation: "KS Puram",
+    eta: "18 mins",
+    progress: 25,
+    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
+    status: "Active",
+  },
+  {
+    id: "4",
+    registrationNumber: "MH 12 ST 1010",
+    gender: "Male",
+    driver: "Rahul",
+    route: "Panchshil Tech Park → Pune Rly Station",
+    currentLocation: "Spice Garden Signal",
+    eta: "5 mins",
+    progress: 75,
+    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
+    status: "Active",
+  },
+];
+
 export const CarpoolDashboard = () => {
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<string>("today");
+  const [activeView, setActiveView] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ridesData, setRidesData] = useState<RideRecord[]>(mockTodayRides);
+  const [usersData, setUsersData] = useState<UserRecord[]>(mockUsers);
+  const [pendingKYCData, setPendingKYCData] =
+    useState<UserRecord[]>(mockPendingKYC);
   const [selectedReportStatus, setSelectedReportStatus] = useState<{
     [key: string]: string;
   }>({});
   const [selectedRides, setSelectedRides] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [activeReportTab, setActiveReportTab] =
+    useState<string>("Under Review");
   const itemsPerPage = 10;
 
   // Calendar states
@@ -578,7 +728,12 @@ export const CarpoolDashboard = () => {
   }, [selectedCalendarDateForApi, calendarDates]);
 
   const handleStatusCardClick = (status: string) => {
-    setActiveView(status);
+    // If clicking the same card, toggle it off
+    if (activeView === status) {
+      setActiveView("");
+    } else {
+      setActiveView(status);
+    }
   };
 
   const handleSearch = (query: string) => {
@@ -593,8 +748,7 @@ export const CarpoolDashboard = () => {
   };
 
   const handleTrackNow = (rideId: string) => {
-    // Track ride: rideId
-    // Implement tracking functionality
+    setActiveView("tracking");
   };
 
   const handleStatusChange = (reportId: string, newStatus: string) => {
@@ -637,6 +791,8 @@ export const CarpoolDashboard = () => {
         return "Pending KYC";
       case "users":
         return "All Users";
+      case "tracking":
+        return "Live Tracking";
       default:
         return "Carpool";
     }
@@ -768,13 +924,15 @@ export const CarpoolDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {/* Status Cards */}
+      {/* Status Cards - Always visible */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
         {statusCards.map((card, index) => (
           <div
             key={index}
-            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
-              activeView === card.status ? "!shadow-lg" : ""
+            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all ${
+              activeView === card.status
+                ? "ring-2 ring-[#C72030] shadow-lg"
+                : ""
             }`}
             onClick={() => handleStatusCardClick(card.status)}
           >
@@ -793,38 +951,42 @@ export const CarpoolDashboard = () => {
         ))}
       </div>
 
-      {/* Calendar Dates Filter */}
-      <div className="flex flex-col gap-0 mb-6">
+      {/* Calendar Dates Filter - Always visible */}
+      <div className="flex flex-col mb-6">
         <div
           ref={datesContainerRef}
           className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         >
-          <div className="min-w-fit flex">
-            <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-10">
+          <div className="min-w-fit flex bg-[#efe9dd] border border-[#c9c2b8] h-[40px] items-center">
+            {/* Month Section */}
+            <div className="w-36 flex-shrink-0 bg-[#efe9dd] border-r border-[#c9c2b8] px-3 py-0.5 sticky left-0 z-10">
               <div className="flex items-center justify-between gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className="h-6 w-6 p-0 hover:bg-transparent"
                   onClick={() => handleMonthChange("prev")}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4 text-black" />
                 </Button>
+
                 <div className="text-[#C72030] font-semibold text-sm">
                   {calendarMonth}
                 </div>
+
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className="h-6 w-6 p-0 hover:bg-transparent"
                   onClick={() => handleMonthChange("next")}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 text-black" />
                 </Button>
               </div>
             </div>
 
-            <div className="flex-1 flex">
+            {/* Dates */}
+            <div className="flex">
               {calendarDates.map((dateInfo, idx) => (
                 <div
                   key={idx}
@@ -838,22 +1000,25 @@ export const CarpoolDashboard = () => {
                     (setSelectedCalendarDate(dateInfo.date),
                     setSelectedCalendarDateForApi(dateInfo.fullDate))
                   }
-                  className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${
-                    selectedCalendarDate === dateInfo.date
-                      ? "bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]"
-                      : dateInfo.isOff
-                        ? "!bg-gray-100 cursor-not-allowed"
-                        : "!bg-white hover:bg-gray-50 cursor-pointer"
-                  }`}
+                  className={`border-r border-[#c9c2b8] w-[115px] px-1 py-0.5 text-center cursor-pointer transition-all
+            ${
+              selectedCalendarDate === dateInfo.date
+                ? "bg-[#f5f1ea] border-b-2 border-b-[#C72030]"
+                : dateInfo.isOff
+                  ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
+                  : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
+            }`}
                 >
-                  {selectedCalendarDate === dateInfo.date && (
-                    <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#C72030] border-r-[10px] border-r-transparent"></span>
-                  )}
-                  <div className="text-xs">{dateInfo.date}</div>
-                  <div className="text-sm font-medium">
-                    {dateInfo.day}
+                  <div className="text-xs font-medium">{dateInfo.date}</div>
+
+                  <div className="text-[11px] font-semibold leading-none">
+                    {new Date(dateInfo.fullDate).toLocaleDateString("en-US", {
+                      weekday: "long",
+                    })}
                     {dateInfo.isOff && (
-                      <span className="text-xs text-gray-500 ml-2">OFF</span>
+                      <span className="block text-[11px] text-gray-500">
+                        OFF
+                      </span>
                     )}
                   </div>
                 </div>
@@ -863,15 +1028,19 @@ export const CarpoolDashboard = () => {
         </div>
       </div>
 
-      {/* Table View */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {getViewTitle()}
-        </h2>
-      </div>
+      {/* Data Section Title - Show when a view is active */}
+      {activeView !== "" && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {getViewTitle()}
+          </h2>
+        </div>
+      )}
 
       {/* Table Views */}
-      {(activeView === "today" || activeView === "total") && (
+      {(activeView === "" ||
+        activeView === "today" ||
+        activeView === "total") && (
         <>
           <EnhancedTaskTable
             data={currentRides}
@@ -928,11 +1097,25 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                  }}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -941,11 +1124,11 @@ export const CarpoolDashboard = () => {
               leavingFrom: ride.leavingFrom,
               destination: ride.destination,
             })}
-            enableSearch={false}
+            enableSearch={true}
             enableSelection={false}
             selectable={false}
             enableExport={true}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-rides-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
@@ -1040,8 +1223,10 @@ export const CarpoolDashboard = () => {
                 </Badge>
               ),
             })}
-            enableSearch={false}
+            enableSearch={true}
+            hideColumnsButton={true}
             enableSelection={false}
+            hideTableExport={true}
             selectable={false}
             enableExport={true}
             hideTableSearch={true}
@@ -1113,11 +1298,25 @@ export const CarpoolDashboard = () => {
             ]}
             renderRow={(ride) => ({
               actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                  }}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               ),
-              carImage: <span className="text-2xl">{ride.carImage}</span>,
+              carImage: (
+                <img
+                  src={ride.carImage}
+                  alt="Car"
+                  className="w-10 h-auto object-contain"
+                />
+              ),
               driver: ride.driver,
               registrationNumber: ride.registrationNumber,
               passengers: (
@@ -1126,8 +1325,9 @@ export const CarpoolDashboard = () => {
               leavingFrom: ride.leavingFrom,
               destination: ride.destination,
             })}
-            enableSearch={false}
+            enableSearch={true}
             enableSelection={false}
+            hideColumnsButton={true}
             selectable={false}
             enableExport={false}
             hideTableSearch={true}
@@ -1148,139 +1348,550 @@ export const CarpoolDashboard = () => {
 
       {/* Active Reports View */}
       {activeView === "reports" && (
-        <div className="space-y-4">
-          {/* Tab Navigation */}
-          <div className="flex gap-4 border-b border-gray-200">
-            <button className="px-4 py-2 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
+        <Tabs
+          value={activeReportTab}
+          onValueChange={setActiveReportTab}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
+            <TabsTrigger
+              value="Under Review"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+            >
               Under Review
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            </TabsTrigger>
+            <TabsTrigger
+              value="Action in Progress"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+            >
               Action in Progress
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            </TabsTrigger>
+            <TabsTrigger
+              value="Resolved"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+            >
               Resolved
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+            </TabsTrigger>
+            <TabsTrigger
+              value="Closed"
+              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
+            >
               Closed
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
-          <EnhancedTaskTable
-            data={currentRides}
-            columns={[
-              {
-                key: "actions",
-                label: "Action",
-                sortable: false,
-                hideable: false,
-                draggable: false,
-              },
-              {
-                key: "reportedBy",
-                label: "Reported by",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportedAgainst",
-                label: "Reported Against",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "issueDescription",
-                label: "Issue Description",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportTime",
-                label: "Report Time",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "reportDate",
-                label: "Report Date",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "statusBadge",
-                label: "Status",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "statusDropdown",
-                label: "Change Status",
-                sortable: false,
-                hideable: false,
-                draggable: false,
-              },
-            ]}
-            renderRow={(report) => ({
-              actions: (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <Eye className="h-4 w-4" />
-                </Button>
-              ),
-              reportedBy: report.reportedBy,
-              reportedAgainst: report.reportedAgainst,
-              issueDescription: (
-                <div className="max-w-[250px]">{report.issueDescription}</div>
-              ),
-              reportTime: report.reportTime,
-              reportDate: report.reportDate,
-              statusBadge: (
-                <Badge variant="secondary" className="bg-gray-100">
-                  Active
-                </Badge>
-              ),
-              statusDropdown: (
-                <div className="relative">
-                  <select
-                    value={selectedReportStatus[report.id] || report.status}
-                    onChange={(e) =>
-                      handleStatusChange(report.id, e.target.value)
-                    }
-                    className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+          <TabsContent value="Under Review">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
                   >
-                    <option value="Under Review">Under Review</option>
-                    <option value="Action in Progress">
-                      Action in Progress
-                    </option>
-                    <option value="Resolve">Resolve</option>
-                    <option value="Closed">Closed</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
                     >
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-              ),
-            })}
-            enableSearch={false}
-            enableSelection={false}
-            selectable={false}
-            enableExport={true}
-            hideTableSearch={true}
-            storageKey="carpool-reports-table"
-            emptyMessage="No reports found"
-            exportFileName="carpool-reports"
-          />
-        </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Action in Progress">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Resolved">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+
+          <TabsContent value="Closed">
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "reportedBy",
+                  label: "Reported by",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportedAgainst",
+                  label: "Reported Against",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "issueDescription",
+                  label: "Issue Description",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportTime",
+                  label: "Report Time",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "reportDate",
+                  label: "Report Date",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusBadge",
+                  label: "Status",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "statusDropdown",
+                  label: "Change Status",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+              ]}
+              renderRow={(report) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                reportedBy: report.reportedBy,
+                reportedAgainst: report.reportedAgainst,
+                issueDescription: (
+                  <div className="max-w-[250px]">{report.issueDescription}</div>
+                ),
+                reportTime: report.reportTime,
+                reportDate: report.reportDate,
+                statusBadge: (
+                  <Badge variant="secondary" className="bg-gray-100">
+                    Active
+                  </Badge>
+                ),
+                statusDropdown: (
+                  <div className="relative">
+                    <select
+                      value={selectedReportStatus[report.id] || report.status}
+                      onChange={(e) =>
+                        handleStatusChange(report.id, e.target.value)
+                      }
+                      className="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent cursor-pointer"
+                    >
+                      <option value="Under Review">Under Review</option>
+                      <option value="Action in Progress">
+                        Action in Progress
+                      </option>
+                      <option value="Resolve">Resolve</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                ),
+              })}
+              enableSearch={true}
+              hideColumnsButton={true}
+              enableSelection={false}
+              hideTableExport={true}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={true}
+              storageKey="carpool-reports-table"
+              emptyMessage="No reports found"
+              exportFileName="carpool-reports"
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Active SOS View */}
@@ -1297,7 +1908,7 @@ export const CarpoolDashboard = () => {
             {currentRides.map((alert) => (
               <Card
                 key={alert.id}
-                className="border-2 border-[#DC143C] bg-[#FFF5F5]"
+                className="border-2 border-[#F2C6C3] bg-[#FAF1F0]"
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -1422,6 +2033,322 @@ export const CarpoolDashboard = () => {
             total rides)
           </div>
         </>
+      )}
+
+      {/* Total Users View */}
+      {activeView === "users" && (
+        <>
+          <EnhancedTaskTable
+            data={usersData}
+            columns={[
+              {
+                key: "actions",
+                label: "Action",
+                sortable: false,
+                hideable: false,
+                draggable: false,
+              },
+              {
+                key: "accessCardNumber",
+                label: "Access card Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "name",
+                label: "Name",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "mobileNumber",
+                label: "Mobile Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "emailAddress",
+                label: "Email Address",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "employeeNumber",
+                label: "Employee Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+            ]}
+            renderRow={(user) => ({
+              actions: (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+              accessCardNumber: user.accessCardNumber,
+              name: user.name,
+              mobileNumber: user.mobileNumber,
+              emailAddress: user.emailAddress,
+              employeeNumber: user.employeeNumber,
+              gender: user.gender,
+            })}
+            enableSearch={true}
+            hideTableExport={true}
+            enableSelection={false}
+            hideColumnsButton={true}
+            selectable={false}
+            enableExport={true}
+            hideTableSearch={true}
+            storageKey="carpool-users-table"
+            searchTerm={searchQuery}
+            onSearchChange={handleSearch}
+            emptyMessage="No users found"
+            searchPlaceholder="Search users..."
+            exportFileName="carpool-users"
+          />
+        </>
+      )}
+
+      {/* Pending KYC View */}
+      {activeView === "kyc" && (
+        <>
+          <EnhancedTaskTable
+            data={pendingKYCData}
+            columns={[
+              {
+                key: "actions",
+                label: "Action",
+                sortable: false,
+                hideable: false,
+                draggable: false,
+              },
+              {
+                key: "accessCardNumber",
+                label: "Access card Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "name",
+                label: "Name",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "mobileNumber",
+                label: "Mobile Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "emailAddress",
+                label: "Email Address",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "employeeNumber",
+                label: "Employee Number",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                sortable: true,
+                hideable: true,
+                draggable: true,
+              },
+            ]}
+            renderRow={(user) => ({
+              actions: (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+              accessCardNumber: user.accessCardNumber,
+              name: user.name,
+              mobileNumber: user.mobileNumber,
+              emailAddress: user.emailAddress,
+              employeeNumber: user.employeeNumber,
+              gender: user.gender,
+            })}
+            enableSearch={true}
+            hideColumnsButton={true}
+            enableSelection={false}
+            hideTableExport={true}
+            selectable={false}
+            enableExport={true}
+            hideTableSearch={true}
+            storageKey="carpool-pending-kyc-table"
+            searchTerm={searchQuery}
+            onSearchChange={handleSearch}
+            emptyMessage="No pending KYC found"
+            searchPlaceholder="Search pending KYC..."
+            exportFileName="carpool-pending-kyc"
+          />
+        </>
+      )}
+
+      {/* Live Tracking View */}
+      {activeView === "tracking" && (
+        <div className="space-y-6">
+          {/* Tracking Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {mockTrackingRides.map((ride) => (
+              <Card key={ride.id} className="border shadow-sm">
+                <CardContent className="p-4 space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        {ride.registrationNumber}{" "}
+                        <span className="text-gray-500">({ride.gender})</span>
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 mt-1">
+                        {ride.driver}
+                      </div>
+                    </div>
+                    <Badge className="bg-[#DC143C] text-white hover:bg-[#B22222] text-xs">
+                      {ride.status}
+                    </Badge>
+                  </div>
+
+                  {/* Route */}
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Route</span>
+                      <div className="mt-0.5">{ride.route}</div>
+                    </div>
+                  </div>
+
+                  {/* Current Location */}
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Current Location</span>
+                      <div className="mt-0.5">{ride.currentLocation}</div>
+                    </div>
+                  </div>
+
+                  {/* ETA */}
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">ETA</span>
+                      <div className="mt-0.5">{ride.eta}</div>
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 font-medium">
+                        Progress
+                      </span>
+                      <span className="text-gray-900 font-semibold">
+                        {ride.progress}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-[#DC143C] h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${ride.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Passengers */}
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-600 font-medium">
+                      Passengers
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {ride.passengers.map((passenger, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-gray-100 text-gray-700 text-xs font-normal"
+                        >
+                          {passenger}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Map Section */}
+          <Card className="border shadow-sm">
+            <CardContent className="p-0">
+              <div className="relative w-full h-[500px] bg-gray-100 rounded-lg overflow-hidden">
+                {/* Map Placeholder - You can integrate Google Maps or any other map service here */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
+                  <div className="text-center space-y-2">
+                    <MapPin className="w-12 h-12 text-gray-400 mx-auto" />
+                    <p className="text-sm text-gray-500 font-medium">
+                      Map View
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Integrate Google Maps or similar service for live tracking
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sample Map Markers for demonstration */}
+                <div className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
+                      MH 01 AB 2345
+                      <div className="text-[10px] text-gray-500">Hamza</div>
+                    </div>
+                    <Car className="w-8 h-8 text-red-600" />
+                  </div>
+                </div>
+
+                <div className="absolute top-1/3 right-1/4 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
+                      MH 04 GH 4455
+                      <div className="text-[10px] text-gray-500">Yukta</div>
+                    </div>
+                    <Car className="w-8 h-8 text-red-600" />
+                  </div>
+                </div>
+
+                <div className="absolute bottom-1/3 right-1/3 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
+                      MH 12 ST 1010
+                      <div className="text-[10px] text-gray-500">Rahul</div>
+                    </div>
+                    <Car className="w-8 h-8 text-red-600" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

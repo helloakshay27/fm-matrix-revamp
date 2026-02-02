@@ -8,30 +8,10 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
-import { fetchEvents } from '@/store/slices/eventSlice';
+import { fetchEvents, updateEvent } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
-
-const formatDateWithTimezone = (date: Date) => {
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  const seconds = pad(date.getSeconds());
-  const millis = String(date.getMilliseconds()).padStart(3, "0");
-
-  const offset = -date.getTimezoneOffset();
-  const sign = offset >= 0 ? "+" : "-";
-  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
-  const offsetMinutes = pad(Math.abs(offset) % 60);
-
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${millis}${sign}${offsetHours}:${offsetMinutes}`;
-};
-
+import { Switch as MuiSwitch } from '@mui/material';
 
 export const CRMEventsPage = () => {
   const dispatch = useAppDispatch();
@@ -55,6 +35,7 @@ export const CRMEventsPage = () => {
     total_pages: 0,
   });
   const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
     total_events: "",
     upcoming_events: "",
@@ -82,6 +63,7 @@ export const CRMEventsPage = () => {
           event_location: event.event_at,
           amount: event.amount_per_member,
           member_capacity: event.capacity,
+          active: event.active,
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
@@ -150,7 +132,7 @@ export const CRMEventsPage = () => {
     const filterParams: any = {};
 
     if (filterData.status) {
-      filterParams["q[publish_in]"] = filterData.status;
+      filterParams["q[active_eq]"] = filterData.status;
     }
 
     if (filterData.created_at) {
@@ -179,6 +161,7 @@ export const CRMEventsPage = () => {
         event_location: event.event_at,
         amount: event.amount_per_member,
         member_capacity: event.capacity,
+        active: event.active,
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -208,6 +191,50 @@ export const CRMEventsPage = () => {
     navigate(`/pulse/events/edit/${id}`);
   }
 
+  const handleStatusChange = async (item: any, checked: boolean) => {
+    // 1: Published, 2: Disabled
+    const newStatus = checked ? 1 : 0;
+
+    // Optimistic update
+    setUpdatingStatus((prev) => ({ ...prev, [item.id]: true }));
+
+    // Update events list optimistically
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === item.id ? { ...event, active: newStatus } : event
+      )
+    );
+
+    try {
+      await dispatch(
+        updateEvent({
+          id: item.id,
+          data: { event: { active: newStatus } },
+          baseUrl,
+          token,
+        })
+      ).unwrap();
+
+      toast.success("Event status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update event status");
+
+      // Revert optimistic update on error
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === item.id ? { ...event, active: item.active } : event
+        )
+      );
+    } finally {
+      setUpdatingStatus((prev) => {
+        const newState = { ...prev };
+        delete newState[item.id];
+        return newState;
+      });
+    }
+  };
+
   // Render cell content
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
@@ -232,6 +259,34 @@ export const CRMEventsPage = () => {
       case 'amount':
         return (
           <span>{item.amount}</span>
+        );
+      case "status":
+        const isChecked = item.active;
+
+        return (
+          <div className="flex items-center gap-2">
+            <MuiSwitch
+              checked={isChecked}
+              onChange={(e) => handleStatusChange(item, e.target.checked)}
+              disabled={updatingStatus[item.id]}
+              size="small"
+              sx={{
+                '& .MuiSwitch-switchBase': {
+                  color: '#ef4444',
+                  '&.Mui-checked': {
+                    color: '#22c55e',
+                  },
+                  '&.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#22c55e',
+                  },
+                },
+                '& .MuiSwitch-track': {
+                  backgroundColor: '#ef4444',
+                },
+              }}
+            />
+            {isChecked ? "Active" : "Inactive"}
+          </div>
         );
       case 'is_expired':
         return item.is_expired ? (

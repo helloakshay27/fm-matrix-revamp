@@ -494,7 +494,7 @@ export const EditBroadcastPage = () => {
                         <div className="flex items-center gap-5">
                             <div className="flex items-center gap-3">
                                 <Label className="text-sm text-gray-700 whitespace-nowrap">
-                                    Mark Important<span className="text-red-500">*</span>:
+                                    Show as Pop-up<span className="text-red-500">*</span>:
                                 </Label>
                                 <RadioGroup
                                     row

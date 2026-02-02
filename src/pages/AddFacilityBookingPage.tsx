@@ -75,11 +75,15 @@ export const AddFacilityBookingPage = () => {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
+  const [users, setUsers] = useState([])
   const [facilityDetails, setFacilityDetails] = useState<{
+    bill_to_company: number;
     postpaid: number;
     prepaid: number;
     pay_on_facility: number;
     complementary: number;
+    fac_type?: string;
+    max_people?: number;
     facility_charge?: {
       adult_member_charge?: number;
       adult_guest_charge?: number;
@@ -89,7 +93,24 @@ export const AddFacilityBookingPage = () => {
     };
     gst?: number;
     sgst?: number;
+    facility_setup_accessories?: Array<{
+      facility_setup_accessory: {
+        id: number;
+        pms_inventory_id: number;
+        pms_inventory?: {
+          id: number;
+          name: string;
+        };
+      };
+    }>;
   } | null>(null);
+  const [selectedAccessories, setSelectedAccessories] = useState<{ [id: number]: number }>({});
+  const [availableAccessories, setAvailableAccessories] = useState<Array<{
+    id: number;
+    name: string;
+    inventoryId: number;
+    price: number;
+  }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
     id: number;
@@ -111,38 +132,91 @@ export const AddFacilityBookingPage = () => {
   const [bookingRuleData, setBookingRuleData] = useState<{
     can_book: boolean;
     rate: number;
+    multiple_bookings?: boolean;
+    multiple_booking_count?: number;
+    concurrent_slots?: number;
+  } | null>(null);
+  const [flexiblePriceData, setFlexiblePriceData] = useState<{
+    success: boolean;
+    total_minutes: number;
+    total_hours_charged: number;
+    slab_price: number;
+    cgst_amount: number;
+    sgst_amount: number;
+    total_amount: number;
+    used_slab: {
+      id: number;
+      duration_hours: number;
+      price: string;
+    };
   } | null>(null);
 
-  // Helper: Check if slot selection is allowed
-  const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
-  // Helper: Max slots user can select
-  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
-  // Helper: Max concurrent slots
-  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+  // Helper: Check if facility is requestable type
+  const isRequestableType = facilityDetails?.fac_type === 'request';
 
-  // Helper: Check if a slot can be selected (enforce concurrent rule)
+  // Helper: Check if slot selection is allowed
+  const canSelectSlots = (facilityDetails?.fac_type === 'request' && bookingRuleData) ? bookingRuleData.can_book !== false : true;
+  // Helper: Max slots user can select
+  const maxSelectableSlots = isRequestableType
+    ? Infinity // For requestable, allow unlimited consecutive slots
+    : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+  // Helper: Max concurrent slots
+  const maxConcurrentSlots = isRequestableType
+    ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
+    : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+
+  // Helper: Check if consecutive selection is valid
+  const isConsecutiveSelection = (slots: number[]) => {
+    if (slots.length === 0) return true;
+    const sorted = [...slots].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] !== sorted[i - 1] + 1) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Helper: Check if a slot can be selected (enforce consecutive rule for requestable)
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect
-    if (selectedSlots.length >= maxSelectableSlots) return false;
-    // Check concurrent rule: sort selected + candidate, check max consecutive
-    const all = [...selectedSlots, slotId].sort((a, b) => a - b);
-    let maxConsec = 1, curr = 1;
-    for (let i = 1; i < all.length; i++) {
-      if (all[i] === all[i - 1] + 1) {
-        curr++;
-        maxConsec = Math.max(maxConsec, curr);
-      } else {
-        curr = 1;
+
+    if (isRequestableType) {
+      // For requestable type, enforce consecutive slots only
+      const newSelection = [...selectedSlots, slotId];
+
+      // Check if adding this slot maintains consecutive pattern
+      if (!isConsecutiveSelection(newSelection)) return false;
+
+      // Check if total doesn't exceed max
+      if (newSelection.length > maxSelectableSlots) return false;
+
+      return true;
+    } else {
+      // For bookable type, use existing logic
+      if (selectedSlots.length >= maxSelectableSlots) return false;
+      const all = [...selectedSlots, slotId].sort((a, b) => a - b);
+      let maxConsec = 1, curr = 1;
+      for (let i = 1; i < all.length; i++) {
+        if (all[i] === all[i - 1] + 1) {
+          curr++;
+          maxConsec = Math.max(maxConsec, curr);
+        } else {
+          curr = 1;
+        }
       }
+      return maxConsec <= maxConcurrentSlots;
     }
-    return maxConsec <= maxConcurrentSlots;
   };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+
   // Helper: Get max people allowed from facility details
   const maxPeople = facilityDetails?.max_people || 0;
   const [peopleTable, setPeopleTable] = useState<Array<{
@@ -174,9 +248,24 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
+  const getUsers = async () => {
+    try {
+      const reseponse = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      setUsers(reseponse.data.users)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(fetchFMUsers());
+    // dispatch(fetchFMUsers());
+    getUsers()
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch]);
 
@@ -227,6 +316,20 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
+        setSelectedAccessories({}); // Reset selected accessories
+
+        // Extract and set available accessories from facility setup
+        if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
+          const accessories = response.data.facility_setup.facility_setup_accessories.map(item => ({
+            id: item.facility_setup_accessory?.id || 0,
+            name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0,
+            price: item.facility_setup_accessory?.cost || 0
+          }));
+          setAvailableAccessories(accessories);
+        } else {
+          setAvailableAccessories([]);
+        }
 
         // Initialize people table based on max_people
         const maxPeople = response.data.facility_setup.max_people || 1;
@@ -241,6 +344,8 @@ export const AddFacilityBookingPage = () => {
     } catch (error) {
       console.error('Error fetching facility details:', error);
       setFacilityDetails(null);
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -252,6 +357,8 @@ export const AddFacilityBookingPage = () => {
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -281,6 +388,38 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
+  // Fetch flexible pricing for requestable facilities
+  const fetchFlexiblePrice = async (facilityId: string, slotIds: number[]) => {
+    if (!isRequestableType || slotIds.length === 0) {
+      setFlexiblePriceData(null);
+      return;
+    }
+
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/calculate_flexible_price.json`,
+        { slot_ids: slotIds },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data && response.data.success) {
+        console.log('Flexible Price Response:', response.data);
+        setFlexiblePriceData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching flexible price:', error);
+      setFlexiblePriceData(null);
+    }
+  };
+
   // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
 
@@ -293,14 +432,18 @@ export const AddFacilityBookingPage = () => {
     }
   }, [selectedFacility, selectedDate, selectedUser]);
 
+  // Effect to fetch flexible pricing when slots are selected for requestable facilities
+  useEffect(() => {
+    if (isRequestableType && selectedSlots.length > 0 && selectedFacility) {
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      fetchFlexiblePrice(facilityId, selectedSlots);
+    } else if (!isRequestableType) {
+      setFlexiblePriceData(null);
+    }
+  }, [selectedSlots, isRequestableType, selectedFacility]);
+
   // Call amenity booking API when member user type is selected with user and facility
   useEffect(() => {
-    console.log('=== Amenity API Check ===');
-    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
-    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
-    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
-    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
-    console.log('========================');
     const token = localStorage.getItem('token')
     console.log('Token for Amenity API:', token);
     if (selectedUser && selectedFacility) {
@@ -378,6 +521,19 @@ export const AddFacilityBookingPage = () => {
     });
   };
 
+  // Handle accessory quantity change
+  const handleAccessoryQuantityChange = (accessoryId: number, quantity: number) => {
+    setSelectedAccessories(prev => {
+      if (quantity <= 0) {
+        const newState = { ...prev };
+        delete newState[accessoryId];
+        return newState;
+      } else {
+        return { ...prev, [accessoryId]: quantity };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -428,13 +584,21 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-      // --- Cost calculation based on per_slot_charge only ---
+      // --- Cost calculation based on per_slot_charge and accessories ---
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
       const slotsCount = selectedSlots.length;
 
-      // Calculate total based only on per_slot_charge
+      // Calculate slot total
       const slotTotal = slotsCount * perSlotCharge;
-      const subtotalBeforeDiscount = slotTotal;
+
+      // Calculate accessory total with quantities
+      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+        return total + ((accessory?.price || 0) * (quantity || 0));
+      }, 0);
+
+      // Subtotal includes slots and accessories
+      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -459,23 +623,55 @@ export const AddFacilityBookingPage = () => {
 
       // Use cost summary calculation (from UI) for payload values
       const costSummary = (() => {
-        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-        const slotsCount = selectedSlots.length;
+        // Calculate accessory total with quantities
+        const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+          const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+          return total + ((accessory?.price || 0) * (quantity || 0));
+        }, 0);
 
-        // Calculate total based only on per_slot_charge
-        const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = slotTotal;
-        const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-        const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-        const gstPercentage = facilityDetails?.gst || 0;
-        const sgstPercentage = facilityDetails?.sgst || 0;
+        let basePrice = 0;
+
+        // For requestable type, use slab_price from API; for others, use slot charges
+        if (isRequestableType && flexiblePriceData) {
+          basePrice = flexiblePriceData.slab_price;
+        } else {
+          const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+          const slotsCount = selectedSlots.length;
+          basePrice = slotsCount * perSlotCharge;
+        }
+
+        // Subtotal includes base price and accessories
+        const subtotalBeforeDiscount = basePrice + accessoryTotal;
+
+        // Calculate discount based on type
+        const calculatedDiscountAmount = discountType === 'percentage'
+          ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+          : (discountAmount || 0);
+
+        const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
+
+        let gstPercentage = 0;
+        let sgstPercentage = 0;
+
+        // For requestable type, use API values; for others, use facility setup values
+        if (isRequestableType && flexiblePriceData) {
+          // Extract percentages from API response if available, otherwise use facility defaults
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        } else {
+          gstPercentage = facilityDetails?.gst || 0;
+          sgstPercentage = facilityDetails?.sgst || 0;
+        }
+
         const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
         const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
         const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+
         return {
-          slotTotal,
+          basePrice,
+          accessoryTotal,
           subtotalBeforeDiscount,
-          discountAmount,
+          discountAmount: calculatedDiscountAmount,
           subtotalAfterDiscount,
           gstPercentage,
           sgstPercentage,
@@ -484,6 +680,8 @@ export const AddFacilityBookingPage = () => {
           amountFull
         };
       })();
+
+      console.log(costSummary)
 
       const payload = {
         facility_booking: {
@@ -498,6 +696,14 @@ export const AddFacilityBookingPage = () => {
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
+          accessories: Object.entries(selectedAccessories).map(([accessoryId, quantity]) => {
+            const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+            return {
+              id: parseInt(accessoryId),
+              quantity: quantity,
+              total_price: (accessory?.price || 0) * quantity
+            };
+          }),
           entity_id: selectedCompany,
           member_charges: 0,
           guest_charges: 0,
@@ -528,9 +734,6 @@ export const AddFacilityBookingPage = () => {
           'Content-Type': 'application/json',
         },
       });
-      console.log(response)
-
-      console.log('Response received:', response.status, response.data);
 
       if (response.data.error) {
         toast.error(response.data.error);
@@ -635,7 +838,7 @@ export const AddFacilityBookingPage = () => {
                   Select User
                 </em>
               </MenuItem>
-              {fmUsers.map((user) => (
+              {users.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.full_name}
                 </MenuItem>
@@ -693,7 +896,6 @@ export const AddFacilityBookingPage = () => {
             <TextField
               type="date"
               label="Date"
-              required
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"
@@ -794,15 +996,75 @@ export const AddFacilityBookingPage = () => {
           {bookingRuleData && !canSelectSlots && (
             <div className="mt-2 text-red-600 text-sm font-medium">You are not allowed to book slots for this user.</div>
           )}
-          {bookingRuleData && canSelectSlots && (
+          {canSelectSlots && (
             <div className="mt-2 text-gray-600 text-xs">
-              {bookingRuleData.multiple_bookings
-                ? `You can select up to ${maxSelectableSlots} slots. `
-                : 'You can select only one slot. '}
-              {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+              {isRequestableType ? (
+                `You can select multiple consecutive slots. Selected slots must be continuous.`
+              ) : (
+                <>
+                  {bookingRuleData?.multiple_bookings
+                    ? `You can select up to ${maxSelectableSlots} slots. `
+                    : 'You can select only one slot. '}
+                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                </>
+              )}
             </div>
           )}
         </div>
+
+        {/* Select Accessories Section */}
+        {availableAccessories.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Select Accessories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableAccessories.map((accessory) => (
+                <div key={accessory.id} className="flex flex-col space-y-2 p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`accessory-${accessory.id}`}
+                      checked={selectedAccessories[accessory.id] ? true : false}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          handleAccessoryQuantityChange(accessory.id, 1);
+                        } else {
+                          handleAccessoryQuantityChange(accessory.id, 0);
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <Label
+                      htmlFor={`accessory-${accessory.id}`}
+                      className="cursor-pointer text-sm font-medium flex-1"
+                    >
+                      <span>{accessory.name}</span>
+                    </Label>
+                    {accessory.price > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">₹{accessory.price.toFixed(2)}</span>
+                    )}
+                  </div>
+
+                  {/* Quantity Input - Only show if selected */}
+                  {selectedAccessories[accessory.id] && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <Label className="text-xs text-gray-600">Quantity:</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={selectedAccessories[accessory.id]}
+                        onChange={(e) => handleAccessoryQuantityChange(accessory.id, Math.max(1, parseInt(e.target.value) || 0))}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                      <span className="text-xs text-gray-600 ml-auto">
+                        Total: ₹{(accessory.price * selectedAccessories[accessory.id]).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Payment Method Section */}
         <div>
@@ -831,6 +1093,12 @@ export const AddFacilityBookingPage = () => {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="complementary" id="complementary" />
                   <Label htmlFor="complementary">Complementary</Label>
+                </div>
+              )}
+              {facilityDetails.bill_to_company && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="bill_to_company" id="bill_to_company" />
+                  <Label htmlFor="bill_to_company">Bill to Company</Label>
                 </div>
               )}
             </RadioGroup>
@@ -867,123 +1135,291 @@ export const AddFacilityBookingPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on per_slot_charge only */}
-              {(() => {
-                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
-                const slotsCount = selectedSlots.length;
-                const hasSlots = slotsCount > 0;
+              {/* For Requestable Type - Use Flexible Price API Response */}
+              {isRequestableType && flexiblePriceData ? (
+                <>
+                  {/* Calculate accessory total */}
+                  {(() => {
+                    const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                      const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                      return total + ((accessory?.price || 0) * (quantity || 0));
+                    }, 0);
+                    const subtotalWithAccessories = flexiblePriceData.slab_price + accessoryTotal;
+                    const calculatedDiscountAmount = discountType === 'percentage'
+                      ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
+                      : (discountAmount || 0);
+                    const subtotalAfterDiscount = subtotalWithAccessories - calculatedDiscountAmount;
+                    const grandTotal = subtotalAfterDiscount + flexiblePriceData.cgst_amount + flexiblePriceData.sgst_amount;
 
-                // Calculate total based only on per_slot_charge
-                const slotTotal = slotsCount * perSlotCharge;
-                const subtotalBeforeDiscount = slotTotal;
-                const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-                const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-
-                const gstPercentage = facilityDetails.gst || 0;
-                const sgstPercentage = facilityDetails.sgst || 0;
-                const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-                const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-                const totalTax = gstAmount + sgstAmount;
-                const grandTotal = subtotalAfterDiscount + totalTax;
-
-                return (
-                  <>
-                    {/* Slots Count - Only show when slots are selected */}
-                    {hasSlots && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
-                        <span className="text-gray-700 font-medium">Number of Slots Selected</span>
-                        <span className="font-semibold text-blue-600">{slotsCount}</span>
-                      </div>
-                    )}
-
-                    {/* Slot Charges */}
-                    {hasSlots && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Slot Charges</span>
-                          <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                    return (
+                      <>
+                        {/* Slab Price */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700">Base Price</span>
+                          <span className="font-medium">₹{flexiblePriceData.slab_price.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Subtotal Before Discount */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-gray-700 font-medium">Subtotal</span>
-                      <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
-                    </div>
+                        {/* Booking Duration */}
+                        {flexiblePriceData.used_slab && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700">Booking Duration</span>
+                            <span className="font-medium">{flexiblePriceData.used_slab.duration_hours} hour{flexiblePriceData.used_slab.duration_hours > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
 
-                    {/* Discount - Editable */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Discount</span>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={discountPercentage}
-                            onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                            variant="outlined"
-                            sx={{
-                              width: '80px',
-                              '& .MuiOutlinedInput-root': {
-                                height: '36px',
-                                '& input': {
-                                  textAlign: 'right',
-                                  padding: '8px 12px'
-                                }
-                              }
-                            }}
-                            inputProps={{
-                              min: 0,
-                              max: 100,
-                              step: 0.1
-                            }}
-                          />
-                          <span className="text-gray-500">%</span>
+                        {/* Accessory Charges */}
+                        {accessoryTotal > 0 && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-700">Accessory Charges</span>
+                              <span className="text-sm text-gray-500">({Object.values(selectedAccessories).reduce((sum, qty) => sum + qty, 0)} items)</span>
+                            </div>
+                            <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {/* Subtotal (Slab Price + Accessories) */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 font-semibold">
+                          <span className="text-gray-700">Subtotal</span>
+                          <span className="font-medium">₹{subtotalWithAccessories.toFixed(2)}</span>
                         </div>
-                      </div>
-                      <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
-                    </div>
 
-                    {/* Subtotal After Discount */}
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <span className="text-gray-700 font-medium">Subtotal After Discount</span>
-                        <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    {/* GST */}
-                    {gstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">GST</span>
-                          <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                        {/* Discount - Editable */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Discount</span>
+                            <div className="flex items-center gap-1">
+                              <div className="flex gap-1 items-center">
+                                <select
+                                  value={discountType}
+                                  onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                  className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                  style={{ height: '36px' }}
+                                >
+                                  <option value="percentage">%</option>
+                                  <option value="amount">₹</option>
+                                </select>
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                  onChange={(e) => {
+                                    if (discountType === 'percentage') {
+                                      setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                    } else {
+                                      setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
+                                    }
+                                  }}
+                                  variant="outlined"
+                                  sx={{
+                                    width: '80px',
+                                    '& .MuiOutlinedInput-root': {
+                                      height: '36px',
+                                      '& input': {
+                                        textAlign: 'right',
+                                        padding: '8px 12px'
+                                      }
+                                    }
+                                  }}
+                                  inputProps={{
+                                    min: 0,
+                                    step: discountType === 'percentage' ? 0.1 : 1
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-medium">₹{calculatedDiscountAmount.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* SGST */}
-                    {sgstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
+                        {/* Subtotal After Discount */}
+                        {calculatedDiscountAmount > 0 && (
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                            <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {/* CGST from API */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700">CGST</span>
+                          <span className="font-medium">₹{flexiblePriceData.cgst_amount.toFixed(2)}</span>
+                        </div>
+
+                        {/* SGST from API */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
                           <span className="text-gray-700">SGST</span>
-                          <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          <span className="font-medium">₹{flexiblePriceData.sgst_amount.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Grand Total */}
-                    <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
-                    </div>
-                  </>
-                );
-              })()}
+                        {/* Grand Total */}
+                        <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                          <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                          <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </>
+              ) : isRequestableType && selectedSlots.length === 0 ? (
+                <p className="text-gray-500 text-sm">Select slots to calculate pricing</p>
+              ) : !isRequestableType ? (
+                (() => {
+                  const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
+                  const slotsCount = selectedSlots.length;
+                  const hasSlots = slotsCount > 0;
+
+                  // Calculate slot total
+                  const slotTotal = slotsCount * perSlotCharge;
+
+                  // Calculate accessory total with quantities
+                  const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                    const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                    return total + ((accessory?.price || 0) * (quantity || 0));
+                  }, 0);
+                  const hasAccessories = accessoryTotal > 0;
+
+                  // Subtotal includes slots and accessories
+                  const subtotalBeforeDiscount = slotTotal + accessoryTotal;
+                  const calculatedDiscountAmount = discountType === 'percentage'
+                    ? (subtotalBeforeDiscount * (discountPercentage || 0)) / 100
+                    : (discountAmount || 0);
+                  const subtotalAfterDiscount = subtotalBeforeDiscount - calculatedDiscountAmount;
+
+                  const gstPercentage = facilityDetails.gst || 0;
+                  const sgstPercentage = facilityDetails.sgst || 0;
+                  const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                  const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                  const totalTax = gstAmount + sgstAmount;
+                  const grandTotal = subtotalAfterDiscount + totalTax;
+
+                  return (
+                    <>
+                      {/* Slots Count - Only show when slots are selected */}
+                      {hasSlots && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                          <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                          <span className="font-semibold text-blue-600">{slotsCount}</span>
+                        </div>
+                      )}
+
+                      {/* Slot Charges */}
+                      {hasSlots && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Slot Charges</span>
+                            <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                          </div>
+                          <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Accessory Charges */}
+                      {hasAccessories && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Accessory Charges</span>
+                            <span className="text-sm text-gray-500">({Object.values(selectedAccessories).reduce((sum, qty) => sum + qty, 0)} items)</span>
+                          </div>
+                          <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Subtotal Before Discount */}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700 font-medium">Subtotal</span>
+                        <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Discount - Editable */}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Discount</span>
+                          <div className="flex items-center gap-1">
+                            <div className="flex gap-1 items-center">
+                              <select
+                                value={discountType}
+                                onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm"
+                                style={{ height: '36px' }}
+                              >
+                                <option value="percentage">%</option>
+                                <option value="amount">₹</option>
+                              </select>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                onChange={(e) => {
+                                  if (discountType === 'percentage') {
+                                    setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                  } else {
+                                    setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
+                                  }
+                                }}
+                                variant="outlined"
+                                sx={{
+                                  width: '80px',
+                                  '& .MuiOutlinedInput-root': {
+                                    height: '36px',
+                                    '& input': {
+                                      textAlign: 'right',
+                                      padding: '8px 12px'
+                                    }
+                                  }
+                                }}
+                                inputProps={{
+                                  min: 0,
+                                  step: discountType === 'percentage' ? 0.1 : 1
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <span className="font-medium"> ₹{calculatedDiscountAmount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Subtotal After Discount */}
+                      {calculatedDiscountAmount > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                          <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* GST */}
+                      {gstPercentage > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">GST</span>
+                            <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* SGST */}
+                      {sgstPercentage > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">SGST</span>
+                            <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Grand Total */}
+                      <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                        <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                        <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()
+              ) : (
+                <p className="text-gray-500 text-sm">Loading cost information...</p>
+              )}
             </div>
           </div>
         )}
@@ -1030,7 +1466,7 @@ export const AddFacilityBookingPage = () => {
             <div className="space-y-4">
               {
                 selectedFacility && typeof selectedFacility === 'object'
-                  ? selectedFacility.cancellation_policy || 'No cancellation policy available'
+                  ? <div dangerouslySetInnerHTML={{ __html: selectedFacility.terms || "<p className='text-gray-500'>No cancellation policy provided</p>" }} />
                   : 'No cancellation policy available'
               }
             </div>
@@ -1057,7 +1493,7 @@ export const AddFacilityBookingPage = () => {
             <div className="space-y-4">
               {
                 selectedFacility && typeof selectedFacility === 'object'
-                  ? selectedFacility.terms || 'No terms and conditions available'
+                  ? <div dangerouslySetInnerHTML={{ __html: selectedFacility.terms || "<p className='text-gray-500'>No terms and conditions provided</p>" }} />
                   : 'No terms and conditions available'
               }
             </div>

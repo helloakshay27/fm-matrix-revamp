@@ -34,6 +34,7 @@ import {
 } from '@/components/ticket-analytics';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
+import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -160,7 +161,7 @@ export const TicketDashboard = () => {
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsLoaded, setAnalyticsLoaded] = useState(false); // Track if analytics data has been loaded
-  
+
   // Individual loading states for each analytics card
   const [loadingStates, setLoadingStates] = useState({
     statusChart: false,
@@ -240,7 +241,7 @@ export const TicketDashboard = () => {
   // Fetch analytics data from API
   const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
-    
+
     // Set all individual cards to loading
     setLoadingStates({
       statusChart: true,
@@ -251,7 +252,7 @@ export const TicketDashboard = () => {
       agingMatrix: true,
       resolutionTat: true
     });
-    
+
     try {
       // Fetch all data in parallel but update states individually as they complete
       const promises = [
@@ -300,7 +301,7 @@ export const TicketDashboard = () => {
       // });
     } catch (error) {
       console.error('Error fetching analytics data:', error);
-      
+
       // Reset all loading states on error
       setLoadingStates({
         statusChart: false,
@@ -311,7 +312,7 @@ export const TicketDashboard = () => {
         agingMatrix: false,
         resolutionTat: false
       });
-      
+
       sonnerToast.error("Failed to fetch analytics data. Please try again.");
     } finally {
       setAnalyticsLoading(false);
@@ -327,7 +328,7 @@ export const TicketDashboard = () => {
     const endDate = convertDateStringToDate(filters.endDate);
 
     fetchAnalyticsData(startDate, endDate);
-    
+
     // Apply date range to ticket summary cards
     const dateRangeParam = `${filters.startDate} - ${filters.endDate}`;
     // The API will automatically wrap date_range with q[] so just pass date_range
@@ -344,7 +345,7 @@ export const TicketDashboard = () => {
       // Only pass filters when explicitly provided
       // Status filters should NEVER be passed to ticket_summary API
       const summaryFilters: TicketFilters = filters || {};
-      
+
       const summary = await ticketManagementAPI.getTicketSummary(summaryFilters);
       setTicketSummary(summary);
 
@@ -373,20 +374,20 @@ export const TicketDashboard = () => {
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
 
       // Optimize sorting with early return for performance
-      const sortedTickets = response.complaints.length > 0 
+      const sortedTickets = response.complaints.length > 0
         ? [...response.complaints].sort((a, b) => {
-            // Flagged tickets always come first
-            if (a.is_flagged !== b.is_flagged) {
-              return a.is_flagged ? -1 : 1;
-            }
+          // Flagged tickets always come first
+          if (a.is_flagged !== b.is_flagged) {
+            return a.is_flagged ? -1 : 1;
+          }
 
-            // Among non-flagged tickets, golden tickets come first
-            if (!a.is_flagged && !b.is_flagged && a.is_golden_ticket !== b.is_golden_ticket) {
-              return a.is_golden_ticket ? -1 : 1;
-            }
+          // Among non-flagged tickets, golden tickets come first
+          if (!a.is_flagged && !b.is_flagged && a.is_golden_ticket !== b.is_golden_ticket) {
+            return a.is_golden_ticket ? -1 : 1;
+          }
 
-            return 0; // Maintain original order for same priority
-          })
+          return 0; // Maintain original order for same priority
+        })
         : [];
 
       // Batch state updates for better performance - Use React.startTransition for non-urgent updates
@@ -473,7 +474,7 @@ export const TicketDashboard = () => {
         sonnerToast.error("Failed to fetch ticket summary. Please try again.");
       }
     };
-    
+
     loadInitialData();
   }, []);
 
@@ -846,18 +847,18 @@ export const TicketDashboard = () => {
   };
   const handleExport = async () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
-    
+
     if (isExporting) {
       return; // Prevent multiple simultaneous exports
     }
-    
+
     setIsExporting(true);
-    
+
     // Show loading toast
     const loadingToastId = sonnerToast.loading("Preparing export file...", {
       duration: Infinity, // Keep it visible until we dismiss it
     });
-    
+
     try {
       const blob = await ticketManagementAPI.exportTicketsExcel(filters);
       const url = window.URL.createObjectURL(blob);
@@ -866,14 +867,14 @@ export const TicketDashboard = () => {
       a.download = `tickets_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       // Dismiss loading toast and show success
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success("Tickets exported successfully!");
-      
+
     } catch (error) {
       console.error('Export failed:', error);
-      
+
       // Dismiss loading toast and show error
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.error("Failed to export tickets. Please try again.");
@@ -885,11 +886,11 @@ export const TicketDashboard = () => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
-    
+
     // Update ticket summary cards with the applied filters
     // Extract only the date_range filter for the summary API
     const dateRange = newFilters.date_range;
-    
+
     if (dateRange) {
       // Pass only date filter to ticket summary API
       // The API will automatically wrap it with q[] so just pass date_range
@@ -910,13 +911,13 @@ export const TicketDashboard = () => {
     if (cardType === 'total') {
       // Clear only status filters, keep other filters like date_range
       setFilters(prevFilters => {
-        const { 
-          complaint_status_fixed_state_eq, 
-          complaint_status_fixed_state_not_eq, 
-          complaint_status_fixed_state_null, 
-          m, 
+        const {
+          complaint_status_fixed_state_eq,
+          complaint_status_fixed_state_not_eq,
+          complaint_status_fixed_state_null,
+          m,
           g, // Remove nested group structure
-          ...otherFilters 
+          ...otherFilters
         } = prevFilters;
         console.log('Total card - Clearing status filters, keeping:', otherFilters);
         return otherFilters;
@@ -928,13 +929,13 @@ export const TicketDashboard = () => {
     // Preserve existing filters (like date_range) and only update status filters
     setFilters(prevFilters => {
       // Remove any existing status filters first (including nested group structure)
-      const { 
-        complaint_status_fixed_state_eq, 
-        complaint_status_fixed_state_not_eq, 
-        complaint_status_fixed_state_null, 
-        m, 
+      const {
+        complaint_status_fixed_state_eq,
+        complaint_status_fixed_state_not_eq,
+        complaint_status_fixed_state_null,
+        m,
         g, // Remove nested group structure
-        ...otherFilters 
+        ...otherFilters
       } = prevFilters;
 
       const newFilters: TicketFilters = { ...otherFilters };
@@ -965,7 +966,7 @@ export const TicketDashboard = () => {
     });
 
     setCurrentPage(1);
-    
+
     // DO NOT call fetchTicketSummary here - status card clicks should only filter the ticket list,
     // not affect the summary counts which should remain unfiltered
   };
@@ -1009,12 +1010,12 @@ export const TicketDashboard = () => {
     key: 'actions',
     label: 'Actions',
     sortable: false
-  }, 
+  },
   {
     key: 'ticket_number',
     label: 'Ticket ID',
     sortable: true
-  }, 
+  },
   {
     key: 'heading',
     label: 'Description',
@@ -1174,12 +1175,33 @@ export const TicketDashboard = () => {
     }
   };
 
+  const formatDateOnly = (dateString: string) => {
+    if (!dateString) return '--';
+    try {
+      // Parse the ISO string to extract only the date part
+      // Format: "2025-11-19T12:01:19.000+04:00"
+      const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const [, year, month, day] = match;
+        return `${day}/${month}/${year}`;
+      }
+      // Fallback to Date object if regex doesn't match
+      const date = new Date(dateString);
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   // Helper function to format escalation data
   const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
     if (!escalation) return null;
-    
+
     const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
-    
+
     return {
       minutes: minutes || 0,
       isOverdue: is_overdue || false,
@@ -1192,7 +1214,7 @@ export const TicketDashboard = () => {
   // Helper function to format escalation display
   const formatEscalationDisplay = (escalation: EscalationInfo | null | undefined, type: 'response' | 'resolution') => {
     if (!escalation) return '--';
-    
+
     const formatted = formatEscalationData(escalation);
     return formatted?.escalationName || '--';
   };
@@ -1207,12 +1229,12 @@ export const TicketDashboard = () => {
   // Helper function to format escalation time in D:H:M format
   const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
     if (!escalation || !escalation.minutes) return '--';
-    
+
     const totalMinutes = escalation.minutes;
     const days = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    
+
     return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
@@ -1249,15 +1271,15 @@ export const TicketDashboard = () => {
       return (
         <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
           <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
-             {shouldShow("tickets", "view") && (
-            <Eye
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewDetails(item.id);
-              }}
-            />
-             )}
+            {shouldShow("tickets", "view") && (
+              <Eye
+                className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewDetails(item.id);
+                }}
+              />
+            )}
           </div>
           {/* <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Edit
@@ -1319,7 +1341,7 @@ export const TicketDashboard = () => {
       return formatDate(item.created_at);
     }
     if (columnKey === 'review_tracking_date') {
-      return formatDate(item.review_tracking_date);
+      return formatDateOnly(item.review_tracking_date);
     }
     if (columnKey === 'response_tat') {
       return formatEscalationMinutes(item.next_response_escalation);
@@ -1353,7 +1375,7 @@ export const TicketDashboard = () => {
       const startDate = convertDateStringToDate(defaultRange.startDate);
       const endDate = convertDateStringToDate(defaultRange.endDate);
       fetchAnalyticsData(startDate, endDate);
-      
+
       // Also fetch ticket summary with date range for analytics tab
       const dateRangeParam = `${defaultRange.startDate} - ${defaultRange.endDate}`;
       // The API will automatically wrap date_range with q[] so just pass date_range
@@ -1368,150 +1390,151 @@ export const TicketDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      <Tabs defaultValue="tickets" className="w-full" onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger
-            value="tickets"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              strokeWidth={2}
-              className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+    <>
+      <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+        <Tabs defaultValue="tickets" className="w-full" onValueChange={handleTabChange}>
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger
+              value="tickets"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-              <path d="M13 5v2" />
-              <path d="M13 17v2" />
-              <path d="M13 11v2" />
-            </svg>
-            Ticket List
-          </TabsTrigger>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                <path d="M13 5v2" />
+                <path d="M13 17v2" />
+                <path d="M13 11v2" />
+              </svg>
+              Ticket List
+            </TabsTrigger>
 
-          <TabsTrigger
-            value="analytics"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              strokeWidth={2}
-              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            <TabsTrigger
+              value="analytics"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
-              <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-              <path d="M18 17V9" />
-              <path d="M13 17V5" />
-              <path d="M8 17v-3" />
-            </svg>
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+              </svg>
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-4 mt-4">
-          {/* Header with Filter and Ticket Selector */}
-          <div className="flex justify-end items-center gap-2">
+          <TabsContent value="analytics" className="space-y-4 sm:space-y-4 mt-4">
+            {/* Header with Filter and Ticket Selector */}
+            <div className="flex justify-end items-center gap-2">
 
-            <Button
-              variant="outline"
-              onClick={() => setIsAnalyticsFilterOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
-            >
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-              </span>
-              <Filter className="w-4 h-4 text-gray-600" />
-            </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsAnalyticsFilterOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+              >
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                </span>
+                <Filter className="w-4 h-4 text-gray-600" />
+              </Button>
 
-            <TicketSelector onSelectionChange={handleSelectionChange} />
-          </div>
+              <TicketSelector onSelectionChange={handleSelectionChange} />
+            </div>
 
-          {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
-            {/* Left Section - Charts */}
-            <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-              {/* All Charts with Drag and Drop */}
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="space-y-4 sm:space-y-2">
-                    {/* First Row - Ticket Status and ProActive/Reactive */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
-                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <SectionLoader loading={loadingStates.statusChart}>
-                                <TicketStatusOverviewCard
-                                  openTickets={openticketanalyticsData}
-                                  closedTickets={closedticketanalyticsData}
-                                />
-                              </SectionLoader>
-                            </SortableChartItem>
-                          );
-                        }
-                        if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <SectionLoader loading={loadingStates.reactiveChart}>
-                                <ProactiveReactiveCard
-                                  proactiveOpenTickets={proactiveOpenTickets}
-                                  proactiveClosedTickets={proactiveClosedTickets}
-                                  reactiveOpenTickets={reactiveOpenTickets}
-                                  reactiveClosedTickets={reactiveClosedTickets}
-                                />
-                              </SectionLoader>
-                            </SortableChartItem>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
+            {/* Main Analytics Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
+              {/* Left Section - Charts */}
+              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+                {/* All Charts with Drag and Drop */}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                    <div className="space-y-4 sm:space-y-2">
+                      {/* First Row - Ticket Status and ProActive/Reactive */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                        {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
+                          if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <SectionLoader loading={loadingStates.statusChart}>
+                                  <TicketStatusOverviewCard
+                                    openTickets={openticketanalyticsData}
+                                    closedTickets={closedticketanalyticsData}
+                                  />
+                                </SectionLoader>
+                              </SortableChartItem>
+                            );
+                          }
+                          if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <SectionLoader loading={loadingStates.reactiveChart}>
+                                  <ProactiveReactiveCard
+                                    proactiveOpenTickets={proactiveOpenTickets}
+                                    proactiveClosedTickets={proactiveClosedTickets}
+                                    reactiveOpenTickets={reactiveOpenTickets}
+                                    reactiveClosedTickets={reactiveClosedTickets}
+                                  />
+                                </SectionLoader>
+                              </SortableChartItem>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
 
-                    {/* Second Row - Response TAT */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                      {visibleSections.includes('responseTat') && (
-                        <SortableChartItem key="responseTat" id="responseTat">
-                          <SectionLoader loading={loadingStates.responseTat}>
-                            <ResponseTATCard
-                              data={responseTATData}
-                              className="h-full"
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      )}
-                    </div>
+                      {/* Second Row - Response TAT */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('responseTat') && (
+                          <SortableChartItem key="responseTat" id="responseTat">
+                            <SectionLoader loading={loadingStates.responseTat}>
+                              <ResponseTATCard
+                                data={responseTATData}
+                                className="h-full"
+                                dateRange={{
+                                  startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                  endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                                }}
+                              />
+                            </SectionLoader>
+                          </SortableChartItem>
+                        )}
+                      </div>
 
-                    {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                      {visibleSections.includes('categoryWiseProactiveReactive') && (
-                        <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
-                          <SectionLoader loading={loadingStates.categoryWiseProactiveReactive}>
-                            <CategoryWiseProactiveReactiveCard
-                              data={categorywiseTicketsData}
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      )}
-                    </div>
+                      {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('categoryWiseProactiveReactive') && (
+                          <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
+                            <SectionLoader loading={loadingStates.categoryWiseProactiveReactive}>
+                              <CategoryWiseProactiveReactiveCard
+                                data={categorywiseTicketsData}
+                                dateRange={{
+                                  startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                  endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                                }}
+                              />
+                            </SectionLoader>
+                          </SortableChartItem>
+                        )}
+                      </div>
 
-                    {/* Fourth Row - Unit Category-wise Tickets */}
-                    {/* <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {/* Fourth Row - Unit Category-wise Tickets */}
+                      {/* <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryChart') && (
                         <SortableChartItem key="categoryChart" id="categoryChart">
                           <UnitCategoryWiseCard
@@ -1525,102 +1548,104 @@ export const TicketDashboard = () => {
                       )}
                     </div> */}
 
-                    {/* Fifth Row - Tickets Aging Matrix */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                      {visibleSections.includes('agingMatrix') && (
-                        <SortableChartItem key="agingMatrix" id="agingMatrix">
-                          <SectionLoader loading={loadingStates.agingMatrix}>
-                            <TicketAgingMatrixCard
-                              data={agingMatrixAnalyticsData}
-                              agingMatrixData={agingMatrixData}
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      )}
-                    </div>
+                      {/* Fifth Row - Tickets Aging Matrix */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('agingMatrix') && (
+                          <SortableChartItem key="agingMatrix" id="agingMatrix">
+                            <SectionLoader loading={loadingStates.agingMatrix}>
+                              <TicketAgingMatrixCard
+                                data={agingMatrixAnalyticsData}
+                                agingMatrixData={agingMatrixData}
+                                dateRange={{
+                                  startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                  endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                                }}
+                              />
+                            </SectionLoader>
+                          </SortableChartItem>
+                        )}
+                      </div>
 
-                    {/* Sixth Row - Resolution TAT Report */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                      {visibleSections.includes('resolutionTat') && (
-                        <SortableChartItem key="resolutionTat" id="resolutionTat">
-                          <SectionLoader loading={loadingStates.resolutionTat}>
-                            <ResolutionTATCard
-                              data={resolutionTATReportData}
-                              className="bg-white border border-gray-200 rounded-lg"
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      )}
+                      {/* Sixth Row - Resolution TAT Report */}
+                      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                        {visibleSections.includes('resolutionTat') && (
+                          <SortableChartItem key="resolutionTat" id="resolutionTat">
+                            <SectionLoader loading={loadingStates.resolutionTat}>
+                              <ResolutionTATCard
+                                data={resolutionTATReportData}
+                                className="bg-white border border-gray-200 rounded-lg"
+                                dateRange={{
+                                  startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                  endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                                }}
+                              />
+                            </SectionLoader>
+                          </SortableChartItem>
+                        )}
+                      </div>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+
+              {/* Right Sidebar - Recent Tickets */}
+              <div className="xl:col-span-4 order-first xl:order-last">
+                <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
+              </div>
+            </div>
+            <AIAssistantWidget allowedModuleId={2} />
+
+          </TabsContent>
+
+          <TabsContent value="tickets" className="space-y-4 sm:space-y-4 mt-4 sm:mt-6">
+            {/* Ticket Statistics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
+              {[{
+                label: 'Total Tickets',
+                value: displayTotalTickets,
+                icon: Settings,
+                type: 'total',
+                clickable: true
+              }, {
+                label: 'Open',
+                value: openTickets,
+                icon: Settings,
+                type: 'open',
+                clickable: true
+              }, {
+                label: 'Closed',
+                value: closedTickets,
+                icon: Settings,
+                type: 'closed',
+                clickable: true
+              }].map((item, i) => {
+                const IconComponent = item.icon;
+                const isActive = isStatusCardActive(item.type);
+                return (
+                  <div
+                    key={i}
+                    className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${item.clickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+                    onClick={() => item.clickable && handleStatusCardClick(item.type)}
+                  >
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                      <IconComponent className="w-6 h-6 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold text-[#1A1A1A]">
+                        {item.value}
+                      </div>
+                      <div className="text-sm font-medium text-[#1A1A1A]">
+                        {item.label}
+                      </div>
                     </div>
                   </div>
-                </SortableContext>
-              </DndContext>
+                );
+              })}
             </div>
 
-            {/* Right Sidebar - Recent Tickets */}
-            <div className="xl:col-span-4 order-first xl:order-last">
-              <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tickets" className="space-y-4 sm:space-y-4 mt-4 sm:mt-6">
-          {/* Ticket Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
-            {[{
-              label: 'Total Tickets',
-              value: displayTotalTickets,
-              icon: Settings,
-              type: 'total',
-              clickable: true
-            }, {
-              label: 'Open',
-              value: openTickets,
-              icon: Settings,
-              type: 'open',
-              clickable: true
-            }, {
-              label: 'Closed',
-              value: closedTickets,
-              icon: Settings,
-              type: 'closed',
-              clickable: true
-            }].map((item, i) => {
-              const IconComponent = item.icon;
-              const isActive = isStatusCardActive(item.type);
-              return (
-                <div
-                  key={i}
-                  className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${item.clickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
-                  onClick={() => item.clickable && handleStatusCardClick(item.type)}
-                >
-                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                    <IconComponent className="w-6 h-6 text-[#C72030]" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-[#1A1A1A]">
-                      {item.value}
-                    </div>
-                    <div className="text-sm font-medium text-[#1A1A1A]">
-                      {item.label}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Tickets Table */}
-          <div className="overflow-x-auto animate-fade-in">
-            {/* {searchLoading && (
+            {/* Tickets Table */}
+            <div className="overflow-x-auto animate-fade-in">
+              {/* {searchLoading && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
                 <div className="flex items-center gap-2 text-blue-600">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -1628,158 +1653,39 @@ export const TicketDashboard = () => {
                 </div>
               </div>
             )} */}
-            <EnhancedTable
-              data={tickets || []}
-              columns={columns}
-              renderCell={renderCell}
-              selectable={true}
-              pagination={false}
-              enableExport={true}
-              exportFileName="tickets"
-              handleExport={handleExport}
-              storageKey="tickets-table"
-              enableSelection={true}
-              selectedItems={selectedTickets.map(id => id.toString())}
-              onSelectItem={handleTicketSelection}
-              onSelectAll={handleSelectAll}
-              getItemId={ticket => ticket.id.toString()}
-              leftActions={
-                <div className="flex gap-3">
-                  {renderCustomActions()}
-                </div>
-              }
-              onFilterClick={() => setIsFilterOpen(true)}
-              rightActions={null}
-              searchPlaceholder="Search Tickets"
-              onSearchChange={handleSearch}
-              hideTableExport={false}
-              hideColumnsButton={false}
-              className="transition-all duration-500 ease-in-out"
-              loading={loading}
-              loadingMessage="Loading tickets..."
-            />
-
-                {/* Add custom CSS for smooth row transitions */}
-                <style>{`
-                  @keyframes slideInFromTop {
-                    from {
-                      opacity: 0;
-                      transform: translateY(-10px);
-                    }
-                    to {
-                      opacity: 1;
-                      transform: translateY(0);
-                    }
-                  }
-                  
-                  .table-row-transition {
-                    animation: slideInFromTop 0.4s ease-out;
-                    transition: all 0.3s ease-in-out;
-                  }
-                  
-                  .flagged-row {
-                    background-color: rgba(239, 68, 68, 0.05) !important;
-                    border-left: 3px solid #ef4444;
-                  }
-                  
-                  .golden-row {
-                    background-color: rgba(245, 158, 11, 0.05) !important;
-                    border-left: 3px solid #f59e0b;
-                  }
-                `}</style>
-
-                {/* Custom Pagination */}
-                <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
-                  <div className="flex items-center space-x-1">
-                    {/* Previous Button */}
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1 || loading || searchLoading}
-                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-
-                    {/* Page Numbers */}
-                    <div className="flex items-center space-x-1">
-                      {/* First page */}
-                      {currentPage > 3 && (
-                        <>
-                          <button
-                            onClick={() => setCurrentPage(1)}
-                            disabled={loading || searchLoading}
-                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                          >
-                            1
-                          </button>
-                          {currentPage > 4 && (
-                            <span className="px-2 text-gray-500">...</span>
-                          )}
-                        </>
-                      )}
-
-                      {/* Current page and surrounding pages */}
-                      {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (currentPage <= 2) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 1) {
-                          pageNum = totalPages - 2 + i;
-                        } else {
-                          pageNum = currentPage - 1 + i;
-                        }
-
-                        if (pageNum < 1 || pageNum > totalPages) return null;
-
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            disabled={loading || searchLoading}
-                            className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
-                              ? 'bg-[#C72030] text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
-                              }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-
-                      {/* Last page */}
-                      {currentPage < totalPages - 2 && (
-                        <>
-                          {currentPage < totalPages - 3 && (
-                            <span className="px-2 text-gray-500">...</span>
-                          )}
-                          <button
-                            onClick={() => setCurrentPage(totalPages)}
-                            disabled={loading || searchLoading}
-                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages || loading || searchLoading}
-                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
+              <EnhancedTable
+                data={tickets || []}
+                columns={columns}
+                renderCell={renderCell}
+                selectable={true}
+                pagination={false}
+                enableExport={true}
+                exportFileName="tickets"
+                handleExport={handleExport}
+                storageKey="tickets-table"
+                enableSelection={true}
+                selectedItems={selectedTickets.map(id => id.toString())}
+                onSelectItem={handleTicketSelection}
+                onSelectAll={handleSelectAll}
+                getItemId={ticket => ticket.id.toString()}
+                leftActions={
+                  <div className="flex gap-3">
+                    {renderCustomActions()}
                   </div>
-                </div>
+                }
+                onFilterClick={() => setIsFilterOpen(true)}
+                rightActions={null}
+                searchPlaceholder="Search Tickets"
+                onSearchChange={handleSearch}
+                hideTableExport={false}
+                hideColumnsButton={false}
+                className="transition-all duration-500 ease-in-out"
+                loading={loading}
+                loadingMessage="Loading tickets..."
+              />
 
-                {/* Add custom CSS for smooth row transitions */}
-                <style>{`
+              {/* Add custom CSS for smooth row transitions */}
+              <style>{`
                   @keyframes slideInFromTop {
                     from {
                       opacity: 0;
@@ -1806,46 +1712,168 @@ export const TicketDashboard = () => {
                     border-left: 3px solid #f59e0b;
                   }
                 `}</style>
-          </div>
-        </TabsContent>
-      </Tabs>
 
-      <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
+              {/* Custom Pagination */}
+              <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+                <div className="flex items-center space-x-1">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || loading || searchLoading}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
 
-      {/* Edit Status Dialog */}
-      <EditStatusDialog
-        open={isEditStatusOpen}
-        onOpenChange={setIsEditStatusOpen}
-        complaintId={selectedTicketForEdit?.id}
-        currentStatusId={selectedTicketForEdit?.complaint_status_id}
-        currentStatus={selectedTicketForEdit?.issue_status}
-        onSuccess={() => {
-          fetchTickets(currentPage);
-          fetchTicketSummary(); // Update summary counts immediately
-          setSelectedTicketForEdit(null);
-        }}
-      />
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {/* First page */}
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          disabled={loading || searchLoading}
+                          className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && (
+                          <span className="px-2 text-gray-500">...</span>
+                        )}
+                      </>
+                    )}
 
-      {/* Analytics Filter Dialog */}
-      <TicketAnalyticsFilterDialog
-        isOpen={isAnalyticsFilterOpen}
-        onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={handleAnalyticsFilterApply}
-        currentStartDate={analyticsDateRange.startDate}
-        currentEndDate={analyticsDateRange.endDate}
-      />
+                    {/* Current page and surrounding pages */}
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (currentPage <= 2) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 1) {
+                        pageNum = totalPages - 2 + i;
+                      } else {
+                        pageNum = currentPage - 1 + i;
+                      }
 
-      {/* Ticket Selection Panel */}
-      {selectedTickets.length > 0 && shouldShow("tickets", "manage") && (
-        <TicketSelectionPanel
-          selectedTickets={selectedTickets}
-          selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))}
-          onGoldenTicket={handleGoldenTicket}
-          onFlag={handleFlag}
-          onExport={handleExport}
-          onClearSelection={handleClearSelection}
+                      if (pageNum < 1 || pageNum > totalPages) return null;
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          disabled={loading || searchLoading}
+                          className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
+                            ? 'bg-[#C72030] text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    {/* Last page */}
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && (
+                          <span className="px-2 text-gray-500">...</span>
+                        )}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={loading || searchLoading}
+                          className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || loading || searchLoading}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Add custom CSS for smooth row transitions */}
+              <style>{`
+                  @keyframes slideInFromTop {
+                    from {
+                      opacity: 0;
+                      transform: translateY(-10px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                  
+                  .table-row-transition {
+                    animation: slideInFromTop 0.4s ease-out;
+                    transition: all 0.3s ease-in-out;
+                  }
+                  
+                  .flagged-row {
+                    background-color: rgba(239, 68, 68, 0.05) !important;
+                    border-left: 3px solid #ef4444;
+                  }
+                  
+                  .golden-row {
+                    background-color: rgba(245, 158, 11, 0.05) !important;
+                    border-left: 3px solid #f59e0b;
+                  }
+                `}</style>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
+
+        {/* Edit Status Dialog */}
+        <EditStatusDialog
+          open={isEditStatusOpen}
+          onOpenChange={setIsEditStatusOpen}
+          complaintId={selectedTicketForEdit?.id}
+          currentStatusId={selectedTicketForEdit?.complaint_status_id}
+          currentStatus={selectedTicketForEdit?.issue_status}
+          onSuccess={() => {
+            fetchTickets(currentPage);
+            fetchTicketSummary(); // Update summary counts immediately
+            setSelectedTicketForEdit(null);
+          }}
         />
-      )}
-    </div>
+
+        {/* Analytics Filter Dialog */}
+        <TicketAnalyticsFilterDialog
+          isOpen={isAnalyticsFilterOpen}
+          onClose={() => setIsAnalyticsFilterOpen(false)}
+          onApplyFilters={handleAnalyticsFilterApply}
+          currentStartDate={analyticsDateRange.startDate}
+          currentEndDate={analyticsDateRange.endDate}
+        />
+
+        {/* Ticket Selection Panel */}
+        {selectedTickets.length > 0 && shouldShow("tickets", "manage") && (
+          <TicketSelectionPanel
+            selectedTickets={selectedTickets}
+            selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))}
+            onGoldenTicket={handleGoldenTicket}
+            onFlag={handleFlag}
+            onExport={handleExport}
+            onClearSelection={handleClearSelection}
+          />
+        )}
+      </div>
+
+      {/* AI Assistant Widget - Tickets Module */}
+    </>
   );
 };

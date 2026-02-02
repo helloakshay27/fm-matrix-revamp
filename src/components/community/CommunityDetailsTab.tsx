@@ -12,6 +12,7 @@ import { toast } from "sonner";
 interface CommunityDetailsTabProps {
     communityId?: string;
     setCommunityName?: (name: string) => void;
+    setCommunityImg?: (img: string) => void;
 }
 
 const memberColumns: ColumnConfig[] = [
@@ -52,7 +53,7 @@ const memberColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'organisation',
+        key: 'organization',
         label: 'Organisation',
         sortable: true,
         draggable: true
@@ -71,7 +72,7 @@ const memberColumns: ColumnConfig[] = [
     },
 ];
 
-const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetailsTabProps) => {
+const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }: CommunityDetailsTabProps) => {
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
@@ -80,6 +81,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
     const [isActive, setIsActive] = useState(true);
     const [selectedMembers, setSelectedMembers] = useState<Array<{ id: string; name: string }>>([])
     const [isToggling, setIsToggling] = useState<number | null>(null)
+    const [isLoading, setIsLoading] = useState(true);
     const [communityData, setCommunityData] = useState({
         icon: "",
         name: "",
@@ -92,7 +94,74 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
 
     const [members, setMembers] = useState<any[]>([]);
 
+    // Skeleton Loader Component
+    const DetailsSkeleton = () => (
+        <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+            <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-300"></div>
+                    <div className="h-5 bg-gray-300 rounded w-48"></div>
+                </div>
+            </div>
+            <div className="p-6 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Image Skeleton */}
+                    <div className="bg-gray-300 h-72 rounded-lg"></div>
+                    {/* Description Skeleton */}
+                    <div className="space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-24 mb-4"></div>
+                        <div className="h-4 bg-gray-300 rounded w-full"></div>
+                        <div className="h-4 bg-gray-300 rounded w-full"></div>
+                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                    </div>
+                </div>
+                {/* Info Grid Skeleton */}
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <div className="flex gap-4">
+                            <div className="h-4 bg-gray-300 rounded w-32"></div>
+                            <div className="h-4 bg-gray-300 rounded w-24"></div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="h-4 bg-gray-300 rounded w-20"></div>
+                            <div className="h-4 bg-gray-300 rounded w-16"></div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="h-4 bg-gray-300 rounded w-28"></div>
+                            <div className="h-4 bg-gray-300 rounded w-32"></div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="h-4 bg-gray-300 rounded w-24"></div>
+                            <div className="h-4 bg-gray-300 rounded w-28"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const TableSkeleton = () => (
+        <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+            <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+                <div className="w-8 h-8 rounded-full bg-gray-300"></div>
+                <div className="h-5 bg-gray-300 rounded w-56"></div>
+            </div>
+            <div className="p-4 bg-white">
+                {[1, 2, 3, 4, 5].map((index) => (
+                    <div key={index} className="flex gap-4 py-4 border-b border-gray-200">
+                        <div className="w-6 h-6 bg-gray-300 rounded"></div>
+                        <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-300 rounded w-48"></div>
+                            <div className="h-3 bg-gray-200 rounded w-32"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
     const fetchData = async () => {
+        setIsLoading(true);
         try {
             const response = await axios.get(`https://${baseUrl}/communities/${communityId}.json`, {
                 headers: {
@@ -102,9 +171,12 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
             setIsActive(response.data.active)
             setCommunityData(response.data)
             setCommunityName(response.data.name)
+            setCommunityImg(response.data.icon)
             setMembers(response.data.all_members || [])
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -194,130 +266,157 @@ const CommunityDetailsTab = ({ communityId, setCommunityName }: CommunityDetails
                     <Pencil className="w-4 h-4" />
                 </Button>
             </div>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <File size={16} />
+
+            {isLoading ? (
+                <>
+                    <DetailsSkeleton />
+                    <TableSkeleton />
+                </>
+            ) : (
+                <>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+                                    <File size={16} />
+                                </div>
+                                <span className="font-semibold text-lg text-gray-800">Community Details</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Switch
+                                    checked={isActive}
+                                    onChange={() => handleStatusChange(Number(id), isActive)}
+                                    disabled={isToggling === Number(id)}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#04A231',
+                                        },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                            backgroundColor: '#04A231',
+                                        },
+                                        '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                                            color: '#C72030',
+                                        },
+                                        '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                            backgroundColor: 'rgba(199, 32, 48, 0.5)',
+                                        },
+                                    }}
+                                />
+                                <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
+                            </div>
                         </div>
-                        <span className="font-semibold text-lg text-gray-800">Community Details</span>
+
+                        <div className="p-6 bg-white">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                {/* Community Image */}
+                                <div className="bg-gray-100 h-72">
+                                    <img
+                                        src={communityData.icon}
+                                        alt={communityData.name}
+                                        className="w-full h-full object-contain rounded-lg"
+                                    />
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-[rgba(26,26,26,0.5)] mb-2">Description</h3>
+                                    <p className="text-[16px] text-[#222222] leading-relaxed">
+                                        {communityData.description}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Community Info Grid */}
+                            <div className="grid grid-cols-7">
+                                <div className="grid grid-cols-3 col-span-6 gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Community Name</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.name}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Members</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData?.all_members?.length}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Pending Requests</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            21
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Created On</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.created_at
+                                                ? new Intl.DateTimeFormat("en-GB", {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                }).format(new Date(communityData.created_at))
+                                                : "-"}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-32 text-sm text-gray-500">Created By</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {communityData.created_by}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Switch
-                            checked={isActive}
-                            onChange={() => handleStatusChange(Number(id), isActive)}
-                            disabled={isToggling === Number(id)}
-                            sx={{
-                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                    color: '#04A231',
-                                },
-                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                    backgroundColor: '#04A231',
-                                },
-                                '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                                    color: '#C72030',
-                                },
-                                '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                                    backgroundColor: 'rgba(199, 32, 48, 0.5)',
-                                },
+
+                    {/* Community Member Details Section */}
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+                            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
+                                <File size={16} />
+                            </div>
+                            <span className="font-semibold text-lg text-gray-800">Community Member Details</span>
+                        </div>
+
+                        <EnhancedTable
+                            data={members}
+                            columns={memberColumns}
+                            renderCell={renderMemberCell}
+                            hideColumnsButton={true}
+                            hideTableSearch={true}
+                            selectable={true}
+                            enableSelection={true}
+                            onSelectItem={(itemId: string, checked: boolean) => {
+                                if (checked) {
+                                    const member = members.find((m) => String(m.id) === itemId);
+                                    if (member && !selectedMemberIds.includes(itemId)) {
+                                        setSelectedMembers([...selectedMembers, { id: itemId, name: member.user || "-" }]);
+                                    }
+                                } else {
+                                    setSelectedMembers(selectedMembers.filter((member) => member.id !== itemId));
+                                }
                             }}
+                            onSelectAll={(isSelectAll: boolean) => {
+                                if (isSelectAll) {
+                                    setSelectedMembers(members.map((member: any) => ({
+                                        id: String(member.id),
+                                        name: member.user || "-"
+                                    })));
+                                } else {
+                                    setSelectedMembers([]);
+                                }
+                            }}
+                            selectedItems={selectedMemberIds}
+                            getItemId={(item: any) => String(item.id)}
                         />
-                        <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                     </div>
-                </div>
-
-                <div className="p-6 bg-white">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {/* Community Image */}
-                        <div className="bg-gray-100 h-72">
-                            <img
-                                src={communityData.icon}
-                                alt={communityData.name}
-                                className="w-full h-full object-contain rounded-lg"
-                            />
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <h3 className="text-sm font-medium text-[rgba(26,26,26,0.5)] mb-2">Description</h3>
-                            <p className="text-[16px] text-[#222222] leading-relaxed">
-                                {communityData.description}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Community Info Grid */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="flex gap-4">
-                                <p className="text-sm text-gray-500 mb-1">Community Name</p>
-                                <p className="text-sm font-semibold text-gray-900">{communityData.name}</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <p className="text-sm text-gray-500 mb-1">Members</p>
-                                <p className="text-sm font-semibold text-gray-900">{communityData?.all_members?.length}</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <p className="text-sm text-gray-500 mb-1">Created On</p>
-                                <p className="text-sm font-semibold text-gray-900">{
-                                    communityData.created_at ? new Intl.DateTimeFormat("en-GB", {
-                                        day: "numeric",
-                                        month: "long",
-                                        year: "numeric",
-                                    }).format(new Date(communityData.created_at)) : "-"
-                                }</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <p className="text-sm text-gray-500 mb-1">Created By</p>
-                                <p className="text-sm font-semibold text-gray-900">{communityData.created_by}</p>
-                            </div>
-                        </div>
-                        <div></div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Community Member Details Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <File size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Community Member Details</span>
-                </div>
-
-                <EnhancedTable
-                    data={members}
-                    columns={memberColumns}
-                    renderCell={renderMemberCell}
-                    hideColumnsButton={true}
-                    hideTableSearch={true}
-                    selectable={true}
-                    enableSelection={true}
-                    onSelectItem={(itemId: string, checked: boolean) => {
-                        if (checked) {
-                            const member = members.find((m) => String(m.id) === itemId);
-                            if (member && !selectedMemberIds.includes(itemId)) {
-                                setSelectedMembers([...selectedMembers, { id: itemId, name: member.user || "-" }]);
-                            }
-                        } else {
-                            setSelectedMembers(selectedMembers.filter((member) => member.id !== itemId));
-                        }
-                    }}
-                    onSelectAll={(isSelectAll: boolean) => {
-                        if (isSelectAll) {
-                            setSelectedMembers(members.map((member: any) => ({
-                                id: String(member.id),
-                                name: member.user || "-"
-                            })));
-                        } else {
-                            setSelectedMembers([]);
-                        }
-                    }}
-                    selectedItems={selectedMemberIds}
-                    getItemId={(item: any) => String(item.id)}
-                />
-            </div>
+                </>
+            )}
 
             {/* Member Selection Panel */}
             {selectedMembers.length > 0 && (

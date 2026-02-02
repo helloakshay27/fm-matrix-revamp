@@ -137,6 +137,33 @@ const mapStatusToDisplay = (raw?: string) => {
   return m[raw.toLowerCase()] ?? raw;
 };
 
+const STATUS_COLORS = {
+  active: "bg-[#E4636A] text-white",
+  in_progress: "bg-[#08AEEA] text-white",
+  on_hold: "bg-[#7BD2B5] text-black",
+  overdue: "bg-[#FF2733] text-white",
+  completed: "bg-[#83D17A] text-black",
+};
+
+const mapDisplayToApiStatus = (displayStatus) => {
+  const reverseStatusMap = {
+    Active: "active",
+    "In Progress": "in_progress",
+    "On Hold": "on_hold",
+    Overdue: "overdue",
+    Completed: "completed",
+  };
+  return reverseStatusMap[displayStatus] || "open";
+};
+
+const dropdownOptions = [
+  "Open",
+  "In Progress",
+  "On Hold",
+  "Overdue",
+  "Completed",
+];
+
 // Map API sprint -> local details type
 const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
   id: api.id,
@@ -179,6 +206,7 @@ export const SprintDetailsPage = () => {
   const [sprintDetails, setSprintDetails] = useState<SprintDetails>({});
   const [tasks, setTasks] = useState<Task[]>([]);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("Open");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -208,6 +236,25 @@ export const SprintDetailsPage = () => {
     };
   }, []);
 
+  const handleOptionSelect = async (option) => {
+    setSelectedOption(option);
+    setOpenDropdown(false);
+
+    // await dispatch(
+    //   updateTaskStatus({
+    //     baseUrl,
+    //     token,
+    //     id: taskId,
+    //     data: {
+    //       status: mapDisplayToApiStatus(option),
+    //     },
+    //   })
+    // ).unwrap();
+    fetchData();
+    toast.dismiss();
+    toast.success("Status updated successfully");
+  };
+
   const renderTaskCell = (item: Task, columnKey: string) => item[columnKey as keyof Task] ?? "-";
 
   return (
@@ -236,36 +283,55 @@ export const SprintDetailsPage = () => {
             <span className="h-6 w-[1px] border border-gray-300"></span>
 
             {/* Dropdown */}
-            <div className="relative w-[150px]" ref={dropdownRef}>
-              <button
-                className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1 rounded bg-gray-200/40"
-                onClick={() => setOpenDropdown((o) => !o)}
-                aria-haspopup="true"
-                aria-expanded={openDropdown}
-              >
-                <ChevronDown size={15} className={`${openDropdown ? "rotate-180" : ""} transition-transform`} />
-              </button>
-
-              {openDropdown && (
-                <div className="absolute top-[110%] left-0 z-50 min-w-[180px] rounded-lg bg-white shadow-lg border border-gray-200 py-2">
-                  {[
-                    "Active",
-                    "In Progress",
-                    "On Hold",
-                    "Overdue",
-                    "Completed",
-                  ].map((label) => (
-                    <div
-                      key={label}
-                      className="px-4 py-2 text-[#2E3748] hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setOpenDropdown(false)}
-                    >
-                      {label}
-                    </div>
-                  ))}
+            <span
+              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
+            >
+              <div className="relative" ref={dropdownRef}>
+                <div
+                  className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                  onClick={() => setOpenDropdown(!openDropdown)}
+                  role="button"
+                  aria-haspopup="true"
+                  aria-expanded={openDropdown}
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && setOpenDropdown(!openDropdown)
+                  }
+                >
+                  <span className="text-[13px]">{selectedOption}</span>
+                  <ChevronDown
+                    size={15}
+                    className={`${openDropdown ? "rotate-180" : ""
+                      } transition-transform`}
+                  />
                 </div>
-              )}
-            </div>
+                <ul
+                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                    }`}
+                  role="menu"
+                  style={{
+                    minWidth: "150px",
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    zIndex: 1000,
+                  }}
+                >
+                  {dropdownOptions.map((option, idx) => (
+                    <li key={idx} role="menuitem">
+                      <button
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                          ? "bg-gray-100 font-semibold"
+                          : ""
+                          }`}
+                        onClick={() => handleOptionSelect(option)}
+                      >
+                        {option}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </span>
           </div>
         </div>
 

@@ -98,6 +98,7 @@ import { TicketAgingClosureFeedbackCard } from "@/components/helpdesk/TicketAgin
 import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerformanceMetricsCard";
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
+import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
@@ -122,21 +123,21 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 interface SelectedAnalytic {
   id: string;
   module:
-    | "tickets"
-    | "tasks"
-    | "schedule"
-    | "inventory"
-    | "amc"
-    | "assets"
-    | "meeting_room"
-    | "community"
-    | "helpdesk"
-    | "asset_management"
-    | "inventory_management"
-    | "parking_management"
-    | "visitor_management"
-    | "checklist_management"
-    | "surveys";
+  | "tickets"
+  | "tasks"
+  | "schedule"
+  | "inventory"
+  | "amc"
+  | "assets"
+  | "meeting_room"
+  | "community"
+  | "helpdesk"
+  | "asset_management"
+  | "inventory_management"
+  | "parking_management"
+  | "visitor_management"
+  | "checklist_management"
+  | "surveys";
   endpoint: string;
   title: string;
 }
@@ -248,9 +249,9 @@ const buildAssetDistributionChartData = (data: any) => {
   const chartData =
     itAssets + nonItAssets > 0
       ? [
-          { name: "IT Equipment", value: itAssets, color: "#C4B99D" },
-          { name: "Non-IT Equipment", value: nonItAssets, color: "#DAD6CA" },
-        ]
+        { name: "IT Equipment", value: itAssets, color: "#C4B99D" },
+        { name: "Non-IT Equipment", value: nonItAssets, color: "#DAD6CA" },
+      ]
       : [{ name: "No Data", value: 0, color: "#D5DBDB" }];
 
   const info = hasSiteNames
@@ -361,13 +362,13 @@ const SortableChartItem = ({
   // Handle pointer down to prevent drag on button/icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
-    
+
     // Check if the click is on an element marked as non-draggable
     if (target.closest("[data-no-drag]")) {
       // Don't start dragging - just return without calling listeners
       return;
     }
-    
+
     // Check if the click is on a button, icon, or download element
     // Check for lucide-react Download icon or any clickable SVG/button
     if (
@@ -380,18 +381,18 @@ const SortableChartItem = ({
       // Don't start dragging - just return without calling listeners
       return;
     }
-    
+
     // Special handling for SVG icons - check if it's inside a clickable area
     if (target.tagName === "SVG" || target.closest("svg")) {
       const svg = target.tagName === "SVG" ? target : target.closest("svg");
       // Check if the SVG has a cursor-pointer class (indicating it's clickable)
-      if (svg?.classList.contains("cursor-pointer") || 
-          svg?.parentElement?.classList.contains("cursor-pointer")) {
+      if (svg?.classList.contains("cursor-pointer") ||
+        svg?.parentElement?.classList.contains("cursor-pointer")) {
         // Don't start dragging - just return without calling listeners
         return;
       }
     }
-    
+
     // For other elements, proceed with drag
     if (listeners?.onPointerDown) {
       listeners.onPointerDown(e);
@@ -404,15 +405,14 @@ const SortableChartItem = ({
       style={style}
       {...attributes}
       onPointerDown={handlePointerDown}
-      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${
-        className ?? ""
-      }`}
+      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
+        }`}
     >
       {children}
     </div>
   );
 };
- 
+
 // Simple loader overlay to show on each section while data is loading
 const SectionLoader: React.FC<{
   loading: boolean;
@@ -436,11 +436,11 @@ const SectionLoader: React.FC<{
 export const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Determine if this is an executive dashboard to use separate storage
   const isExecutiveDashboard = location.pathname.includes('/dashboard-executive');
   const storagePrefix = isExecutiveDashboard ? 'executive' : 'regular';
-  
+
   const [selectedAnalytics, setSelectedAnalytics] = useState<
     SelectedAnalytic[]
   >([]);
@@ -489,9 +489,9 @@ export const Dashboard = () => {
   useEffect(() => {
     const savedLayout = localStorage.getItem(`${storagePrefix}DashboardGridLayout`);
     const savedAnalytics = localStorage.getItem(`${storagePrefix}DashboardSelectedAnalytics`);
-    
+
     console.log(`🔍 Loading ${storagePrefix} dashboard from localStorage:`, { savedLayout, savedAnalytics });
-    
+
     if (savedLayout) {
       try {
         const parsedLayout = JSON.parse(savedLayout);
@@ -501,7 +501,7 @@ export const Dashboard = () => {
         console.error("❌ Failed to parse saved layout", e);
       }
     }
-    
+
     if (savedAnalytics) {
       try {
         const parsedAnalytics = JSON.parse(savedAnalytics);
@@ -528,7 +528,7 @@ export const Dashboard = () => {
     } catch (e) {
       console.warn('Unable to persist URL site_id/access_token to localStorage', e);
     }
-    
+
     // Mark initial mount as complete
     isInitialMount.current = false;
   }, [storagePrefix]);
@@ -536,18 +536,18 @@ export const Dashboard = () => {
   // Update chart order and generate layout only for new cards when selected analytics change
   useEffect(() => {
     console.log("🔄 selectedAnalytics changed:", selectedAnalytics.length, "isInitialMount:", isInitialMount.current);
-    
+
     // Skip layout generation on initial mount - layouts are loaded from localStorage
     if (isInitialMount.current) {
       console.log("⏭️ Skipping layout generation on initial mount");
       setChartOrder(selectedAnalytics.map((analytic) => analytic.id));
       return;
     }
-    
+
     setChartOrder(selectedAnalytics.map((analytic) => analytic.id));
-    
+
     console.log("📐 Current layouts:", layouts);
-    
+
     // Only generate layouts for new cards that don't have existing layouts
     const newLayouts = selectedAnalytics.map((analytic, index) => {
       const existingLayout = layouts.find((l) => l.i === analytic.id);
@@ -555,9 +555,9 @@ export const Dashboard = () => {
         console.log("✅ Using existing layout for:", analytic.id, existingLayout);
         return existingLayout;
       }
-      
+
       console.log("🆕 Generating new layout for:", analytic.id);
-      
+
       // Cards that should use compact height (simple stat cards only)
       const compactCards = [
         'customer_experience_feedback',
@@ -566,18 +566,18 @@ export const Dashboard = () => {
         'amc_contract_summary',
         'engagement_metrics',
       ];
-      
+
       const isCompactCard = compactCards.includes(analytic.endpoint);
-      
+
       // Find the maximum y position to place new cards below existing ones
-      const maxY = layouts.length > 0 
+      const maxY = layouts.length > 0
         ? Math.max(...layouts.map(l => l.y + l.h))
         : 0;
-      
+
       // Full width layout for analytics cards: each card takes full width (12 columns)
       // Recent Updates sidebar is outside the grid system
       const row = index;
-      
+
       return {
         i: analytic.id,
         x: 0, // Start at column 0 for full width
@@ -588,11 +588,11 @@ export const Dashboard = () => {
         minH: isCompactCard ? 3 : 5,
       };
     });
-    
+
     // Remove layouts for cards that are no longer selected
     const selectedIds = selectedAnalytics.map(a => a.id);
     const filteredLayouts = newLayouts.filter(layout => selectedIds.includes(layout.i));
-    
+
     setLayouts(filteredLayouts);
   }, [selectedAnalytics]);
 
@@ -633,7 +633,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 // Use cached data to keep Promise order alignment and avoid network hit
@@ -646,7 +646,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -725,7 +725,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -737,7 +737,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -787,7 +787,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -799,7 +799,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -890,7 +890,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -902,7 +902,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -968,7 +968,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -980,7 +980,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1022,7 +1022,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1034,7 +1034,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1091,7 +1091,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1103,7 +1103,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1154,7 +1154,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1166,7 +1166,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1196,7 +1196,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1208,7 +1208,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1253,7 +1253,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1265,7 +1265,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1339,7 +1339,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1351,7 +1351,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1393,7 +1393,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1405,7 +1405,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1430,7 +1430,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1442,7 +1442,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1467,7 +1467,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1479,7 +1479,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1514,7 +1514,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1526,7 +1526,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
+                dateKey &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1708,16 +1708,16 @@ export const Dashboard = () => {
   // Handle grid layout changes and persist both layout and selected analytics
   const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
     console.log("📏 handleLayoutChange called, isInitialMount:", isInitialMount.current, "newLayout:", newLayout);
-    
+
     // Always update the state for UI responsiveness
     setLayouts(newLayout);
-    
+
     // Skip saving to localStorage during initial mount to prevent overwriting saved layouts
     if (isInitialMount.current) {
       console.log("⏭️ Skipping localStorage save during initial mount");
       return;
     }
-    
+
     // Save to localStorage only after initial mount (when user actually resizes/repositions)
     console.log(`💾 Saving ${storagePrefix} dashboard layout to localStorage:`, newLayout);
     localStorage.setItem(`${storagePrefix}DashboardGridLayout`, JSON.stringify(newLayout));
@@ -1916,9 +1916,9 @@ export const Dashboard = () => {
             // Ticket Status Overview
             const statusData =
               data &&
-              typeof data === "object" &&
-              "open" in data &&
-              "closed" in data
+                typeof data === "object" &&
+                "open" in data &&
+                "closed" in data
                 ? data
                 : { open: 0, closed: 0, wip: 0 };
 
@@ -1943,11 +1943,11 @@ export const Dashboard = () => {
               data && typeof data === "object" && "proactiveOpen" in data
                 ? data
                 : {
-                    proactiveOpen: 0,
-                    proactiveClosed: 0,
-                    reactiveOpen: 0,
-                    reactiveClosed: 0,
-                  };
+                  proactiveOpen: 0,
+                  proactiveClosed: 0,
+                  reactiveOpen: 0,
+                  reactiveClosed: 0,
+                };
 
             console.log("🔍 tickets_proactive_reactive - Final values:", {
               proactiveOpen: proactiveReactiveData.proactiveOpen,
@@ -2012,41 +2012,41 @@ export const Dashboard = () => {
             // Transform API response to expected format - same as TicketDashboard
             const agingMatrixData = agingRawData?.response?.matrix
               ? Object.entries(agingRawData.response.matrix).map(
-                  ([priority, data]: [string, any]) => ({
-                    priority,
-                    T1: data.T1 || 0,
-                    T2: data.T2 || 0,
-                    T3: data.T3 || 0,
-                    T4: data.T4 || 0,
-                    T5: data.T5 || 0,
-                  })
-                )
+                ([priority, data]: [string, any]) => ({
+                  priority,
+                  T1: data.T1 || 0,
+                  T2: data.T2 || 0,
+                  T3: data.T3 || 0,
+                  T4: data.T4 || 0,
+                  T5: data.T5 || 0,
+                })
+              )
               : [
-                  {
-                    priority: "High",
-                    T1: 0,
-                    T2: 0,
-                    T3: 0,
-                    T4: 0,
-                    T5: 0,
-                  },
-                  {
-                    priority: "Medium",
-                    T1: 0,
-                    T2: 0,
-                    T3: 0,
-                    T4: 0,
-                    T5: 0,
-                  },
-                  {
-                    priority: "Low",
-                    T1: 0,
-                    T2: 0,
-                    T3: 0,
-                    T4: 0,
-                    T5: 0,
-                  },
-                ];
+                {
+                  priority: "High",
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                },
+                {
+                  priority: "Medium",
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                },
+                {
+                  priority: "Low",
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                },
+              ];
 
             return (
               <TicketAgingMatrixCard
@@ -2134,9 +2134,9 @@ export const Dashboard = () => {
             dateRange={
               dateRange
                 ? {
-                    startDate: dateRange.from!,
-                    endDate: dateRange.to!,
-                  }
+                  startDate: dateRange.from!,
+                  endDate: dateRange.to!,
+                }
                 : undefined
             }
           />
@@ -2314,9 +2314,9 @@ export const Dashboard = () => {
             dateRange={
               dateRange
                 ? {
-                    startDate: dateRange.from!,
-                    endDate: dateRange.to!,
-                  }
+                  startDate: dateRange.from!,
+                  endDate: dateRange.to!,
+                }
                 : undefined
             }
           />
@@ -2358,36 +2358,36 @@ export const Dashboard = () => {
           case "asset_statistics": {
             const metricDownloads = assetDateRange
               ? {
-                  total_assets: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardTotalAssets
-                  ),
-                  assets_in_use: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardAssetsInUse
-                  ),
-                  assets_in_breakdown: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardAssetsInBreakdown
-                  ),
-                  critical_assets_breakdown: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardCriticalAssetsInBreakdown
-                  ),
-                  ppm_assets: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardPPMConductAssets
-                  ),
-                  amc_assets: downloadGuard(
-                    assetAnalyticsDownloadAPI.downloadCardAMCAssets
-                  ),
-                }
+                total_assets: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardTotalAssets
+                ),
+                assets_in_use: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardAssetsInUse
+                ),
+                assets_in_breakdown: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardAssetsInBreakdown
+                ),
+                critical_assets_breakdown: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardCriticalAssetsInBreakdown
+                ),
+                ppm_assets: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardPPMConductAssets
+                ),
+                amc_assets: downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCardAMCAssets
+                ),
+              }
               : undefined;
 
             const onDownloadAll =
               metricDownloads && Object.values(metricDownloads).some(Boolean)
                 ? async () => {
-                    for (const handler of Object.values(metricDownloads)) {
-                      if (handler) {
-                        await handler();
-                      }
+                  for (const handler of Object.values(metricDownloads)) {
+                    if (handler) {
+                      await handler();
                     }
                   }
+                }
                 : undefined;
 
             return (
@@ -2542,7 +2542,7 @@ export const Dashboard = () => {
           case "center_assets_downtime": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CenterAssetsDowntimeMetricsCard 
+                <CenterAssetsDowntimeMetricsCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2565,7 +2565,7 @@ export const Dashboard = () => {
           case "highest_maintenance_assets": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <HighestMaintenanceAssetsCard 
+                <HighestMaintenanceAssetsCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2588,7 +2588,7 @@ export const Dashboard = () => {
           case "amc_contract_summary": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AmcContractSummaryCard 
+                <AmcContractSummaryCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2611,7 +2611,7 @@ export const Dashboard = () => {
           case "amc_contract_expiry_90": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AmcExpiringContractsCard 
+                <AmcExpiringContractsCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2653,7 +2653,7 @@ export const Dashboard = () => {
           case "inventory_overstock_top10": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <OverstockTop10ItemsCard 
+                <OverstockTop10ItemsCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2676,7 +2676,7 @@ export const Dashboard = () => {
           case "top_consumables_center":
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TopConsumablesCenterOverviewCard 
+                <TopConsumablesCenterOverviewCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2863,7 +2863,7 @@ export const Dashboard = () => {
           case "ticket_performance_metrics": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketPerformanceMetricsCard 
+                <TicketPerformanceMetricsCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2893,7 +2893,7 @@ export const Dashboard = () => {
           case "customer_rating_overview": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CustomerRatingOverviewCard 
+                <CustomerRatingOverviewCard
                   data={rawData}
                   onDownload={async () => {
                     if (!dateRange?.from || !dateRange?.to) {
@@ -2923,9 +2923,9 @@ export const Dashboard = () => {
                   dateRange={
                     dateRange
                       ? {
-                          startDate: dateRange.from!,
-                          endDate: dateRange.to!,
-                        }
+                        startDate: dateRange.from!,
+                        endDate: dateRange.to!,
+                      }
                       : undefined
                   }
                   onDownload={async () => {
@@ -2956,9 +2956,9 @@ export const Dashboard = () => {
                   dateRange={
                     dateRange
                       ? {
-                          startDate: dateRange.from!,
-                          endDate: dateRange.to!,
-                        }
+                        startDate: dateRange.from!,
+                        endDate: dateRange.to!,
+                      }
                       : undefined
                   }
                   onDownload={async () => {
@@ -2991,9 +2991,9 @@ export const Dashboard = () => {
                   dateRange={
                     dateRange && dateRange.from && dateRange.to
                       ? {
-                          startDate: dateRange.from,
-                          endDate: dateRange.to,
-                        }
+                        startDate: dateRange.from,
+                        endDate: dateRange.to,
+                      }
                       : undefined
                   }
                 />
@@ -3060,9 +3060,9 @@ export const Dashboard = () => {
                   dateRange={
                     dateRange && dateRange.from && dateRange.to
                       ? {
-                          startDate: dateRange.from,
-                          endDate: dateRange.to,
-                        }
+                        startDate: dateRange.from,
+                        endDate: dateRange.to,
+                      }
                       : undefined
                   }
                 />
@@ -3127,10 +3127,10 @@ export const Dashboard = () => {
                     value:
                       Number(
                         item.response_count ||
-                          item.responses ||
-                          item.count ||
-                          item.value ||
-                          item.survey_count
+                        item.responses ||
+                        item.count ||
+                        item.value ||
+                        item.survey_count
                       ) || 0,
                     color: surveyColors[index % surveyColors.length],
                   }));
@@ -3161,9 +3161,9 @@ export const Dashboard = () => {
                   dateRange={
                     dateRange && dateRange.from && dateRange.to
                       ? {
-                          startDate: dateRange.from,
-                          endDate: dateRange.to,
-                        }
+                        startDate: dateRange.from,
+                        endDate: dateRange.to,
+                      }
                       : undefined
                   }
                 />
@@ -3446,7 +3446,7 @@ export const Dashboard = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Recent Updates Sidebar - Always Visible */}
               <div className="w-[350px] flex-shrink-0">
                 <RecentUpdatedSidebar />
@@ -3455,6 +3455,9 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Assistant Widget */}
+      <AIAssistantWidget />
     </>
   );
 };

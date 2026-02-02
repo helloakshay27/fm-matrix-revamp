@@ -209,7 +209,7 @@ export const FMUserMasterDashboard = () => {
       const response = await dispatch(
         getFMUsers({ baseUrl, token, perPage: 10, currentPage: page, ...filterParams })
       ).unwrap() as FMUserAPIResponse;
-      const transformedData = response.fm_users.map(transformFMUserData);
+      const transformedData = (response?.fm_users ?? []).map(transformFMUserData);
       setFmUsersData(transformedData);
       setFilteredFMUsersData(transformedData);
       setPagination({
@@ -277,11 +277,19 @@ export const FMUserMasterDashboard = () => {
     fmUsersData.filter((user) => user.appDownloaded).length;
 
   const handleAddUser = () => {
-    navigate("/master/user/fm-users/add");
+    location.pathname.includes("/club-management/") ? (
+      navigate(`/club-management/users/fm-users/add`)
+    ) : (
+      navigate(`/master/user/fm-users/add`)
+    );
   };
 
   const handleViewUser = (id: string) => {
-    navigate(`/master/user/fm-users/view/${id}`);
+    location.pathname.includes("/club-management/") ? (
+      navigate(`/club-management/users/fm-users/view/${id}`)
+    ) : (
+      navigate(`/master/user/fm-users/view/${id}`)
+    );
   };
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
@@ -496,16 +504,16 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     setFilters({
       name: "",
       email: "",
+      status: "",
+      downloaded: undefined,
     });
-    setFilteredFMUsersData(fmUsersData);
-    setPagination({
-      ...pagination,
-      current_page: 1,
-    });
+    setSearchTerm("");
+    await fetchUsers(1);
+    setFilterDialogOpen(false);
   };
 
   const handleFilterChange = (field: "name" | "email", value: string) => {
@@ -761,12 +769,6 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-          FM User Master
-        </h1>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Users"
@@ -1017,7 +1019,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1045,7 +1047,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1076,7 +1078,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}
@@ -1104,7 +1106,7 @@ export const FMUserMasterDashboard = () => {
                         <em>Select User</em>
                       </MenuItem>
 
-                      {fmForClone.length > 0 ? (
+                      {fmForClone?.length > 0 ? (
                         fmForClone.map((user) => (
                           <MenuItem key={user.id} value={user.id}>
                             {user.full_name}

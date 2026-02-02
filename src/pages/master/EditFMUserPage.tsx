@@ -88,6 +88,7 @@ interface UserData {
   gender?: string;
   employee_type?: string;
   entity_id?: number;
+  accessCardNumber?: string;
   supplier_id?: number;
   site_id?: number;
   unit_id?: number;
@@ -110,6 +111,7 @@ interface FormData {
   selectEntity: string | number;
   supplier: string | number;
   employeeId: string;
+  accessCardNumber: string;
   baseSite: string | number;
   selectBaseUnit: string | number;
   selectDepartment: string | number;
@@ -152,6 +154,7 @@ interface Payload {
     employee_type: string;
     user_category_id: string | number;
     profile_type?: string;
+    access_card_number?: string;
   };
   lock_user_permission?: number;
 }
@@ -230,6 +233,7 @@ export const EditFMUserPage = () => {
     selectEntity: "",
     supplier: "",
     employeeId: "",
+    accessCardNumber: "",
     baseSite: "",
     selectBaseUnit: "",
     selectDepartment: "",
@@ -327,6 +331,7 @@ export const EditFMUserPage = () => {
         selectEntity: userData.entity_id || "",
         supplier: userData.supplier_id || "",
         employeeId: userData.lock_user_permission?.employee_id || "",
+        accessCardNumber: userData.accessCardNumber || "",
         baseSite: userData.site_id || "",
         selectBaseUnit: userData.unit_id || "",
         selectDepartment: userData.department_id || "",
@@ -435,6 +440,7 @@ export const EditFMUserPage = () => {
         employee_type: formData.employeeType,
         user_category_id: formData.selectUserCategory,
         profile_type: formData.selectProfileType,
+        access_card_number: formData.accessCardNumber,
       },
       lock_user_permission: lockId,
     };
@@ -465,7 +471,11 @@ export const EditFMUserPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/master/user/fm-users")}
+          onClick={() => location.pathname.includes("/club-management/") ? (
+            navigate("/club-management/users/fm-users")
+          ) : (
+            navigate("/master/user/fm-users")
+          )}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -655,6 +665,18 @@ export const EditFMUserPage = () => {
                     value={formData.employeeId}
                     onChange={(e) =>
                       handleInputChange("employeeId", e.target.value)
+                    }
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Access Card Number"
+                    variant="outlined"
+                    value={formData.accessCardNumber}
+                    onChange={(e) =>
+                      handleInputChange("accessCardNumber", e.target.value)
                     }
                     InputLabelProps={{ shrink: true }}
                   />

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, Plus, ReceiptText, Settings, Share, Share2, Trash2, Tv, Upload, User, X } from "lucide-react";
 import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 import {
   TextField,
@@ -17,6 +17,8 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -86,6 +88,10 @@ export const AddBookingSetupPage = () => {
 
   const coverImageRef = useRef(null);
   const bookingImageRef = useRef(null);
+  const termsQuillRef = useRef<HTMLDivElement>(null);
+  const termsEditorRef = useRef<Quill | null>(null);
+  const cancellationQuillRef = useRef<HTMLDivElement>(null);
+  const cancellationEditorRef = useRef<Quill | null>(null);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
   const [selectedBookingFiles, setSelectedBookingFiles] = useState<File[]>([]);
   const [galleryModalOpen, setGalleryModalOpen] = useState(false);
@@ -107,6 +113,7 @@ export const AddBookingSetupPage = () => {
     postpaid: false,
     prepaid: false,
     payOnFacility: false,
+    billToCompany: false,
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
@@ -121,7 +128,8 @@ export const AddBookingSetupPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {
+    amenities: {} as Record<number, boolean>,
+    staticAmenities: {
       tv: false,
       whiteboard: false,
       casting: false,
@@ -150,6 +158,9 @@ export const AddBookingSetupPage = () => {
       maximumPersonAllowed: "1",
       perSlotCharge: "",
       gst: "0.0",
+      facilityDurationCharges: [
+        { hours: "", price: "" }
+      ],
     },
     blockDays: {
       startDate: "",
@@ -287,6 +298,83 @@ export const AddBookingSetupPage = () => {
     fetchInventories();
   }, []);
 
+  // Initialize Quill editors for Terms & Conditions and Cancellation Policy
+  useEffect(() => {
+    // Terms & Conditions editor
+    if (termsQuillRef.current && !termsEditorRef.current) {
+      termsEditorRef.current = new Quill(termsQuillRef.current, {
+        theme: "snow",
+        placeholder: "Enter terms and conditions...",
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote", "code-block"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link", "image"],
+            ["clean"],
+          ],
+        },
+      });
+
+      if (formData.termsConditions) {
+        termsEditorRef.current.root.innerHTML = formData.termsConditions;
+      }
+
+      termsEditorRef.current.on("text-change", () => {
+        const html = termsEditorRef.current?.root.innerHTML;
+        const sanitized = html && html !== '<p><br></p>' ? html : "";
+        setFormData((prev) => ({ ...prev, termsConditions: sanitized }));
+      });
+    }
+
+    // Cancellation Policy editor
+    if (cancellationQuillRef.current && !cancellationEditorRef.current) {
+      cancellationEditorRef.current = new Quill(cancellationQuillRef.current, {
+        theme: "snow",
+        placeholder: "Enter cancellation policy...",
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote", "code-block"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link"],
+            ["clean"],
+          ],
+        },
+      });
+
+      if (formData.cancellationText) {
+        cancellationEditorRef.current.root.innerHTML = formData.cancellationText;
+      }
+
+      cancellationEditorRef.current.on("text-change", () => {
+        const html = cancellationEditorRef.current?.root.innerHTML;
+        const sanitized = html && html !== '<p><br></p>' ? html : "";
+        setFormData((prev) => ({ ...prev, cancellationText: sanitized }));
+      });
+    }
+
+    // Keep editors in sync if formData changes programmatically
+    return () => {
+      // Cleanup not strictly necessary for Quill; if required, set refs to null here
+    };
+  }, []);
+
+  // Sync updates from formData to editors (useful if formData is pre-filled)
+  useEffect(() => {
+    if (termsEditorRef.current && formData.termsConditions !== (termsEditorRef.current.root.innerHTML || "")) {
+      termsEditorRef.current.root.innerHTML = formData.termsConditions || "";
+    }
+  }, [formData.termsConditions]);
+
+  useEffect(() => {
+    if (cancellationEditorRef.current && formData.cancellationText !== (cancellationEditorRef.current.root.innerHTML || "")) {
+      cancellationEditorRef.current.root.innerHTML = formData.cancellationText || "";
+    }
+  }, [formData.cancellationText]);
+
   const validateForm = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
@@ -297,10 +385,12 @@ export const AddBookingSetupPage = () => {
     } else if (!formData.location) {
       toast.error("Please enter Location");
       return false;
-    } else if (!formData.facilityBookedTimes) {
-      toast.error("Please enter how many times facility can be booked per day");
-      return false;
-    } else if (!formData.termsConditions) {
+    }
+    // else if (!formData.facilityBookedTimes) {
+    //   toast.error("Please enter how many times facility can be booked per day");
+    //   return false;
+    // } 
+    else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
     } else if (!formData.cancellationText) {
@@ -436,6 +526,10 @@ export const AddBookingSetupPage = () => {
         "facility_setup[complementary]",
         formData.complimentary ? "1" : "0"
       );
+      formDataToSend.append(
+        "facility_setup[bill_to_company]",
+        formData.billToCompany ? "1" : "0"
+      );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
       // formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
@@ -492,9 +586,23 @@ export const AddBookingSetupPage = () => {
         formData.chargeSetup.maximumPersonAllowed || "1"
       );
 
+      // Facility Duration Charges
+      formData.chargeSetup.facilityDurationCharges.forEach((charge, index) => {
+        if (charge.hours || charge.price) {
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][duration_hours]`,
+            charge.hours
+          );
+          formDataToSend.append(
+            `facility_setup[facility_duration_charges_attributes][${index}][price]`,
+            charge.price
+          );
+        }
+      });
+
       formDataToSend.append(
         "facility_setup[description]",
-        formData.termsConditions || ""
+        formData.description || ""
       );
       formDataToSend.append(
         "facility_setup[terms]",
@@ -562,9 +670,9 @@ export const AddBookingSetupPage = () => {
         formDataToSend.append(`cover_image`, file);
       });
 
-      selectedBookingFiles.forEach((file) => {
-        formDataToSend.append(`attachments[]`, file);
-      });
+      // selectedBookingFiles.forEach((file) => {
+      //   formDataToSend.append(`attachments[]`, file);
+      // });
 
       selectedGalleryImages.forEach((image: any, index: number) => {
         // Convert aspect ratio to format: 16_9, 9_16, 1_1, 3_2
@@ -575,14 +683,32 @@ export const AddBookingSetupPage = () => {
         );
       });
 
+      const selectedAccessories = Object.entries(formData.amenities)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([inventoryId]) => parseInt(inventoryId));
+
+      console.log('=== Selected Accessories ===');
+      console.log('formData.amenities:', formData.amenities);
+      console.log('selectedAccessories IDs:', selectedAccessories);
+      console.log('Total accessories selected:', selectedAccessories.length);
+      console.log('===========================');
+
+      selectedAccessories.forEach((inventoryId, index) => {
+        formDataToSend.append(
+          `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
+          inventoryId.toString()
+        );
+        console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
+      });
+
       const amenities = [];
-      if (formData.amenities.tv) amenities.push("TV");
-      if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-      if (formData.amenities.casting) amenities.push("Casting");
-      if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-      if (formData.amenities.wirelessCharging)
+      if (formData.staticAmenities.tv) amenities.push("TV");
+      if (formData.staticAmenities.whiteboard) amenities.push("Whiteboard");
+      if (formData.staticAmenities.casting) amenities.push("Casting");
+      if (formData.staticAmenities.smartPenForTV) amenities.push("Smart Pen for TV");
+      if (formData.staticAmenities.wirelessCharging)
         amenities.push("Wireless Charging");
-      if (formData.amenities.meetingRoomInventory)
+      if (formData.staticAmenities.meetingRoomInventory)
         amenities.push("Meeting Room Inventory");
 
       amenities.forEach((name, index) => {
@@ -778,7 +904,7 @@ export const AddBookingSetupPage = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    if (/^[a-zA-Z0-9\s]*$/.test(value)) {
                       setFormData({ ...formData, facilityName: value });
                     }
                   }}
@@ -795,9 +921,21 @@ export const AddBookingSetupPage = () => {
                   <InputLabel className="bg-[#F6F7F7]">Category<span className="text-red-500">*</span></InputLabel>
                   <Select
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selectedCategoryId = e.target.value;
+                      const selectedCategory = categories.find((cat: any) => cat.id === selectedCategoryId);
+
+                      // Set isBookable based on fac_type
+                      // Assuming "bookable" fac_type = true, others = false
+                      const isBookableType = selectedCategory?.fac_type === "bookable";
+
+                      setFormData({
+                        ...formData,
+                        category: selectedCategoryId,
+                        isBookable: isBookableType,
+                        isRequest: !isBookableType,
+                      });
+                    }}
                     onFocus={fetchCategories}
                     label="Category"
                     displayEmpty
@@ -820,8 +958,8 @@ export const AddBookingSetupPage = () => {
                   value={formData.location}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    // Allow address-friendly characters
+                    if (/^[a-zA-Z0-9\s,.\-/#]*$/.test(value)) {
                       setFormData({ ...formData, location: value });
                     }
                   }}
@@ -884,7 +1022,7 @@ export const AddBookingSetupPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* <div className="overflow-x-auto">
               <table className="w-full border">
                 <thead>
                   <tr className="bg-gray-50">
@@ -1000,115 +1138,9 @@ export const AddBookingSetupPage = () => {
                       </div>
                     </td>
                   </tr>
-                  {/* <tr>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.chargeSetup.guest.selected}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  selected: !!checked,
-                                },
-                              },
-                            })
-                          }
-                        />
-                        <span>Guest</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.adult}
-                          onCheckedChange={(checked) => {
-                            if (!checked) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: "",
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.adult}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    adult: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox
-                          checked={!!formData.chargeSetup.guest.child}
-                          onCheckedChange={(checked) => {
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  child: checked ? formData.chargeSetup.guest.child || "" : "",
-                                },
-                              },
-                            });
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.child}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow only positive numbers with max 2 decimal places
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    child: value,
-                                  },
-                                },
-                              });
-                            }
-                          }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                  </tr> */}
                 </tbody>
               </table>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               <div className="flex items-center gap-3">
@@ -1165,30 +1197,147 @@ export const AddBookingSetupPage = () => {
                   placeholder="1"
                 />
               </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.perSlotCharge}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow only positive integers (no decimals, no negatives)
-                    if (value === '' || /^[1-9]\d*$/.test(value)) {
+              {
+                formData.isBookable && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-semibold whitespace-nowrap">Per slot charge</label>
+                    <TextField
+                      size="small"
+                      variant="outlined"
+                      value={formData.chargeSetup.perSlotCharge}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only positive integers (no decimals, no negatives)
+                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            chargeSetup: {
+                              ...formData.chargeSetup,
+                              perSlotCharge: value,
+                            },
+                          });
+                        }
+                      }}
+                      className="w-32"
+                      placeholder="1"
+                    />
+                  </div>
+                )
+              }
+            </div>
+
+            {/* Facility Duration Charges Table */}
+            {!formData.isBookable && (
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-semibold text-gray-800">Facility Duration Charges</h4>
+                  <Button
+                    onClick={() => {
                       setFormData({
                         ...formData,
                         chargeSetup: {
                           ...formData.chargeSetup,
-                          perSlotCharge: value,
-                        },
+                          facilityDurationCharges: [
+                            ...formData.chargeSetup.facilityDurationCharges,
+                            { hours: "", price: "" }
+                          ]
+                        }
                       });
-                    }
-                  }}
-                  className="w-32"
-                  placeholder="1"
-                />
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Row
+                  </Button>
+                </div>
+
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Hours</th>
+                        <th className="border-b px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                        <th className="border-b px-4 py-3 text-center font-semibold text-gray-700">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.chargeSetup.facilityDurationCharges.map((charge, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter hours"
+                              value={charge.hours}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].hours = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.5",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              placeholder="Enter price"
+                              value={charge.price}
+                              onChange={(e) => {
+                                const newCharges = [...formData.chargeSetup.facilityDurationCharges];
+                                newCharges[index].price = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges
+                                  }
+                                });
+                              }}
+                              inputProps={{
+                                step: "0.01",
+                                min: "0"
+                              }}
+                              className="w-full"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => {
+                                const newCharges = formData.chargeSetup.facilityDurationCharges.filter((_, i) => i !== index);
+                                setFormData({
+                                  ...formData,
+                                  chargeSetup: {
+                                    ...formData.chargeSetup,
+                                    facilityDurationCharges: newCharges.length > 0 ? newCharges : [{ hours: "", price: "" }]
+                                  }
+                                });
+                              }}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
+                              title="Remove row"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -1699,27 +1848,31 @@ export const AddBookingSetupPage = () => {
                   )}
                 </div> */}
 
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Facility can be booked</span>
-                  <TextField
-                    placeholder=""
-                    value={formData.facilityBookedTimes}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only positive integers (no decimals, no negatives)
-                      if (value === '' || /^[1-9]\d*$/.test(value)) {
-                        setFormData({
-                          ...formData,
-                          facilityBookedTimes: value,
-                        });
-                      }
-                    }}
-                    variant="outlined"
-                    size="small"
-                    style={{ width: "80px" }}
-                  />
-                  <span>times per day by User</span>
-                </div>
+                {
+                  formData.isBookable && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>Facility can be booked</span>
+                      <TextField
+                        placeholder=""
+                        value={formData.facilityBookedTimes}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow only positive integers (no decimals, no negatives)
+                          if (value === '' || /^[1-9]\d*$/.test(value)) {
+                            setFormData({
+                              ...formData,
+                              facilityBookedTimes: value,
+                            });
+                          }
+                        }}
+                        variant="outlined"
+                        size="small"
+                        style={{ width: "80px" }}
+                      />
+                      <span>times per day by User</span>
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>
@@ -1734,46 +1887,67 @@ export const AddBookingSetupPage = () => {
 
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, postpaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="postpaid">Postpaid</label>
-                </div> */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, prepaid: !!checked })
-                    }
-                  />
-                  <label htmlFor="prepaid">Prepaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, payOnFacility: !!checked })
-                    }
-                  />
-                  <label htmlFor="payOnFacility">Pay at Facility</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, complimentary: !!checked })
-                    }
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div>
+                {/* Show Prepaid and Pay at Facility for Bookable */}
+                {formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="prepaid"
+                        checked={formData.prepaid}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, prepaid: !!checked })
+                        }
+                      />
+                      <label htmlFor="prepaid">Prepaid</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="payOnFacility"
+                        checked={formData.payOnFacility}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, payOnFacility: !!checked })
+                        }
+                      />
+                      <label htmlFor="payOnFacility">Pay at Facility</label>
+                    </div>
+                  </>
+                )}
+
+                {/* Show Complimentary and Bill to Company for Requestable */}
+                {!formData.isBookable && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="complimentary"
+                        checked={formData.complimentary}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            complimentary: !!checked,
+                            billToCompany: !!checked ? false : formData.billToCompany
+                          })
+                        }
+                        disabled={formData.billToCompany}
+                      />
+                      <label htmlFor="complimentary" className={formData.billToCompany ? "text-gray-400" : ""}>Complimentary</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="billToCompany"
+                        checked={formData.billToCompany}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            billToCompany: !!checked,
+                            complimentary: !!checked ? false : formData.complimentary
+                          })
+                        }
+                        disabled={formData.complimentary}
+                      />
+                      <label htmlFor="billToCompany" className={formData.complimentary ? "text-gray-400" : ""}>Bill to Company</label>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField
@@ -1872,7 +2046,7 @@ export const AddBookingSetupPage = () => {
               )}
             </div>
 
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <Image className="w-4 h-4" />
@@ -1927,7 +2101,7 @@ export const AddBookingSetupPage = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Gallery Images Card */}
@@ -2052,17 +2226,9 @@ export const AddBookingSetupPage = () => {
               </div>
 
               <div>
-                <Textarea
-                  placeholder="Enter terms and conditions"
-                  value={formData.termsConditions}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      termsConditions: e.target.value,
-                    })
-                  }
-                  className="min-h-[100px]"
-                />
+                <div className="border rounded">
+                  <div ref={termsQuillRef} className="min-h-[160px] p-2 bg-white" />
+                </div>
               </div>
             </div>
 
@@ -2179,24 +2345,27 @@ export const AddBookingSetupPage = () => {
                   </div>
 
                   {/* Percentage Input */}
-                  <TextField
-                    placeholder="%"
-                    size="small"
-                    variant="outlined"
-                    value={rule.deduction}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only non-negative numbers with max 2 decimal places and not more than 100
-                      if (
-                        value === '' ||
-                        (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= 100)
-                      ) {
-                        const newRules = [...cancellationRules];
-                        newRules[index].deduction = value;
-                        setCancellationRules(newRules);
-                      }
-                    }}
-                  />
+                  <div className="flex items-center gap-1">
+                    <TextField
+                      placeholder="%"
+                      size="small"
+                      variant="outlined"
+                      value={rule.deduction}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only non-negative numbers with max 2 decimal places and not more than 100
+                        if (
+                          value === '' ||
+                          (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= 100)
+                        ) {
+                          const newRules = [...cancellationRules];
+                          newRules[index].deduction = value;
+                          setCancellationRules(newRules);
+                        }
+                      }}
+                    />
+                    <span>%</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2205,17 +2374,9 @@ export const AddBookingSetupPage = () => {
               <div className="font-medium text-gray-700">
                 Cancellation Policy <span>*</span>
               </div>
-              <Textarea
-                placeholder="Enter cancellation text"
-                value={formData.cancellationText}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    cancellationText: e.target.value,
-                  })
-                }
-                className="min-h-[100px]"
-              />
+              <div className="border rounded">
+                <div ref={cancellationQuillRef} className="min-h-[140px] p-2 bg-white" />
+              </div>
             </div>
           </div>
 
@@ -2241,7 +2402,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             <div className="space-y-4" id="additional">
-              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
@@ -2277,116 +2438,120 @@ export const AddBookingSetupPage = () => {
                     ))
                   )}
                 </div>
-              </div> */}
-
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                    <Tv className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tv"
-                      checked={formData.amenities.tv}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: { ...formData.amenities, tv: !!checked },
-                        })
-                      }
-                    />
-                    <label htmlFor="tv">TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="whiteboard"
-                      checked={formData.amenities.whiteboard}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            whiteboard: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="whiteboard">Whiteboard</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="casting"
-                      checked={formData.amenities.casting}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            casting: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="casting">Casting</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="smartPenForTV"
-                      checked={formData.amenities.smartPenForTV}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            smartPenForTV: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="wirelessCharging"
-                      checked={formData.amenities.wirelessCharging}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            wirelessCharging: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="wirelessCharging">Wireless Charging</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="meetingRoomInventory"
-                      checked={formData.amenities.meetingRoomInventory}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            meetingRoomInventory: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="meetingRoomInventory">
-                      Meeting Room Inventory
-                    </label>
-                  </div>
-                </div>
               </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {
+                !formData.isBookable && (
+                  <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <Tv className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="tv"
+                          checked={formData.staticAmenities.tv}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: { ...formData.staticAmenities, tv: !!checked },
+                            })
+                          }
+                        />
+                        <label htmlFor="tv">TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="whiteboard"
+                          checked={formData.staticAmenities.whiteboard}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                whiteboard: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="whiteboard">Whiteboard</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="casting"
+                          checked={formData.staticAmenities.casting}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                casting: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="casting">Casting</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="smartPenForTV"
+                          checked={formData.staticAmenities.smartPenForTV}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                smartPenForTV: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="wirelessCharging"
+                          checked={formData.staticAmenities.wirelessCharging}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                wirelessCharging: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="wirelessCharging">Wireless Charging</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="meetingRoomInventory"
+                          checked={formData.staticAmenities.meetingRoomInventory}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              staticAmenities: {
+                                ...formData.staticAmenities,
+                                meetingRoomInventory: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor="meetingRoomInventory">
+                          Meeting Room Inventory
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Armchair className="w-4 h-4" />
@@ -2425,7 +2590,6 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* Floor Info */}
               <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -2506,7 +2670,7 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

@@ -8,6 +8,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Switch as MuiSwitch,
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,7 +24,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +65,7 @@ export const EditEventPage = () => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
 
   // Tech Park Modal State
@@ -137,7 +138,7 @@ export const EditEventPage = () => {
         // We still need to fetch some details like isActive and existingAttachments that aren't in localStorage
         try {
           const event = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
-          setIsActive(event.is_important === true || event.is_important === 1);
+          setIsActive(event.active);
           if (event.documents && event.documents.length > 0) {
             setExistingAttachments([event.documents[event.documents.length - 1]]);
           } else {
@@ -175,11 +176,11 @@ export const EditEventPage = () => {
             shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
           }));
 
-          if (event.site_ids) {
-            setSelectedTechParks(event.site_ids);
+          if (event.shared_sites) {
+            setSelectedTechParks(event.shared_sites.map((site: any) => site.id));
           }
 
-          setIsActive(event.is_important === true || event.is_important === 1);
+          setIsActive(event.active);
 
           if (event.community_events) {
             setSelectedCommunities(event.community_events.map((ce: any) => ce.community_id));
@@ -247,6 +248,38 @@ export const EditEventPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleStatusChange = async (checked: boolean) => {
+    const newStatus = checked ? 1 : 0;
+
+    // Store previous state for rollback
+    const previousStatus = isActive;
+
+    // Optimistic update
+    setUpdatingStatus(true);
+    setIsActive(checked);
+
+    try {
+      await dispatch(
+        updateEvent({
+          id,
+          data: { event: { active: newStatus } },
+          baseUrl,
+          token,
+        })
+      ).unwrap();
+
+      toast.success("Event status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update event status");
+
+      // Revert optimistic update on error
+      setIsActive(previousStatus);
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   const handleRadioChange = (name: string, value: string) => {
@@ -447,12 +480,26 @@ export const EditEventPage = () => {
               <span className="font-semibold text-lg text-gray-800">Event Detail</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
               <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
-              <Switch
+              <MuiSwitch
                 checked={isActive}
-                onCheckedChange={setIsActive}
-                className="data-[state=checked]:bg-green-500"
+                onChange={(e) => handleStatusChange(e.target.checked)}
+                disabled={updatingStatus}
+                size="small"
+                sx={{
+                  '& .MuiSwitch-switchBase': {
+                    color: '#ef4444',
+                    '&.Mui-checked': {
+                      color: '#22c55e',
+                    },
+                    '&.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#22c55e',
+                    },
+                  },
+                  '& .MuiSwitch-track': {
+                    backgroundColor: '#ef4444',
+                  },
+                }}
               />
             </div>
           </div>
@@ -506,7 +553,7 @@ export const EditEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Amount Per Person<span className="text-[#C72030]">*</span></>}
+                  label={<>Event Amount Per Person</>}
                   id="amountPerPerson"
                   name="amountPerPerson"
                   type="number"
@@ -516,6 +563,12 @@ export const EditEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -543,6 +596,9 @@ export const EditEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -566,6 +622,9 @@ export const EditEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{
+                    min: formData.fromDate || new Date().toISOString().split('T')[0],
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -601,7 +660,7 @@ export const EditEventPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -636,6 +695,12 @@ export const EditEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -659,6 +724,12 @@ export const EditEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                      e.preventDefault();
+                    }
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
@@ -671,9 +742,9 @@ export const EditEventPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-3 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 mb-4">
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Pulse Category:
                 </Label>
                 <RadioGroup
@@ -689,23 +760,23 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="play"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Play</span>}
+                    label={<span className="text-[12px] text-gray-600">Play</span>}
                   />
                   <FormControlLabel
                     value="panasche"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Panasche</span>}
+                    label={<span className="text-[12px] text-gray-600">Panasche</span>}
                   />
                   <FormControlLabel
                     value="persuit"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Persuit</span>}
+                    label={<span className="text-[12px] text-gray-600">Persuit</span>}
                   />
                 </RadioGroup>
               </div>
 
-              <div className="flex items-center gap-2 ml-4">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   RSVP:
                 </Label>
                 <RadioGroup
@@ -718,18 +789,18 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
 
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Show On Home Screen:
                 </Label>
                 <RadioGroup
@@ -742,18 +813,18 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
 
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-700 whitespace-nowrap">
+                <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Approval Required:
                 </Label>
                 <RadioGroup
@@ -766,20 +837,20 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="yes"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Yes</span>}
+                    label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">No</span>}
+                    label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
             </div>
 
             <div>
-              <div className="relative w-full mt-4">
-                <label className="absolute -top-2 left-3 bg-white px-1 text-sm text-black pointer-events-none">
+              <div className="relative w-full mt-6">
+                <label className="absolute -top-2 left-3 bg-white px-1 text-[12.5px] text-black pointer-events-none">
                   Event Description<span className="text-[#C72030]">*</span>
                 </label>
                 <textarea
@@ -854,7 +925,7 @@ export const EditEventPage = () => {
               </div>
             </div>
 
-            {formData.shareWith === "individual" && selectedTechParks.length > 0 && (
+            {selectedTechParks.length > 0 && (
               <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
                 <span>
                   {techParks
@@ -991,6 +1062,7 @@ export const EditEventPage = () => {
                         ref={attachmentInputRef}
                         onChange={handleFileChange}
                         className="hidden"
+                        accept="image/*"
                       />
 
                       <div className="text-center text-gray-500 text-sm">

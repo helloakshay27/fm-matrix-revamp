@@ -155,10 +155,10 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
       return;
     }
     
-    if (!fixedStateValue) {
-      toast.error('Please select a fixed state');
-      return;
-    }
+    // if (!fixedStateValue) {
+    //   toast.error('Please select a fixed state');
+    //   return;
+    // }
     
     if (!colorCodeInput?.value?.trim()) {
       toast.error('Please enter a color code');
@@ -275,7 +275,9 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
                 name="fixedState"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fixed State<span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Fixed State
+                      {/* <span className="text-red-500">*</span> */}
+                      </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>

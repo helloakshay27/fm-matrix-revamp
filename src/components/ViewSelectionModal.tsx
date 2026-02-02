@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Navigate, useNavigate } from "react-router-dom";
+import { usePermissions } from "../contexts/PermissionsContext";
+import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
 interface ViewSelectionModalProps {
   isOpen: boolean;
@@ -21,18 +23,95 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
 }) => {
   const [selectedView, setSelectedView] = useState<string | null>("admin"); // Default to admin
   const navigate = useNavigate();
+  const { userRole } = usePermissions();
+
+  // Helper function to get first available employee link
+  const getFirstEmployeeLink = (): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/vas/projects"; // Fallback
+    }
+
+    // Find first module from Employee modules (Employee Sidebar or Employee Projects Sidebar)
+    for (const module of userRole.lock_modules) {
+      // Only look for Employee-specific modules
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) {
+        // Find first active function with a react_link
+        const firstActiveFunction = module.lock_functions.find(
+          (func) =>
+            func.function_active === 1 &&
+            func.react_link &&
+            !func.parent_function
+        );
+
+        if (firstActiveFunction && firstActiveFunction.react_link) {
+          return firstActiveFunction.react_link;
+        }
+      }
+    }
+
+    return "/vas/projects"; // Fallback to projects
+  };
+
+  // Helper function to get first available admin link
+  const getFirstAdminLink = (): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/";
+    }
+
+    // Find first module with active functions (excluding Employee modules)
+    for (const module of userRole.lock_modules) {
+      // Skip Employee Sidebar and Employee Projects Sidebar modules
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) {
+        continue;
+      }
+
+      // Find first active function with a react_link
+      const firstActiveFunction = module.lock_functions.find(
+        (func) =>
+          func.function_active === 1 && func.react_link && !func.parent_function
+      );
+
+      if (firstActiveFunction && firstActiveFunction.react_link) {
+        return firstActiveFunction.react_link;
+      }
+    }
+
+    return "/"; // Fallback to root
+  };
 
   const handleViewSelection = (viewType: string) => {
     // Set localStorage based on selected view
     if (viewType === "admin") {
       localStorage.setItem("userType", "pms_organization_admin");
       localStorage.setItem("selectedView", "admin");
-      navigate("/");
+
+      // Use dynamic routing based on permissions
+      if (userRole) {
+        const firstRoute = findFirstAccessibleRoute(userRole);
+        if (firstRoute) {
+          navigate(firstRoute);
+          onComplete();
+          return;
+        }
+      }
+
+      // Fallback to getFirstAdminLink if findFirstAccessibleRoute doesn't return a route
+      const adminLink = getFirstAdminLink();
+      navigate(adminLink);
     } else if (viewType === "employee") {
       localStorage.setItem("userType", "pms_occupant");
-      localStorage.setItem("tempType", "pms_organization_admin"); // Clear selected company for employee view
+      localStorage.setItem("tempType", "pms_organization_admin");
       localStorage.setItem("selectedView", "employee");
-      navigate("/employee/dashboard");
+
+      // Use dynamic employee link based on permissions
+      const employeeLink = getFirstEmployeeLink();
+      navigate(employeeLink);
     }
 
     // Complete the selection and reload to apply changes
