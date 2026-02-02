@@ -125,7 +125,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         console.log('Submitting ledger data:', ledgerData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/2/lock_account_ledgers.json`,
+                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers.json`,
                 { lock_account_ledger: ledgerData },
                 {
                     headers: {
