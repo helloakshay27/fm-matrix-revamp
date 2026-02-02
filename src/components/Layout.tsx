@@ -146,6 +146,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOmanSite,
     });
 
+    if (isViSite) {
+      console.log("✅ Rendering ViSidebar");
+      return <ViSidebar />;
+    }
+
     // Check if user is in Club Management route - render ClubSidebar
     if (isClubManagementRoute) {
       console.log("✅ Rendering ClubSidebar");
@@ -202,11 +207,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ViSidebarWithToken />;
     }
 
-    if (isViSite) {
-      console.log("✅ Rendering ViSidebar");
-      return <ViSidebar />;
-    }
-
     // Company-specific logic (Admin layout)
     if (selectedCompany?.id === 189) {
       return <ZxSidebar />;
@@ -241,6 +241,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render header component based on configuration
   const renderDynamicHeader = () => {
+    if (isViSite) {
+      return <ViDynamicHeader />;
+    }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
       return <StaticDynamicHeader />;
@@ -270,9 +273,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
-    }
-    if (isViSite) {
-      return <ViDynamicHeader />;
     }
 
     // Company-specific logic (Admin layout)
