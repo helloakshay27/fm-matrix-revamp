@@ -1,7 +1,10 @@
-import { File, Loader2 } from "lucide-react"
+import { Eye, File, Loader2 } from "lucide-react"
 import { EnhancedTable } from "./enhanced-table/EnhancedTable"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
     {
@@ -11,7 +14,7 @@ const columns: ColumnConfig[] = [
         draggable: false
     },
     {
-        key: 'full_name',
+        key: 'user_name',
         label: 'Requestor Name',
         sortable: true,
         draggable: true
@@ -35,7 +38,7 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'organisation',
+        key: 'organization',
         label: 'Organisation',
         sortable: true,
         draggable: true
@@ -54,10 +57,52 @@ const columns: ColumnConfig[] = [
     }
 ];
 
-const CommunityWaitingList = () => {
+const CommunityWaitingList = ({ communityId }: { communityId: string }) => {
+    const navigate = useNavigate()
+    const baseUrl = localStorage.getItem("baseUrl")
+    const token = localStorage.getItem("token")
+
     const [loading, setLoading] = useState(false)
+    const [waitingListMembers, setWaitingListMembers] = useState([])
+
+    const getWaitingListUsers = async () => {
+        setLoading(true)
+        try {
+            const response = await axios.get(`https://${baseUrl}/community_members/waiting_list.json?community_id=${communityId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setWaitingListMembers(response.data.community_members)
+        } catch (error) {
+            console.log(error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        getWaitingListUsers()
+    }, [])
 
     const renderCell = (item: any, columnKey: string) => {
+        if (columnKey === 'action') {
+            return (
+                <Button variant="ghost" size="sm" onClick={() => navigate(`user/${item.id}`)}>
+                    <Eye className="w-4 h-4" />
+                </Button>
+            );
+        }
+        if (columnKey === 'created_at' && item.created_at) {
+            return new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            }).format(new Date(item.created_at));
+        }
+        if (columnKey === 'status') {
+            return item.status.charAt(0).toUpperCase() + item.status.slice(1);
+        }
         return item[columnKey] || "-";
     }
 
@@ -76,11 +121,14 @@ const CommunityWaitingList = () => {
                 </div>
             ) : (
                 <EnhancedTable
-                    data={[]}
+                    data={waitingListMembers}
                     columns={columns}
                     renderCell={renderCell}
                     hideColumnsButton={true}
                     hideTableSearch={true}
+                    loading={loading}
+                    pageSize={10}
+                    pagination={true}
                 />
             )}
         </div>

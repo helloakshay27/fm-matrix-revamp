@@ -714,7 +714,7 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.expected_at).toLocaleDateString()}
+                          {new Date(visitorData.expected_at).toLocaleDateString('en-GB')}
                         </span>
                       </div>
                     )}
