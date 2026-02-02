@@ -582,7 +582,7 @@ const ReportsDetailsPage = () => {
                                 >
                                     <option value="under_review">Under Review</option>
                                     <option value="action_in_progress">Action In Progress</option>
-                                    <option value="resolve">Resolve</option>
+                                    <option value="resolved">Resolve</option>
                                     <option value="closed">Closed</option>
                                 </select>
                                 {updatingStatus && (
