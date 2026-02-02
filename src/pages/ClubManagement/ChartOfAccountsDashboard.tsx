@@ -258,7 +258,7 @@ export const ChartOfAccountsDashboard = () => {
     { key: "name", label: "Account Name", sortable: true },
     { key: "account_code", label: "Account Code", sortable: true },
     // { key: "lock_account_group_id", label: "Group ID", sortable: true },
-    { key: "account_type", label: "Account Type", sortable: true },
+    { key: "base_group_type", label: "Account Type", sortable: true },
     // { key: "documents", label: "Documents", sortable: false },
     {
       key: "lock_account_group_name",
