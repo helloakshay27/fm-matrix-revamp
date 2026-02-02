@@ -847,6 +847,7 @@ import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
 import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDetails";
+import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1897,7 +1898,7 @@ function App() {
                     />
                     <Route
                       path="/club-management/events/details/:id"
-                      element={<CRMEventDetailsPage />}
+                      element={<ClubEventDetailsPage />}
                     />
 
                     {/* Club Management - Accounting */}
