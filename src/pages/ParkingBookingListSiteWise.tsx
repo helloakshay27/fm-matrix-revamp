@@ -679,10 +679,12 @@ const ParkingBookingListSiteWise = () => {
       }
       
       const data: UsersApiResponse = await response.json();
-      return data.users;
+      console.log('✅ Users fetched successfully:', data.users?.length || 0);
+      return data.users || [];
     } catch (error) {
-      console.error('Error fetching users:', error);
-      throw error;
+      console.error('❌ Error fetching users:', error);
+      // Return empty array instead of throwing to prevent blocking the UI
+      return [];
     }
   };
 
@@ -779,11 +781,7 @@ const ParkingBookingListSiteWise = () => {
         setLoading(true);
         setError(null);
         
-        // Additional debugging for URL construction
-        console.log('🔍 Detailed URL Debug:');
-        console.log('Raw Base URL from API_CONFIG:', API_CONFIG.BASE_URL);
-        console.log('Raw endpoint:', '/pms/admin/parking_bookings.json');
-        console.log('Is Initial Load:', isInitialLoad);
+        console.log('🔍 Load Debug - Is Initial Load:', isInitialLoad);
         
         // Convert UI filters to API filter parameters
         const buildApiFilterParamsBase = (): ApiFilterParams => {
@@ -791,21 +789,14 @@ const ParkingBookingListSiteWise = () => {
           
           // Only apply dialog category if not overridden by card filter
           if (appliedFilters.category !== 'all' && !cardFilter?.active) {
-            console.log('🔍 Building API Filter - Category:');
-            console.log('UI Filter category value:', appliedFilters.category);
-            console.log('UI Filter category type:', typeof appliedFilters.category);
             apiParams.category = appliedFilters.category;
           }
-          // Do not apply card overrides to base (cards should stay original)
           
           if (appliedFilters.user !== 'all') {
             apiParams.user_ids = [appliedFilters.user];
           }
           
           if (appliedFilters.parking_slot.trim()) {
-            console.log('🔍 Building API Filter - Parking Slot:');
-            console.log('UI Filter parking_slot value:', appliedFilters.parking_slot);
-            console.log('UI Filter parking_slot trimmed:', appliedFilters.parking_slot.trim());
             apiParams.parking_slot = appliedFilters.parking_slot.trim();
           }
           
@@ -824,15 +815,11 @@ const ParkingBookingListSiteWise = () => {
           
           // Building filter
           if (appliedFilters.building !== 'all') {
-            console.log('🔍 Building API Filter - Building:');
-            console.log('UI Filter building value:', appliedFilters.building);
             apiParams.building_id = appliedFilters.building;
           }
           
           // Floor filter
           if (appliedFilters.floor !== 'all') {
-            console.log('🔍 Building API Filter - Floor:');
-            console.log('UI Filter floor value:', appliedFilters.floor);
             apiParams.floor_id = appliedFilters.floor;
           }
           
@@ -841,7 +828,6 @@ const ParkingBookingListSiteWise = () => {
             const fromDate = appliedFilters.scheduled_on_from.trim() ? formatDateForAPI(appliedFilters.scheduled_on_from.trim()) : formatDateForAPI(appliedFilters.scheduled_on_to.trim());
             const toDate = appliedFilters.scheduled_on_to.trim() ? formatDateForAPI(appliedFilters.scheduled_on_to.trim()) : formatDateForAPI(appliedFilters.scheduled_on_from.trim());
             apiParams.scheduled_date_range = `${fromDate} - ${toDate}`;
-            console.log('🔍 Formatted Scheduled Date Range:', apiParams.scheduled_date_range);
           }
           
           if (appliedFilters.booked_on_from.trim() || appliedFilters.booked_on_to.trim()) {
@@ -849,7 +835,6 @@ const ParkingBookingListSiteWise = () => {
             const fromDate = appliedFilters.booked_on_from.trim() ? formatDateForAPI(appliedFilters.booked_on_from.trim()) : formatDateForAPI(appliedFilters.booked_on_to.trim());
             const toDate = appliedFilters.booked_on_to.trim() ? formatDateForAPI(appliedFilters.booked_on_to.trim()) : formatDateForAPI(appliedFilters.booked_on_from.trim());
             apiParams.booked_date_range = `${fromDate} - ${toDate}`;
-            console.log('🔍 Formatted Booked Date Range:', apiParams.booked_date_range);
           }
           
           return apiParams;
@@ -867,131 +852,141 @@ const ParkingBookingListSiteWise = () => {
           return effective;
         };
         
-        // On initial load, fetch everything including cards
-        // On subsequent loads, only fetch table data
+        // On initial load, prioritize parking bookings first
         if (isInitialLoad) {
-          // First fetch categories and basic data
-          const [cardsResponse, response, usersData, categoriesData, buildingsData, floorsData] = await Promise.all([
-            fetchParkingBookings(1, debouncedSearchTerm, buildApiFilterParamsBase()),
-            fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective()),
+          console.log('🚀 Step 1: Fetching parking bookings...');
+          
+          // STEP 1: Fetch only parking bookings first to show data quickly
+          const response = await fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsBase());
+          
+          console.log('✅ Parking bookings loaded:', response.parking_bookings?.length || 0);
+          
+          // Set cards data immediately (without cancelled counts for now)
+          setCards({
+            ...response.cards,
+            two_cancelled: 0, // Will be updated later
+            four_cancelled: 0  // Will be updated later
+          });
+          
+          // Set raw API data
+          setBookings(response.parking_bookings || []);
+          
+          // Transform for UI
+          const transformedBookings = transformApiDataToBookings(response.parking_bookings || []);
+          setBookingData(transformedBookings);
+          
+          // Generate summary
+          const generatedSummary = generateSummaryFromBookings(response.parking_bookings || []);
+          setSummary(generatedSummary);
+          
+          // Set pagination
+          setApiPagination({
+            current_page: response.pagination.current_page,
+            total_count: response.pagination.total_count,
+            total_pages: response.pagination.total_pages,
+            per_page: 20
+          });
+          
+          // Mark initial load as complete immediately so table shows
+          isInitialLoadRef.current = false;
+          setLoading(false);
+          
+          // STEP 2: Fetch other data in background (non-blocking)
+          console.log('🔄 Step 2: Loading additional data in background...');
+          
+          Promise.all([
             fetchUsers(),
             fetchParkingCategories(),
             fetchBuildings(),
             fetchFloors()
-          ]);
-          
-          // Set users data
-          setUsers(usersData);
-          
-          // Set parking categories data
-          setParkingCategories(categoriesData);
-          
-          // Set buildings data
-          setBuildings(buildingsData);
-          
-          // Set floors data
-          setFloors(floorsData);
-          
-          // Now resolve category IDs from the fetched categories
-          const twoWheelerCategory = categoriesData.find(cat => {
-            const lower = cat.name.toLowerCase();
-            return lower.includes('two') || lower.includes('2') || lower.includes('bike');
-          });
-          const twoWheelerCategoryIdLocal = twoWheelerCategory ? twoWheelerCategory.id.toString() : null;
-          
-          const fourWheelerCategory = categoriesData.find(cat => {
-            const lower = cat.name.toLowerCase();
-            return lower.includes('four') || lower.includes('4') || lower.includes('car');
-          });
-          const fourWheelerCategoryIdLocal = fourWheelerCategory ? fourWheelerCategory.id.toString() : null;
-          
-          // Build filter params for cancelled counts (base filters + cancelled status for each vehicle type)
-          const buildCancelledFilterParams = (vehicleType: 'two' | 'four'): ApiFilterParams => {
-            const baseParams = buildApiFilterParamsBase();
-            const categoryId = vehicleType === 'two' ? twoWheelerCategoryIdLocal : fourWheelerCategoryIdLocal;
+          ]).then(([usersData, categoriesData, buildingsData, floorsData]) => {
+            console.log('📊 Background data loaded:');
+            console.log('- Users:', usersData?.length || 0);
+            console.log('- Categories:', categoriesData?.length || 0);
+            console.log('- Buildings:', buildingsData?.length || 0);
+            console.log('- Floors:', floorsData?.length || 0);
             
-            return {
-              ...baseParams,
-              category: categoryId || undefined,
-              statuses: ['cancelled']
+            // Set all the background data
+            setUsers(usersData || []);
+            setParkingCategories(categoriesData || []);
+            setBuildings(buildingsData || []);
+            setFloors(floorsData || []);
+            
+            // STEP 3: Fetch cancelled counts after categories are loaded
+            const twoWheelerCategory = categoriesData.find(cat => {
+              const lower = cat.name.toLowerCase();
+              return lower.includes('two') || lower.includes('2') || lower.includes('bike');
+            });
+            const twoWheelerCategoryIdLocal = twoWheelerCategory ? twoWheelerCategory.id.toString() : null;
+            
+            const fourWheelerCategory = categoriesData.find(cat => {
+              const lower = cat.name.toLowerCase();
+              return lower.includes('four') || lower.includes('4') || lower.includes('car');
+            });
+            const fourWheelerCategoryIdLocal = fourWheelerCategory ? fourWheelerCategory.id.toString() : null;
+            
+            // Build filter params for cancelled counts
+            const buildCancelledFilterParams = (vehicleType: 'two' | 'four'): ApiFilterParams => {
+              const baseParams = buildApiFilterParamsBase();
+              const categoryId = vehicleType === 'two' ? twoWheelerCategoryIdLocal : fourWheelerCategoryIdLocal;
+              
+              return {
+                ...baseParams,
+                category: categoryId || undefined,
+                statuses: ['cancelled']
+              };
             };
-          };
-          
-          // Now fetch cancelled counts with the resolved category IDs
-          const [twoWheelerCancelledResponse, fourWheelerCancelledResponse] = await Promise.all([
-            // Fetch all cancelled two wheeler bookings (we only need the count from pagination)
-            twoWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('two')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} }),
-            // Fetch all cancelled four wheeler bookings (we only need the count from pagination)
-            fourWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('four')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} })
-          ]);
-          
-          // Cards stay original (base filters only)
-          // Get cancelled counts from API response total_count (this gives us ALL cancelled bookings, not just first page)
-          const twoWheelerCancelled = twoWheelerCancelledResponse.pagination.total_count || 0;
-          const fourWheelerCancelled = fourWheelerCancelledResponse.pagination.total_count || 0;
-          
-          console.log('🔍 Cancelled Bookings Debug:');
-          console.log('Two Wheeler Cancelled Count:', twoWheelerCancelled);
-          console.log('Four Wheeler Cancelled Count:', fourWheelerCancelled);
-          
-          setCards({
-            ...cardsResponse.cards,
-            two_cancelled: twoWheelerCancelled,
-            four_cancelled: fourWheelerCancelled
+            
+            // Fetch cancelled counts
+            return Promise.all([
+              twoWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('two')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} }),
+              fourWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('four')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} })
+            ]).then(([twoWheelerCancelledResponse, fourWheelerCancelledResponse]) => {
+              const twoWheelerCancelled = twoWheelerCancelledResponse.pagination.total_count || 0;
+              const fourWheelerCancelled = fourWheelerCancelledResponse.pagination.total_count || 0;
+              
+              console.log('📊 Cancelled counts updated:', {
+                twoWheeler: twoWheelerCancelled,
+                fourWheeler: fourWheelerCancelled
+              });
+              
+              // Update cards with cancelled counts
+              setCards(prev => prev ? {
+                ...prev,
+                two_cancelled: twoWheelerCancelled,
+                four_cancelled: fourWheelerCancelled
+              } : null);
+            });
+          }).catch(error => {
+            console.error('❌ Error loading background data:', error);
+            // Don't show error to user as main data is already loaded
           });
           
-          // Set raw API data
-          setBookings(response.parking_bookings);
-          
-          // Transform for UI
-          const transformedBookings = transformApiDataToBookings(response.parking_bookings);
-          setBookingData(transformedBookings);
-          
-          // Generate summary
-          const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
-          setSummary(generatedSummary);
-          
-          // Set pagination - use fixed per_page of 20 for consistent serial number calculation
-          setApiPagination({
-            current_page: response.pagination.current_page,
-            total_count: response.pagination.total_count,
-            total_pages: response.pagination.total_pages,
-            per_page: 20 // Fixed per_page value for consistent pagination
-          });
         } else {
           // For non-initial loads, only fetch table data
+          console.log('🔄 Fetching updated table data...');
           const response = await fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective());
           
           // Set raw API data
-          setBookings(response.parking_bookings);
+          setBookings(response.parking_bookings || []);
           
           // Transform for UI
-          const transformedBookings = transformApiDataToBookings(response.parking_bookings);
+          const transformedBookings = transformApiDataToBookings(response.parking_bookings || []);
           setBookingData(transformedBookings);
           
           // Generate summary
-          const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
+          const generatedSummary = generateSummaryFromBookings(response.parking_bookings || []);
           setSummary(generatedSummary);
           
-          // Set pagination - use fixed per_page of 20 for consistent serial number calculation
+          // Set pagination
           setApiPagination({
             current_page: response.pagination.current_page,
             total_count: response.pagination.total_count,
             total_pages: response.pagination.total_pages,
-            per_page: 20 // Fixed per_page value for consistent pagination
+            per_page: 20
           });
           
-          console.log('🔍 Pagination Update Debug (Non-Initial):');
-          console.log('Current Page:', response.pagination.current_page);
-          console.log('Total Pages:', response.pagination.total_pages);
-          console.log('Total Count:', response.pagination.total_count);
-          console.log('Card Filter Active:', cardFilter?.active);
-          console.log('Table Data Length:', transformedBookings.length);
-        }
-        
-        // Mark initial load as complete
-        if (isInitialLoad) {
-          isInitialLoadRef.current = false;
+          console.log('✅ Table updated - Page:', response.pagination.current_page);
         }
         
       } catch (error) {
@@ -999,7 +994,10 @@ const ParkingBookingListSiteWise = () => {
         setError('Failed to load parking booking data');
         toast.error('Failed to load parking booking data');
       } finally {
-        setLoading(false);
+        // Only set loading false for non-initial loads (initial load sets it earlier)
+        if (!isInitialLoadRef.current) {
+          setLoading(false);
+        }
       }
     };
 
