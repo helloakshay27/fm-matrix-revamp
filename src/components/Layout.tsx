@@ -89,9 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   // Check if non-employee user needs to select project/site
-  const isViSite =
-    hostname.includes("localhost") ||
-    hostname.includes("vi-web.gophygital.work");
+  const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -122,6 +120,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse-uat.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
+    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
