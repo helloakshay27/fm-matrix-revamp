@@ -153,32 +153,43 @@ export const ForgotPasswordOTPPage = () => {
     try {
       const response = await sendForgotPasswordOTP(emailOrMobile);
 
-      // 🔴 Business logic error
-      if (response.data?.code === 429) {
-        toast.error(response.data.message);
+      // Check response code (could be response.code or response.data.code depending on service)
+      const responseCode = response?.code || response?.data?.code;
+      const responseMessage = response?.message || response?.data?.message;
+
+      // Handle rate limiting (429) - server returns 200 OK but with code: 429 in body
+      if (responseCode === 429) {
+        toast.error(
+          responseMessage ||
+            "Too many OTP requests. Please try again after some time."
+        );
         setTimeLeft(60);
         return;
       }
 
-      // 🟢 Real success
-      toast.success("A new OTP has been sent to your email or mobile number.");
-    } catch (error: any) {
-      // Handle rate limiting (429) specifically
-      if (error.response?.data?.code === 429) {
+      // Handle other non-200 codes
+      if (responseCode && responseCode !== 200) {
         toast.error(
-          error.response.data.message ||
-            "Too many OTP requests. Please try again after some time."
+          responseMessage || "Failed to resend OTP. Please try again."
         );
-        setTimeLeft(60); // Set longer wait time for rate limit
-      } else {
-        // Generic error handling
-        const errorMessage =
-          error.response?.data?.message ||
-          "Failed to resend OTP. Please try again.";
-        toast.error(errorMessage);
         setCanResend(true);
         setTimeLeft(0);
+        return;
       }
+
+      // Success (code: 200 or otp: "Y")
+      toast.success(
+        responseMessage ||
+          "A new OTP has been sent to your email or mobile number."
+      );
+    } catch (error: any) {
+      // Handle HTTP errors
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to resend OTP. Please try again.";
+      toast.error(errorMessage);
+      setCanResend(true);
+      setTimeLeft(0);
     }
   };
 
