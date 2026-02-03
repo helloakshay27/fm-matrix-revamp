@@ -35,6 +35,7 @@ import {
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
 import { AIAssistantWidget } from '@/components/AIAssistantWidget';
+import { DashboardAIAssistant } from '@/components/DashboardAIAssistant';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -1593,7 +1594,7 @@ export const TicketDashboard = () => {
                 <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
               </div>
             </div>
-            <AIAssistantWidget allowedModuleId={2} />
+            <DashboardAIAssistant moduleId="2" />
 
           </TabsContent>
 

@@ -70,6 +70,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
+import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
@@ -1447,7 +1448,8 @@ export const ScheduledTaskDashboard = () => {
             value="analytics"
             className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
           >
-                  <AIAssistantWidget allowedModuleId={3} />
+            <DashboardAIAssistant moduleId="3" />
+
 
             {/* Header Section with Filter and Selector */}
             <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
