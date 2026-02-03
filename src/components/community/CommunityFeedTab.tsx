@@ -1018,8 +1018,17 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                             {/* Document Info */}
                             <div className="flex-grow min-w-0">
                                 <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{post.title}</h3>
-                                {post.attachment?.file_size && <span className="text-sm text-gray-600">{post.attachment.file_size}</span>}
-                                <p className="text-gray-600 text-sm mt-1 truncate">Created: {post.created_at && new Date(post.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                {post.attachment?.file_size && <span className="text-sm font-[500] text-gray-600">{post.attachment.file_size}</span>}
+                                <p className="text-gray-600 text-sm font-[500] mt-1 truncate">
+                                    Created:{" "}
+                                    {post.created_at &&
+                                        new Date(post.created_at).toLocaleDateString("en-GB", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
+                                </p>
+
                             </div>
                         </div>
                     </div>
