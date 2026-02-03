@@ -12,6 +12,7 @@ import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 import { WaterFilterDialog } from '../components/WaterFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 import { AssetDataTable } from '../components/AssetDataTable';
+import { AssetStats } from '../components/AssetStats';
 import { StatsCard } from '../components/StatsCard';
 import { useWaterAssetSearch } from '../hooks/useWaterAssetSearch';
 import {
@@ -274,23 +275,19 @@ export const UtilityWaterDashboard = () => {
       ) : (
         <>
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatsCard
-              title="Total Asset"
-              value={stats.total.toString()}
-              icon={<Package className="w-8 h-8" color='#c72030' />}
-            />
-            <StatsCard
-              title="In Use"
-              value={stats.inUse.toString()}
-              icon={<CheckCircle className="w-8 h-8" color='#c72030' />}
-            />
-            <StatsCard
-              title="Breakdown"
-              value={stats.breakdown.toString()}
-              icon={<AlertTriangle className="w-8 h-8" color='#c72030' />}
-            />
-          </div>
+          <AssetStats
+            stats={{
+              total_count: stats.total,
+              total_value: 0,
+              non_it_assets: stats.total,
+              it_assets: 0,
+              in_use_count: stats.inUse,
+              breakdown_count: stats.breakdown,
+              in_store: 0,
+              allocated_count: 0,
+              dispose_assets: 0,
+            }}
+          />
 
           {/* Action Buttons */}
           {/* <div className="flex flex-wrap gap-3">
