@@ -244,11 +244,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         organizationId
       );
 
-      if (!response.is_login) {
-        toast.error("You are not approved to login.")
-        return
-      }
-
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
