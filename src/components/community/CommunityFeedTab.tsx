@@ -1103,10 +1103,10 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
 
                                 <div className="flex items-center justify-between border-t border-gray-200 w-[75%] pt-2">
                                     <div className="flex items-center gap-4">
-                                        <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
+                                        {/* <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
                                             <Heart size={16} />
                                             <span className="text-sm font-medium">0</span>
-                                        </button>
+                                        </button> */}
                                     </div>
                                     <Button
                                         variant="ghost"

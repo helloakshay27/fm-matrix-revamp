@@ -274,14 +274,18 @@ const CommunityUserDetails = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 flex items-center gap-3">
-                                    <div className="flex items-start">
-                                        <span className="text-sm text-gray-500 block min-w-[120px]">Issue</span>
-                                        <span className="text-gray-900 font-medium">
-                                            {report.description}
-                                        </span>
-                                    </div>
-                                </div>
+                                {
+                                    report.report_type === "Community" && (
+                                        <div className="space-y-4 flex items-center gap-3">
+                                            <div className="flex items-start">
+                                                <span className="text-sm text-gray-500 block min-w-[120px]">Issue</span>
+                                                <span className="text-gray-900 font-medium">
+                                                    {report.description}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )
+                                }
                             </div>
                         </div>
                     ))
