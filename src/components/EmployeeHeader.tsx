@@ -145,9 +145,8 @@ export const EmployeeHeader: React.FC = () => {
     );
 
     if (!sidebarModule) {
-      // If Employee Sidebar module is not found, return empty array
-      // This means the user doesn't have permission to see header modules
-      return [];
+      // If Employee Sidebar module is not found, return static modules as fallback
+      return staticEmployeeModules;
     }
 
     // Build modules from active functions
@@ -168,7 +167,7 @@ export const EmployeeHeader: React.FC = () => {
         };
       });
 
-    return dynamicModules.length > 0 ? dynamicModules : [];
+    return dynamicModules.length > 0 ? dynamicModules : staticEmployeeModules;
   }, [userRole]);
 
   const fetchWalleteDetails = async () => {
@@ -206,16 +205,17 @@ export const EmployeeHeader: React.FC = () => {
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
-  // Module visibility management
-  const [visibleModules, setVisibleModules] = useState<string[]>(() => {
-    // const saved = localStorage.getItem("employeeVisibleModules");
-    // return saved
-    //   ? JSON.parse(saved)
-    //   : employeeModules.slice(0, 9).map((m) => m.name);
-    return employeeModules.slice(0, 9).map((m) => m.name);
-  });
+  // Module visibility management - sync with employeeModules
+  const [visibleModules, setVisibleModules] = useState<string[]>([]);
 
-  const MAX_VISIBLE_MODULES = 9;
+  // Update visibleModules when employeeModules changes
+  useEffect(() => {
+    if (employeeModules.length > 0) {
+      setVisibleModules(employeeModules.slice(0, 8).map((m) => m.name));
+    }
+  }, [employeeModules]);
+
+  const MAX_VISIBLE_MODULES = 8;
 
   // Ensure "Company Hub" and "Dashboard" are always the first modules
   const orderedVisibleModules = [...visibleModules];
