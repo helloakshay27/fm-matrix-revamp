@@ -418,7 +418,7 @@ export const WorkOrderAddPage: React.FC = () => {
         toast.error("Please select a service");
         return false;
       } else if (!item.productDescription) {
-        toast.error("Please enter a product description");
+        toast.error("Please enter a Product Additional Text");
         return false;
       } else if (!item.expectedDate) {
         toast.error("Please enter an expected date");
@@ -1023,7 +1023,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   </FormControl>
 
                   <TextField
-                    label="Product Description*"
+                    label="Product Additional Text*"
                     value={detailsData.productDescription}
                     onChange={(e) =>
                       handleDetailsChange(

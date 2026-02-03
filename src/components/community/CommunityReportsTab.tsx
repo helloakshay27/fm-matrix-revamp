@@ -20,7 +20,7 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "access_card_no",
+        key: "access_card_number",
         label: "Access Card No.",
         sortable: true,
         hideable: true,
@@ -63,7 +63,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "company",
-        label: "Company Name",
+        label: "Organization",
         sortable: true,
         hideable: true,
         defaultVisible: true,

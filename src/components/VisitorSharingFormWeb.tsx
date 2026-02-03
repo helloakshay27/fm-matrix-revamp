@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 
 type Visitor = {
   id: number;
+  apiId?: number; // Actual ID from API response for delete operations
   contact?: string;
   name?: string;
   email?: string;
@@ -136,6 +137,7 @@ const VisitorSharingFormWeb: React.FC = () => {
   );
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [newlyAddedVisitorIds, setNewlyAddedVisitorIds] = useState<Set<number>>(new Set());
   const [visitorErrors, setVisitorErrors] = useState<
     Record<number, { contact: boolean; name: boolean; vehicleNumber: boolean }>
   >({});
@@ -274,9 +276,9 @@ const VisitorSharingFormWeb: React.FC = () => {
         if (data.guest_email) setEmail(String(data.guest_email));
         else if (data.email) setEmail(String(data.email));
         if (data.expected_at) {
-          const [d, t, f] = String(data.expected_at).split(" ");
+          const [d, t, a] = String(data.expected_at).split(" ");
           if (d) setExpectedDate(d);
-          if (t) setExpectedTime(t + " " + f);
+          if (t) setExpectedTime(t + " " + a);
         }
         if (data.visit_purpose) setPurpose(String(data.visit_purpose));
         if (data.company_name) setCompany(String(data.company_name));
@@ -503,6 +505,7 @@ const VisitorSharingFormWeb: React.FC = () => {
               }
               return {
                 id: idx + 1,
+                apiId: (av as Record<string, unknown>)?.id as number | undefined,
                 contact: av.mobile || av.guest_number || "",
                 name: av.name || av.guest_name || "",
                 email: av.email || av.guest_email || "",
@@ -513,6 +516,8 @@ const VisitorSharingFormWeb: React.FC = () => {
             }
           );
           setVisitors(mapped);
+          // Clear newly added visitors set since we're loading pre-filled ones
+          setNewlyAddedVisitorIds(new Set());
           // Map identity for additional visitors (so Step 4 shows gov id and photos)
           try {
             const identitiesMap: Record<number, IdentityState> = {};
@@ -759,10 +764,63 @@ const VisitorSharingFormWeb: React.FC = () => {
         vehicleNumber: "",
       },
     ]);
+    // Track this as a newly added visitor
+    setNewlyAddedVisitorIds((prev) => new Set([...prev, nextId]));
   };
 
-  const removeVisitor = (id: number) =>
-    setVisitors((v) => v.filter((x) => x.id !== id));
+  const removeVisitor = async (id: number) => {
+    // If it's a newly added visitor, just remove from state without API call
+    if (newlyAddedVisitorIds.has(id)) {
+      setVisitors((v) => v.filter((x) => x.id !== id));
+      setNewlyAddedVisitorIds((prev) => {
+        const updated = new Set(prev);
+        updated.delete(id);
+        return updated;
+      });
+      return;
+    }
+
+    // For pre-filled visitors, call the delete API
+    if (!urlToken || !urlVisitorId) {
+      showToast("Missing token or visitor ID");
+      return;
+    }
+
+    // Find the visitor to get the API ID
+    const visitor = visitors.find((v) => v.id === id);
+    if (!visitor || !visitor.apiId) {
+      showToast("Unable to delete visitor - API ID not found");
+      return;
+    }
+
+    try {
+      const apiUrl = `https://lockated-api.gophygital.work/pms/visitors/${visitor.apiId}/delete_additional_visitor.json?token=${encodeURIComponent(
+        urlToken
+      )}`;
+
+      const response = await fetch(apiUrl, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete visitor: ${response.statusText}`);
+      }
+
+      // Remove from state after successful API call
+      setVisitors((v) => v.filter((x) => x.id !== id));
+      showToast("Visitor deleted successfully");
+    } catch (error) {
+      console.error("Error deleting visitor:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete visitor"
+      );
+    }
+  };
 
   const updateVisitor = (id: number, patch: Partial<Visitor>) =>
     setVisitors((v) => v.map((x) => (x.id === id ? { ...x, ...patch } : x)));
@@ -1317,17 +1375,17 @@ const VisitorSharingFormWeb: React.FC = () => {
           : "";
 
       const primaryVisitor: VisitorPayload = {
-        guest_type: guestType,
-        guest_number: contact,
-        guest_name: name,
-        guest_email: email,
+        // guest_type: guestType,
+        // guest_number: contact,
+        // guest_name: name,
+        // guest_email: email,
         guest_vehicle_number: primaryVehicleNumber,
         guest_vehicle_type: primaryVehicle || undefined,
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
+        // expected_at: expectedIso,
+        // visit_purpose: purpose,
+        // company_name: company,
         visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
+        // persont_to_meet: personToMeetName || "Myself",
         plus_person: visitors.length,
         notes: "",
         pass_holder: passHolder ? "true" : undefined,
@@ -1358,48 +1416,51 @@ const VisitorSharingFormWeb: React.FC = () => {
           : undefined,
       };
 
-      const additionalVisitors: VisitorPayload[] = visitors.map((vis) => ({
-        name: vis.name,
-        mobile: vis.contact,
-        email: vis.email,
-        vehicle_number: vis.vehicleNumber,
-        vehicle_type: vis.vehicle || undefined,
-        guest_type: "Once",
-        expected_at: expectedIso,
-        visit_purpose: purpose,
-        company_name: company,
-        visit_to: location,
-        persont_to_meet: personToMeetName || "Myself",
-        plus_person: 0,
-        notes: "",
-        pass_holder: undefined,
-        pass_start_date: undefined,
-        pass_end_date: undefined,
-        pass_days: [],
-        assets: (assetsByVisitor[vis.id] || []).map((a) => ({
-          asset_category_name: a.category,
-          asset_name: a.name,
-          serial_model_number: a.serial,
-          notes: a.notes,
-          attachments: (a.attachments || []).map((att) => ({
-            name: att.name,
-            url: att.url,
-            file: (att as { file?: File })?.file,
-          })),
-          documents: (a.attachments || [])
-            .map((att) => att.file)
-            .filter(Boolean),
-        })),
-        identity: identityByVisitor[vis.id]
-          ? {
-            identity_type: identityByVisitor[vis.id].type,
-            government_id_number: identityByVisitor[vis.id].govId,
-            documents: (identityByVisitor[vis.id].documents || [])
-              .map((d) => d.file!)
+      // Only include newly added visitors in the payload (exclude pre-filled ones)
+      const additionalVisitors: VisitorPayload[] = visitors
+        .filter((vis) => newlyAddedVisitorIds.has(vis.id))
+        .map((vis) => ({
+          name: vis.name,
+          mobile: vis.contact,
+          email: vis.email,
+          vehicle_number: vis.vehicleNumber,
+          vehicle_type: vis.vehicle || undefined,
+          guest_type: "Once",
+          expected_at: expectedIso,
+          visit_purpose: purpose,
+          company_name: company,
+          visit_to: location,
+          persont_to_meet: personToMeetName || "Myself",
+          plus_person: 0,
+          notes: "",
+          pass_holder: undefined,
+          pass_start_date: undefined,
+          pass_end_date: undefined,
+          pass_days: [],
+          assets: (assetsByVisitor[vis.id] || []).map((a) => ({
+            asset_category_name: a.category,
+            asset_name: a.name,
+            serial_model_number: a.serial,
+            notes: a.notes,
+            attachments: (a.attachments || []).map((att) => ({
+              name: att.name,
+              url: att.url,
+              file: (att as { file?: File })?.file,
+            })),
+            documents: (a.attachments || [])
+              .map((att) => att.file)
               .filter(Boolean),
-          }
-          : undefined,
-      }));
+          })),
+          identity: identityByVisitor[vis.id]
+            ? {
+              identity_type: identityByVisitor[vis.id].type,
+              government_id_number: identityByVisitor[vis.id].govId,
+              documents: (identityByVisitor[vis.id].documents || [])
+                .map((d) => d.file!)
+                .filter(Boolean),
+            }
+            : undefined,
+        }));
 
       // Debug: inspect state and payload shapes to ensure File objects exist
       // eslint-disable-next-line no-console
@@ -2730,11 +2791,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Contact Number <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.contact}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { contact: e.target.value })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.contact ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.contact ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter number"
                       />
                       {visitorErrors[visitor.id]?.contact && (
@@ -2749,11 +2811,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Name <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.name}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { name: e.target.value })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.name ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.name ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter full name"
                       />
                       {visitorErrors[visitor.id]?.name && (
@@ -2766,11 +2829,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                     <div>
                       <div className="text-xs text-gray-600">Mail</div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.email}
                         onChange={(e) =>
                           updateVisitor(visitor.id, { email: e.target.value })
                         }
-                        className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
+                        className={`mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""}`}
                         placeholder="Enter mail id"
                       />
                     </div>
@@ -2781,11 +2845,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <button
+                          disabled={!newlyAddedVisitorIds.has(visitor.id)}
                           type="button"
                           onClick={() =>
                             updateVisitor(visitor.id, { vehicle: "car" })
                           }
-                          className={`py-3 rounded border ${visitor.vehicle === "car" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
+                          className={`py-3 rounded border ${!newlyAddedVisitorIds.has(visitor.id) ? "opacity-50 cursor-not-allowed" : ""} ${visitor.vehicle === "car" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
                         >
                           <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                             <svg
@@ -2828,11 +2893,12 @@ const VisitorSharingFormWeb: React.FC = () => {
                           </div>
                         </button>
                         <button
+                          disabled={!newlyAddedVisitorIds.has(visitor.id)}
                           type="button"
                           onClick={() =>
                             updateVisitor(visitor.id, { vehicle: "bike" })
                           }
-                          className={`py-3 rounded border ${visitor.vehicle === "bike" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
+                          className={`py-3 rounded border ${!newlyAddedVisitorIds.has(visitor.id) ? "opacity-50 cursor-not-allowed" : ""} ${visitor.vehicle === "bike" ? "bg-[#d8d3c6] border-[#d8d3c6]" : "bg-white border border-gray-200"}`}
                         >
                           <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                             <svg
@@ -2882,13 +2948,14 @@ const VisitorSharingFormWeb: React.FC = () => {
                         Vehicle Number <span className="text-[#C72030]">*</span>
                       </div>
                       <input
+                        disabled={!newlyAddedVisitorIds.has(visitor.id)}
                         value={visitor.vehicleNumber}
                         onChange={(e) =>
                           updateVisitor(visitor.id, {
                             vehicleNumber: e.target.value,
                           })
                         }
-                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${visitorErrors[visitor.id]?.vehicleNumber ? "border-[#C72030]" : "border-gray-200"}`}
+                        className={`mt-1 w-full bg-white border rounded px-3 py-2 text-sm ${!newlyAddedVisitorIds.has(visitor.id) ? "bg-gray-100 cursor-not-allowed" : ""} ${visitorErrors[visitor.id]?.vehicleNumber ? "border-[#C72030]" : "border-gray-200"}`}
                         placeholder="Enter Vehicle Registration No."
                       />
                       {visitorErrors[visitor.id]?.vehicleNumber && (

@@ -581,7 +581,7 @@ export const AddMaterialPRDashboard = () => {
         return false;
       }
       if (!item.productDescription) {
-        toast.error("Product Description is required for all items");
+        toast.error("Product Additional Text is required for all items");
         return false;
       }
       if (!item.glAccount) {
@@ -1109,10 +1109,10 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   <TextField
-                    label="Product Description*"
+                    label="Product Additional Text*"
                     value={item.productDescription}
                     onChange={(e) => handleItemChange(item.id, "productDescription", e.target.value)}
-                    placeholder="Product Description"
+                    placeholder="Product Additional Text"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}

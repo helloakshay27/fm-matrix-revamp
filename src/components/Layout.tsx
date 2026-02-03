@@ -32,6 +32,7 @@ import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
 import { ActionSidebar } from "./ActionSidebar";
 import { ActionHeader } from "./ActionHeader";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
+import { ClubSidebar } from "./ClubSidebar";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -50,6 +51,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const currentUser = getUser();
   const userEmail = currentUser?.email || "No email";
+  const hostname = window.location.hostname;
+
+  // Detect Club Management routes
+  const isClubManagementRoute = hostname === "club.lockated.com";
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -82,7 +87,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   // Check if non-employee user needs to select project/site
-  const hostname = window.location.hostname;
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
@@ -90,6 +94,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Handle token-based authentication from URL parameters
   // Get current domain for backward compatibility
   const isOmanSite = hostname.includes("oig.gophygital.work");
+
+  const isFMSite =
+    hostname === "fm-matrix.lockated.com" ||
+    hostname === "web.gophygital.work" ||
+    hostname === "lockated.gophygital.work";
 
   const isLockatedSite =
     hostname.includes("lockated.gophygital.work") ||
@@ -112,16 +121,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
-    userEmail === "ubaid.hashmat@lockated.com";
+    userEmail === "ubaid.hashmat@lockated.com" ||
+    userEmail === "besis69240@azeriom.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
   // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
   // - Other companies (193, 204): Static layout (Sidebar + StaticDynamicHeader)
   // - No company selected: Static layout (fallback)
+  // - Club Management routes: Separate Club Management layout
 
   // Render sidebar component based on configuration
   const renderSidebar = () => {
+    console.log("🔧 Layout renderSidebar - checking conditions:", {
+      isClubManagementRoute,
+      isEmployeeUser,
+      isLocalhost,
+      selectedCompanyId: selectedCompany?.id,
+      userEmail,
+      isViSite,
+      isOmanSite,
+    });
+
+    if (isViSite) {
+      console.log("✅ Rendering ViSidebar");
+      return <ViSidebar />;
+    }
+
+    // Check if user is in Club Management route - render ClubSidebar
+    if (isClubManagementRoute) {
+      console.log("✅ Rendering ClubSidebar");
+      return <ClubSidebar />;
+    }
+
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Only show sidebar for "Project Task" module, hide for other modules
     if (isEmployeeUser && isLocalhost) {
@@ -153,23 +185,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      userEmail === "ubaid.hashmat@lockated.com"
+      userEmail === "ubaid.hashmat@lockated.com" ||
+      userEmail === "besis69240@azeriom.com"
     ) {
+      console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
     }
 
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
+      console.log("✅ Rendering OmanSidebar");
       return <OmanSidebar />;
     }
 
     // Check for VI site with token parameter or stored token
     if (isViSite && hasToken) {
+      console.log("✅ Rendering ViSidebarWithToken");
       return <ViSidebarWithToken />;
-    }
-
-    if (isViSite) {
-      return <ViSidebar />;
     }
 
     // Company-specific logic (Admin layout)
@@ -206,6 +238,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render header component based on configuration
   const renderDynamicHeader = () => {
+    if (isViSite) {
+      return <ViDynamicHeader />;
+    }
+    // Check if user is in Club Management route - render StaticDynamicHeader
+    if (isClubManagementRoute) {
+      return <StaticDynamicHeader />;
+    }
+
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
     if (isEmployeeUser && isLocalhost) {
@@ -217,17 +257,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      userEmail === "ubaid.hashmat@lockated.com"
+      userEmail === "ubaid.hashmat@lockated.com" ||
+      userEmail === "besis69240@azeriom.com"
     ) {
       return <ActionHeader />;
+    }
+
+    if (isFMSite) {
+      return <StaticDynamicHeader />;
     }
 
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
-    }
-    if (isViSite) {
-      return <ViDynamicHeader />;
     }
 
     // Company-specific logic (Admin layout)
@@ -338,7 +380,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
-        userEmail === "ubaid.hashmat@lockated.com" ? (
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />

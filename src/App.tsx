@@ -149,11 +149,6 @@ import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
-// Import Pulse pages
-import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
-import { RideDetail } from "./pages/pulse/RideDetail";
-import { UserDetail } from "./pages/pulse/UserDetail";
-
 import { EditEventPage } from "./pages/EditEventPage";
 
 // Import Visitors pages
@@ -172,6 +167,9 @@ import { EditVisitorGatePage } from "./pages/EditVisitorGatePage";
 import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
+
+// Import Carpool pages
+import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
 
 // Import Icons pages
 import { IconsDashboard } from "./pages/IconsDashboard";
@@ -387,8 +385,6 @@ import { AddPermitPage } from "./pages/AddPermitPage";
 // Import Operational Audit pages
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { AddOperationalAuditSchedulePage } from "./pages/AddOperationalAuditSchedulePage";
-import { ViewOperationalAuditSchedulePage } from "./pages/ViewOperationalAuditSchedulePage";
-import { ViewOperationalAuditSchedulePerformancePage } from "./pages/ViewOperationalAuditSchedulePerformancePage";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
 
@@ -915,13 +911,8 @@ import ReportsDetailsPage from "./pages/ReportsDetailsPage";
 import AmenityCategorySetup from "./pages/AmenityCategorySetup";
 import VisitorPassWeb from "./components/VisitorPassWeb";
 import ProjectsMobileView from "./pages/ProjectsMobileView";
-import IssuesMobileView from "./pages/IssuesMobileView";
-import IssueDetailsMobile from "./pages/IssueDetailsMobile";
-import AddIssueMobileView from "./pages/AddIssueMobileView";
 import MilestoneMobileView from "./pages/MilestoneMobileView";
 import ProjectTasksMobileView from "./pages/ProjectTasksMobileView";
-import TasksMobileView from "./pages/TasksMobileView";
-import TaskDetailsMobile from "./pages/TaskDetailsMobile";
 import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
@@ -929,13 +920,17 @@ import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
+import TaskDetailsMobile from "./pages/TaskDetailsMobile";
+import TasksMobileView from "./pages/TasksMobileView";
+import IssueDetailsMobile from "./pages/IssueDetailsMobile";
+import AddIssueMobileView from "./pages/AddIssueMobileView";
+import IssuesMobileView from "./pages/IssuesMobileView";
 import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
 import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
 import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
-import SupersetDashboardMobile from "./pages/SupersetDashboardMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2101,7 +2096,7 @@ function App() {
                       path="/safety/permit/safety-check-form"
                       element={<PermitSafetyCheckForm />}
                     />
-                    <Route path="/safety/permit/vendor-form/:id?" element={<VendorPermitForm />} />
+                    <Route path="/safety/permit/vendor-form/:id?" />
                     <Route
                       path="/safety/permit/fill-form/:id?"
                       element={<FillForm />}
@@ -2217,14 +2212,6 @@ function App() {
                     <Route
                       path="/maintenance/audit/operational/scheduled/add"
                       element={<AddOperationalAuditSchedulePage />}
-                    />
-                    <Route
-                      path="/maintenance/audit/operational/scheduled/view/:id"
-                      element={<ViewOperationalAuditSchedulePage />}
-                    />
-                    <Route
-                      path="/maintenance/audit/operational/scheduled/performance/:id"
-                      element={<ViewOperationalAuditSchedulePerformancePage />}
                     />
                     <Route
                       path="/maintenance/audit/operational/conducted"
@@ -4061,14 +4048,6 @@ function App() {
                       path="/pulse/carpool"
                       element={<CarpoolDashboard />}
                     />
-                    <Route
-                      path="/pulse/carpool/ride-detail"
-                      element={<RideDetail />}
-                    />
-                    <Route
-                      path="/pulse/carpool/user-detail"
-                      element={<UserDetail />}
-                    />
 
                     <Route
                       path="/pulse/amenity/:id"
@@ -4506,10 +4485,6 @@ function App() {
                   <Route
                     path="/mobile-tasks/:taskId"
                     element={<TaskDetailsMobile />}
-                  />
-                  <Route
-                    path="/superset-dashboard-mobile"
-                    element={<SupersetDashboardMobile />}
                   />
 
                   {/* Mail Inbound Routes */}

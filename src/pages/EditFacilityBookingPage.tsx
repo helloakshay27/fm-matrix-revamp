@@ -392,19 +392,8 @@ const EditFacilityBookingPage = () => {
                                 ₹ <input
                                     type="number"
                                     value={subTotal}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (value === '' || (/^[0-9]*(\.[0-9]{0,2})?$/.test(value) && !value.includes('-'))) {
-                                            setSubTotal(value);
-                                        }
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === '-') {
-                                            e.preventDefault();
-                                        }
-                                    }}
+                                    onChange={(e) => setSubTotal(e.target.value)}
                                     className='w-20 text-right border border-gray-300 rounded-md px-2 py-1'
-                                    min="0"
                                 />
                             </span>
                         </div>
@@ -419,23 +408,8 @@ const EditFacilityBookingPage = () => {
                                     <input
                                         type="number"
                                         value={gstPercentage}
-                                        onChange={(e) => {
-                                            let value = e.target.value;
-                                            if (value === '' || (!value.includes('-') && /^[0-9]*(\.[0-9]{0,2})?$/.test(value))) {
-                                                const numValue = parseFloat(value);
-                                                if (value === '' || numValue <= 100) {
-                                                    setGstPercentage(value);
-                                                }
-                                            }
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === '-') {
-                                                e.preventDefault();
-                                            }
-                                        }}
+                                        onChange={(e) => setGstPercentage(e.target.value)}
                                         className='w-16 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
-                                        min="0"
-                                        max="100"
                                     /> %
                                 </span>
                                 <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
@@ -452,23 +426,8 @@ const EditFacilityBookingPage = () => {
                                     <input
                                         type="number"
                                         value={sgstPercentage}
-                                        onChange={(e) => {
-                                            let value = e.target.value;
-                                            if (value === '' || (!value.includes('-') && /^[0-9]*(\.[0-9]{0,2})?$/.test(value))) {
-                                                const numValue = parseFloat(value);
-                                                if (value === '' || numValue <= 100) {
-                                                    setSgstPercentage(value);
-                                                }
-                                            }
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === '-') {
-                                                e.preventDefault();
-                                            }
-                                        }}
+                                        onChange={(e) => setSgstPercentage(e.target.value)}
                                         className='w-16 text-right border border-gray-300 rounded-md px-2 py-1 ml-2'
-                                        min="0"
-                                        max="100"
                                     /> %
                                 </span>
                                 <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
