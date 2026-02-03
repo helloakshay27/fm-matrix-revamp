@@ -151,7 +151,16 @@ export const ForgotPasswordOTPPage = () => {
     setTimeLeft(30);
 
     try {
-      await sendForgotPasswordOTP(emailOrMobile);
+      const response = await sendForgotPasswordOTP(emailOrMobile);
+
+      // 🔴 Business logic error
+      if (response.data?.code === 429) {
+        toast.error(response.data.message);
+        setTimeLeft(60);
+        return;
+      }
+
+      // 🟢 Real success
       toast.success("A new OTP has been sent to your email or mobile number.");
     } catch (error: any) {
       // Handle rate limiting (429) specifically
