@@ -122,7 +122,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
-    userEmail === "besis69240@azeriom.com";
+    userEmail === "besis69240@azeriom.com" ||
+    userEmail === "megipow156@aixind.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -186,7 +187,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -258,7 +260,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com"
     ) {
       return <ActionHeader />;
     }
@@ -381,7 +384,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
         userEmail === "ubaid.hashmat@lockated.com" ||
-        userEmail === "besis69240@azeriom.com" ? (
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
