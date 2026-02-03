@@ -1,73 +1,135 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
+import { toast } from "sonner";
+import { API_CONFIG } from "@/config/apiConfig";
+import { apiClient } from "@/utils/apiClient";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
+interface AuditConductedOccurrence {
+  id: number;
+  form_name: string;
+  start_date: string;
+  conducted_by: string;
+  status: string;
+  site: string;
+  duration: number | null;
+  percentage: number;
+  has_response: boolean;
+  print_pdf_url: string | null;
+  delete_url: string | null;
+}
+
+interface AuditConductedResponse {
+  occurrences: AuditConductedOccurrence[];
+  total_count: number;
+  current_page: number;
+  per_page: number;
+  total_pages: number;
+}
 
 export const OperationalAuditConductedDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  
-  // Sample data matching the image
-  const conductedData = [
-    { report: true, id: "46884738", auditName: "clean", startDateTime: "18/02/2025, 06:26PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: true, id: "44388421", auditName: "This is test Audit", startDateTime: "22/11/2024, 04:17PM", conductedBy: "Vinayak Mane", status: "Completed", site: "Lockated", duration: "", percentage: "" },
-    { report: true, id: "44254888", auditName: "This is test Audit", startDateTime: "05/11/2024, 02:44PM", conductedBy: "", status: "Completed", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44247307", auditName: "This is test Audit", startDateTime: "30/10/2024, 04:27PM", conductedBy: "Vinayak Mane", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44247306", auditName: "This is test Audit", startDateTime: "30/10/2024, 04:27PM", conductedBy: "Vinayak Mane", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: true, id: "44246870", auditName: "This is test Audit", startDateTime: "25/10/2024, 01:08PM", conductedBy: "Vinayak Mane", status: "Completed", site: "Lockated", duration: "", percentage: "" },
-    { report: true, id: "44212284", auditName: "This is test Audit", startDateTime: "23/10/2024, 06:34PM", conductedBy: "", status: "Completed", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44212283", auditName: "Short Audit Process Report 1", startDateTime: "23/10/2024, 06:23PM", conductedBy: "Deepak Gupta", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119818", auditName: "Short Audit Process Report 1", startDateTime: "18/10/2024, 11:48AM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119816", auditName: "Short Audit Process Report 1", startDateTime: "18/10/2024, 10:19AM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119814", auditName: "Short Audit Process Report 1", startDateTime: "17/10/2024, 10:26PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119808", auditName: "Engineering Audit Checklist 2", startDateTime: "17/10/2024, 07:50PM", conductedBy: "Vinayak Mane", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119803", auditName: "Short Audit Process Report 1", startDateTime: "17/10/2024, 06:07PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44119800", auditName: "Short Audit Process Report 1", startDateTime: "17/10/2024, 05:19PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44117794", auditName: "Short Audit Process Report 1", startDateTime: "17/10/2024, 03:58PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-    { report: false, id: "44116014", auditName: "Short Audit Process Report 1", startDateTime: "16/10/2024, 04:07PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
-  ];
+  const [conductedData, setConductedData] = useState<AuditConductedOccurrence[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const handlePrintReport = (auditId: string, auditName: string) => {
-    // Create a printable content
-    const printContent = `
-      <html>
-        <head>
-          <title>Audit Report - ${auditId}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #C72030; }
-            .report-header { margin-bottom: 20px; }
-            .report-details { line-height: 1.6; }
-          </style>
-        </head>
-        <body>
-          <div class="report-header">
-            <h1>Operational Audit Report</h1>
-            <h2>Audit ID: ${auditId}</h2>
-            <h3>Audit Name: ${auditName}</h3>
-          </div>
-          <div class="report-details">
-            <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
-            <p><strong>Generated at:</strong> ${new Date().toLocaleTimeString()}</p>
-            <p>This is a system-generated audit report.</p>
-          </div>
-        </body>
-      </html>
-    `;
+  useEffect(() => {
+    fetchAuditsConducted();
+  }, [currentPage]);
 
-    // Open a new window for printing
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+  const fetchAuditsConducted = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get<AuditConductedResponse>(
+        '/pms/custom_forms/audits_conducted.json',
+        {
+          params: {
+            page: currentPage,
+            per_page: 20,
+          },
+        }
+      );
+      setConductedData(response.data.occurrences);
+      setTotalPages(response.data.total_pages);
+      setTotalCount(response.data.total_count);
+    } catch (error) {
+      console.error("Error fetching audits conducted:", error);
+      toast.error("Failed to fetch audits conducted data");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handlePrintReport = async (auditId: number, printPdfUrl: string | null) => {
+    if (!printPdfUrl) {
+      toast.error("PDF report not available for this audit");
+      return;
+    }
+
+    try {
+      const response = await apiClient.get(printPdfUrl, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and open it in a new window
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+
+      // Clean up the blob URL after a delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      toast.success("Opening PDF report...");
+    } catch (error) {
+      console.error("Error opening PDF:", error);
+      toast.error("Failed to open PDF report");
+    }
+  };
+
+  const handleDeleteReport = async (auditId: number, deleteUrl: string | null) => {
+    if (!deleteUrl) {
+      toast.error("Cannot delete report for this audit");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this report?")) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/pms/asset_task_occurrences/${auditId}/delete_print_pdf`);
+      toast.success("Report deleted successfully");
+      fetchAuditsConducted(); // Refresh data
+    } catch (error) {
+      console.error("Error deleting PDF:", error);
+      toast.error("Failed to delete report");
+    }
+  };
+
+  const formatDuration = (duration: number | null): string => {
+    if (!duration) return "-";
+    const hours = Math.floor(duration / 3600);
+    const minutes = Math.floor((duration % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  };
+
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'report', label: 'Report', sortable: true, draggable: true },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'auditName', label: 'Audit Name', sortable: true, draggable: true },
@@ -80,7 +142,7 @@ export const OperationalAuditConductedDashboard = () => {
     { key: 'delete', label: 'Delete', sortable: false, draggable: true },
   ];
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -89,36 +151,58 @@ export const OperationalAuditConductedDashboard = () => {
           </Button>
         );
       case 'report':
-        return item.report ? (
+        return item.has_response && item.print_pdf_url ? (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handlePrintReport(item.id, item.auditName)}
+            onClick={() => handlePrintReport(item.id, item.print_pdf_url)}
             className="p-1 h-auto hover:bg-gray-100"
+            title="Print PDF"
           >
             <FileText className="w-4 h-4 text-blue-600" />
           </Button>
         ) : null;
       case 'id':
         return <span className="text-blue-600 font-medium">{item.id}</span>;
+      case 'auditName':
+        return item.form_name;
+      case 'startDateTime':
+        return item.start_date;
+      case 'conductedBy':
+        return item.conducted_by || "-";
       case 'status':
         return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${
-            item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-          }`}>
+          <span className={`px-2 py-1 rounded text-xs font-medium ${item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+            }`}>
             {item.status}
           </span>
         );
+      case 'site':
+        return item.site;
+      case 'duration':
+        return formatDuration(item.duration);
+      case 'percentage':
+        return item.percentage ? `${item.percentage}%` : "-";
       case 'delete':
-        return null;
+        return item.has_response && item.delete_url ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteReport(item.id, item.delete_url)}
+            className="text-red-600 hover:bg-red-50"
+            title="Delete Report"
+          >
+            Delete
+          </Button>
+        ) : null;
       default:
-        return item[columnKey];
+        return null;
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(conductedData.map(item => item.id));
+      setSelectedItems(conductedData.map(item => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -132,6 +216,13 @@ export const OperationalAuditConductedDashboard = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -141,20 +232,112 @@ export const OperationalAuditConductedDashboard = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <EnhancedTable
-          data={conductedData}
-          columns={columns}
-          renderCell={renderCell}
-          selectable={true}
-          selectedItems={selectedItems}
-          onSelectAll={handleSelectAll}
-          onSelectItem={handleSelectItem}
-          getItemId={(item) => item.id}
-          storageKey="conducted-audit-table"
-          className="w-full"
-        />
-      </div>
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          <div className="overflow-x-auto">
+            <EnhancedTable
+              data={conductedData}
+              columns={columns}
+              renderCell={renderCell}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              getItemId={(item) => item.id.toString()}
+              storageKey="conducted-audit-table"
+              className="w-full"
+              pagination={false}
+            />
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => {
+                        if (currentPage > 1) {
+                          handlePageChange(currentPage - 1);
+                        }
+                      }}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => handlePageChange(1)}
+                      isActive={currentPage === 1}
+                    >
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+
+                  {currentPage > 4 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+
+                  {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+                    .filter((page) => page > 1 && page < totalPages)
+                    .map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(page)}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                  {currentPage < totalPages - 3 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+
+                  {totalPages > 1 && (
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => handlePageChange(totalPages)}
+                        isActive={currentPage === totalPages}
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => {
+                        if (currentPage < totalPages) {
+                          handlePageChange(currentPage + 1);
+                        }
+                      }}
+                      className={
+                        currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+
+              <div className="text-center mt-2 text-sm text-gray-600">
+                Showing page {currentPage} of {totalPages} ({totalCount} total audits)
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
