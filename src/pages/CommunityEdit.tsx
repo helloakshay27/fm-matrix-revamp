@@ -73,12 +73,20 @@ const CommunityEdit = () => {
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, coverImage: file }));
-    if (file && file.type.startsWith("image/")) {
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        if (coverImageInputRef.current) {
+          coverImageInputRef.current.value = "";
+        }
+        return;
+      }
+      setFormData((prev) => ({ ...prev, coverImage: file }));
       const reader = new FileReader();
       reader.onloadend = () => setCoverImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     } else {
+      setFormData((prev) => ({ ...prev, coverImage: null }));
       setCoverImagePreview(null);
     }
   };
