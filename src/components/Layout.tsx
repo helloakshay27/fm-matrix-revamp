@@ -51,6 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const currentUser = getUser();
   const userEmail = currentUser?.email || "No email";
+  const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
@@ -186,6 +187,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com"
@@ -259,6 +262,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com"
@@ -383,6 +388,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
+        org_id === "90" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ? (

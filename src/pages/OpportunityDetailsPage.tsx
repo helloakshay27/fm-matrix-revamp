@@ -720,7 +720,7 @@ const OpportunityDetailsPage = () => {
                         </div>
                         <div className="mt-3 overflow-hidden transition-all duration-300" style={{ maxHeight: isFirstCollapsed ? '0px' : '1000px' }}>
                             <div
-                                className="prose prose-sm max-w-none"
+                                className="prose prose-sm max-w-none quill-content"
                                 dangerouslySetInnerHTML={{
                                     __html: opportunityDetails?.description || '<p>No description provided</p>'
                                 }}
