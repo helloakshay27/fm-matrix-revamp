@@ -928,6 +928,9 @@ import IssuesMobileView from "./pages/IssuesMobileView";
 import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
+import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
+import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
+import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3927,6 +3930,18 @@ function App() {
                     <Route
                       path="/pulse/community/:communityId/reports/details/:id"
                       element={<ReportsDetailsPage />}
+                    />
+                    <Route
+                      path="/pulse/community/notice/:id"
+                      element={<CommunityNoticeDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/event/:id"
+                      element={<CommunityEventDetails />}
+                    />
+                    <Route
+                      path="/pulse/community/document/:id"
+                      element={<CommunityDocumentDetails />}
                     />
 
                     <Route

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AssetStats } from "@/components/AssetStats";
 import {
   Plus,
   Eye,
@@ -34,20 +35,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AssetDataTable } from "@/components/AssetDataTable";
+import type { Asset } from '@/hooks/useAssets';
 
-const transformEnergyAsset = (asset, index, currentPage) => ({
+const transformEnergyAsset = (asset: any, index: number, currentPage: number): Asset => ({
   id: asset.id?.toString() || "",
   name: asset.name || asset.location || "",
   serialNumber: (currentPage - 1) * 15 + index + 1,
   assetNumber: asset.asset_number || asset.id || "",
-  status:
-    asset.status === "in_use" || asset.status === "in use"
-      ? "in_use"
-      : asset.status === "breakdown"
-        ? "breakdown"
-        : asset.status === "disposed"
-          ? "disposed"
-          : "in_storage",
+  status: ((): "in_use" | "breakdown" | "disposed" | "in_storage" => {
+    if (asset.status === "in_use" || asset.status === "in use") return "in_use";
+    if (asset.status === "breakdown") return "breakdown";
+    if (asset.status === "disposed") return "disposed";
+    return "in_storage";
+  })(),
   siteName: asset.site_name || asset.location?.split(" - ")[0] || "",
   building: typeof asset.building === 'string' ? { name: asset.building } : asset.building || null,
   wing: typeof asset.wing === 'string' ? { name: asset.wing } : asset.wing || null,
@@ -142,7 +142,20 @@ export const EnergyDashboard = () => {
     (asset.id?.toString() || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
   const displayAssets = filteredEnergyAssets.map((asset, idx) => transformEnergyAsset(asset, idx, currentPage));
-  const stats = calculateStats(filteredEnergyAssets);
+  const calculatedStats = calculateStats(filteredEnergyAssets);
+
+  // Transform stats to match AssetStats component interface
+  const stats = {
+    total_count: totalCount,
+    total_value: 0,
+    non_it_assets: calculatedStats.normalUsage,
+    it_assets: 0,
+    in_use_count: calculatedStats.normalUsage,
+    breakdown_count: calculatedStats.highUsageAlerts,
+    in_store: 0,
+    allocated_count: calculatedStats.totalMeters,
+    dispose_assets: 0,
+  };
 
   // AssetDataTable handlers
   const visibleColumns = {
@@ -221,81 +234,8 @@ export const EnergyDashboard = () => {
         </TabsList>
 
         <TabsContent value="list" className="mt-6">
-          {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={<Zap />} label="Total Consumption" value={`${stats.totalConsumption.toFixed(1)} kWh`} />
-            <StatCard icon={<TrendingUp />} label="Total Cost" value={`$${stats.totalCost.toFixed(2)}`} />
-            <StatCard icon={<Activity />} label="Avg Efficiency" value={`${stats.avgEfficiency.toFixed(1)}%`} />
-            <StatCard icon={<TrendingDown />} label="High Usage Alerts" value={stats.highUsageAlerts} />
-            <StatCard icon={<Zap />} label="Total Meters" value={stats.totalMeters} />
-            <StatCard icon={<TrendingUp />} label="Peak Consumption" value={`${stats.peakConsumption.toFixed(1)} kWh`} />
-          </div> */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            {/* Card 1 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <Zap />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A]">123.4 kWh</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">Total Consumption</p>
-              </div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <TrendingUp />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A]">$456.78</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">Total Cost</p>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <Activity />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A]">89%</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">Avg Efficiency</p>
-              </div>
-            </div>
-
-            {/* Card 4 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <TrendingDown />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A]">5</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">High Usage Alerts</p>
-              </div>
-            </div>
-
-            {/* Card 5 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <Zap />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A] ">12</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">Total Meters</p>
-              </div>
-            </div>
-
-            {/* Card 6 */}
-            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
-                <TrendingUp />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-[#1A1A1A]">78.9 kWh</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">Peak Consumption</p>
-              </div>
-            </div>
-          </div>
+          {/* Statistics Cards */}
+          <AssetStats stats={stats} />
 
 
           {/* <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
