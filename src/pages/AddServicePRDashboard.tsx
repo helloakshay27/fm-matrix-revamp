@@ -666,7 +666,7 @@ export const AddServicePRDashboard = () => {
         return false;
       }
       if (!item.productDescription) {
-        toast.error("Product Description is required for all items");
+        toast.error("Product Additional Text is required for all items");
         return false;
       }
       if (!item.glCode) {
@@ -1190,7 +1190,7 @@ export const AddServicePRDashboard = () => {
                   </FormControl>
 
                   <TextField
-                    label="Product Description*"
+                    label="Product Additional Text*"
                     value={detailsData.productDescription}
                     onChange={(e) =>
                       handleDetailsChange(

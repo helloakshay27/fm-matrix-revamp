@@ -58,7 +58,7 @@ export const CloneServicePRPage = () => {
   const addNewService = () => {
     const newService = {
       service: "Select Service",
-      productDescription: "Product Description",
+      productDescription: "Product Additional Text",
       quantityArea: "Quantity",
       uom: "UOM",
       expectedDate: "Select Expected Date",

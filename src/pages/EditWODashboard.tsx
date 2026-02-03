@@ -362,7 +362,7 @@ export const EditWODashboard: React.FC = () => {
                 return false;
             }
             if (!item.productDescription) {
-                toast.error("Product Description is required for all items");
+                toast.error("Product Additional Text is required for all items");
                 return false;
             }
             if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
@@ -940,7 +940,7 @@ export const EditWODashboard: React.FC = () => {
                                         </FormControl>
 
                                         <TextField
-                                            label="Product Description*"
+                                            label="Product Additional Text*"
                                             value={detailsData.productDescription}
                                             onChange={(e) =>
                                                 handleDetailsChange(

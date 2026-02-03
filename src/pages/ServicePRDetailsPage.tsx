@@ -180,7 +180,7 @@ const serviceColumns: ColumnConfig[] = [
   },
   {
     key: "product_description",
-    label: "Product Description",
+    label: "Product Additional Text",
     sortable: true,
     draggable: true,
   },

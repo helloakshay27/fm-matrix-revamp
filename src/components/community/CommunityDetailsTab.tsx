@@ -53,7 +53,7 @@ const memberColumns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'organisation',
+        key: 'organization',
         label: 'Organisation',
         sortable: true,
         draggable: true
@@ -327,8 +327,8 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                             </div>
 
                             {/* Community Info Grid */}
-                            <div className="grid grid-cols-7">
-                                <div className="grid grid-cols-3 col-span-6 gap-6">
+                            <div className="grid grid-cols-9">
+                                <div className="grid grid-cols-3 col-span-8 gap-6">
                                     <div className="flex items-center gap-4">
                                         <p className="w-32 text-sm text-gray-500">Community Name</p>
                                         <p className="text-sm font-semibold text-gray-900">

@@ -175,7 +175,7 @@ export const AdminUsersDashboard = () => {
         per_page: limit.toString(),
         ...(search && { search }),
         ...(statusFilter !== "all" && {
-          "q[:active_eq]": statusFilter === "active" ? "true" : "false",
+          "q[active_eq]": statusFilter === "active" ? "true" : "false",
         }),
       });
 

@@ -273,7 +273,7 @@ export const EditServicePRPage = () => {
             />
 
             <TextField
-              label="Product Description*"
+              label="Product Additional Text*"
               value={formData.productDescription}
               onChange={(e) => handleInputChange('productDescription', e.target.value)}
               fullWidth
