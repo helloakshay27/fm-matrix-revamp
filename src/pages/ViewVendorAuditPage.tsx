@@ -1,510 +1,782 @@
-
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, Eye } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, FileText, Box, Clock, Link, Mail, MapPin, Loader2, Download, Eye } from "lucide-react";
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { toast } from "sonner";
 
 export const ViewVendorAuditPage = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
-  const [createTask, setCreateTask] = useState(false);
-  const [weightage, setWeightage] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSetApproval = () => {
-    console.log('Set approval clicked');
+  // Tab state
+  const [activeTab, setActiveTab] = useState("basic");
+
+  // Modal states
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+
+  // API data state
+  const [formData, setFormData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Get custom_form_code from location state
+  const customFormCode = location.state?.formCode;
+
+  // Fetch form details
+  useEffect(() => {
+    const fetchFormDetails = async () => {
+      if (!customFormCode) {
+        toast.error("Form code is missing");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/custom_form_preview.json`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch form details: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setFormData(data);
+      } catch (error) {
+        console.error('Error fetching form details:', error);
+        toast.error("Failed to load form details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFormDetails();
+  }, [customFormCode]);
+
+  // Use API data
+  const customForm = formData?.custom_form;
+  const assetTask = formData?.asset_task;
+  const emailRules = formData?.email_rules;
+
+  // Toggle states
+  const createTicketEnabled = customForm?.create_ticket || false;
+  const weightageEnabled = customForm?.weightage_enabled || false;
+
+  const selectedGroupId = customForm?.content?.[0]?.group_id || '';
+  const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
+
+  // Format date function
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Format date with time
+  const formatDateTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   const handleViewPerformance = () => {
-    console.log('View performance clicked');
+    navigate(`/maintenance/audit/vendor/scheduled/performance/${id}`, {
+      state: { formCode: customFormCode }
+    });
   };
 
-  const emailTriggerData = [
-    {
-      ruleName: "Rule 1",
-      triggerType: "Daily",
-      triggerTo: "admin@example.com",
-      role: "Admin",
-      periodValue: "1",
-      periodType: "Day",
-      createdOn: "10/12/2024",
-      createdBy: "System"
-    }
-  ];
+  const handleBack = () => navigate('/maintenance/audit/vendor/scheduled');
+  // const handleBack = () => navigate(-1);
 
-  const assetMappingData = [
-    {
-      assetName: "Engineering Asset 1"
-    }
-  ];
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-[#C72030]" />
+          <p className="text-gray-600">Loading form details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 p-6 bg-white min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Maintenance</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Audit</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Vendor</span>
-          <span className="mx-2">{'>'}</span>
-          <span>View Schedule</span>
-        </nav>
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">VENDOR AUDIT SCHEDULE - {id}</h1>
-          <div className="flex gap-4">
-            <Button
-              onClick={handleSetApproval}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Set Approval
-            </Button>
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Schedule
+        </button>
+
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                {customForm?.form_name}
+              </h1>
+            </div>
+            <div className="text-sm text-gray-600">
+              Schedule #{assetTask?.id || id} • Created by {assetTask?.created_by || 'Unknown'} • Last updated {formatDate(assetTask?.start_date || assetTask?.services?.[0]?.created_at)}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            {/* Create Ticket Toggle */}
+            <div className="flex items-center space-x-2">
+              <RadioGroup value={createTicketEnabled ? "enabled" : "disabled"}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="enabled" id="create-ticket-enabled" disabled />
+                  <Label htmlFor="create-ticket-enabled">Create Ticket</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Weightage Toggle */}
+            <div className="flex items-center space-x-2">
+              <RadioGroup value={weightageEnabled ? "enabled" : "disabled"}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="enabled" id="weightage-enabled" disabled />
+                  <Label htmlFor="weightage-enabled">Weightage</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <Button
               onClick={handleViewPerformance}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90"
+              variant="outline"
+              className="border-[#C72030] text-[#C72030]"
             >
-              <Eye className="w-4 h-4 mr-2" />
               View Performance
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Toggle Buttons */}
-      <div className="flex gap-6 mb-6">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="create-task"
-            checked={createTask}
-            onCheckedChange={setCreateTask}
-          />
-          <Label htmlFor="create-task">Create Task</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="weightage"
-            checked={weightage}
-            onCheckedChange={setWeightage}
-          />
-          <Label htmlFor="weightage">Weightage</Label>
-        </div>
+      {/* Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="basic"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Basic Configuration
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="task"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Task
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="time"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Time Setup
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="schedule"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Schedule
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="association"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Association
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="email"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Email Trigger Rules
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="mapping"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Asset Mapping List
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Basic Configuration Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Basic Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.schedule_type || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Schedule For</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.sch_type || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Activity Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.form_name || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Form Code</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.form_code || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Create Ticket</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.create_ticket ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Weightage</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.weightage_enabled ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Ticket Level</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.ticket_level || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Observations</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.observations_enabled ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    {customForm?.description && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Description</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{customForm.description}</span>
+                      </div>
+                    )}
+                    {customForm?.attachments && customForm.attachments.length > 0 && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Attachments</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {customForm.attachments.map((doc) => {
+                            const isImage = doc.content_type?.startsWith('image/');
+                            const isPdf = doc.content_type === 'application/pdf';
+
+                            return (
+                              <div
+                                key={doc.id}
+                                className="group relative flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc(doc);
+                                  setShowImagePreview(true);
+                                }}
+                              >
+                                {isImage ? (
+                                  <Eye className="w-4 h-4 text-gray-600" />
+                                ) : (
+                                  <Download className="w-4 h-4 text-gray-600" />
+                                )}
+                                <span className="text-sm text-gray-700 max-w-[200px] truncate">
+                                  {doc.name}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="task" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Task Information Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <Box className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Task Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Group</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedGroupId || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Sub Group</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedSubGroupId || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dynamic Tasks Card */}
+              {customForm?.content && customForm.content.length > 0 && (
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <span className="uppercase tracking-wide">Task Details</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-6">
+                      {customForm.content.map((task, index) => (
+                        <div key={task.name || index} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                          <div className="mb-4">
+                            <h3 className="font-semibold text-gray-900 mb-3">Question {index + 1}</h3>
+                            <p className="text-sm text-gray-700">{task.label}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[120px]">Input Type</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium capitalize">{task.type}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[120px]">Mandatory</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.required === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[120px]">Reading</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.is_reading === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            {task.weightage && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[120px]">Weightage</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.weightage}</span>
+                              </div>
+                            )}
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[120px]">Rating Enabled</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.rating_enabled === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            {task.hint && (
+                              <div className="flex items-start col-span-2">
+                                <span className="text-gray-500 min-w-[120px]">Help Text</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.hint}</span>
+                              </div>
+                            )}
+
+                            {/* Values for select/radio/checkbox */}
+                            {task.values && task.values.length > 0 && (
+                              <div className="flex items-start col-span-2">
+                                <span className="text-gray-500 min-w-[120px]">Options</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {task.values.map((option, idx) => (
+                                    <span
+                                      key={idx}
+                                      className={`px-2 py-1 rounded text-xs ${option.type === 'positive'
+                                        ? 'bg-green-100 text-green-700'
+                                        : option.type === 'negative'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-700'
+                                        }`}
+                                    >
+                                      {option.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="time" className="p-4 sm:p-6">
+            {/* Time Setup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Clock className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Time Setup</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Parse cron expression and show as Table */}
+                {(() => {
+                  const cron = assetTask?.cron_expression || '';
+                  let minutes: string[] = [], hours: string[] = [], dayOfMonth: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  let isDayOfMonth = false;
+                  if (cron) {
+                    const parts = cron.split(' ');
+                    if (parts.length >= 5) {
+                      minutes = parts[0].split(',');
+                      hours = parts[1].split(',');
+                      dayOfMonth = parts[2] === '*' ? [] : parts[2].split(',');
+                      months = parts[3] === '*' ? ['All'] : parts[3].split(',');
+                      weekdays = parts[4] === '*' ? [] : parts[4].split(',');
+
+                      isDayOfMonth = parts[2] !== '*' && dayOfMonth.length > 0;
+                    }
+                  }
+                  if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
+                  if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
+                  if (!months.length) months = ['All'];
+
+                  let dayColumnHeader = '';
+                  let dayColumnValue = '';
+
+                  if (isDayOfMonth) {
+                    dayColumnHeader = 'Date of Month';
+                    dayColumnValue = dayOfMonth.join(', ');
+                  } else {
+                    dayColumnHeader = 'Day of Week';
+                    if (weekdays.length === 0) {
+                      dayColumnValue = 'All';
+                    } else {
+                      const dayMap: { [key: string]: string } = {
+                        '0': 'Sunday', '1': 'Monday', '2': 'Tuesday',
+                        '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday'
+                      };
+                      dayColumnValue = weekdays.map(d => dayMap[d] || d).join(', ');
+                    }
+                  }
+
+                  return (
+                    <div className="rounded-lg border border-gray-200 overflow-hidden">
+                      <Table className="border-separate">
+                        <TableHeader>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="font-semibold text-gray-700">Hour</TableHead>
+                            <TableHead className="font-semibold text-gray-700">Minute</TableHead>
+                            <TableHead className="font-semibold text-gray-700">{dayColumnHeader}</TableHead>
+                            <TableHead className="font-semibold text-gray-700">Month</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>{hours.join(', ')}</TableCell>
+                            <TableCell>{minutes.join(', ')}</TableCell>
+                            <TableCell>{dayColumnValue}</TableCell>
+                            <TableCell>{months.join(', ')}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Schedule Configuration Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Schedule Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Assignment Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium capitalize">{assetTask?.assignment_type || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Assigned To</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {assetTask?.assigned_to?.map(u => u.name).join(', ') || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Scan Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.scan_type || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Plan Duration</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {assetTask?.plan_value} {assetTask?.plan_type}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Priority</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.priority || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Category</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.category || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Lock Overdue Task</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {assetTask?.overdue_task_start_status ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Frequency</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.frequency || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Start Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(assetTask?.start_date)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">End Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(assetTask?.end_date)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Submission Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.submission_time_value && customForm?.submission_time_type
+                          ? `${customForm.submission_time_value} ${customForm.submission_time_type}`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Grace Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {assetTask?.grace_time_value && assetTask?.grace_time_type
+                          ? `${assetTask.grace_time_value} ${assetTask.grace_time_type}`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supervisors</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.supervisors?.join(', ') || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.supplier?.name || 'N/A'}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="association" className="p-4 sm:p-6">
+            {/* Association */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Link className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Association</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {customForm?.sch_type === 'Service' ? (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <Table className="border-separate">
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="font-semibold text-gray-700">Service ID</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Service Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Created Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {assetTask?.services?.map((service) => (
+                          <TableRow key={service.id}>
+                            <TableCell>{service.id}</TableCell>
+                            <TableCell>{service.service_name}</TableCell>
+                            <TableCell>{formatDateTime(service.created_at)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <Table className="border-separate">
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="font-semibold text-gray-700">Asset ID</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Asset Name</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {assetTask?.assets?.map((asset) => (
+                          <TableRow key={asset.id}>
+                            <TableCell>{asset.id}</TableCell>
+                            <TableCell>{asset.name}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="email" className="p-4 sm:p-6">
+            {/* Email Trigger Rules */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Mail className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Email Trigger Rules</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold text-gray-700">Rule Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Trigger Type</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Trigger To</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Period</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Created By</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {emailRules?.map((rule) => (
+                        <TableRow key={rule.id}>
+                          <TableCell>{rule.rule_name}</TableCell>
+                          <TableCell>{rule.trigger_type}</TableCell>
+                          <TableCell>{rule.trigger_to || 'N/A'}</TableCell>
+                          <TableCell>
+                            {rule.period_value} {rule.period_type}
+                          </TableCell>
+                          <TableCell>{rule.created_by || 'N/A'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mapping" className="p-4 sm:p-6">
+            {/* Asset Mapping List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <MapPin className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Asset Mapping List</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold text-gray-700">Asset Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Bar Code</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {assetTask?.assets?.map((asset) => (
+                        <TableRow key={asset.id}>
+                          <TableCell>{asset.name}</TableCell>
+                          <TableCell>{asset.qr_code || 'N/A'}</TableCell>
+                          <TableCell>{asset.bar_code || 'N/A'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Basic Info Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">i</div>
-            Basic Info
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium">Schedule For</Label>
-            <RadioGroup 
-              value="vendor"
-              className="flex gap-6 mt-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="asset" id="asset" disabled />
-                <Label htmlFor="asset">Asset</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="service" id="service" disabled />
-                <Label htmlFor="service">Service</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="vendor" id="vendor" disabled />
-                <Label htmlFor="vendor">Vendor</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label htmlFor="activity-name">Activity Name</Label>
-            <Input 
-              id="activity-name" 
-              value="Engineering Audit Checklist 2"
-              disabled
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              value=""
-              disabled
-              className="mt-1 min-h-[100px]"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox id="allow-observations" disabled />
-            <Label htmlFor="allow-observations">Allow Observations</Label>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Task Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">T</div>
-            Task
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Checklist Group</Label>
-              <Select disabled>
-                <SelectTrigger>
-                  <SelectValue placeholder="Daily Substation Log" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily-log">Daily Substation Log</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Checklist Group</Label>
-              <Select disabled>
-                <SelectTrigger>
-                  <SelectValue placeholder="E-Block EMT" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="e-block">E-Block EMT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="border-l-4 border-orange-500 pl-4">
-              <div className="grid grid-cols-3 gap-4 items-center">
-                <div>
-                  <Label>Task</Label>
-                  <Input value="Section 1" disabled />
-                </div>
-                <div>
-                  <Label>Input Type</Label>
-                  <Input value="Radio Button" disabled />
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox checked disabled />
-                    <Label>Mandatory</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox disabled />
-                    <Label>Reading</Label>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label>Selected Enter Value</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup value="yes" disabled>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="yes1" />
-                        <Label htmlFor="yes1">Yes</Label>
-                      </div>
-                    </RadioGroup>
-                    <Select disabled>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="P" />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup disabled>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="no1" />
-                        <Label htmlFor="no1">No</Label>
-                      </div>
-                    </RadioGroup>
-                    <Select disabled>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="N" />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-l-4 border-orange-500 pl-4">
-              <div className="grid grid-cols-3 gap-4 items-center">
-                <div>
-                  <Label>Task</Label>
-                  <Input value="Q2" disabled />
-                </div>
-                <div>
-                  <Label>Input Type</Label>
-                  <Input value="Radio Button" disabled />
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox checked disabled />
-                    <Label>Mandatory</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox disabled />
-                    <Label>Reading</Label>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label>Selected Enter Value</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup value="yes" disabled>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="yes2" />
-                        <Label htmlFor="yes2">Yes</Label>
-                      </div>
-                    </RadioGroup>
-                    <Select disabled>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="P" />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup disabled>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="no2" />
-                        <Label htmlFor="no2">No</Label>
-                      </div>
-                    </RadioGroup>
-                    <Select disabled>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="N" />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Schedule Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">S</div>
-            Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium">Checklist Type</Label>
-            <RadioGroup 
-              value="individual"
-              className="flex gap-6 mt-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="individual" id="individual" disabled />
-                <Label htmlFor="individual">Individual</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="asset-group" id="asset-group" disabled />
-                <Label htmlFor="asset-group">Asset Group</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Assign To</Label>
-              <Input placeholder="Select Assign To" disabled />
-            </div>
-            <div>
-              <Label>Scan Type</Label>
-              <Input placeholder="Select Scan Type" disabled />
-            </div>
-            <div>
-              <Label>Plan Duration Type</Label>
-              <Input placeholder="Select Plan Duration" disabled />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Plan value</Label>
-              <Input disabled />
-            </div>
-            <div>
-              <Label>Priority</Label>
-              <Input placeholder="Select Priority" disabled />
-            </div>
-            <div>
-              <Label>Email Trigger Rule</Label>
-              <Input placeholder="Select Email Trigger Rule" disabled />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Supervisors</Label>
-              <Input placeholder="Select Supervisors" disabled />
-            </div>
-            <div>
-              <Label>Category</Label>
-              <Select disabled>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-              </Select>
-            </div>
-            <div>
-              <Label>Submission Type</Label>
-              <Input placeholder="Select Submission Type" disabled />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Submission Time Value</Label>
-              <Input placeholder="Select Time Value" disabled />
-            </div>
-            <div>
-              <Label>Grace Time</Label>
-              <Input placeholder="Select Grace Time" disabled />
-            </div>
-            <div>
-              <Label>Grace Time Value</Label>
-              <Input disabled />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Lock Overdue Task</Label>
-              <Input disabled />
-            </div>
-            <div>
-              <Label>Frequency</Label>
-              <Input disabled />
-            </div>
-            <div>
-              <Label>Start Time</Label>
-              <Input disabled />
-            </div>
-          </div>
-
-          <div>
-            <Label>End At</Label>
-            <Input disabled />
-          </div>
-
-          <div>
-            <Label>Select Supplier</Label>
-            <Select disabled>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Supplier" />
-              </SelectTrigger>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Association Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">A</div>
-            Association
-          </CardTitle>
-        </CardHeader>
-      </Card>
-
-      {/* Email Trigger Rules Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">E</div>
-            Email Trigger Rules
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Rule Name</TableHead>
-                <TableHead>Trigger Type</TableHead>
-                <TableHead>Trigger To</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Period Value</TableHead>
-                <TableHead>Period Type</TableHead>
-                <TableHead>Created On</TableHead>
-                <TableHead>Created By</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {emailTriggerData.map((rule, index) => (
-                <TableRow key={index}>
-                  <TableCell>{rule.ruleName}</TableCell>
-                  <TableCell>{rule.triggerType}</TableCell>
-                  <TableCell>{rule.triggerTo}</TableCell>
-                  <TableCell>{rule.role}</TableCell>
-                  <TableCell>{rule.periodValue}</TableCell>
-                  <TableCell>{rule.periodType}</TableCell>
-                  <TableCell>{rule.createdOn}</TableCell>
-                  <TableCell>{rule.createdBy}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Asset Mapping List Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">A</div>
-            Asset Mapping List
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Asset Name</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assetMappingData.map((asset, index) => (
-                <TableRow key={index}>
-                  <TableCell>{asset.assetName}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 };
-
-export default ViewVendorAuditPage;

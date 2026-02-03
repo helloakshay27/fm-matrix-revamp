@@ -590,6 +590,23 @@ const modulesByPackage = {
           ],
         },
         {
+          name: "Training",
+          href: "/maintenance/audit/training",
+          color: "text-[#1a1a1a]",
+          subItems: [
+            {
+              name: "Scheduled",
+              href: "/maintenance/audit/training/scheduled",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Conducted",
+              href: "/maintenance/audit/training/conducted",
+              color: "text-[#1a1a1a]",
+            },
+          ],
+        },
+        {
           name: "Assets",
           href: "/maintenance/audit/assets",
           color: "text-[#1a1a1a]",
