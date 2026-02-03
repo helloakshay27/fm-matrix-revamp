@@ -65,20 +65,19 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
-      hostname.includes("localhost") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
 
     // Template routes should be treated as Settings
     const templatePaths = [
-      '/master/communication-template',
-      '/master/template/root-cause-analysis',
-      '/master/template/preventive-action',
-      '/master/template/short-term-impact',
-      '/master/template/long-term-impact',
-      '/master/template/corrective-action'
+      "/master/communication-template",
+      "/master/template/root-cause-analysis",
+      "/master/template/preventive-action",
+      "/master/template/short-term-impact",
+      "/master/template/long-term-impact",
+      "/master/template/corrective-action",
     ];
-    const isTemplatePath = templatePaths.some(t => path.startsWith(t));
+    const isTemplatePath = templatePaths.some((t) => path.startsWith(t));
 
     // For employee users, don't auto-detect section changes
     // They manually select modules via EmployeeHeader

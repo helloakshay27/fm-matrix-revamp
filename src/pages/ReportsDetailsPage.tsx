@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, File, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, File, FileText, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import {
@@ -732,7 +732,7 @@ const ReportsDetailsPage = () => {
                         {reportDetails.comment && (
                             <div className="mt-6 w-[70%]">
                                 <h4 className="font-semibold text-gray-900 mb-4">Reported Comment</h4>
-                                <div className="border border-red-200 rounded-[8px] p-4">
+                                <div className="border border-[#c72030] rounded-[8px] p-4">
                                     <div className="flex items-start gap-6 mb-3">
                                         <div className="flex items-center gap-3">
                                             <img
@@ -751,7 +751,7 @@ const ReportsDetailsPage = () => {
                                         <span
                                             className="bg-[rgba(199,32,48,0.5)] text-white w-[139px] px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
                                         >
-                                            <File size={16} /> 1 Report
+                                            <FileText size={16} /> 1 Report
                                         </span>
                                     </div>
                                     <p className="text-gray-700 mb-3">{reportDetails.comment.body}</p>

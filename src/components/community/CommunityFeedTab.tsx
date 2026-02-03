@@ -149,7 +149,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
     const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | 'document' | null; id: number | null }>({ open: false, type: null, id: null });
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | 'document' | 'notice' | 'event' | null; id: number | null }>({ open: false, type: null, id: null });
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselAttachments, setCarouselAttachments] = useState<Attachment[]>([]);
     const [carouselStartIndex, setCarouselStartIndex] = useState(0);
@@ -385,6 +385,50 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                 );
                 toast.success('Document deleted successfully');
                 await fetchPosts();
+            } else if (deleteConfirmation.type === 'notice') {
+                // Fetch notice data to get community_ids
+                const noticeResponse = await axios.get(
+                    `https://${baseUrl}/pms/admin/noticeboards/${deleteConfirmation.id}.json`,
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+
+                const noticeData = noticeResponse.data;
+                const currentCommunityIds = noticeData.community_ids || [];
+
+                // Filter out current communityId from the array
+                const filteredCommunityIds = currentCommunityIds.filter(
+                    (cId: string | number) => String(cId) !== String(communityId)
+                );
+
+                // Update notice with filtered community_ids
+                await axios.put(
+                    `https://${baseUrl}/pms/admin/noticeboards/${deleteConfirmation.id}.json`,
+                    { noticeboard: { community_ids: filteredCommunityIds } },
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+                toast.success('Notice deleted successfully');
+                await fetchPosts();
+            } else if (deleteConfirmation.type === 'event') {
+                // Update the community to remove this event
+                await axios.put(
+                    `https://${baseUrl}/communities/${communityId}.json`,
+                    { community: { event_ids: [deleteConfirmation.id] } },
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+                toast.success('Event deleted successfully');
+                await fetchPosts();
             }
         } catch (error) {
             console.error(`Error deleting ${deleteConfirmation.type}:`, error);
@@ -456,7 +500,17 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
     };
 
     const handleDeletePost = (postId: number, postType?: string) => {
-        setDeleteConfirmation({ open: true, type: postType === 'document' ? 'document' : 'post', id: postId });
+        let deleteType: 'post' | 'comment' | 'document' | 'notice' | 'event' | null = 'post';
+
+        if (postType === 'document') {
+            deleteType = 'document';
+        } else if (postType === 'notice') {
+            deleteType = 'notice';
+        } else if (postType === 'event') {
+            deleteType = 'event';
+        }
+
+        setDeleteConfirmation({ open: true, type: deleteType, id: postId });
     };
 
     const handleCreatePost = async () => {
@@ -739,6 +793,15 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
             clap: { icon: "👏", hoverClass: "hover:text-yellow-600" },
         };
 
+        const REACTION_ORDER = [
+            "thumbs_up",
+            "heart",
+            "laugh",
+            "clap",
+            "angry",
+        ];
+
+
         return (
             <div className="bg-white rounded-[10px] border border-gray-200 p-6 mb-4 w-[80%]">
                 {/* Post Header */}
@@ -778,7 +841,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                 onClick={() => handleDeletePost(post.id, post.type)}
                                 className="text-red-600 focus:text-red-600"
                             >
-                                Delete {post.type === 'document' ? 'Document' : 'Post'}
+                                Delete {post.type === 'document' ? 'Document' : post.type === 'notice' ? 'Notice' : post.type === 'event' ? 'Event' : 'Post'}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -870,7 +933,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                     {post.attachments.map((attachment, index) => {
                                         const isImage = attachment?.document_content_type?.startsWith('image/');
                                         const isVideo = attachment.document_content_type?.startsWith('video/');
-                                        const shouldShowMore = post.attachments.length > 4 && index === 3;
+                                        const shouldShowMore = post.attachments.length > 3 && index === 2;
 
                                         return (
                                             <div
@@ -915,7 +978,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                                 {shouldShowMore && (
                                                     <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-opacity">
                                                         <span className="text-white text-3xl font-semibold">
-                                                            +{post.attachments.length - 4}
+                                                            +{post.attachments.length - 2}
                                                         </span>
                                                     </div>
                                                 )}
@@ -931,7 +994,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                                 )}
                                             </div>
                                         );
-                                    }).slice(0, 4)}
+                                    }).slice(0, 3)}
                                 </div>
                             )}
                         </>
@@ -966,27 +1029,26 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                 {
                     post.type === "post" && (
                         <div className="flex items-center gap-3 border-t border-b border-gray-200 py-3">
-                            {Object.entries(post.likes_with_emoji || {}).map(
-                                ([emojiKey, count]) => {
-                                    const emoji = EMOJI_MAP[emojiKey];
+                            {REACTION_ORDER.map((emojiKey) => {
+                                const count = post.likes_with_emoji?.[emojiKey];
+                                const emoji = EMOJI_MAP[emojiKey];
 
-                                    if (!emoji || count === 0) return null;
+                                if (!emoji || !count || count === 0) return null;
 
-                                    return (
-                                        <button
-                                            key={emojiKey}
-                                            onClick={() => {
-                                                setReactionsModalData(post.likes_with_user_names);
-                                                setReactionsModalOpen(true);
-                                            }}
-                                            className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
-                                        >
-                                            <span>{emoji.icon}</span>
-                                            <span className="text-sm font-medium">{count}</span>
-                                        </button>
-                                    );
-                                }
-                            )}
+                                return (
+                                    <button
+                                        key={emojiKey}
+                                        onClick={() => {
+                                            setReactionsModalData(post.likes_with_user_names);
+                                            setReactionsModalOpen(true);
+                                        }}
+                                        className={`flex items-center gap-1 text-gray-600 transition-colors cursor-pointer hover:opacity-75 ${emoji.hoverClass}`}
+                                    >
+                                        <span>{emoji.icon}</span>
+                                        <span className="text-sm font-medium">{count}</span>
+                                    </button>
+                                );
+                            })}
                             <button
                                 className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors"
                                 onClick={() => setShowCommentsForPost(showCommentsForPost === post.id ? null : post.id)}
@@ -1108,10 +1170,10 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="min-w-[9.1rem]">
-                        <DropdownMenuItem className="font-medium" onClick={() => setCreatePostOpen(true)}>
+                        <DropdownMenuItem className="font-medium justify-center" onClick={() => setCreatePostOpen(true)}>
                             Create Post
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="font-medium" onClick={() => setCreatePollOpen(true)}>
+                        <DropdownMenuItem className="font-medium justify-center" onClick={() => setCreatePollOpen(true)}>
                             Create Poll
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1530,7 +1592,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                 <DialogContent className="max-w-sm bg-white rounded-lg p-0 flex flex-col border-0 shadow-lg">
                     <div className="bg-white pt-12 text-center flex flex-col">
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
-                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : deleteConfirmation.type === 'document' ? 'Document' : 'Comment'} ?
+                            Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : deleteConfirmation.type === 'document' ? 'Document' : deleteConfirmation.type === 'notice' ? 'Notice' : deleteConfirmation.type === 'event' ? 'Event' : 'Comment'} ?
                         </h2>
                         <div className="flex mt-auto">
                             <button

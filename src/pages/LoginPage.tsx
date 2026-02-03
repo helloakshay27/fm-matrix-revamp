@@ -74,7 +74,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work");
   const isWebSite = hostname.includes("web.gophygital.work");
-  const isClubSite = hostname.includes("club.lockated.com/");
 
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
@@ -245,14 +244,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         organizationId
       );
 
-      // if (
-      //   hostname !== "pulse.lockated.com" &&
-      //   hostname !== "localhost" &&
-      //   !response.is_login
-      // ) {
-      //   toast.error("You are not approved to login.");
-      //   return;
-      // }
+      if (!response.is_login) {
+        toast.error("You are not approved to login.")
+        return
+      }
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
@@ -382,7 +377,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const from =
         (location.state as { from?: Location })?.from?.pathname +
         (location.state as { from?: Location })?.from?.search ||
-        "/club-management/membership";
+        "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
@@ -395,8 +390,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           hostname.includes("fm-matrix.lockated.com");
         const isPulseSite =
           hostname.includes("pulse.lockated.com") ||
-          hostname.includes("pulse.gophygital.work") ||
-          hostname.includes("pulse-uat.panchshil.com");
+          hostname.includes("pulse.gophygital.work");
 
         // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
         if (userRole) {
@@ -410,7 +404,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // PRIORITY 2: Localhost with userType-based routing
         if (userType && isLocalhost) {
           if (userType === "pms_organization_admin") {
-            navigate("/maintenance/asset", { replace: true });
+            navigate("/admin/dashboard", { replace: true });
             return;
           } else if (userType === "pms_occupant") {
             navigate("/vas/projects", { replace: true });
@@ -434,15 +428,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             }
           }
           // Fallback to default admin route for these companies
-          navigate("/maintenance/asset", { replace: true });
+          navigate("/admin/dashboard", { replace: true });
           return;
         }
 
         // PRIORITY 4: Domain-specific and user-specific fallback routing
         if (response.id === 189005) {
           navigate("/dashboard");
-        } else if (isClubSite) {
-          navigate("/club-management/membership");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
         } else if (isPulseSite) {
@@ -495,10 +487,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div
             key={step}
             className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
+              ? "bg-[#C72030] text-white shadow-lg scale-110"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-400"
               }`}
           >
             {step < currentStep ? (
@@ -912,8 +904,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
               <p
                 className={`${isViSite
-                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                    : "text-gray-600 text-sm font-medium"
+                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                  : "text-gray-600 text-sm font-medium"
                   }`}
               >
                 Sign in to your account

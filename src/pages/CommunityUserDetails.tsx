@@ -266,7 +266,7 @@ const CommunityUserDetails = () => {
                                             className="bg-[rgba(199,32,48,0.5)] text-white w-[139px] px-3 py-2 rounded text-xs font-medium inline-flex items-center gap-2 cursor-pointer"
                                             onClick={() => navigate(`/pulse/community/${communityId}/reports/details/${report.id}`)}
                                         >
-                                            <File size={16} /> 1 Report
+                                            <FileText size={16} /> 1 Report
                                         </span>
                                     </div>
                                     <div>
