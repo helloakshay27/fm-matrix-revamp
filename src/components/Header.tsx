@@ -105,6 +105,7 @@ export const Header = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const org_id = localStorage.getItem("org_id");
 
   useEffect(() => {
     if (selectedSite) {
@@ -120,7 +121,8 @@ export const Header = () => {
     email: "",
   };
   const userId = user.id;
-  const isRestrictedUser = user?.email === "karan.balsara@zycus.com";
+  const isRestrictedUser =
+    user?.email === "karan.balsara@zycus.com" || org_id === "90"; // Example condition for restricted user
 
   const assetSuggestions = [
     "sdcdsc",
