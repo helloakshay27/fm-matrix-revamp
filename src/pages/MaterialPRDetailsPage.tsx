@@ -178,7 +178,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "prod_desc",
-    label: "Product Description",
+    label: "Product Additional Text",
     sortable: true,
     defaultVisible: true,
   },
