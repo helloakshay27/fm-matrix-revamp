@@ -1246,7 +1246,8 @@ export const InventoryDashboard = () => {
                 </SortableContext>
               </DndContext>
             )}
-            <AIAssistantWidget allowedModuleId={4} />
+                        <DashboardAIAssistant moduleId="4" />
+            
 
           </TabsContent>
           <TabsContent value="list" className="space-y-4 sm:space-y-6">
