@@ -68,11 +68,22 @@ export const permissionService = {
         return response.data;
       } else {
         console.error("Failed to fetch user role");
-        return null;
+        // Throw specific error for "No Role" case
+        throw new Error("NO_ROLE_ASSIGNED");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user role:", error);
-      return null;
+      // Check for 500 Internal Server Error or "No Role" message
+      if (error.response?.status === 500) {
+        throw new Error("SERVER_ERROR_500");
+      }
+      // Check for "No Role" in error message
+      if (error.response?.data?.message?.toLowerCase().includes("no role") ||
+        error.message === "NO_ROLE_ASSIGNED") {
+        throw new Error("NO_ROLE_ASSIGNED");
+      }
+      // Re-throw other errors
+      throw error;
     }
   },
 
