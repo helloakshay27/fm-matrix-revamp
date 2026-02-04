@@ -1,63 +1,87 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { toast } from 'sonner';
-import { verifyForgotPasswordOTPAndResetPassword, sendForgotPasswordOTP } from '@/utils/auth';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { toast } from "sonner";
+import {
+  verifyForgotPasswordOTPAndResetPassword,
+  sendForgotPasswordOTP,
+} from "@/utils/auth";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 export const ForgotPasswordOTPPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const [emailOrMobile, setEmailOrMobile] = useState(location.state?.emailOrMobile || '');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [emailOrMobile, setEmailOrMobile] = useState(
+    location.state?.emailOrMobile || ""
+  );
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [canResend, setCanResend] = useState(false);
-   const hostname = window.location.hostname;
+  const hostname = window.location.hostname;
   const isOmanSite = hostname.includes("oig.gophygital.work");
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
     if (password.length < 8) {
-      return { isValid: false, message: "Password must be at least 8 characters long." };
+      return {
+        isValid: false,
+        message: "Password must be at least 8 characters long.",
+      };
     }
-    
+
     // Must contain at least one uppercase letter
     if (!/[A-Z]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one uppercase letter." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one uppercase letter.",
+      };
     }
-    
+
     // Must contain at least one lowercase letter
     if (!/[a-z]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one lowercase letter." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one lowercase letter.",
+      };
     }
-    
+
     // Must contain at least one number
     if (!/[0-9]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one number." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one number.",
+      };
     }
-    
+
     // Must contain at least one special character
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)." };
+      return {
+        isValid: false,
+        message:
+          'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>).',
+      };
     }
-    
+
     return { isValid: true, message: "Password is valid." };
   };
 
   useEffect(() => {
     // Redirect if no email or mobile
     if (!emailOrMobile) {
-      navigate('/forgot-password');
+      navigate("/forgot-password");
       return;
     }
 
@@ -92,7 +116,7 @@ export const ForgotPasswordOTPPage = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
       const response = await verifyForgotPasswordOTPAndResetPassword(
         emailOrMobile,
@@ -103,16 +127,18 @@ export const ForgotPasswordOTPPage = () => {
 
       if (response.code === 200) {
         toast.success(response.message || "Password reset successful!");
-        navigate('/login');
+        navigate("/login");
       } else if (response.code === 401) {
         toast.error(response.message || "Invalid OTP for mobile/email.");
       } else {
-        toast.error(response?.message || "Failed to reset password. Please try again.");
+        toast.error(
+          response?.message || "Failed to reset password. Please try again."
+        );
       }
     } catch (error) {
       toast.error(
-        error instanceof Error 
-          ? error.message 
+        error instanceof Error
+          ? error.message
           : "Failed to reset password. Please try again."
       );
     } finally {
@@ -123,12 +149,45 @@ export const ForgotPasswordOTPPage = () => {
   const handleResendOTP = async () => {
     setCanResend(false);
     setTimeLeft(30);
-    
+
     try {
-      await sendForgotPasswordOTP(emailOrMobile);
-      toast.success("A new OTP has been sent to your email or mobile number.");
-    } catch (error) {
-      toast.error("Failed to resend OTP. Please try again.");
+      const response = await sendForgotPasswordOTP(emailOrMobile);
+
+      // Check response code (could be response.code or response.data.code depending on service)
+      const responseCode = response?.code || response?.data?.code;
+      const responseMessage = response?.message || response?.data?.message;
+
+      // Handle rate limiting (429) - server returns 200 OK but with code: 429 in body
+      if (responseCode === 429) {
+        toast.error(
+          responseMessage ||
+            "Too many OTP requests. Please try again after some time."
+        );
+        setTimeLeft(60);
+        return;
+      }
+
+      // Handle other non-200 codes
+      if (responseCode && responseCode !== 200) {
+        toast.error(
+          responseMessage || "Failed to resend OTP. Please try again."
+        );
+        setCanResend(true);
+        setTimeLeft(0);
+        return;
+      }
+
+      // Success (code: 200 or otp: "Y")
+      toast.success(
+        responseMessage ||
+          "A new OTP has been sent to your email or mobile number."
+      );
+    } catch (error: any) {
+      // Handle HTTP errors
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to resend OTP. Please try again.";
+      toast.error(errorMessage);
       setCanResend(true);
       setTimeLeft(0);
     }
@@ -149,7 +208,7 @@ export const ForgotPasswordOTPPage = () => {
       {/* Right Side - Reset Password Form */}
       <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
         {/* Logo and Branding */}
-       {isOmanSite ? (
+        {isOmanSite ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
@@ -260,18 +319,22 @@ export const ForgotPasswordOTPPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate("/forgot-password")}
             className="p-2 -ml-2"
           >
             <ArrowLeft size={20} />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900 ml-2">Reset Password</h1>
+          <h1 className="text-xl font-semibold text-gray-900 ml-2">
+            Reset Password
+          </h1>
         </div>
 
         {/* Description */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Enter the 5-digit OTP sent to <span className="font-medium">{emailOrMobile}</span> and create a new password.
+            Enter the 5-digit OTP sent to{" "}
+            <span className="font-medium">{emailOrMobile}</span> and create a
+            new password.
           </p>
         </div>
 
@@ -283,11 +346,7 @@ export const ForgotPasswordOTPPage = () => {
               Enter OTP
             </label>
             <div className="flex justify-center">
-              <InputOTP
-                maxLength={5}
-                value={otp}
-                onChange={setOtp}
-              >
+              <InputOTP maxLength={5} value={otp} onChange={setOtp}>
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
                   <InputOTPSlot index={1} />
@@ -321,7 +380,7 @@ export const ForgotPasswordOTPPage = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            
+
             {/* Password Requirements */}
             {/* {newPassword && (
               <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
@@ -379,7 +438,9 @@ export const ForgotPasswordOTPPage = () => {
           {/* Reset Password Button */}
           <Button
             onClick={handleResetPassword}
-            disabled={isLoading || otp.length !== 5 || !newPassword || !confirmPassword}
+            disabled={
+              isLoading || otp.length !== 5 || !newPassword || !confirmPassword
+            }
             className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
           >
             {isLoading ? (
@@ -388,7 +449,7 @@ export const ForgotPasswordOTPPage = () => {
                 Resetting...
               </div>
             ) : (
-              'Reset Password'
+              "Reset Password"
             )}
           </Button>
 

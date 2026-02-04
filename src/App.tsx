@@ -431,6 +431,9 @@ import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
 // Import Material Master page
 import { MaterialMasterPage } from "./pages/MaterialMasterPage";
 
+// Import Plant Detail Setup page
+import { PlantDetailSetupPage } from "./pages/PlantDetailSetupPage";
+
 // Import RVehiclesInDashboard and RVehiclesOutDashboard
 import { RVehiclesInDashboard } from "./pages/RVehiclesInDashboard";
 import { RVehiclesOutDashboard } from "./pages/RVehiclesOutDashboard";
@@ -1789,6 +1792,10 @@ function App() {
                     <Route
                       path="/master/finance"
                       element={<FinanceMasterPage />}
+                    />
+                    <Route
+                      path="/master/plant-detail"
+                      element={<PlantDetailSetupPage />}
                     />
 
                     {/* CRM Routes */}

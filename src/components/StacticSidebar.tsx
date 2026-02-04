@@ -395,6 +395,11 @@ const modulesByPackage = {
       href: '/master/finance'
     },
     {
+      name: 'Plant Detail Setup',
+      icon: DoorOpen,
+      href: '/master/plant-detail'
+    },
+    {
       name: "Gate Number",
       icon: DoorOpen,
       href: "/master/gate-number",
