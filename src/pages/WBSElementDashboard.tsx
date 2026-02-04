@@ -61,6 +61,7 @@ export const WBSElementDashboard = () => {
         category_wbs_code: data.category_wbs_code,
         wbs_name: data.wbs_name,
         wbs_code: data.wbs_code,
+        gl_code: data.gl_code,
         active: true
       }
     };
@@ -103,6 +104,7 @@ export const WBSElementDashboard = () => {
         category_wbs_code: data.category_wbs_code,
         wbs_name: data.wbs_name,
         wbs_code: data.wbs_code,
+        gl_code: data.gl_code,
         active: true
       }
     };
