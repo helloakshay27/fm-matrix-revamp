@@ -848,6 +848,7 @@ import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDetails";
 import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
+import BudgetAddNew from "./pages/ClubManagement/BudgetAddNew";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1738,7 +1739,8 @@ function App() {
                       path="/settings/Budget"
                       element={<BudgetDashboard />}
                     />
-                    <Route path="/settings/Budget/add" element={<BudgetAdd />} />
+                    {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
+                    <Route path="/settings/Budget/add/new" element={<BudgetAddNew />} />
                     <Route
                       path="/settings/reports/balance-sheet"
                       element={<BalanceSheetReport />}
