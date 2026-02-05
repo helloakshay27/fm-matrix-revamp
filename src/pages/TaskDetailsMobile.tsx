@@ -103,6 +103,35 @@ const TaskDetailsMobile = () => {
         }
     };
 
+    // Transform status to match card display
+    const transformStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            "open": "OPEN",
+            "in_progress": "IN PROGRESS",
+            "completed": "CLOSED",
+            "on_hold": "ON HOLD",
+            "overdue": "OVERDUE",
+        };
+        return statusMap[status] || status.toUpperCase();
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "open":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
+            case "completed":
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
+            case "in_progress":
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
+            case "on_hold":
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
+            case "overdue":
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
+            default:
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -131,21 +160,33 @@ const TaskDetailsMobile = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="px-4 py-3 flex items-center">
+                <div className="px-4 py-3 flex items-center gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="mr-3"
+                        className="flex-shrink-0"
                     >
                         <ArrowLeft className="w-6 h-6 text-gray-700" />
                     </button>
-                    <h1 className="text-lg font-bold text-gray-900">Task Details</h1>
+                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                        {taskData?.title || "Task Details"}
+                    </h1>
                 </div>
             </div>
 
             {/* Content */}
             <div className="p-4">
+                {/* Description Card */}
+                {taskData.description && (
+                    <div className="bg-white rounded-[10px] shadow-lg mb-4 p-4">
+                        <h2 className="font-semibold text-gray-900 mb-2">Description</h2>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {taskData.description}
+                        </p>
+                    </div>
+                )}
+
                 {/* Task Info Card */}
-                <div className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+                <div className="bg-white rounded-[10px] shadow-lg mb-4 overflow-hidden">
                     {/* Collapsible Header */}
                     <button
                         onClick={() => setIsTaskInfoExpanded(!isTaskInfoExpanded)}
@@ -176,21 +217,23 @@ const TaskDetailsMobile = () => {
                                 </div>
                             )}
 
-                            {/* Description */}
-                            {taskData.description && (
-                                <div className="flex mb-3">
-                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Description</span>
-                                    <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{taskData.description}</span>
-                                </div>
-                            )}
+
 
                             {/* Status */}
                             {taskData.status && (
-                                <div className="flex mb-3">
+                                <div className="flex mb-3 items-center">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Status</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{taskData.status}</span>
+                                    {(() => {
+                                        const statusColor = getStatusColor(taskData.status);
+                                        const displayStatus = transformStatus(taskData.status);
+                                        return (
+                                            <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5 w-fit`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
+                                                {displayStatus}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             )}
 

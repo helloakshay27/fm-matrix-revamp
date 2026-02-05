@@ -58,6 +58,34 @@ const ProjectDetailsMobile = () => {
         }
     };
 
+    const transformStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            "active": "ACTIVE",
+            "in_progress": "IN PROGRESS",
+            "completed": "CLOSED",
+            "on_hold": "ON HOLD",
+            "overdue": "OVERDUE",
+        };
+        return statusMap[status] || status.toUpperCase();
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "active":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
+            case "completed":
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
+            case "in_progress":
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
+            case "on_hold":
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
+            case "overdue":
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
+            default:
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -155,12 +183,21 @@ const ProjectDetailsMobile = () => {
                                 </div>
                             )}
 
-                            {/* Department */}
+                            {/* Status */}
                             {projectData.status && (
-                                <div className="flex mb-3">
+                                <div className="flex mb-3 items-center">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Status</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{projectData.status}</span>
+                                    {(() => {
+                                        const statusColor = getStatusColor(projectData.status);
+                                        const displayStatus = transformStatus(projectData.status);
+                                        return (
+                                            <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5 w-fit`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
+                                                {displayStatus}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             )}
 
