@@ -67,6 +67,8 @@ const ProjectTeams = () => {
     const [submitting, setSubmitting] = useState(false)
     const [users, setUsers] = useState([])
 
+    const [memberIdMap, setMemberIdMap] = useState<Record<number, number>>({});
+
     const getUsers = async () => {
         try {
             const response = await axios.get(
@@ -94,6 +96,7 @@ const ProjectTeams = () => {
         setTeamName('');
         setSelectedLead(null);
         setSelectedMembers([]);
+        setMemberIdMap({});
         setEditingId(null);
         setIsDialogOpen(true);
     };
@@ -105,6 +108,8 @@ const ProjectTeams = () => {
         setSelectedLead(leadId);
 
         let memberIds: number[] = [];
+        const newMemberIdMap: Record<number, number> = {};
+
         if (item.user_ids) {
             memberIds = item.user_ids;
         } else if (item.member_ids) {
@@ -112,8 +117,14 @@ const ProjectTeams = () => {
         } else if (item.members && Array.isArray(item.members)) {
             memberIds = item.members.map((m: any) => m.id);
         } else if (item.project_team_members && Array.isArray(item.project_team_members)) {
-            memberIds = item.project_team_members.map((m: any) => m.user.id);
+            memberIds = item.project_team_members.map((m: any) => {
+                const userId = m.user.id;
+                newMemberIdMap[userId] = m.id;
+                return userId;
+            });
         }
+
+        setMemberIdMap(newMemberIdMap);
 
         // Convert to MuiMultiSelect format
         const membersForSelect = memberIds.map(id => {
@@ -131,6 +142,7 @@ const ProjectTeams = () => {
         setTeamName('');
         setSelectedLead(null);
         setSelectedMembers([]);
+        setMemberIdMap({});
         setEditingId(null);
     };
 
@@ -193,8 +205,42 @@ const ProjectTeams = () => {
         }
     };
 
-    const handleMultiSelectChange = (values: any) => {
+    const handleMultiSelectChange = async (values: any) => {
+        // Identify removed members before state update
+        let removedMembers: { value: number; label: string }[] = [];
+        if (isEditMode && values.length < selectedMembers.length) {
+            removedMembers = selectedMembers.filter(oldM => !values.find((newM: any) => newM.value === oldM.value));
+        }
+
+        // Update local state immediately so that if the user clicks "Save", the payload is correct
         setSelectedMembers(values);
+
+        // Process deletions in the background
+        if (removedMembers.length > 0) {
+            for (const removed of removedMembers) {
+                const projectTeamMemberId = memberIdMap[removed.value];
+                if (projectTeamMemberId) {
+                    try {
+                        await axios.delete(`https://${baseUrl}/project_team_members/${projectTeamMemberId}.json`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        toast.success('Member removed successfully');
+
+                        // Update map state safely
+                        setMemberIdMap(prev => {
+                            const newMap = { ...prev };
+                            delete newMap[removed.value];
+                            return newMap;
+                        });
+
+                        dispatch(fetchProjectTeams());
+                    } catch (error) {
+                        console.error('Failed to remove member', error);
+                        toast.error('Failed to remove member');
+                    }
+                }
+            }
+        }
     };
 
     const renderActions = (item: any) => {

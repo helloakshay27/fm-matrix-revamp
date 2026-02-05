@@ -10,7 +10,7 @@ import { ArrowLeft, FileText, Box, Clock, Link, Mail, MapPin, Loader2, Download,
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { toast } from "sonner";
 
-export const ViewOperationalAuditSchedulePage = () => {
+export const ViewTrainingSchedule = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -106,12 +106,13 @@ export const ViewOperationalAuditSchedulePage = () => {
     };
 
     const handleViewPerformance = () => {
-        navigate(`/maintenance/audit/operational/scheduled/performance/${id}`, {
+        navigate(`/maintenance/audit/training/scheduled/performance/${id}`, {
             state: { formCode: customFormCode }
         });
     };
 
-    const handleBack = () => navigate('/maintenance/audit/operational/scheduled');
+    const handleBack = () => navigate('/maintenance/audit/training/scheduled');
+    // const handleBack = () => navigate(-1);
 
     // Loading state
     if (loading) {
