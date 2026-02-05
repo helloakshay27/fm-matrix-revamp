@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronDown, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ const IssueDetailsMobile = () => {
     const [isIssueInfoExpanded, setIsIssueInfoExpanded] = useState(true);
     const [issueData, setIssueData] = useState<IssueData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -56,22 +57,64 @@ const IssueDetailsMobile = () => {
         }
     };
 
+    const handleStatusUpdate = async (newStatus: string) => {
+        try {
+            setUpdatingStatus(true);
+            const token = localStorage.getItem('token');
+            const baseUrl = localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
+
+            if (!token) {
+                toast.error('Authentication token not found');
+                return;
+            }
+
+            const response = await fetch(
+                `https://${baseUrl}/issues/${id}.json?token=${token}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        issue: {
+                            status: newStatus
+                        }
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Update local state smoothly
+            setIssueData(prev => prev ? { ...prev, status: newStatus } : null);
+            toast.success("Status updated successfully");
+
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            toast.error('Failed to update status');
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case "open":
-                return "bg-red-500 text-white";
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
             case "in_progress":
-                return "bg-blue-500 text-white";
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
             case "closed":
-                return "bg-green-600 text-white";
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             case "resolved":
-                return "bg-green-500 text-white";
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             case "on_hold":
-                return "bg-orange-400 text-white";
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
             case "pending":
-                return "bg-yellow-400 text-white";
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
             default:
-                return "bg-gray-400 text-white";
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
         }
     };
 
@@ -153,23 +196,23 @@ const IssueDetailsMobile = () => {
             {/* Content */}
             <div className="p-4 space-y-4">
                 {/* Title Section */}
-                {issueData.title && (
-                    <div className="bg-white rounded-lg shadow-sm p-4">
+                {/* {issueData.title && (
+                    <div className="bg-white rounded-[10px] shadow-lg p-4">
                         <h1 className="text-2xl font-bold text-gray-900">{issueData.title}</h1>
                         <p className="text-sm text-gray-600 mt-2">Issue ID: #{issueData.id}</p>
                     </div>
-                )}
+                )} */}
 
                 {/* Description Section */}
                 {issueData.description && (
-                    <div className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="bg-white rounded-[10px] shadow-lg p-4">
                         <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{issueData.description}</p>
                     </div>
                 )}
 
                 {/* Issue Details Card */}
-                <div className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+                <div className="bg-white rounded-[10px] shadow-lg mb-4 overflow-hidden">
                     {/* Collapsible Header */}
                     <button
                         onClick={() => setIsIssueInfoExpanded(!isIssueInfoExpanded)}
@@ -185,6 +228,16 @@ const IssueDetailsMobile = () => {
                     {/* Issue Info Content */}
                     {isIssueInfoExpanded && (
                         <div className="px-4 py-3 space-y-3">
+                            <div className="flex items-start">
+                                <span className="text-sm text-gray-700 w-32 flex-shrink-0">Issue ID</span>
+                                <span className="text-sm text-gray-500 mr-2">:</span>
+                                <span className="text-sm text-gray-900 flex-1">{issueData.id}</span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-sm text-gray-700 w-32 flex-shrink-0">Issue</span>
+                                <span className="text-sm text-gray-500 mr-2">:</span>
+                                <span className="text-sm text-gray-900 flex-1">{issueData.title}</span>
+                            </div>
                             {/* Issue Type */}
                             {issueData.issue_type_name && (
                                 <div className="flex items-start">
@@ -196,10 +249,38 @@ const IssueDetailsMobile = () => {
 
                             {/* Status */}
                             {issueData.status && (
-                                <div className="flex items-start">
+                                <div className="flex items-center">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Status</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{transformStatus(issueData.status)}</span>
+                                    {(() => {
+                                        const statusColor = getStatusColor(issueData.status);
+                                        const displayStatus = transformStatus(issueData.status);
+                                        return (
+                                            <div className="relative inline-block">
+                                                <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5 w-fit`}>
+                                                    {updatingStatus ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
+                                                    )}
+                                                    {displayStatus}
+                                                    <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+                                                </span>
+                                                <select
+                                                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                                    value={issueData.status}
+                                                    onChange={(e) => handleStatusUpdate(e.target.value)}
+                                                    disabled={updatingStatus}
+                                                >
+                                                    <option value="open">OPEN</option>
+                                                    <option value="in_progress">IN PROGRESS</option>
+                                                    <option value="on_hold">ON HOLD</option>
+                                                    <option value="resolved">RESOLVED</option>
+                                                    <option value="closed">CLOSED</option>
+                                                </select>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             )}
 

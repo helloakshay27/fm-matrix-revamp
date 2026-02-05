@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User, Target, Wrench, UserCheck, Shield, Star, Circle } from 'lucide-react';
 
 interface ModuleItem {
     name: string;
@@ -13,7 +13,7 @@ interface ModuleItem {
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage: Record<string, ModuleItem[]> = {
-    Maintainance: [
+    Maintenance: [
         { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     ],
     "Value Added Services": [
@@ -81,6 +81,129 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
+    Settings: [
+        {
+            name: "Account",
+            icon: Users,
+            href: "/settings/account",
+            subItems: [
+                { name: "General", href: "/settings/account/general" },
+                {
+                    name: "Holiday Calendar",
+                    href: "/settings/account/holiday-calendar",
+                },
+                { name: "About", href: "/settings/account/about" },
+                { name: "Language", href: "/settings/account/language" },
+                {
+                    name: "Company Logo Upload",
+                    href: "/settings/account/company-logo-upload",
+                },
+                { name: "Report Setup", href: "/settings/account/report-setup" },
+                {
+                    name: "Notification Setup",
+                    href: "/settings/account/notification-setup",
+                },
+                { name: "Shift", href: "/settings/account/shift" },
+                { name: "Roster", href: "/settings/account/roster" },
+                { name: "Lock Module", href: "/settings/account/lock-module" },
+                { name: "Lock Function", href: "/settings/account/lock-function" },
+                {
+                    name: "Lock Sub Function",
+                    href: "/settings/account/lock-sub-function",
+                },
+            ],
+        },
+        {
+            name: "Roles (RACI)",
+            icon: UserCheck,
+            href: "/settings/roles",
+            subItems: [
+                { name: "Department", href: "/settings/roles/department" },
+                { name: "Role", href: "/settings/roles/role" },
+                { name: "Approval Matrix", href: "/settings/approval-matrix/setup" },
+            ],
+        },
+        {
+            name: "Maintenance",
+            icon: Wrench,
+            href: "/settings/maintenance",
+            subItems: [
+                {
+                    name: "Ticket Management",
+                    href: "/settings/ticket-management",
+                    subItems: [
+                        { name: "Setup", href: "/settings/ticket-management/setup" },
+                        {
+                            name: "Escalation Matrix",
+                            href: "/settings/ticket-management/escalation-matrix",
+                        },
+                        {
+                            name: "Cost Approval",
+                            href: "/settings/ticket-management/cost-approval",
+                        },
+                    ],
+                },
+                {
+                    name: "Safety",
+                    href: "/settings/safety",
+                    subItems: [
+                        { name: "Permit Setup", href: "/settings/safety/permit-setup" },
+                        { name: "Incident Setup", href: "/settings/safety/incident" },
+                    ],
+                },
+            ],
+        },
+        {
+            name: "Security",
+            icon: Shield,
+            href: "/settings/security",
+            subItems: [
+                {
+                    name: "Visitor Management",
+                    href: "/settings/visitor-management/setup",
+                    subItems: [
+                        { name: "Setup", href: "/settings/visitor-management/setup" },
+                        {
+                            name: "Visiting Purpose",
+                            href: "/settings/visitor-management/visiting-purpose",
+                        },
+                        {
+                            name: "Support Staff",
+                            href: "/settings/visitor-management/support-staff",
+                        },
+                        { name: "Icons", href: "/settings/visitor-management/icons" },
+                    ],
+                },
+                {
+                    name: "Gate Pass",
+                    href: "/security/gate-pass",
+                    subItems: [
+                        {
+                            name: "Materials Type",
+                            href: "/security/gate-pass/materials-type",
+                        },
+                        { name: "Items Name", href: "/security/gate-pass/items-name" },
+                    ],
+                },
+            ],
+        },
+        {
+            name: "Value Added Services",
+            icon: Star,
+            href: "/settings/vas",
+            subItems: [
+                {
+                    name: "Booking",
+                    href: "/settings/vas/booking/setup",
+                },
+            ],
+        },
+        {
+            icon: Circle,
+            name: "Circle",
+            href: "/safety/m-safe/circle",
+        },
+    ]
 }
 
 const ViSidebar: React.FC = () => {
@@ -142,40 +265,55 @@ const ViSidebar: React.FC = () => {
     const renderItem = (item: any, level = 0) => {
         const hasSub = Array.isArray(item.subItems) && item.subItems.length > 0;
         const expanded = expandedItems.includes(item.name);
-        const active = item.href ? isActiveRoute(item.href) : false;
+
+        const isActiveRoute = (href: string) => {
+            const p = location.pathname;
+            return p === href || p.startsWith(href + '/');
+        };
+
+        // Check active status recursively for parents or if this item is active
+        const isActive = item.href ? isActiveRoute(item.href) : false;
+
+        // Check if any descendant is active
+        const isChildActive = (items: any[]): boolean => {
+            return items.some(sub =>
+                (sub.href && isActiveRoute(sub.href)) ||
+                (sub.subItems && isChildActive(sub.subItems))
+            );
+        };
+        const hasActiveChild = hasSub && isChildActive(item.subItems);
 
         if (hasSub) {
             return (
-                <div key={item.name}>
+                <div key={item.name} className="w-full">
                     <button
                         onClick={() => toggleExpanded(item.name)}
-                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        className={`flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative
+                            ${level === 0 ? 'font-bold' : 'font-medium'}
+                        `}
                     >
                         <div className="flex items-center gap-3">
-                            {level === 0 && (
-                                <>
-                                    {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                                    <item.icon className="w-5 h-5" />
-                                </>
+                            {/* Level 0 Active Indicator */}
+                            {level === 0 && (isActive || hasActiveChild) && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                             )}
-                            {item.name}
+
+                            {/* Level 0 Icon */}
+                            {level === 0 && item.icon && (
+                                <item.icon className={`w-5 h-5 ${(isActive || hasActiveChild) ? 'text-[#C72030]' : ''}`} />
+                            )}
+
+                            <span className={`${(level === 0 && (isActive || hasActiveChild)) ? 'text-[#C72030]' : ''}`}>
+                                {item.name}
+                            </span>
                         </div>
                         {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
                     {expanded && (
-                        <div className="space-y-1">
+                        <div className="space-y-1 mt-1">
                             {item.subItems.map((sub: any) => (
-                                <div key={sub.name} className={level === 0 ? 'ml-8' : 'ml-4'}>
-                                    <button
-                                        onClick={() => handleNavigation(sub.href)}
-                                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${sub.color || 'text-[#1a1a1a]'
-                                            }`}
-                                    >
-                                        {isActiveRoute(sub.href) && (
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                                        )}
-                                        {sub.name}
-                                    </button>
+                                <div key={sub.name} className={level < 1 ? 'ml-4' : 'ml-4'}>
+                                    {renderItem(sub, level + 1)}
                                 </div>
                             ))}
                         </div>
@@ -185,19 +323,28 @@ const ViSidebar: React.FC = () => {
         }
 
         return (
-            <div key={item.name}>
+            <div key={item.name} className="w-full">
                 <button
                     onClick={() => item.href && handleNavigation(item.href)}
-                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'
-                        }`}
+                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'}
+                        ${isActive ? 'bg-[#f0e8dc] shadow-inner' : ''}
+                    `}
                 >
                     {level === 0 && (
                         <>
-                            {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                            <item.icon className="w-5 h-5" />
+                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                            {item.icon && <item.icon className={`w-5 h-5 ${isActive ? 'text-[#C72030]' : ''}`} />}
                         </>
                     )}
-                    {item.name}
+
+                    {/* Nested Active Indicator */}
+                    {level > 0 && isActive && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                    )}
+
+                    <span className={`${isActive ? 'text-[#C72030]' : ''}`}>
+                        {item.name}
+                    </span>
                 </button>
             </div>
         );

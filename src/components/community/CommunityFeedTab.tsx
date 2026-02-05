@@ -144,9 +144,14 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
     const [showCommentsForPost, setShowCommentsForPost] = useState<number | null>(null);
     const [posts, setPosts] = useState<Post[]>([]);
     const [isEditMode, setIsEditMode] = useState(false);
+    interface PollOptionInput {
+        id?: number;
+        name: string;
+    }
+
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
-    const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+    const [pollOptions, setPollOptions] = useState<PollOptionInput[]>([{ name: '' }, { name: '' }]);
     const [isToggling, setIsToggling] = useState<number | null>(null)
     const [isActive, setIsActive] = useState(true);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; type: 'post' | 'comment' | 'document' | 'notice' | 'event' | null; id: number | null }>({ open: false, type: null, id: null });
@@ -491,7 +496,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
         // Check if post has poll options
         if (post.poll_options && post.poll_options.length > 0) {
             // Open poll modal for poll posts
-            setPollOptions(post.poll_options.map(opt => opt.name));
+            setPollOptions(post.poll_options.map(opt => ({ id: opt.id, name: opt.name })));
             setCreatePollOpen(true);
         } else {
             // Open regular post modal for normal posts
@@ -619,7 +624,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
 
     // Poll option handlers
     const handleAddPollOption = () => {
-        setPollOptions(prev => [...prev, '']);
+        setPollOptions(prev => [...prev, { name: '' }]);
     };
 
     const handleRemovePollOption = (index: number) => {
@@ -631,7 +636,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
     const handlePollOptionChange = (index: number, value: string) => {
         setPollOptions(prev => {
             const newOptions = [...prev];
-            newOptions[index] = value;
+            newOptions[index] = { ...newOptions[index], name: value };
             return newOptions;
         });
     };
@@ -643,7 +648,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
         }
 
         // Validate poll options - at least 2 non-empty options
-        const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+        const validOptions = pollOptions.filter(opt => opt.name.trim() !== '');
         if (validOptions.length < 2) {
             toast.error('Please provide at least 2 poll options');
             return;
@@ -655,17 +660,32 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
             formData.append('resource_id', communityId || '');
             formData.append('resource_type', 'Community');
 
-            // Add poll options
-            validOptions.forEach((option, index) => {
-                if (isEditMode) {
-                    // only send id while editing
-                    formData.append(
-                        `poll_options_attributes[${index}][id]`,
-                        editingPost?.poll_options ? editingPost.poll_options[index]?.id.toString() || '' : ''
-                    );
+            // Calculate removed options if in edit mode
+            let removedOptions: PollOption[] = [];
+            if (isEditMode && editingPost?.poll_options) {
+                const currentIds = pollOptions.map(o => o.id).filter(Boolean);
+                removedOptions = editingPost.poll_options.filter(o => !currentIds.includes(o.id));
+            }
+
+            let formIndex = 0;
+
+            // Add current options (New + Updates)
+            validOptions.forEach((option) => {
+                formData.append(`poll_options_attributes[${formIndex}][name]`, option.name);
+                if (option.id) {
+                    formData.append(`poll_options_attributes[${formIndex}][id]`, option.id.toString());
                 }
-                formData.append(`poll_options_attributes[${index}][name]`, option);
+                formIndex++;
             });
+
+            // Add removed options (Deletes)
+            if (isEditMode && removedOptions.length > 0) {
+                removedOptions.forEach((option) => {
+                    formData.append(`poll_options_attributes[${formIndex}][id]`, option.id.toString());
+                    formData.append(`poll_options_attributes[${formIndex}][_destroy]`, 'true');
+                    formIndex++;
+                });
+            }
 
             // Add attachments if any
             if (selectedFiles.length > 0) {
@@ -702,7 +722,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                 setCreatePollOpen(false);
                 setPostContent("");
                 setSelectedFiles([]);
-                setPollOptions(['', '']);
+                setPollOptions([{ name: '' }, { name: '' }]);
                 setRemovedAttachmentIds([]);
                 setIsEditMode(false);
                 setEditingPost(null);
@@ -1388,7 +1408,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                     // Reset poll state when closing
                     setPostContent("");
                     setSelectedFiles([]);
-                    setPollOptions(['', '']);
+                    setPollOptions([{ name: '' }, { name: '' }]);
                     setExistingAttachments([]);
                     setRemovedAttachmentIds([]);
                     setIsEditMode(false);
@@ -1540,7 +1560,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                     <div key={index} className="flex items-center gap-2">
                                         <Input
                                             placeholder={`Option ${index + 1}`}
-                                            value={option}
+                                            value={option.name}
                                             onChange={(e) => handlePollOptionChange(index, e.target.value)}
                                             className="bg-white border-[#E5E5E5] placeholder:text-[#9CA3AF] rounded-[8px] flex-1"
                                         />
@@ -1573,7 +1593,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                     setCreatePollOpen(false);
                                     setPostContent("");
                                     setSelectedFiles([]);
-                                    setPollOptions(['', '']);
+                                    setPollOptions([{ name: '' }, { name: '' }]);
                                     setExistingAttachments([]);
                                     setRemovedAttachmentIds([]);
                                     setIsEditMode(false);
