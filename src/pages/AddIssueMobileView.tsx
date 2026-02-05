@@ -550,7 +550,7 @@ const AddIssueMobileView = () => {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                            className="w-full bg-[#c72030] disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                         >
                             {submitting ? 'Creating...' : 'Create Issue'}
                         </button>

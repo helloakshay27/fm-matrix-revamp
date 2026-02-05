@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Download, Eye, LogOut, Search, Plus } from "lucide-react";
+import { Eye, Search, Plus } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -180,34 +180,34 @@ const IssuesMobileView = () => {
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case "open":
-                return { bg: "bg-red-500", text: "text-white" };
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
             case "in_progress":
-                return { bg: "bg-blue-500", text: "text-white" };
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
             case "closed":
-                return { bg: "bg-green-600", text: "text-white" };
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             case "resolved":
-                return { bg: "bg-green-500", text: "text-white" };
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             case "on_hold":
-                return { bg: "bg-orange-400", text: "text-white" };
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
             case "pending":
-                return { bg: "bg-yellow-400", text: "text-white" };
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
             default:
-                return { bg: "bg-gray-400", text: "text-white" };
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
         }
     };
 
     const getPriorityColor = (priority: string) => {
         switch (priority?.toLowerCase()) {
             case "critical":
-                return { bg: "bg-red-600", text: "text-white" };
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
             case "high":
-                return { bg: "bg-orange-500", text: "text-white" };
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
             case "medium":
-                return { bg: "bg-yellow-500", text: "text-white" };
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
             case "low":
-                return { bg: "bg-green-500", text: "text-white" };
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             default:
-                return { bg: "bg-gray-400", text: "text-white" };
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
         }
     };
 
@@ -260,15 +260,17 @@ const IssuesMobileView = () => {
                                     {/* Header with ID and Status */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <span className="bg-pink-200 text-pink-700 px-3 py-1 rounded-full font-semibold text-sm">
-                                                #{issue.id}
+                                            <span className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-medium text-xs">
+                                                ISSUE-{issue.id}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`${statusColor.bg} ${statusColor.text} px-3 py-1 rounded-lg font-semibold text-xs`}>
+                                            <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
                                                 {displayStatus}
                                             </span>
-                                            <span className={`${priorityColor.bg} ${priorityColor.text} px-3 py-1 rounded-lg font-semibold text-xs`}>
+                                            <span className={`${priorityColor.bg} ${priorityColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${priorityColor.dot}`} />
                                                 {displayPriority}
                                             </span>
                                         </div>
@@ -289,16 +291,7 @@ const IssuesMobileView = () => {
                                                 <span className="font-semibold">Type :</span> {issue.issueType}
                                             </p>
                                         )}
-                                        {issue.status && (
-                                            <p className="text-sm text-gray-700 mb-1">
-                                                <span className="font-semibold">Status :</span> {transformStatus(issue.status)}
-                                            </p>
-                                        )}
-                                        {issue.priority && (
-                                            <p className="text-sm text-gray-700 mb-1">
-                                                <span className="font-semibold">Priority :</span> {transformPriority(issue.priority)}
-                                            </p>
-                                        )}
+
                                         {issue.assignedTo && (
                                             <p className="text-sm text-gray-700">
                                                 <span className="font-semibold">Assigned To :</span> {issue.assignedTo}
