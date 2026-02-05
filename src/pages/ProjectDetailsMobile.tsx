@@ -12,6 +12,7 @@ const ProjectDetailsMobile = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [isPermitInfoExpanded, setIsPermitInfoExpanded] = useState(true);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
     const [comments, setComments] = useState('');
     const [projectData, setProjectData] = useState<ProjectData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -85,13 +86,16 @@ const ProjectDetailsMobile = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="px-4 py-3 flex items-center">
+                <div className="px-4 py-3 flex items-center gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="mr-3"
+                        className="flex-shrink-0"
                     >
                         <ArrowLeft className="w-6 h-6 text-gray-700" />
                     </button>
+                    <h1 className="text-lg font-semibold text-gray-900 truncate">
+                        {projectData.title}
+                    </h1>
                 </div>
 
 
@@ -99,8 +103,27 @@ const ProjectDetailsMobile = () => {
 
             {/* Content */}
             <div className="p-4">
+                {/* Description Card */}
+                <div className="bg-white rounded-[10px] shadow-md mb-4 overflow-hidden">
+                    <button
+                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                        className="w-full px-4 py-3 flex items-center justify-between bg-white border-b border-gray-200"
+                    >
+                        <span className="font-semibold text-gray-900">Description</span>
+                        <ChevronDown
+                            className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${isDescriptionExpanded ? 'transform rotate-180' : ''
+                                }`}
+                        />
+                    </button>
+                    {isDescriptionExpanded && (
+                        <div className="px-4 py-3 text-sm text-gray-700 whitespace-pre-wrap">
+                            {projectData.description || "No description available."}
+                        </div>
+                    )}
+                </div>
+
                 {/* Permit Info Card */}
-                <div className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+                <div className="bg-white rounded-[10px] shadow-md mb-4 overflow-hidden">
                     {/* Collapsible Header */}
                     <button
                         onClick={() => setIsPermitInfoExpanded(!isPermitInfoExpanded)}
@@ -129,15 +152,6 @@ const ProjectDetailsMobile = () => {
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Title</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
                                     <span className="text-sm text-gray-900 flex-1">{projectData.title}</span>
-                                </div>
-                            )}
-
-                            {/* Description */}
-                            {projectData.description && (
-                                <div className="flex mb-3">
-                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Description</span>
-                                    <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{projectData.description}</span>
                                 </div>
                             )}
 

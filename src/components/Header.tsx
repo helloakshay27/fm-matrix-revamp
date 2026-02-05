@@ -93,9 +93,12 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work");
 
   const isClubSite = hostname === "club.lockated.com";
+  const org_id = localStorage.getItem("org_id");
+
   const isPulseSite =
     hostname === "pulse.lockated.com" ||
-    hostname.includes("pulse-uat.panchshil.com");
+    hostname.includes("pulse-uat.panchshil.com") ||
+    org_id === "90";
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -105,7 +108,6 @@ export const Header = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const org_id = localStorage.getItem("org_id");
 
   useEffect(() => {
     if (selectedSite) {

@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/services/permissionService";
 import { permissionCache } from "@/services/simplePermissionCache";
 import { isAuthenticated } from "@/utils/auth";
+import { toast } from "sonner";
 
 interface PermissionsContextType {
   userRole: UserRoleResponse | null;
@@ -59,6 +61,9 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
 
+  // Track if error toast has been shown to prevent duplicate toasts
+  const errorShownRef = useRef<string | null>(null);
+
   const fetchUserPermissions = useCallback(async () => {
     // Don't fetch permissions if user is not authenticated
     if (!isAuthenticated()) {
@@ -76,12 +81,29 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
         setUserRole(role);
         // Store in cache for fast access
         permissionCache.store(role);
+        // Reset error shown flag on success
+        errorShownRef.current = null;
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch user permissions";
       setError(errorMessage);
       console.error("Error fetching user permissions:", err);
+
+      // Show toast only once per error type to prevent spam
+      if (errorShownRef.current !== errorMessage) {
+        errorShownRef.current = errorMessage;
+
+        if (errorMessage === "NO_ROLE_ASSIGNED") {
+          toast.error("No role assigned to your account. Please contact administrator.", {
+            duration: 5000,
+          });
+        } else if (errorMessage === "SERVER_ERROR_500") {
+          toast.error("Server error (500). Unable to fetch user permissions. Please assign role and try again later.", {
+            duration: 5000,
+          });
+        }
+      }
     } finally {
       setLoading(false);
     }
