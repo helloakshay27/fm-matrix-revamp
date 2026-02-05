@@ -265,40 +265,55 @@ const ViSidebar: React.FC = () => {
     const renderItem = (item: any, level = 0) => {
         const hasSub = Array.isArray(item.subItems) && item.subItems.length > 0;
         const expanded = expandedItems.includes(item.name);
-        const active = item.href ? isActiveRoute(item.href) : false;
+
+        const isActiveRoute = (href: string) => {
+            const p = location.pathname;
+            return p === href || p.startsWith(href + '/');
+        };
+
+        // Check active status recursively for parents or if this item is active
+        const isActive = item.href ? isActiveRoute(item.href) : false;
+
+        // Check if any descendant is active
+        const isChildActive = (items: any[]): boolean => {
+            return items.some(sub =>
+                (sub.href && isActiveRoute(sub.href)) ||
+                (sub.subItems && isChildActive(sub.subItems))
+            );
+        };
+        const hasActiveChild = hasSub && isChildActive(item.subItems);
 
         if (hasSub) {
             return (
-                <div key={item.name}>
+                <div key={item.name} className="w-full">
                     <button
                         onClick={() => toggleExpanded(item.name)}
-                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        className={`flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative
+                            ${level === 0 ? 'font-bold' : 'font-medium'}
+                        `}
                     >
                         <div className="flex items-center gap-3">
-                            {level === 0 && (
-                                <>
-                                    {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                                    <item.icon className="w-5 h-5" />
-                                </>
+                            {/* Level 0 Active Indicator */}
+                            {level === 0 && (isActive || hasActiveChild) && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                             )}
-                            {item.name}
+
+                            {/* Level 0 Icon */}
+                            {level === 0 && item.icon && (
+                                <item.icon className={`w-5 h-5 ${(isActive || hasActiveChild) ? 'text-[#C72030]' : ''}`} />
+                            )}
+
+                            <span className={`${(level === 0 && (isActive || hasActiveChild)) ? 'text-[#C72030]' : ''}`}>
+                                {item.name}
+                            </span>
                         </div>
                         {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
                     {expanded && (
-                        <div className="space-y-1">
+                        <div className="space-y-1 mt-1">
                             {item.subItems.map((sub: any) => (
-                                <div key={sub.name} className={level === 0 ? 'ml-8' : 'ml-4'}>
-                                    <button
-                                        onClick={() => handleNavigation(sub.href)}
-                                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${sub.color || 'text-[#1a1a1a]'
-                                            }`}
-                                    >
-                                        {isActiveRoute(sub.href) && (
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                                        )}
-                                        {sub.name}
-                                    </button>
+                                <div key={sub.name} className={level < 1 ? 'ml-4' : 'ml-4'}>
+                                    {renderItem(sub, level + 1)}
                                 </div>
                             ))}
                         </div>
@@ -308,19 +323,28 @@ const ViSidebar: React.FC = () => {
         }
 
         return (
-            <div key={item.name}>
+            <div key={item.name} className="w-full">
                 <button
                     onClick={() => item.href && handleNavigation(item.href)}
-                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'
-                        }`}
+                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'}
+                        ${isActive ? 'bg-[#f0e8dc] shadow-inner' : ''}
+                    `}
                 >
                     {level === 0 && (
                         <>
-                            {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                            <item.icon className="w-5 h-5" />
+                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                            {item.icon && <item.icon className={`w-5 h-5 ${isActive ? 'text-[#C72030]' : ''}`} />}
                         </>
                     )}
-                    {item.name}
+
+                    {/* Nested Active Indicator */}
+                    {level > 0 && isActive && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                    )}
+
+                    <span className={`${isActive ? 'text-[#C72030]' : ''}`}>
+                        {item.name}
+                    </span>
                 </button>
             </div>
         );
