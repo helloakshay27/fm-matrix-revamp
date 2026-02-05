@@ -114,6 +114,7 @@ interface ParkingBookingUser {
   department_name: string;
   designation: string;
   email: string;
+  emp_id: string;
 }
 
 interface ParkingCategory {
@@ -261,6 +262,7 @@ interface ParkingBookingSite {
   id: number;
   employee_name: string;
   employee_email: string;
+  employee_id: string;
   schedule_date: string;
   booking_schedule: string;
   booking_schedule_time: string;
@@ -374,6 +376,7 @@ const ParkingBookingListSiteWise = () => {
       id: booking.id,
       employee_name: booking.user.full_name,
       employee_email: booking.user.email,
+      employee_id: booking.user.emp_id || "-",
       schedule_date: booking.booking_date,
       booking_schedule: booking.booking_schedule,
       booking_schedule_time: booking.booking_schedule_time,
@@ -502,28 +505,30 @@ const ParkingBookingListSiteWise = () => {
 
   // Column visibility state
   const [columns, setColumns] = useState([
-    { key: "sr_no", label: "Sr No.", visible: true },
-    { key: "id", label: "Parking ID", visible: true },
-    { key: "employee_name", label: "Employee Name", visible: true },
-    { key: "employee_email", label: "Employee Email ID", visible: true },
-    { key: "schedule_date", label: "Schedule Date", visible: true },
-    { key: "booking_schedule_time", label: "Booking Time", visible: true },
+    { key: "sr_no", label: "Sr No.", visible: true, sortable: false },
+    { key: "id", label: "Parking ID", visible: true, sortable: true },
+    { key: "employee_name", label: "Employee Name", visible: true, sortable: true },
+    { key: "employee_email", label: "Employee Email ID", visible: true, sortable: true },
+    { key: "employee_id", label: "Employee ID", visible: true, sortable: true },
+    { key: "schedule_date", label: "Schedule Date", visible: true, sortable: true },
+    { key: "booking_schedule_time", label: "Booking Time", visible: true, sortable: true },
     {
       key: "booking_schedule_slot_time",
       label: "Booking Slots",
       visible: true,
+      sortable: true,
     },
-    { key: "category", label: "Category", visible: true },
-    { key: "building", label: "Building", visible: true },
-    { key: "floor", label: "Floor", visible: true },
-    { key: "designation", label: "Designation", visible: true },
-    { key: "department", label: "Department", visible: true },
-    // { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true },
-    { key: "status", label: "Status", visible: true },
-    { key: "checked_in_at", label: "Checked In At", visible: true },
-    { key: "checked_out_at", label: "Checked Out At", visible: true },
-    { key: "created_on", label: "Created On", visible: true },
-    { key: "cancel", label: "Cancel", visible: true },
+    { key: "category", label: "Category", visible: true, sortable: true },
+    { key: "building", label: "Building", visible: true, sortable: true },
+    { key: "floor", label: "Floor", visible: true, sortable: true },
+    { key: "designation", label: "Designation", visible: true, sortable: true },
+    { key: "department", label: "Department", visible: true, sortable: true },
+    // { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true, sortable: true },
+    { key: "status", label: "Status", visible: true, sortable: true },
+    { key: "checked_in_at", label: "Checked In At", visible: true, sortable: true },
+    { key: "checked_out_at", label: "Checked Out At", visible: true, sortable: true },
+    { key: "created_on", label: "Created On", visible: true, sortable: true },
+    { key: "cancel", label: "Cancel", visible: true, sortable: false },
   ]);
 
   // Analytics state
@@ -2369,7 +2374,7 @@ const ParkingBookingListSiteWise = () => {
           <div className="overflow-x-auto animate-fade-in">
             <EnhancedTable
               data={paginatedData || []}
-              columns={columns}
+              columns={columns.filter(col => col.visible)}
               renderCell={(item, columnKey) => {
                 if (columnKey === "sr_no") {
                   const index = paginatedData.findIndex(
@@ -2430,6 +2435,7 @@ const ParkingBookingListSiteWise = () => {
               }}
               selectable={false}
               pagination={true}
+              pageSize={20}
               currentPage={currentApiPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
