@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User, Target, Wrench, UserCheck, Shield, Star, Circle } from 'lucide-react';
 
 interface ModuleItem {
     name: string;
@@ -13,7 +13,7 @@ interface ModuleItem {
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage: Record<string, ModuleItem[]> = {
-    Maintainance: [
+    Maintenance: [
         { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     ],
     "Value Added Services": [
@@ -81,6 +81,129 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
+    Settings: [
+        {
+            name: "Account",
+            icon: Users,
+            href: "/settings/account",
+            subItems: [
+                { name: "General", href: "/settings/account/general" },
+                {
+                    name: "Holiday Calendar",
+                    href: "/settings/account/holiday-calendar",
+                },
+                { name: "About", href: "/settings/account/about" },
+                { name: "Language", href: "/settings/account/language" },
+                {
+                    name: "Company Logo Upload",
+                    href: "/settings/account/company-logo-upload",
+                },
+                { name: "Report Setup", href: "/settings/account/report-setup" },
+                {
+                    name: "Notification Setup",
+                    href: "/settings/account/notification-setup",
+                },
+                { name: "Shift", href: "/settings/account/shift" },
+                { name: "Roster", href: "/settings/account/roster" },
+                { name: "Lock Module", href: "/settings/account/lock-module" },
+                { name: "Lock Function", href: "/settings/account/lock-function" },
+                {
+                    name: "Lock Sub Function",
+                    href: "/settings/account/lock-sub-function",
+                },
+            ],
+        },
+        {
+            name: "Roles (RACI)",
+            icon: UserCheck,
+            href: "/settings/roles",
+            subItems: [
+                { name: "Department", href: "/settings/roles/department" },
+                { name: "Role", href: "/settings/roles/role" },
+                { name: "Approval Matrix", href: "/settings/approval-matrix/setup" },
+            ],
+        },
+        {
+            name: "Maintenance",
+            icon: Wrench,
+            href: "/settings/maintenance",
+            subItems: [
+                {
+                    name: "Ticket Management",
+                    href: "/settings/ticket-management",
+                    subItems: [
+                        { name: "Setup", href: "/settings/ticket-management/setup" },
+                        {
+                            name: "Escalation Matrix",
+                            href: "/settings/ticket-management/escalation-matrix",
+                        },
+                        {
+                            name: "Cost Approval",
+                            href: "/settings/ticket-management/cost-approval",
+                        },
+                    ],
+                },
+                {
+                    name: "Safety",
+                    href: "/settings/safety",
+                    subItems: [
+                        { name: "Permit Setup", href: "/settings/safety/permit-setup" },
+                        { name: "Incident Setup", href: "/settings/safety/incident" },
+                    ],
+                },
+            ],
+        },
+        {
+            name: "Security",
+            icon: Shield,
+            href: "/settings/security",
+            subItems: [
+                {
+                    name: "Visitor Management",
+                    href: "/settings/visitor-management/setup",
+                    subItems: [
+                        { name: "Setup", href: "/settings/visitor-management/setup" },
+                        {
+                            name: "Visiting Purpose",
+                            href: "/settings/visitor-management/visiting-purpose",
+                        },
+                        {
+                            name: "Support Staff",
+                            href: "/settings/visitor-management/support-staff",
+                        },
+                        { name: "Icons", href: "/settings/visitor-management/icons" },
+                    ],
+                },
+                {
+                    name: "Gate Pass",
+                    href: "/security/gate-pass",
+                    subItems: [
+                        {
+                            name: "Materials Type",
+                            href: "/security/gate-pass/materials-type",
+                        },
+                        { name: "Items Name", href: "/security/gate-pass/items-name" },
+                    ],
+                },
+            ],
+        },
+        {
+            name: "Value Added Services",
+            icon: Star,
+            href: "/settings/vas",
+            subItems: [
+                {
+                    name: "Booking",
+                    href: "/settings/vas/booking/setup",
+                },
+            ],
+        },
+        {
+            icon: Circle,
+            name: "Circle",
+            href: "/safety/m-safe/circle",
+        },
+    ]
 }
 
 const ViSidebar: React.FC = () => {
