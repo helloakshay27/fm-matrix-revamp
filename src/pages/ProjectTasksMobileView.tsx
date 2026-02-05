@@ -4,6 +4,14 @@ import { ArrowLeft, Download, Eye, Search, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 // Overdue Reason Modal Component
 const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
@@ -60,6 +68,8 @@ const ProjectTasksMobileView = () => {
     const location = useLocation();
     const { id, mid } = useParams();
     const [searchTerm, setSearchTerm] = useState("");
+    const [projectTitle, setProjectTitle] = useState("");
+    const [milestoneTitle, setMilestoneTitle] = useState("");
 
     // Extract token, org_id, and user_id from URL
     let token: string | null = null;
@@ -140,7 +150,7 @@ const ProjectTasksMobileView = () => {
                 title: task.title,
                 status: task.status,
                 projectStatus: task.project_status_name,
-                responsible: task.responsible_person_name,
+                responsible: task.responsible_person,
                 completionPercent: task.completion_percentage,
                 startDate: task.expected_start_date,
                 endDate: task.target_date,
@@ -165,14 +175,37 @@ const ProjectTasksMobileView = () => {
         }
     }, [baseUrl, storedToken, mid]);
 
+    // Fetch context details (Project & Milestone titles)
+    const fetchContextDetails = useCallback(async () => {
+        if (!storedToken) return;
+        try {
+            if (id) {
+                const projectRes = await axios.get(
+                    `https://${baseUrl}/project_managements/${id}.json?token=${storedToken}`
+                );
+                setProjectTitle(projectRes.data?.title || "");
+            }
+            if (mid) {
+                const milestoneRes = await axios.get(
+                    `https://${baseUrl}/milestones/${mid}.json?token=${storedToken}`
+                );
+                setMilestoneTitle(milestoneRes.data?.title || "");
+            }
+        } catch (error) {
+            console.error("Error fetching context details:", error);
+        }
+    }, [baseUrl, storedToken, id, mid]);
+
     // Fetch tasks on mount and when search term changes
     useEffect(() => {
         if (storedToken && mid) {
             setCurrentPage(1);
             setHasMore(true);
+            setHasMore(true);
             fetchTasks(1, searchTerm);
+            fetchContextDetails();
         }
-    }, [storedToken, mid, searchTerm, fetchTasks]);
+    }, [storedToken, mid, searchTerm, fetchTasks, fetchContextDetails]);
 
     // Check if task is overdue
     const isTaskOverdue = (date: string | Date) => {
@@ -265,7 +298,7 @@ const ProjectTasksMobileView = () => {
     // Transform status to match card display
     const transformStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-            "active": "APPROVED",
+            "open": "OPEN",
             "in_progress": "IN PROGRESS",
             "completed": "CLOSED",
             "on_hold": "ON HOLD",
@@ -276,18 +309,18 @@ const ProjectTasksMobileView = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "active":
-                return { bg: "bg-yellow-400", text: "text-white" };
+            case "open":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
             case "completed":
                 return { bg: "bg-green-600", text: "text-white" };
             case "in_progress":
-                return { bg: "bg-blue-500", text: "text-white" };
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
             case "on_hold":
-                return { bg: "bg-orange-400", text: "text-white" };
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
             case "overdue":
-                return { bg: "bg-red-500", text: "text-white" };
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
             default:
-                return { bg: "bg-gray-400", text: "text-white" };
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
         }
     };
 
@@ -300,6 +333,31 @@ const ProjectTasksMobileView = () => {
                         <ArrowLeft size={18} />
                     </Button>
                     <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+                </div>
+
+                {/* Breadcrumbs */}
+                <div className="mb-4">
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink onClick={() => navigate('/mobile-projects')}>
+                                    {projectTitle || "Projects"}
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            {milestoneTitle && (
+                                <>
+                                    <BreadcrumbItem>
+                                        <BreadcrumbLink onClick={() => navigate(`/mobile-projects/${id}/milestones`)}>{milestoneTitle}</BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    <BreadcrumbSeparator />
+                                </>
+                            )}
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>Tasks</BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
                 </div>
 
                 {/* Search Bar */}
@@ -333,11 +391,12 @@ const ProjectTasksMobileView = () => {
                                 {/* Header with ID and Status */}
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <span className="bg-pink-200 text-pink-700 px-3 py-1 rounded-full font-semibold text-sm">
-                                            #{task.id}
+                                        <span className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-medium text-xs">
+                                            TASK-{task.id}
                                         </span>
                                     </div>
-                                    <span className={`${statusColor.bg} ${statusColor.text} px-4 py-1 rounded-lg font-semibold text-sm`}>
+                                    <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
                                         {displayStatus}
                                     </span>
                                 </div>
@@ -384,8 +443,6 @@ const ProjectTasksMobileView = () => {
                                 {/* Stats and Actions */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex gap-3 text-xs text-gray-600">
-                                        <span>📋 {task.totalSubtasks || 0}</span>
-                                        <span>⚠️ {task.totalIssues || 0}</span>
                                         <span>⏱️ {task.estimatedHours || 0}h</span>
                                     </div>
 

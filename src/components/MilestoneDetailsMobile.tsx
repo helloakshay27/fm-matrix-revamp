@@ -57,6 +57,36 @@ const MilestoneDetailsMobile = () => {
         }
     };
 
+    // Helper functions for status styling
+    const transformStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            "active": "OPEN",
+            "in_progress": "IN PROGRESS",
+            "completed": "CLOSED",
+            "on_hold": "ON HOLD",
+            "overdue": "OVERDUE",
+        };
+        return statusMap[status?.toLowerCase()] || status?.toUpperCase() || "-";
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case "open":
+            case "active":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
+            case "completed":
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
+            case "in_progress":
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
+            case "on_hold":
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
+            case "overdue":
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
+            default:
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -85,22 +115,23 @@ const MilestoneDetailsMobile = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="px-4 py-3 flex items-center">
+                <div className="px-4 py-3 flex items-center gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="mr-3"
+                        className="mr-1"
                     >
                         <ArrowLeft className="w-6 h-6 text-gray-700" />
                     </button>
+                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                        {milestoneData?.title || 'Milestone Details'}
+                    </h1>
                 </div>
-
-
             </div>
 
             {/* Content */}
             <div className="p-4">
                 {/* Permit Info Card */}
-                <div className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+                <div className="bg-white rounded-[10px] shadow-lg mb-4 overflow-hidden">
                     {/* Collapsible Header */}
                     <button
                         onClick={() => setIsPermitInfoExpanded(!isPermitInfoExpanded)}
@@ -143,19 +174,22 @@ const MilestoneDetailsMobile = () => {
 
                             {/* Status */}
                             {milestoneData.status && (
-                                <div className="flex mb-3">
+                                <div className="flex items-center mb-3">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Status</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.status}</span>
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(milestoneData.status).bg} ${getStatusColor(milestoneData.status).text}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(milestoneData.status).dot}`} />
+                                        {transformStatus(milestoneData.status)}
+                                    </span>
                                 </div>
                             )}
 
                             {/* Mile Stone Owner */}
-                            {milestoneData.mile_stone_owner && (
+                            {milestoneData.owner_name && (
                                 <div className="flex mb-3">
-                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Mile Stone Owner</span>
+                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Milestone Owner</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.mile_stone_owner}</span>
+                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.owner_name}</span>
                                 </div>
                             )}
 
@@ -173,7 +207,7 @@ const MilestoneDetailsMobile = () => {
                                 <div className="flex mb-3">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Start Date</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.start_date}</span>
+                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.start_date.split('T')[0]}</span>
                                 </div>
                             )}
 
@@ -182,7 +216,7 @@ const MilestoneDetailsMobile = () => {
                                 <div className="flex mb-3">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">End Date</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.end_date}</span>
+                                    <span className="text-sm text-gray-900 flex-1">{milestoneData.end_date.split('T')[0]}</span>
                                 </div>
                             )}
                         </div>
