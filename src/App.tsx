@@ -3191,6 +3191,10 @@ function App() {
                       element={<PatrollingDetailPage />}
                     />
                     <Route
+                      path="/security/staff"
+                      element={<StaffsDashboard />}
+                    />
+                    <Route
                       path="/security/staff/details/:id"
                       element={<StaffDetailsPage />}
                     />
