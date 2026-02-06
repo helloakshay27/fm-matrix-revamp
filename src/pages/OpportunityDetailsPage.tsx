@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, RefreshCw, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, RefreshCw, Trash2, X, Mic, MicOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import ConvertModal from '@/components/ConvertModal';
 import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
 
 // Types
 interface OpportunityDetailsData {
@@ -253,6 +254,34 @@ const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOp
     const [editedCommentText, setEditedCommentText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+    const fieldId = "opportunity-comment-input";
+    const isActive = isListening && activeId === fieldId;
+
+    // Update comment state when transcript changes
+    useEffect(() => {
+        if (isActive && transcript) {
+            setComment(transcript);
+        }
+    }, [isActive, transcript]);
+
+    // Handle updates for editing transcripts
+    useEffect(() => {
+        if (isListening && activeId?.startsWith("edit-comment-") && transcript) {
+            setEditedCommentText(transcript);
+        }
+    }, [isListening, activeId, transcript]);
+
+    const toggleListening = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isActive) {
+            stopListening();
+        } else {
+            startListening(fieldId);
+        }
+    };
+
     const handleAddComment = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!comment?.trim()) {
@@ -334,13 +363,25 @@ const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOp
                         {`${currentUser?.firstname?.charAt(0) || ''}${currentUser?.lastname?.charAt(0) || ''}`}
                     </span>
                 </div>
-                <textarea
-                    ref={textareaRef}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none rounded"
-                    placeholder="Add comment here..."
-                />
+                <div className="relative w-[95%]">
+                    <textarea
+                        ref={textareaRef}
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        className="w-full h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none rounded pr-10"
+                        placeholder="Add comment here..."
+                    />
+                    {supported && (
+                        <button
+                            onClick={toggleListening}
+                            className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isActive ? "bg-red-100 text-red-600 animate-pulse" : "text-gray-400 hover:bg-gray-200"
+                                }`}
+                            title={isActive ? "Stop recording" : "Start voice input"}
+                        >
+                            {isActive ? <Mic size={20} /> : <MicOff size={20} />}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex justify-end">
@@ -373,20 +414,42 @@ const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOp
                             <h1 className="font-bold">{cmt.commentor_full_name}</h1>
 
                             {isEditing ? (
-                                <textarea
-                                    value={editedCommentText}
-                                    onChange={(e) => setEditedCommentText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            setTimeout(() => {
-                                                handleEditSave();
-                                            }, 100);
-                                        }
-                                    }}
-                                    onBlur={handleEditSave}
-                                    className="w-full bg-white p-2 border-2 border-gray-300 rounded focus:outline-none"
-                                    autoFocus
-                                />
+                                <div className="relative w-full">
+                                    <textarea
+                                        value={editedCommentText}
+                                        onChange={(e) => setEditedCommentText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                setTimeout(() => {
+                                                    handleEditSave();
+                                                }, 100);
+                                            }
+                                        }}
+                                        onBlur={handleEditSave}
+                                        className="w-full bg-white p-2 border-2 border-gray-300 rounded focus:outline-none pr-10"
+                                        autoFocus
+                                    />
+                                    {supported && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                const editFieldId = `edit-comment-${cmt.id}`;
+                                                if (isListening && activeId === editFieldId) {
+                                                    stopListening();
+                                                } else {
+                                                    startListening(editFieldId);
+                                                }
+                                            }}
+                                            className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isListening && activeId === `edit-comment-${cmt.id}`
+                                                ? "bg-red-100 text-red-600 animate-pulse"
+                                                : "text-gray-400 hover:bg-gray-200"
+                                                }`}
+                                        >
+                                            {isListening && activeId === `edit-comment-${cmt.id}` ? <Mic size={16} /> : <MicOff size={16} />}
+                                        </button>
+                                    )}
+                                </div>
                             ) : (
                                 <div>
                                     {cmt.body

@@ -23,6 +23,7 @@ import AddMilestoneForm from "./AddMilestoneForm";
 import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
 import MuiMultiSelect from "./MuiMultiSelect";
+import { SpeechInput } from "./SpeechInput";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -349,7 +350,7 @@ const ProjectCreateModal = ({
               <form onSubmit={handleSubmit}>
                 <div className="max-w-[90%] mx-auto pr-3">
                   <div className="mt-4 space-y-2">
-                    <TextField
+                    <SpeechInput
                       label={
                         <>
                           Project Title<span className="text-[#c72030]">*</span>
@@ -360,7 +361,7 @@ const ProjectCreateModal = ({
                       fullWidth
                       variant="outlined"
                       value={formData.title}
-                      onChange={handleChange}
+                      onChange={(value) => setFormData({ ...formData, title: value })}
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
                       sx={{ mt: 1 }}
@@ -397,7 +398,7 @@ const ProjectCreateModal = ({
                   </div>
 
                   <div className="mt-4 space-y-2 h-[100px]">
-                    <TextField
+                    <SpeechInput
                       label={
                         <>
                           Description<span className="text-[#c72030]">*</span>
@@ -410,7 +411,7 @@ const ProjectCreateModal = ({
                       multiline
                       minRows={2}
                       value={formData.description}
-                      onChange={handleChange}
+                      onChange={(value) => setFormData({ ...formData, description: value })}
                       InputLabelProps={{ shrink: true }}
                       sx={{
                         "& .MuiOutlinedInput-root": {

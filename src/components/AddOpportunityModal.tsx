@@ -11,7 +11,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
-import { X, Upload, Trash2 } from "lucide-react";
+import { X, Upload, Trash2, Mic, MicOff } from "lucide-react";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchFMUsers } from "../store/slices/fmUserSlice";
 import MuiSelectField from "./MuiSelectField";
@@ -23,6 +23,7 @@ import MuiMultiSelect from "./MuiMultiSelect";
 import { AddTagModal } from "./AddTagModal";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { useSpeechToText } from "../hooks/useSpeechToText";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -57,6 +58,27 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prevTags, setPrevTags] = useState([]);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [baseValue, setBaseValue] = useState("");
+
+  const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+
+  // Handle STT for Title and Description
+  useEffect(() => {
+    if (isListening && transcript) {
+      if (activeId === "opportunity-title") {
+        const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+        setTitle(newValue);
+      } else if (activeId === "opportunity-description") {
+        const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+        setDescription(newValue);
+        if (quillEditorRef.current) {
+          // Wrap in a paragraph if it's empty or doesn't look like HTML
+          const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+          quillEditorRef.current.root.innerHTML = formattedValue;
+        }
+      }
+    }
+  }, [isListening, transcript, activeId, baseValue]);
 
   console.log(responsiblePerson);
 
@@ -346,9 +368,28 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
           <div className="flex-1 p-6 overflow-y-auto space-y-3">
             {/* Title */}
             <div>
-              <Typography variant="subtitle2" className="mb-2 font-medium">
-                Title <span className="text-red-500">*</span>
-              </Typography>
+              <div className="flex items-center justify-between mb-2">
+                <Typography variant="subtitle2" className="font-medium">
+                  Title <span className="text-red-500">*</span>
+                </Typography>
+                {supported && (
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      if (isListening && activeId === "opportunity-title") {
+                        stopListening();
+                      } else {
+                        setBaseValue(title);
+                        startListening("opportunity-title");
+                      }
+                    }}
+                    color={isListening && activeId === "opportunity-title" ? "secondary" : "default"}
+                    sx={{ color: isListening && activeId === "opportunity-title" ? "#C72030" : "inherit" }}
+                  >
+                    {isListening && activeId === "opportunity-title" ? <Mic size={18} /> : <MicOff size={18} />}
+                  </IconButton>
+                )}
+              </div>
               <MentionsInput
                 value={title}
                 onChange={(e, newValue) => setTitle(newValue)}
@@ -375,9 +416,30 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
 
             {/* Description */}
             <div>
-              <Typography variant="subtitle2" className="font-medium mb-2">
-                Description
-              </Typography>
+              <div className="flex items-center justify-between mb-2">
+                <Typography variant="subtitle2" className="font-medium">
+                  Description
+                </Typography>
+                {supported && (
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      if (isListening && activeId === "opportunity-description") {
+                        stopListening();
+                      } else {
+                        // Extract text from Quill if possible, or just use description state
+                        const currentText = quillEditorRef.current ? quillEditorRef.current.root.innerHTML : description;
+                        setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                        startListening("opportunity-description");
+                      }
+                    }}
+                    color={isListening && activeId === "opportunity-description" ? "secondary" : "default"}
+                    sx={{ color: isListening && activeId === "opportunity-description" ? "#C72030" : "inherit" }}
+                  >
+                    {isListening && activeId === "opportunity-description" ? <Mic size={18} /> : <MicOff size={18} />}
+                  </IconButton>
+                )}
+              </div>
               <div
                 ref={quillRef}
                 style={{
