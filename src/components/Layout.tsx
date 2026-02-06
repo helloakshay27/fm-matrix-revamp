@@ -51,6 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const currentUser = getUser();
   const userEmail = currentUser?.email || "No email";
+  const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
@@ -122,7 +123,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
-    userEmail === "besis69240@azeriom.com";
+    userEmail === "besis69240@azeriom.com" ||
+    userEmail === "megipow156@aixind.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -164,7 +166,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199
+          selectedCompany?.id === 199 ||
+          org_id === "90" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com"
         ) {
           return <EmployeeSidebar />;
         }
@@ -185,8 +191,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -257,8 +266,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com"
     ) {
       return <ActionHeader />;
     }
@@ -380,8 +392,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
+        org_id === "90" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
-        userEmail === "besis69240@azeriom.com" ? (
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />

@@ -736,14 +736,14 @@ export const AddOperationalAuditSchedulePage = () => {
     // Step 3: Schedule validation
     if (activeStep === 2) {
       // Check schedule type specific required fields
-      if (scheduleFor === 'Asset' && checklistType === 'Individual' && !selectedAsset) {
-        toast.error('Please select an asset', {
-          position: 'top-right',
-          duration: 4000,
-          style: { background: '#fff', color: 'black', border: 'none' }
-        });
-        return false;
-      }
+      // if (scheduleFor === 'Asset' && checklistType === 'Individual' && !selectedAsset) {
+      //   toast.error('Please select an asset', {
+      //     position: 'top-right',
+      //     duration: 4000,
+      //     style: { background: '#fff', color: 'black', border: 'none' }
+      //   });
+      //   return false;
+      // }
 
       if (scheduleFor === 'Asset' && checklistType === 'Asset Group') {
         if (!assetGroup) {
@@ -1678,12 +1678,12 @@ export const AddOperationalAuditSchedulePage = () => {
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', fontFamily: 'Work Sans, sans-serif' }}>
                 BASIC INFO
               </Typography>
-              <Typography variant="caption" sx={{ ml: 'auto', color: '#666' }}>
+              {/* <Typography variant="caption" sx={{ ml: 'auto', color: '#666' }}>
                 Schedule For: <strong>{scheduleFor === 'Supplier' ? 'Vendor' : scheduleFor}</strong>
-              </Typography>
+              </Typography> */}
             </SectionHeader>
 
-            <Box sx={{ mb: 3 }}>
+            {/* <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
                 Schedule For
               </Typography>
@@ -1693,7 +1693,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 <FormControlLabel value="Supplier" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Vendor" />
                 <FormControlLabel value="Training" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Training" />
               </MuiRadioGroup>
-            </Box>
+            </Box> */}
 
             <Box sx={{ mb: 3 }}>
               <TextField
@@ -2450,256 +2450,6 @@ export const AddOperationalAuditSchedulePage = () => {
 
             <Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-                {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
-                {scheduleFor === 'Asset' && checklistType === 'Individual' && (
-                  <Box sx={{ minWidth: 0 }}>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles, minWidth: 0 } }}>
-                      <InputLabel shrink>
-                        Select Assets <span style={{ color: 'red' }}>*</span>
-                      </InputLabel>
-                      <MuiSelect
-                        multiple
-                        label="Select Assets"
-                        notched
-                        displayEmpty
-                        value={selectedAsset ? [selectedAsset] : []}
-                        onChange={(e) => {
-                          const value = e.target.value as string[];
-                          setSelectedAsset(value[value.length - 1] || '');
-                        }}
-                        renderValue={(selected) => {
-                          if (!selected || selected.length === 0) {
-                            return <span style={{ color: '#aaa' }}>Select Assets</span>;
-                          }
-                          const names = assets
-                            .filter(asset => selected.includes(asset.id.toString()))
-                            .map(asset => asset.name)
-                            .join(', ');
-                          return (
-                            <span title={names} style={{ display: 'inline-block', maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {names}
-                            </span>
-                          );
-                        }}
-                        disabled={loading.assets}
-                        sx={{ minWidth: 0, width: '100%', maxWidth: '100%', '& .MuiSelect-select': { display: 'block', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }}
-                        MenuProps={{ PaperProps: { style: { minWidth: 200, maxWidth: 520, width: 'auto' } } }}
-                      >
-                        <MenuItem value="">Select Assets</MenuItem>
-                        {assets && assets.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    {loading.assets && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading assets...
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-
-                {/* Service Dropdown - Show when scheduleFor is Service */}
-                {scheduleFor === 'Service' && checklistType === 'Individual' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles, width: '100%', maxWidth: 340 } }}>
-                      <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
-                      <MuiSelect
-                        multiple
-                        label="Select Services"
-                        notched
-                        displayEmpty
-                        value={selectedService ? [selectedService] : []}
-                        onChange={(e) => {
-                          const value = e.target.value as string[];
-                          setSelectedService(value[value.length - 1] || '');
-                        }}
-                        renderValue={(selected) => {
-                          const names = services
-                            .filter(service => selected.includes(service.id.toString()))
-                            .map(service => service.service_name)
-                            .join(', ');
-                          return (
-                            <span style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }} title={names}>
-                              {selected.length === 0 ? 'Select Services' : names}
-                            </span>
-                          );
-                        }}
-                        disabled={loading.services}
-                        sx={{ width: '100%', maxWidth: 340 }}
-                        MenuProps={{ PaperProps: { style: { width: 340 } } }}
-                      >
-                        <MenuItem value="" disabled>Select Services</MenuItem>
-                        {services && services.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    {loading.services && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading services...
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-
-                {/* Vendor/Supplier Dropdown - Show when scheduleFor is Supplier */}
-                {scheduleFor === 'Supplier' && checklistType === 'Individual' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles, width: '100%', maxWidth: 340 } }}>
-                      <InputLabel shrink>Select Vendors <span style={{ color: 'red' }}>*</span></InputLabel>
-                      <MuiSelect
-                        multiple
-                        label="Select Vendors"
-                        notched
-                        displayEmpty
-                        value={selectedVendor ? [selectedVendor] : []}
-                        onChange={(e) => {
-                          const value = e.target.value as string[];
-                          setSelectedVendor(value[value.length - 1] || '');
-                        }}
-                        renderValue={(selected) => {
-                          const names = suppliers
-                            .filter(vendor => selected.includes(vendor.id.toString()))
-                            .map(vendor => vendor.name)
-                            .join(', ');
-                          return (
-                            <span style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }} title={names}>
-                              {selected.length === 0 ? 'Select Vendors' : names}
-                            </span>
-                          );
-                        }}
-                        disabled={loading.suppliers}
-                        sx={{ width: '100%', maxWidth: 340 }}
-                        MenuProps={{ PaperProps: { style: { width: 340 } } }}
-                      >
-                        <MenuItem value="" disabled>Select Vendors</MenuItem>
-                        {suppliers && suppliers.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    {loading.suppliers && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading vendors...
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-
-                {/* Training Subject Dropdown - Show when scheduleFor is Training */}
-                {scheduleFor === 'Training' && checklistType === 'Individual' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles, width: '100%', maxWidth: 340 } }}>
-                      <InputLabel shrink>Select Training Subject <span style={{ color: 'red' }}>*</span></InputLabel>
-                      <MuiSelect
-                        multiple
-                        label="Select Training Subject"
-                        notched
-                        displayEmpty
-                        value={selectedTrainingSubject ? [selectedTrainingSubject] : []}
-                        onChange={(e) => {
-                          const value = e.target.value as string[];
-                          setSelectedTrainingSubject(value[value.length - 1] || '');
-                        }}
-                        renderValue={(selected) => {
-                          const names = trainingSubjects
-                            .filter(subject => selected.includes(subject.id.toString()))
-                            .map(subject => subject.tag_name || subject.name)
-                            .join(', ');
-                          return (
-                            <span style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }} title={names}>
-                              {selected.length === 0 ? 'Select Training Subject' : names}
-                            </span>
-                          );
-                        }}
-                        disabled={loading.trainingSubjects}
-                        sx={{ width: '100%', maxWidth: 340 }}
-                        MenuProps={{ PaperProps: { style: { width: 340 } } }}
-                      >
-                        <MenuItem value="" disabled>Select Training Subject</MenuItem>
-                        {trainingSubjects && trainingSubjects.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.tag_name || option.name}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    {loading.trainingSubjects && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading training subjects...
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-
-                {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
-                {scheduleFor === 'Asset' && checklistType === 'Asset Group' && (
-                  <>
-                    <Box>
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles, width: '100%', maxWidth: 340 } }}>
-                        <InputLabel shrink>Select Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Select Asset Group"
-                          notched
-                          displayEmpty
-                          value={assetGroup}
-                          onChange={(e) => handleAssetGroupChange(e.target.value)}
-                          sx={{ width: '100%', maxWidth: 340 }}
-                        >
-                          <MenuItem value="" disabled>Select Asset Group</MenuItem>
-                          {assetGroups && assetGroups.map((group) => (
-                            <MenuItem key={group.id} value={group.id.toString()}>{group.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                      {loading.assetGroups && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading asset groups...
-                        </Typography>
-                      )}
-                    </Box>
-
-                    {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
-                    {selectedAssetGroup && (
-                      <FormControl fullWidth>
-                        <InputLabel>
-                          Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
-                        </InputLabel>
-                        <MuiSelect
-                          multiple
-                          value={assetSubGroup ? [assetSubGroup] : []}
-                          onChange={(e) => {
-                            const value = e.target.value as string[];
-                            setAssetSubGroup(value[value.length - 1] || '');
-                          }}
-                          input={<OutlinedInput label="Select Asset Sub-Groups" />}
-                          renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {selected.map((value) => {
-                                const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
-                                return (
-                                  <Chip key={value} label={subGroup?.name || value} size="small" />
-                                );
-                              })}
-                            </Box>
-                          )}
-                          disabled={loading.assetSubGroups}
-                        >
-                          {assetSubGroups && assetSubGroups.map((subGroup) => (
-                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                              {subGroup.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {loading.assetSubGroups && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Loading sub-groups...
-                          </Typography>
-                        )}
-                      </FormControl>
-                    )}
-                  </>
-                )}
-
                 {/* Assign To Type Selection */}
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>

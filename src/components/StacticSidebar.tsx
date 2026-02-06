@@ -395,6 +395,11 @@ const modulesByPackage = {
       href: '/master/finance'
     },
     {
+      name: 'Plant Detail Setup',
+      icon: DoorOpen,
+      href: '/master/plant-detail'
+    },
+    {
       name: "Gate Number",
       icon: DoorOpen,
       href: "/master/gate-number",
@@ -585,6 +590,23 @@ const modulesByPackage = {
             {
               name: "Conducted",
               href: "/maintenance/audit/vendor/conducted",
+              color: "text-[#1a1a1a]",
+            },
+          ],
+        },
+        {
+          name: "Training",
+          href: "/maintenance/audit/training",
+          color: "text-[#1a1a1a]",
+          subItems: [
+            {
+              name: "Scheduled",
+              href: "/maintenance/audit/training/scheduled",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Conducted",
+              href: "/maintenance/audit/training/conducted",
               color: "text-[#1a1a1a]",
             },
           ],

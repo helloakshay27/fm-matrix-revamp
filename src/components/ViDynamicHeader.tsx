@@ -16,13 +16,13 @@ export const ViDynamicHeader: React.FC = () => {
         <div className="w-full">
           <div className="flex w-full justify-between whitespace-nowrap">
             <button
-              onClick={() => setCurrentSection('Maintainance')}
-              className={`pb-3 text-sm transition-colors ${currentSection === 'Maintainance'
+              onClick={() => setCurrentSection('Maintenance')}
+              className={`pb-3 text-sm transition-colors ${currentSection === 'Maintenance'
                 ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
                 : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
                 }`}
             >
-              Maintainance
+              Maintenance
             </button>
             <button
               onClick={() => setCurrentSection('Safety')}
@@ -50,6 +50,15 @@ export const ViDynamicHeader: React.FC = () => {
                 }`}
             >
               Value Added Services
+            </button>
+            <button
+              onClick={() => setCurrentSection('Settings')}
+              className={`pb-3 text-sm transition-colors ${currentSection === 'Value Added Services'
+                ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
+                : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
+                }`}
+            >
+              Settings
             </button>
           </div>
         </div>

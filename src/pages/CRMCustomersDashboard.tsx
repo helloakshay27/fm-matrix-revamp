@@ -9,6 +9,7 @@ import { getCustomerList } from "@/store/slices/cusomerSlice";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import axios from "axios";
+import { Switch } from "@/components/ui/switch";
 
 const columns: ColumnConfig[] = [
   {
@@ -57,6 +58,13 @@ const columns: ColumnConfig[] = [
     key: "domains",
     label: "Domains",
     sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
     draggable: true,
     defaultVisible: true,
   },
@@ -150,6 +158,7 @@ const CRMCustomersDashboard = () => {
             email: item.email,
             mobile: item.mobile,
             domains: item.domains || [],
+            status: item.active ?? true,
             // plant_code: item.plant_code,
             company_code: item.company_code,
             lease_start_date: lease?.lease_start_date,
@@ -174,6 +183,39 @@ const CRMCustomersDashboard = () => {
   }, []);
 
   console.log(customers);
+
+  const handleStatusToggle = async (customerId: number, currentStatus: boolean) => {
+    try {
+      const response = await axios.patch(
+        `https://${baseUrl}/entities/${customerId}.json`,
+        {
+          entity: {
+            active: !currentStatus
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Update local state
+      setCustomers((prevCustomers) =>
+        prevCustomers.map((customer: any) =>
+          customer.id === customerId
+            ? { ...customer, status: !currentStatus }
+            : customer
+        )
+      );
+
+      toast.success(`Customer ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error("Error updating customer status:", error);
+      toast.error("Failed to update customer status");
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -231,6 +273,19 @@ const CRMCustomersDashboard = () => {
                 {domain.domain}
               </span>
             ))}
+          </div>
+        );
+
+      case "status":
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={item.status}
+              onCheckedChange={() => handleStatusToggle(item.id, item.status)}
+            />
+            <span className={`text-sm font-medium ${item.status ? 'text-green-600' : 'text-gray-400'}`}>
+              {/* {item.status ? 'Active' : 'Inactive'} */}
+            </span>
           </div>
         );
 

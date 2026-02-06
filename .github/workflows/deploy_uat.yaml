@@ -35,7 +35,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            rm -rf /var/www/html/uat/fm-matrix-revamp/dist/*
+            sudo rm -rf /var/www/html/uat/fm-matrix-revamp/dist/*
 
       # Copy new build to EC2
       - name: Deploy dist to EC2

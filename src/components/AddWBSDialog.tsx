@@ -21,6 +21,7 @@ interface WBSElement {
   category_wbs_code: string;
   wbs_name: string;
   wbs_code: string;
+  gl_code: string;
 }
 
 interface AddWBSDialogProps {
@@ -45,7 +46,8 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
     category: '',
     categoryWBSCode: '',
     wbsName: '',
-    wbsCode: ''
+    wbsCode: '',
+    glCode: ''
   });
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
       category_wbs_code: formData.categoryWBSCode,
       wbs_name: formData.wbsName,
       wbs_code: formData.wbsCode,
+      gl_code: formData.glCode,
     });
     onOpenChange(false);
     setFormData({
@@ -86,7 +89,8 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
       category: '',
       categoryWBSCode: '',
       wbsName: '',
-      wbsCode: ''
+      wbsCode: '',
+      glCode: ''
     });
   };
 
@@ -173,6 +177,19 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               name="wbsCode"
               value={formData.wbsCode}
               onChange={(e) => handleInputChange('wbsCode', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+
+            <TextField
+              label="GL Code*"
+              type="glCode"
+              name="glCode"
+              value={formData.glCode}
+              onChange={(e) => handleInputChange('glCode', e.target.value)}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}

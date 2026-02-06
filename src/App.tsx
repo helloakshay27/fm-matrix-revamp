@@ -384,6 +384,8 @@ import { AddPermitPage } from "./pages/AddPermitPage";
 
 // Import Operational Audit pages
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
+import { ViewOperationalAuditSchedulePage } from "./pages/ViewOperationalAuditSchedulePage";
+import { ViewOperationalAuditSchedulePerformancePage } from "./pages/ViewOperationalAuditSchedulePerformancePage";
 import { AddOperationalAuditSchedulePage } from "./pages/AddOperationalAuditSchedulePage";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
@@ -394,6 +396,14 @@ import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashb
 import { AddVendorAuditSchedulePage } from "./pages/AddVendorAuditSchedulePage";
 import { AddVendorAuditPage } from "./pages/AddVendorAuditPage";
 import { ViewVendorAuditPage } from "./pages/ViewVendorAuditPage";
+import { ViewVendorAuditSchedulePerformancePage } from "./pages/ViewVendorAuditSchedulePerformancePage";
+
+// Import Training Audit pages
+import { TrainingScheduledDashboard } from "./pages/TrainingScheduledDashboard";
+import { ViewTrainingSchedule } from "./pages/ViewTraningSchedule";
+import ViewTrainingPerformancePage from "./ViewTrainingPerformance";
+import { AddTrainingSchedulePage } from "./pages/AddTrainingSchedulePage";
+import { TrainingConductedDashboard } from "./pages/TrainingConductedDashboard";
 
 // Import Asset Audit pages
 import { AssetAuditDashboard } from "./pages/AssetAuditDashboard";
@@ -420,6 +430,9 @@ import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
 
 // Import Material Master page
 import { MaterialMasterPage } from "./pages/MaterialMasterPage";
+
+// Import Plant Detail Setup page
+import { PlantDetailSetupPage } from "./pages/PlantDetailSetupPage";
 
 // Import RVehiclesInDashboard and RVehiclesOutDashboard
 import { RVehiclesInDashboard } from "./pages/RVehiclesInDashboard";
@@ -1780,6 +1793,10 @@ function App() {
                       path="/master/finance"
                       element={<FinanceMasterPage />}
                     />
+                    <Route
+                      path="/master/plant-detail"
+                      element={<PlantDetailSetupPage />}
+                    />
 
                     {/* CRM Routes */}
                     <Route path="/crm/campaign" element={<CRMCampaignPage />} />
@@ -2214,8 +2231,38 @@ function App() {
                       element={<AddOperationalAuditSchedulePage />}
                     />
                     <Route
+                      path="/maintenance/audit/operational/scheduled/view/:id"
+                      element={<ViewOperationalAuditSchedulePage />}
+                    />
+                    <Route
+                      path="/maintenance/audit/operational/scheduled/performance/:id"
+                      element={<ViewOperationalAuditSchedulePerformancePage />}
+                    />
+                    <Route
                       path="/maintenance/audit/operational/conducted"
                       element={<OperationalAuditConductedDashboard />}
+                    />
+
+                    {/* Training Audit Routes */}
+                    <Route
+                      path="/maintenance/audit/training/scheduled"
+                      element={<TrainingScheduledDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/audit/training/scheduled/add"
+                      element={<AddTrainingSchedulePage />}
+                    />
+                    <Route
+                      path="/maintenance/audit/training/scheduled/view/:id"
+                      element={<ViewTrainingSchedule />}
+                    />
+                    <Route
+                      path="/maintenance/audit/training/scheduled/performance/:id"
+                      element={<ViewTrainingPerformancePage />}
+                    />
+                    <Route
+                      path="/maintenance/audit/training/conducted"
+                      element={<TrainingConductedDashboard />}
                     />
                     <Route
                       path="/maintenance/audit/operational/master-checklists"
@@ -2242,6 +2289,10 @@ function App() {
                     <Route
                       path="/maintenance/audit/vendor/scheduled/view/:id"
                       element={<ViewVendorAuditPage />}
+                    />
+                    <Route
+                      path="/maintenance/audit/vendor/scheduled/performance/:id"
+                      element={<ViewVendorAuditSchedulePerformancePage />}
                     />
                     <Route
                       path="/maintenance/audit/vendor/conducted"
@@ -3138,6 +3189,10 @@ function App() {
                     <Route
                       path="/security/patrolling/response/details/:id"
                       element={<PatrollingDetailPage />}
+                    />
+                    <Route
+                      path="/security/staff"
+                      element={<StaffsDashboard />}
                     />
                     <Route
                       path="/security/staff/details/:id"

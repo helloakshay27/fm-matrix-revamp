@@ -10,17 +10,17 @@ interface TaskData {
 
 const ProjectTaskDetailsMobile = () => {
     const navigate = useNavigate();
-    const { id } = useParams<{ id: string }>();
+    const { id, taskId } = useParams<{ id: string, taskId: string }>();
     const [isPermitInfoExpanded, setIsPermitInfoExpanded] = useState(true);
     const [comments, setComments] = useState('');
     const [taskData, setTaskData] = useState<TaskData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (id) {
-            fetchTaskDetails(id);
+        if (taskId) {
+            fetchTaskDetails(taskId);
         }
-    }, [id]);
+    }, [taskId]);
 
     const fetchTaskDetails = async (taskId: string) => {
         try {
@@ -79,28 +79,68 @@ const ProjectTaskDetailsMobile = () => {
                 </div>
             </div>
         );
+
+
     }
+    const transformStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            "open": "OPEN",
+            "in_progress": "IN PROGRESS",
+            "completed": "CLOSED",
+            "on_hold": "ON HOLD",
+            "overdue": "OVERDUE",
+        };
+        return statusMap[status] || status.toUpperCase();
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "open":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
+            case "completed":
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
+            case "in_progress":
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
+            case "on_hold":
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
+            case "overdue":
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
+            default:
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="px-4 py-3 flex items-center">
+                <div className="px-4 py-3 flex items-center gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="mr-3"
+                        className="flex-shrink-0"
                     >
                         <ArrowLeft className="w-6 h-6 text-gray-700" />
                     </button>
+                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                        {taskData?.title || "Task Details"}
+                    </h1>
                 </div>
-
-
             </div>
 
             {/* Content */}
             <div className="p-4">
+                {/* Description Card */}
+                {taskData.description && (
+                    <div className="bg-white rounded-[10px] shadow-lg mb-4 p-4">
+                        <h2 className="font-semibold text-gray-900 mb-2">Description</h2>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {taskData.description}
+                        </p>
+                    </div>
+                )}
+
                 {/* Permit Info Card */}
-                <div className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+                <div className="bg-white rounded-[10px] shadow-lg mb-4 overflow-hidden">
                     {/* Collapsible Header */}
                     <button
                         onClick={() => setIsPermitInfoExpanded(!isPermitInfoExpanded)}
@@ -133,20 +173,23 @@ const ProjectTaskDetailsMobile = () => {
                             )}
 
                             {/* Description */}
-                            {taskData.description && (
-                                <div className="flex mb-3">
-                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Description</span>
-                                    <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{taskData.description}</span>
-                                </div>
-                            )}
+
 
                             {/* Status */}
                             {taskData.status && (
-                                <div className="flex mb-3">
+                                <div className="flex mb-3 items-center">
                                     <span className="text-sm text-gray-700 w-32 flex-shrink-0">Status</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{taskData.status}</span>
+                                    {(() => {
+                                        const statusColor = getStatusColor(taskData.status);
+                                        const displayStatus = transformStatus(taskData.status);
+                                        return (
+                                            <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5 w-fit`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
+                                                {displayStatus}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             )}
 
@@ -159,17 +202,14 @@ const ProjectTaskDetailsMobile = () => {
                                 </div>
                             )}
 
-                            {/* Priority */}
-                            {taskData.priority && (
+                            {/* Start Date */}
+                            {taskData.expected_start_date && (
                                 <div className="flex mb-3">
-                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Priority</span>
+                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Start Date</span>
                                     <span className="text-sm text-gray-500 mr-2">:</span>
-                                    <span className="text-sm text-gray-900 flex-1">{taskData.priority}</span>
+                                    <span className="text-sm text-gray-900 flex-1">{taskData.expected_start_date}</span>
                                 </div>
                             )}
-
-                            {/* Start Date */}
-
 
                             {/* End Date */}
                             {taskData.target_date && (
@@ -179,6 +219,33 @@ const ProjectTaskDetailsMobile = () => {
                                     <span className="text-sm text-gray-900 flex-1">{taskData.target_date}</span>
                                 </div>
                             )}
+
+                            <div className="flex mb-3">
+                                <span className="text-sm text-gray-700 w-32 flex-shrink-0">Efforts Duration:</span>
+                                <span className="text-sm text-gray-500 mr-2">:</span>
+                                <span className="text-sm text-gray-900 flex-1">{taskData.estimated_hour} hours</span>
+                            </div>
+
+                            <div className="flex mb-3">
+                                <span className="text-sm text-gray-700 w-32 flex-shrink-0">Observers</span>
+                                <span className="text-sm text-gray-500 mr-2">:</span>
+                                <span className="text-sm text-gray-900 flex-1">{taskData.observers.map((observer: any) => observer.user_name).join(', ')}</span>
+                            </div>
+
+                            {/* Priority */}
+                            {taskData.priority && (
+                                <div className="flex mb-3">
+                                    <span className="text-sm text-gray-700 w-32 flex-shrink-0">Priority</span>
+                                    <span className="text-sm text-gray-500 mr-2">:</span>
+                                    <span className="text-sm text-gray-900 flex-1">{taskData.priority}</span>
+                                </div>
+                            )}
+
+                            <div className="flex mb-3">
+                                <span className="text-sm text-gray-700 w-32 flex-shrink-0">Tags</span>
+                                <span className="text-sm text-gray-500 mr-2">:</span>
+                                <span className="text-sm text-gray-900 flex-1">{taskData.task_tags.map((tag: any) => tag?.company_tag?.name).join(', ')}</span>
+                            </div>
                         </div>
                     )}
                 </div>

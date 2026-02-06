@@ -65,6 +65,11 @@ const masterItems = [
     icon: Wallet,
     href: '/master/finance'
   },
+  {
+    name: 'Plant Detail Setup',
+    icon: DoorOpen,
+    href: '/master/plant-detail'
+  },
 ];
 
 export const MasterSidebar = () => {
