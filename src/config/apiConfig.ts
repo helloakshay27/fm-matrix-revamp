@@ -273,6 +273,22 @@ export const API_CONFIG = {
     SPRINTS: "/sprints.json",
     SPRINT_DETAILS: "/sprints", // Base path, will append /:id.json
     UPDATE_SPRINT_STATUS: "/sprints", // Base path, will append /:id/update_status.json
+    SPINNER_CONTESTS: "/api/spinner_contests.json",
+    SPINNER_CONTEST_DETAILS: "/api/spinner_contests", // Base path, will append /:id.json
+    SPINNER_CONTEST_SPIN: "/api/spinner_contests/spin.json",
+    SPINNER_CONTEST_HISTORY: "/api/spinner_contests/history.json",
+    SPINNER_CONTEST_USE_VOUCHER: "/api/spinner_contests/use_voucher.json",
+    // Scratch card endpoints
+    SCRATCH_CARDS: "/api/scratch_cards.json",
+    SCRATCH_CARD_DETAILS: "/api/scratch_cards", // Base path, will append /:id.json
+    SCRATCH_CARD_SCRATCH: "/api/scratch_cards/scratch.json",
+    SCRATCH_CARD_HISTORY: "/api/scratch_cards/history.json",
+    SCRATCH_CARD_REDEEM: "/api/scratch_cards/redeem.json",
+    // Flip card endpoints
+    FLIP_CARDS: "/api/flip_cards.json",
+    FLIP_CARD_DETAILS: "/api/flip_cards", // Base path, will append /:id.json
+    FLIP_CARD_FLIP: "/api/flip_cards/flip.json",
+    FLIP_CARD_HISTORY: "/api/flip_cards/history.json",
   },
 } as const;
 

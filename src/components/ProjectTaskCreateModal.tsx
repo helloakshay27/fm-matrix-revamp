@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { RecurringTaskModal } from "./RecurringTaskModal";
+import { SpeechInput } from "./SpeechInput";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -323,11 +324,11 @@ const TaskForm = ({
         />
       )}
       {project &&
-      milestone &&
-      !Array.isArray(project) &&
-      !Array.isArray(milestone) &&
-      project.title &&
-      milestone.title ? (
+        milestone &&
+        !Array.isArray(project) &&
+        !Array.isArray(milestone) &&
+        project.title &&
+        milestone.title ? (
         <div className="flex items-center justify-between gap-3 mb-4 mt-4">
           <div className="w-full">
             <TextField
@@ -408,7 +409,7 @@ const TaskForm = ({
       )}
 
       <div className="mb-1">
-        <TextField
+        <SpeechInput
           fullWidth
           label={
             <>
@@ -418,7 +419,7 @@ const TaskForm = ({
           name="taskTitle"
           placeholder="Enter Task Title"
           value={formData.taskTitle}
-          onChange={handleInputChange}
+          onChange={(value) => setFormData({ ...formData, taskTitle: value })}
           disabled={isReadOnly}
           variant="outlined"
           size="small"
@@ -427,7 +428,7 @@ const TaskForm = ({
       </div>
 
       <div className="mb-1">
-        <TextField
+        <SpeechInput
           fullWidth
           label={
             <>
@@ -439,7 +440,7 @@ const TaskForm = ({
           multiline
           rows={3}
           value={formData.description}
-          onChange={handleInputChange}
+          onChange={(value) => setFormData({ ...formData, description: value })}
           disabled={isReadOnly}
           variant="outlined"
           size="small"
@@ -667,7 +668,7 @@ const TaskForm = ({
         ) : (
           <TasksOfDate
             selectedDate={startDate}
-            onClose={() => {}}
+            onClose={() => { }}
             tasks={startDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -706,7 +707,7 @@ const TaskForm = ({
         ) : (
           <TasksOfDate
             selectedDate={endDate}
-            onClose={() => {}}
+            onClose={() => { }}
             tasks={targetDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -991,12 +992,10 @@ const ProjectTaskCreateModal = ({
   }, [isEdit, task, id, mid, getTagName]);
 
   const createTaskPayload = (data) => {
-    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${
-      endDate?.date
-    }`;
-    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${
-      startDate?.date
-    }`;
+    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${endDate?.date
+      }`;
+    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
+      }`;
     return {
       task_management: {
         title: data.taskTitle,
@@ -1174,7 +1173,7 @@ const ProjectTaskCreateModal = ({
           <TaskForm
             key={task.id}
             formData={task.formData}
-            setFormData={() => {}}
+            setFormData={() => { }}
             isReadOnly={true}
             project={project}
             milestone={milestone}
