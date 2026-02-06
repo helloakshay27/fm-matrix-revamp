@@ -781,9 +781,9 @@ const columns = [
           variant="ghost"
           className="p-0"
           title="Edit"
-          onClick={() => navigate(`/maintenance/${item.id}/edit`)}
+          onClick={() => navigate(`/settings/Budget/Edit`)}
         >
-          {/* <Edit className="w-4 h-4 text-[#C72030]" /> */}
+          <Edit className="w-4 h-4 text-[#C72030]" />
         </Button>
       </div>
     );
