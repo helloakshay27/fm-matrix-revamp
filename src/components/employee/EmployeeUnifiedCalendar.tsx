@@ -32,11 +32,19 @@ interface UnifiedCalendarEvent {
   title: string;
   start: string;
   end?: string;
-  type: "Task" | "Issue" | "Meeting" | "Facility" | "Todo";
+  type:
+    | "Task"
+    | "Issue"
+    | "Meeting"
+    | "Facility"
+    | "Todo"
+    | "Google Calendar"
+    | "Ticket";
   status?: string;
   color?: string;
   description?: string;
   location?: string;
+  redirectUrl?: string;
 }
 
 interface EmployeeUnifiedCalendarProps {
@@ -104,6 +112,8 @@ export const EmployeeUnifiedCalendar: React.FC<
       showMeetings: true,
       showFacilities: true,
       showTodos: true,
+      showGoogleCalendar: true,
+      showTickets: true,
     };
   });
 
@@ -123,6 +133,10 @@ export const EmployeeUnifiedCalendar: React.FC<
         return "#22c55e"; // green
       case "Todo":
         return "#f59e0b"; // orange
+      case "Google Calendar":
+        return "#8b5cf6"; // purple
+      case "Ticket":
+        return "#f97316"; // dark orange
       default:
         return "#6b7280"; // gray
     }
@@ -139,7 +153,7 @@ export const EmployeeUnifiedCalendar: React.FC<
         const baseUrl = API_CONFIG.BASE_URL;
 
         // Build API URL with date filter parameters
-        let apiUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.USER_CALENDARS}?access_token=${token}&id=${userId}`;
+        let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
 
         // Add date filters to API call
         if (activeFilters.dateFrom) {
@@ -165,31 +179,49 @@ export const EmployeeUnifiedCalendar: React.FC<
 
         // Map API data to calendar event format
         const mappedEvents = (data.user_calendars || []).map((item: any) => {
-          // Map type names from API to internal types
-          let eventType = item.type;
-          if (item.type === "FacilityBooking") {
-            eventType = "Facility";
-          } else if (item.type === "TaskManagement") {
-            eventType = "Task";
-          }
+          // Map calendarable_type to internal event types
+          let eventType = "Todo"; // Default
 
-          // Combine date and time for start and end
-          const startDateTime = item.start_time
-            ? `${item.start_date}T${item.start_time}:00`
-            : item.start_date;
-          const endDateTime = item.end_time
-            ? `${item.end_date}T${item.end_time}:00`
-            : item.end_date;
+          switch (item.calendarable_type) {
+            case "Todo":
+              eventType = "Todo";
+              break;
+            case "GoogleCalendarEvent":
+              eventType = "Google Calendar";
+              break;
+            case "Meeting":
+              eventType = "Meeting";
+              break;
+            case "FacilityBooking":
+            case "Facility Booking":
+              eventType = "Facility";
+              break;
+            case "TaskManagement":
+            case "Task Management":
+            case "Task":
+              eventType = "Task";
+              break;
+            case "Ticket":
+              eventType = "Ticket";
+              break;
+            case "Issue":
+              eventType = "Issue";
+              break;
+            default:
+              eventType = "Todo";
+          }
 
           return {
             id: item.id.toString(),
             title: item.title || "Untitled Event",
-            start: startDateTime,
-            end: endDateTime,
+            start: item.start_at,
+            end: item.end_at,
             type: eventType,
             status: item.status,
             description: item.description,
-            color: getColorForType(eventType),
+            color: item.color || getColorForType(eventType),
+            location: item.location,
+            redirectUrl: item.redirect_url,
           };
         });
 
@@ -251,6 +283,9 @@ export const EmployeeUnifiedCalendar: React.FC<
       if (!activeFilters.showFacilities && event.type === "Facility")
         return false;
       if (!activeFilters.showTodos && event.type === "Todo") return false;
+      if (!activeFilters.showGoogleCalendar && event.type === "Google Calendar")
+        return false;
+      if (!activeFilters.showTickets && event.type === "Ticket") return false;
 
       // Filter by date range
       if (activeFilters.dateFrom && activeFilters.dateTo) {
@@ -352,11 +387,29 @@ export const EmployeeUnifiedCalendar: React.FC<
   const handleSelectEvent = (info: any) => {
     const eventType = info.event.extendedProps?.type;
     const eventId = info.event.id;
+    const redirectUrl = info.event.extendedProps?.resource?.redirectUrl;
 
+    // First priority: use redirect_url from API if available
+    if (redirectUrl) {
+      // Extract the path from the full URL
+      try {
+        const url = new URL(redirectUrl);
+        navigate(url.pathname);
+        return;
+      } catch (e) {
+        // If it's already a path, use it directly
+        if (redirectUrl.startsWith("/")) {
+          navigate(redirectUrl);
+          return;
+        }
+      }
+    }
+
+    // Second priority: use onNavigateToDetails callback if provided
     if (onNavigateToDetails) {
       onNavigateToDetails(eventType, eventId);
     } else {
-      // Default navigation logic based on event type
+      // Fallback: Default navigation logic based on event type
       switch (eventType) {
         case "Task":
           navigate(`/vas/tasks/${eventId}`);
@@ -364,8 +417,15 @@ export const EmployeeUnifiedCalendar: React.FC<
         case "Issue":
           navigate(`/vas/tickets/${eventId}`);
           break;
+        case "Ticket":
+          navigate(`/vas/tickets/${eventId}`);
+          break;
         case "Meeting":
           navigate(`/employee/meetings/${eventId}`);
+          break;
+        case "Google Calendar":
+          // Google Calendar events typically use redirect_url
+          console.log("Google Calendar event:", eventId);
           break;
         case "Facility":
           navigate(`/employee/facilities/${eventId}`);
@@ -411,8 +471,12 @@ export const EmployeeUnifiedCalendar: React.FC<
         return <CheckSquare className="w-4 h-4" />;
       case "Issue":
         return <Ticket className="w-4 h-4" />;
+      case "Ticket":
+        return <Ticket className="w-4 h-4" />;
       case "Meeting":
         return <Users className="w-4 h-4" />;
+      case "Google Calendar":
+        return <Calendar className="w-4 h-4" />;
       case "Facility":
         return <Calendar className="w-4 h-4" />;
       case "Todo":
@@ -428,8 +492,12 @@ export const EmployeeUnifiedCalendar: React.FC<
         return "Task";
       case "Issue":
         return "Issue";
+      case "Ticket":
+        return "Ticket";
       case "Meeting":
         return "Meeting";
+      case "Google Calendar":
+        return "Google Calendar";
       case "Facility":
         return "Facility";
       case "Todo":
@@ -509,7 +577,7 @@ export const EmployeeUnifiedCalendar: React.FC<
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Quick filter toggles */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg flex-wrap">
             <span className="text-sm font-medium text-gray-700">Show:</span>
             <button
               onClick={() =>
@@ -551,6 +619,24 @@ export const EmployeeUnifiedCalendar: React.FC<
               onClick={() =>
                 setActiveFilters((prev) => ({
                   ...prev,
+                  showTickets: !prev.showTickets,
+                }))
+              }
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showTickets
+                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Ticket className="w-3 h-3" />
+                Tickets
+              </div>
+            </button>
+            <button
+              onClick={() =>
+                setActiveFilters((prev) => ({
+                  ...prev,
                   showMeetings: !prev.showMeetings,
                 }))
               }
@@ -563,6 +649,24 @@ export const EmployeeUnifiedCalendar: React.FC<
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 Meetings
+              </div>
+            </button>
+            <button
+              onClick={() =>
+                setActiveFilters((prev) => ({
+                  ...prev,
+                  showGoogleCalendar: !prev.showGoogleCalendar,
+                }))
+              }
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showGoogleCalendar
+                  ? "bg-purple-100 text-purple-700 border border-purple-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                Google Calendar
               </div>
             </button>
             <button
@@ -592,7 +696,7 @@ export const EmployeeUnifiedCalendar: React.FC<
               }
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 activeFilters.showTodos
-                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  ? "bg-amber-100 text-amber-700 border border-amber-300"
                   : "bg-gray-100 text-gray-500 border border-gray-300"
               }`}
             >
@@ -619,12 +723,14 @@ export const EmployeeUnifiedCalendar: React.FC<
       </div>
 
       {/* Legends */}
-      <div className="flex items-center gap-6 text-sm">
+      <div className="flex items-center gap-6 text-sm flex-wrap">
         <span className="font-medium">Legends</span>
         {[
           ["#3b82f6", "Tasks", <CheckSquare className="w-3 h-3" />],
           ["#ef4444", "Issues", <Ticket className="w-3 h-3" />],
+          ["#f97316", "Tickets", <Ticket className="w-3 h-3" />],
           ["#ec4899", "Meetings", <Users className="w-3 h-3" />],
+          ["#8b5cf6", "Google Calendar", <Calendar className="w-3 h-3" />],
           ["#22c55e", "Facilities", <Calendar className="w-3 h-3" />],
           ["#f59e0b", "Todos", <Briefcase className="w-3 h-3" />],
         ].map(([color, label, icon]) => (
@@ -991,9 +1097,19 @@ export const EmployeeUnifiedCalendar: React.FC<
                     icon: <Ticket className="w-4 h-4" />,
                   },
                   {
+                    key: "showTickets",
+                    label: "Tickets",
+                    icon: <Ticket className="w-4 h-4" />,
+                  },
+                  {
                     key: "showMeetings",
                     label: "Meetings",
                     icon: <Users className="w-4 h-4" />,
+                  },
+                  {
+                    key: "showGoogleCalendar",
+                    label: "Google Calendar",
+                    icon: <Calendar className="w-4 h-4" />,
                   },
                   {
                     key: "showFacilities",
@@ -1039,7 +1155,9 @@ export const EmployeeUnifiedCalendar: React.FC<
                     dateTo: moment().format("DD/MM/YYYY"),
                     showTasks: true,
                     showIssues: true,
+                    showTickets: true,
                     showMeetings: true,
+                    showGoogleCalendar: true,
                     showFacilities: true,
                     showTodos: true,
                   });

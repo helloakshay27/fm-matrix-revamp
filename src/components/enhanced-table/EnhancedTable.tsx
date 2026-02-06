@@ -110,6 +110,9 @@ interface EnhancedTableProps<T> {
   showBulkActions?: boolean;
   pagination?: boolean;
   pageSize?: number;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
   loading?: boolean;
   enableSearch?: boolean;
   enableSelection?: boolean;
@@ -167,6 +170,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   showBulkActions = false,
   pagination = false,
   pageSize = 10,
+  currentPage: externalCurrentPage,
+  totalPages: externalTotalPages,
+  onPageChange: externalOnPageChange,
   loading = false,
   enableSearch = false,
   enableSelection = false,
@@ -196,8 +202,11 @@ export function EnhancedTable<T extends Record<string, any>>({
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
+  
+  // Use external pagination if provided, otherwise use internal
+  const currentPage = externalCurrentPage ?? internalCurrentPage;
   const [isSearching, setIsSearching] = useState(false);
   const [searchAbortController, setSearchAbortController] = useState<AbortController | null>(null);
   const [lastProcessedSearch, setLastProcessedSearch] = useState('');
@@ -424,7 +433,8 @@ export function EnhancedTable<T extends Record<string, any>>({
   }, [filteredData, currentPage, pageSize, pagination]);
 
   const sortedData = pagination ? paginatedData : filteredData;
-  const totalPages = pagination ? Math.ceil(filteredData.length / pageSize) : 1;
+  // Use external totalPages if provided, otherwise calculate from filtered data
+  const totalPages = externalTotalPages ?? (pagination ? Math.ceil(filteredData.length / pageSize) : 1);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -488,7 +498,12 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Handle search input changes
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
-    setCurrentPage(1); // Reset to first page when searching
+    // Reset to first page when searching
+    if (externalOnPageChange) {
+      externalOnPageChange(1);
+    } else {
+      setInternalCurrentPage(1);
+    }
     if (onSearchChange) {
       onSearchChange(value);
     }
@@ -498,7 +513,12 @@ export function EnhancedTable<T extends Record<string, any>>({
     setSearchInput('');
     setInternalSearchTerm('');
     setApiSearchResults(null);
-    setCurrentPage(1);
+    // Reset to first page
+    if (externalOnPageChange) {
+      externalOnPageChange(1);
+    } else {
+      setInternalCurrentPage(1);
+    }
     setLastProcessedSearch('');
     if (onSearchChange) {
       onSearchChange('');
@@ -1102,7 +1122,14 @@ export function EnhancedTable<T extends Record<string, any>>({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => setCurrentPage(prev => prev - 1)}
+                onClick={() => {
+                  const newPage = currentPage - 1;
+                  if (externalOnPageChange) {
+                    externalOnPageChange(newPage);
+                  } else {
+                    setInternalCurrentPage(newPage);
+                  }
+                }}
                 className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
@@ -1113,7 +1140,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                   <PaginationEllipsis />
                 ) : (
                   <PaginationLink
-                    onClick={() => setCurrentPage(page as number)}
+                    onClick={() => {
+                      if (externalOnPageChange) {
+                        externalOnPageChange(page as number);
+                      } else {
+                        setInternalCurrentPage(page as number);
+                      }
+                    }}
                     isActive={currentPage === page}
                     className="cursor-pointer"
                   >
@@ -1125,7 +1158,14 @@ export function EnhancedTable<T extends Record<string, any>>({
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage(prev => prev + 1)}
+                onClick={() => {
+                  const newPage = currentPage + 1;
+                  if (externalOnPageChange) {
+                    externalOnPageChange(newPage);
+                  } else {
+                    setInternalCurrentPage(newPage);
+                  }
+                }}
                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
