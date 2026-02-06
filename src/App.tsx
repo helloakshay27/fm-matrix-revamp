@@ -944,6 +944,18 @@ import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
 import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
 import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
+import { ContestListPage } from "./pages/ContestListPage";
+import { CreateContestPage } from "./pages/CreateContestPage";
+import { ContestDetailsPage } from "./pages/ContestDetailsPage";
+
+import { SpinnerContest } from "./components/mobile/SpinnerContest";
+import { ScratchCard } from "./components/mobile/ScratchCard";
+import { VoucherDetails } from "./components/mobile/VoucherDetails";
+import { ScratchCardListing } from "./components/mobile/ScratchCardListing";
+import { ContestPromotion } from "./components/mobile/ContestPromotion";
+import { FlipCard } from "./components/mobile/FlipCard";
+import { FlipCardDetails } from "./components/mobile/FlipCardDetails";
+
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -997,7 +1009,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -4501,10 +4513,7 @@ function App() {
                     path="/mobile-projects"
                     element={<ProjectsMobileView />}
                   />
-                  <Route
-                    path="/mobile-issues"
-                    element={<IssuesMobileView />}
-                  />
+                  <Route path="/mobile-issues" element={<IssuesMobileView />} />
                   <Route
                     path="/mobile-issues/add"
                     element={<AddIssueMobileView />}
@@ -4533,16 +4542,55 @@ function App() {
                     path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetailsMobile />}
                   />
-                  <Route
-                    path="/mobile-tasks"
-                    element={<TasksMobileView />}
-                  />
+                  <Route path="/mobile-tasks" element={<TasksMobileView />} />
                   <Route
                     path="/mobile-tasks/:taskId"
                     element={<TaskDetailsMobile />}
                   />
 
                   {/* Mail Inbound Routes */}
+
+                  <Route path="/contests" element={<ContestListPage />} />
+                  <Route
+                    path="/contests/create"
+                    element={<CreateContestPage />}
+                  />
+                  <Route
+                    path="/contests/:id"
+                    element={<ContestDetailsPage />}
+                  />
+                  {/* Contest & Promotion Routes */}
+                  <Route
+                    path="/contest-promotion"
+                    element={<ContestPromotion />}
+                  />
+                  {/* Spinner Contest Routes */}
+                  <Route path="/spinnercontest" element={<SpinnerContest />} />
+                  <Route
+                    path="/spinnercontest/:contestId"
+                    element={<SpinnerContest />}
+                  />
+                  {/* Scratch Card Routes */}
+                  <Route
+                    path="/scratchcards"
+                    element={<ScratchCardListing />}
+                  />
+                  <Route path="/scratchcard" element={<ScratchCard />} />
+                  <Route
+                    path="/scratchcard/:cardId"
+                    element={<ScratchCard />}
+                  />
+                  <Route
+                    path="/scratchcard/:cardId/voucher"
+                    element={<VoucherDetails />}
+                  />
+                  {/* Flip Card Routes */}
+                  <Route path="/flipcard" element={<FlipCard />} />
+                  <Route path="/flipcard/:gameId" element={<FlipCard />} />
+                  <Route
+                    path="/flipcard/:gameId/card/:cardId"
+                    element={<FlipCardDetails />}
+                  />
                 </Routes>
                 <Toaster />
                 <SonnerToaster
