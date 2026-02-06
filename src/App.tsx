@@ -850,6 +850,7 @@ import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDeta
 import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
 import BudgetAddNew from "./pages/ClubManagement/BudgetAddNew";
 import EditBudget from "./pages/ClubManagement/BudgetEdit";
+import BudgetDetails from "./pages/ClubManagement/BudgetDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1745,6 +1746,10 @@ function App() {
                      <Route
                       path="/settings/Budget/Edit"
                       element={<EditBudget/>}
+                    />
+                    <Route
+                      path="/settings/Budget/details"
+                      element={<BudgetDetails/>}
                     />
                     <Route
                       path="/settings/reports/balance-sheet"

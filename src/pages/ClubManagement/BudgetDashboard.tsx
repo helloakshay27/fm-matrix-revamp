@@ -772,7 +772,7 @@ const columns = [
           variant="ghost"
           className="p-0"
           title="View"
-          onClick={() => navigate(`/maintenance/${item.id}`)}
+          onClick={() => navigate(`/settings/Budget/details`)}
         >
           {/* <Eye className="w-4 h-4 text-gray-600" /> */}
         </Button>
