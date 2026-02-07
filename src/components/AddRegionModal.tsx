@@ -1,10 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Switch } from '@/components/ui/switch';
-import { MapPin, Building, Globe, Flag, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
+import { Switch } from "@/components/ui/switch";
+import { MapPin, Building, Globe, Flag, X } from "lucide-react";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AddRegionModalProps {
   isOpen: boolean;
@@ -25,15 +37,15 @@ interface RegionFormData {
 }
 
 const fieldStyles = {
-  height: '45px',
-  '& .MuiInputBase-root': {
-    height: '45px',
+  height: "45px",
+  "& .MuiInputBase-root": {
+    height: "45px",
   },
-  '& .MuiInputBase-input': {
-    padding: '12px 14px',
+  "& .MuiInputBase-input": {
+    padding: "12px 14px",
   },
-  '& .MuiSelect-select': {
-    padding: '12px 14px',
+  "& .MuiSelect-select": {
+    padding: "12px 14px",
   },
 };
 
@@ -41,10 +53,11 @@ const selectMenuProps = {
   PaperProps: {
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       zIndex: 9999,
     },
   },
@@ -59,57 +72,67 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
   onSuccess,
   companiesDropdown,
   countriesDropdown,
-  canEdit
+  canEdit,
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
 
   const [formData, setFormData] = useState<RegionFormData>({
-    name: '',
-    code: '',
-    description: '',
-    country_id: '',
-    company_id: '',
-    active: true
+    name: "",
+    code: "",
+    description: "",
+    country_id: "",
+    company_id: "",
+    active: true,
   });
 
   // Local state for headquarters/countries
-  const [headquartersDropdown, setHeadquartersDropdown] = useState<Array<{ id: number; name: string }>>(countriesDropdown || []);
+  const [headquartersDropdown, setHeadquartersDropdown] = useState<
+    Array<{ id: number; name: string }>
+  >(countriesDropdown || []);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = async (field: string, value: string | boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
 
     // If company_id changes, fetch headquarters
-    if (field === 'company_id' && value) {
+    if (field === "company_id" && value) {
       try {
-        const apiUrl = getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+        const apiUrl = getFullUrl(
+          `/headquarters.json?q[company_setup_id_eq]=${value}`
+        );
         const response = await fetch(apiUrl, {
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': getAuthHeader()
-          }
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
         });
         if (response.ok) {
           const data = await response.json();
           // Expecting headquarters array with id and name
           if (Array.isArray(data.headquarters)) {
-            setHeadquartersDropdown(data.headquarters.map((hq: any) => ({ id: hq.id, name: hq.headquarter_name })));
+            setHeadquartersDropdown(
+              data.headquarters.map((hq: any) => ({
+                id: hq.id,
+                name: hq.headquarter_name,
+              }))
+            );
           } else if (Array.isArray(data)) {
-            setHeadquartersDropdown(data.map((hq: any) => ({ id: hq.id, name: hq.headquarter_name })));
+            setHeadquartersDropdown(
+              data.map((hq: any) => ({ id: hq.id, name: hq.headquarter_name }))
+            );
           } else {
             setHeadquartersDropdown([]);
           }
@@ -117,7 +140,7 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
           setHeadquartersDropdown([]);
         }
         // Reset country_id when company changes
-        setFormData(prev => ({ ...prev, country_id: '' }));
+        setFormData((prev) => ({ ...prev, country_id: "" }));
       } catch (error) {
         setHeadquartersDropdown([]);
       }
@@ -128,16 +151,15 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Region name is required';
+      newErrors.name = "Region name is required";
     }
 
-   
     if (!formData.company_id) {
-      newErrors.company_id = 'Company is required';
+      newErrors.company_id = "Company is required";
     }
 
     if (!formData.country_id) {
-      newErrors.country_id = 'Country is required';
+      newErrors.country_id = "Country is required";
     }
 
     setErrors(newErrors);
@@ -146,12 +168,12 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
   const handleSubmit = async () => {
     if (!canEdit) {
-      toast.error('You do not have permission to create regions');
+      toast.error("You do not have permission to create regions");
       return;
     }
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the errors in the form");
       return;
     }
 
@@ -162,33 +184,33 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
         pms_region: {
           name: formData.name,
           company_id: parseInt(formData.company_id),
-          headquarter_id: parseInt(formData.country_id) // Using country_id as headquarter_id based on API requirement
-        }
+          headquarter_id: parseInt(formData.country_id), // Using country_id as headquarter_id based on API requirement
+        },
       };
 
-      const response = await fetch(getFullUrl('/pms/regions.json'), {
-        method: 'POST',
+      const response = await fetch(getFullUrl("/pms/regions.json"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create region');
+        throw new Error(errorData.message || "Failed to create region");
       }
 
-      toast.success('Region created successfully!', {
+      toast.success("Region created successfully!", {
         duration: 3000,
       });
 
       onSuccess();
       resetForm();
     } catch (error: any) {
-      console.error('Error creating region:', error);
+      console.error("Error creating region:", error);
       toast.error(`Failed to create region: ${error.message}`, {
         duration: 5000,
       });
@@ -199,12 +221,12 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      code: '',
-      description: '',
-      country_id: '',
-      company_id: '',
-      active: true
+      name: "",
+      code: "",
+      description: "",
+      country_id: "",
+      company_id: "",
+      active: true,
     });
     setErrors({});
   };
@@ -216,9 +238,14 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="add-region-dialog-description">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white z-50"
+        aria-describedby="add-region-dialog-description"
+      >
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW REGION</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            ADD NEW REGION
+          </DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -228,24 +255,30 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
           <div id="add-region-dialog-description" className="sr-only">
-            Add region details including name, code, description, company, and country
+            Add region details including name, code, description, company, and
+            country
           </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Basic Information */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Basic Information</h3>
-            
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Basic Information
+            </h3>
+
             <div className="grid grid-cols-2 gap-6">
               <TextField
                 label="Region Name"
                 placeholder="Enter region name"
                 value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
+                onChange={(e) => handleChange("name", e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true, sx: { '& .MuiFormLabel-asterisk': { color: '#C72030' } } }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 required
                 disabled={isSubmitting}
@@ -257,7 +290,7 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
                 label="Region Code"
                 placeholder="Enter region code"
                 value={formData.code}
-                onChange={(e) => handleChange('code', e.target.value)}
+                onChange={(e) => handleChange("code", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -265,13 +298,23 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
                 disabled={isSubmitting}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-6 mt-6">
-              <FormControl fullWidth variant="outlined" error={!!errors.company_id} required>
-                <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Company</InputLabel>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                error={!!errors.company_id}
+                required
+              >
+                <InputLabel
+                  shrink
+                  sx={{ "& .MuiFormLabel-asterisk": { color: "#C72030" } }}
+                >
+                  Company
+                </InputLabel>
                 <MuiSelect
                   value={formData.company_id}
-                  onChange={(e) => handleChange('company_id', e.target.value)}
+                  onChange={(e) => handleChange("company_id", e.target.value)}
                   label="Company"
                   displayEmpty
                   MenuProps={selectMenuProps}
@@ -288,15 +331,27 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
                   ))}
                 </MuiSelect>
                 {errors.company_id && (
-                  <div className="text-red-500 text-xs mt-1">{errors.company_id}</div>
+                  <div className="text-red-500 text-xs mt-1">
+                    {errors.company_id}
+                  </div>
                 )}
               </FormControl>
 
-              <FormControl fullWidth variant="outlined" error={!!errors.country_id} required>
-                <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Country</InputLabel>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                error={!!errors.country_id}
+                required
+              >
+                <InputLabel
+                  shrink
+                  sx={{ "& .MuiFormLabel-asterisk": { color: "#C72030" } }}
+                >
+                  Country
+                </InputLabel>
                 <MuiSelect
                   value={formData.country_id}
-                  onChange={(e) => handleChange('country_id', e.target.value)}
+                  onChange={(e) => handleChange("country_id", e.target.value)}
                   label="Country"
                   displayEmpty
                   MenuProps={selectMenuProps}
@@ -313,7 +368,9 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
                   ))}
                 </MuiSelect>
                 {errors.country_id && (
-                  <div className="text-red-500 text-xs mt-1">{errors.country_id}</div>
+                  <div className="text-red-500 text-xs mt-1">
+                    {errors.country_id}
+                  </div>
                 )}
               </FormControl>
             </div>
@@ -323,14 +380,14 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
                 label="Description"
                 placeholder="Enter region description"
                 value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
+                onChange={(e) => handleChange("description", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 multiline
                 rows={3}
                 disabled={isSubmitting}
-                 sx={{
+                sx={{
                   "& .MuiOutlinedInput-root": {
                     height: "auto !important",
                     padding: "2px !important",
@@ -353,36 +410,40 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
             {/* Status Toggle */}
             <div className="flex items-center gap-3 mt-6">
-              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <label className="text-sm font-medium text-gray-700">
+                Status:
+              </label>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.active}
-                  onCheckedChange={(checked) => handleChange('active', checked)}
+                  onCheckedChange={(checked) => handleChange("active", checked)}
                   disabled={isSubmitting}
                 />
-                <span className={`text-sm font-medium ${formData.active ? 'text-green-600' : 'text-red-600'}`}>
-                  {formData.active ? 'Active' : 'Inactive'}
+                <span
+                  className={`text-sm font-medium ${formData.active ? "text-green-600" : "text-red-600"}`}
+                >
+                  {formData.active ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-200">
-          <Button 
-            variant="outline" 
-            onClick={handleClose} 
+        <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-200">
+          <Button
+            variant="outline"
+            onClick={handleClose}
             disabled={isSubmitting}
             className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={isSubmitting || !canEdit}
             className="px-6 py-2 bg-[#C72030] text-white hover:bg-[#A61B29] disabled:opacity-50"
           >
-            {isSubmitting ? 'Creating...' : 'Create Region'}
+            {isSubmitting ? "Creating..." : "Create Region"}
           </Button>
         </div>
       </DialogContent>

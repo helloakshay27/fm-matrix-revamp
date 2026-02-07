@@ -24,7 +24,8 @@ export const MoveAssetPage: React.FC = () => {
   const [floorId, setFloorId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
   const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
-  const [allocationPrefillLabel, setAllocationPrefillLabel] = useState<string>("");
+  const [allocationPrefillLabel, setAllocationPrefillLabel] =
+    useState<string>("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [comments, setComments] = useState("");
   const [employeeCode, setEmployeeCode] = useState<string>("");
@@ -40,35 +41,49 @@ export const MoveAssetPage: React.FC = () => {
     const fetchAssetAllocation = async () => {
       if (!assetIdForPrefill) return;
       try {
-        const resp = await apiClient.get(`/pms/assets/${assetIdForPrefill}.json`);
+        const resp = await apiClient.get(
+          `/pms/assets/${assetIdForPrefill}.json`
+        );
         const asset = resp?.data?.asset;
         const allocationTypeRaw = asset?.allocation_type;
         const allocationIdsRaw = asset?.allocation_ids;
 
         const normalizedAllocationType = (() => {
-          const raw = String(allocationTypeRaw ?? "").toLowerCase().trim();
+          const raw = String(allocationTypeRaw ?? "")
+            .toLowerCase()
+            .trim();
           if (raw === "user" || raw === "users") return "user";
-          if (raw === "department" || raw === "departments") return "department";
+          if (raw === "department" || raw === "departments")
+            return "department";
           return raw;
         })();
 
-        if (normalizedAllocationType === "user" || normalizedAllocationType === "department") {
+        if (
+          normalizedAllocationType === "user" ||
+          normalizedAllocationType === "department"
+        ) {
           setAllocateTo(normalizedAllocationType);
         }
 
         const allocatedToLabel = (() => {
           const rawAllocatedTo = asset?.allocated_to;
-          if (Array.isArray(rawAllocatedTo) && rawAllocatedTo.length) return String(rawAllocatedTo[0] ?? "");
+          if (Array.isArray(rawAllocatedTo) && rawAllocatedTo.length)
+            return String(rawAllocatedTo[0] ?? "");
           if (typeof rawAllocatedTo === "string") return rawAllocatedTo;
           return "";
         })();
         setAllocationPrefillLabel(allocatedToLabel);
 
         const parsedAllocatedId = (() => {
-          if (allocationIdsRaw === undefined || allocationIdsRaw === null) return null;
+          if (allocationIdsRaw === undefined || allocationIdsRaw === null)
+            return null;
           if (Array.isArray(allocationIdsRaw)) {
             const first = allocationIdsRaw[0];
-            return first !== undefined && first !== null && String(first).trim() !== "" ? Number(first) : null;
+            return first !== undefined &&
+              first !== null &&
+              String(first).trim() !== ""
+              ? Number(first)
+              : null;
           }
           const rawStr = String(allocationIdsRaw).trim();
           if (!rawStr) return null;
@@ -79,7 +94,11 @@ export const MoveAssetPage: React.FC = () => {
               const parsed = JSON.parse(rawStr);
               if (Array.isArray(parsed)) {
                 const first = parsed[0];
-                return first !== undefined && first !== null && String(first).trim() !== "" ? Number(first) : null;
+                return first !== undefined &&
+                  first !== null &&
+                  String(first).trim() !== ""
+                  ? Number(first)
+                  : null;
               }
             } catch {
               // fall through to regex parsing
@@ -96,7 +115,10 @@ export const MoveAssetPage: React.FC = () => {
           setAllocatedToId(parsedAllocatedId);
         }
       } catch (error) {
-        console.error("Error fetching asset details for allocation prefill:", error);
+        console.error(
+          "Error fetching asset details for allocation prefill:",
+          error
+        );
       }
     };
 
@@ -117,14 +139,17 @@ export const MoveAssetPage: React.FC = () => {
         return;
       }
       try {
-        const resp = await apiClient.get(`/pms/get_fm_user_detail.json?id=${allocatedToId}`);
+        const resp = await apiClient.get(
+          `/pms/get_fm_user_detail.json?id=${allocatedToId}`
+        );
         const user = resp?.data?.user || resp?.data;
         const lockUserPermission = user?.lock_user_permission || {};
         const fullName =
           user?.full_name ||
           [user?.firstname, user?.lastname].filter(Boolean).join(" ") ||
           "";
-        const empId = lockUserPermission?.employee_id || user?.employee_id || "";
+        const empId =
+          lockUserPermission?.employee_id || user?.employee_id || "";
         const deptName =
           lockUserPermission?.department?.department_name ||
           user?.department?.department_name ||
@@ -256,7 +281,7 @@ export const MoveAssetPage: React.FC = () => {
       area_id: areaId || null,
       room_id: roomId || null,
       allocate_to_id: allocatedToId || null,
-      allocate_type: allocateTo === 'user' ? 'users' : (allocateTo || null),
+      allocate_type: allocateTo === "user" ? "users" : allocateTo || null,
       comments: comments || "",
     }));
 
@@ -353,7 +378,7 @@ export const MoveAssetPage: React.FC = () => {
             />
 
             {allocateTo === "user" && (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Employee Code</Label>
                   <Input value={employeeCode} disabled />

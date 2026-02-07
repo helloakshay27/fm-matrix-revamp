@@ -60,7 +60,7 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-const CuratedServiceDashboard = () => {
+const SupportedServiceDashboard = () => {
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState<any[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<{
@@ -79,7 +79,7 @@ const CuratedServiceDashboard = () => {
       }
 
       const apiUrl = getFullUrl(
-        "/osr_setups/osr_sub_categories.json?q[service_tag_eq]=curated"
+        "/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported"
       );
 
       const response = await fetch(apiUrl, {
@@ -147,7 +147,7 @@ const CuratedServiceDashboard = () => {
       }
 
       const apiUrl = getFullUrl(
-        `/osr_setups/modify_osr_sub_category.json?json?q[service_tag_eq]=curated&id=${itemId}`
+        `/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&id=${itemId}`
       );
 
       const response = await fetch(apiUrl, {
@@ -319,7 +319,7 @@ const CuratedServiceDashboard = () => {
           variant="ghost"
           className="p-1"
           onClick={() =>
-            navigate(`/pulse/curated-services/service/edit/${item.id}`)
+            navigate(`/pulse/supported-services/service/edit/${item.id}`)
           }
           disabled={!item.active}
         >
@@ -341,7 +341,7 @@ const CuratedServiceDashboard = () => {
     <>
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/pulse/curated-services/service/create")}
+        onClick={() => navigate("/pulse/supported-services/service/create")}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add
@@ -352,7 +352,7 @@ const CuratedServiceDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Curated Services</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Supported Services</h1>
       </div>
 
       <EnhancedTable
@@ -369,4 +369,4 @@ const CuratedServiceDashboard = () => {
   );
 };
 
-export default CuratedServiceDashboard;
+export default SupportedServiceDashboard;

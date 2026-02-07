@@ -84,7 +84,7 @@ const modulesByPackage = {
       href: "/pulse/events",
     },
     {
-      name: "Curated Services",
+      name: "Services",
       icon: Gift,
       href: "/pulse/curated-services",
       subItems: [
@@ -92,7 +92,11 @@ const modulesByPackage = {
           name: "Service Category",
           href: "/pulse/curated-services/service-category",
         },
-        { name: "Service", href: "/pulse/curated-services/service" },
+        { name: "Curated Service", href: "/pulse/curated-services/service" },
+        {
+          name: "Supported Services",
+          href: "/pulse/supported-services/service",
+        },
       ],
     },
     {
@@ -337,8 +341,14 @@ const modulesByPackage = {
       href: "/settings/vas/booking",
       subItems: [
         { name: "Amenity Setup", href: "/settings/vas/booking/setup" },
-        { name: "Category Setup", href: "/settings/vas/booking/category-setup" },
-        { name: "Accessories Setup", href: "/settings/vas/booking/accessories-setup" },
+        {
+          name: "Category Setup",
+          href: "/settings/vas/booking/category-setup",
+        },
+        {
+          name: "Accessories Setup",
+          href: "/settings/vas/booking/accessories-setup",
+        },
       ],
     },
     {
@@ -475,8 +485,9 @@ export const PulseSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${isActive ? "bg-[#f0e8dc] shadow-inner" : ""
-            } ${item.color || "text-[#1a1a1a]"}`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            isActive ? "bg-[#f0e8dc] shadow-inner" : ""
+          } ${item.color || "text-[#1a1a1a]"}`}
         >
           {isActive && (
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
@@ -499,8 +510,9 @@ export const PulseSidebar = () => {
             handleNavigation(module.href, currentSection);
           }
         }}
-        className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active ? "bg-[#f0e8dc] shadow-inner" : "hover:bg-[#DBC2A9]"
-          }`}
+        className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+          active ? "bg-[#f0e8dc] shadow-inner" : "hover:bg-[#DBC2A9]"
+        }`}
         title={module.name}
       >
         {active && (
@@ -515,8 +527,9 @@ export const PulseSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -538,8 +551,9 @@ export const PulseSidebar = () => {
         {currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
+                isSidebarCollapsed ? "text-center" : "tracking-wide"
+              }`}
             >
               {isSidebarCollapsed ? currentSection.slice(0, 1) : currentSection}
             </h3>

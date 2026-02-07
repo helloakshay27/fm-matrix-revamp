@@ -22,24 +22,24 @@ interface ServiceCategory {
 }
 
 const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: "45px",
+    "& fieldset": {
+      borderColor: "#ddd",
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    "&:hover fieldset": {
+      borderColor: "#C72030",
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
     },
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": {
+      color: "#C72030",
     },
   },
 };
@@ -50,7 +50,9 @@ export const EditCuratedServicePage = () => {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(
+    []
+  );
   const [showTooltip, setShowTooltip] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -60,7 +62,7 @@ export const EditCuratedServicePage = () => {
     order_no: "",
     mobile: "",
     address: "",
-    email: "", 
+    email: "",
     active: true,
   });
 
@@ -114,7 +116,9 @@ export const EditCuratedServicePage = () => {
 
     setFetchLoading(true);
     try {
-      const apiUrl = getFullUrl(`/osr_setups/osr_sub_category_detail.json?osr_sub_category_id=${id}`);
+      const apiUrl = getFullUrl(
+        `/osr_setups/osr_sub_category_detail.json?osr_sub_category_id=${id}`
+      );
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -132,25 +136,25 @@ export const EditCuratedServicePage = () => {
       const serviceInfo = data.osr_sub_category || data;
 
       setFormData({
-      name: serviceInfo.name || "",
-      description: serviceInfo.description || "",
-      service_category_id: serviceInfo.osr_categories_id?.toString() || "",
-      order_no: serviceInfo.order_no?.toString() || "",
-      mobile: serviceInfo.mobile || "",
-      address: serviceInfo.address || "",
-      email: serviceInfo.email || "",
-      active: serviceInfo.active !== undefined ? serviceInfo.active : true,
-    });
+        name: serviceInfo.name || "",
+        description: serviceInfo.description || "",
+        service_category_id: serviceInfo.osr_categories_id?.toString() || "",
+        order_no: serviceInfo.order_no?.toString() || "",
+        mobile: serviceInfo.mobile || "",
+        address: serviceInfo.address || "",
+        email: serviceInfo.email || "",
+        active: serviceInfo.active !== undefined ? serviceInfo.active : true,
+      });
 
-    // Handle existing image
-    let imageUrl = "";
-    if (serviceInfo.attachment && serviceInfo.attachment.document_url) {
-      imageUrl = serviceInfo.attachment.document_url;
-    } else if (serviceInfo.attachment_url) {
-      imageUrl = serviceInfo.attachment_url;
-    } else if (serviceInfo.image_url) {
-      imageUrl = serviceInfo.image_url;
-    }
+      // Handle existing image
+      let imageUrl = "";
+      if (serviceInfo.attachment && serviceInfo.attachment.document_url) {
+        imageUrl = serviceInfo.attachment.document_url;
+      } else if (serviceInfo.attachment_url) {
+        imageUrl = serviceInfo.attachment_url;
+      } else if (serviceInfo.image_url) {
+        imageUrl = serviceInfo.image_url;
+      }
 
       setExistingImageUrl(imageUrl);
     } catch (error: any) {
@@ -171,9 +175,9 @@ export const EditCuratedServicePage = () => {
 
   const handleMobileChange = (value: string) => {
     // Allow only digits and limit to 10 characters
-    const numbersOnly = value.replace(/\D/g, '');
+    const numbersOnly = value.replace(/\D/g, "");
     if (numbersOnly.length <= 10) {
-      handleInputChange('mobile', numbersOnly);
+      handleInputChange("mobile", numbersOnly);
     }
   };
 
@@ -217,7 +221,9 @@ export const EditCuratedServicePage = () => {
     setAttachment(null);
     setImagePreview("");
     setImageChanged(false);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
@@ -226,7 +232,9 @@ export const EditCuratedServicePage = () => {
     setAttachment(null);
     setImagePreview("");
     setImageChanged(true);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
@@ -248,7 +256,9 @@ export const EditCuratedServicePage = () => {
       return false;
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Please enter a valid email address (e.g., user@example.com)");
+      toast.error(
+        "Please enter a valid email address (e.g., user@example.com)"
+      );
       return false;
     }
     return true;
@@ -281,7 +291,7 @@ export const EditCuratedServicePage = () => {
       if (formData.address) {
         formDataToSend.append("address", formData.address);
       }
-       if (formData.email) {
+      if (formData.email) {
         formDataToSend.append("email", formData.email);
       }
 
@@ -293,7 +303,9 @@ export const EditCuratedServicePage = () => {
         }
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?id=${id}`);
+      const apiUrl = getFullUrl(
+        `/osr_setups/modify_osr_sub_category.json?id=${id}`
+      );
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -310,7 +322,9 @@ export const EditCuratedServicePage = () => {
       navigate("/pulse/curated-services/service");
     } catch (error: any) {
       console.error("Error updating plus service:", error);
-      toast.error(error.message || "Failed to update service. Please try again.");
+      toast.error(
+        error.message || "Failed to update service. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -343,11 +357,15 @@ export const EditCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Service List</span>
+          <span>Curated Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Edit Service</span>
+          <span className="text-gray-900 font-medium">
+            Edit Curated Service
+          </span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          EDIT CURATED SERVICE
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -355,9 +373,21 @@ export const EditCuratedServicePage = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z" fill="#C72030" />
+              <span
+                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z"
+                    fill="#C72030"
+                  />
                 </svg>
               </span>
               Service Details
@@ -389,19 +419,23 @@ export const EditCuratedServicePage = () => {
                 fullWidth
                 required
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
                 <InputLabel shrink>Service Category</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
-                  onChange={(e) => handleInputChange("service_category_id", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("service_category_id", e.target.value)
+                  }
                   label="Service Category"
                   notched
                   displayEmpty
                   disabled={loadingCategories}
                 >
                   <MenuItem value="">
-                    {loadingCategories ? "Loading..." : "Select Service Category"}
+                    {loadingCategories
+                      ? "Loading..."
+                      : "Select Service Category"}
                   </MenuItem>
                   {serviceCategories.map((category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
@@ -430,7 +464,7 @@ export const EditCuratedServicePage = () => {
                 }}
               /> */}
 
-               <TextField
+              <TextField
                 fullWidth
                 label="Mobile"
                 type="tel"
@@ -448,17 +482,18 @@ export const EditCuratedServicePage = () => {
                 }}
                 inputProps={{
                   maxLength: 10,
-                  pattern: '[0-9]*',
+                  pattern: "[0-9]*",
                 }}
-                helperText={formData.mobile && formData.mobile.length !== 10 ? '' : ''}
-                error={formData.mobile !== '' && formData.mobile.length !== 10}
+                helperText={
+                  formData.mobile && formData.mobile.length !== 10 ? "" : ""
+                }
+                error={formData.mobile !== "" && formData.mobile.length !== 10}
               />
             </div>
 
             {/* Second Row - Mobile and Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Mobile */}
-             
 
               {/* Address */}
               <TextField
@@ -478,27 +513,31 @@ export const EditCuratedServicePage = () => {
                 }}
               />
               <TextField
-  fullWidth
-  label="Email"
-  value={formData.email}
-  onChange={(e) => handleInputChange("email", e.target.value)}
-  placeholder="Enter Email"
-  variant="outlined"
-  slotProps={{
-    inputLabel: {
-      shrink: true,
-    },
-  }}
-  InputProps={{
-    sx: fieldStyles,
-  }}
-/>
+                fullWidth
+                label="Email"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="Enter Email"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
             </div>
 
             {/* Description - Full width */}
             <Box sx={{ position: "relative" }}>
               <TextField
-                label={<span>Description<span className="text-red-500">*</span></span>}
+                label={
+                  <span>
+                    Description<span className="text-red-500">*</span>
+                  </span>
+                }
                 placeholder="Enter Description"
                 fullWidth
                 multiline
@@ -551,10 +590,25 @@ export const EditCuratedServicePage = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030" />
-                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3" />
+              <span
+                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z"
+                    fill="#C72030"
+                  />
+                  <path
+                    d="M10 2V5C10 5.55228 10.4477 6 11 6H14"
+                    fill="#E5E0D3"
+                  />
                 </svg>
               </span>
               Add Attachments
@@ -571,7 +625,7 @@ export const EditCuratedServicePage = () => {
               />
               <Button
                 type="button"
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => document.getElementById("file-upload")?.click()}
                 variant="outline"
                 className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
               >
@@ -585,13 +639,17 @@ export const EditCuratedServicePage = () => {
                   <div className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
                     <div className="flex items-center gap-2">
                       <Upload className="w-4 h-4 text-gray-500" />
-                      <span>{imageChanged ? attachment?.name : 'Current attachment'}</span>
+                      <span>
+                        {imageChanged ? attachment?.name : "Current attachment"}
+                      </span>
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={imageChanged ? removeNewImage : removeExistingImage}
+                      onClick={
+                        imageChanged ? removeNewImage : removeExistingImage
+                      }
                     >
                       <X className="w-3 h-3" />
                     </Button>
@@ -599,7 +657,11 @@ export const EditCuratedServicePage = () => {
                   <div className="relative inline-block">
                     <img
                       src={imageChanged ? imagePreview : existingImageUrl}
-                      alt={imageChanged ? "New Service Preview" : "Current Service Image"}
+                      alt={
+                        imageChanged
+                          ? "New Service Preview"
+                          : "Current Service Image"
+                      }
                       className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
                   </div>
@@ -620,7 +682,7 @@ export const EditCuratedServicePage = () => {
             disabled={loading}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
-            {loading ? 'Updating...' : 'Update Service'}
+            {loading ? "Updating..." : "Update Service"}
           </Button>
           <Button
             type="button"
