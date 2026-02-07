@@ -72,7 +72,7 @@ export const SupportedServiceAdd = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=supported");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
