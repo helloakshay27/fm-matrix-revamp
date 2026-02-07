@@ -1,7 +1,4 @@
-
-
-
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
@@ -16,7 +13,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
 
 interface AuditConductedOccurrence {
   id: number;
@@ -42,7 +39,9 @@ interface AuditConductedResponse {
 
 export const VendorAuditConductedDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [conductedData, setConductedData] = useState<AuditConductedOccurrence[]>([]);
+  const [conductedData, setConductedData] = useState<
+    AuditConductedOccurrence[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -56,12 +55,12 @@ export const VendorAuditConductedDashboard = () => {
     try {
       setLoading(true);
       const response = await apiClient.get<AuditConductedResponse>(
-        '/pms/custom_forms/audits_conducted.json',
+        "/pms/custom_forms/audits_conducted.json",
         {
           params: {
             page: currentPage,
             per_page: 20,
-            'q[custom_form_checklist_for_eq]': 'Pms::Supplier',
+            "q[custom_form_checklist_for_eq]": "Pms::Supplier",
           },
         }
       );
@@ -76,7 +75,10 @@ export const VendorAuditConductedDashboard = () => {
     }
   };
 
-  const handlePrintReport = async (auditId: number, printPdfUrl: string | null) => {
+  const handlePrintReport = async (
+    auditId: number,
+    printPdfUrl: string | null
+  ) => {
     if (!printPdfUrl) {
       toast.error("PDF report not available for this audit");
       return;
@@ -84,13 +86,13 @@ export const VendorAuditConductedDashboard = () => {
 
     try {
       const response = await apiClient.get(printPdfUrl, {
-        responseType: 'blob',
+        responseType: "blob",
       });
 
       // Create a blob URL and open it in a new window
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: "application/pdf" });
       const blobUrl = window.URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
+      window.open(blobUrl, "_blank");
 
       // Clean up the blob URL after a delay
       setTimeout(() => {
@@ -104,7 +106,10 @@ export const VendorAuditConductedDashboard = () => {
     }
   };
 
-  const handleDeleteReport = async (auditId: number, deleteUrl: string | null) => {
+  const handleDeleteReport = async (
+    auditId: number,
+    deleteUrl: string | null
+  ) => {
     if (!deleteUrl) {
       toast.error("Cannot delete report for this audit");
       return;
@@ -115,7 +120,9 @@ export const VendorAuditConductedDashboard = () => {
     }
 
     try {
-      await apiClient.delete(`/pms/asset_task_occurrences/${auditId}/delete_print_pdf`);
+      await apiClient.delete(
+        `/pms/asset_task_occurrences/${auditId}/delete_print_pdf`
+      );
       toast.success("Report deleted successfully");
       fetchAuditsConducted(); // Refresh data
     } catch (error) {
@@ -132,28 +139,42 @@ export const VendorAuditConductedDashboard = () => {
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: 'report', label: 'Report', sortable: true, draggable: true },
-    { key: 'id', label: 'ID', sortable: true, draggable: true },
-    { key: 'auditName', label: 'Audit Name', sortable: true, draggable: true },
-    { key: 'startDateTime', label: 'Start Date & Time', sortable: true, draggable: true },
-    { key: 'conductedBy', label: 'Conducted By', sortable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: true, draggable: true },
-    { key: 'site', label: 'Site', sortable: true, draggable: true },
-    { key: 'duration', label: 'Duration', sortable: true, draggable: true },
-    { key: 'percentage', label: '%', sortable: true, draggable: true },
-    { key: 'delete', label: 'Delete', sortable: false, draggable: true },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    { key: "report", label: "Report", sortable: true, draggable: true },
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "auditName", label: "Audit Name", sortable: true, draggable: true },
+    {
+      key: "startDateTime",
+      label: "Start Date & Time",
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: "conductedBy",
+      label: "Conducted By",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    { key: "site", label: "Site", sortable: true, draggable: true },
+    { key: "duration", label: "Duration", sortable: true, draggable: true },
+    { key: "percentage", label: "%", sortable: true, draggable: true },
+    { key: "delete", label: "Delete", sortable: false, draggable: true },
   ];
 
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
+      case "actions":
         return (
-          <Button variant="ghost" size="sm" onClick={() => console.log('View conducted audit:', item.id)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => console.log("View conducted audit:", item.id)}
+          >
             <Eye className="w-4 h-4" />
           </Button>
         );
-      case 'report':
+      case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button
             variant="ghost"
@@ -165,28 +186,33 @@ export const VendorAuditConductedDashboard = () => {
             <FileText className="w-4 h-4 text-blue-600" />
           </Button>
         ) : null;
-      case 'id':
+      case "id":
         return <span className="text-blue-600 font-medium">{item.id}</span>;
-      case 'auditName':
+      case "auditName":
         return item.form_name;
-      case 'startDateTime':
+      case "startDateTime":
         return item.start_date;
-      case 'conductedBy':
+      case "conductedBy":
         return item.conducted_by || "-";
-      case 'status':
+      case "status":
         return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }`}>
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              item.status === "Completed"
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
             {item.status}
           </span>
         );
-      case 'site':
+      case "site":
         return item.site;
-      case 'duration':
+      case "duration":
         return formatDuration(item.duration);
-      case 'percentage':
+      case "percentage":
         return item.percentage ? `${item.percentage}%` : "-";
-      case 'delete':
+      case "delete":
         return item.has_response && item.delete_url ? (
           <Button
             variant="ghost"
@@ -205,7 +231,7 @@ export const VendorAuditConductedDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(conductedData.map(item => item.id.toString()));
+      setSelectedItems(conductedData.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -213,16 +239,16 @@ export const VendorAuditConductedDashboard = () => {
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
+      setSelectedItems((prev) => [...prev, itemId]);
     } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
     }
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -230,8 +256,12 @@ export const VendorAuditConductedDashboard = () => {
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Audits Conducted &gt; Audits Conducted List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">AUDITS CONDUCTED LIST</h1>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">
+            Audits Conducted &gt; Audits Conducted List
+          </p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">
+            AUDITS CONDUCTED LIST
+          </h1>
         </div>
       </div>
 
@@ -248,10 +278,10 @@ export const VendorAuditConductedDashboard = () => {
               data={conductedData}
               columns={columns}
               renderCell={renderCell}
-              selectable={true}
-              selectedItems={selectedItems}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
+              // selectable={true}
+              // selectedItems={selectedItems}
+              // onSelectAll={handleSelectAll}
+              // onSelectItem={handleSelectItem}
               getItemId={(item) => item.id.toString()}
               storageKey="conducted-audit-table"
               className="w-full"
@@ -270,7 +300,11 @@ export const VendorAuditConductedDashboard = () => {
                           handlePageChange(currentPage - 1);
                         }
                       }}
-                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
 
@@ -327,7 +361,9 @@ export const VendorAuditConductedDashboard = () => {
                         }
                       }}
                       className={
-                        currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
                       }
                     />
                   </PaginationItem>
@@ -335,7 +371,8 @@ export const VendorAuditConductedDashboard = () => {
               </Pagination>
 
               <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {currentPage} of {totalPages} ({totalCount} total audits)
+                Showing page {currentPage} of {totalPages} ({totalCount} total
+                audits)
               </div>
             </div>
           )}
@@ -344,4 +381,3 @@ export const VendorAuditConductedDashboard = () => {
     </div>
   );
 };
-

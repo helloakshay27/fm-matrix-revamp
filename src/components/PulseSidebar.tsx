@@ -94,7 +94,7 @@ const modulesByPackage = {
         },
         { name: "Curated Service", href: "/pulse/curated-services/service" },
         {
-          name: "Supported Services",
+          name: "Supported Service",
           href: "/pulse/supported-services/service",
         },
       ],
