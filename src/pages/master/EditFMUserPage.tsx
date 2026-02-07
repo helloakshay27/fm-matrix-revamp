@@ -962,7 +962,7 @@ export const EditFMUserPage = () => {
                               <Chip
                                 key={value}
                                 label={
-                                  selectedCompany?.id.toString() === value
+                                  selectedCompany?.id === Number(value)
                                     ? selectedCompany.name
                                     : value
                                 }
