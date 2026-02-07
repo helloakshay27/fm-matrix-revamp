@@ -77,7 +77,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=curated");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -143,7 +143,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?id=${itemId}`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?json?q[service_tag_eq]=curated&id=${itemId}`);
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -343,7 +343,7 @@ const CuratedServiceDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Services</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Curated Services</h1>
       </div>
 
       <EnhancedTable

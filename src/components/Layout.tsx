@@ -51,12 +51,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const currentUser = getUser();
   const userEmail = currentUser?.email || "No email";
+  const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
-  const isClubManagementRoute =
-    hostname === "club.lockated.com" ||
-    location.pathname.startsWith("/club-management");
+  const isClubManagementRoute = hostname === "club.lockated.com";
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -89,9 +88,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   // Check if non-employee user needs to select project/site
-  const isViSite =
-    hostname.includes("localhost") ||
-    hostname.includes("vi-web.gophygital.work");
+  const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -122,10 +119,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse-uat.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
+    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
-    userEmail === "besis69240@azeriom.com";
+    userEmail === "besis69240@azeriom.com" ||
+    userEmail === "megipow156@aixind.com" ||
+    userEmail === "jevosak839@cimario.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -167,7 +167,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199
+          selectedCompany?.id === 199 ||
+          org_id === "90" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com"
         ) {
           return <EmployeeSidebar />;
         }
@@ -188,8 +193,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com" ||
+      userEmail === "jevosak839@cimario.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -260,8 +269,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.comm"
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com" ||
+      userEmail === "jevosak839@cimario.com"
     ) {
       return <ActionHeader />;
     }
@@ -383,8 +396,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
+        org_id === "90" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
-        userEmail === "besis69240@azeriom.comm" ? (
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />

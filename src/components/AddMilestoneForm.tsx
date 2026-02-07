@@ -12,6 +12,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { createMilestone, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
+import { SpeechInput } from "./SpeechInput";
 
 interface Project {
     id: string | number;
@@ -143,7 +144,7 @@ const AddMilestoneModal = ({
             )}
 
             <div className="mt-4 space-y-2">
-                <TextField
+                <SpeechInput
                     label={<>Milestone Title<span className="text-red-500">*</span></>}
                     name="milestoneTitle"
                     fullWidth
@@ -152,7 +153,7 @@ const AddMilestoneModal = ({
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                     value={formData.milestoneTitle || ''}
-                    onChange={handleInputChange}
+                    onChange={(value) => setFormData({ ...formData, milestoneTitle: value })}
                     disabled={isReadOnly}
                 />
             </div>

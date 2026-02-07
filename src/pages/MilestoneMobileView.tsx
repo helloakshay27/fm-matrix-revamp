@@ -4,6 +4,14 @@ import { ArrowLeft, Download, Eye, LogOut, Search } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 const MilestoneMobileView = () => {
     const navigate = useNavigate();
@@ -52,9 +60,25 @@ const MilestoneMobileView = () => {
     const storedToken = sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
 
     const [milestones, setMilestones] = useState([]);
+    const [projectTitle, setProjectTitle] = useState("");
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Fetch project details
+    const fetchProjectDetails = useCallback(async () => {
+        if (!storedToken || !id) return;
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/project_managements/${id}.json?token=${storedToken}`
+            );
+            if (response.data && response.data.title) {
+                setProjectTitle(response.data.title);
+            }
+        } catch (error) {
+            console.error("Error fetching project details:", error);
+        }
+    }, [baseUrl, storedToken, id]);
 
     // Fetch milestones from API
     const fetchMilestones = useCallback(async (page = 1, search = "") => {
@@ -113,13 +137,14 @@ const MilestoneMobileView = () => {
             setCurrentPage(1);
             setHasMore(true);
             fetchMilestones(1, searchTerm);
+            fetchProjectDetails();
         }
-    }, [storedToken, id, searchTerm, fetchMilestones]);
+    }, [storedToken, id, searchTerm, fetchMilestones, fetchProjectDetails]);
 
     // Transform status to match card display
     const transformStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-            "active": "APPROVED",
+            "open": "OPEN",
             "in_progress": "IN PROGRESS",
             "completed": "CLOSED",
             "on_hold": "ON HOLD",
@@ -130,18 +155,18 @@ const MilestoneMobileView = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "active":
-                return { bg: "bg-yellow-400", text: "text-white" };
+            case "open":
+                return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
             case "completed":
-                return { bg: "bg-green-600", text: "text-white" };
+                return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             case "in_progress":
-                return { bg: "bg-blue-500", text: "text-white" };
+                return { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-600" };
             case "on_hold":
-                return { bg: "bg-orange-400", text: "text-white" };
+                return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
             case "overdue":
-                return { bg: "bg-red-500", text: "text-white" };
+                return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
             default:
-                return { bg: "bg-gray-400", text: "text-white" };
+                return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };
         }
     };
 
@@ -154,6 +179,23 @@ const MilestoneMobileView = () => {
                         <ArrowLeft size={18} />
                     </Button>
                     <h1 className="text-2xl font-bold text-gray-900">Milestones</h1>
+                </div>
+
+                {/* Breadcrumbs */}
+                <div className="mb-4">
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink onClick={() => navigate('/mobile-projects')}>
+                                    {projectTitle || "Projects"}
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>Milestones</BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
                 </div>
 
                 {/* Search Bar */}
@@ -187,11 +229,12 @@ const MilestoneMobileView = () => {
                                 {/* Header with ID and Status */}
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <span className="bg-pink-200 text-pink-700 px-3 py-1 rounded-full font-semibold text-sm">
-                                            #{milestone.id}
+                                        <span className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-medium text-xs">
+                                            MILESTONE-{milestone.id}
                                         </span>
                                     </div>
-                                    <span className={`${statusColor.bg} ${statusColor.text} px-4 py-1 rounded-lg font-semibold text-sm`}>
+                                    <span className={`${statusColor.bg} ${statusColor.text} pl-2 pr-3 py-1 rounded-full font-medium text-xs flex items-center gap-1.5`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor.dot}`} />
                                         {displayStatus}
                                     </span>
                                 </div>
@@ -206,9 +249,6 @@ const MilestoneMobileView = () => {
                                 <div className="mb-4">
                                     <p className="text-sm text-gray-700 mb-1">
                                         <span className="font-semibold">Owner :</span> {milestone.owner || "-"}
-                                    </p>
-                                    <p className="text-sm text-gray-700">
-                                        <span className="font-semibold">Priority :</span> {milestone.priority ? milestone.priority.charAt(0).toUpperCase() + milestone.priority.slice(1) : "-"}
                                     </p>
                                 </div>
 
@@ -227,8 +267,6 @@ const MilestoneMobileView = () => {
                                 {/* Stats and Actions */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex gap-3 text-xs text-gray-600">
-                                        <span>✓ {milestone.totalTasks}</span>
-                                        <span>⚠️ {milestone.totalIssues}</span>
                                     </div>
 
                                     <div className="flex items-center gap-4">

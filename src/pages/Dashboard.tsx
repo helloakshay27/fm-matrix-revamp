@@ -99,6 +99,7 @@ import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerfor
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
+import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
@@ -3457,7 +3458,11 @@ export const Dashboard = () => {
       </div>
 
       {/* AI Assistant Widget */}
-      <AIAssistantWidget />
+      {location.pathname === "/dashboard" || location.pathname === "/dashboard-executive" ? (
+        <DashboardAIAssistant />
+      ) : (
+        <AIAssistantWidget />
+      )}
     </>
   );
 };

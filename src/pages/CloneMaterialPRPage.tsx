@@ -57,7 +57,7 @@ export const CloneMaterialPRPage = () => {
       amount: '',
       sacHsnCode: '',
       expectedDate: '20/06/2025',
-      productDescription: 'Product Description',
+      productDescription: 'Product Additional Text',
       rate: ''
     }
   ]);
@@ -301,7 +301,7 @@ export const CloneMaterialPRPage = () => {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Product Description*</Label>
+                  <Label className="text-sm font-medium">Product Additional Text*</Label>
                   <Input
                     value={item.productDescription}
                     onChange={(e) => updateItemDetail(item.id, 'productDescription', e.target.value)}

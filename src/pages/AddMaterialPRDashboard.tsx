@@ -311,6 +311,9 @@ export const AddMaterialPRDashboard = () => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
     }
+     if (Array.isArray(data) && data.length <= 0){
+      setShowRadio(false)
+    }
   }, [data]);
 
   useEffect(() => {
@@ -455,11 +458,45 @@ export const AddMaterialPRDashboard = () => {
             const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
             updatedItem.amount = (rate * quantity).toFixed(2);
           }
+          // When WBS code changes, fetch GL code
+          if (field === "wbsCode" && value) {
+            fetchGlCodeForWbs(id, value);
+          }
           return updatedItem;
         }
         return item;
       })
     );
+  };
+
+  // Fetch GL Code for WBS
+  const fetchGlCodeForWbs = async (itemId, wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      console.log("GL Code Response:", response.data);
+      
+      // Update the item with the GL code from API
+      if (response.data && response.data.gl_code) {
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === itemId
+              ? { ...item, glAccount: response.data.gl_code }
+              : item
+          )
+        );
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);  q 
+      toast.error("Failed to fetch GL Code for WBS");
+    }
   };
 
   const handleFileChange = (e) => {
@@ -581,7 +618,7 @@ export const AddMaterialPRDashboard = () => {
         return false;
       }
       if (!item.productDescription) {
-        toast.error("Product Description is required for all items");
+        toast.error("Product Additional Text is required for all items");
         return false;
       }
       if (!item.glAccount) {
@@ -1073,6 +1110,7 @@ export const AddMaterialPRDashboard = () => {
                     </Button>
                   )}
 
+                  {/* 1. Item Details (Inventory) */}
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Item Details*</InputLabel>
                     <MuiSelect
@@ -1096,6 +1134,7 @@ export const AddMaterialPRDashboard = () => {
                     </MuiSelect>
                   </FormControl>
 
+                  {/* 2. HSN Code */}
                   <TextField
                     label="SAC/HSN Code"
                     value={item.sacHsnCode}
@@ -1108,11 +1147,12 @@ export const AddMaterialPRDashboard = () => {
                     disabled
                   />
 
+                  {/* 3. Product Additional Text */}
                   <TextField
-                    label="Product Description*"
+                    label="Product Additional Text*"
                     value={item.productDescription}
                     onChange={(e) => handleItemChange(item.id, "productDescription", e.target.value)}
-                    placeholder="Product Description"
+                    placeholder="Product Additional Text"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1120,123 +1160,7 @@ export const AddMaterialPRDashboard = () => {
                     sx={{ mt: 1 }}
                   />
 
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>GL Account*</InputLabel>
-                    <MuiSelect
-                      label="GL Account*"
-                      value={item.glAccount}
-                      onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select GL Account</em>
-                      </MenuItem>
-                      {glAccountOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.content.code}>
-                          {option.content.code} - {option.content.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Tax Code*</InputLabel>
-                    <MuiSelect
-                      label="Tax Code*"
-                      value={item.taxCode}
-                      onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select Tax Code</em>
-                      </MenuItem>
-                      {taxCodeOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.content.code}>
-                          {option.content.code} - {option.content.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
-                  <TextField
-                    label="Expected Date*"
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    inputProps={{
-                      min: new Date().toISOString().split("T")[0],
-                    }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Rate"
-                    value={item.each}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleItemChange(item.id, "each", value);
-                      }
-                    }}
-                    placeholder="Enter Number"
-                    fullWidth
-                    type="number"
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Quantity*"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(item.id, "quantity", e.target.value)}
-                    placeholder="Enter Number"
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Amount*"
-                    value={item.amount}
-                    placeholder="Calculated Amount"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles, readOnly: true }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Storage Location*</InputLabel>
-                    <MuiSelect
-                      label="Storage Location*"
-                      value={item.generalStorage}
-                      onChange={(e) => handleItemChange(item.id, "generalStorage", e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select Storage Location</em>
-                      </MenuItem>
-                      {storageLocationOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.content.code}>
-                          {option.content.code} - {option.content.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
+                  {/* 4. WBS Code */}
                   {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel shrink>WBS Code*</InputLabel>
@@ -1258,6 +1182,147 @@ export const AddMaterialPRDashboard = () => {
                       </MuiSelect>
                     </FormControl>
                   )}
+
+                  {/* 5. GL Code - Conditional rendering */}
+                  {wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                    // Show disabled TextField when WBS is selected and codes available
+                    <TextField
+                      label="GL Account*"
+                      value={item.glAccount}
+                      placeholder="Auto-populated after WBS selection"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, readOnly: true }}
+                      sx={{ mt: 1 }}
+                      disabled
+                    />
+                  ) : (
+                    // Show Select dropdown when no WBS or WBS not in individual mode
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>GL Account*</InputLabel>
+                      <MuiSelect
+                        label="GL Account*"
+                        value={item.glAccount}
+                        onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select GL Account</em>
+                        </MenuItem>
+                        {glAccountOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                  {/* 6. Tax Code */}
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Tax Code*</InputLabel>
+                    <MuiSelect
+                      label="Tax Code*"
+                      value={item.taxCode}
+                      onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Tax Code</em>
+                      </MenuItem>
+                      {taxCodeOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* 7. Storage Location */}
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Storage Location*</InputLabel>
+                    <MuiSelect
+                      label="Storage Location*"
+                      value={item.generalStorage}
+                      onChange={(e) => handleItemChange(item.id, "generalStorage", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Storage Location</em>
+                      </MenuItem>
+                      {storageLocationOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* 8. Other Fields */}
+                  {/* Expected Date */}
+                  <TextField
+                    label="Expected Date*"
+                    type="date"
+                    value={item.expectedDate}
+                    onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    inputProps={{
+                      min: new Date().toISOString().split("T")[0],
+                    }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  {/* Rate */}
+                  <TextField
+                    label="Rate"
+                    value={item.each}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleItemChange(item.id, "each", value);
+                      }
+                    }}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  {/* Quantity */}
+                  <TextField
+                    label="Quantity*"
+                    value={item.quantity}
+                    onChange={(e) => handleItemChange(item.id, "quantity", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    variant="outlined"
+                    type="number"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  {/* Amount */}
+                  <TextField
+                    label="Amount*"
+                    value={item.amount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
                 </div>
               ))}
             </CardContent>

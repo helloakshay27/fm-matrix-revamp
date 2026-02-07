@@ -20,6 +20,7 @@ interface WBSElement {
     category_wbs_code: string;
     wbs_name: string;
     wbs_code: string;
+    gl_code: string;
 }
 
 interface EditWBSDialogProps {
@@ -46,6 +47,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
         categoryWBSCode: '',
         wbsName: '',
         wbsCode: '',
+        glCode: '',
     });
 
     useEffect(() => {
@@ -71,6 +73,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
                 categoryWBSCode: wbsElement.category_wbs_code,
                 wbsName: wbsElement.wbs_name,
                 wbsCode: wbsElement.wbs_code,
+                glCode: wbsElement.gl_code,
             });
         } else {
             setFormData({
@@ -79,6 +82,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
                 categoryWBSCode: '',
                 wbsName: '',
                 wbsCode: '',
+                glCode: '',
             });
         }
     }, [wbsElement]);
@@ -92,7 +96,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
     };
 
     const handleSubmit = () => {
-        if (!formData.plantCode || !formData.category || !formData.categoryWBSCode || !formData.wbsName || !formData.wbsCode) {
+        if (!formData.plantCode || !formData.category || !formData.categoryWBSCode || !formData.wbsName || !formData.wbsCode || !formData.glCode) {
             toast.error('Please fill in all required fields');
             return;
         }
@@ -103,6 +107,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
             category_wbs_code: formData.categoryWBSCode,
             wbs_name: formData.wbsName,
             wbs_code: formData.wbsCode,
+            gl_code: formData.glCode,
         });
     };
 
@@ -189,6 +194,19 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
                             name="wbsCode"
                             value={formData.wbsCode}
                             onChange={(e) => handleInputChange('wbsCode', e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: fieldStyles }}
+                            sx={{ mt: 1 }}
+                        />
+
+                        <TextField
+                            label="GL Code*"
+                            type="text"
+                            name="glCode"
+                            value={formData.glCode}
+                            onChange={(e) => handleInputChange('glCode', e.target.value)}
                             fullWidth
                             variant="outlined"
                             InputLabelProps={{ shrink: true }}

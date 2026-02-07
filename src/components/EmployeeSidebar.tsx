@@ -90,292 +90,6 @@ const getFunctionIcon = (actionName: string) => {
   return functionIconMap[actionName] || Circle;
 };
 
-// Static fallback for backward compatibility
-const employeeNavigationByModule: Record<string, any> = {
-  Dashboard: {
-    Overview: {
-      icon: Home,
-      href: "/dashboard",
-      items: [],
-    },
-    Analytics: {
-      icon: Target,
-      href: "/dashboard/analytics",
-      items: [],
-    },
-  },
-  "Project Task": {
-    Projects: {
-      icon: Briefcase,
-      items: [
-        { name: "Project Overview", href: "/vas/projects" },
-        { name: "Project Dashboard", href: "/vas/project-dashboard" },
-      ],
-    },
-    "My Tasks": {
-      icon: ListChecks,
-      href: "/vas/tasks",
-      items: [],
-    },
-    Issues: {
-      icon: Bug,
-      href: "/vas/issues",
-      items: [],
-    },
-    Sprint: {
-      icon: Zap,
-      href: "/vas/sprint",
-      items: [],
-    },
-    Channels: {
-      icon: MessageSquare,
-      href: "/vas/channels",
-      items: [],
-    },
-    "Minutes of Meeting": {
-      icon: FileCheck2Icon,
-      href: "/vas/mom",
-      items: [],
-    },
-    "Opportunity Register": {
-      icon: Target,
-      href: "/vas/opportunity",
-      items: [],
-    },
-    "To Do": {
-      icon: CircleCheckBig,
-      href: "/vas/todo",
-      items: [],
-    },
-    Documents: {
-      icon: File,
-      href: "/vas/documents",
-      items: [],
-    },
-  },
-  "Book Seats": {
-    "My Bookings": {
-      icon: Calendar,
-      href: "/vas/space-management/bookings",
-      items: [],
-    },
-    "Seat Requests": {
-      icon: UserPlus,
-      href: "/vas/space-management/seat-requests",
-      items: [],
-    },
-    "Available Spaces": {
-      icon: CheckSquare,
-      href: "/vas/space-management/available",
-      items: [],
-    },
-  },
-  Parking: {
-    "My Parking": {
-      icon: Car,
-      href: "/parking/employee/my-parking",
-      items: [],
-    },
-    "Book Parking": {
-      icon: Plus,
-      href: "/parking/employee/book",
-      items: [],
-    },
-    "Parking History": {
-      icon: Clock,
-      href: "/parking/employee/history",
-      items: [],
-    },
-  },
-  Calendar: {
-    "My Calendar": {
-      icon: Calendar,
-      href: "/calendar",
-      items: [],
-    },
-    Events: {
-      icon: CalendarDays,
-      href: "/calendar/events",
-      items: [],
-    },
-    Meetings: {
-      icon: Users,
-      href: "/calendar/meetings",
-      items: [],
-    },
-  },
-  Ticket: {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "My Tickets": {
-      icon: Ticket,
-      href: "/tickets",
-      items: [],
-    },
-    Tasks: {
-      icon: CheckSquare,
-      href: "/maintenance/task",
-      items: [],
-    },
-    Schedule: {
-      icon: Calendar,
-      href: "/maintenance/schedule",
-      items: [],
-    },
-  },
-  MOM: {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "MOM List": {
-      icon: FileText,
-      href: "/settings/vas/mom",
-      items: [],
-    },
-    "Client Tag Setup": {
-      icon: Settings,
-      href: "/settings/vas/mom/client-tag-setup",
-      items: [],
-    },
-    "Product Tag Setup": {
-      icon: Settings,
-      href: "/settings/vas/mom/product-tag-setup",
-      items: [],
-    },
-  },
-  Visitors: {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "Visitor Management": {
-      icon: Users,
-      href: "/visitors",
-      items: [],
-    },
-    "Visitor Setup": {
-      icon: Settings,
-      items: [
-        { name: "Setup", href: "/settings/visitor-management/setup" },
-        {
-          name: "Visiting Purpose",
-          href: "/settings/visitor-management/visiting-purpose",
-        },
-        {
-          name: "Support Staff",
-          href: "/settings/visitor-management/support-staff",
-        },
-        { name: "Icons", href: "/settings/visitor-management/icons" },
-      ],
-    },
-  },
-  Booking: {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "Booking List": {
-      icon: Calendar,
-      href: "/bookings",
-      items: [],
-    },
-    "My Bookings": {
-      icon: CheckSquare,
-      href: "/bookings",
-      items: [],
-    },
-  },
-  "Meeting Room": {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "Space Bookings": {
-      icon: Calendar,
-      href: "/vas/space-management/bookings",
-      items: [],
-    },
-    "Seat Requests": {
-      icon: UserPlus,
-      href: "/vas/space-management/seat-requests",
-      items: [],
-    },
-  },
-  "F&B": {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "F&B Services": {
-      icon: Utensils,
-      href: "/vas/fnb",
-      items: [],
-    },
-  },
-  Documents: {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "Communication Templates": {
-      icon: FileText,
-      href: "/master/communication-template",
-      items: [],
-    },
-  },
-  "ID Card": {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
-    "Occupant Users": {
-      icon: Users,
-      href: "/master/user/occupant-users",
-      items: [],
-    },
-    "FM Users": {
-      icon: UserCheck,
-      href: "/master/user/fm-users",
-      items: [],
-    },
-  },
-  Notes: {
-    Channels: {
-      icon: MessageSquare,
-      href: "/vas/channels",
-      items: [],
-    },
-    Tasks: {
-      icon: ListChecks,
-      href: "/vas/channels/tasks",
-      items: [],
-    },
-  },
-  "Ask AI": {
-    "AI Assistant": {
-      icon: Bot,
-      href: "/ask-ai",
-      items: [],
-    },
-    "Chat History": {
-      icon: MessageSquare,
-      href: "/ask-ai/history",
-      items: [],
-    },
-  },
-};
-
 export const EmployeeSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -387,7 +101,7 @@ export const EmployeeSidebar: React.FC = () => {
   // Build dynamic navigation from Employee Projects Sidebar module (module_id: 126)
   const navigationStructure = useMemo(() => {
     if (!userRole || !userRole.lock_modules) {
-      return employeeNavigationByModule[currentSection] || {};
+      return {};
     }
 
     // Find Employee Projects Sidebar module
@@ -396,7 +110,7 @@ export const EmployeeSidebar: React.FC = () => {
     );
 
     if (!projectsModule || currentSection !== "Project Task") {
-      return employeeNavigationByModule[currentSection] || {};
+      return {};
     }
 
     // Build navigation structure from active functions
@@ -445,9 +159,7 @@ export const EmployeeSidebar: React.FC = () => {
       }
     });
 
-    return Object.keys(dynamicNav).length > 0
-      ? dynamicNav
-      : employeeNavigationByModule[currentSection] || {};
+    return dynamicNav;
   }, [userRole, currentSection]);
 
   const toggleSection = (section: string) => {
@@ -465,17 +177,21 @@ export const EmployeeSidebar: React.FC = () => {
   React.useEffect(() => {
     // Determine which sections should be open based on active route
     const nextOpen: Record<string, boolean> = {};
-    Object.entries(navigationStructure).forEach(([key, section]: [string, any]) => {
-      const sectionHref = section.href || "";
-      const hasItems = section.items && section.items.length > 0;
-      const sectionHasActiveItem = hasItems
-        ? section.items.some((item: { href: string }) => isActive(item.href))
-        : false;
-      const sectionIsActive = sectionHref ? isActive(sectionHref) : sectionHasActiveItem;
-      if (sectionIsActive) {
-        nextOpen[key] = true;
+    Object.entries(navigationStructure).forEach(
+      ([key, section]: [string, any]) => {
+        const sectionHref = section.href || "";
+        const hasItems = section.items && section.items.length > 0;
+        const sectionHasActiveItem = hasItems
+          ? section.items.some((item: { href: string }) => isActive(item.href))
+          : false;
+        const sectionIsActive = sectionHref
+          ? isActive(sectionHref)
+          : sectionHasActiveItem;
+        if (sectionIsActive) {
+          nextOpen[key] = true;
+        }
       }
-    });
+    );
     setOpenSections(nextOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, currentSection]);
@@ -510,8 +226,9 @@ export const EmployeeSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${isSidebarCollapsed ? "w-12 sm:w-16" : "w-56 sm:w-64"
-        }`}
+      className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${
+        isSidebarCollapsed ? "w-12 sm:w-16" : "w-56 sm:w-64"
+      }`}
     >
       {/* Toggle Button */}
       <button
@@ -548,7 +265,9 @@ export const EmployeeSidebar: React.FC = () => {
               const hasItems = section.items && section.items.length > 0;
               const sectionHref = section.href || "";
               const sectionHasActiveItem = hasItems
-                ? section.items.some((item: { href: string }) => isActive(item.href))
+                ? section.items.some((item: { href: string }) =>
+                    isActive(item.href)
+                  )
                 : false;
               const isSectionOpen = openSections[key] ?? sectionHasActiveItem;
 
@@ -558,10 +277,11 @@ export const EmployeeSidebar: React.FC = () => {
                   <button
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                      }`}
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
+                      isActive(sectionHref)
+                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                    }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     {isActive(sectionHref) && (
@@ -582,8 +302,9 @@ export const EmployeeSidebar: React.FC = () => {
                 <div key={key} className="space-y-0.5 sm:space-y-1">
                   <button
                     onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
-                      } text-[#1a1a1a]`}
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${
+                      isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
+                    } text-[#1a1a1a]`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
@@ -593,8 +314,9 @@ export const EmployeeSidebar: React.FC = () => {
                           {key}
                         </span>
                         <ChevronDown
-                          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${isSectionOpen ? "transform rotate-180" : ""
-                            }`}
+                          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${
+                            isSectionOpen ? "transform rotate-180" : ""
+                          }`}
                         />
                       </>
                     )}
@@ -607,10 +329,11 @@ export const EmployeeSidebar: React.FC = () => {
                         <button
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
-                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                            }`}
+                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${
+                            isActive(item.href)
+                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                          }`}
                         >
                           {isActive(item.href) && (
                             <div className="absolute left-0 top-0 bottom-0 w-0.5 sm:w-1 bg-[#C72030]"></div>

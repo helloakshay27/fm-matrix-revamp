@@ -194,6 +194,7 @@ export const AddCuratedServicePage = () => {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("osr_categories_id", formData.service_category_id);
       formDataToSend.append("active", formData.active.toString());
+      formDataToSend.append("service_tag", "curated");
 
       // if (formData.order_no) {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
@@ -254,11 +255,11 @@ export const AddCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Service List</span>
+          <span> Curated Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Service</span>
+          <span className="text-gray-900 font-medium">Create New Curated Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW CURATED SERVICE</h1>
       </div>
 
       <form

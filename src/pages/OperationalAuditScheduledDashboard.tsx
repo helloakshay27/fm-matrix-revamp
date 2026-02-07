@@ -55,7 +55,7 @@ export const OperationalAuditScheduledDashboard = () => {
       }
 
       const response = await fetch(
-        `https://${baseUrl}/pms/custom_forms/audit_checklists.json?page=${page}`,
+        `https://${baseUrl}/pms/custom_forms/audit_checklists.json?page=${page}&q[checklist_type_eq]=Operational`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -151,8 +151,8 @@ export const OperationalAuditScheduledDashboard = () => {
           data={scheduleData}
           columns={columns}
           renderCell={renderCell}
-          selectable={true}
-          selectedItems={selectedItems}
+          // selectable={true}
+          // selectedItems={selectedItems}
           onSelectAll={handleSelectAll}
           onSelectItem={handleSelectItem}
           getItemId={(item) => item.id.toString()}

@@ -500,9 +500,9 @@ export const AddOccupantUserPage: React.FC = () => {
                   notched
                 >
                   <MenuItem value="">Select User Type</MenuItem>
-                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
+                  {/* <MenuItem value="pms_occupant_admin">Admin</MenuItem> */}
                   <MenuItem value="pms_occupant">Member</MenuItem>
-                  <MenuItem value="pms_guest">Guest</MenuItem>
+                  {/* <MenuItem value="pms_guest">Guest</MenuItem> */}
                 </MuiSelect>
                 {errors.userType && (
                   <p className="text-red-600 text-xs mt-1">User Type is required</p>

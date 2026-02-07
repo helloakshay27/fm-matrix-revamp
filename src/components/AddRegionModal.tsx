@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { MapPin, Building, Globe, Flag, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface AddRegionModalProps {
   isOpen: boolean;

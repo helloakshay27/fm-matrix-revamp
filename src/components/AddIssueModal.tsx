@@ -17,7 +17,6 @@ import {
   FormControl,
   InputLabel,
   Box,
-  TextareaAutosize,
   Dialog,
   DialogContent,
   Slide,
@@ -31,6 +30,7 @@ import MuiMultiSelect from "./MuiMultiSelect";
 import { AddTagModal } from "./AddTagModal";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { SpeechInput } from "./SpeechInput";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -860,12 +860,13 @@ const AddIssueModal = ({
           >
             {/* Title Field */}
             <Box sx={{ mb: 2 }}>
-              <TextField
+              <SpeechInput
+                name="title"
                 fullWidth
                 size="small"
                 label="Title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(value) => setTitle(value)}
                 placeholder="Enter Issue Title"
                 required
                 variant="outlined"
@@ -952,19 +953,34 @@ const AddIssueModal = ({
 
             {/* Description */}
             <Box sx={{ mb: 2 }}>
-              <TextareaAutosize
+              <SpeechInput
+                multiline
+                name="description"
                 minRows={4}
                 maxRows={6}
                 placeholder="Enter Description"
+                label="Description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  fontSize: "13px",
-                  fontFamily: "Roboto, sans-serif",
-                  border: "1px solid rgba(0, 0, 0, 0.23)",
-                  borderRadius: "4px",
+                onChange={(value) => setDescription(value)}
+                fullWidth
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
                 }}
               />
             </Box>

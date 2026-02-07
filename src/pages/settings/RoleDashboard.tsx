@@ -513,10 +513,33 @@ export const RoleDashboard = () => {
       return;
     }
 
+    // Validation: Check if at least one module is enabled
+    const enabledModules = currentRole.modules.filter(
+      (module) => module.enabled
+    );
+
+    if (enabledModules.length === 0) {
+      toast.error("At least one module must be enabled");
+      return;
+    }
+
+    // Validation: Check if at least one function is enabled across all enabled modules
+    const hasEnabledFunction = enabledModules.some((module) =>
+      module.functions.some((func) => func.enabled)
+    );
+
+    if (!hasEnabledFunction) {
+      toast.error(
+        "At least one function must be enabled in the selected modules"
+      );
+      return;
+    }
+
     console.log("Updating permissions for role:", {
       role_id: currentRole.role_id,
       role_name: currentRole.role_name,
       modules_count: currentRole.modules.length,
+      enabled_modules_count: enabledModules.length,
       full_role_data: currentRole,
     });
 

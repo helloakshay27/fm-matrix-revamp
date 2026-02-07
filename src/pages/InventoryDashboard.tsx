@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchInventoryData, setCurrentPage } from "@/store/slices/inventorySlice";
-import axios from 'axios';
+import {
+  fetchInventoryData,
+  setCurrentPage,
+} from "@/store/slices/inventorySlice";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { DateFilterModal } from "@/components/DateFilterModal";
 import {
@@ -74,6 +77,7 @@ import { InventorySelectionPanel } from "@/components/InventorySelectionPanel";
 import { toast } from "sonner";
 import { StatsCard } from "@/components/StatsCard";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
+import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -96,9 +100,13 @@ const mapInventoryData = (apiData: any[]) => {
       subGroup: item.sub_group || "",
       category: item.category || "",
       manufacturer: item.manufacturer || "",
-      criticality: item.criticality !== undefined && item.criticality !== null ? item.criticality : "",
+      criticality:
+        item.criticality !== undefined && item.criticality !== null
+          ? item.criticality
+          : "",
       quantity: item.quantity?.toString() || "0",
-      expiryDate: (item as any).expiry_date || (item as any).expiration_date || "",
+      expiryDate:
+        (item as any).expiry_date || (item as any).expiration_date || "",
       active: item.active ? "Active" : "Inactive",
       unit: item.unit || "",
       cost: item.cost?.toString() || "",
@@ -177,7 +185,8 @@ export const InventoryDashboard = () => {
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
-  const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] = useState(false);
+  const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] =
+    useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -202,15 +211,19 @@ export const InventoryDashboard = () => {
   const [inventory, setInventory] = useState([]);
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
+    {}
+  );
   // Track which summary tile is currently selected; null on initial load
-  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'green'>(null);
+  const [selectedSummary, setSelectedSummary] = useState<
+    null | "total" | "active" | "inactive" | "green"
+  >(null);
   // Track last filter signature we already showed a no-results toast for
   const lastNoResultSigRef = useRef<string | null>(null);
 
   const buildFilterSignature = (obj: Record<string, string>) => {
     const keys = Object.keys(obj || {}).sort();
-    return keys.map((k) => `${k}=${String(obj[k])}`).join('&');
+    return keys.map((k) => `${k}=${String(obj[k])}`).join("&");
   };
 
   // Snapshot baseline counts when no filters are applied so cards don't fluctuate on filter clicks
@@ -229,14 +242,20 @@ export const InventoryDashboard = () => {
         greenInventories: greenInventories || 0,
       });
     }
-  }, [totalInventories, activeCount, inactiveCount, greenInventories, activeFilters]);
+  }, [
+    totalInventories,
+    activeCount,
+    inactiveCount,
+    greenInventories,
+    activeFilters,
+  ]);
 
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
     // String form (DD/MM/YYYY) aligned with new default dateRange
-    startDate: '01/07/2025',
-    endDate: '15/08/2025',
+    startDate: "01/07/2025",
+    endDate: "15/08/2025",
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -244,34 +263,36 @@ export const InventoryDashboard = () => {
     categoryData: null,
     inventoryCostOverMonth: null,
   });
-  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
-    'items_status',
-    'category_wise',
-    'green_consumption',
-    'consumption_report_green',
-    'consumption_report_non_green',
-    'current_minimum_stock_green',
-    'current_minimum_stock_non_green',
-    'inventory_cost_over_month',
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<
+    string[]
+  >([
+    "items_status",
+    "category_wise",
+    "green_consumption",
+    "consumption_report_green",
+    "consumption_report_non_green",
+    "current_minimum_stock_green",
+    "current_minimum_stock_non_green",
+    "inventory_cost_over_month",
   ]);
   // Maintain explicit draggable order for analytics cards
   const [analyticsCardOrder, setAnalyticsCardOrder] = useState<string[]>([]);
   const formatAnalyticsDateForDisplay = (date: Date) => {
-    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
   const getAnalyticsDateRangeLabel = () => {
     const { startDate, endDate } = dateRange;
-    if (!startDate || !endDate) return '';
+    if (!startDate || !endDate) return "";
     return `${formatAnalyticsDateForDisplay(startDate)} - ${formatAnalyticsDateForDisplay(endDate)}`;
   };
   // Load saved order from localStorage on first mount
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('inventoryAnalyticsCardOrder');
+      const raw = localStorage.getItem("inventoryAnalyticsCardOrder");
       if (raw) {
         const parsed: string[] = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -279,7 +300,7 @@ export const InventoryDashboard = () => {
         }
       }
     } catch (e) {
-      console.warn('[AnalyticsOrder] Failed to parse saved order', e);
+      console.warn("[AnalyticsOrder] Failed to parse saved order", e);
     }
   }, []);
   // Fetch analytics data when selected options or date range changes
@@ -290,29 +311,46 @@ export const InventoryDashboard = () => {
       const fromDate = dateRange.startDate;
       const toDate = dateRange.endDate;
       try {
-        if (selectedAnalyticsOptions.includes('items_status')) {
-          newData.statusData = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+        if (selectedAnalyticsOptions.includes("items_status")) {
+          newData.statusData = await inventoryAnalyticsAPI.getItemsStatus(
+            fromDate,
+            toDate
+          );
         }
-        if (selectedAnalyticsOptions.includes('category_wise')) {
-          newData.categoryData = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+        if (selectedAnalyticsOptions.includes("category_wise")) {
+          newData.categoryData = await inventoryAnalyticsAPI.getCategoryWise(
+            fromDate,
+            toDate
+          );
         }
-        if (selectedAnalyticsOptions.includes('green_consumption')) {
-          newData.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
+        if (selectedAnalyticsOptions.includes("green_consumption")) {
+          newData.greenConsumption =
+            await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
         }
-        if (selectedAnalyticsOptions.includes('inventory_cost_over_month')) {
+        if (selectedAnalyticsOptions.includes("inventory_cost_over_month")) {
           try {
-            const costOverMonthResp = await inventoryAnalyticsAPI.getInventoryCostOverMonth(fromDate, toDate);
-            console.log('[DEBUG] inventory_cost_over_month API response:', costOverMonthResp);
+            const costOverMonthResp =
+              await inventoryAnalyticsAPI.getInventoryCostOverMonth(
+                fromDate,
+                toDate
+              );
+            console.log(
+              "[DEBUG] inventory_cost_over_month API response:",
+              costOverMonthResp
+            );
             newData.inventoryCostOverMonth = costOverMonthResp;
           } catch (err) {
-            console.error('[DEBUG] Error fetching inventory_cost_over_month:', err);
+            console.error(
+              "[DEBUG] Error fetching inventory_cost_over_month:",
+              err
+            );
             newData.inventoryCostOverMonth = null;
           }
         }
         // Add other analytics fetches as needed
       } catch (err) {
-        toast.error('Failed to fetch analytics data');
-        console.error('[DEBUG] General analytics fetch error:', err);
+        toast.error("Failed to fetch analytics data");
+        console.error("[DEBUG] General analytics fetch error:", err);
       } finally {
         setAnalyticsData((prev: any) => ({ ...prev, ...newData }));
         setAnalyticsLoading(false);
@@ -324,7 +362,9 @@ export const InventoryDashboard = () => {
   // Sync card order when selection changes: keep existing order, append new selections at end
   useEffect(() => {
     setAnalyticsCardOrder((prev) => {
-      const filtered = prev.filter((id) => selectedAnalyticsOptions.includes(id));
+      const filtered = prev.filter((id) =>
+        selectedAnalyticsOptions.includes(id)
+      );
       selectedAnalyticsOptions.forEach((id) => {
         if (!filtered.includes(id)) filtered.push(id);
       });
@@ -336,17 +376,18 @@ export const InventoryDashboard = () => {
   useEffect(() => {
     if (analyticsCardOrder.length) {
       try {
-        localStorage.setItem('inventoryAnalyticsCardOrder', JSON.stringify(analyticsCardOrder));
+        localStorage.setItem(
+          "inventoryAnalyticsCardOrder",
+          JSON.stringify(analyticsCardOrder)
+        );
       } catch (e) {
-        console.warn('[AnalyticsOrder] Failed to save order', e);
+        console.warn("[AnalyticsOrder] Failed to save order", e);
       }
     }
   }, [analyticsCardOrder]);
-  const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
-    'itemsStatus',
-    'categoryWise',
-    'greenConsumption',
-  ]);
+  const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<
+    string[]
+  >(["itemsStatus", "categoryWise", "greenConsumption"]);
 
   useEffect(() => {
     if (inventoryItems) {
@@ -464,7 +505,11 @@ export const InventoryDashboard = () => {
       setShowActionPanel(true);
     }
     // Auto-hide only if no selection AND panel was not opened explicitly for Add/Import
-    if (selectedItems.length === 0 && showActionPanel && !keepOpenWithoutSelection) {
+    if (
+      selectedItems.length === 0 &&
+      showActionPanel &&
+      !keepOpenWithoutSelection
+    ) {
       setShowActionPanel(false);
       if (panelManuallyClosed) setPanelManuallyClosed(false);
     }
@@ -472,7 +517,12 @@ export const InventoryDashboard = () => {
     if (selectedItems.length > 0 && keepOpenWithoutSelection) {
       setKeepOpenWithoutSelection(false);
     }
-  }, [selectedItems, showActionPanel, panelManuallyClosed, keepOpenWithoutSelection]);
+  }, [
+    selectedItems,
+    showActionPanel,
+    panelManuallyClosed,
+    keepOpenWithoutSelection,
+  ]);
 
   // Explicit action button to manually open panel (even if no selection yet)
   const handleActionClick = () => {
@@ -483,22 +533,27 @@ export const InventoryDashboard = () => {
   const handleFilter = async (filter: any) => {
     const { name, code, category, criticality, groupId, subGroupId } = filter;
     const newFilters: Record<string, string> = {};
-    if (name) newFilters['q[name_cont]'] = name;
-    if (code) newFilters['q[code_cont]'] = code;
-    if (category) newFilters['q[category_eq]'] = category;
-    if (criticality !== undefined && criticality !== null && criticality !== '') {
+    if (name) newFilters["q[name_cont]"] = name;
+    if (code) newFilters["q[code_cont]"] = code;
+    if (category) newFilters["q[category_eq]"] = category;
+    if (
+      criticality !== undefined &&
+      criticality !== null &&
+      criticality !== ""
+    ) {
       // Accept both numeric & string inputs; normalize then translate.
       // UI semantics: 1 (or 'Critical') => Critical, 2 (or 'Non-Critical') => Non-Critical.
       // Backend still expects legacy: 0 = Critical, 2 = Non-Critical.
       const rawCrit = String(criticality).trim().toLowerCase();
-      if (['1', 'critical', '0'].includes(rawCrit)) {
-        newFilters['q[criticality_eq]'] = '1';
-      } else if (['2', 'non-critical', 'non_critical'].includes(rawCrit)) {
-        newFilters['q[criticality_eq]'] = '2';
+      if (["1", "critical", "0"].includes(rawCrit)) {
+        newFilters["q[criticality_eq]"] = "1";
+      } else if (["2", "non-critical", "non_critical"].includes(rawCrit)) {
+        newFilters["q[criticality_eq]"] = "2";
       }
     }
-    if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
-    if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
+    if (groupId) newFilters["q[pms_asset_pms_asset_group_id_eq]"] = groupId;
+    if (subGroupId)
+      newFilters["q[pms_asset_pms_asset_sub_group_id_eq]"] = subGroupId;
     setActiveFilters(newFilters);
     // Changing filters via dialog shouldn't preselect any summary tile
     setSelectedSummary(null);
@@ -512,7 +567,7 @@ export const InventoryDashboard = () => {
     if (!currentSig) return; // only when filters are applied
     const count = Array.isArray(inventoryItems) ? inventoryItems.length : 0;
     if (count === 0 && lastNoResultSigRef.current !== currentSig) {
-      toast.info('No records found for the applied filters');
+      toast.info("No records found for the applied filters");
       lastNoResultSigRef.current = currentSig; // prevent duplicate toasts for the same filters
     }
     // If results appear for current filters, allow future toasts if filters change again
@@ -594,17 +649,17 @@ export const InventoryDashboard = () => {
   const handleStatusToggle = async (itemId: string) => {
     const item = inventoryData.find((i) => i.id === itemId);
     if (!item) {
-      toast.error('Item not found');
+      toast.error("Item not found");
       return;
     }
 
     const newStatus = item.active === "Active" ? false : true;
 
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
       if (!baseUrl || !token) {
-        toast.error('Missing base URL or token');
+        toast.error("Missing base URL or token");
         return;
       }
 
@@ -618,16 +673,18 @@ export const InventoryDashboard = () => {
         }
       );
 
-      if (response.data && typeof response.data.active === 'boolean') {
-        toast.success(`Item ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      if (response.data && typeof response.data.active === "boolean") {
+        toast.success(
+          `Item ${newStatus ? "activated" : "deactivated"} successfully`
+        );
         // Refresh inventory data
         dispatch(fetchInventoryData({ page: currentPage, pageSize }));
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response from server");
       }
     } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update item status');
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update item status");
     }
   };
 
@@ -653,7 +710,6 @@ export const InventoryDashboard = () => {
     { key: "minStockLevel", label: "Min Stock", sortable: true },
     { key: "minOrderLevel", label: "Min Order", sortable: true },
     { key: "referenceNumber", label: "Reference Number", sortable: true },
-
   ];
 
   const bulkActions = [
@@ -668,9 +724,13 @@ export const InventoryDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "actions") {
-      const itemId = typeof item.id === "string" ? item.id : String(item.id || "");
+      const itemId =
+        typeof item.id === "string" ? item.id : String(item.id || "");
       return (
-        <div className="flex items-center justify-center w-full gap-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center justify-center w-full gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Button
             variant="ghost"
             size="sm"
@@ -695,7 +755,8 @@ export const InventoryDashboard = () => {
               alt="Green Product"
               className="w-4 h-4"
               style={{
-                filter: "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
+                filter:
+                  "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
               }}
             />
           )}
@@ -706,40 +767,48 @@ export const InventoryDashboard = () => {
       const raw = item.expiryDate as string | undefined;
       if (!raw) return "-";
       // Avoid timezone shifts; use the date portion before 'T' when present
-      const onlyDate = raw.includes('T') ? raw.split('T')[0] : raw;
+      const onlyDate = raw.includes("T") ? raw.split("T")[0] : raw;
       return onlyDate;
     }
     if (columnKey === "criticality") {
       const raw = item.criticality;
       // Normalise to numeric code: 1 = Critical, 2 = Non-Critical (backward compat: 0 also treated as Critical)
       let code: number | null = null;
-      if (typeof raw === 'number') code = raw;
-      else if (typeof raw === 'string') {
+      if (typeof raw === "number") code = raw;
+      else if (typeof raw === "string") {
         const v = raw.trim().toLowerCase();
-        if (v === '1' || v === 'critical') code = 1;
-        else if (v === '2' || v === 'non-critical' || v === 'non_critical') code = 2;
-        else if (v === '0') code = 1; // legacy mapping (old API used 0 for Critical)
+        if (v === "1" || v === "critical") code = 1;
+        else if (v === "2" || v === "non-critical" || v === "non_critical")
+          code = 2;
+        else if (v === "0") code = 1; // legacy mapping (old API used 0 for Critical)
       }
       if (code === 0) code = 1; // legacy safeguard
-      const label = code === 1 ? 'Critical' : code === 2 ? 'Non-Critical' : '-';
-      const isCritical = label === 'Critical';
+      const label = code === 1 ? "Critical" : code === 2 ? "Non-Critical" : "-";
+      const isCritical = label === "Critical";
       return (
-        <span className={`px-2 py-1 rounded text-xs ${label === '-' ? 'bg-gray-50 text-gray-400' : isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+        <span
+          className={`px-2 py-1 rounded text-xs ${label === "-" ? "bg-gray-50 text-gray-400" : isCritical ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}
+        >
           {label}
         </span>
       );
     }
     if (columnKey === "active") {
       return (
-        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center justify-center w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div
-            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${item.active === "Active" ? 'bg-green-500' : 'bg-gray-300'
-              }`}
+            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${
+              item.active === "Active" ? "bg-green-500" : "bg-gray-300"
+            }`}
             onClick={() => handleStatusToggle(item.id)}
           >
             <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${item.active === "Active" ? 'translate-x-6' : 'translate-x-1'
-                }`}
+              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${
+                item.active === "Active" ? "translate-x-6" : "translate-x-1"
+              }`}
             />
           </div>
         </div>
@@ -747,16 +816,14 @@ export const InventoryDashboard = () => {
     }
     if (columnKey === "type") {
       const raw = item.type;
-      const code = typeof raw === 'number' ? raw : parseInt(raw, 10);
-      let label = '-';
-      if (code === 1) label = 'sparse';
-      else if (code === 2) label = 'consumable';
+      const code = typeof raw === "number" ? raw : parseInt(raw, 10);
+      let label = "-";
+      if (code === 1) label = "sparse";
+      else if (code === 2) label = "consumable";
       return <span className="capitalize">{label}</span>;
     }
     return item[columnKey];
   };
-
-
 
   const handlePageChange = (page: number) => {
     setLocalCurrentPage(page);
@@ -768,7 +835,7 @@ export const InventoryDashboard = () => {
     const items = [];
     const maxPagesToShow = 7;
     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
     if (endPage - startPage < maxPagesToShow - 1) {
       startPage = Math.max(1, endPage - maxPagesToShow + 1);
@@ -837,7 +904,7 @@ export const InventoryDashboard = () => {
   const handleGlobalNameSearch = (term: string) => {
     setLocalCurrentPage(1);
     if (term && term.trim()) {
-      const nf = { 'q[name_cont]': term.trim() };
+      const nf = { "q[name_cont]": term.trim() };
       setActiveFilters(nf);
       setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize, filters: nf }));
@@ -869,12 +936,12 @@ export const InventoryDashboard = () => {
   );
 
   const handleExport = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const siteId = localStorage.getItem("selectedSiteId");
     try {
       if (!baseUrl || !token || !siteId) {
-        toast.error('Missing base URL, token, or site ID');
+        toast.error("Missing base URL, token, or site ID");
         return;
       }
 
@@ -882,7 +949,7 @@ export const InventoryDashboard = () => {
       const queryParams = new URLSearchParams();
 
       // Add site_id parameter
-      queryParams.append('site_id', siteId);
+      queryParams.append("site_id", siteId);
 
       // Add active filter parameters to export
       if (activeFilters && Object.keys(activeFilters).length > 0) {
@@ -895,7 +962,7 @@ export const InventoryDashboard = () => {
 
       // Add selected items if any
       if (selectedItems.length > 0) {
-        queryParams.append('ids', selectedItems.join(','));
+        queryParams.append("ids", selectedItems.join(","));
       }
 
       // Append query parameters to URL
@@ -904,34 +971,34 @@ export const InventoryDashboard = () => {
       }
 
       const response = await axios.get(url, {
-        responseType: 'blob',
+        responseType: "blob",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.data || response.data.size === 0) {
-        toast.error('Empty file received from server');
+        toast.error("Empty file received from server");
         return;
       }
 
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
 
       // Create descriptive filename based on filters
-      let filename = 'inventories';
+      let filename = "inventories";
       if (Object.keys(activeFilters).length > 0) {
-        filename += '_filtered';
+        filename += "_filtered";
       }
       if (selectedItems.length > 0) {
-        filename += '_selected';
+        filename += "_selected";
       }
-      filename += '.xlsx';
+      filename += ".xlsx";
 
       link.download = filename;
       document.body.appendChild(link);
@@ -939,45 +1006,51 @@ export const InventoryDashboard = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      const message = Object.keys(activeFilters).length > 0
-        ? 'Filtered inventory data exported successfully'
-        : 'Inventory data exported successfully';
+      const message =
+        Object.keys(activeFilters).length > 0
+          ? "Filtered inventory data exported successfully"
+          : "Inventory data exported successfully";
       toast.success(message);
     } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export inventory data');
+      console.error("Export failed:", error);
+      toast.error("Failed to export inventory data");
     }
   };
 
   // Bulk / single QR code PDF download similar to ServiceDashboard pattern
   const handlePrintQR = async () => {
     if (selectedItems.length === 0 || downloadingQR) return;
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
     if (!baseUrl || !token) {
-      toast.error('Missing base URL or token');
+      toast.error("Missing base URL or token");
       return;
     }
     try {
       setDownloadingQR(true);
       // API (single existing pattern) used inventory_ids=[id]; extend for multiple by comma joining
-      const idsParam = selectedItems.join(',');
+      const idsParam = selectedItems.join(",");
       const url = `https://${baseUrl}/pms/inventories/inventory_qr_codes.pdf?inventory_ids=[${idsParam}]`;
-      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!resp.ok) throw new Error('Failed to generate QR PDF');
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) throw new Error("Failed to generate QR PDF");
       const blob = await resp.blob();
       const dlUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = dlUrl;
-      link.download = selectedItems.length === 1 ? `inventory-qr-${selectedItems[0]}.pdf` : `inventory-qr-bulk-${selectedItems.length}.pdf`;
+      link.download =
+        selectedItems.length === 1
+          ? `inventory-qr-${selectedItems[0]}.pdf`
+          : `inventory-qr-bulk-${selectedItems.length}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(dlUrl);
-      toast.success('QR code PDF downloaded');
+      toast.success("QR code PDF downloaded");
     } catch (e: any) {
-      console.error('QR download error', e);
-      toast.error(e.message || 'Failed to download QR codes');
+      console.error("QR download error", e);
+      toast.error(e.message || "Failed to download QR codes");
     } finally {
       setDownloadingQR(false);
     }
@@ -992,17 +1065,24 @@ export const InventoryDashboard = () => {
       const results: any = {};
 
       // Always fetch inventory_cost_over_month if selected
-      if (selectedAnalyticsOptions.includes('inventory_cost_over_month')) {
+      if (selectedAnalyticsOptions.includes("inventory_cost_over_month")) {
         try {
-          const costOverMonthResp = await inventoryAnalyticsAPI.getInventoryCostOverMonth(fromDate, toDate);
+          const costOverMonthResp =
+            await inventoryAnalyticsAPI.getInventoryCostOverMonth(
+              fromDate,
+              toDate
+            );
           results.inventoryCostOverMonth = costOverMonthResp;
         } catch (err) {
-          console.error('[DEBUG] Error fetching inventory_cost_over_month:', err);
+          console.error(
+            "[DEBUG] Error fetching inventory_cost_over_month:",
+            err
+          );
           results.inventoryCostOverMonth = null;
         }
       }
 
-      if (selectedAnalyticsOptions.includes('items_status')) {
+      if (selectedAnalyticsOptions.includes("items_status")) {
         const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(
           fromDate,
           toDate
@@ -1010,7 +1090,7 @@ export const InventoryDashboard = () => {
         results.statusData = statusResponse;
       }
 
-      if (selectedAnalyticsOptions.includes('category_wise')) {
+      if (selectedAnalyticsOptions.includes("category_wise")) {
         const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(
           fromDate,
           toDate
@@ -1018,26 +1098,30 @@ export const InventoryDashboard = () => {
         results.categoryData = categoryResponse;
       }
 
-      if (selectedAnalyticsOptions.includes('green_consumption')) {
-        results.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(
-          fromDate,
-          toDate
-        );
+      if (selectedAnalyticsOptions.includes("green_consumption")) {
+        results.greenConsumption =
+          await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
       }
 
-      if (selectedAnalyticsOptions.includes('inventory_consumption_over_site')) {
-        results.inventoryConsumptionOverSite = await inventoryAnalyticsAPI.getInventoryConsumptionOverSite(
-          fromDate,
-          toDate
-        );
+      if (
+        selectedAnalyticsOptions.includes("inventory_consumption_over_site")
+      ) {
+        results.inventoryConsumptionOverSite =
+          await inventoryAnalyticsAPI.getInventoryConsumptionOverSite(
+            fromDate,
+            toDate
+          );
       }
 
-      if (selectedAnalyticsOptions.includes('consumption_report_green')) {
+      if (selectedAnalyticsOptions.includes("consumption_report_green")) {
         results.consumptionReportGreen =
-          await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
+          await inventoryAnalyticsAPI.getConsumptionReportGreen(
+            fromDate,
+            toDate
+          );
       }
 
-      if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
+      if (selectedAnalyticsOptions.includes("consumption_report_non_green")) {
         results.consumptionReportNonGreen =
           await inventoryAnalyticsAPI.getConsumptionReportNonGreen(
             fromDate,
@@ -1045,7 +1129,7 @@ export const InventoryDashboard = () => {
           );
       }
 
-      if (selectedAnalyticsOptions.includes('current_minimum_stock_green')) {
+      if (selectedAnalyticsOptions.includes("current_minimum_stock_green")) {
         results.minimumStockGreen =
           await inventoryAnalyticsAPI.getCurrentMinimumStockGreen(
             fromDate,
@@ -1053,7 +1137,9 @@ export const InventoryDashboard = () => {
           );
       }
 
-      if (selectedAnalyticsOptions.includes('current_minimum_stock_non_green')) {
+      if (
+        selectedAnalyticsOptions.includes("current_minimum_stock_non_green")
+      ) {
         results.minimumStockNonGreen =
           await inventoryAnalyticsAPI.getCurrentMinimumStockNonGreen(
             fromDate,
@@ -1063,8 +1149,8 @@ export const InventoryDashboard = () => {
 
       setAnalyticsData(results);
     } catch (error) {
-      console.error('Failed to fetch analytics data:', error);
-      toast.error('Failed to fetch analytics data');
+      console.error("Failed to fetch analytics data:", error);
+      toast.error("Failed to fetch analytics data");
     } finally {
       setAnalyticsLoading(false);
     }
@@ -1123,17 +1209,16 @@ export const InventoryDashboard = () => {
   ];
 
   // Group data from API - with safety check
-  const groupChartData = (
+  const groupChartData =
     analyticsData.categoryData?.category_counts &&
     Array.isArray(analyticsData.categoryData.category_counts)
-  )
-    ? analyticsData.categoryData.category_counts.map(
-      ({ group_name, item_count }) => ({
-        name: group_name,
-        value: item_count,
-      })
-    )
-    : [];
+      ? analyticsData.categoryData.category_counts.map(
+          ({ group_name, item_count }) => ({
+            name: group_name,
+            value: item_count,
+          })
+        )
+      : [];
 
   const resetFilters = () => {
     setDateRange({
@@ -1195,7 +1280,9 @@ export const InventoryDashboard = () => {
                 </Button>
               </div>
               <InventoryAnalyticsSelector
-                onSelectionChange={(options) => setSelectedAnalyticsOptions(options)}
+                onSelectionChange={(options) =>
+                  setSelectedAnalyticsOptions(options)
+                }
               />
             </div>
 
@@ -1204,50 +1291,104 @@ export const InventoryDashboard = () => {
                 <div className="text-gray-600">Loading analytics data...</div>
               </div>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
-                <SortableContext items={analyticsCardOrder} strategy={rectSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleAnalyticsDragEnd}
+              >
+                <SortableContext
+                  items={analyticsCardOrder}
+                  strategy={rectSortingStrategy}
+                >
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {analyticsCardOrder.filter(id => selectedAnalyticsOptions.includes(id)).map((id) => {
-                      const config: Record<string, { title: string; data: any; type: any }> = {
-                        items_status: { title: 'Items Status', data: analyticsData.statusData, type: 'itemsStatus' },
-                        category_wise: { title: 'Category Wise Items', data: analyticsData.categoryData, type: 'categoryWise' },
-                        green_consumption: { title: 'Green Consumption', data: analyticsData.greenConsumption, type: 'greenConsumption' },
-                        consumption_report_green: { title: 'Consumption Report Green', data: analyticsData.consumptionReportGreen, type: 'consumptionReportGreen' },
-                        consumption_report_non_green: { title: 'Consumption Report Non-Green', data: analyticsData.consumptionReportNonGreen, type: 'consumptionReportNonGreen' },
-                        current_minimum_stock_green: { title: 'Current Minimum Stock Green', data: analyticsData.minimumStockGreen, type: 'currentMinimumStockGreen' },
-                        current_minimum_stock_non_green: { title: 'Current Minimum Stock Non-Green', data: analyticsData.minimumStockNonGreen, type: 'currentMinimumStockNonGreen' },
-                        inventory_cost_over_month: { title: 'Inventory Cost Over Month', data: analyticsData.inventoryCostOverMonth, type: 'inventoryCostOverMonth' },
-                        inventory_consumption_over_site: { title: 'Inventory Consumption Over Site', data: analyticsData.inventoryConsumptionOverSite, type: 'inventoryConsumptionOverSite' },
-                      };
-                      const card = config[id];
-                      if (!card) return null;
-                      const spanFull = id === 'current_minimum_stock_non_green';
-                      return (
-                        <div key={id} className={spanFull ? 'col-span-1 lg:col-span-2' : ''}>
-                          <SortableChartItem id={id}>
-                            {id === 'inventory_cost_over_month' && !card.data ? (
-                              <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
-                                <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
-                                <div className="flex-1 bg-gray-100 rounded" />
-                              </div>
-                            ) : card.data ? (
-                              <InventoryAnalyticsCard
-                                title={card.title}
-                                data={card.data}
-                                type={card.type}
-                                dateRange={dateRange}
-                              />
-                            ) : null}
-                          </SortableChartItem>
-                        </div>
-                      );
-                    })}
+                    {analyticsCardOrder
+                      .filter((id) => selectedAnalyticsOptions.includes(id))
+                      .map((id) => {
+                        const config: Record<
+                          string,
+                          { title: string; data: any; type: any }
+                        > = {
+                          items_status: {
+                            title: "Items Status",
+                            data: analyticsData.statusData,
+                            type: "itemsStatus",
+                          },
+                          category_wise: {
+                            title: "Category Wise Items",
+                            data: analyticsData.categoryData,
+                            type: "categoryWise",
+                          },
+                          green_consumption: {
+                            title: "Green Consumption",
+                            data: analyticsData.greenConsumption,
+                            type: "greenConsumption",
+                          },
+                          consumption_report_green: {
+                            title: "Consumption Report Green",
+                            data: analyticsData.consumptionReportGreen,
+                            type: "consumptionReportGreen",
+                          },
+                          consumption_report_non_green: {
+                            title: "Consumption Report Non-Green",
+                            data: analyticsData.consumptionReportNonGreen,
+                            type: "consumptionReportNonGreen",
+                          },
+                          current_minimum_stock_green: {
+                            title: "Current Minimum Stock Green",
+                            data: analyticsData.minimumStockGreen,
+                            type: "currentMinimumStockGreen",
+                          },
+                          current_minimum_stock_non_green: {
+                            title: "Current Minimum Stock Non-Green",
+                            data: analyticsData.minimumStockNonGreen,
+                            type: "currentMinimumStockNonGreen",
+                          },
+                          inventory_cost_over_month: {
+                            title: "Inventory Cost Over Month",
+                            data: analyticsData.inventoryCostOverMonth,
+                            type: "inventoryCostOverMonth",
+                          },
+                          inventory_consumption_over_site: {
+                            title: "Inventory Consumption Over Site",
+                            data: analyticsData.inventoryConsumptionOverSite,
+                            type: "inventoryConsumptionOverSite",
+                          },
+                        };
+                        const card = config[id];
+                        if (!card) return null;
+                        const spanFull =
+                          id === "current_minimum_stock_non_green";
+                        return (
+                          <div
+                            key={id}
+                            className={
+                              spanFull ? "col-span-1 lg:col-span-2" : ""
+                            }
+                          >
+                            <SortableChartItem id={id}>
+                              {id === "inventory_cost_over_month" &&
+                              !card.data ? (
+                                <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
+                                  <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
+                                  <div className="flex-1 bg-gray-100 rounded" />
+                                </div>
+                              ) : card.data ? (
+                                <InventoryAnalyticsCard
+                                  title={card.title}
+                                  data={card.data}
+                                  type={card.type}
+                                  dateRange={dateRange}
+                                />
+                              ) : null}
+                            </SortableChartItem>
+                          </div>
+                        );
+                      })}
                   </div>
                 </SortableContext>
               </DndContext>
             )}
-            <AIAssistantWidget allowedModuleId={4} />
-
+            <DashboardAIAssistant moduleId="4" />
           </TabsContent>
           <TabsContent value="list" className="space-y-4 sm:space-y-6">
             {error && (
@@ -1260,45 +1401,57 @@ export const InventoryDashboard = () => {
                 <StatsCard
                   title="Total Inventories"
                   value={baselineCounts.totalInventories}
-                  selected={selectedSummary === 'total'}
-                  icon={<Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  selected={selectedSummary === "total"}
+                  icon={
+                    <Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />
+                  }
                   // selected={selectedSummary === 'total'}
                   onClick={() => {
                     setActiveFilters({});
-                    setSelectedSummary('total');
+                    setSelectedSummary("total");
                     setLocalCurrentPage(1);
                   }}
                 />
                 <StatsCard
                   title="Active Inventory"
                   value={baselineCounts.activeCount}
-                  selected={selectedSummary === 'active'}
-                  icon={<BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  selected={selectedSummary === "active"}
+                  icon={
+                    <BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />
+                  }
                   // selected={selectedSummary === 'active'}
                   onClick={() => {
-                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                    const nf = { "q[active_eq]": true as any } as Record<
+                      string,
+                      string
+                    >;
                     setActiveFilters(nf);
-                    setSelectedSummary('active');
+                    setSelectedSummary("active");
                     setLocalCurrentPage(1);
                   }}
                 />
                 <StatsCard
                   title="Inactive Inventory"
                   value={baselineCounts.inactiveCount}
-                  selected={selectedSummary === 'inactive'}
-                  icon={<CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                  selected={selectedSummary === "inactive"}
+                  icon={
+                    <CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />
+                  }
                   // selected={selectedSummary === 'inactive'}
                   onClick={() => {
-                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                    const nf = { "q[active_eq]": false as any } as Record<
+                      string,
+                      string
+                    >;
                     setActiveFilters(nf);
-                    setSelectedSummary('inactive');
+                    setSelectedSummary("inactive");
                     setLocalCurrentPage(1);
                   }}
                 />
                 <StatsCard
                   title="Ecofriendly"
                   value={baselineCounts.greenInventories}
-                  selected={selectedSummary === 'green'}
+                  selected={selectedSummary === "green"}
                   icon={
                     <img
                       src={bio}
@@ -1310,12 +1463,14 @@ export const InventoryDashboard = () => {
                       }}
                     />
                   }
-
                   // selected={selectedSummary === 'green'}
                   onClick={() => {
-                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                    const nf = { "q[green_product_eq]": true as any } as Record<
+                      string,
+                      string
+                    >;
                     setActiveFilters(nf);
-                    setSelectedSummary('green');
+                    setSelectedSummary("green");
                     setLocalCurrentPage(1);
                   }}
                 />
@@ -1328,19 +1483,26 @@ export const InventoryDashboard = () => {
                   onAddConsumable={() => {
                     const firstId = selectedItems[0];
                     if (!firstId) return;
-                    console.log(paginatedData)
-                    if (paginatedData.find(item => item.id === firstId)?.active === "Inactive") {
-                      toast.dismiss()
-                      toast.error("Inactive inventory cannot be consumed or add")
+                    console.log(paginatedData);
+                    if (
+                      paginatedData.find((item) => item.id === firstId)
+                        ?.active === "Inactive"
+                    ) {
+                      toast.dismiss();
+                      toast.error(
+                        "Inactive inventory cannot be consumed or add"
+                      );
                       return;
                     }
                     const now = new Date();
                     const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, "0");
+                    const day = String(now.getDate()).padStart(2, "0");
                     const startDateStr = `${year}-${month}-01`;
                     const endDateStr = `${year}-${month}-${day}`;
-                    navigate(`/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`);
+                    navigate(
+                      `/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`
+                    );
                   }}
                   onAdd={handleAddInventory}
                   onImport={handleImportClick}
@@ -1371,7 +1533,9 @@ export const InventoryDashboard = () => {
                 storageKey="inventory-table"
                 loading={loading}
                 emptyMessage={
-                  loading ? "Loading inventory data..." : "No inventory items found"
+                  loading
+                    ? "Loading inventory data..."
+                    : "No inventory items found"
                 }
                 leftActions={renderCustomActions()}
                 onFilterClick={handleFiltersClick}
@@ -1385,9 +1549,13 @@ export const InventoryDashboard = () => {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        handlePageChange(Math.max(1, currentPage - 1))
+                      }
                       className={
-                        currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
                       }
                     />
                   </PaginationItem>
@@ -1399,8 +1567,8 @@ export const InventoryDashboard = () => {
                       }
                       className={
                         currentPage === totalPages
-                          ? 'pointer-events-none opacity-50'
-                          : ''
+                          ? "pointer-events-none opacity-50"
+                          : ""
                       }
                     />
                   </PaginationItem>
@@ -1413,7 +1581,15 @@ export const InventoryDashboard = () => {
           open={showBulkUpload}
           onOpenChange={setShowBulkUpload}
           title="Bulk Upload"
-          onImported={() => dispatch(fetchInventoryData({ page: currentPage, pageSize, filters: activeFilters }))}
+          onImported={() =>
+            dispatch(
+              fetchInventoryData({
+                page: currentPage,
+                pageSize,
+                filters: activeFilters,
+              })
+            )
+          }
         />
         <InventoryFilterDialog
           open={showFilter}
@@ -1440,8 +1616,12 @@ export const InventoryDashboard = () => {
           currentEndDate={dateRange.endDate}
           onApplyFilters={(filters) => {
             // Parse DD/MM/YYYY to Date objects
-            const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
-            const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
+            const [startDay, startMonth, startYear] = filters.startDate
+              .split("/")
+              .map(Number);
+            const [endDay, endMonth, endYear] = filters.endDate
+              .split("/")
+              .map(Number);
             const startDate = new Date(startYear, startMonth - 1, startDay);
             const endDate = new Date(endYear, endMonth - 1, endDay);
             // Set time to start of day for startDate and end of day for endDate

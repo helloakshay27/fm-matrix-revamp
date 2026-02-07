@@ -598,7 +598,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     apiUrl = `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else {
     // Default fallback
-    apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+    apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
   }
 
   const response = await fetch(apiUrl);

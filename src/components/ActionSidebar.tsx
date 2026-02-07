@@ -433,9 +433,10 @@ export const ActionSidebar = () => {
         <button
           onClick={() => {
             if (hasChildren) {
+              // If has children, only toggle dropdown - don't navigate
               toggleExpand(func.action_name);
-            }
-            if (func.react_link) {
+            } else if (func.react_link) {
+              // Only navigate if no children (leaf node)
               handleNavigation(func.react_link, func.function_name);
             }
           }}

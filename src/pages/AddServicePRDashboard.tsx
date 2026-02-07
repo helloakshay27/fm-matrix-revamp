@@ -144,6 +144,36 @@ export const AddServicePRDashboard = () => {
     }
   };
 
+  // Fetch GL Code for WBS
+  const fetchGlCodeForWbs = async (detailId, wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      console.log("GL Code Response:", response.data);
+      
+      // Update the detail with the GL code from API
+      if (response.data && response.data.gl_code) {
+        setDetailsForms((prevForms) =>
+          prevForms.map((form) =>
+            form.id === detailId
+              ? { ...form, glCode: response.data.gl_code }
+              : form
+          )
+        );
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
+    }
+  };
+
   // Fetch Tax Code options
   const fetchTaxCodeOptions = async () => {
     try {
@@ -470,6 +500,9 @@ export const AddServicePRDashboard = () => {
     if (data.length > 0) {
       setShowRadio(true);
     }
+    if (data.length <= 0 ){
+      setShowRadio(false)
+    }
   }, [data]);
 
   useEffect(() => {
@@ -555,6 +588,10 @@ export const AddServicePRDashboard = () => {
             ].includes(field)
           ) {
             return calculateItem(updatedForm);
+          }
+          // When WBS code changes, fetch GL code
+          if (field === "wbsCode" && value) {
+            fetchGlCodeForWbs(id, value);
           }
           return updatedForm;
         }
@@ -666,7 +703,7 @@ export const AddServicePRDashboard = () => {
         return false;
       }
       if (!item.productDescription) {
-        toast.error("Product Description is required for all items");
+        toast.error("Product Additional Text is required for all items");
         return false;
       }
       if (!item.glCode) {
@@ -1190,7 +1227,7 @@ export const AddServicePRDashboard = () => {
                   </FormControl>
 
                   <TextField
-                    label="Product Description*"
+                    label="Product Additional Text*"
                     value={detailsData.productDescription}
                     onChange={(e) =>
                       handleDetailsChange(
@@ -1204,28 +1241,68 @@ export const AddServicePRDashboard = () => {
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
+                    {wbsSelection === "individual" && (
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={detailsData.wbsCode}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  )}
 
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>GL Code*</InputLabel>
-                    <MuiSelect
+                  {/* GL Code - Conditional rendering */}
+                  {wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                    // Show disabled TextField when WBS is selected and codes available
+                    <TextField
                       label="GL Code*"
                       value={detailsData.glCode}
-                      onChange={(e) =>
-                        handleDetailsChange(detailsData.id, "glCode", e.target.value)
-                      }
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select GL Code</em>
-                      </MenuItem>
-                      {glAccountOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.content.code}>
-                          {option.content.code} - {option.content.name}
+                      placeholder="Auto-populated after WBS selection"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, readOnly: true }}
+                      sx={{ mt: 1 }}
+                      disabled
+                    />
+                  ) : (
+                    // Show Select dropdown when no WBS or WBS not in individual mode
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>GL Code*</InputLabel>
+                      <MuiSelect
+                        label="GL Code*"
+                        value={detailsData.glCode}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "glCode", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select GL Code</em>
                         </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
+                        {glAccountOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  )}
 
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Tax Code*</InputLabel>
@@ -1514,29 +1591,7 @@ export const AddServicePRDashboard = () => {
 
                  
 
-                  {wbsSelection === "individual" && (
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
-                      <MuiSelect
-                        label="WBS Code*"
-                        value={detailsData.wbsCode}
-                        onChange={(e) =>
-                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
-                        }
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="">
-                          <em>Select WBS Code</em>
-                        </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  )}
+                
                 </div>
               </div>
             ))}
