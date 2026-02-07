@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -44,11 +44,9 @@ const fieldStyles = {
   },
 };
 
-export const EditCuratedServicePage = () => {
-  const { id } = useParams<{ id: string }>();
+export const SupportedServiceAdd = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -60,21 +58,16 @@ export const EditCuratedServicePage = () => {
     order_no: "",
     mobile: "",
     address: "",
-    email: "", 
-    active: true,
+    email: "",
+    active: 1,
   });
 
   const [attachment, setAttachment] = useState<File | null>(null);
-  const [existingImageUrl, setExistingImageUrl] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [imageChanged, setImageChanged] = useState(false);
 
   useEffect(() => {
     fetchServiceCategories();
-    if (id) {
-      fetchPlusService();
-    }
-  }, [id]);
+  }, []);
 
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
@@ -94,6 +87,7 @@ export const EditCuratedServicePage = () => {
       }
 
       const data = await response.json();
+      console.log("Fetched service categories:", data);
       setServiceCategories(data.osr_categories || []);
     } catch (error: any) {
       console.error("Error fetching service categories:", error);
@@ -102,63 +96,6 @@ export const EditCuratedServicePage = () => {
       });
     } finally {
       setLoadingCategories(false);
-    }
-  };
-
-  const fetchPlusService = async () => {
-    if (!id) {
-      toast.error("Service ID is required");
-      navigate("/pulse/curated-services/service");
-      return;
-    }
-
-    setFetchLoading(true);
-    try {
-      const apiUrl = getFullUrl(`/osr_setups/osr_sub_category_detail.json?osr_sub_category_id=${id}`);
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const serviceInfo = data.osr_sub_category || data;
-
-      setFormData({
-      name: serviceInfo.name || "",
-      description: serviceInfo.description || "",
-      service_category_id: serviceInfo.osr_categories_id?.toString() || "",
-      order_no: serviceInfo.order_no?.toString() || "",
-      mobile: serviceInfo.mobile || "",
-      address: serviceInfo.address || "",
-      email: serviceInfo.email || "",
-      active: serviceInfo.active !== undefined ? serviceInfo.active : true,
-    });
-
-    // Handle existing image
-    let imageUrl = "";
-    if (serviceInfo.attachment && serviceInfo.attachment.document_url) {
-      imageUrl = serviceInfo.attachment.document_url;
-    } else if (serviceInfo.attachment_url) {
-      imageUrl = serviceInfo.attachment_url;
-    } else if (serviceInfo.image_url) {
-      imageUrl = serviceInfo.image_url;
-    }
-
-      setExistingImageUrl(imageUrl);
-    } catch (error: any) {
-      console.error("Error fetching plus service:", error);
-      toast.error(error.message || "Failed to load plus service data");
-      navigate("/pulse/curated-services/service");
-    } finally {
-      setFetchLoading(false);
     }
   };
 
@@ -183,7 +120,6 @@ export const EditCuratedServicePage = () => {
     if (!file) {
       setAttachment(null);
       setImagePreview("");
-      setImageChanged(false);
       return;
     }
 
@@ -210,22 +146,11 @@ export const EditCuratedServicePage = () => {
 
     setAttachment(file);
     setImagePreview(URL.createObjectURL(file));
-    setImageChanged(true);
   };
 
-  const removeNewImage = () => {
+  const removeImage = () => {
     setAttachment(null);
     setImagePreview("");
-    setImageChanged(false);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) fileInput.value = "";
-  };
-
-  const removeExistingImage = () => {
-    setExistingImageUrl("");
-    setAttachment(null);
-    setImagePreview("");
-    setImageChanged(true);
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
@@ -268,32 +193,30 @@ export const EditCuratedServicePage = () => {
       formDataToSend.append("name", formData.name);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("osr_categories_id", formData.service_category_id);
-      // formDataToSend.append("plus_service[active]", formData?.active?.toString());
+      formDataToSend.append("active", formData.active.toString());
+      formDataToSend.append("service_tag", "supported");
 
       // if (formData.order_no) {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
       // }
 
-      // if (formData.mobile) {
+      if (formData.mobile) {
         formDataToSend.append("mobile", formData.mobile);
-      // }
-
-      // if (formData.address) {
-        formDataToSend.append("address", formData.address);
-      // }
-      //  if (formData.email) {
+      }
+       if (formData.email) {
         formDataToSend.append("email", formData.email);
-      // }
-
-      if (imageChanged) {
-        if (attachment) {
-          formDataToSend.append("attachment", attachment);
-        } else {
-          formDataToSend.append("attachment", "");
-        }
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?id=${id}`);
+
+      if (formData.address) {
+        formDataToSend.append("address", formData.address);
+      }
+
+      if (attachment) {
+        formDataToSend.append("attachment", attachment);
+      }
+
+      const apiUrl = getFullUrl("/osr_setups/create_osr_sub_category.json");
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -306,30 +229,19 @@ export const EditCuratedServicePage = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success("Service updated successfully!");
-      navigate("/pulse/curated-services/service");
+      toast.success("Service created successfully!");
+      navigate("/pulse/supported-services/service");
     } catch (error: any) {
-      console.error("Error updating plus service:", error);
-      toast.error(error.message || "Failed to update service. Please try again.");
+      console.error("Error creating plus service:", error);
+      toast.error(error.message || "Failed to create service. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate("/pulse/curated-services/service");
+    navigate("/pulse/supported-services/service");
   };
-
-  if (fetchLoading) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030] mx-auto mb-4" />
-          <p className="text-gray-600">Loading service details...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -343,14 +255,16 @@ export const EditCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Curated Service List</span>
+          <span>Supported Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Edit Curated Service</span>
+          <span className="text-gray-900 font-medium">Create New Supported Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT CURATED SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW SUPPORTED SERVICE</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6">
         {/* Service Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
@@ -430,7 +344,8 @@ export const EditCuratedServicePage = () => {
                 }}
               /> */}
 
-               <TextField
+                {/* Mobile */}
+              <TextField
                 fullWidth
                 label="Mobile"
                 type="tel"
@@ -457,8 +372,7 @@ export const EditCuratedServicePage = () => {
 
             {/* Second Row - Mobile and Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Mobile */}
-             
+            
 
               {/* Address */}
               <TextField
@@ -477,22 +391,23 @@ export const EditCuratedServicePage = () => {
                   sx: fieldStyles,
                 }}
               />
+
               <TextField
-  fullWidth
-  label="Email"
-  value={formData.email}
-  onChange={(e) => handleInputChange("email", e.target.value)}
-  placeholder="Enter Email"
-  variant="outlined"
-  slotProps={{
-    inputLabel: {
-      shrink: true,
-    },
-  }}
-  InputProps={{
-    sx: fieldStyles,
-  }}
-/>
+                fullWidth
+                label="Email"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="Enter Email"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
             </div>
 
             {/* Description - Full width */}
@@ -580,33 +495,29 @@ export const EditCuratedServicePage = () => {
               </Button>
 
               {/* Display attached image */}
-              {(imagePreview && imageChanged) || existingImageUrl ? (
+              {imagePreview && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
                     <div className="flex items-center gap-2">
                       <Upload className="w-4 h-4 text-gray-500" />
-                      <span>{imageChanged ? attachment?.name : 'Current attachment'}</span>
+                      <span>{attachment?.name}</span>
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={imageChanged ? removeNewImage : removeExistingImage}
+                      onClick={removeImage}
                     >
                       <X className="w-3 h-3" />
                     </Button>
                   </div>
                   <div className="relative inline-block">
                     <img
-                      src={imageChanged ? imagePreview : existingImageUrl}
-                      alt={imageChanged ? "New Service Preview" : "Current Service Image"}
+                      src={imagePreview}
+                      alt="Service Preview"
                       className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
                   </div>
-                </div>
-              ) : (
-                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-sm text-gray-500">No image selected</p>
                 </div>
               )}
             </div>
@@ -620,7 +531,7 @@ export const EditCuratedServicePage = () => {
             disabled={loading}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
-            {loading ? 'Updating...' : 'Update Service'}
+            {loading ? 'Creating...' : 'Create Service'}
           </Button>
           <Button
             type="button"

@@ -18,13 +18,6 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "osr_category_name",
-    label: "Service Category Name",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "email",
     label: "Email",
     sortable: true,
@@ -51,7 +44,6 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
-    // width: 200,
   },
   {
     key: "attachment",
@@ -69,7 +61,7 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-const CuratedServiceDashboard = () => {
+const SupportedServiceDashboard = () => {
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState<any[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
@@ -85,7 +77,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=curated");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -111,7 +103,6 @@ const CuratedServiceDashboard = () => {
             mobile: item.mobile,
             address: item.address,
             active: item.active === 1,
-            osr_category_name: item.osr_category_name,
             attachment: item.attachment
             ? {
                 document_url: item.attachment.document_url,
@@ -131,9 +122,6 @@ const CuratedServiceDashboard = () => {
       setLoadingData(false);
     }
   };
-
-
-  console.log("Plus Services Data:", plusServices);
 
   useEffect(() => {
     fetchData();
@@ -155,7 +143,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?json?q[service_tag_eq]=curated&id=${itemId}`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&id=${itemId}`);
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -288,31 +276,12 @@ const CuratedServiceDashboard = () => {
             disabled={updatingStatus[item.id]}
           />
         );
-         case "category":
-      return (
-        <span className="text-sm text-gray-600">
-          {item.osr_category_name|| "-"}
-        </span>
-      );
 
       case "description":
         return (
-          <div className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
-          title={item.description || ""}
-          style={{ maxWidth: 250 }}
-          >
+          <span className="text-sm text-gray-600">
             {item.description || "-"}
-          </div>
-        );
-      case "address":
-        return (
-          <div
-            className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
-            title={item.address || ""}
-            style={{ maxWidth: 250 }}
-          >
-            {item.address || "-"}
-          </div>
+          </span>
         );
 
       case "email":
@@ -342,7 +311,7 @@ const CuratedServiceDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => navigate(`/pulse/curated-services/service/edit/${item.id}`)}
+          onClick={() => navigate(`/pulse/supported-services/service/edit/${item.id}`)}
           disabled={!item.active}
         >
           <Edit className="w-4 h-4" />
@@ -363,7 +332,7 @@ const CuratedServiceDashboard = () => {
     <>
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/pulse/curated-services/service/create")}
+        onClick={() => navigate("/pulse/supported-services/service/create")}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add
@@ -374,7 +343,7 @@ const CuratedServiceDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Curated Services</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Supported Services</h1>
       </div>
 
       <EnhancedTable
@@ -391,4 +360,4 @@ const CuratedServiceDashboard = () => {
   );
 };
 
-export default CuratedServiceDashboard;
+export default SupportedServiceDashboard;

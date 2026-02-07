@@ -44,7 +44,7 @@ const fieldStyles = {
   },
 };
 
-export const EditCuratedServicePage = () => {
+export const SupportedServiceEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -274,16 +274,16 @@ export const EditCuratedServicePage = () => {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
       // }
 
-      // if (formData.mobile) {
+      if (formData.mobile) {
         formDataToSend.append("mobile", formData.mobile);
-      // }
+      }
 
-      // if (formData.address) {
+      if (formData.address) {
         formDataToSend.append("address", formData.address);
-      // }
-      //  if (formData.email) {
+      }
+       if (formData.email) {
         formDataToSend.append("email", formData.email);
-      // }
+      }
 
       if (imageChanged) {
         if (attachment) {
@@ -307,7 +307,7 @@ export const EditCuratedServicePage = () => {
       }
 
       toast.success("Service updated successfully!");
-      navigate("/pulse/curated-services/service");
+      navigate("/pulse/supported-services/service");
     } catch (error: any) {
       console.error("Error updating plus service:", error);
       toast.error(error.message || "Failed to update service. Please try again.");
@@ -317,7 +317,7 @@ export const EditCuratedServicePage = () => {
   };
 
   const handleCancel = () => {
-    navigate("/pulse/curated-services/service");
+    navigate("/pulse/supported-services/service");
   };
 
   if (fetchLoading) {
@@ -343,11 +343,11 @@ export const EditCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Curated Service List</span>
+          <span>Supported Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Edit Curated Service</span>
+          <span className="text-gray-900 font-medium">Edit Supported Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT CURATED SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">EDIT SUPPORTED SERVICE</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

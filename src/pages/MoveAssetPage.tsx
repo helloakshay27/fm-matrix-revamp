@@ -353,7 +353,7 @@ export const MoveAssetPage: React.FC = () => {
             />
 
             {allocateTo === "user" && (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Employee Code</Label>
                   <Input value={employeeCode} disabled />
