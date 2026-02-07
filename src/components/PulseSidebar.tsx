@@ -93,7 +93,7 @@ const modulesByPackage = {
           href: "/pulse/curated-services/service-category",
         },
         { name: "Curated Service", href: "/pulse/curated-services/service" },
-        { name: "Supported Services", href: "/pulse/supported-services/service" },
+        { name: "Supported Service", href: "/pulse/supported-services/service" },
       ],
     },
     {
