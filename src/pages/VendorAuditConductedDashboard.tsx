@@ -132,7 +132,7 @@ export const VendorAuditConductedDashboard = () => {
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'report', label: 'Report', sortable: true, draggable: true },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'auditName', label: 'Audit Name', sortable: true, draggable: true },
@@ -248,10 +248,10 @@ export const VendorAuditConductedDashboard = () => {
               data={conductedData}
               columns={columns}
               renderCell={renderCell}
-              selectable={true}
-              selectedItems={selectedItems}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
+              // selectable={true}
+              // selectedItems={selectedItems}
+              // onSelectAll={handleSelectAll}
+              // onSelectItem={handleSelectItem}
               getItemId={(item) => item.id.toString()}
               storageKey="conducted-audit-table"
               className="w-full"
