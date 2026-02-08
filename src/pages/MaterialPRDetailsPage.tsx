@@ -709,9 +709,9 @@ export const MaterialPRDetailsPage = () => {
       </div>
 
       <TooltipProvider>
-        <div className="flex items-start gap-4 my-4">
+        <div className="flex flex-wrap items-start gap-2 sm:gap-3 md:gap-4 my-4">
           {pr.approval_levels?.map((level, index) => (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-2 w-full sm:w-auto">
               {level.status_label.toLowerCase() === "rejected" ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
