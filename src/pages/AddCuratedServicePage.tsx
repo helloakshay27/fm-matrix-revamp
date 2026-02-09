@@ -74,7 +74,7 @@ export const AddCuratedServicePage = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=curated");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -312,6 +312,11 @@ export const AddCuratedServicePage = () => {
                 slotProps={{
                   inputLabel: {
                     shrink: true,
+                    sx: {
+                      "& .MuiFormLabel-asterisk": {
+                        color: "red",
+                      },
+                    },
                   },
                 }}
                 InputProps={{
@@ -326,7 +331,13 @@ export const AddCuratedServicePage = () => {
                 variant="outlined"
                 sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
-                <InputLabel shrink>Service Category</InputLabel>
+                <InputLabel shrink
+                  sx={{
+                    "& .MuiFormLabel-asterisk": {
+                      color: "red",   // or #d32f2f
+                    },
+                  }}
+                >Service Category</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
                   onChange={(e) =>
@@ -399,6 +410,8 @@ export const AddCuratedServicePage = () => {
 
             {/* Second Row - Mobile and Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
               {/* Address */}
               <TextField
                 fullWidth

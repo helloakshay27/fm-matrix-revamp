@@ -183,6 +183,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
+    if (selectedCompany?.id === 189) {
+      return <ZxSidebar />;
+    }
+
     // Check for token-based VI access first
     const urlParams = new URLSearchParams(window.location.search);
     const hasTokenParam = urlParams.has("access_token");
@@ -219,9 +223,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Company-specific logic (Admin layout)
-    if (selectedCompany?.id === 189) {
-      return <ZxSidebar />;
-    }
 
     if (selectedCompany?.id === 294) {
       return <ZycusSidebar />;
@@ -266,6 +267,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null; // No dynamic header for employees
     }
 
+    // Company-specific logic (Admin layout)
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -282,6 +285,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ActionHeader />;
     }
 
+    if (selectedCompany?.id === 189) {
+      return <ZxDynamicHeader />;
+    }
+
     if (isFMSite) {
       return <StaticDynamicHeader />;
     }
@@ -289,11 +296,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
-    }
-
-    // Company-specific logic (Admin layout)
-    if (selectedCompany?.id === 189) {
-      return <ZxDynamicHeader />;
     }
 
     if (selectedCompany?.id === 294) {

@@ -944,9 +944,9 @@ import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
 import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
 import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
-// import { ContestListPage } from "./pages/ContestListPage";
-// import { CreateContestPage } from "./pages/CreateContestPage";
-// import { ContestDetailsPage } from "./pages/ContestDetailsPage";
+import { ContestListPage } from "./pages/ContestListPage";
+import { CreateContestPage } from "./pages/CreateContestPage";
+import { ContestDetailsPage } from "./pages/ContestDetailsPage";
 
 import { SpinnerContest } from "./components/mobile/SpinnerContest";
 import { ScratchCard } from "./components/mobile/ScratchCard";
@@ -4610,7 +4610,7 @@ function App() {
 
                     {/* Mail Inbound Routes */}
 
-                    {/* <Route path="/contests" element={<ContestListPage />} />
+                    <Route path="/contests" element={<ContestListPage />} />
                     <Route
                       path="/contests/create"
                       element={<CreateContestPage />}
@@ -4618,7 +4618,7 @@ function App() {
                     <Route
                       path="/contests/:id"
                       element={<ContestDetailsPage />}
-                    /> */}
+                    />
                     {/* Contest & Promotion Routes */}
                     <Route
                       path="/contest-promotion"

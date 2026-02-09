@@ -106,6 +106,9 @@ export const AddMaterialPRDashboard = () => {
   const [files, setFiles] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState<boolean>(false);
+  const [selectedWbsCode, setSelectedWbsCode] = useState<string>("");
+  const [overallGlCode, setOverallGlCode] = useState<string>("");
   const [slid, setSlid] = useState(null);
 
   // Fetch GL Account options
@@ -273,7 +276,7 @@ export const AddMaterialPRDashboard = () => {
           pms_po_inventories_attributes: items.map((item) => ({
             pms_inventory_id: item.itemDetails,
             quantity: item.quantity,
-            gl_account: item.glAccount,
+            gl_account: wbsSelection === "overall" ? overallGlCode : item.glAccount,
             tax_code: item.taxCode,
             rate: item.each,
             total_value: item.amount,
@@ -313,6 +316,7 @@ export const AddMaterialPRDashboard = () => {
     }
      if (Array.isArray(data) && data.length <= 0){
       setShowRadio(false)
+      setWbsSelection("")
     }
   }, [data]);
 
@@ -494,7 +498,30 @@ export const AddMaterialPRDashboard = () => {
         toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
       }
     } catch (error) {
-      console.error("Error fetching GL Code for WBS:", error);  q 
+      console.error("Error fetching GL Code for WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
+    }
+  };
+
+  // Fetch GL Code for Overall WBS
+  const fetchGlCodeForOverallWbs = async (wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      console.log("GL Code Response:", response.data);
+      
+      if (response.data && response.data.gl_code) {
+        setOverallGlCode(response.data.gl_code);
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
       toast.error("Failed to fetch GL Code for WBS");
     }
   };
@@ -702,7 +729,7 @@ export const AddMaterialPRDashboard = () => {
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
-          gl_account: item.glAccount,
+          gl_account: wbsSelection === "overall" ? overallGlCode : item.glAccount,
           tax_code: item.taxCode,
           rate: item.each,
           total_value: item.amount,
@@ -745,14 +772,12 @@ export const AddMaterialPRDashboard = () => {
         <div className="space-y-6">
           {/* Supplier Details */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-[#C72030] flex items-center">
-                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                  1
-                </h2>
-                SUPPLIER DETAILS
-              </CardTitle>
-            </CardHeader>
+             <CardHeader className='bg-[#F6F4EE] mb-4'>
+                      <CardTitle className="text-lg text-black flex items-center">
+                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+                        SUPPLIER DETAILS
+                      </CardTitle>
+                    </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Supplier*</InputLabel>
@@ -1052,48 +1077,83 @@ export const AddMaterialPRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>WBS Code*</InputLabel>
-                  <MuiSelect
-                    label="WBS Code*"
-                    value={overallWbs}
-                    onChange={(e) => setOverallWbs(e.target.value)}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
+                <div className="flex gap-2 items-end">
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>WBS Code*</InputLabel>
+                    <MuiSelect
+                      label="WBS Code*"
+                      value={overallWbs}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setOverallWbs(value);
+                        if (value) {
+                          fetchGlCodeForOverallWbs(value);
+                        }
+                      }}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select WBS Code</em>
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                      {wbsCodes.map((wbs) => (
+                        <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                          {wbs.wbs_code}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  {overallWbs && (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedWbsCode(overallWbs);
+                        setIsBudgetModalOpen(true);
+                      }}
+                      className="mb-1"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {wbsSelection === "overall" && overallWbs && (
+                <TextField
+                  label="GL Code (Auto-populated)"
+                  value={overallGlCode}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles, readOnly: true }}
+                  sx={{ mt: 2 }}
+                  disabled
+                />
               )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-orange-600 flex items-center justify-between">
-                <div className="flex items-center text-[#C72030]">
-                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                    2
-                  </h2>
-                  ITEM DETAILS
-                </div>
-                <Button
+            <CardHeader className='bg-[#F6F4EE] mb-4'>
+                      <CardTitle className="text-lg text-black flex items-center justify-between">
+                        <div className="flex items-center">
+                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                        ITEM DETAILS
+                       </div>
+                        <Button
                   onClick={addItem}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90"
                   type="button"
                 >
                   Add Item
                 </Button>
-              </CardTitle>
-            </CardHeader>
+                      </CardTitle>
+                    </CardHeader>
+                
+            
             <CardContent className="space-y-6">
               {items.map((item) => (
                 <div
@@ -1162,62 +1222,82 @@ export const AddMaterialPRDashboard = () => {
 
                   {/* 4. WBS Code */}
                   {wbsSelection === "individual" && (
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
-                      <MuiSelect
-                        label="WBS Code*"
-                        value={item.wbsCode}
-                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="">
-                          <em>Select WBS Code</em>
-                        </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
+                    <div className="flex gap-2 items-end">
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>WBS Code*</InputLabel>
+                        <MuiSelect
+                          label="WBS Code*"
+                          value={item.wbsCode}
+                          onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value="">
+                            <em>Select WBS Code</em>
                           </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
+                          {wbsCodes.map((wbs) => (
+                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                              {wbs.wbs_code}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                      {item.wbsCode && (
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedWbsCode(item.wbsCode);
+                            setIsBudgetModalOpen(true);
+                          }}
+                          className="mb-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
 
                   {/* 5. GL Code - Conditional rendering */}
-                  {wbsSelection === "individual" && wbsCodes.length > 0 ? (
-                    // Show disabled TextField when WBS is selected and codes available
-                    <TextField
-                      label="GL Account*"
-                      value={item.glAccount}
-                      placeholder="Auto-populated after WBS selection"
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles, readOnly: true }}
-                      sx={{ mt: 1 }}
-                      disabled
-                    />
-                  ) : (
-                    // Show Select dropdown when no WBS or WBS not in individual mode
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>GL Account*</InputLabel>
-                      <MuiSelect
-                        label="GL Account*"
-                        value={item.glAccount}
-                        onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="">
-                          <em>Select GL Account</em>
-                        </MenuItem>
-                        {glAccountOptions.map((option) => (
-                          <MenuItem key={option.id} value={option.content.code}>
-                            {option.content.code} - {option.content.name}
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
+                  {wbsSelection !== "overall" && (
+                    <>
+                      {wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                        // Show disabled TextField when WBS is selected and codes available
+                        <TextField
+                          label="GL Account*"
+                          value={item.glAccount}
+                          placeholder="Auto-populated after WBS selection"
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles, readOnly: true }}
+                          sx={{ mt: 1 }}
+                          disabled
+                        />
+                      ) : (
+                        // Show Select dropdown when no WBS or WBS not in individual mode
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                          <InputLabel shrink>GL Account*</InputLabel>
+                          <MuiSelect
+                            label="GL Account*"
+                            value={item.glAccount}
+                            onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                            displayEmpty
+                            sx={fieldStyles}
+                          >
+                            <MenuItem value="">
+                              <em>Select GL Account</em>
+                            </MenuItem>
+                            {glAccountOptions.map((option) => (
+                              <MenuItem key={option.id} value={option.content.code}>
+                                {option.content.code} - {option.content.name}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
+                    </>
                   )}
 
                   {/* 6. Tax Code */}
@@ -1335,14 +1415,12 @@ export const AddMaterialPRDashboard = () => {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-[#C72030] flex items-center">
-                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                  3
-                </h2>
-                ATTACHMENTS
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className='bg-[#F6F4EE] mb-4'>
+                      <CardTitle className="text-lg text-black flex items-center">
+                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+                        Attachments
+                      </CardTitle>
+                    </CardHeader>
             <CardContent>
               <div
                 className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
@@ -1474,6 +1552,58 @@ export const AddMaterialPRDashboard = () => {
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
       />
+
+      {/* WBS Budget Details Modal */}
+      {isBudgetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
+              <button
+                onClick={() => setIsBudgetModalOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Budget Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead className="bg-[#C72030] text-white">
+                  <tr>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Budget Type</th>
+                    <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Total Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 5,00,000.00</td>
+                  </tr>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Consumed Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 2,50,000.00</td>
+                  </tr>
+                  <tr className="bg-[#fafafa] hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-bold">Current Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right font-bold text-green-600">₹ 2,50,000.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                onClick={() => setIsBudgetModalOpen(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

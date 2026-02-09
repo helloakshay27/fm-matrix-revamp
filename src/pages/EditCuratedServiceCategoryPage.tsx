@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
-import { TextField } from "@mui/material";
-
+// import { TextField } from "@mui/material";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 const fieldStyles = {
   height: '45px',
   backgroundColor: '#fff',
@@ -37,6 +37,7 @@ export const EditCuratedServiceCategoryPage = () => {
 
   const [formData, setFormData] = useState({
     service_cat_name: "",
+    service_tag: ""
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -46,7 +47,7 @@ export const EditCuratedServiceCategoryPage = () => {
 
   useEffect(() => {
     if (id) {
-        console.log("calledddd")
+      console.log("calledddd")
       fetchServiceCategory();
     }
   }, [id]);
@@ -79,25 +80,26 @@ export const EditCuratedServiceCategoryPage = () => {
 
       setFormData({
         service_cat_name: categoryInfo.name || "",
+        service_tag: categoryInfo.service_tag || "curated",
       });
 
       // Handle existing image
       let imageUrl = "";
-if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
-      imageUrl = categoryInfo.attachment.document_url;
-    } else if (categoryInfo.service_image) {
-      imageUrl = categoryInfo.service_image.document_url || categoryInfo.service_image.url || "";
-    } else if (categoryInfo.service_image_url) {
-      imageUrl = categoryInfo.service_image_url;
-    } else if (categoryInfo.image_url) {
-      imageUrl = categoryInfo.image_url;
-    }
+      if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
+        imageUrl = categoryInfo.attachment.document_url;
+      } else if (categoryInfo.service_image) {
+        imageUrl = categoryInfo.service_image.document_url || categoryInfo.service_image.url || "";
+      } else if (categoryInfo.service_image_url) {
+        imageUrl = categoryInfo.service_image_url;
+      } else if (categoryInfo.image_url) {
+        imageUrl = categoryInfo.image_url;
+      }
 
       setExistingImageUrl(imageUrl);
     } catch (error: any) {
       console.error("Error fetching service category:", error);
       toast.error(error.message || "Failed to load service category data");
-    //   navigate("/pulse/pulse-privilege/service-category");
+      //   navigate("/pulse/pulse-privilege/service-category");
     } finally {
       setFetchLoading(false);
     }
@@ -168,6 +170,10 @@ if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
       toast.error("Service category name is required");
       return false;
     }
+    if (!formData.service_tag) {
+      toast.error("Service tag is required");
+      return false;
+    }
     return true;
   };
 
@@ -184,15 +190,16 @@ if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
       let requestBody: any;
       let headers: any;
 
-      if (imageChanged) {
+      // if (imageChanged) {
         // Use FormData if image changed
         const formDataToSend = new FormData();
         formDataToSend.append("name", formData.service_cat_name);
-        
+        formDataToSend.append("service_tag", formData.service_tag);
+
         if (imageFile) {
           formDataToSend.append("attachment", imageFile);
         }
-         else {
+        else {
           formDataToSend.append("attachment", "");
         }
 
@@ -200,18 +207,20 @@ if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
         headers = {
           Authorization: getAuthHeader(),
         };
-      } else {
-        // Use JSON if no image change
-        requestBody = JSON.stringify({
-          service_category: {
-            service_cat_name: formData.service_cat_name,
-          },
-        });
-        headers = {
-          "Content-Type": "application/json",
-          Authorization: getAuthHeader(),
-        };
-      }
+      // } 
+      // else {
+      //   // Use JSON if no image change
+      //   requestBody = JSON.stringify({
+      //     service_category: {
+      //       name: formData.service_cat_name,
+      //       service_tag: formData.service_tag,
+      //     },
+      //   });
+      //   headers = {
+      //     "Content-Type": "application/json",
+      //     Authorization: getAuthHeader(),
+      //   };
+      // }
 
       const apiUrl = getFullUrl(`/osr_setups/modify_osr_category.json?id=${id}`);
       const response = await fetch(apiUrl, {
@@ -301,6 +310,26 @@ if (categoryInfo.attachment && categoryInfo.attachment.document_url) {
                   sx: fieldStyles,
                 }}
               />
+
+              {/* Service Tag Dropdown */}
+              <FormControl
+                fullWidth
+                required
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Service Tag</InputLabel>
+                <MuiSelect
+                  value={formData.service_tag}
+                  onChange={(e) => handleInputChange("service_tag", e.target.value)}
+                  label="Service Tag"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="curated">Curated</MenuItem>
+                  <MenuItem value="supported">Supported</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>

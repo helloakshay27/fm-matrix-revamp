@@ -74,7 +74,7 @@ export const SupportedServiceAdd = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=supported");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -312,6 +312,12 @@ export const SupportedServiceAdd = () => {
                 slotProps={{
                   inputLabel: {
                     shrink: true,
+                    sx: {
+                      "& .MuiFormLabel-asterisk": {
+                        color: "red",
+                      },
+                    },
+
                   },
                 }}
                 InputProps={{
@@ -326,7 +332,13 @@ export const SupportedServiceAdd = () => {
                 variant="outlined"
                 sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
-                <InputLabel shrink>Service Category</InputLabel>
+                <InputLabel shrink
+                  sx={{
+                    "& .MuiFormLabel-asterisk": {
+                      color: "red",   // or #d32f2f
+                    },
+                  }}
+                >Service Category</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
                   onChange={(e) =>
@@ -399,6 +411,8 @@ export const SupportedServiceAdd = () => {
 
             {/* Second Row - Mobile and Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
               {/* Address */}
               <TextField
                 fullWidth
