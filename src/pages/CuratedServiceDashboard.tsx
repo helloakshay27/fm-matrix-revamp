@@ -103,21 +103,21 @@ const CuratedServiceDashboard = () => {
       // Expecting { osr_sub_categories: [...] }
       const servicesList = Array.isArray(data.osr_sub_categories)
         ? data.osr_sub_categories.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            email: item.email,
-            description: item.description,
-            mobile: item.mobile,
-            osr_category_name:item.osr_category_name,
-            address: item.address,
-            active: item.active === 1,
-            attachment: item.attachment
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          description: item.description,
+          mobile: item.mobile,
+          osr_category_name: item.osr_category_name,
+          address: item.address,
+          active: item.active === 1,
+          attachment: item.attachment
             ? {
-                document_url: item.attachment.document_url,
-                document_content_type: item.attachment.document_content_type,
-              }
+              document_url: item.attachment.document_url,
+              document_content_type: item.attachment.document_content_type,
+            }
             : undefined, // No attachment in API response
-          }))
+        }))
         : [];
       setPlusServices(servicesList);
     } catch (error: any) {
@@ -161,7 +161,7 @@ const CuratedServiceDashboard = () => {
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify({
-         active: newStatus,
+          active: newStatus,
         }),
       });
 
@@ -368,18 +368,18 @@ const CuratedServiceDashboard = () => {
             disabled={updatingStatus[item.id]}
           />
         );
-         case "category":
-      return (
-        <span className="text-sm text-gray-600">
-          {item.osr_category_name|| "-"}
-        </span>
-      );
+      case "category":
+        return (
+          <span className="text-sm text-gray-600">
+            {item.osr_category_name || "-"}
+          </span>
+        );
 
       case "description":
         return (
           <div className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
-          title={item.description || ""}
-          style={{ maxWidth: 250 }}
+            title={item.description || ""}
+            style={{ maxWidth: 250 }}
           >
             {item.description || "-"}
           </div>
@@ -424,6 +424,7 @@ const CuratedServiceDashboard = () => {
           className="p-1"
           onClick={() => navigate(`/pulse/curated-services/service/edit/${item.id}`)}
           disabled={!item.active}
+          title="Edit"
         >
           <Edit className="w-4 h-4" />
         </Button>
