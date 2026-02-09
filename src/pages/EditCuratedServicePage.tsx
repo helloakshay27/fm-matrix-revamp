@@ -343,11 +343,11 @@ export const EditCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Service List</span>
+          <span>Curated Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Edit Service</span>
+          <span className="text-gray-900 font-medium">Edit Curated Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">EDIT CURATED SERVICE</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

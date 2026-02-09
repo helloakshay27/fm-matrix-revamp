@@ -718,9 +718,9 @@ export const ServicePRDetailsPage = () => {
       </div>
 
       <TooltipProvider>
-        <div className="flex items-start gap-3 my-4">
+        <div className="flex flex-wrap items-start gap-2 sm:gap-3 md:gap-4 my-4">
           {servicePR?.approvals?.map((level: Approval) => (
-            <div className="space-y-2" key={level.level}>
+            <div className="space-y-2 w-full sm:w-auto" key={level.level}>
               {level.status.toLowerCase() === "rejected" ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
