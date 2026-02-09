@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     X,
     Sparkles,
@@ -9,10 +9,13 @@ import {
     Download,
     ChevronDown,
     ChevronUp,
+    Mic,
+    MicOff,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";  // Import Textarea from UI component
+import { useSpeechToText } from "@/hooks/useSpeechToText";
 import {
     Select,
     SelectContent,
@@ -68,6 +71,27 @@ export const DashboardAIAssistant: React.FC<DashboardAIAssistantProps> = ({ modu
 
     const user = getUser();
     const token = getToken();
+
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+    const fieldId = "dashboard-assistant-input";
+    const isActive = isListening && activeId === fieldId;
+
+    // Update question state when transcript changes
+    useEffect(() => {
+        if (isActive && transcript) {
+            setQuestion(transcript);
+        }
+    }, [isActive, transcript]);
+
+    const toggleListening = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isActive) {
+            stopListening();
+        } else {
+            startListening(fieldId);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!question.trim()) {
@@ -542,19 +566,31 @@ export const DashboardAIAssistant: React.FC<DashboardAIAssistantProps> = ({ modu
 
                     {/* Input Area */}
                     <div className="bg-white border-t border-[#DBC2A9]/40 px-3 py-2 flex items-center gap-2">
-                        <Textarea
-                            placeholder="Type a message..."
-                            value={question}
-                            onChange={(e) => setQuestion(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSubmit();
-                                }
-                            }}
-                            className="flex-1 min-h-[40px] max-h-[100px] resize-none bg-white border border-[#DBC2A9]/40 rounded-2xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                            disabled={isLoading}
-                        />
+                        <div className="relative flex-1">
+                            <Textarea
+                                placeholder="Type a message..."
+                                value={question}
+                                onChange={(e) => setQuestion(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                    }
+                                }}
+                                className="w-full min-h-[40px] max-h-[100px] resize-none bg-white border border-[#DBC2A9]/40 rounded-2xl px-4 py-2 pr-10 text-sm focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                                disabled={isLoading}
+                            />
+                            {supported && (
+                                <button
+                                    onClick={toggleListening}
+                                    className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isActive ? "bg-red-100 text-red-600 animate-pulse" : "text-gray-400 hover:bg-gray-200"
+                                        }`}
+                                    title={isActive ? "Stop recording" : "Start voice input"}
+                                >
+                                    {isActive ? <Mic size={20} /> : <MicOff size={20} />}
+                                </button>
+                            )}
+                        </div>
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading || !question.trim()}

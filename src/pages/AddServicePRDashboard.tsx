@@ -72,6 +72,9 @@ export const AddServicePRDashboard = () => {
   const [glAccountOptions, setGlAccountOptions] = useState([]);
   const [taxCodeOptions, setTaxCodeOptions] = useState([]);
   const [storageLocationOptions, setStorageLocationOptions] = useState([]);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState<boolean>(false);
+  const [selectedWbsCode, setSelectedWbsCode] = useState<string>("");
+  const [overallGlCode, setOverallGlCode] = useState<string>("");
 
   const fileInputRef = useRef(null);
 
@@ -166,6 +169,29 @@ export const AddServicePRDashboard = () => {
               : form
           )
         );
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
+    }
+  };
+
+  // Fetch GL Code for Overall WBS
+  const fetchGlCodeForOverallWbs = async (wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      console.log("GL Code Response:", response.data);
+      
+      if (response.data && response.data.gl_code) {
+        setOverallGlCode(response.data.gl_code);
         toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
       }
     } catch (error) {
@@ -332,7 +358,7 @@ export const AddServicePRDashboard = () => {
           pms_wo_inventories_attributes: detailsForms.map((item) => ({
             pms_service_id: item.service,
             prod_desc: item.productDescription,
-            gl_account: item.glCode,
+            gl_account: wbsSelection === "overall" ? overallGlCode : item.glCode,
             tax_code: item.taxCode,
             quantity: item.quantityArea,
             unit: item.uom,
@@ -502,6 +528,7 @@ export const AddServicePRDashboard = () => {
     }
     if (data.length <= 0 ){
       setShowRadio(false)
+      setWbsSelection("")
     }
   }, [data]);
 
@@ -789,7 +816,7 @@ export const AddServicePRDashboard = () => {
         pms_wo_inventories_attributes: detailsForms.map((item) => ({
           pms_service_id: item.service,
           prod_desc: item.productDescription,
-          gl_account: item.glCode,
+          gl_account: wbsSelection === "overall" ? overallGlCode : item.glCode,
           tax_code: item.taxCode,
           quantity: item.quantityArea,
           unit: item.uom,
@@ -840,7 +867,7 @@ export const AddServicePRDashboard = () => {
         </Button>
         {/* Work Order Details Section Card */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
@@ -1147,25 +1174,60 @@ export const AddServicePRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>WBS Code*</InputLabel>
-                  <MuiSelect
-                    label="WBS Code*"
-                    value={overallWbs}
-                    onChange={(e) => setOverallWbs(e.target.value)}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
+                <div className="flex gap-2 items-end">
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>WBS Code*</InputLabel>
+                    <MuiSelect
+                      label="WBS Code*"
+                      value={overallWbs}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setOverallWbs(value);
+                        if (value) {
+                          fetchGlCodeForOverallWbs(value);
+                        }
+                      }}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select WBS Code</em>
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                      {wbsCodes.map((wbs) => (
+                        <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                          {wbs.wbs_code}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  {overallWbs && (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedWbsCode(overallWbs);
+                        setIsBudgetModalOpen(true);
+                      }}
+                      className="mb-1"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {wbsSelection === "overall" && overallWbs && (
+                <TextField
+                  label="GL Code (Auto-populated)"
+                  value={overallGlCode}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles, readOnly: true }}
+                  sx={{ mt: 2 }}
+                  disabled
+                />
               )}
             </div>
           </div>
@@ -1173,7 +1235,7 @@ export const AddServicePRDashboard = () => {
 
         {/* Details Section Card */}
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
@@ -1239,69 +1301,89 @@ export const AddServicePRDashboard = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    sx={{ ...fieldStyles, mt: 1 }}
                   />
                     {wbsSelection === "individual" && (
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
-                      <MuiSelect
-                        label="WBS Code*"
-                        value={detailsData.wbsCode}
-                        onChange={(e) =>
-                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
-                        }
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="">
-                          <em>Select WBS Code</em>
-                        </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
+                    <div className="flex gap-2 items-end">
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>WBS Code*</InputLabel>
+                        <MuiSelect
+                          label="WBS Code*"
+                          value={detailsData.wbsCode}
+                          onChange={(e) =>
+                            handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                          }
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value="">
+                            <em>Select WBS Code</em>
                           </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
+                          {wbsCodes.map((wbs) => (
+                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                              {wbs.wbs_code}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                      {detailsData.wbsCode && (
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedWbsCode(detailsData.wbsCode);
+                            setIsBudgetModalOpen(true);
+                          }}
+                          className="mb-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
 
                   {/* GL Code - Conditional rendering */}
-                  {wbsSelection === "individual" && wbsCodes.length > 0 ? (
-                    // Show disabled TextField when WBS is selected and codes available
-                    <TextField
-                      label="GL Code*"
-                      value={detailsData.glCode}
-                      placeholder="Auto-populated after WBS selection"
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles, readOnly: true }}
-                      sx={{ mt: 1 }}
-                      disabled
-                    />
-                  ) : (
-                    // Show Select dropdown when no WBS or WBS not in individual mode
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>GL Code*</InputLabel>
-                      <MuiSelect
-                        label="GL Code*"
-                        value={detailsData.glCode}
-                        onChange={(e) =>
-                          handleDetailsChange(detailsData.id, "glCode", e.target.value)
-                        }
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="">
-                          <em>Select GL Code</em>
-                        </MenuItem>
-                        {glAccountOptions.map((option) => (
-                          <MenuItem key={option.id} value={option.content.code}>
-                            {option.content.code} - {option.content.name}
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
+                  {wbsSelection !== "overall" && (
+                    <>
+                      {wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                        // Show disabled TextField when WBS is selected and codes available
+                        <TextField
+                          label="GL Code*"
+                          value={detailsData.glCode}
+                          placeholder="Auto-populated after WBS selection"
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles, readOnly: true }}
+                          sx={{ mt: 1 }}
+                          disabled
+                        />
+                      ) : (
+                        // Show Select dropdown when no WBS or WBS not in individual mode
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                          <InputLabel shrink>GL Code*</InputLabel>
+                          <MuiSelect
+                            label="GL Code*"
+                            value={detailsData.glCode}
+                            onChange={(e) =>
+                              handleDetailsChange(detailsData.id, "glCode", e.target.value)
+                            }
+                            displayEmpty
+                            sx={fieldStyles}
+                          >
+                            <MenuItem value="">
+                              <em>Select GL Code</em>
+                            </MenuItem>
+                            {glAccountOptions.map((option) => (
+                              <MenuItem key={option.id} value={option.content.code}>
+                                {option.content.code} - {option.content.name}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
+                    </>
                   )}
 
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1614,7 +1696,7 @@ export const AddServicePRDashboard = () => {
         </div>
 
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
@@ -1715,8 +1797,8 @@ export const AddServicePRDashboard = () => {
         </div>
 
         <Card>
-          <div className="p-4 border-b border-gray-200 mb-4">
-            <div className="flex items-center gap-2">
+          <div className="p-4 border-b border-gray-200 mb-4 bg-[#F6F4EE]">
+            <div className="flex items-center gap-2 ">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
               </div>
@@ -1849,6 +1931,58 @@ export const AddServicePRDashboard = () => {
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
       />
+
+      {/* WBS Budget Details Modal */}
+      {isBudgetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
+              <button
+                onClick={() => setIsBudgetModalOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Budget Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead className="bg-[#C72030] text-white">
+                  <tr>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Budget Type</th>
+                    <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Total Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 5,00,000.00</td>
+                  </tr>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Consumed Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 2,50,000.00</td>
+                  </tr>
+                  <tr className="bg-[#fafafa] hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-bold">Current Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right font-bold text-green-600">₹ 2,50,000.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                onClick={() => setIsBudgetModalOpen(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
