@@ -88,14 +88,20 @@ export const updateIssue = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
+            const headers: Record<string, string> = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            // If sending JSON (not FormData), set content type. Let the browser set boundary for FormData.
+            if (!(data instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+
             const response = await axios.put(
                 `https://${baseUrl}/issues/${id}.json`,
                 data,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
+                    headers,
                 }
             );
             return response.data;
