@@ -11,6 +11,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 interface ServiceCategory {
   id: number;
   service_cat_name: string;
+  service_tag: string;
   service_image?: {
     document_url?: string;
     url?: string;
@@ -22,6 +23,13 @@ const columns: ColumnConfig[] = [
   {
     key: "service_cat_name",
     label: "Service Category Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "service_tag",
+    label: "Service Tag",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -72,11 +80,15 @@ const CuratedServiceCategoryDashboard = () => {
         categoriesData = data.osr_categories.map((cat: any) => ({
           id: cat.id,
           service_cat_name: cat.name,
+          // service_tag: cat.service_tag || "curated",
+          service_tag: (cat.service_tag || "curated")
+            .charAt(0)
+            .toUpperCase() + (cat.service_tag || "curated").slice(1),
           service_image: cat.attachment
             ? {
-                document_url: cat.attachment.document_url,
-                document_content_type: cat.attachment.document_content_type,
-              }
+              document_url: cat.attachment.document_url,
+              document_content_type: cat.attachment.document_content_type,
+            }
             : undefined,
           active: cat.active === 1,
         }));

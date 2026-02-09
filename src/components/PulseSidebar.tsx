@@ -84,7 +84,7 @@ const modulesByPackage = {
       href: "/pulse/events",
     },
     {
-      name: "Curated Services",
+      name: "Services",
       icon: Gift,
       href: "/pulse/curated-services",
       subItems: [
@@ -92,7 +92,8 @@ const modulesByPackage = {
           name: "Service Category",
           href: "/pulse/curated-services/service-category",
         },
-        { name: "Service", href: "/pulse/curated-services/service" },
+        { name: "Curated Service", href: "/pulse/curated-services/service" },
+        { name: "Supported Service", href: "/pulse/supported-services/service" },
       ],
     },
     {

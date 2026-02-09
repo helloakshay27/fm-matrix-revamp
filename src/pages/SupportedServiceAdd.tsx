@@ -44,7 +44,7 @@ const fieldStyles = {
   },
 };
 
-export const AddCuratedServicePage = () => {
+export const SupportedServiceAdd = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -72,7 +72,7 @@ export const AddCuratedServicePage = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=curated");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=supported");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -194,7 +194,7 @@ export const AddCuratedServicePage = () => {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("osr_categories_id", formData.service_category_id);
       formDataToSend.append("active", formData.active.toString());
-      formDataToSend.append("service_tag", "curated");
+      formDataToSend.append("service_tag", "supported");
 
       // if (formData.order_no) {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
@@ -230,7 +230,7 @@ export const AddCuratedServicePage = () => {
       }
 
       toast.success("Service created successfully!");
-      navigate("/pulse/curated-services/service");
+      navigate("/pulse/supported-services/service");
     } catch (error: any) {
       console.error("Error creating plus service:", error);
       toast.error(error.message || "Failed to create service. Please try again.");
@@ -240,7 +240,7 @@ export const AddCuratedServicePage = () => {
   };
 
   const handleCancel = () => {
-    navigate("/pulse/curated-services/service");
+    navigate("/pulse/supported-services/service");
   };
 
   return (
@@ -255,11 +255,11 @@ export const AddCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span> Curated Service List</span>
+          <span>Supported Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Curated Service</span>
+          <span className="text-gray-900 font-medium">Create New Supported Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW CURATED SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW SUPPORTED SERVICE</h1>
       </div>
 
       <form

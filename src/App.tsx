@@ -944,9 +944,9 @@ import EditFacilityBookingPage from "./pages/EditFacilityBookingPage";
 import { CommunityNoticeDetails } from "./pages/CommunityNoticeDetails";
 import { CommunityEventDetails } from "./pages/CommunityEvenetDetails";
 import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
-// import { ContestListPage } from "./pages/ContestListPage";
-// import { CreateContestPage } from "./pages/CreateContestPage";
-// import { ContestDetailsPage } from "./pages/ContestDetailsPage";
+import { ContestListPage } from "./pages/ContestListPage";
+import { CreateContestPage } from "./pages/CreateContestPage";
+import { ContestDetailsPage } from "./pages/ContestDetailsPage";
 
 import { SpinnerContest } from "./components/mobile/SpinnerContest";
 import { ScratchCard } from "./components/mobile/ScratchCard";
@@ -957,6 +957,9 @@ import { FlipCard } from "./components/mobile/FlipCard";
 import { FlipCardDetails } from "./components/mobile/FlipCardDetails";
 import { SpeechProvider } from "./contexts/SpeechContext";
 
+import SupportedServiceDashboard from "./pages/SupportedServiceDashboard";
+import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
+import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -4098,6 +4101,22 @@ function App() {
                         element={<EditCuratedServicePage />}
                       />
 
+
+                      {/* Plus Support Service Routes */}
+                      <Route
+                        path="/pulse/supported-services/service"
+                        element={<SupportedServiceDashboard />}
+                      />
+                      <Route
+                        path="/pulse/supported-services/service/create"
+                        element={<SupportedServiceAdd />}
+                      />
+                      <Route
+                        path="/pulse/supported-services/service/edit/:id"
+                        element={<SupportedServiceEdit />}
+                      />
+
+
                       {/*  curated Service  Category Routes */}
                       <Route
                         path="/pulse/curated-services/service-category"
@@ -4552,7 +4571,7 @@ function App() {
 
                     {/* Mail Inbound Routes */}
 
-                    {/* <Route path="/contests" element={<ContestListPage />} />
+                    <Route path="/contests" element={<ContestListPage />} />
                     <Route
                       path="/contests/create"
                       element={<CreateContestPage />}
@@ -4560,7 +4579,7 @@ function App() {
                     <Route
                       path="/contests/:id"
                       element={<ContestDetailsPage />}
-                    /> */}
+                    />
                     {/* Contest & Promotion Routes */}
                     <Route
                       path="/contest-promotion"
