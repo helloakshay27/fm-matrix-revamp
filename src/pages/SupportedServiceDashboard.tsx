@@ -12,7 +12,14 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 const columns: ColumnConfig[] = [
   {
     key: "name",
-    label: "Name",
+    label: "Service Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "osr_category_name",
+    label: "Service Category Name",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -99,6 +106,7 @@ const SupportedServiceDashboard = () => {
             id: item.id,
             name: item.name,
             email: item.email,
+            osr_category_name:item.osr_category_name,
             description: item.description,
             mobile: item.mobile,
             address: item.address,

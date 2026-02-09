@@ -12,7 +12,14 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 const columns: ColumnConfig[] = [
   {
     key: "name",
-    label: "Name",
+    label: "Service Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "osr_category_name",
+    label: "Service Category Name",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -101,6 +108,7 @@ const CuratedServiceDashboard = () => {
             email: item.email,
             description: item.description,
             mobile: item.mobile,
+            osr_category_name:item.osr_category_name,
             address: item.address,
             active: item.active === 1,
             attachment: item.attachment
