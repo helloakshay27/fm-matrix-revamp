@@ -36,7 +36,7 @@ export const AddCuratedServiceCategoryPage = () => {
 
   const [formData, setFormData] = useState({
     service_cat_name: "",
-    service_tag: "curated", // default value
+    service_tag: "", // default value
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -168,9 +168,9 @@ export const AddCuratedServiceCategoryPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE CATEGORY</h1>
       </div>
 
-      <form 
-      onSubmit={handleSubmit} 
-      className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6">
         {/* Service Category Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
@@ -197,6 +197,11 @@ export const AddCuratedServiceCategoryPage = () => {
                 slotProps={{
                   inputLabel: {
                     shrink: true,
+                    sx: {
+                      "& .MuiFormLabel-asterisk": {
+                        color: "red",
+                      },
+                    },
                   },
                 }}
                 InputProps={{
@@ -211,14 +216,22 @@ export const AddCuratedServiceCategoryPage = () => {
                 variant="outlined"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <InputLabel shrink>Service Tag</InputLabel>
+                <InputLabel shrink sx={{
+                  "& .MuiFormLabel-asterisk": {
+                    color: "red",   // or #d32f2f
+                  },
+                }}>Service Tag</InputLabel>
                 <MuiSelect
                   value={formData.service_tag}
                   onChange={(e) => handleInputChange("service_tag", e.target.value)}
                   label="Service Tag"
                   notched
                   displayEmpty
+
                 >
+                  <MenuItem value="">
+                    {"Select Service tag"}
+                  </MenuItem>
                   <MenuItem value="curated">Curated</MenuItem>
                   <MenuItem value="supported">Supported</MenuItem>
                 </MuiSelect>

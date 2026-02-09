@@ -59,7 +59,7 @@ const CuratedServiceCategoryDashboard = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?inactive=true");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -220,6 +220,7 @@ const CuratedServiceCategoryDashboard = () => {
           className="p-1"
           onClick={() => navigate(`/pulse/curated-services/service-category/edit/${item.id}`)}
           disabled={!item.active}
+          title="Edit"
         >
           <Edit className="w-4 h-4" />
         </Button>

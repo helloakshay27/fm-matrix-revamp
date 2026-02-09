@@ -12,7 +12,14 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 const columns: ColumnConfig[] = [
   {
     key: "name",
-    label: "Name",
+    label: "Service Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "osr_category_name",
+    label: "Service Category Name",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -77,7 +84,7 @@ const SupportedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported&inactive=true");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -99,6 +106,7 @@ const SupportedServiceDashboard = () => {
             id: item.id,
             name: item.name,
             email: item.email,
+            osr_category_name:item.osr_category_name,
             description: item.description,
             mobile: item.mobile,
             address: item.address,
@@ -143,7 +151,7 @@ const SupportedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&id=${itemId}`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&inactive=true&id=${itemId}`);
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -212,89 +220,192 @@ const SupportedServiceDashboard = () => {
     }
   };
 
+  // const renderCell = (item: any, columnKey: string) => {
+  //   switch (columnKey) {
+  //     case "attachment":
+  //       if (item.attachment && Object.keys(item.attachment).length > 0) {
+  //         const attachmentUrl =
+  //           item.attachment.document_url ||
+  //           item.attachment.url ||
+  //           "";
+  //         const contentType =
+  //           item.attachment.document_content_type ||
+  //           item.attachment.content_type ||
+  //           "";
+
+  //         if (attachmentUrl && contentType.startsWith("image/")) {
+  //           return (
+  //             <div className="flex justify-center">
+  //               <img
+  //                 src={attachmentUrl}
+  //                 alt="Service Attachment"
+  //                 className="w-14 h-14 object-cover rounded"
+  //               />
+  //             </div>
+  //           );
+  //         } else if (attachmentUrl && contentType.startsWith("video/")) {
+  //           return (
+  //             <div className="flex justify-center">
+  //               <video
+  //                 width="56"
+  //                 height="56"
+  //                 autoPlay
+  //                 muted
+  //                 loop
+  //                 playsInline
+  //                 className="rounded object-cover"
+  //               >
+  //                 <source src={attachmentUrl} type={contentType} />
+  //                 Your browser does not support the video tag.
+  //               </video>
+  //             </div>
+  //           );
+  //         } else if (attachmentUrl) {
+  //           return (
+  //             <a
+  //               href={attachmentUrl}
+  //               target="_blank"
+  //               rel="noopener noreferrer"
+  //               className="text-blue-600 hover:underline"
+  //             >
+  //               Download
+  //             </a>
+  //           );
+  //         }
+  //       }
+  //       return <span className="text-gray-400">No attachment</span>;
+
+  //     case "active":
+  //       return (
+  //         <Switch
+  //           checked={item.active}
+  //           onCheckedChange={() => handleCheckboxChange(item)}
+  //           className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+  //           disabled={updatingStatus[item.id]}
+  //         />
+  //       );
+
+  //     case "description":
+  //       return (
+  //         <span className="text-sm text-gray-600">
+  //           {item.description || "-"}
+  //         </span>
+  //       );
+
+  //     case "email":
+  //       return (
+  //         <span className="text-sm text-gray-600">
+  //           {item.email || "-"}
+  //         </span>
+  //       );
+
+  //     default:
+  //       return item[columnKey] || "-";
+  //   }
+  // };
+
   const renderCell = (item: any, columnKey: string) => {
-    switch (columnKey) {
-      case "attachment":
-        if (item.attachment && Object.keys(item.attachment).length > 0) {
-          const attachmentUrl =
-            item.attachment.document_url ||
-            item.attachment.url ||
-            "";
-          const contentType =
-            item.attachment.document_content_type ||
-            item.attachment.content_type ||
-            "";
-
-          if (attachmentUrl && contentType.startsWith("image/")) {
-            return (
-              <div className="flex justify-center">
-                <img
-                  src={attachmentUrl}
-                  alt="Service Attachment"
-                  className="w-14 h-14 object-cover rounded"
-                />
-              </div>
-            );
-          } else if (attachmentUrl && contentType.startsWith("video/")) {
-            return (
-              <div className="flex justify-center">
-                <video
-                  width="56"
-                  height="56"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="rounded object-cover"
+      switch (columnKey) {
+        case "attachment":
+          if (item.attachment && Object.keys(item.attachment).length > 0) {
+            const attachmentUrl =
+              item.attachment.document_url ||
+              item.attachment.url ||
+              "";
+            const contentType =
+              item.attachment.document_content_type ||
+              item.attachment.content_type ||
+              "";
+  
+            if (attachmentUrl && contentType.startsWith("image/")) {
+              return (
+                <div className="flex justify-center">
+                  <img
+                    src={attachmentUrl}
+                    alt="Service Attachment"
+                    className="w-14 h-14 object-cover rounded"
+                  />
+                </div>
+              );
+            } else if (attachmentUrl && contentType.startsWith("video/")) {
+              return (
+                <div className="flex justify-center">
+                  <video
+                    width="56"
+                    height="56"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="rounded object-cover"
+                  >
+                    <source src={attachmentUrl} type={contentType} />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              );
+            } else if (attachmentUrl) {
+              return (
+                <a
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
                 >
-                  <source src={attachmentUrl} type={contentType} />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            );
-          } else if (attachmentUrl) {
-            return (
-              <a
-                href={attachmentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                Download
-              </a>
-            );
+                  Download
+                </a>
+              );
+            }
           }
-        }
-        return <span className="text-gray-400">No attachment</span>;
-
-      case "active":
-        return (
-          <Switch
-            checked={item.active}
-            onCheckedChange={() => handleCheckboxChange(item)}
-            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-            disabled={updatingStatus[item.id]}
-          />
-        );
-
-      case "description":
+          return <span className="text-gray-400">No attachment</span>;
+  
+        case "active":
+          return (
+            <Switch
+              checked={item.active}
+              onCheckedChange={() => handleCheckboxChange(item)}
+              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              disabled={updatingStatus[item.id]}
+            />
+          );
+           case "category":
         return (
           <span className="text-sm text-gray-600">
-            {item.description || "-"}
+            {item.osr_category_name|| "-"}
           </span>
         );
-
-      case "email":
-        return (
-          <span className="text-sm text-gray-600">
-            {item.email || "-"}
-          </span>
-        );
-
-      default:
-        return item[columnKey] || "-";
-    }
-  };
+  
+        case "description":
+          return (
+            <div className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
+            title={item.description || ""}
+            style={{ maxWidth: 250 }}
+            >
+              {item.description || "-"}
+            </div>
+          );
+        case "address":
+          return (
+            <div
+              className="text-sm text-gray-600 min-w-[180px] truncate whitespace-nowrap overflow-hidden cursor-pointer"
+              title={item.address || ""}
+              style={{ maxWidth: 250 }}
+            >
+              {item.address || "-"}
+            </div>
+          );
+  
+        case "email":
+          return (
+            <span className="text-sm text-gray-600">
+              {item.email || "-"}
+            </span>
+          );
+  
+        default:
+          return item[columnKey] || "-";
+      }
+    };
 
   const renderActions = (item: any) => {
     return (
@@ -313,6 +424,7 @@ const SupportedServiceDashboard = () => {
           className="p-1"
           onClick={() => navigate(`/pulse/supported-services/service/edit/${item.id}`)}
           disabled={!item.active}
+           title="Edit"
         >
           <Edit className="w-4 h-4" />
         </Button>

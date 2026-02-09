@@ -67,7 +67,7 @@ export const ContestDetailsPage: React.FC = () => {
         // Ensure protocol is present
         const url = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
 
-        const res = await fetch(`${url}/contests/${id}`, {
+        const res = await fetch(`${url}/contests/${id}.json`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
