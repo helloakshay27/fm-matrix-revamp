@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { MobileOwnerCostDetails } from "@/components/mobile/MobileOwnerCostDetails";
 import { useToast } from "@/hooks/use-toast";
 import { saveToken, saveBaseUrl, getOrganizationsByEmailAndAutoSelect, getBaseUrl, getToken } from '@/utils/auth';
+import { baseClient } from "@/utils/withoutTokenBase";
 
 
 interface Asset {
@@ -46,36 +47,22 @@ interface OwnershipCost {
 const mobileOwnerCostAssetService = {
   async getAssetById(token: string, assetId: string): Promise<Asset> {
     try {
-      // Get the base URL from auth utils (same as DirectPDFDownloadPage)
-      const baseUrl = getBaseUrl();
-      
-      if (!baseUrl) {
-        throw new Error('Base URL not configured. Please provide baseUrl parameter or select an organization.');
-      }
-      
-      const url = `${baseUrl}/pms/assets/${assetId}.json`;
+      // Use baseClient which handles baseUrl dynamically via interceptors
+      const url = `/pms/assets/${assetId}.json`;
 
       console.log("🔍 FETCHING OWNER COST ASSET:");
-      console.log("  - Base URL:", baseUrl);
-      console.log("  - Full URL:", url);
+      console.log("  - Relative URL:", url);
       console.log("  - Asset ID:", assetId);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
-      const response = await fetch(url, {
-        method: 'GET',
+      const response = await baseClient.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const rawData = await response.json();
+      const rawData = response.data;
       console.log("📦 OWNER COST ASSET API Response:", rawData);
 
       // Normalize asset shape across different API responses
@@ -121,8 +108,8 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
   // Get URL parameters
   const token = searchParams.get("token");
   const email = searchParams.get("email");
-  const orgId = searchParams.get("orgId");
-  const baseUrl = searchParams.get("baseUrl");
+  const orgId = searchParams.get("orgId") || searchParams.get("org_id") || searchParams.get("organization_id");
+  const baseUrl = searchParams.get("baseUrl") || searchParams.get("base_url");
 
   useEffect(() => {
     initializeAndFetchAsset();
@@ -141,13 +128,13 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
       // Handle email and organization auto-selection
       if (email && orgId) {
         console.log('📧 Processing email and organization:', { email, orgId });
-        
+
         try {
           const { organizations, selectedOrg } = await getOrganizationsByEmailAndAutoSelect(email, orgId);
-          
+
           if (selectedOrg) {
             console.log('✅ Organization auto-selected:', selectedOrg.name);
-            
+
             // Set baseUrl from organization's domain
             if (selectedOrg.domain || selectedOrg.sub_domain) {
               const orgBaseUrl = `https://${selectedOrg.sub_domain}.${selectedOrg.domain}`;
@@ -177,7 +164,7 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
 
       // Use token from URL or from auth utils
       const tokenToUse = token || getToken() || sessionStorage.getItem("mobile_token");
-      
+
       if (!tokenToUse) {
         throw new Error("No authentication token available");
       }
@@ -210,7 +197,7 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
 
       // Use token from URL or from auth utils
       const tokenToUse = token || getToken() || sessionStorage.getItem("mobile_token");
-      
+
       if (tokenToUse) {
         sessionStorage.setItem("mobile_token", tokenToUse);
         console.log("💾 Mobile token stored in sessionStorage");
