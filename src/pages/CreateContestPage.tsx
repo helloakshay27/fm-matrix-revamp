@@ -208,7 +208,7 @@ export const CreateContestPage: React.FC = () => {
       const url = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
 
       const res = await fetch(
-        `${url}/contests`,
+        `${url}/contests.json`,
         {
           method: "POST",
           headers: {
@@ -337,7 +337,7 @@ export const CreateContestPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Card className="shadow-sm">
+          <Card className="shadow-sm w-full">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
                 <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
@@ -395,7 +395,7 @@ export const CreateContestPage: React.FC = () => {
 
       case 2:
         return (
-          <Card className="shadow-sm">
+          <Card className="shadow-sm w-full">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
                 <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
@@ -538,7 +538,7 @@ export const CreateContestPage: React.FC = () => {
       case 3:
         // ... (your original validity step remains 100% unchanged)
         return (
-          <Card className="shadow-sm">
+          <Card className="shadow-sm w-full">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6 bg-[#F6F4EE] p-4 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -655,7 +655,7 @@ export const CreateContestPage: React.FC = () => {
         // ... your original terms & redemption step (unchanged)
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="shadow-sm">
+            <Card className="shadow-sm w-full">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
@@ -753,7 +753,7 @@ export const CreateContestPage: React.FC = () => {
 
       {/* Step Progress Indicator ── unchanged ── */}
       <div className="mb-4">
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative w-full">
           <div
             className="absolute top-8 left-0 right-0 h-0.5"
             style={{
@@ -790,7 +790,7 @@ export const CreateContestPage: React.FC = () => {
       </div>
 
       {/* Step Content */}
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full px-6">
         {renderStepContent()}
 
         {/* Action Buttons */}
