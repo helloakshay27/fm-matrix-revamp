@@ -84,7 +84,7 @@ const SupportedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=supported&inactive=true");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -151,7 +151,7 @@ const SupportedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&id=${itemId}`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?q[service_tag_eq]=supported&inactive=true&id=${itemId}`);
 
       const response = await fetch(apiUrl, {
         method: "POST",

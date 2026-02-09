@@ -59,7 +59,7 @@ const CuratedServiceCategoryDashboard = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?inactive=true");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
