@@ -21,6 +21,17 @@ export const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     try {
+      // Check if running locally
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
+      // If running locally, use runwal API directly
+      if (isLocalhost) {
+        config.baseURL = "https://runwal-api.lockated.com";
+        console.log("🏠 Running locally - Base URL set to:", config.baseURL);
+        return config;
+      }
+
       // Extract URL parameters first to check for org_id
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
@@ -67,7 +78,6 @@ baseClient.interceptors.request.use(
       }
 
       // Determine site type based on hostname
-      const hostname = window.location.hostname;
       const isOmanSite = hostname.includes("oig.gophygital.work");
       const isViSite =
         hostname.includes("vi-web.gophygital.work") ||

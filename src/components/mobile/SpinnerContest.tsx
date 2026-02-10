@@ -1,68 +1,89 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { X, ChevronLeft } from "lucide-react";
 import {
-  spinnerContestApi,
-  SpinnerContest as SpinnerContestType,
-  SpinnerSegment,
-} from "@/services/spinnerContestApi";
+  newSpinnerContestApi,
+  Contest,
+  Prize,
+} from "@/services/newSpinnerContestApi";
+import { spinSound } from "@/utils/spinSound";
 
-interface VoucherResult {
-  voucher_code: string;
-  discount_text: string;
-  segment_label: string;
+interface WheelSegment {
+  id: number;
+  label: string;
+  color: string;
+  prize: Prize;
+}
+
+interface WinResult {
+  prize: Prize;
 }
 
 export const SpinnerContest: React.FC = () => {
   const navigate = useNavigate();
   const { contestId } = useParams<{ contestId: string }>();
+  const [searchParams] = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Get URL parameters
+  const orgId = searchParams.get("org_id");
+  const token = searchParams.get("token");
+  const urlContestId = searchParams.get("contest_id") || contestId;
+
+  console.warn("🎯 Component Params:", {
+    orgId,
+    token: token ? "exists" : "missing",
+    contest_id_from_query: searchParams.get("contest_id"),
+    contestId_from_route: contestId,
+    final_urlContestId: urlContestId
+  });
 
   // Loading and data states
   const [isLoading, setIsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [spinnerData, setSpinnerData] = useState<SpinnerContestType | null>(
-    null
-  );
+  const [contestData, setContestData] = useState<Contest | null>(null);
+  const [segments, setSegments] = useState<WheelSegment[]>([]);
   const [rotation, setRotation] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [voucherResult, setVoucherResult] = useState<VoucherResult | null>(
-    null
-  );
+  const [winResult, setWinResult] = useState<WinResult | null>(null);
+  const [canSpin, setCanSpin] = useState(true);
 
   // Fetch spinner contest data
   useEffect(() => {
-    const fetchSpinnerData = async () => {
+    const fetchContestData = async () => {
+      if (!urlContestId) {
+        console.error("❌ No contest ID provided");
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        let data: SpinnerContestType;
+        const data = await newSpinnerContestApi.getContestById(urlContestId);
 
-        if (contestId) {
-          // Fetch specific contest
-          data = await spinnerContestApi.getContestById(contestId);
-        } else {
-          // Fetch first active contest
-          const contests = await spinnerContestApi.getActiveContests();
-          if (contests.length === 0) {
-            throw new Error("No active contests found");
-          }
-          data = contests[0];
-        }
+        setContestData(data);
 
-        setSpinnerData(data);
+        // Convert prizes to wheel segments
+        const wheelSegments =
+          newSpinnerContestApi.convertPrizesToSegments(data.prizes);
+        setSegments(wheelSegments);
       } catch (error) {
-        console.error("Error fetching spinner data:", error);
+        console.error("❌ Error fetching contest data:", error);
+        if (error instanceof Error) {
+          console.error("❌ Error message:", error.message);
+        }
+        setCanSpin(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSpinnerData();
-  }, [contestId]);
+    fetchContestData();
+  }, [urlContestId, orgId, token]);
 
   // Draw wheel on canvas
   useEffect(() => {
-    if (!spinnerData || !canvasRef.current) return;
+    if (segments.length === 0 || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -72,8 +93,7 @@ export const SpinnerContest: React.FC = () => {
     const centerY = canvas.height / 2;
     const radius = Math.min(centerX, centerY) - 10;
 
-    const activeSegments = spinnerData.segments.filter((s) => s.active);
-    const segmentAngle = (2 * Math.PI) / activeSegments.length;
+    const segmentAngle = (2 * Math.PI) / segments.length;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -85,7 +105,7 @@ export const SpinnerContest: React.FC = () => {
     ctx.translate(-centerX, -centerY);
 
     // Draw segments
-    activeSegments.forEach((segment, index) => {
+    segments.forEach((segment, index) => {
       const startAngle = index * segmentAngle - Math.PI / 2;
       const endAngle = startAngle + segmentAngle;
 
@@ -107,7 +127,14 @@ export const SpinnerContest: React.FC = () => {
       ctx.textAlign = "right";
       ctx.fillStyle = "#000";
       ctx.font = "bold 11px Arial";
-      ctx.fillText(segment.label, radius - 20, 5);
+
+      // Truncate long text
+      const maxLength = 20;
+      const text = segment.label.length > maxLength
+        ? segment.label.substring(0, maxLength) + "..."
+        : segment.label;
+
+      ctx.fillText(text, radius - 20, 5);
       ctx.restore();
     });
 
@@ -128,88 +155,90 @@ export const SpinnerContest: React.FC = () => {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Spin", centerX, centerY);
-  }, [spinnerData, rotation]);
+  }, [segments, rotation]);
 
   // Handle spin
   const handleSpin = async () => {
-    if (isSpinning || !spinnerData) return;
+    if (isSpinning || segments.length === 0 || !contestData || !canSpin) return;
 
     setIsSpinning(true);
 
-    const activeSegments = spinnerData.segments.filter((s) => s.active);
-    const randomIndex = Math.floor(Math.random() * activeSegments.length);
-    const segmentAngle = 360 / activeSegments.length;
-
-    // Calculate final rotation (multiple spins + random segment)
-    const spins = 5; // Number of full rotations
-    const finalRotation =
-      spins * 360 + (360 - randomIndex * segmentAngle - segmentAngle / 2);
-
-    // Animate rotation
-    let currentRotation = rotation;
-    const duration = 4000; // 4 seconds
-    const startTime = Date.now();
-
-    const animate = () => {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Easing function (ease-out)
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-
-      currentRotation = rotation + finalRotation * easeOut;
-      setRotation(currentRotation % 360);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        // Spin complete - show result
-        setTimeout(() => {
-          handleSpinComplete(activeSegments[randomIndex]);
-        }, 500);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  };
-
-  // Handle spin complete
-  const handleSpinComplete = async (selectedSegment: SpinnerSegment) => {
     try {
-      if (!spinnerData) return;
+      // Play casino sound
+      spinSound.play();
 
-      // Call API to record spin and get voucher
-      const result = await spinnerContestApi.spinWheel(
-        spinnerData.id,
-        selectedSegment.id
+      // Call API to get the winning prize
+      const result = await newSpinnerContestApi.playContest(contestData.id);
+
+      if (!result.success || !result.prize) {
+        throw new Error(result.message || "Failed to play contest");
+      }
+
+      // Find the index of the winning segment
+      const winningIndex = segments.findIndex(
+        (s) => s.prize.id === result.prize!.id
       );
 
-      if (result.success) {
-        const voucherData: VoucherResult = {
-          voucher_code: result.voucher.voucher_code,
-          discount_text: result.voucher.discount_text,
-          segment_label: selectedSegment.label,
-        };
-
-        setVoucherResult(voucherData);
-        setShowResult(true);
+      if (winningIndex === -1) {
+        throw new Error("Winning prize not found in segments");
       }
+
+      const segmentAngle = 360 / segments.length;
+
+      // Calculate final rotation (multiple spins + winning segment)
+      // Pointer is at top, so we need to align the segment center with top
+      const spins = 5; // Number of full rotations
+      const targetAngle = winningIndex * segmentAngle + segmentAngle / 2;
+      const finalRotation = spins * 360 + (360 - targetAngle);
+
+      // Animate rotation
+      let currentRotation = rotation;
+      const duration = 4000; // 4 seconds
+      const startTime = Date.now();
+
+      const animate = () => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Easing function (ease-out cubic)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+
+        currentRotation = rotation + finalRotation * easeOut;
+        setRotation(currentRotation % 360);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Spin complete - show result
+          setTimeout(() => {
+            spinSound.playWinSound();
+            setWinResult({ prize: result.prize! });
+            setShowResult(true);
+            setIsSpinning(false);
+          }, 500);
+        }
+      };
+
+      requestAnimationFrame(animate);
     } catch (error) {
-      console.error("Error recording spin:", error);
-      // Show error message to user
-      alert("Failed to process spin. Please try again.");
-    } finally {
+      console.error("❌ Error during spin:", error);
+      const message = error instanceof Error ? error.message : "Failed to spin. Please try again.";
+      alert(message);
       setIsSpinning(false);
     }
   };
 
-  // Copy voucher code
-  const copyVoucherCode = () => {
-    if (voucherResult) {
-      navigator.clipboard.writeText(voucherResult.voucher_code);
-      // Show success toast or feedback
-      alert("Voucher code copied to clipboard!");
+  // Copy prize code or information
+  const copyPrizeInfo = () => {
+    if (winResult) {
+      const textToCopy =
+        winResult.prize.reward_type === "coupon"
+          ? winResult.prize.coupon_code || winResult.prize.title
+          : `${winResult.prize.title} - ${winResult.prize.points_value} points`;
+
+      navigator.clipboard.writeText(textToCopy);
+      alert("Prize information copied to clipboard!");
     }
   };
 
@@ -222,11 +251,15 @@ export const SpinnerContest: React.FC = () => {
     );
   }
 
-  if (!spinnerData) {
+  if (!contestData || segments.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Contest not found</p>
+          <p className="text-gray-600 mb-4">
+            {!urlContestId
+              ? "No contest ID provided"
+              : "Contest not found or has no active prizes"}
+          </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[#B88B15] font-medium"
@@ -254,13 +287,21 @@ export const SpinnerContest: React.FC = () => {
       <div className="px-6 py-8 flex flex-col items-center">
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {spinnerData.title}
+          {contestData.name}
         </h1>
 
         {/* Description */}
-        <p className="text-center text-gray-600 mb-8 max-w-md">
-          {spinnerData.description}
-        </p>
+        {contestData.description && (
+          <p className="text-center text-gray-600 mb-8 max-w-md">
+            {contestData.description}
+          </p>
+        )}
+
+        {/* Contest Period */}
+        <div className="text-xs text-gray-500 mb-6">
+          Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+          {new Date(contestData.end_at).toLocaleDateString()}
+        </div>
 
         {/* Spinner Wheel */}
         <div className="relative mb-8">
@@ -280,27 +321,29 @@ export const SpinnerContest: React.FC = () => {
         {/* Tap to Spin Button */}
         <button
           onClick={handleSpin}
-          disabled={isSpinning}
+          disabled={isSpinning || !canSpin}
           className="w-full max-w-md bg-[#B88B15] text-white py-4 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#9a7612] transition-colors"
         >
           {isSpinning ? "Spinning..." : "Tap To Spin"}
         </button>
 
         {/* Terms and Conditions */}
-        <p className="text-center text-xs text-gray-500 mt-6 max-w-md whitespace-pre-line">
-          {spinnerData.terms_conditions}
-        </p>
+        {contestData.terms_and_conditions && (
+          <p className="text-center text-xs text-gray-500 mt-6 max-w-md whitespace-pre-line">
+            {contestData.terms_and_conditions}
+          </p>
+        )}
       </div>
 
       {/* Result Modal */}
-      {showResult && voucherResult && (
+      {showResult && winResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative">
             {/* Close button */}
             <button
               onClick={() => {
                 setShowResult(false);
-                setVoucherResult(null);
+                setWinResult(null);
               }}
               className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
             >
@@ -317,26 +360,46 @@ export const SpinnerContest: React.FC = () => {
               Congratulations!
             </h2>
 
-            {/* Won voucher text */}
+            {/* Won prize text */}
             <p className="text-center text-gray-600 mb-2">
-              You've won a voucher for
+              You've won
             </p>
 
             <p className="text-center text-2xl font-bold text-gray-900 mb-6">
-              {voucherResult.discount_text}
+              {winResult.prize.title}
             </p>
 
-            {/* Voucher Code label */}
-            <p className="text-center text-gray-600 mb-3">Voucher Code</p>
+            {/* Display prize details based on type */}
+            {winResult.prize.reward_type === "coupon" &&
+              winResult.prize.coupon_code && (
+                <>
+                  {/* Coupon Code label */}
+                  <p className="text-center text-gray-600 mb-3">Coupon Code</p>
 
-            {/* Voucher code */}
-            <p className="text-center text-xl font-bold text-gray-900 mb-6 tracking-wider">
-              {voucherResult.voucher_code}
-            </p>
+                  {/* Coupon code */}
+                  <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                    {winResult.prize.coupon_code}
+                  </p>
+
+                  {/* Partner name if available */}
+                  {winResult.prize.partner_name && (
+                    <p className="text-center text-sm text-gray-500 mb-6">
+                      Partner: {winResult.prize.partner_name}
+                    </p>
+                  )}
+                </>
+              )}
+
+            {winResult.prize.reward_type === "points" &&
+              winResult.prize.points_value && (
+                <p className="text-center text-lg text-gray-600 mb-6">
+                  {winResult.prize.points_value} Loyalty Points
+                </p>
+              )}
 
             {/* Copy button */}
             <button
-              onClick={copyVoucherCode}
+              onClick={copyPrizeInfo}
               className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
             >
               Copy To Clipboard

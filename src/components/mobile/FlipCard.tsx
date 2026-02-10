@@ -1,65 +1,123 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ChevronLeft, X } from "lucide-react";
 import {
-  flipCardApi,
-  FlipCardData,
+  newFlipCardApi,
+  FlipContest,
   FlipCard as FlipCardType,
-} from "@/services/flipCardApi";
+  Prize,
+} from "@/services/newFlipCardApi";
 
 export const FlipCard: React.FC = () => {
   const navigate = useNavigate();
   const { gameId } = useParams<{ gameId: string }>();
+  const [searchParams] = useSearchParams();
+
+  // Get URL parameters
+  const orgId = searchParams.get("org_id");
+  const token = searchParams.get("token");
+  const urlContestId = searchParams.get("contest_id") || gameId;
+
+  console.warn("🎯 FlipCard Component Params:", {
+    orgId,
+    token: token ? "exists" : "missing",
+    contest_id_from_query: searchParams.get("contest_id"),
+    gameId_from_route: gameId,
+    final_urlContestId: urlContestId,
+  });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [gameData, setGameData] = useState<FlipCardData | null>(null);
+  const [contestData, setContestData] = useState<FlipContest | null>(null);
+  const [cards, setCards] = useState<FlipCardType[]>([]);
   const [flippingCard, setFlippingCard] = useState<number | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [wonPrize, setWonPrize] = useState<Prize | null>(null);
 
   useEffect(() => {
-    const fetchGameData = async () => {
+    const fetchContestData = async () => {
+      if (!urlContestId) {
+        console.error("❌ No contest ID provided");
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const data = await flipCardApi.getFlipCardGame(gameId);
-        setGameData(data);
+        const data = await newFlipCardApi.getContestById(urlContestId);
+        setContestData(data);
+
+        // Convert prizes to cards based on attempt_required
+        const attemptsRequired = data.attemp_required || 3;
+        const flipCards = newFlipCardApi.convertPrizesToCards(
+          data.prizes,
+          attemptsRequired
+        );
+        setCards(flipCards);
+        setRemainingAttempts(attemptsRequired);
       } catch (error) {
-        console.error("Error fetching flip card game:", error);
+        console.error("❌ Error fetching contest data:", error);
+        if (error instanceof Error) {
+          console.error("❌ Error message:", error.message);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchGameData();
-  }, [gameId]);
+    fetchContestData();
+  }, [urlContestId, orgId, token]);
 
   const handleCardClick = async (card: FlipCardType) => {
-    if (card.is_flipped || flippingCard !== null) return;
+    if (card.is_flipped || flippingCard !== null || remainingAttempts <= 0 || !contestData) return;
 
     setFlippingCard(card.id);
 
     try {
-      if (gameData) {
-        await flipCardApi.flipCard(gameData.id, card.id);
+      // Call API to play/flip
+      const result = await newFlipCardApi.playContest(contestData.id);
 
-        // Update local state
-        setGameData((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            cards: prev.cards.map((c) =>
-              c.id === card.id ? { ...c, is_flipped: true } : c
-            ),
-          };
-        });
-
-        // Navigate to details after a delay
-        setTimeout(() => {
-          navigate(`/flipcard/${gameData.id}/card/${card.id}`);
-        }, 600);
+      if (!result.success || !result.prize || !result.user_contest_reward) {
+        throw new Error(result.message || "Failed to flip card");
       }
+
+      // Update card to flipped state with won prize
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === card.id ? { ...c, is_flipped: true, prize: result.prize! } : c
+        )
+      );
+
+      // Update remaining attempts
+      setRemainingAttempts((prev) => prev - 1);
+
+      // Show result modal after animation
+      setTimeout(() => {
+        setWonPrize(result.prize!);
+        setShowResult(true);
+        setFlippingCard(null);
+
+        // Store user_contest_reward.id in localStorage for details page
+        localStorage.setItem('last_reward_id', result.user_contest_reward!.id.toString());
+      }, 600);
     } catch (error) {
-      console.error("Error flipping card:", error);
-    } finally {
+      console.error("❌ Error flipping card:", error);
+      const message = error instanceof Error ? error.message : "Failed to flip card";
+      alert(message);
       setFlippingCard(null);
+    }
+  };
+
+  // Copy prize information
+  const copyPrizeInfo = () => {
+    if (wonPrize) {
+      const textToCopy =
+        wonPrize.reward_type === "coupon"
+          ? wonPrize.coupon_code || wonPrize.title
+          : `${wonPrize.title} - ${wonPrize.points_value} points`;
+
+      navigator.clipboard.writeText(textToCopy);
+      alert("Prize information copied to clipboard!");
     }
   };
 
@@ -71,11 +129,15 @@ export const FlipCard: React.FC = () => {
     );
   }
 
-  if (!gameData) {
+  if (!contestData || cards.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Game not found</p>
+          <p className="text-gray-600 mb-4">
+            {!urlContestId
+              ? "No contest ID provided"
+              : "Contest not found or has no prizes"}
+          </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[#B88B15] font-medium"
@@ -103,22 +165,35 @@ export const FlipCard: React.FC = () => {
 
       {/* Content */}
       <div className="px-4 py-6">
-        {/* Instructions */}
-        <p className="text-center text-gray-700 mb-8">{gameData.description}</p>
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+          {contestData.name}
+        </h1>
+
+        {/* Description */}
+        {contestData.description && (
+          <p className="text-center text-gray-700 mb-4">{contestData.description}</p>
+        )}
+
+        {/* Remaining Attempts */}
+        <div className="text-center mb-8">
+          <span className="inline-block bg-[#FFF8E7] border border-[#D4A574] rounded-full px-4 py-2 text-sm font-semibold text-gray-900">
+            Attempts Remaining: {remainingAttempts}
+          </span>
+        </div>
 
         {/* Cards Grid */}
         <div className="space-y-4 max-w-md mx-auto">
-          {gameData.cards.map((card) => (
+          {cards.map((card) => (
             <button
               key={card.id}
               onClick={() => handleCardClick(card)}
-              disabled={card.is_flipped || flippingCard !== null}
+              disabled={card.is_flipped || flippingCard !== null || remainingAttempts <= 0}
               className="w-full perspective-1000"
             >
               <div
-                className={`relative transition-all duration-600 transform-style-3d ${
-                  flippingCard === card.id ? "rotate-y-180" : ""
-                }`}
+                className={`relative transition-all duration-600 transform-style-3d ${flippingCard === card.id ? "rotate-y-180" : ""
+                  }`}
               >
                 {/* Card */}
                 <div className="relative rounded-2xl overflow-hidden shadow-lg">
@@ -130,21 +205,25 @@ export const FlipCard: React.FC = () => {
 
                       {/* Title */}
                       <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {card.reward.title}
+                        {card.prize.title}
                       </h3>
 
                       {/* Value */}
                       <p className="text-3xl font-bold text-gray-900 mb-2">
-                        {card.reward.value}
+                        {card.prize.reward_type === "coupon"
+                          ? card.prize.partner_name || "Coupon"
+                          : `${card.prize.points_value} Points`}
                       </p>
 
-                      {/* Code */}
-                      <p className="text-sm text-gray-600">
-                        Code{" "}
-                        <span className="font-semibold">
-                          {card.reward.voucher_code}
-                        </span>
-                      </p>
+                      {/* Code or Details */}
+                      {card.prize.reward_type === "coupon" && card.prize.coupon_code && (
+                        <p className="text-sm text-gray-600">
+                          Code{" "}
+                          <span className="font-semibold">
+                            {card.prize.coupon_code}
+                          </span>
+                        </p>
+                      )}
                     </div>
                   ) : (
                     // Unflipped Card - Golden gradient
@@ -174,7 +253,96 @@ export const FlipCard: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Terms and Conditions */}
+        {contestData.terms_and_conditions && (
+          <p className="text-center text-xs text-gray-500 mt-8 max-w-md mx-auto whitespace-pre-line">
+            {contestData.terms_and_conditions}
+          </p>
+        )}
       </div>
+
+      {/* Result Modal */}
+      {showResult && wonPrize && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative">
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowResult(false);
+                setWonPrize(null);
+              }}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Gift icon */}
+            <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
+              <div className="text-4xl">🎁</div>
+            </div>
+
+            {/* Congratulations text */}
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
+              Congratulations!
+            </h2>
+
+            {/* Won prize text */}
+            <p className="text-center text-gray-600 mb-2">You've won</p>
+
+            <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+              {wonPrize.title}
+            </p>
+
+            {/* Display prize details based on type */}
+            {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
+              <>
+                {/* Coupon Code label */}
+                <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+
+                {/* Coupon code */}
+                <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                  {wonPrize.coupon_code}
+                </p>
+
+                {/* Partner name if available */}
+                {wonPrize.partner_name && (
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    Partner: {wonPrize.partner_name}
+                  </p>
+                )}
+              </>
+            )}
+
+            {wonPrize.reward_type === "points" && wonPrize.points_value && (
+              <p className="text-center text-lg text-gray-600 mb-6">
+                {wonPrize.points_value} Loyalty Points
+              </p>
+            )}
+
+            {/* Action buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const rewardId = localStorage.getItem('last_reward_id');
+                  if (rewardId) {
+                    navigate(`/flipcard/details/${rewardId}`);
+                  }
+                }}
+                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
+              >
+                View Details
+              </button>
+              <button
+                onClick={copyPrizeInfo}
+                className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
+              >
+                Copy To Clipboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .perspective-1000 {
