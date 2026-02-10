@@ -19,6 +19,39 @@ import {
   Loader2,
 } from "lucide-react";
 import axios from "axios";
+
+// Interface for Month-wise Rides
+interface MonthWiseRide {
+  id: number;
+  status: string;
+  start_location: string;
+  end_location: string;
+  start_time: string;
+  end_time: string;
+  available_seats: number;
+  price: number;
+  driver: {
+    id: number;
+    name: string;
+    profile_image_url: string;
+  };
+  vehicle: {
+    car_model_name: string;
+    registration_number: string;
+  };
+}
+
+interface MonthWiseDate {
+  date: string;
+  rides: MonthWiseRide[];
+}
+
+interface MonthWiseRidesResponse {
+  dates: MonthWiseDate[];
+}
+
+// fetchMonthWiseRides is now inside the component to access state
+
 import carGrayImage from "@/assets/car_gray.png";
 import carRedImage from "@/assets/car_red.png";
 import carBlackImage from "@/assets/car_black.png";
@@ -824,8 +857,43 @@ export const CarpoolDashboard = () => {
     useState<string>("");
   const [calendarMonth, setCalendarMonth] = useState<string>("");
   const [calendarYear, setCalendarYear] = useState<number>(0);
+  const [monthWiseRides, setMonthWiseRides] = useState<MonthWiseDate[]>([]);
   const datesContainerRef = useRef<HTMLDivElement | null>(null);
   const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const fetchMonthWiseRidesData = useCallback(
+    async (month: number, year: number) => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "pulse-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+        const selectedSiteId = localStorage.getItem("selectedSiteId") || "1";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/rides/monthwise_rides.json`,
+          {
+            params: {
+              month: month,
+              year: year,
+              pms_site_id: selectedSiteId,
+            },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data && response.data.dates) {
+          setMonthWiseRides(response.data.dates);
+        }
+        // console.log("Month-wise Rides:", response.data);
+      } catch (error) {
+        console.error("Failed to fetch month-wise rides:", error);
+      }
+    },
+    []
+  );
 
   // Initialize calendar dates
   useEffect(() => {
@@ -839,6 +907,44 @@ export const CarpoolDashboard = () => {
     setSelectedCalendarDateForApi(initialApiDate);
     setCalendarMonth(initialMonth);
     setCalendarYear(initialYear);
+
+    const fetchUserRides = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "pulse-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        // console.log("User Ride Requests:", response.data);
+      } catch (error) {
+        console.error("Failed to fetch user ride requests:", error);
+      }
+    };
+
+    const fetchDriverRideRequests = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "pulse-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/ride_requests.json`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        // console.log("Driver Ride Requests:", response.data);
+      } catch (error) {
+        console.error("Failed to fetch driver ride requests:", error);
+      }
+    };
+
+    fetchUserRides();
+    fetchDriverRideRequests();
   }, []);
 
   // Fetch calendar data function
@@ -863,43 +969,46 @@ export const CarpoolDashboard = () => {
       });
 
       setCalendarDates(generatedDates);
-
-      const selectedDateObj = selectedCalendarDate
-        ? new Date(selectedCalendarDateForApi)
-        : null;
-      const isSelectedDateInCurrentMonth =
-        selectedDateObj &&
-        selectedDateObj.getMonth() === monthIndex &&
-        selectedDateObj.getFullYear() === calendarYear;
-
-      if (!isSelectedDateInCurrentMonth) {
-        const today = new Date();
-        const isTodayInCurrentMonth =
-          today.getMonth() === monthIndex &&
-          today.getFullYear() === calendarYear;
-
-        if (isTodayInCurrentMonth) {
-          const todayFormatted = today.toLocaleDateString("en-GB");
-          const todayApiFormat = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-          setSelectedCalendarDate(todayFormatted);
-          setSelectedCalendarDateForApi(todayApiFormat);
-        } else {
-          const firstAvailableDate = generatedDates.find((d) => !d.isOff);
-          if (firstAvailableDate) {
-            setSelectedCalendarDate(firstAvailableDate.date);
-            setSelectedCalendarDateForApi(firstAvailableDate.fullDate);
-          }
-        }
-      }
     } catch (error) {
       console.error("Error fetching calendar data:", error);
     }
-  }, [
-    calendarMonth,
-    calendarYear,
-    selectedCalendarDate,
-    selectedCalendarDateForApi,
-  ]);
+  }, [calendarMonth, calendarYear]);
+
+  // Handle date selection when month/year changes
+  useEffect(() => {
+    if (calendarDates.length === 0) return;
+
+    const monthIndex = new Date(
+      `${calendarMonth} 1, ${calendarYear}`
+    ).getMonth();
+
+    const selectedDateObj = selectedCalendarDateForApi
+      ? new Date(selectedCalendarDateForApi)
+      : null;
+    const isSelectedDateInCurrentMonth =
+      selectedDateObj &&
+      selectedDateObj.getMonth() === monthIndex &&
+      selectedDateObj.getFullYear() === calendarYear;
+
+    if (!isSelectedDateInCurrentMonth) {
+      const today = new Date();
+      const isTodayInCurrentMonth =
+        today.getMonth() === monthIndex && today.getFullYear() === calendarYear;
+
+      if (isTodayInCurrentMonth) {
+        const todayFormatted = today.toLocaleDateString("en-GB");
+        const todayApiFormat = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        setSelectedCalendarDate(todayFormatted);
+        setSelectedCalendarDateForApi(todayApiFormat);
+      } else {
+        const firstAvailableDate = calendarDates.find((d) => !d.isOff);
+        if (firstAvailableDate) {
+          setSelectedCalendarDate(firstAvailableDate.date);
+          setSelectedCalendarDateForApi(firstAvailableDate.fullDate);
+        }
+      }
+    }
+  }, [calendarDates, calendarMonth, calendarYear, selectedCalendarDateForApi]);
 
   // Month navigation logic
   const handleMonthChange = (direction: "next" | "prev") => {
@@ -1105,8 +1214,13 @@ export const CarpoolDashboard = () => {
   useEffect(() => {
     if (calendarMonth && calendarYear) {
       fetchCalendarData();
+
+      // Calculate month number (1-12)
+      const monthIndex =
+        new Date(`${calendarMonth} 1, ${calendarYear}`).getMonth() + 1;
+      fetchMonthWiseRidesData(monthIndex, calendarYear);
     }
-  }, [calendarMonth, calendarYear, fetchCalendarData]);
+  }, [calendarMonth, calendarYear, fetchCalendarData, fetchMonthWiseRidesData]);
 
   // Auto-scroll to selected date
   useEffect(() => {
@@ -1137,6 +1251,43 @@ export const CarpoolDashboard = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
+  };
+
+  const handleFindRide = async () => {
+    // Example parameters from request
+    const params = new URLSearchParams({
+      start_lat: "18.9696",
+      start_long: "72.8193",
+      end_lat: "18.5284",
+      end_long: "73.8739",
+      date: "26-01-2026",
+      passengers: "2",
+      gender: "male",
+    });
+
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        "F8jgP8cVc8fRUNdVzFeWF0ouaQiWcPYaajDFnEWXUKc"; // Fallback to provided token for testing if local is missing
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "pulse-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      const response = await fetch(
+        `${protocol}${baseUrl}/rides/search.json?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      // console.log("Find Ride Results:", data);
+    } catch (error) {
+      console.error("Error finding rides:", error);
+    }
   };
 
   const handlePageChange = (page: number) => {
