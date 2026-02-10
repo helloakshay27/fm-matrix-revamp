@@ -362,7 +362,7 @@ export const ContestDetailsPage: React.FC = () => {
 
                         {/* Row 2 */}
                         <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">Value</p>
+                          <p className="text-xs font-medium text-gray-500">Coupon Code</p>
                           <p className="text-sm text-[#1A1A1A]">
                             {prize.reward_type === "points"
                               ? `${prize.points_value ?? 0} Points`
