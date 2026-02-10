@@ -586,6 +586,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   const isFmSite =
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work") ||
+    hostname === "fm-matrix.lockated.com" ||
     hostname === "localhost";
 
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
