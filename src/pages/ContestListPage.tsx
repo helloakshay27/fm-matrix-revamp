@@ -82,7 +82,7 @@ export const ContestListPage: React.FC = () => {
       const url = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
 
       const response = await fetch(
-        `${url}/contests`,
+        `${url}/contests.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -92,9 +92,24 @@ export const ContestListPage: React.FC = () => {
       );
 
       const data = await response.json();
+      console.log('Contest API response:', data);
       const today = new Date();
 
-      const formatted: ContestRecord[] = data.map((item: any) => {
+      // Handle both array and object response
+      const contestArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data.contests)
+          ? data.contests
+          : [];
+
+      if (!contestArray.length) {
+        setContests([]);
+        setFilteredContests([]);
+        setStatusCounts({ total: 0, active: 0, inactive: 0, expired: 0 });
+        return;
+      }
+
+      const formatted: ContestRecord[] = contestArray.map((item: any) => {
         const start = new Date(item.start_at);
         const end = new Date(item.end_at);
 
@@ -221,13 +236,13 @@ export const ContestListPage: React.FC = () => {
 
       {/* ACTION BAR */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <Button
+        {/* <Button
           onClick={() => navigate("/contests/create")}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Contest
-        </Button>
+        </Button> */}
 
         {/* <div className="flex gap-3">
           <TextField
@@ -293,6 +308,17 @@ export const ContestListPage: React.FC = () => {
             enableSearch={false}
             enableSelection={false}
             enableExport={false}
+            leftActions={
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate("/contests/create")}
+                  className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Contest
+                </Button>
+              </div>
+            }
             storageKey="contest-table"
             emptyMessage="No contests found"
           />
