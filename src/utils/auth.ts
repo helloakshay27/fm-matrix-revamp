@@ -79,6 +79,8 @@ export interface Organization {
   logo?: {
     url: string;
   };
+  backend_url?: string;
+  backend_domain?: string;
 }
 
 // Local storage keys

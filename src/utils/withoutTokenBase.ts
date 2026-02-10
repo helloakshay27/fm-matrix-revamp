@@ -21,6 +21,11 @@ export const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     try {
+      // If baseURL is already set (e.g. per-request override), respect it
+      if (config.baseURL && config.baseURL !== "undefined" && config.baseURL !== "") {
+        console.log("🎯 Using pre-set Base URL:", config.baseURL);
+        return config;
+      }
       // Check if running locally
       const hostname = window.location.hostname;
       const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
