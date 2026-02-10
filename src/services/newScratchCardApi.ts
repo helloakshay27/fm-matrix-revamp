@@ -222,7 +222,7 @@ class NewScratchCardApi {
       const url = `/contests`;
       const params: any = {};
       if (this.token) params.token = this.token;
-      if (this.orgId) params.org_id = this.orgId;
+      //   if (this.orgId) params.org_id = this.orgId;
 
       console.warn("🌐 API Call - URL:", url);
       console.warn("🔑 API Call - Params:", params);
@@ -273,7 +273,7 @@ class NewScratchCardApi {
       const url = `/contests/${contestId}`;
       const params: any = {};
       if (this.token) params.token = this.token;
-      if (this.orgId) params.org_id = this.orgId;
+      //   if (this.orgId) params.org_id = this.orgId;
 
       console.warn("🌐 API Call - URL:", url);
       console.warn("📋 Contest ID:", contestId);
