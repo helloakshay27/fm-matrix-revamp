@@ -84,7 +84,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=curated");
+      const apiUrl = getFullUrl("/osr_setups/osr_sub_categories.json?q[service_tag_eq]=curated&inactive=true");
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -151,7 +151,7 @@ const CuratedServiceDashboard = () => {
         throw new Error("API configuration is missing");
       }
 
-      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?json?q[service_tag_eq]=curated&id=${itemId}`);
+      const apiUrl = getFullUrl(`/osr_setups/modify_osr_sub_category.json?json?q[service_tag_eq]=curated&inactive=true&id=${itemId}`);
 
       const response = await fetch(apiUrl, {
         method: "POST",

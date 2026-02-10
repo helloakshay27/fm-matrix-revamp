@@ -86,7 +86,8 @@ baseClient.interceptors.request.use(
       const isFmSite =
         hostname === "fm-uat.gophygital.work" ||
         hostname === "fm.gophygital.work" ||
-        hostname === "fm-matrix.lockated.com";
+        hostname === "fm-matrix.lockated.com" ||
+        hostname === "localhost";
       const isClubSite =
         hostname.includes("club-uat-api.lockated.com") ||
         hostname.includes("club.lockated.com");
