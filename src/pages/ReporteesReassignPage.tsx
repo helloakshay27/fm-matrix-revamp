@@ -24,6 +24,9 @@ const ReporteesReassignPage = () => {
     const [reportees, setReportees] = useState<Array<{ id: number; name?: string; email?: string; mobile?: string }>>([]);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [isFetching, setIsFetching] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
@@ -57,7 +60,13 @@ const ReporteesReassignPage = () => {
         try {
 
             const basePath = '/pms/users/get_reportees_of_line_magager';
-            const qs = new URLSearchParams({ line_manager_email: current, company_id: String(companyId) });
+            // const qs = new URLSearchParams({ line_manager_email: current, company_id: String(companyId) });
+            const qs = new URLSearchParams({
+                line_manager_email: current,
+                company_id: String(companyId),
+                page: String(currentPage),   // 👈 important
+            });
+
 
             const url = getFullUrl(`${basePath}?${qs.toString()}`);
             const res = await fetch(url, {
@@ -86,7 +95,7 @@ const ReporteesReassignPage = () => {
                 toast.error(msg);
                 // Ensure table is cleared on error
                 setReportees([]);
-                setSelectedIds(new Set());
+                // setSelectedIds(new Set());
                 return;
             }
             const data = await res.json();
@@ -100,7 +109,7 @@ const ReporteesReassignPage = () => {
                 msg = String(msg).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
                 toast.error(msg);
                 setReportees([]);
-                setSelectedIds(new Set());
+                // setSelectedIds(new Set());
                 return;
             }
             const listRaw: Array<any>
@@ -108,7 +117,7 @@ const ReporteesReassignPage = () => {
             if (!Array.isArray(listRaw)) {
                 toast.info('No reportees found');
                 setReportees([]);
-                setSelectedIds(new Set());
+                // setSelectedIds(new Set());
                 return;
             }
             const list = listRaw.map((u: any) => {
@@ -123,8 +132,14 @@ const ReporteesReassignPage = () => {
                 } as { id: number; name?: string; email?: string; mobile?: string };
             });
             setReportees(list);
-            setSelectedIds(new Set());
-            toast.success(`Loaded ${list.length} reportee${list.length === 1 ? '' : 's'}`);
+            // setSelectedIds(new Set());
+            // toast.success(`Loaded ${list.length} reportee${list.length === 1 ? '' : 's'}`);
+
+            const listRaw2 = data?.reportees || data?.users || data?.data || [];
+
+            setTotalPages(data?.pagination?.total_pages || 1);
+            setTotalCount(data?.pagination?.total_count || listRaw2.length);
+
         } catch (e: any) {
             toast.error(e?.message || 'Failed to fetch reportees');
         } finally {
@@ -132,6 +147,12 @@ const ReporteesReassignPage = () => {
         }
     };
 
+
+    React.useEffect(() => {
+        if (currentEmail.trim()) {
+            handleFetchReportees();
+        }
+    }, [currentPage]);
     const handleToggleOne = (id: number) => {
         setSelectedIds(prev => {
             const next = new Set(prev);
@@ -148,7 +169,10 @@ const ReporteesReassignPage = () => {
             setSelectedIds(new Set(reportees.map(r => r.id)));
         }
     };
-
+console.log("Reassign payload:", {
+//   new_manager_email: updated,
+  reportee_ids: Array.from(selectedIds),
+});
     const handleReassign = async () => {
         if (isSubmitting) return;
         const current = currentEmail.trim().toLowerCase();
@@ -170,6 +194,7 @@ const ReporteesReassignPage = () => {
             return;
         }
         setIsSubmitting(true);
+        
         try {
             // Using new endpoint without /pms and without .json as per latest requirement
             const url = getFullUrl('/pms/users/vi_reassign_reportees');
@@ -231,6 +256,29 @@ const ReporteesReassignPage = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+
+    const getVisiblePages = (current: number, total: number) => {
+        const delta = 1; // how many pages before & after current
+        const range: (number | string)[] = [];
+
+        const left = Math.max(2, current - delta);
+        const right = Math.min(total - 1, current + delta);
+
+        range.push(1);
+
+        if (left > 2) range.push("...");
+
+        for (let i = left; i <= right; i++) {
+            range.push(i);
+        }
+
+        if (right < total - 1) range.push("...");
+
+        if (total > 1) range.push(total);
+
+        return range;
     };
 
     return (
@@ -344,6 +392,52 @@ const ReporteesReassignPage = () => {
                             </table>
                         </div>
                         <div className="mt-3 text-xs text-gray-600">Selected: {selectedIds.size}</div>
+                        {/* <div className="mt-3 text-xs text-gray-600">Selected: {totalCount}</div> */}
+                        {/* Pagination */}
+
+                        <div className="flex flex-col items-center gap-2 mt-6">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    disabled={currentPage === 1 || isFetching}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    className="px-2 py-1 text-gray-600 disabled:opacity-40"
+                                >
+                                    {"<"}
+                                </button>
+
+                                {getVisiblePages(currentPage, totalPages).map((page, index) =>
+                                    page === "..." ? (
+                                        <span key={index} className="px-2">...</span>
+                                    ) : (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentPage(Number(page))}
+                                            className={`px-3 py-1 rounded text-sm ${currentPage === page
+                                                    ? "bg-red-600 text-white"
+                                                    : "border hover:bg-gray-100"
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                )}
+
+                                <button
+                                    disabled={currentPage === totalPages || isFetching}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    className="px-2 py-1 text-gray-600 disabled:opacity-40"
+                                >
+                                    {">"}
+                                </button>
+                            </div>
+
+                            <div className="text-sm text-gray-500">
+                                Showing page {currentPage} of {totalPages}
+                            </div>
+                        </div>
+
+
+
                     </div>
                 </div>
             )}
