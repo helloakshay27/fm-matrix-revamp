@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, X } from "lucide-react";
-import { newScratchCardApi, ScratchContest, Prize, UserContestReward } from "@/services/newScratchCardApi";
+import {
+  newScratchCardApi,
+  ScratchContest,
+  Prize,
+  UserContestReward,
+} from "@/services/newScratchCardApi";
+import { toast } from "sonner";
 
 export const ScratchCard: React.FC = () => {
   const navigate = useNavigate();
@@ -226,7 +232,10 @@ export const ScratchCard: React.FC = () => {
       setWonPrize(result.prize);
 
       // Store user_contest_reward.id in localStorage for details page
-      localStorage.setItem('last_reward_id', result.user_contest_reward.id.toString());
+      localStorage.setItem(
+        "last_reward_id",
+        result.user_contest_reward.id.toString()
+      );
 
       // Show result modal
       setShowResultModal(true);
@@ -234,16 +243,19 @@ export const ScratchCard: React.FC = () => {
       console.warn("🎁 Won prize:", result.prize);
     } catch (error) {
       console.error("❌ Error scratching card:", error);
-      const message = error instanceof Error ? error.message : "Failed to scratch card";
-      alert(message);
+      const message =
+        error instanceof Error ? error.message : "Failed to scratch card";
+      toast.error(message);
     }
   };
 
   // Navigate to voucher details
   const handleViewVoucher = () => {
-    const rewardId = localStorage.getItem('last_reward_id');
+    const rewardId = localStorage.getItem("last_reward_id");
     if (rewardId && orgId && token) {
-      navigate(`/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`);
+      navigate(
+        `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+      );
     }
   };
 
@@ -256,7 +268,7 @@ export const ScratchCard: React.FC = () => {
           : wonPrize.title;
 
       navigator.clipboard.writeText(textToCopy);
-      alert("Copied to clipboard!");
+      toast.success("Copied to clipboard!");
     }
   };
 
@@ -274,9 +286,7 @@ export const ScratchCard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600 mb-4">
-            {!urlContestId
-              ? "No contest ID provided"
-              : "Contest not found"}
+            {!urlContestId ? "No contest ID provided" : "Contest not found"}
           </p>
           <button
             onClick={() => navigate(-1)}
@@ -402,26 +412,22 @@ export const ScratchCard: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-900 mb-2">Voucher</h2>
               {wonPrize && (
                 <>
-                  <p className="text-gray-600 mb-1">
-                    {wonPrize.title}
-                  </p>
-                  {wonPrize.reward_type === "coupon" && wonPrize.partner_name && (
-                    <p className="text-sm text-gray-500 mb-1">
-                      {wonPrize.partner_name}
-                    </p>
-                  )}
+                  <p className="text-gray-600 mb-1">{wonPrize.title}</p>
+                  {wonPrize.reward_type === "coupon" &&
+                    wonPrize.partner_name && (
+                      <p className="text-sm text-gray-500 mb-1">
+                        {wonPrize.partner_name}
+                      </p>
+                    )}
                 </>
               )}
               <p className="text-sm text-gray-500">
                 Valid Till{" "}
-                {new Date(contestData.end_at).toLocaleDateString(
-                  "en-GB",
-                  {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  }
-                )}
+                {new Date(contestData.end_at).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
             </div>
           </div>
@@ -468,41 +474,37 @@ export const ScratchCard: React.FC = () => {
             </h2>
 
             {/* Won prize text */}
-            <p className="text-center text-gray-600 mb-2">
-              You've won
-            </p>
+            <p className="text-center text-gray-600 mb-2">You've won</p>
 
             <p className="text-center text-2xl font-bold text-gray-900 mb-6">
               {wonPrize.title}
             </p>
 
             {/* Display prize details based on type */}
-            {wonPrize.reward_type === "coupon" &&
-              wonPrize.coupon_code && (
-                <>
-                  {/* Coupon Code label */}
-                  <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+            {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
+              <>
+                {/* Coupon Code label */}
+                <p className="text-center text-gray-600 mb-3">Coupon Code</p>
 
-                  {/* Coupon code */}
-                  <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
-                    {wonPrize.coupon_code}
-                  </p>
-
-                  {/* Partner name if available */}
-                  {wonPrize.partner_name && (
-                    <p className="text-center text-sm text-gray-500 mb-6">
-                      Partner: {wonPrize.partner_name}
-                    </p>
-                  )}
-                </>
-              )}
-
-            {wonPrize.reward_type === "points" &&
-              wonPrize.points_value && (
-                <p className="text-center text-lg text-gray-600 mb-6">
-                  {wonPrize.points_value} Loyalty Points
+                {/* Coupon code */}
+                <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                  {wonPrize.coupon_code}
                 </p>
-              )}
+
+                {/* Partner name if available */}
+                {wonPrize.partner_name && (
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    Partner: {wonPrize.partner_name}
+                  </p>
+                )}
+              </>
+            )}
+
+            {wonPrize.reward_type === "points" && wonPrize.points_value && (
+              <p className="text-center text-lg text-gray-600 mb-6">
+                {wonPrize.points_value} Loyalty Points
+              </p>
+            )}
 
             {/* Copy button */}
             <button

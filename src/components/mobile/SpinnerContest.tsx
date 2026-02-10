@@ -7,6 +7,7 @@ import {
   Prize,
 } from "@/services/newSpinnerContestApi";
 import { spinSound } from "@/utils/spinSound";
+import { toast } from "sonner";
 
 interface WheelSegment {
   id: number;
@@ -17,6 +18,25 @@ interface WheelSegment {
 
 interface WinResult {
   prize: Prize;
+}
+
+interface PlayContestResult {
+  success: boolean;
+  contest_type: string;
+  user_contest_reward: {
+    id: number;
+    contest_id: number;
+    prize_id: number;
+    reward_type: string;
+    points_value: number | null;
+    coupon_code: string | null;
+    user_id: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  };
+  prize: Prize;
+  message?: string;
 }
 
 export const SpinnerContest: React.FC = () => {
@@ -35,7 +55,7 @@ export const SpinnerContest: React.FC = () => {
     token: token ? "exists" : "missing",
     contest_id_from_query: searchParams.get("contest_id"),
     contestId_from_route: contestId,
-    final_urlContestId: urlContestId
+    final_urlContestId: urlContestId,
   });
 
   // Loading and data states
@@ -47,6 +67,7 @@ export const SpinnerContest: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [winResult, setWinResult] = useState<WinResult | null>(null);
   const [canSpin, setCanSpin] = useState(true);
+  const [rewardId, setRewardId] = useState<number | null>(null);
 
   // Fetch spinner contest data
   useEffect(() => {
@@ -64,8 +85,9 @@ export const SpinnerContest: React.FC = () => {
         setContestData(data);
 
         // Convert prizes to wheel segments
-        const wheelSegments =
-          newSpinnerContestApi.convertPrizesToSegments(data.prizes);
+        const wheelSegments = newSpinnerContestApi.convertPrizesToSegments(
+          data.prizes
+        );
         setSegments(wheelSegments);
       } catch (error) {
         console.error("❌ Error fetching contest data:", error);
@@ -130,9 +152,10 @@ export const SpinnerContest: React.FC = () => {
 
       // Truncate long text
       const maxLength = 20;
-      const text = segment.label.length > maxLength
-        ? segment.label.substring(0, maxLength) + "..."
-        : segment.label;
+      const text =
+        segment.label.length > maxLength
+          ? segment.label.substring(0, maxLength) + "..."
+          : segment.label;
 
       ctx.fillText(text, radius - 20, 5);
       ctx.restore();
@@ -168,7 +191,9 @@ export const SpinnerContest: React.FC = () => {
       spinSound.play();
 
       // Call API to get the winning prize
-      const result = await newSpinnerContestApi.playContest(contestData.id);
+      const result = (await newSpinnerContestApi.playContest(
+        contestData.id
+      )) as PlayContestResult;
 
       if (!result.success || !result.prize) {
         throw new Error(result.message || "Failed to play contest");
@@ -210,11 +235,26 @@ export const SpinnerContest: React.FC = () => {
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Spin complete - show result
+          // Spin complete - navigate to voucher details
           setTimeout(() => {
             spinSound.playWinSound();
-            setWinResult({ prize: result.prize! });
-            setShowResult(true);
+
+            // Store reward ID in localStorage
+            const userRewardId = result.user_contest_reward?.id;
+            if (userRewardId) {
+              localStorage.setItem("last_reward_id", userRewardId.toString());
+              setRewardId(userRewardId);
+
+              // Navigate to voucher details page
+              navigate(
+                `/scratchcard/details/${userRewardId}?org_id=${orgId}&token=${token}`
+              );
+            } else {
+              // Fallback to showing modal if no reward ID
+              setWinResult({ prize: result.prize! });
+              setShowResult(true);
+            }
+
             setIsSpinning(false);
           }, 500);
         }
@@ -223,8 +263,18 @@ export const SpinnerContest: React.FC = () => {
       requestAnimationFrame(animate);
     } catch (error) {
       console.error("❌ Error during spin:", error);
-      const message = error instanceof Error ? error.message : "Failed to spin. Please try again.";
-      alert(message);
+
+      // Stop the spinning sound
+      spinSound.stop();
+
+      // Show error message
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to spin. Please try again.";
+      toast.error(message);
+
+      // Re-enable spinning button
       setIsSpinning(false);
     }
   };
@@ -238,7 +288,7 @@ export const SpinnerContest: React.FC = () => {
           : `${winResult.prize.title} - ${winResult.prize.points_value} points`;
 
       navigator.clipboard.writeText(textToCopy);
-      alert("Prize information copied to clipboard!");
+      toast.success("Prize information copied to clipboard!");
     }
   };
 
@@ -361,9 +411,7 @@ export const SpinnerContest: React.FC = () => {
             </h2>
 
             {/* Won prize text */}
-            <p className="text-center text-gray-600 mb-2">
-              You've won
-            </p>
+            <p className="text-center text-gray-600 mb-2">You've won</p>
 
             <p className="text-center text-2xl font-bold text-gray-900 mb-6">
               {winResult.prize.title}
@@ -400,9 +448,24 @@ export const SpinnerContest: React.FC = () => {
             {/* Copy button */}
             <button
               onClick={copyPrizeInfo}
-              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
+              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
             >
               Copy To Clipboard
+            </button>
+
+            {/* View Voucher Details button */}
+            <button
+              onClick={() => {
+                const storedRewardId = localStorage.getItem("last_reward_id");
+                if (storedRewardId && orgId && token) {
+                  navigate(
+                    `/scratchcard/details/${storedRewardId}?org_id=${orgId}&token=${token}`
+                  );
+                }
+              }}
+              className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            >
+              View Voucher Details
             </button>
           </div>
         </div>
