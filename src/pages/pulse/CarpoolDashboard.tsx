@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Car,
@@ -10,7 +16,9 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
 import carGrayImage from "@/assets/car_gray.png";
 import carRedImage from "@/assets/car_red.png";
 import carBlackImage from "@/assets/car_black.png";
@@ -134,57 +142,6 @@ const generateCalendarDays = (
 
   return days;
 };
-
-const statusCards = [
-  {
-    title: "Today's Rides",
-    count: 11,
-    icon: Car,
-    status: "today",
-  },
-  {
-    title: "Total Rides",
-    count: 12049,
-    icon: Car,
-    status: "total",
-  },
-  {
-    title: "Total Users",
-    count: 9658,
-    icon: Users,
-    status: "users",
-  },
-  {
-    title: "Upcoming Rides",
-    count: 21,
-    icon: Calendar,
-    status: "upcoming",
-  },
-  {
-    title: "Active Now",
-    count: 4,
-    icon: MapPin,
-    status: "active",
-  },
-  {
-    title: "Active Report's",
-    count: 18,
-    icon: AlertCircle,
-    status: "reports",
-  },
-  // {
-  //   title: "Pending KYC",
-  //   count: 23,
-  //   icon: Users,
-  //   status: "kyc",
-  // },
-  {
-    title: "Active SOS",
-    count: 1,
-    icon: AlertCircle,
-    status: "sos",
-  },
-];
 
 // Mock data for different views
 const mockTodayRides: RideRecord[] = [
@@ -584,6 +541,282 @@ export const CarpoolDashboard = () => {
     useState<string>("Under Review");
   const itemsPerPage = 10;
 
+  // API state management for all_rides
+  const [apiData, setApiData] = useState<any>(null);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // API state management for today's rides
+  const [todaysRidesData, setTodaysRidesData] = useState<any>(null);
+  const [todaysRidesLoading, setTodaysRidesLoading] = useState(true);
+  const [todaysRidesError, setTodaysRidesError] = useState<string | null>(null);
+
+  // API state management for upcoming rides
+  const [upcomingRidesData, setUpcomingRidesData] = useState<any>(null);
+  const [upcomingRidesLoading, setUpcomingRidesLoading] = useState(true);
+  const [upcomingRidesError, setUpcomingRidesError] = useState<string | null>(
+    null
+  );
+
+  // API state management for active now rides
+  const [activeNowRidesData, setActiveNowRidesData] = useState<any>(null);
+  const [activeNowRidesLoading, setActiveNowRidesLoading] = useState(true);
+  const [activeNowRidesError, setActiveNowRidesError] = useState<string | null>(
+    null
+  );
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  // Helper function to get today's date range
+  const getTodayDateRange = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    const startTime = `${year}-${month}-${day}T00:00:00`;
+    const endTime = `${year}-${month}-${day}T23:59:59`;
+
+    return { startTime, endTime };
+  };
+
+  // Helper function to get upcoming rides date range (from tomorrow onwards)
+  const getUpcomingDateRange = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const day = String(tomorrow.getDate()).padStart(2, "0");
+
+    const startTime = `${year}-${month}-${day}T00:00:00`;
+
+    return { startTime };
+  };
+
+  // Fetch today's rides from API
+  useEffect(() => {
+    const fetchTodaysRides = async () => {
+      console.log("=== Today's Rides API Debug ===");
+      console.log("baseUrl:", baseUrl);
+      console.log("token:", token ? `${token.substring(0, 20)}...` : "null");
+
+      if (!baseUrl || !token) {
+        console.warn(
+          "⚠️ Today's Rides API call skipped - Missing required values:"
+        );
+        console.warn("- baseUrl:", baseUrl ? "✓" : "✗");
+        console.warn("- token:", token ? "✓" : "✗");
+        setTodaysRidesLoading(false);
+        return;
+      }
+
+      setTodaysRidesLoading(true);
+      setTodaysRidesError(null);
+
+      try {
+        const { startTime, endTime } = getTodayDateRange();
+        console.log("Date range:", { startTime, endTime });
+
+        const url = `https://${baseUrl}/rides/all_rides.json`;
+        console.log("✓ Making Today's Rides API call to:", url);
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            "q[start_time_gteq]": startTime,
+            "q[start_time_lteq]": endTime,
+          },
+        });
+
+        console.log("✓ Today's Rides API Response:", response.data);
+        setTodaysRidesData(response.data);
+      } catch (err: any) {
+        console.error("✗ Error fetching today's rides:", err);
+        console.error("✗ Error response:", err.response?.data);
+        setTodaysRidesError(err.response?.data?.error || err.message);
+      } finally {
+        setTodaysRidesLoading(false);
+      }
+    };
+
+    fetchTodaysRides();
+  }, [baseUrl, token]);
+
+  // Fetch upcoming rides from API
+  useEffect(() => {
+    const fetchUpcomingRides = async () => {
+      console.log("=== Upcoming Rides API Debug ===");
+      console.log("baseUrl:", baseUrl);
+      console.log("token:", token ? `${token.substring(0, 20)}...` : "null");
+
+      if (!baseUrl || !token) {
+        console.warn(
+          "⚠️ Upcoming Rides API call skipped - Missing required values:"
+        );
+        console.warn("- baseUrl:", baseUrl ? "✓" : "✗");
+        console.warn("- token:", token ? "✓" : "✗");
+        setUpcomingRidesLoading(false);
+        return;
+      }
+
+      setUpcomingRidesLoading(true);
+      setUpcomingRidesError(null);
+
+      try {
+        const { startTime } = getUpcomingDateRange();
+        console.log("Upcoming rides start time:", startTime);
+
+        const url = `https://${baseUrl}/rides/all_rides.json`;
+        console.log("✓ Making Upcoming Rides API call to:", url);
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            "q[start_time_gteq]": startTime,
+          },
+        });
+
+        console.log("✓ Upcoming Rides API Response:", response.data);
+        setUpcomingRidesData(response.data);
+      } catch (err: any) {
+        console.error("✗ Error fetching upcoming rides:", err);
+        console.error("✗ Error response:", err.response?.data);
+        setUpcomingRidesError(err.response?.data?.error || err.message);
+      } finally {
+        setUpcomingRidesLoading(false);
+      }
+    };
+
+    fetchUpcomingRides();
+  }, [baseUrl, token]);
+
+  // Fetch active now rides from API
+  useEffect(() => {
+    const fetchActiveNowRides = async () => {
+      console.log("=== Active Now Rides API Debug ===");
+      console.log("baseUrl:", baseUrl);
+      console.log("token:", token ? `${token.substring(0, 20)}...` : "null");
+
+      if (!baseUrl || !token) {
+        console.warn(
+          "⚠️ Active Now Rides API call skipped - Missing required values:"
+        );
+        console.warn("- baseUrl:", baseUrl ? "✓" : "✗");
+        console.warn("- token:", token ? "✓" : "✗");
+        setActiveNowRidesLoading(false);
+        return;
+      }
+
+      setActiveNowRidesLoading(true);
+      setActiveNowRidesError(null);
+
+      try {
+        const url = `https://${baseUrl}/rides/all_rides.json`;
+        console.log("✓ Making Active Now Rides API call to:", url);
+        console.log("Filter: status=started");
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            "q[status_eq]": "started",
+          },
+        });
+
+        console.log("✓ Active Now Rides API Response:", response.data);
+        setActiveNowRidesData(response.data);
+      } catch (err: any) {
+        console.error("✗ Error fetching active now rides:", err);
+        console.error("✗ Error response:", err.response?.data);
+        setActiveNowRidesError(err.response?.data?.error || err.message);
+      } finally {
+        setActiveNowRidesLoading(false);
+      }
+    };
+
+    fetchActiveNowRides();
+  }, [baseUrl, token]);
+
+  // Fetch all rides from API
+  useEffect(() => {
+    const fetchAllRides = async () => {
+      if (!baseUrl || !token) {
+        setApiLoading(false);
+        return;
+      }
+
+      setApiLoading(true);
+      setApiError(null);
+
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/rides/all_rides.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setApiData(response.data);
+        console.log("All Rides API Response:", response.data);
+      } catch (err: any) {
+        setApiError(err.response?.data?.error || err.message);
+        console.error("Error fetching all rides:", err);
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    fetchAllRides();
+  }, [baseUrl, token]);
+
+  // Create status cards from API data (useMemo to update when apiData, todaysRidesData, upcomingRidesData, or activeNowRidesData changes)
+  const statusCards = useMemo(
+    () => [
+      {
+        title: "Today's Rides",
+        count: todaysRidesData?.rides?.length || 0,
+        icon: Car,
+        status: "today",
+      },
+      {
+        title: "Total Rides",
+        count: apiData?.rotal_rides || 0, // Note: API has typo "rotal" instead of "total"
+        icon: Car,
+        status: "total",
+      },
+      {
+        title: "Total Users",
+        count: apiData?.total_users || 0,
+        icon: Users,
+        status: "users",
+      },
+      {
+        title: "Upcoming Rides",
+        count: upcomingRidesData?.rides?.length || 0,
+        icon: Calendar,
+        status: "upcoming",
+      },
+      {
+        title: "Active Now",
+        count: activeNowRidesData?.rides?.length || 0,
+        icon: MapPin,
+        status: "active",
+      },
+      {
+        title: "Active Report's",
+        count: apiData?.active_reports || 0,
+        icon: AlertCircle,
+        status: "reports",
+      },
+      {
+        title: "Active SOS",
+        count: apiData?.active_sos || 0,
+        icon: AlertCircle,
+        status: "sos",
+      },
+    ],
+    [apiData, todaysRidesData, upcomingRidesData, activeNowRidesData]
+  );
+
   // Calendar states
   const [calendarDates, setCalendarDates] = useState<CalendarDay[]>([]);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("");
@@ -678,18 +911,170 @@ export const CarpoolDashboard = () => {
     setCalendarYear(newYear);
   };
 
+  // Helper function to format time from API
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Helper function to format date from API
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Helper function to get car image based on color
+  const getCarImageByColor = (colour: string) => {
+    const colorLower = colour.toLowerCase();
+    if (colorLower.includes("white") || colorLower.includes("beige")) {
+      return carBeigeImage;
+    } else if (colorLower.includes("black")) {
+      return carBlackImage;
+    } else if (colorLower.includes("red")) {
+      return carRedImage;
+    }
+    return carGrayImage; // Default
+  };
+
+  // Map API rides data to RideRecord format
+  const mapApiRides = useMemo(() => {
+    if (!apiData?.rides || !Array.isArray(apiData.rides)) {
+      return [];
+    }
+
+    return apiData.rides.map((ride: any) => ({
+      id: String(ride.id),
+      driver: ride.driver?.name || "N/A",
+      registrationNumber: ride.vehicle?.registration_number || "N/A",
+      passengers:
+        ride.passengers && ride.passengers.length > 0
+          ? ride.passengers.map((p: any) => p.name).join(", ")
+          : `${ride.available_seats} seats available`,
+      leavingFrom: ride.start_location || "N/A",
+      destination: ride.end_location || "N/A",
+      carImage: ride.vehicle?.colour
+        ? getCarImageByColor(ride.vehicle.colour)
+        : carGrayImage,
+      status: ride.status || "scheduled",
+      departureTime: formatTime(ride.start_time),
+      rideDate: formatDate(ride.start_time),
+      price: `₹${ride.price?.toFixed(0) || "0"}`,
+    }));
+  }, [apiData, formatTime, formatDate, getCarImageByColor]);
+
+  // Map today's rides API data to RideRecord format
+  const mapTodaysRides = useMemo(() => {
+    if (!todaysRidesData?.rides || !Array.isArray(todaysRidesData.rides)) {
+      return [];
+    }
+
+    return todaysRidesData.rides.map((ride: any) => ({
+      id: String(ride.id),
+      driver: ride.driver?.name || "N/A",
+      registrationNumber: ride.vehicle?.registration_number || "N/A",
+      passengers:
+        ride.passengers && ride.passengers.length > 0
+          ? ride.passengers.map((p: any) => p.name).join(", ")
+          : `${ride.available_seats} seats available`,
+      leavingFrom: ride.start_location || "N/A",
+      destination: ride.end_location || "N/A",
+      carImage: ride.vehicle?.colour
+        ? getCarImageByColor(ride.vehicle.colour)
+        : carGrayImage,
+      status: ride.status || "scheduled",
+      departureTime: formatTime(ride.start_time),
+      rideDate: formatDate(ride.start_time),
+      price: `₹${ride.price?.toFixed(0) || "0"}`,
+    }));
+  }, [todaysRidesData, formatTime, formatDate, getCarImageByColor]);
+
+  // Map upcoming rides API data to RideRecord format
+  const mapUpcomingRides = useMemo(() => {
+    if (!upcomingRidesData?.rides || !Array.isArray(upcomingRidesData.rides)) {
+      return [];
+    }
+
+    return upcomingRidesData.rides.map((ride: any) => ({
+      id: String(ride.id),
+      driver: ride.driver?.name || "N/A",
+      registrationNumber: ride.vehicle?.registration_number || "N/A",
+      passengers:
+        ride.passengers && ride.passengers.length > 0
+          ? ride.passengers.map((p: any) => p.name).join(", ")
+          : `${ride.available_seats} seats available`,
+      leavingFrom: ride.start_location || "N/A",
+      destination: ride.end_location || "N/A",
+      carImage: ride.vehicle?.colour
+        ? getCarImageByColor(ride.vehicle.colour)
+        : carGrayImage,
+      status: ride.status || "scheduled",
+      departureTime: formatTime(ride.start_time),
+      rideDate: formatDate(ride.start_time),
+      price: `₹${ride.price?.toFixed(0) || "0"}`,
+    }));
+  }, [upcomingRidesData, formatTime, formatDate, getCarImageByColor]);
+
+  // Map active now rides API data to RideRecord format
+  const mapActiveNowRides = useMemo(() => {
+    if (
+      !activeNowRidesData?.rides ||
+      !Array.isArray(activeNowRidesData.rides)
+    ) {
+      return [];
+    }
+
+    return activeNowRidesData.rides.map((ride: any) => ({
+      id: String(ride.id),
+      driver: ride.driver?.name || "N/A",
+      registrationNumber: ride.vehicle?.registration_number || "N/A",
+      passengers:
+        ride.passengers && ride.passengers.length > 0
+          ? ride.passengers.map((p: any) => p.name).join(", ")
+          : `${ride.available_seats} seats available`,
+      leavingFrom: ride.start_location || "N/A",
+      destination: ride.end_location || "N/A",
+      carImage: ride.vehicle?.colour
+        ? getCarImageByColor(ride.vehicle.colour)
+        : carGrayImage,
+      status: ride.status || "started",
+      departureTime: formatTime(ride.start_time),
+      rideDate: formatDate(ride.start_time),
+      price: `₹${ride.price?.toFixed(0) || "0"}`,
+    }));
+  }, [activeNowRidesData, formatTime, formatDate, getCarImageByColor]);
+
   useEffect(() => {
     // Update rides data based on active view
     switch (activeView) {
       case "today":
+        // Use today's rides API data if available, otherwise fallback to mock
+        setRidesData(
+          mapTodaysRides.length > 0 ? mapTodaysRides : mockTodayRides
+        );
+        break;
       case "total":
-        setRidesData(mockTodayRides);
+        // Use API rides data if available, otherwise fallback to mock
+        setRidesData(mapApiRides.length > 0 ? mapApiRides : mockTodayRides);
         break;
       case "upcoming":
-        setRidesData(mockUpcomingRides);
+        // Use upcoming rides API data if available, otherwise fallback to mock
+        setRidesData(
+          mapUpcomingRides.length > 0 ? mapUpcomingRides : mockUpcomingRides
+        );
         break;
       case "active":
-        setRidesData(mockActiveNowRides);
+        // Use active now rides API data if available, otherwise fallback to mock
+        setRidesData(
+          mapActiveNowRides.length > 0 ? mapActiveNowRides : mockActiveNowRides
+        );
         break;
       case "reports":
         setRidesData(mockActiveReports);
@@ -697,11 +1082,24 @@ export const CarpoolDashboard = () => {
       case "sos":
         setRidesData(mockSOSAlerts);
         break;
+      case "completed":
+        setRidesData(mockUpcomingRides); // Using upcoming as placeholder
+        break;
+      case "cancelled":
+        setRidesData(mockTodayRides); // Using today as placeholder
+        break;
       default:
-        setRidesData(mockTodayRides);
+        // Use API rides for default view
+        setRidesData(mapApiRides.length > 0 ? mapApiRides : mockTodayRides);
     }
     setCurrentPage(1);
-  }, [activeView]);
+  }, [
+    activeView,
+    mapApiRides,
+    mapTodaysRides,
+    mapUpcomingRides,
+    mapActiveNowRides,
+  ]);
 
   // Fetch calendar data when month/year changes
   useEffect(() => {

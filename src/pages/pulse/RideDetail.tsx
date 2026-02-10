@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,9 @@ import {
   Star,
   FileCheck,
   Eye,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
 import carGrayImage from "@/assets/car_gray.png";
 import carBlackImage from "@/assets/car_black.png";
 import carRedImage from "@/assets/car_red.png";
@@ -38,6 +40,7 @@ const allRides = [
     genderPreference: "All",
     pricePerPerson: "₹250",
     emergencyContact: "+91 1234567890",
+    passengersList: [],
   },
   {
     id: "2",
@@ -58,6 +61,7 @@ const allRides = [
     genderPreference: "All",
     pricePerPerson: "₹260",
     emergencyContact: "+91 9876543210",
+    passengersList: [],
   },
   {
     id: "3",
@@ -78,6 +82,7 @@ const allRides = [
     genderPreference: "Female",
     pricePerPerson: "₹270",
     emergencyContact: "+91 5555666677",
+    passengersList: [],
   },
   {
     id: "4",
@@ -98,6 +103,7 @@ const allRides = [
     genderPreference: "Male",
     pricePerPerson: "₹240",
     emergencyContact: "+91 8888999900",
+    passengersList: [],
   },
 ];
 
@@ -106,14 +112,182 @@ export const RideDetail = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("Ride Details");
 
+  // API state management
+  const [apiRide, setApiRide] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const rideId = searchParams.get("id");
 
-  // Find the ride data based on ID from URL
+  // Initialize baseUrl if not set
+  useEffect(() => {
+    if (!localStorage.getItem("baseUrl")) {
+      localStorage.setItem("baseUrl", "pulse-api.lockated.com");
+      console.log("✓ baseUrl initialized to: pulse-api.lockated.com");
+    }
+  }, []);
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  // Fetch ride detail from API
+  useEffect(() => {
+    const fetchRideDetail = async () => {
+      // Debug logging
+      console.log("=== API Call Debug Info ===");
+      console.log("rideId:", rideId);
+      console.log("baseUrl:", baseUrl);
+      console.log("token:", token ? `${token.substring(0, 20)}...` : "null");
+      console.log("Full URL:", `https://${baseUrl}/rides/${rideId}.json`);
+
+      if (!rideId || !baseUrl || !token) {
+        console.log("⚠️ API call skipped - Missing required values:");
+        console.log("- rideId:", rideId ? "✓" : "✗");
+        console.log("- baseUrl:", baseUrl ? "✓" : "✗");
+        console.log("- token:", token ? "✓" : "✗");
+        setLoading(false);
+        return;
+      }
+
+      console.log("✓ Making API call...");
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/rides/${rideId}.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log("✓ API Response:", response.data);
+        setApiRide(response.data);
+      } catch (err: any) {
+        console.error("✗ API Error:", err);
+        console.error("✗ Error response:", err.response?.data);
+        setError(err.response?.data?.error || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRideDetail();
+  }, [rideId, baseUrl, token]);
+
+  // Map API data to UI format, or fallback to mock data
   const rideData = useMemo(() => {
+    // If we have API data, use it
+    if (apiRide) {
+      // Helper function to format date/time
+      const formatDateTime = (dateString: string) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      };
+
+      const formatTime = (dateString: string) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      };
+
+      const formatDate = (dateString: string) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+      };
+
+      // Map API response to UI format
+      return {
+        id: apiRide.id?.toString() || rideId || "1",
+        driver: apiRide.driver?.name || "N/A",
+        registrationNumber: apiRide.vehicle?.registration_number || "N/A",
+        passengers:
+          apiRide.passengers?.map((p: any) => p.name).join(", ") ||
+          "No passengers yet",
+        leavingFrom: apiRide.start_location || "N/A",
+        destination: apiRide.end_location || "N/A",
+        carImage: apiRide.vehicle?.attachments?.[0] || carGrayImage, // Fallback to default image
+        carModel: apiRide.vehicle?.car_model_name || "N/A",
+        carColor: apiRide.vehicle?.colour || "N/A",
+        status: apiRide.status === "open" ? "Active" : apiRide.status || "N/A",
+        departureTime: formatTime(apiRide.start_time),
+        rideDate: formatDate(apiRide.start_time),
+        bookingDate: formatDate(apiRide.created_at),
+        expectedArrivalTime: formatTime(apiRide.end_time),
+        seat: `${apiRide.passengers?.length || 0}/${apiRide.available_seats || 0}`,
+        genderPreference:
+          apiRide.gender_preference === "all"
+            ? "All"
+            : apiRide.gender_preference || "All",
+        pricePerPerson: `₹${apiRide.price || 0}`,
+        emergencyContact: "+91 1234567890", // Not in API response, using default
+        driverGender: apiRide.driver?.gender || "N/A",
+        driverImage: apiRide.driver?.profile_image_url || "",
+        driverRating: apiRide.driver?.rating || "N/A",
+        passengersList: apiRide.passengers || [],
+      };
+    }
+
+    // Fallback to mock data if API data is not available
     const ride = allRides.find((r) => r.id === rideId);
-    // Default to first ride if ID not found
     return ride || allRides[0];
-  }, [rideId]);
+  }, [apiRide, rideId]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && !apiRide) {
+    return (
+      <div className="bg-white px-6 py-4">
+        <div className="text-sm text-gray-500 mb-6">
+          <span
+            className="cursor-pointer hover:text-gray-700"
+            onClick={() => navigate(-1)}
+          >
+            Carpool
+          </span>{" "}
+          &gt; <span className="text-gray-700">Ride Detail</span>
+        </div>
+        <div className="flex flex-col items-center justify-center h-96">
+          <AlertCircle className="w-12 h-12 text-[#C72030] mb-4" />
+          <h2 className="text-xl font-semibold mb-2">
+            Failed to Load Ride Details
+          </h2>
+          <p className="text-gray-500 mb-4">{error}</p>
+          {!token && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4 max-w-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> Authentication token is missing. Please
+                ensure you're logged in.
+              </p>
+            </div>
+          )}
+          <Button onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white px-6 py-4">
@@ -463,44 +637,22 @@ export const RideDetail = () => {
 
             {/* Passengers Table with EnhancedTaskTable */}
             <EnhancedTaskTable
-              data={[
-                {
-                  id: "1",
-                  accessCardNumber: "54647",
-                  name: "Hamza",
-                  mobileNumber: "+91 1234567890",
-                  emailAddress: "hamza.soas@localted.com",
-                  employeeNumber: "346347",
-                  gender: "Male",
-                },
-                {
-                  id: "2",
-                  accessCardNumber: "54647",
-                  name: "Shahab",
-                  mobileNumber: "+91 1234567890",
-                  emailAddress: "hamza.soas@localted.com",
-                  employeeNumber: "346347",
-                  gender: "Male",
-                },
-                {
-                  id: "3",
-                  accessCardNumber: "64647",
-                  name: "Yukta",
-                  mobileNumber: "+91 1234567890",
-                  emailAddress: "hamza.jasal@localted.com",
-                  employeeNumber: "346347",
-                  gender: "Female",
-                },
-                {
-                  id: "4",
-                  accessCardNumber: "54647",
-                  name: "Rahul",
-                  mobileNumber: "+91 1234567890",
-                  emailAddress: "hamza.soas@localted.com",
-                  employeeNumber: "346347",
-                  gender: "Male",
-                },
-              ]}
+              data={
+                rideData.passengersList && rideData.passengersList.length > 0
+                  ? rideData.passengersList.map(
+                      (passenger: any, index: number) => ({
+                        id: passenger.id?.toString() || index.toString(),
+                        accessCardNumber: passenger.access_card_number || "N/A",
+                        name: passenger.name || "N/A",
+                        mobileNumber:
+                          passenger.mobile_number || passenger.phone || "N/A",
+                        emailAddress: passenger.email || "N/A",
+                        employeeNumber: passenger.employee_number || "N/A",
+                        gender: passenger.gender || "N/A",
+                      })
+                    )
+                  : [] // Empty array when no passengers
+              }
               columns={[
                 {
                   key: "actions",
