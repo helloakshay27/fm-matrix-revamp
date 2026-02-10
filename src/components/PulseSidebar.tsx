@@ -198,7 +198,7 @@ const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "FM Users",
+          name: "Admin Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },

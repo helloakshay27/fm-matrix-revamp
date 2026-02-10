@@ -49,6 +49,26 @@ export const CreateContestPage: React.FC = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [createdContestId, setCreatedContestId] = useState<number | null>(null);
+
+  // Helper function to create a default offer object
+  const createDefaultOffer = (): OfferData => ({
+    id: Date.now().toString() + Math.random(),
+    offerTitle: "",
+    couponCode: "",
+    displayName: "",
+    partner: "",
+    winningProbability: "",
+    probabilityOutOf: "",
+    offerDescription: "",
+    bannerImage: null,
+    bannerImageName: "",
+  });
+
+  // Helper function to get initial offers count based on contest type
+  const getInitialOffersCount = (type: string): number => {
+    return type === "Spin" ? 4 : 1;
+  };
 
   // Form data ────────────────────────────────────────────────────────────────
   const [contestName, setContestName] = useState("");
@@ -56,21 +76,35 @@ export const CreateContestPage: React.FC = () => {
   const [contestType, setContestType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
+  // Reset redemption document when contest type changes away from Scratch
+  // Also adjust offers count based on contest type
+  const handleContestTypeChange = (newType: string) => {
+    setContestType(newType);
+
+    // Reset redemption text for non-Scratch types
+    if (newType !== "Scratch") {
+      setRedemptionText("");
+    }
+
+    // Adjust offers count based on contest type
+    const requiredCount = getInitialOffersCount(newType);
+    const currentCount = offers.length;
+
+    if (currentCount < requiredCount) {
+      // Add more offers to reach required count
+      const newOffers = Array.from(
+        { length: requiredCount - currentCount },
+        () => createDefaultOffer()
+      );
+      setOffers([...offers, ...newOffers]);
+    } else if (currentCount > requiredCount) {
+      // Keep only the required number of offers
+      setOffers(offers.slice(0, requiredCount));
+    }
+  };
+
   // Offers
-  const [offers, setOffers] = useState<OfferData[]>([
-    {
-      id: "1",
-      offerTitle: "",
-      couponCode: "",
-      displayName: "",
-      partner: "",
-      winningProbability: "",
-      probabilityOutOf: "",
-      offerDescription: "",
-      bannerImage: null,
-      bannerImageName: "",
-    },
-  ]);
+  const [offers, setOffers] = useState<OfferData[]>([createDefaultOffer()]);
 
   // Validity
   const [startDate, setStartDate] = useState("");
@@ -81,14 +115,9 @@ export const CreateContestPage: React.FC = () => {
   const [attemptsRequired, setAttemptsRequired] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  // Documents
-  const [termsDocument, setTermsDocument] = useState<File | null>(null);
-  const [termsDocumentName, setTermsDocumentName] = useState("");
-  const termsFileRef = useRef<HTMLInputElement>(null);
-
-  const [redemptionDocument, setRedemptionDocument] = useState<File | null>(null);
-  const [redemptionDocumentName, setRedemptionDocumentName] = useState("");
-  const redemptionFileRef = useRef<HTMLInputElement>(null);
+  // Documents - now text inputs instead of file uploads
+  const [termsText, setTermsText] = useState("");
+  const [redemptionText, setRedemptionText] = useState("");
 
   const steps: ContestStep[] = [
     { id: 1, title: "Basic Info", completed: completedSteps.includes(1), active: currentStep === 1 },
@@ -100,21 +129,7 @@ export const CreateContestPage: React.FC = () => {
   const contestTypes = ["Spin", "Scratch", "Flip"];
 
   const addOffer = () => {
-    setOffers([
-      ...offers,
-      {
-        id: Date.now().toString(),
-        offerTitle: "",
-        couponCode: "",
-        displayName: "",
-        partner: "",
-        winningProbability: "",
-        probabilityOutOf: "",
-        offerDescription: "",
-        bannerImage: null,
-        bannerImageName: "",
-      },
-    ]);
+    setOffers([...offers, createDefaultOffer()]);
   };
 
   const removeOffer = (id: string) => {
@@ -139,22 +154,6 @@ export const CreateContestPage: React.FC = () => {
     if (file) {
       updateOffer(id, "bannerImage", file);
       updateOffer(id, "bannerImageName", file.name);
-    }
-  };
-
-  const handleTermsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setTermsDocument(file);
-      setTermsDocumentName(file.name);
-    }
-  };
-
-  const handleRedemptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setRedemptionDocument(file);
-      setRedemptionDocumentName(file.name);
     }
   };
 
@@ -242,14 +241,14 @@ export const CreateContestPage: React.FC = () => {
       }
     });
 
-    // Add terms document if present
-    if (termsDocument) {
-      formData.append('contest[terms_document]', termsDocument);
+    // Add terms and conditions text if present
+    if (termsText.trim()) {
+      formData.append('contest[terms_and_conditions]', termsText.trim());
     }
 
-    // Add redemption document if present
-    if (redemptionDocument) {
-      formData.append('contest[redemption_document]', redemptionDocument);
+    // Add redemption guide text if present (only for Scratch contests)
+    if (redemptionText.trim() && contestType === "Scratch") {
+      formData.append('contest[redemption_guide]', redemptionText.trim());
     }
 
     try {
@@ -275,10 +274,13 @@ export const CreateContestPage: React.FC = () => {
 
       const data = await res.json();
       sonnerToast.success("Contest created successfully!");
+      
+      // Store the created contest ID for navigation
+      if (data.id) {
+        setCreatedContestId(data.id);
+      }
+      
       setShowSuccessModal(true);
-
-      // Optional: store real ID for navigation
-      // console.log("Created ID:", data.id);
 
     } catch (err: any) {
       console.error(err);
@@ -368,7 +370,11 @@ export const CreateContestPage: React.FC = () => {
 
   const handleViewDetails = () => {
     setShowSuccessModal(false);
-    navigate("/contests/1"); // ← replace with real ID later
+    if (createdContestId) {
+      navigate(`/contests/${createdContestId}`);
+    } else {
+      navigate("/contests");
+    }
   };
 
   // MUI TextField styling (unchanged)
@@ -414,7 +420,7 @@ export const CreateContestPage: React.FC = () => {
                   <MuiSelect
                     value={contestType}
                     label="Contest Type"
-                    onChange={(e) => setContestType(e.target.value)}
+                    onChange={(e) => handleContestTypeChange(e.target.value)}
                   >
                     {contestTypes.map((type) => (
                       <MenuItem key={type} value={type}>
@@ -435,7 +441,25 @@ export const CreateContestPage: React.FC = () => {
                   variant="outlined"
                   multiline
                   rows={4}
-                  sx={textFieldSx}
+                  // sx={textFieldSx}
+                   sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
+            }}
                 />
               </div>
             </CardContent>
@@ -517,6 +541,8 @@ export const CreateContestPage: React.FC = () => {
                       onChange={(e) => updateOffer(offer.id, "winningProbability", e.target.value)}
                       sx={textFieldSx}
                       size="small"
+                      type="number"
+                      inputProps={{ min: 0 }}
                     />
 
                     <TextField
@@ -526,6 +552,8 @@ export const CreateContestPage: React.FC = () => {
                       onChange={(e) => updateOffer(offer.id, "probabilityOutOf", e.target.value)}
                       sx={textFieldSx}
                       size="small"
+                      type="number"
+                      inputProps={{ min: 0 }}
                     />
                   </div>
 
@@ -703,7 +731,7 @@ export const CreateContestPage: React.FC = () => {
       case 4:
         // ... your original terms & redemption step (unchanged)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6 w-full">
             <Card className="shadow-sm w-full">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
@@ -716,69 +744,83 @@ export const CreateContestPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <Typography variant="body2" className="text-gray-700 mb-2">
-                    Upload Document<span className="text-[#C72030]">*</span>
-                  </Typography>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-sm text-gray-600 mb-4">
-                      {termsDocumentName || "Choose a file or drag & drop it here"}
-                    </p>
-                    <input
-                      type="file"
-                      ref={termsFileRef}
-                      className="hidden"
-                      onChange={handleTermsUpload}
-                      accept=".pdf,.doc,.docx"
-                    />
-                    <Button
-                      onClick={() => termsFileRef.current?.click()}
-                      variant="outline"
-                      className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
-                    >
-                      Browse
-                    </Button>
-                  </div>
+                  <TextField
+                    fullWidth
+                    label="Terms & Conditions"
+                    placeholder="Enter terms and conditions"
+                    value={termsText}
+                    onChange={(e) => setTermsText(e.target.value)}
+                    variant="outlined"
+                    multiline
+                    rows={8}
+                   sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
+            }}
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
-                    <Trophy className="w-5 h-5 text-[#C72030]" />
+            {contestType === "Scratch" && (
+              <Card className="shadow-sm w-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                      <Trophy className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                      Redemption Guide
+                    </h2>
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Redemption Guide
-                  </h2>
-                </div>
 
-                <div>
-                  <Typography variant="body2" className="text-gray-700 mb-2">
-                    Upload Document<span className="text-[#C72030]">*</span>
-                  </Typography>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-sm text-gray-600 mb-4">
-                      {redemptionDocumentName || "Choose a file or drag & drop it here"}
-                    </p>
-                    <input
-                      type="file"
-                      ref={redemptionFileRef}
-                      className="hidden"
-                      onChange={handleRedemptionUpload}
-                      accept=".pdf,.doc,.docx"
+                  <div>
+                    <TextField
+                      fullWidth
+                      label="Redemption Guide"
+                      placeholder="Enter redemption guide"
+                      value={redemptionText}
+                      onChange={(e) => setRedemptionText(e.target.value)}
+                      variant="outlined"
+                      multiline
+                      rows={8}
+                     sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
+            }}
                     />
-                    <Button
-                      onClick={() => redemptionFileRef.current?.click()}
-                      variant="outline"
-                      className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
-                    >
-                      Browse
-                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
 

@@ -79,6 +79,8 @@ export interface Organization {
   logo?: {
     url: string;
   };
+  backend_url?: string;
+  backend_domain?: string;
 }
 
 // Local storage keys
@@ -149,10 +151,10 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work");
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com" || hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -581,7 +583,8 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("web.gophygital.work");
   const isFmSite =
     hostname.includes("fm-uat.gophygital.work") ||
-    hostname.includes("fm.gophygital.work");
+    hostname.includes("fm.gophygital.work") ||
+    hostname === "localhost";
 
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
   const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
