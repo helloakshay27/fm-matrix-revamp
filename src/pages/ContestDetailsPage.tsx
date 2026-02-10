@@ -23,6 +23,10 @@ interface Prize {
   probability_value: number;
   probability_out_of: number;
   icon_url: string | null;
+  image: {
+    id: number;
+    url: string;
+  } | null;
   // other fields omitted if not used in UI
 }
 
@@ -59,6 +63,8 @@ export const ContestDetailsPage: React.FC = () => {
       try {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+// const baseUrl =  "https://uat-hi-society.lockated.com";
+//     const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
 
         if (!baseUrl || !token) {
           throw new Error("Base URL or token not set in localStorage");
@@ -346,9 +352,9 @@ export const ContestDetailsPage: React.FC = () => {
 
                         <div className="md:row-span-4 flex items-start justify-end">
                           <div className="w-48 h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-                            {prize.icon_url ? (
+                            {prize.image?.url || prize.icon_url ? (
                               <img
-                                src={prize.icon_url}
+                                src={prize.image?.url || prize.icon_url || ""}
                                 alt={prize.title}
                                 className="w-full h-full object-cover"
                               />
@@ -362,7 +368,7 @@ export const ContestDetailsPage: React.FC = () => {
 
                         {/* Row 2 */}
                         <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">Value</p>
+                          <p className="text-xs font-medium text-gray-500">Coupon Code</p>
                           <p className="text-sm text-[#1A1A1A]">
                             {prize.reward_type === "points"
                               ? `${prize.points_value ?? 0} Points`
@@ -409,12 +415,15 @@ export const ContestDetailsPage: React.FC = () => {
             </Button>
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
-            <div className="prose max-w-none text-sm">
-              {contest.terms_and_conditions ? (
+            <div className="prose max-w-none text-sm quill-content">
+              {/* {contest.terms_and_conditions ? (
                 <p>{contest.terms_and_conditions}</p>
               ) : (
                 <p className="text-gray-500 italic">No terms and conditions provided.</p>
-              )}
+              )} */}
+              <div dangerouslySetInnerHTML={{ __html:contest.terms_and_conditions || "<p className='text-gray-500'>No terms and conditions provided</p>" }}/>
+
+              
             </div>
           </CardContent>
         </Card>

@@ -36,15 +36,28 @@ export const FlipCard: React.FC = () => {
 
   useEffect(() => {
     const fetchContestData = async () => {
-      if (!urlContestId) {
-        console.error("❌ No contest ID provided");
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       try {
-        const data = await newFlipCardApi.getContestById(urlContestId);
+        let data: FlipContest;
+
+        // If contest_id is provided, fetch specific contest
+        if (urlContestId) {
+          data = await newFlipCardApi.getContestById(urlContestId);
+        } else {
+          // Otherwise, fetch all flip contests and use the first one
+          console.warn("⚠️ No contest ID provided, fetching all flip contests");
+          const contests = await newFlipCardApi.getContests();
+
+          if (contests.length === 0) {
+            console.error("❌ No flip contests available");
+            setIsLoading(false);
+            return;
+          }
+
+          data = contests[0];
+          console.warn("✅ Using first flip contest:", data);
+        }
+
         setContestData(data);
 
         // Convert prizes to cards based on attempt_required
@@ -69,7 +82,13 @@ export const FlipCard: React.FC = () => {
   }, [urlContestId, orgId, token]);
 
   const handleCardClick = async (card: FlipCardType) => {
-    if (card.is_flipped || flippingCard !== null || remainingAttempts <= 0 || !contestData) return;
+    if (
+      card.is_flipped ||
+      flippingCard !== null ||
+      remainingAttempts <= 0 ||
+      !contestData
+    )
+      return;
 
     setFlippingCard(card.id);
 
@@ -84,7 +103,9 @@ export const FlipCard: React.FC = () => {
       // Update card to flipped state with won prize
       setCards((prev) =>
         prev.map((c) =>
-          c.id === card.id ? { ...c, is_flipped: true, prize: result.prize! } : c
+          c.id === card.id
+            ? { ...c, is_flipped: true, prize: result.prize! }
+            : c
         )
       );
 
@@ -98,11 +119,15 @@ export const FlipCard: React.FC = () => {
         setFlippingCard(null);
 
         // Store user_contest_reward.id in localStorage for details page
-        localStorage.setItem('last_reward_id', result.user_contest_reward!.id.toString());
+        localStorage.setItem(
+          "last_reward_id",
+          result.user_contest_reward!.id.toString()
+        );
       }, 600);
     } catch (error) {
       console.error("❌ Error flipping card:", error);
-      const message = error instanceof Error ? error.message : "Failed to flip card";
+      const message =
+        error instanceof Error ? error.message : "Failed to flip card";
       alert(message);
       setFlippingCard(null);
     }
@@ -134,9 +159,7 @@ export const FlipCard: React.FC = () => {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600 mb-4">
-            {!urlContestId
-              ? "No contest ID provided"
-              : "Contest not found or has no prizes"}
+            Contest not found or has no prizes
           </p>
           <button
             onClick={() => navigate(-1)}
@@ -172,7 +195,9 @@ export const FlipCard: React.FC = () => {
 
         {/* Description */}
         {contestData.description && (
-          <p className="text-center text-gray-700 mb-4">{contestData.description}</p>
+          <p className="text-center text-gray-700 mb-4">
+            {contestData.description}
+          </p>
         )}
 
         {/* Remaining Attempts */}
@@ -188,12 +213,17 @@ export const FlipCard: React.FC = () => {
             <button
               key={card.id}
               onClick={() => handleCardClick(card)}
-              disabled={card.is_flipped || flippingCard !== null || remainingAttempts <= 0}
+              disabled={
+                card.is_flipped ||
+                flippingCard !== null ||
+                remainingAttempts <= 0
+              }
               className="w-full perspective-1000"
             >
               <div
-                className={`relative transition-all duration-600 transform-style-3d ${flippingCard === card.id ? "rotate-y-180" : ""
-                  }`}
+                className={`relative transition-all duration-600 transform-style-3d ${
+                  flippingCard === card.id ? "rotate-y-180" : ""
+                }`}
               >
                 {/* Card */}
                 <div className="relative rounded-2xl overflow-hidden shadow-lg">
@@ -216,14 +246,15 @@ export const FlipCard: React.FC = () => {
                       </p>
 
                       {/* Code or Details */}
-                      {card.prize.reward_type === "coupon" && card.prize.coupon_code && (
-                        <p className="text-sm text-gray-600">
-                          Code{" "}
-                          <span className="font-semibold">
-                            {card.prize.coupon_code}
-                          </span>
-                        </p>
-                      )}
+                      {card.prize.reward_type === "coupon" &&
+                        card.prize.coupon_code && (
+                          <p className="text-sm text-gray-600">
+                            Code{" "}
+                            <span className="font-semibold">
+                              {card.prize.coupon_code}
+                            </span>
+                          </p>
+                        )}
                     </div>
                   ) : (
                     // Unflipped Card - Golden gradient
@@ -324,9 +355,11 @@ export const FlipCard: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  const rewardId = localStorage.getItem('last_reward_id');
-                  if (rewardId) {
-                    navigate(`/flipcard/details/${rewardId}`);
+                  const rewardId = localStorage.getItem("last_reward_id");
+                  if (rewardId && orgId && token) {
+                    navigate(
+                      `/flipcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+                    );
                   }
                 }}
                 className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
