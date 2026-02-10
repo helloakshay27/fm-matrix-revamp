@@ -116,7 +116,8 @@ export const VoucherDetails: React.FC = () => {
           rewardData.contest?.description ||
           rewardData.prize?.display_name ||
           "",
-        image_url: rewardData.prize?.icon_url || null,
+        image_url:
+          rewardData.prize?.image?.url || rewardData.prize?.icon_url || null,
         value: rewardData.prize?.partner_name || "",
         code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
         status: rewardData.status,
