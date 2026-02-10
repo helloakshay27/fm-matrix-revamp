@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { newScratchCardApi, ScratchContest } from "@/services/newScratchCardApi";
+import {
+  newScratchCardApi,
+  ScratchContest,
+} from "@/services/newScratchCardApi";
 
 export const ScratchCardListing: React.FC = () => {
   const navigate = useNavigate();
@@ -10,7 +13,8 @@ export const ScratchCardListing: React.FC = () => {
   const [scratchCards, setScratchCards] = useState<ScratchContest[]>([]);
 
   const orgId = searchParams.get("org_id") || "runwal";
-  const token = searchParams.get("token") || "QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ";
+  const token =
+    searchParams.get("token") || "QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ";
 
   useEffect(() => {
     const fetchScratchCards = async () => {
@@ -35,7 +39,9 @@ export const ScratchCardListing: React.FC = () => {
   }, [orgId, token]);
 
   const handleCardClick = (contestId: number) => {
-    navigate(`/scratchcard?org_id=${orgId}&token=${token}&contest_id=${contestId}`);
+    navigate(
+      `/scratchcard?org_id=${orgId}&token=${token}&contest_id=${contestId}`
+    );
   };
 
   if (isLoading) {
@@ -78,9 +84,36 @@ export const ScratchCardListing: React.FC = () => {
       {scratchCards.length > 0 && (
         <div className="p-4">
           <div className="grid grid-cols-2 gap-4">
-            {scratchCards.map((card) => {
-              const isActive = card.active && new Date(card.start_at) <= new Date() && new Date(card.end_at) >= new Date();
+            {scratchCards.map((card, index) => {
+              const isActive =
+                card.active &&
+                new Date(card.start_at) <= new Date() &&
+                new Date(card.end_at) >= new Date();
               const isExpired = new Date(card.end_at) < new Date();
+              const isNew =
+                new Date(card.created_at) >
+                new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Created within last 7 days
+
+              // Calculate days left
+              const daysLeft = isExpired
+                ? 0
+                : Math.ceil(
+                    (new Date(card.end_at).getTime() - Date.now()) /
+                      (1000 * 60 * 60 * 24)
+                  );
+
+              // Alternate colors for visual variety
+              const colorIndex = index % 4;
+              const cardColors = [
+                "bg-gradient-to-br from-[#4A90E2] to-[#357ABD]", // Blue
+                "bg-gradient-to-br from-[#F5A623] to-[#E89B1D]", // Golden
+                "bg-gradient-to-br from-[#5B9DD9] to-[#4A8BC2]", // Light Blue
+                "bg-gradient-to-br from-gray-300 to-gray-400", // Gray for expired
+              ];
+
+              const bgColor = isExpired
+                ? cardColors[3]
+                : cardColors[colorIndex % 3];
 
               return (
                 <div
@@ -89,84 +122,119 @@ export const ScratchCardListing: React.FC = () => {
                   className="relative cursor-pointer"
                 >
                   {/* Card Container */}
-                  <div className="relative aspect-square rounded-2xl overflow-hidden shadow-md">
-                    {/* Background with gradient */}
-                    <div
-                      className={`absolute inset-0 ${isExpired
-                        ? "bg-gradient-to-br from-gray-300 to-gray-400"
-                        : isActive
-                          ? "bg-gradient-to-br from-blue-400 to-blue-500"
-                          : "bg-gradient-to-br from-amber-200 to-amber-300"
-                        }`}
-                    >
-                      {/* Confetti pattern */}
-                      <div className="absolute inset-0 opacity-30">
-                        {Array.from({ length: 15 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="absolute text-xs"
-                            style={{
-                              left: `${Math.random() * 100}%`,
-                              top: `${Math.random() * 100}%`,
-                              transform: `rotate(${Math.random() * 360}deg)`,
-                            }}
-                          >
-                            {
-                              ["🎁", "🎉", "⭐", "🎊"][
-                              Math.floor(Math.random() * 4)
-                              ]
-                            }
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Center Icon/Symbol */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-20 h-20 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center">
-                        <div className="text-4xl">
-                          {isExpired ? "🎟️" : "🎁"}
+                  <div className="relative rounded-xl overflow-hidden shadow-lg">
+                    {/* Main card with aspect ratio */}
+                    <div className="relative aspect-[4/3]">
+                      {/* Background with gradient */}
+                      <div className={`absolute inset-0 ${bgColor}`}>
+                        {/* Confetti/dots pattern */}
+                        <div className="absolute inset-0 opacity-20">
+                          {Array.from({ length: 20 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="absolute w-1 h-1 bg-black/30 rounded-full"
+                              style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                              }}
+                            />
+                          ))}
                         </div>
                       </div>
+
+                      {/* Horizontal stripes for depth */}
+                      <div className="absolute inset-0 flex flex-col">
+                        <div className="flex-1 bg-black/5"></div>
+                        <div className="flex-1 bg-transparent"></div>
+                        <div className="flex-1 bg-black/5"></div>
+                      </div>
+
+                      {/* Center Icon Circle */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="relative">
+                          {/* Outer circle */}
+                          <div className="w-24 h-24 rounded-full bg-black/20 flex items-center justify-center">
+                            {/* Inner icon */}
+                            <div className="text-white/90">
+                              {colorIndex % 3 === 0 ? (
+                                // Gift box icon
+                                <svg
+                                  className="w-12 h-12"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="10"
+                                    width="18"
+                                    height="10"
+                                    rx="1"
+                                  />
+                                  <path d="M3 10V8c0-.6.4-1 1-1h16c.6 0 1 .4 1 1v2" />
+                                  <path
+                                    d="M12 7V20"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    fill="none"
+                                  />
+                                  <path d="M12 7c0-1.7-1.3-3-3-3S6 5.3 6 7h6z" />
+                                  <path d="M12 7c0-1.7 1.3-3 3-3s3 1.3 3 3h-6z" />
+                                </svg>
+                              ) : (
+                                // Percentage/coupon icon
+                                <svg
+                                  className="w-12 h-12"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <rect
+                                    x="2"
+                                    y="6"
+                                    width="20"
+                                    height="12"
+                                    rx="2"
+                                  />
+                                  <path d="M8 10h2v4H8z" />
+                                  <path d="M14 10h2v4h-2z" />
+                                  <circle
+                                    cx="22"
+                                    cy="12"
+                                    r="1.5"
+                                    fill="white"
+                                  />
+                                  <circle cx="2" cy="12" r="1.5" fill="white" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status badge - top right */}
+                      {isExpired ? (
+                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                          Expired
+                        </div>
+                      ) : isNew ? (
+                        <div className="absolute top-2 right-2 bg-[#4CAF50] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                          New
+                        </div>
+                      ) : daysLeft <= 7 ? (
+                        <div className="absolute top-2 right-2 bg-[#FF9800] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                          {daysLeft}d Left
+                        </div>
+                      ) : null}
                     </div>
 
-                    {/* Badge for status */}
-                    {isActive && !isExpired && (
-                      <div className="absolute top-2 right-2 bg-[#B88B15] text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        Active
-                      </div>
-                    )}
-
-                    {/* Expired badge */}
-                    {isExpired && (
-                      <div className="absolute top-2 right-2 bg-gray-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        Expired
-                      </div>
-                    )}
-
-                    {/* Attempts badge */}
-                    {card.attemp_required && (
-                      <div className="absolute bottom-2 left-2 bg-white/90 text-gray-900 text-xs font-semibold px-2 py-1 rounded-full">
-                        {card.attemp_required} {card.attemp_required === 1 ? 'Attempt' : 'Attempts'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card info below */}
-                  <div className="mt-2 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                      {card.name}
-                    </h3>
-                    {card.description && (
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                        {card.description}
+                    {/* Info section below card */}
+                    <div className="bg-white p-3 border-t-2 border-gray-100">
+                      <h3 className="font-bold text-sm text-gray-900 line-clamp-1 mb-1">
+                        {card.name}
+                      </h3>
+                      <p className="text-[11px] text-gray-600 line-clamp-2 leading-tight">
+                        {card.description || "Scratch to win exciting prizes!"}
                       </p>
-                    )}
-                    {card.prizes && card.prizes.length > 0 && (
-                      <p className="text-xs text-[#B88B15] font-semibold mt-1">
-                        {card.prizes.length} {card.prizes.length === 1 ? 'Prize' : 'Prizes'} Available
-                      </p>
-                    )}
+                    </div>
                   </div>
                 </div>
               );
