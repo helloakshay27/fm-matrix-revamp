@@ -140,7 +140,7 @@ class NewSpinnerContestApi {
       const url = `/contests/${contestId}/play`;
       const params: any = {};
       if (this.token) params.token = this.token;
-      if (this.orgId) params.org_id = this.orgId;
+      // if (this.orgId) params.org_id = this.orgId;
 
       console.warn("🎲 Playing contest at:", url);
       console.warn("🔑 API Call - Params:", params);

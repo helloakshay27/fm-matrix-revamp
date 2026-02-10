@@ -58,7 +58,7 @@ export const VoucherDetails: React.FC = () => {
           // Pass org_id and token as params for baseClient interceptor
           const params: any = {};
           if (token) params.token = token;
-          if (orgId) params.org_id = orgId;
+          // if (orgId) params.org_id = orgId;
 
           const response = await baseClient.get(
             `/user_contest_rewards/${rewardId}`,

@@ -50,11 +50,7 @@ export const ScratchCard: React.FC = () => {
       try {
         const data = await newScratchCardApi.getContestById(urlContestId);
         setContestData(data);
-
-        // If contest has prizes, set the first one as preview
-        if (data.prizes && data.prizes.length > 0) {
-          setWonPrize(data.prizes[0]);
-        }
+        // Don't set wonPrize here - only after play API response
       } catch (error) {
         console.error("❌ Error fetching contest data:", error);
         if (error instanceof Error) {
@@ -382,6 +378,38 @@ export const ScratchCard: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Show prize info only after API response */}
+                {wonPrize && (
+                  <div className="text-center space-y-3">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {wonPrize.title}
+                    </h3>
+
+                    {/* Show coupon code if available */}
+                    {wonPrize.reward_type === "coupon" &&
+                      wonPrize.coupon_code && (
+                        <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xl border-2 border-dashed border-gray-300">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Coupon Code
+                          </p>
+                          <p className="text-xl font-bold text-[#B88B15] tracking-wider">
+                            {wonPrize.coupon_code}
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Show points if available */}
+                    {wonPrize.reward_type === "points" &&
+                      wonPrize.points_value && (
+                        <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xl border-2 border-dashed border-gray-300">
+                          <p className="text-2xl font-bold text-[#B88B15]">
+                            {wonPrize.points_value} Points
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                )}
+
                 {/* Hand pointer - only show when not revealed */}
                 {!isRevealed && (
                   <div className="absolute bottom-8 right-8 text-6xl animate-bounce">
@@ -409,8 +437,10 @@ export const ScratchCard: React.FC = () => {
 
             {/* Voucher info */}
             <div className="p-6 text-center bg-white">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Voucher</h2>
-              {wonPrize && (
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {contestData.name}
+              </h2>
+              {wonPrize ? (
                 <>
                   <p className="text-gray-600 mb-1">{wonPrize.title}</p>
                   {wonPrize.reward_type === "coupon" &&
@@ -420,6 +450,10 @@ export const ScratchCard: React.FC = () => {
                       </p>
                     )}
                 </>
+              ) : (
+                <p className="text-gray-600 mb-1">
+                  Scratch to reveal your prize!
+                </p>
               )}
               <p className="text-sm text-gray-500">
                 Valid Till{" "}
@@ -431,16 +465,6 @@ export const ScratchCard: React.FC = () => {
               </p>
             </div>
           </div>
-
-          {/* View Voucher Button */}
-          {isRevealed && (
-            <button
-              onClick={handleViewVoucher}
-              className="w-full mt-6 bg-[#B88B15] text-white py-4 rounded-lg font-semibold text-lg hover:bg-[#9a7612] transition-colors"
-            >
-              View Voucher Details
-            </button>
-          )}
 
           {/* Scratch instruction */}
           {!isRevealed && (
