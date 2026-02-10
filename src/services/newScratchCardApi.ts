@@ -231,9 +231,11 @@ class NewScratchCardApi {
 
       console.warn("✅ API Response:", response.data);
 
-      // Filter only scratch contests
+      // Filter only scratch contests that are active
       const scratchContests = Array.isArray(response.data)
-        ? response.data.filter((c) => c.content_type === "scratch")
+        ? response.data.filter(
+            (c) => c.content_type === "scratch" && c.active === true
+          )
         : [];
 
       return scratchContests;

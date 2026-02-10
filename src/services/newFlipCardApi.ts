@@ -132,9 +132,11 @@ class NewFlipCardApi {
 
       console.warn("✅ API Response:", response.data);
 
-      // Filter only flip contests
+      // Filter only flip contests that are active
       const flipContests = Array.isArray(response.data)
-        ? response.data.filter((c) => c.content_type === "flip")
+        ? response.data.filter(
+            (c) => c.content_type === "flip" && c.active === true
+          )
         : [];
 
       return flipContests;

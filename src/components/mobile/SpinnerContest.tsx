@@ -72,15 +72,30 @@ export const SpinnerContest: React.FC = () => {
   // Fetch spinner contest data
   useEffect(() => {
     const fetchContestData = async () => {
-      if (!urlContestId) {
-        console.error("❌ No contest ID provided");
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       try {
-        const data = await newSpinnerContestApi.getContestById(urlContestId);
+        let data: Contest;
+
+        // If contest_id is provided, fetch specific contest
+        if (urlContestId) {
+          data = await newSpinnerContestApi.getContestById(urlContestId);
+        } else {
+          // Otherwise, fetch all spin contests and use the first one
+          console.warn(
+            "⚠️ No contest ID provided, fetching latest active spin contest"
+          );
+          const contests = await newSpinnerContestApi.getContests();
+
+          if (contests.length === 0) {
+            console.error("❌ No active spin contests available");
+            setIsLoading(false);
+            setCanSpin(false);
+            return;
+          }
+
+          data = contests[0];
+          console.warn("✅ Using latest active spin contest:", data);
+        }
 
         setContestData(data);
 
@@ -235,7 +250,7 @@ export const SpinnerContest: React.FC = () => {
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Spin complete - navigate to voucher details
+          // Spin complete - show result modal
           setTimeout(() => {
             spinSound.playWinSound();
 
@@ -244,17 +259,10 @@ export const SpinnerContest: React.FC = () => {
             if (userRewardId) {
               localStorage.setItem("last_reward_id", userRewardId.toString());
               setRewardId(userRewardId);
-
-              // Navigate to voucher details page
-              navigate(
-                `/scratchcard/details/${userRewardId}?org_id=${orgId}&token=${token}`
-              );
-            } else {
-              // Fallback to showing modal if no reward ID
-              setWinResult({ prize: result.prize! });
-              setShowResult(true);
             }
 
+            setWinResult({ prize: result.prize! });
+            setShowResult(true);
             setIsSpinning(false);
           }, 500);
         }
@@ -306,9 +314,7 @@ export const SpinnerContest: React.FC = () => {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600 mb-4">
-            {!urlContestId
-              ? "No contest ID provided"
-              : "Contest not found or has no active prizes"}
+            Contest not found or has no active prizes
           </p>
           <button
             onClick={() => navigate(-1)}
