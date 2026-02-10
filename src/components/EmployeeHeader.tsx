@@ -47,6 +47,13 @@ import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 import axios from "axios";
 import { toast } from "sonner";
+import businessPlanIcon from "@/assets/business_plan.png";
+import ourGroupIcon from "@/assets/our_group.png";
+import productsIcon from "@/assets/products.png";
+import documentDriveIcon from "@/assets/document_drive.png";
+import hrPoliciesIcon from "@/assets/hr_policies.png";
+import directoryIcon from "@/assets/directory.png";
+import employeeFaqIcon from "@/assets/employee_faq.png";
 
 // Icon mapping for employee header modules based on action_name
 const headerIconMap: Record<string, any> = {
@@ -134,6 +141,21 @@ export const EmployeeHeader: React.FC = () => {
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const { selectedCompany } = useSelector((state: RootState) => state.project);
+
+  const quickLinks = [
+    { name: "Business Plan", icon: businessPlanIcon, path: "/business-plan" },
+    { name: "Our Group", icon: ourGroupIcon, path: "/our-group" },
+    { name: "Products", icon: productsIcon, path: "/products" },
+    {
+      name: "Document Drive",
+      icon: documentDriveIcon,
+      path: "/vas/documents",
+    },
+    { name: "HR Policies", icon: hrPoliciesIcon, path: "/vas/documents" },
+    { name: "Directory", icon: directoryIcon, path: "/directory" },
+    { name: "Employee FAQ", icon: employeeFaqIcon, path: "/eployee-faq" },
+  ];
 
   // Build dynamic employee modules from Employee Sidebar module (module_id: 127)
   const employeeModules = useMemo(() => {
@@ -203,8 +225,6 @@ export const EmployeeHeader: React.FC = () => {
     }
   }, [id, baseUrl, token]);
 
-  const { selectedCompany } = useSelector((state: RootState) => state.project);
-  const { selectedSite } = useSelector((state: RootState) => state.site);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
   // Module visibility management - sync with employeeModules
@@ -494,7 +514,14 @@ export const EmployeeHeader: React.FC = () => {
       <div className="flex items-center justify-between h-full px-2 sm:px-4 lg:px-6 max-w-[1920px] mx-auto">
         {/* Left Section - Logo & Company Info */}
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
-          {isOmanSite ? (
+          {selectedCompany?.logo ? (
+            <img
+              src={selectedCompany.logo}
+              alt="Company Logo"
+              className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
+              onClick={() => navigate("/employee/portal")}
+            />
+          ) : isOmanSite ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               xmlnsXlink="http://www.w3.org/1999/xlink"
@@ -623,6 +650,40 @@ export const EmployeeHeader: React.FC = () => {
         <div className="flex-1 flex justify-center px-2 lg:px-4 overflow-x-auto scrollbar-hide">
           <TooltipProvider delayDuration={300}>
             <div className="flex items-center gap-1 rounded-lg p-1">
+              {/* Dashboard and Hub Logos */}
+              <TooltipProvider delayDuration={300}>
+                <div className="flex items-center gap-1 border-r border-gray-200 pr-2 mr-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate("/employee/portal")}
+                        className="flex flex-col items-center justify-center p-2 rounded-lg transition-all hover:bg-gray-100 group"
+                      >
+                        <Home className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
+                        <span className="text-[10px] font-medium text-gray-500 group-hover:text-blue-600">
+                          Dashboard
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Dashboard</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate("/company-hub")}
+                        className="flex flex-col items-center justify-center p-2 rounded-lg transition-all hover:bg-gray-100 group"
+                      >
+                        <Globe className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
+                        <span className="text-[10px] font-medium text-gray-500 group-hover:text-blue-600">
+                          Hub
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Company Hub</TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
+
               {/* Main visible modules */}
               {displayedModules.map((module) => {
                 const Icon = module.icon;
@@ -664,6 +725,32 @@ export const EmployeeHeader: React.FC = () => {
                   </Tooltip>
                 );
               })}
+
+              {/* Seven Stats (Quick Links) */}
+              <div className="flex items-center gap-1 border-l border-gray-200 pl-2 ml-2">
+                {quickLinks.map((link) => (
+                  <Tooltip key={link.name}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate(link.path)}
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all hover:bg-gray-100 group ${
+                          location.pathname === link.path ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <img
+                          src={link.icon}
+                          alt={link.name}
+                          className="w-5 h-5 object-contain grayscale group-hover:grayscale-0"
+                        />
+                        <span className="text-[10px] font-medium text-gray-500 group-hover:text-blue-600 truncate max-w-[60px]">
+                          {link.name}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{link.name}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
 
               {/* More modules dropdown */}
               {hiddenModules.length > 0 && (

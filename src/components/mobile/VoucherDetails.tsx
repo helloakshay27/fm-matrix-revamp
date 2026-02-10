@@ -29,7 +29,10 @@ interface UserContestReward {
 
 export const VoucherDetails: React.FC = () => {
   const navigate = useNavigate();
-  const { cardId, rewardId } = useParams<{ cardId?: string; rewardId?: string }>();
+  const { cardId, rewardId } = useParams<{
+    cardId?: string;
+    rewardId?: string;
+  }>();
   const [searchParams] = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -52,12 +55,17 @@ export const VoucherDetails: React.FC = () => {
             return;
           }
 
-          // Initialize baseClient with dynamic base URL
-          baseClient.defaults.baseURL = `https://${orgId}-api.lockated.com`;
-          baseClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          // Pass org_id and token as params for baseClient interceptor
+          const params: any = {};
+          if (token) params.token = token;
+          // if (orgId) params.org_id = orgId;
 
-          const response = await baseClient.get(`/user_contest_rewards/${rewardId}`);
+          const response = await baseClient.get(
+            `/user_contest_rewards/${rewardId}`,
+            { params }
+          );
           setRewardData(response.data);
+          console.warn("✅ Reward data loaded:", response.data);
         } catch (error) {
           console.error("Error fetching reward data:", error);
         } finally {
@@ -90,7 +98,10 @@ export const VoucherDetails: React.FC = () => {
   };
 
   const copyCode = () => {
-    const code = rewardData ? rewardData.reward_code : voucherData?.voucher_code;
+    const code =
+      rewardData?.coupon_code ||
+      rewardData?.prize?.coupon_code ||
+      voucherData?.voucher_code;
     if (code) {
       navigator.clipboard.writeText(code);
       alert("Voucher code copied to clipboard!");
@@ -98,23 +109,35 @@ export const VoucherDetails: React.FC = () => {
   };
 
   // Use appropriate data based on which is available
-  const displayData = rewardData ? {
-    title: rewardData.prize.title,
-    description: rewardData.prize.description,
-    image_url: rewardData.prize.image_url,
-    value: rewardData.prize.value,
-    code: rewardData.reward_code,
-    status: rewardData.status,
-    contest_title: rewardData.contest.title,
-  } : voucherData ? {
-    title: voucherData.reward.title,
-    description: voucherData.reward.description,
-    image_url: voucherData.reward.image_url,
-    value: voucherData.value,
-    code: voucherData.voucher_code,
-    status: voucherData.status,
-    contest_title: voucherData.name,
-  } : null;
+  const displayData = rewardData
+    ? {
+        title: rewardData.prize?.title || "Voucher",
+        description:
+          rewardData.contest?.description ||
+          rewardData.prize?.display_name ||
+          "",
+        image_url:
+          rewardData.prize?.image?.url || rewardData.prize?.icon_url || null,
+        value: rewardData.prize?.partner_name || "",
+        code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
+        status: rewardData.status,
+        contest_title: rewardData.contest?.name || "Contest",
+        valid_till: rewardData.contest?.end_at || "",
+        terms: rewardData.contest?.terms_and_conditions || "",
+      }
+    : voucherData
+      ? {
+          title: voucherData.reward.title,
+          description: voucherData.reward.description,
+          image_url: voucherData.reward.image_url,
+          value: voucherData.value,
+          code: voucherData.voucher_code,
+          status: voucherData.status,
+          contest_title: voucherData.name,
+          valid_till: voucherData.valid_until,
+          terms: "",
+        }
+      : null;
 
   if (isLoading) {
     return (
@@ -161,8 +184,7 @@ export const VoucherDetails: React.FC = () => {
         <div className="w-full bg-[#F5E6D3] px-4 py-8">
           <img
             src={
-              displayData?.image_url ||
-              "https://via.placeholder.com/400x300"
+              displayData?.image_url || "https://via.placeholder.com/400x300"
             }
             alt={displayData?.title}
             className="w-full h-48 object-cover rounded-lg"
@@ -217,13 +239,37 @@ export const VoucherDetails: React.FC = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-600 text-sm">
-                    <p><strong>Prize Value:</strong> {displayData?.value}</p>
-                    <p><strong>Status:</strong> {displayData?.status}</p>
+                  <div className="text-gray-600 text-sm space-y-1">
+                    {displayData?.value && (
+                      <p>
+                        <strong>Partner:</strong> {displayData.value}
+                      </p>
+                    )}
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      <span className="capitalize">{displayData?.status}</span>
+                    </p>
                     {rewardData && (
                       <>
-                        <p><strong>Contest:</strong> {rewardData.contest.title}</p>
-                        <p><strong>Claimed:</strong> {new Date(rewardData.claimed_at).toLocaleString()}</p>
+                        <p>
+                          <strong>Contest:</strong>{" "}
+                          {rewardData.contest?.name ||
+                            displayData?.contest_title}
+                        </p>
+                        {rewardData.claimed_at && (
+                          <p>
+                            <strong>Claimed:</strong>{" "}
+                            {new Date(rewardData.claimed_at).toLocaleString()}
+                          </p>
+                        )}
+                        {displayData?.valid_till && (
+                          <p>
+                            <strong>Valid Till:</strong>{" "}
+                            {new Date(
+                              displayData.valid_till
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
@@ -239,7 +285,9 @@ export const VoucherDetails: React.FC = () => {
                 onClick={() => toggleSection("redeem")}
                 className="w-full flex items-center justify-between py-4"
               >
-                <span className="font-semibold text-gray-900">How to redeem</span>
+                <span className="font-semibold text-gray-900">
+                  How to redeem
+                </span>
                 {expandedSection === "redeem" ? (
                   <ChevronDown className="w-5 h-5 text-gray-600" />
                 ) : (
@@ -267,7 +315,7 @@ export const VoucherDetails: React.FC = () => {
           )}
 
           {/* Terms & Conditions Section */}
-          {voucherData?.terms_conditions && (
+          {(voucherData?.terms_conditions || displayData?.terms) && (
             <div className="border-t border-gray-200">
               <button
                 onClick={() => toggleSection("terms")}
@@ -285,12 +333,20 @@ export const VoucherDetails: React.FC = () => {
 
               {expandedSection === "terms" && (
                 <div className="pb-4 space-y-2">
-                  {voucherData.terms_conditions.map((term, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <span className="text-gray-600 text-sm">•</span>
-                      <span className="text-gray-600 text-sm flex-1">{term}</span>
+                  {voucherData?.terms_conditions ? (
+                    voucherData.terms_conditions.map((term, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="text-gray-600 text-sm">•</span>
+                        <span className="text-gray-600 text-sm flex-1">
+                          {term}
+                        </span>
+                      </div>
+                    ))
+                  ) : displayData?.terms ? (
+                    <div className="text-gray-600 text-sm whitespace-pre-wrap">
+                      {displayData.terms}
                     </div>
-                  ))}
+                  ) : null}
                 </div>
               )}
             </div>
