@@ -965,15 +965,20 @@ const IssueDetailsPage = () => {
                             </div>
                         </span>
 
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-
-                        <span
-                            className="flex items-center gap-1 cursor-pointer"
-                            onClick={() => setOpenEditModal(true)}
-                        >
-                            <PencilIcon size={15} />
-                            Edit Issue
-                        </span>
+                        {
+                            localStorage.getItem("selectedView") !== "employee" && (
+                                <>
+                                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                                    <span
+                                        className="flex items-center gap-1 cursor-pointer"
+                                        onClick={() => setOpenEditModal(true)}
+                                    >
+                                        <PencilIcon size={15} />
+                                        Edit Issue
+                                    </span>
+                                </>
+                            )
+                        }
                     </div>
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
