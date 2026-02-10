@@ -2,12 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { ChevronDown, ChevronDownCircle, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { Mic, MicOff } from "lucide-react";
 import { Mention, MentionsInput } from "react-mentions";
+import EditIssueModal from "@/components/EditIssueModal";
 
 interface Issue {
     id?: string;
@@ -24,8 +25,11 @@ interface Issue {
     start_date?: string;
     end_date?: string;
     project_management_name?: string;
+    project_management_id?: string;
     milstone_name?: string;
+    milestone_id?: string;
     task_management_name?: string;
+    task_management_id?: string;
     tags?: string[];
     attachments?: any[];
     comments?: any[];
@@ -716,6 +720,7 @@ const IssueDetailsPage = () => {
     const [activeTab, setActiveTab] = useState("Comments");
     const [openStatusDropdown, setOpenStatusDropdown] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Open");
+    const [openEditModal, setOpenEditModal] = useState(false);
 
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -749,8 +754,11 @@ const IssueDetailsPage = () => {
                 start_date: issueDetail.start_date || "",
                 end_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
                 project_management_name: issueDetail.project_management_name || "",
+                project_management_id: issueDetail.project_management_id || "",
                 milstone_name: issueDetail.milstone_name || "",
+                milestone_id: issueDetail.milestone_id || "",
                 task_management_name: issueDetail.task_management_name || "",
+                task_management_id: issueDetail.task_management_id || "",
                 tags: issueDetail.tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
@@ -838,8 +846,11 @@ const IssueDetailsPage = () => {
                     start_date: issueDetail.start_date || "",
                     end_date: issueDetail.end_date || "",
                     project_management_name: issueDetail.project_management_name || "",
+                    project_management_id: issueDetail.project_management_id || "",
                     milstone_name: issueDetail.milstone_name || "",
+                    milestone_id: issueDetail.milestone_id || "",
                     task_management_name: issueDetail.task_management_name || "",
+                    task_management_id: issueDetail.task_management_id || "",
                     tags: issueDetail.tags || [],
                     attachments: issueDetail.attachments || [],
                     comments: sortCommentsDesc(issueDetail.comments || []),
@@ -954,7 +965,20 @@ const IssueDetailsPage = () => {
                             </div>
                         </span>
 
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
+                        {
+                            localStorage.getItem("selectedView") !== "employee" && (
+                                <>
+                                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                                    <span
+                                        className="flex items-center gap-1 cursor-pointer"
+                                        onClick={() => setOpenEditModal(true)}
+                                    >
+                                        <PencilIcon size={15} />
+                                        Edit Issue
+                                    </span>
+                                </>
+                            )
+                        }
                     </div>
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
@@ -1137,6 +1161,16 @@ const IssueDetailsPage = () => {
                     </div>
                 </div>
             </div>
+            {issueData && (
+                <EditIssueModal
+                    openDialog={openEditModal}
+                    handleCloseDialog={() => setOpenEditModal(false)}
+                    issueData={issueData}
+                    onIssueUpdated={() => {
+                        fetchIssueDetails();
+                    }}
+                />
+            )}
         </div>
     );
 };

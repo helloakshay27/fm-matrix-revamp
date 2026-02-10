@@ -1,51 +1,70 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
-import { scratchCardApi, ScratchCardData } from "@/services/scratchCardApi";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ChevronLeft, X } from "lucide-react";
+import { newScratchCardApi, ScratchContest, Prize, UserContestReward } from "@/services/newScratchCardApi";
 
 export const ScratchCard: React.FC = () => {
   const navigate = useNavigate();
   const { cardId } = useParams<{ cardId: string }>();
+  const [searchParams] = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Get URL parameters
+  const orgId = searchParams.get("org_id");
+  const token = searchParams.get("token");
+  const urlContestId = searchParams.get("contest_id") || cardId;
+
+  console.warn("🎯 ScratchCard Component Params:", {
+    orgId,
+    token: token ? "exists" : "missing",
+    contest_id_from_query: searchParams.get("contest_id"),
+    cardId_from_route: cardId,
+    final_urlContestId: urlContestId,
+  });
+
   const [isScratching, setIsScratching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [scratchCardData, setScratchCardData] =
-    useState<ScratchCardData | null>(null);
+  const [contestData, setContestData] = useState<ScratchContest | null>(null);
+  const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [scratchPercentage, setScratchPercentage] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [hasScratched, setHasScratched] = useState(false);
 
   // Fetch scratch card data
   useEffect(() => {
-    const fetchScratchCardData = async () => {
+    const fetchContestData = async () => {
+      if (!urlContestId) {
+        console.error("❌ No contest ID provided");
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        let data: ScratchCardData;
+        const data = await newScratchCardApi.getContestById(urlContestId);
+        setContestData(data);
 
-        if (cardId) {
-          data = await scratchCardApi.getScratchCardById(cardId);
-        } else {
-          const cards = await scratchCardApi.getActiveScratchCards();
-          if (cards.length === 0) {
-            throw new Error("No active scratch cards found");
-          }
-          data = cards[0];
+        // If contest has prizes, set the first one as preview
+        if (data.prizes && data.prizes.length > 0) {
+          setWonPrize(data.prizes[0]);
         }
-
-        setScratchCardData(data);
-        setIsRevealed(data.is_scratched || false);
       } catch (error) {
-        console.error("Error fetching scratch card data:", error);
+        console.error("❌ Error fetching contest data:", error);
+        if (error instanceof Error) {
+          console.error("❌ Error message:", error.message);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchScratchCardData();
-  }, [cardId]);
+    fetchContestData();
+  }, [urlContestId, orgId, token]);
 
   // Initialize canvas
   useEffect(() => {
-    if (!scratchCardData || !canvasRef.current || isRevealed) return;
+    if (!contestData || !canvasRef.current || isRevealed) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -106,7 +125,7 @@ export const ScratchCard: React.FC = () => {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("YOU WON", canvas.width / 2, canvas.height / 2);
-  }, [scratchCardData, isRevealed]);
+  }, [contestData, isRevealed]);
 
   // Calculate scratched percentage
   const calculateScratchPercentage = (canvas: HTMLCanvasElement): number => {
@@ -190,21 +209,54 @@ export const ScratchCard: React.FC = () => {
 
   // Reveal card
   const revealCard = async () => {
+    if (hasScratched || !contestData) return;
+
+    setHasScratched(true);
     setIsRevealed(true);
 
-    if (scratchCardData && !scratchCardData.is_scratched) {
-      try {
-        await scratchCardApi.scratchCard(scratchCardData.id);
-      } catch (error) {
-        console.error("Error updating scratch status:", error);
+    try {
+      // Call API to play/scratch
+      const result = await newScratchCardApi.playContest(contestData.id);
+
+      if (!result.success || !result.prize || !result.user_contest_reward) {
+        throw new Error(result.message || "Failed to scratch card");
       }
+
+      // Update with actual won prize
+      setWonPrize(result.prize);
+
+      // Store user_contest_reward.id in localStorage for details page
+      localStorage.setItem('last_reward_id', result.user_contest_reward.id.toString());
+
+      // Show result modal
+      setShowResultModal(true);
+
+      console.warn("🎁 Won prize:", result.prize);
+    } catch (error) {
+      console.error("❌ Error scratching card:", error);
+      const message = error instanceof Error ? error.message : "Failed to scratch card";
+      alert(message);
     }
   };
 
   // Navigate to voucher details
   const handleViewVoucher = () => {
-    if (scratchCardData) {
-      navigate(`/scratchcard/${scratchCardData.id}/voucher`);
+    const rewardId = localStorage.getItem('last_reward_id');
+    if (rewardId && orgId && token) {
+      navigate(`/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`);
+    }
+  };
+
+  // Copy prize code or information
+  const copyPrizeInfo = () => {
+    if (wonPrize) {
+      const textToCopy =
+        wonPrize.reward_type === "coupon" && wonPrize.coupon_code
+          ? wonPrize.coupon_code
+          : wonPrize.title;
+
+      navigator.clipboard.writeText(textToCopy);
+      alert("Copied to clipboard!");
     }
   };
 
@@ -217,11 +269,15 @@ export const ScratchCard: React.FC = () => {
     );
   }
 
-  if (!scratchCardData) {
+  if (!contestData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Scratch card not found</p>
+          <p className="text-gray-600 mb-4">
+            {!urlContestId
+              ? "No contest ID provided"
+              : "Contest not found"}
+          </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[#B88B15] font-medium"
@@ -344,12 +400,21 @@ export const ScratchCard: React.FC = () => {
             {/* Voucher info */}
             <div className="p-6 text-center bg-white">
               <h2 className="text-xl font-bold text-gray-900 mb-2">Voucher</h2>
-              <p className="text-gray-600 mb-1">
-                {scratchCardData.reward.title}
-              </p>
+              {wonPrize && (
+                <>
+                  <p className="text-gray-600 mb-1">
+                    {wonPrize.title}
+                  </p>
+                  {wonPrize.reward_type === "coupon" && wonPrize.partner_name && (
+                    <p className="text-sm text-gray-500 mb-1">
+                      {wonPrize.partner_name}
+                    </p>
+                  )}
+                </>
+              )}
               <p className="text-sm text-gray-500">
                 Valid Till{" "}
-                {new Date(scratchCardData.valid_until).toLocaleDateString(
+                {new Date(contestData.end_at).toLocaleDateString(
                   "en-GB",
                   {
                     day: "numeric",
@@ -379,6 +444,87 @@ export const ScratchCard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Result Modal */}
+      {showResultModal && wonPrize && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative">
+            {/* Close button */}
+            <button
+              onClick={() => setShowResultModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Gift icon */}
+            <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
+              <div className="text-4xl">🎁</div>
+            </div>
+
+            {/* Congratulations text */}
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
+              Congratulations!
+            </h2>
+
+            {/* Won prize text */}
+            <p className="text-center text-gray-600 mb-2">
+              You've won
+            </p>
+
+            <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+              {wonPrize.title}
+            </p>
+
+            {/* Display prize details based on type */}
+            {wonPrize.reward_type === "coupon" &&
+              wonPrize.coupon_code && (
+                <>
+                  {/* Coupon Code label */}
+                  <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+
+                  {/* Coupon code */}
+                  <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                    {wonPrize.coupon_code}
+                  </p>
+
+                  {/* Partner name if available */}
+                  {wonPrize.partner_name && (
+                    <p className="text-center text-sm text-gray-500 mb-6">
+                      Partner: {wonPrize.partner_name}
+                    </p>
+                  )}
+                </>
+              )}
+
+            {wonPrize.reward_type === "points" &&
+              wonPrize.points_value && (
+                <p className="text-center text-lg text-gray-600 mb-6">
+                  {wonPrize.points_value} Loyalty Points
+                </p>
+              )}
+
+            {/* Copy button */}
+            <button
+              onClick={copyPrizeInfo}
+              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+            >
+              Copy To Clipboard
+            </button>
+
+            {/* View Details button */}
+            <button
+              onClick={() => {
+                setShowResultModal(false);
+                handleViewVoucher();
+              }}
+              className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            >
+              View Voucher Details
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
