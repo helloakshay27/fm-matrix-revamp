@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/pagination";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { TextField, InputAdornment } from "@mui/material";
+import { TextField, InputAdornment, Switch } from "@mui/material";
 
 interface ContestRecord {
   id: number;
@@ -33,6 +33,7 @@ interface ContestRecord {
   contestType: "Spin Wheel" | "Card Flip" | "Scratch Card";
   attempt: number;
   status: "Active" | "Inactive" | "Expired";
+  isActive: boolean;
 }
 
 const statusCards = [
@@ -60,6 +61,7 @@ export const ContestListPage: React.FC = () => {
     inactive: 0,
     expired: 0,
   });
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   /* ---------------- API FETCH ---------------- */
 
@@ -73,6 +75,9 @@ export const ContestListPage: React.FC = () => {
 
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
+    //   const baseUrl =  "https://uat-hi-society.lockated.com";
+    // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
+
 
       if (!baseUrl || !token) {
         throw new Error("Base URL or token not set in localStorage");
@@ -135,6 +140,7 @@ export const ContestListPage: React.FC = () => {
                 : "Card Flip",
           attempt: item.attemp_required ?? 1,
           status,
+          isActive: item.active ?? false,
         };
       });
 
@@ -187,6 +193,66 @@ export const ContestListPage: React.FC = () => {
     if (status === "Active") return "bg-green-100 text-green-800";
     if (status === "Inactive") return "bg-red-100 text-red-800";
     return "bg-gray-100 text-gray-800";
+  };
+
+  const handleToggleActive = async (contestId: number, currentIsActive: boolean) => {
+    try {
+      setTogglingId(contestId);
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token") ;
+
+      if (!baseUrl || !token) {
+        throw new Error("Base URL or token not set in localStorage");
+      }
+
+      const url = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
+      const newActiveState = !currentIsActive;
+
+      const formData = new FormData();
+      formData.append("contest[active]", String(newActiveState));
+      formData.append("contest[id]", String(contestId));
+
+      const response = await fetch(`${url}/contests/${contestId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+      }
+
+      // Optimistic UI update
+      const updatedContests = contests.map(contest => {
+        if (contest.id === contestId) {
+          return {
+            ...contest,
+            isActive: newActiveState,
+            status: newActiveState ? "Active" : "Inactive",
+          };
+        }
+        return contest;
+      });
+
+      setContests(updatedContests);
+
+      // Update status counts
+      const activeCounts = updatedContests.filter(c => c.status === "Active").length;
+      const inactiveCounts = updatedContests.filter(c => c.status === "Inactive").length;
+      setStatusCounts(prev => ({
+        ...prev,
+        active: activeCounts,
+        inactive: inactiveCounts,
+      }));
+
+      console.log(`Contest ${contestId} toggled to ${newActiveState ? "Active" : "Inactive"}`);
+    } catch (error) {
+      console.error("Error toggling contest status", error);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   /* ---------------- TABLE CONFIG ---------------- */
@@ -296,13 +362,25 @@ export const ContestListPage: React.FC = () => {
               contestType: contest.contestType,
               attempt: String(contest.attempt).padStart(2, "0"),
               status: (
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${getStatusBadgeColor(
-                    contest.status
-                  )}`}
-                >
-                  {contest.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={contest.isActive}
+                    onChange={() => handleToggleActive(contest.id, contest.isActive)}
+                    disabled={togglingId === contest.id || contest.status === "Expired"}
+                    size="small"
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": {
+                        color: "#22c55e",
+                      },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                        backgroundColor: "#22c55e",
+                      },
+                    }}
+                  />
+                  <span className="text-sm font-medium">
+                    {contest.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
               ),
             })}
             enableSearch={false}

@@ -1,5 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Quill from "quill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -50,6 +51,12 @@ export const CreateContestPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [createdContestId, setCreatedContestId] = useState<number | null>(null);
+
+  // Refs for Quill editors
+  const termsEditorRef = useRef<HTMLDivElement>(null);
+  const redemptionEditorRef = useRef<HTMLDivElement>(null);
+  const termsQuillRef = useRef<Quill | null>(null);
+  const redemptionQuillRef = useRef<Quill | null>(null);
 
   // Helper function to create a default offer object
   const createDefaultOffer = (): OfferData => ({
@@ -119,6 +126,65 @@ export const CreateContestPage: React.FC = () => {
   const [termsText, setTermsText] = useState("");
   const [redemptionText, setRedemptionText] = useState("");
 
+  // Initialize Quill editors
+  useEffect(() => {
+    // Initialize Terms & Conditions editor
+    if (termsEditorRef.current && !termsQuillRef.current) {
+      termsQuillRef.current = new Quill(termsEditorRef.current, {
+        theme: "snow",
+        placeholder: "Enter terms and conditions",
+        modules: {
+          toolbar: [
+            ["bold", "italic", "underline"],
+            [{ list: "bullet" }],
+            ["link"],
+          ],
+        },
+      });
+
+      // Set initial content if exists
+      if (termsText) {
+        termsQuillRef.current.root.innerHTML = termsText;
+      }
+
+      // Listen for changes
+      termsQuillRef.current.on("text-change", () => {
+        const html = termsQuillRef.current?.root.innerHTML || "";
+        setTermsText(html);
+      });
+    }
+
+    // Initialize Redemption Guide editor
+    if (redemptionEditorRef.current && !redemptionQuillRef.current) {
+      redemptionQuillRef.current = new Quill(redemptionEditorRef.current, {
+        theme: "snow",
+        placeholder: "Enter redemption guide",
+        modules: {
+          toolbar: [
+            ["bold", "italic", "underline"],
+            [{ list: "bullet" }],
+            ["link"],
+          ],
+        },
+      });
+
+      // Set initial content if exists
+      if (redemptionText) {
+        redemptionQuillRef.current.root.innerHTML = redemptionText;
+      }
+
+      // Listen for changes
+      redemptionQuillRef.current.on("text-change", () => {
+        const html = redemptionQuillRef.current?.root.innerHTML || "";
+        setRedemptionText(html);
+      });
+    }
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, [currentStep]); // Re-initialize when step changes to ensure editors are visible
+
   const steps: ContestStep[] = [
     { id: 1, title: "Basic Info", completed: completedSteps.includes(1), active: currentStep === 1 },
     { id: 2, title: "Offers & Vouchers", completed: completedSteps.includes(2), active: currentStep === 2 },
@@ -143,18 +209,20 @@ export const CreateContestPage: React.FC = () => {
     field: keyof OfferData,
     value: string | File | null
   ) => {
-    setOffers(
-      offers.map((offer) =>
-        offer.id === id ? { ...offer, [field]: value } : offer
-      )
+    setOffers((prev) =>
+      prev.map((offer) => (offer.id === id ? { ...offer, [field]: value } : offer))
     );
   };
 
   const handleOfferBannerUpload = (id: string, file: File | null) => {
-    if (file) {
-      updateOffer(id, "bannerImage", file);
-      updateOffer(id, "bannerImageName", file.name);
-    }
+    // Update both banner image and its name in a single state update
+    setOffers((prev) =>
+      prev.map((offer) =>
+        offer.id === id
+          ? { ...offer, bannerImage: file, bannerImageName: file ? file.name : "" }
+          : offer
+      )
+    );
   };
 
   // ── Date/Time → ISO helper ───────────────────────────────────────────────
@@ -169,6 +237,7 @@ export const CreateContestPage: React.FC = () => {
     return dt.toISOString(); // UTC — change to +05:30 string if backend requires it
   };
 
+  console.log("offers", offers);
   // ── Submit to API ────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
@@ -177,8 +246,8 @@ export const CreateContestPage: React.FC = () => {
 
     const baseUrl = localStorage.getItem('baseUrl') || '';
     const token = localStorage.getItem('token') || '';
-
-    // Build FormData instead of JSON
+    //     const baseUrl =  "https://uat-hi-society.lockated.com";
+    // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
     const formData = new FormData();
 
     // Basic contest fields
@@ -744,33 +813,13 @@ export const CreateContestPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    fullWidth
-                    label="Terms & Conditions"
-                    placeholder="Enter terms and conditions"
-                    value={termsText}
-                    onChange={(e) => setTermsText(e.target.value)}
-                    variant="outlined"
-                    multiline
-                    rows={8}
-                   sx={{
-              "& .MuiOutlinedInput-root": {
-                height: "auto !important",
-                padding: "2px !important",
-                display: "flex",
-              },
-              "& .MuiInputBase-input[aria-hidden='true']": {
-                flex: 0,
-                width: 0,
-                height: 0,
-                padding: "0 !important",
-                margin: 0,
-                display: "none",
-              },
-              "& .MuiInputBase-input": {
-                resize: "none !important",
-              },
-            }}
+                  <div
+                    ref={termsEditorRef}
+                    style={{
+                      width: "100%",
+                      minHeight: "200px",
+                      backgroundColor: "white",
+                    }}
                   />
                 </div>
               </CardContent>
@@ -789,33 +838,13 @@ export const CreateContestPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <TextField
-                      fullWidth
-                      label="Redemption Guide"
-                      placeholder="Enter redemption guide"
-                      value={redemptionText}
-                      onChange={(e) => setRedemptionText(e.target.value)}
-                      variant="outlined"
-                      multiline
-                      rows={8}
-                     sx={{
-              "& .MuiOutlinedInput-root": {
-                height: "auto !important",
-                padding: "2px !important",
-                display: "flex",
-              },
-              "& .MuiInputBase-input[aria-hidden='true']": {
-                flex: 0,
-                width: 0,
-                height: 0,
-                padding: "0 !important",
-                margin: 0,
-                display: "none",
-              },
-              "& .MuiInputBase-input": {
-                resize: "none !important",
-              },
-            }}
+                    <div
+                      ref={redemptionEditorRef}
+                      style={{
+                        width: "100%",
+                        minHeight: "200px",
+                        backgroundColor: "white",
+                      }}
                     />
                   </div>
                 </CardContent>
