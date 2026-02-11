@@ -7,6 +7,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    ListSubheader,
     Checkbox,
     FormControlLabel,
     RadioGroup,
@@ -161,29 +162,31 @@ const ItemsAdd = () => {
         }));
     };
 
-    // Account types for sales/purchase account dropdowns
-    const [accountTypes, setAccountTypes] = React.useState([]);
+    // Account groups and ledgers for sales/purchase account dropdowns
+    const [accountGroups, setAccountGroups] = React.useState([]);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
     React.useEffect(() => {
-        const fetchAccountTypes = async () => {
+        const fetchAccountGroups = async () => {
             try {
+                // Replace with your actual endpoint for groups/ledgers
                 const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setAccountTypes(res.data.data || []);
+                console.log("Account Groups Response:", res.data);
+                setAccountGroups(res.data.data || []);
             } catch (e) {
-                setAccountTypes([]);
+                setAccountGroups([]);
             }
         };
-        fetchAccountTypes();
+        fetchAccountGroups();
     }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
-    console.log("Account Types:", accountTypes)
+    console.log("Account Groups:", accountGroups)
 
     const payload = {
         lock_account_item: {
@@ -557,12 +560,17 @@ const ItemsAdd = () => {
                                     }}
                                 >
                                     <MenuItem value="" disabled>
-                                        Select Account Type
+                                        Select Account Ledger
                                     </MenuItem>
-                                    {accountTypes.map(type => (
-                                        <MenuItem key={type.id} value={type.id}>
-                                            {type.group_name}
-                                        </MenuItem>
+                                    {accountGroups.map(group => (
+                                        group.ledgers && group.ledgers.length > 0 ? [
+                                            <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
+                                            ...group.ledgers.map(ledger => (
+                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                    {ledger.name}
+                                                </MenuItem>
+                                            ))
+                                        ] : null
                                     ))}
                                 </Select>
                             </FormControl>
@@ -674,12 +682,17 @@ const ItemsAdd = () => {
                                     }}
                                 >
                                     <MenuItem value="" disabled>
-                                        Select Account Type
+                                        Select Account Ledger
                                     </MenuItem>
-                                    {accountTypes.map(type => (
-                                        <MenuItem key={type.id} value={type.id}>
-                                            {type.group_name}
-                                        </MenuItem>
+                                    {accountGroups.map(group => (
+                                        group.ledgers && group.ledgers.length > 0 ? [
+                                            <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
+                                            ...group.ledgers.map(ledger => (
+                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                    {ledger.name}
+                                                </MenuItem>
+                                            ))
+                                        ] : null
                                     ))}
                                 </Select>
                             </FormControl>

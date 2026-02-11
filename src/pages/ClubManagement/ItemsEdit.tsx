@@ -3,6 +3,7 @@ import {
     // TextField,
     FormControl,
     InputLabel,
+    ListSubheader,
     Select,
     MenuItem,
     Checkbox,
@@ -153,7 +154,29 @@ const ItemsEdit = () => {
         preferred_vendor: "",
     });
     const [loading, setLoading] = useState(false);
+    const [accountGroups, setAccountGroups] = React.useState([]);
+    // const baseUrl = localStorage.getItem("baseUrl");
+    // const token = localStorage.getItem("token");
+    const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
+    const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
+    React.useEffect(() => {
+        const fetchAccountGroups = async () => {
+            try {
+                // Replace with your actual endpoint for groups/ledgers
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                console.log("Account Groups Response:", res.data);
+                setAccountGroups(res.data.data || []);
+            } catch (e) {
+                setAccountGroups([]);
+            }
+        };
+        fetchAccountGroups();
+    }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
     React.useEffect(() => {
         const fetchItemDetails = async () => {
             setLoading(true);
@@ -491,10 +514,10 @@ const ItemsEdit = () => {
                                 fullWidth
                                 // label=""
                                 label={
-                                <>
-                                    Selling Price <span style={{ color: "red" }}>*</span>
-                                </>
-                            }
+                                    <>
+                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
                                 name="selling_price"
                                 value={form.selling_price}
                                 onChange={handleChange}
@@ -540,7 +563,7 @@ const ItemsEdit = () => {
                             />
 
 
-                            <FormControl disabled={!form.sellable}>
+                            {/* <FormControl disabled={!form.sellable}>
                                 <InputLabel>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
                                     name="sales_account"
@@ -552,6 +575,44 @@ const ItemsEdit = () => {
                                     <MenuItem value="181">Sales Ledger 181</MenuItem>
                                     <MenuItem value="182">Sales Ledger 182</MenuItem>
                                     <MenuItem value="183">Sales Ledger 183</MenuItem>
+                                </Select>
+                            </FormControl> */}
+
+                            <FormControl disabled={!form.sellable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
+                                <InputLabel id="sales-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <Select
+                                    labelId="sales-account-label"
+                                    name="sales_account"
+                                    value={form.sales_account}
+                                    label="Account*"
+                                    onChange={handleChange}
+                                    open={openSalesAccount}
+                                    onOpen={() => setOpenSalesAccount(true)}
+                                    onClose={() => setOpenSalesAccount(false)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                                minWidth: 300,
+                                                maxWidth: 400,
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select Account Ledger
+                                    </MenuItem>
+                                    {accountGroups.map(group => (
+                                        group.ledgers && group.ledgers.length > 0 ? [
+                                            <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
+                                            ...group.ledgers.map(ledger => (
+                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                    {ledger.name}
+                                                </MenuItem>
+                                            ))
+                                        ] : null
+                                    ))}
                                 </Select>
                             </FormControl>
 
@@ -600,10 +661,10 @@ const ItemsEdit = () => {
                                 fullWidth
                                 // label="Cost Price"
                                 label={
-                                <>
-                                    Cost Price <span style={{ color: "red" }}>*</span>
-                                </>
-                            }
+                                    <>
+                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
                                 name="cost_price"
                                 value={form.cost_price}
                                 onChange={handleChange}
@@ -637,7 +698,7 @@ const ItemsEdit = () => {
                                     },
                                 }}
                             />
-                            <FormControl disabled={!form.purchasable}>
+                            {/* <FormControl disabled={!form.purchasable}>
                                 <InputLabel>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
                                     name="purchase_account"
@@ -649,6 +710,45 @@ const ItemsEdit = () => {
                                     <MenuItem value="164">Purchase Ledger 164</MenuItem>
                                     <MenuItem value="165">Purchase Ledger 165</MenuItem>
                                     <MenuItem value="166">Purchase Ledger 166</MenuItem>
+                                </Select>
+                            </FormControl> */}
+
+
+                            <FormControl disabled={!form.purchasable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
+                                <InputLabel id="purchase-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <Select
+                                    labelId="purchase-account-label"
+                                    name="purchase_account"
+                                    value={form.purchase_account}
+                                    label="Account*"
+                                    onChange={handleChange}
+                                    open={openPurchaseAccount}
+                                    onOpen={() => setOpenPurchaseAccount(true)}
+                                    onClose={() => setOpenPurchaseAccount(false)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                                minWidth: 300,
+                                                maxWidth: 400,
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select Account Ledger
+                                    </MenuItem>
+                                    {accountGroups.map(group => (
+                                        group.ledgers && group.ledgers.length > 0 ? [
+                                            <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
+                                            ...group.ledgers.map(ledger => (
+                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                    {ledger.name}
+                                                </MenuItem>
+                                            ))
+                                        ] : null
+                                    ))}
                                 </Select>
                             </FormControl>
 
