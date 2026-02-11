@@ -351,7 +351,7 @@ export const FlipCard: React.FC = () => {
                   const rewardId = localStorage.getItem("last_reward_id");
                   if (rewardId && orgId && token) {
                     navigate(
-                      `/flipcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+                      `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
                     );
                   }
                 }}
