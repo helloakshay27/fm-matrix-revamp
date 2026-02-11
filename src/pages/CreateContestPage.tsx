@@ -333,8 +333,8 @@ export const CreateContestPage: React.FC = () => {
       formData.append('contest[terms_and_conditions]', termsText.trim());
     }
 
-    // Add redemption guide text if present (only for Scratch contests)
-    if (redemptionText.trim() && contestType === "Scratch") {
+    // Add redemption guide text if present (for all contest types)
+    if (redemptionText.trim()) {
       formData.append('contest[redemption_guide]', redemptionText.trim());
     }
 
@@ -880,7 +880,7 @@ export const CreateContestPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {contestType === "Scratch" && (
+            
               <Card className="shadow-sm w-full">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
@@ -904,7 +904,7 @@ export const CreateContestPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            )}
+          
           </div>
         );
 
