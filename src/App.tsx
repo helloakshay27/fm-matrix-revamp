@@ -855,6 +855,8 @@ import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
 import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
 import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
 import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
+import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
+import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1747,13 +1749,13 @@ function App() {
                     />
                     {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
                     <Route path="/settings/Budget/add/new" element={<BudgetAddNew />} />
-                     <Route
+                    <Route
                       path="/settings/Budget/Edit"
-                      element={<EditBudget/>}
+                      element={<EditBudget />}
                     />
                     <Route
                       path="/settings/Budget/details"
-                      element={<BudgetDetails/>}
+                      element={<BudgetDetails />}
                     />
                     <Route
                       path="/settings/reports/balance-sheet"
@@ -1792,21 +1794,28 @@ function App() {
                     />
                     <Route
                       path="/settings/items"
-                      element={<ItemsDashboard/>}
+                      element={<ItemsDashboard />}
                     />
                     <Route
                       path="/settings/items/add"
-                      element={<ItemsAdd/>}
+                      element={<ItemsAdd />}
                     />
-                      <Route
+                    <Route
                       path="/settings/items/details"
-                      element={<ItemsDetails/>}
+                      element={<ItemsDetails />}
                     />
-                                          <Route
+                    <Route
                       path="/settings/items/edit"
-                      element={<ItemsEdit/>}
+                      element={<ItemsEdit />}
                     />
-
+                    <Route
+                      path="/settings/customers"
+                      element={<CustomersDashboard />}
+                    />
+                     <Route
+                      path="/settings/customers/add"
+                      element={<CustomersAdd />}
+                    />
 
                     {/* Club Management - Occupant Users */}
                     <Route
