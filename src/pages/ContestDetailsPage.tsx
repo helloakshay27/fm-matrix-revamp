@@ -344,9 +344,15 @@ export const ContestDetailsPage: React.FC = () => {
                         </div>
 
                         <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">Type</p>
+                          <p className="text-xs font-medium text-gray-500"> Reward Type</p>
                           <p className="text-sm text-[#1A1A1A]">
-                            {prize.reward_type === "points" ? "Loyalty Points" : "Coupon/Voucher"}
+                            {/* {prize.reward_type === "points" ? "Loyalty Points" : "Coupon/Voucher"} */}
+                            {prize.reward_type === "points"
+  ? "Points"
+  : prize.reward_type === "coupon"
+  ? "Coupon Code"
+  : ""}
+
                           </p>
                         </div>
 
@@ -367,14 +373,26 @@ export const ContestDetailsPage: React.FC = () => {
                         </div>
 
                         {/* Row 2 */}
-                        <div className="space-y-1">
+                        {/* <div className="space-y-1">
                           <p className="text-xs font-medium text-gray-500">Coupon Code</p>
                           <p className="text-sm text-[#1A1A1A]">
                             {prize.reward_type === "points"
                               ? `${prize.points_value ?? 0} Points`
                               : prize.coupon_code ?? "—"}
                           </p>
-                        </div>
+                        </div> */}
+                        <div className="space-y-1">
+  <p className="text-xs font-medium text-gray-500">
+    {prize.reward_type === "points" ? "Points" : "Coupon Code"}
+  </p>
+
+  <p className="text-sm text-[#1A1A1A]">
+    {prize.reward_type === "points"
+      ? `${prize.points_value ?? 0} Points`
+      : prize.coupon_code ?? "—"}
+  </p>
+</div>
+
 
                         <div className="space-y-1">
                           <p className="text-xs font-medium text-gray-500">Partner</p>
