@@ -1184,7 +1184,6 @@ const modulesByPackage = {
       icon: FileText,
       subItems: [
         { name: "Items", href: "/settings/items" },
-        { name: "Expense", href: "/settings/expense" },
 
         // { name: "Transactions ", href: "/settings/transactions" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
@@ -1194,14 +1193,33 @@ const modulesByPackage = {
         // { name: "Tax Setup ", href: "/settings/tax-setup" },
       ],
     },
-    
-
     {
-      name: "Items",
+      name: "Sales",
       icon: FileText,
       subItems: [
         { name: "Customers", href: "/settings/customers" },
         { name: "Sales Order", href: "/settings/sales-order" },
+
+
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
+
+
+
+
+    {
+      name: "Purchase",
+      icon: FileText,
+      subItems: [
+
+        { name: "Expense", href: "/settings/expense" },
+
 
         // { name: "Transactions ", href: "/settings/transactions" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
