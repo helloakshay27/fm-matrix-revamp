@@ -177,11 +177,12 @@ const modulesByPackage = {
             ],
         },
 
-         {
+        {
             name: "Sales",
             icon: FileText,
             subItems: [
                 { name: "Customers", href: "/settings/customers" },
+                { name: "Sales Order", href: "/settings/sales-order" },
                 // { name: "Transactions ", href: "/settings/transactions" },
                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
