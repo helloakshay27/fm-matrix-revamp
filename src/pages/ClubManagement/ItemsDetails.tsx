@@ -175,10 +175,10 @@ export const ItemsDetails = () => {
                     unit: data.unit || "",
                     createdSource: data.created_source || "",
                     sellingPrice: data.sale_rate?.toString() || "",
-                    salesAccount: data.sales_account_name || "",
+                    salesAccount: data.sale_lock_account_ledger || "",
                     salesDescription: data.sale_description || "",
                     costPrice: data.purchase_rate?.toString() || "",
-                    purchaseAccount: data.purchase_account_name || "",
+                    purchaseAccount: data.purchase_lock_account_ledger || "",
                     purchaseDescription: data.purchase_description || "",
                     reportingTags: data.reporting_tags || [],
                 });
