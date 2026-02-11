@@ -579,7 +579,7 @@ const columns = [
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/items/view/${item.id}`)}
+          onClick={() => navigate(`/settings/items/details`)}
           title="View"
           className="p-0"
         >
@@ -588,7 +588,7 @@ const columns = [
 
         <Button
           variant="ghost"
-          onClick={() => navigate(`/items/edit/${item.id}`)}
+          onClick={() => navigate(`/settings/items/edit`)}
           title="Edit"
           className="p-0"
         >

@@ -853,6 +853,8 @@ import EditBudget from "./pages/ClubManagement/BudgetEdit";
 import BudgetDetails from "./pages/ClubManagement/BudgetDetails";
 import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
 import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
+import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
+import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1795,6 +1797,14 @@ function App() {
                     <Route
                       path="/settings/items/add"
                       element={<ItemsAdd/>}
+                    />
+                      <Route
+                      path="/settings/items/details"
+                      element={<ItemsDetails/>}
+                    />
+                                          <Route
+                      path="/settings/items/edit"
+                      element={<ItemsEdit/>}
                     />
 
 

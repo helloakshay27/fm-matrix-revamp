@@ -128,7 +128,7 @@ const muiTheme = createTheme({
 
 
 
-const ItemsAdd = () => {
+const ItemsEdit = () => {
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
@@ -181,7 +181,7 @@ const ItemsAdd = () => {
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white min-h-screen">
-                <h1 className="text-2xl font-semibold mb-6">New Item</h1>
+                <h1 className="text-2xl font-semibold mb-6">Edit Item</h1>
 
                 {/* TYPE */}
                 <div className="mb-6 flex items-center gap-8">
@@ -549,7 +549,7 @@ const ItemsAdd = () => {
                         onClick={handleSubmit}
                         className="bg-[#C72030] hover:bg-[#A01020] text-white"
                     >
-                        Save
+                        Update
                     </Button>
 
                     <Button variant="outline" onClick={() => navigate("/items")}>
@@ -561,4 +561,4 @@ const ItemsAdd = () => {
     );
 };
 
-export default ItemsAdd;
+export default ItemsEdit;
