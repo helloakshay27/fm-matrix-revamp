@@ -341,24 +341,23 @@ export const FlipCard: React.FC = () => {
             {/* Action buttons */}
             <div className="space-y-3">
               <button
+                onClick={copyPrizeInfo}
+                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
+              >
+                Copy To Clipboard
+              </button>
+              <button
                 onClick={() => {
                   const rewardId = localStorage.getItem("last_reward_id");
                   if (rewardId && orgId && token) {
                     navigate(
-                      `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}
-                      `
+                      `/flipcard/details/${rewardId}?org_id=${orgId}&token=${token}`
                     );
                   }
                 }}
-                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
-              >
-                View Details
-              </button>
-              <button
-                onClick={copyPrizeInfo}
                 className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
               >
-                Copy To Clipboard
+                View Details
               </button>
             </div>
           </div>

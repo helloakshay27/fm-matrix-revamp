@@ -38,7 +38,9 @@ export const VoucherDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [voucherData, setVoucherData] = useState<ScratchCardData | null>(null);
   const [rewardData, setRewardData] = useState<UserContestReward | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "details"
+  );
   const [showCode, setShowCode] = useState(false);
 
   useEffect(() => {
@@ -181,14 +183,21 @@ export const VoucherDetails: React.FC = () => {
       {/* Main Content */}
       <div className="pb-8">
         {/* Product Image */}
-        <div className="w-full bg-[#F5E6D3] px-4 py-8">
-          <img
-            src={
-              displayData?.image_url || "https://via.placeholder.com/400x300"
-            }
-            alt={displayData?.title}
-            className="w-full h-48 object-cover rounded-lg"
-          />
+        <div className="w-full bg-[#F5E6D3] ">
+          {displayData?.image_url ? (
+            <img
+              src={displayData.image_url}
+              alt={displayData?.title}
+              className="w-full h-48 object-cover rounded-lg"
+            />
+          ) : (
+            <div className="w-full h-48 bg-white rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-2">🎁</div>
+                <p className="text-gray-500 text-sm">No Image Available</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Voucher Info */}
@@ -351,271 +360,6 @@ export const VoucherDetails: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Illustration */}
-          <div className="mt-8 flex justify-center px-4 pb-8">
-            {/* Boxing Day Illustration */}
-            <div className="relative w-full max-w-xs">
-              <svg viewBox="0 0 250 150" className="w-full h-auto">
-                {/* Background stars/sparkles */}
-                <g opacity="0.4">
-                  <text x="30" y="30" fontSize="16" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="200" y="40" fontSize="12" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="180" y="120" fontSize="14" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="220" y="80" fontSize="10" fill="#FFD700">
-                    ⭐
-                  </text>
-                </g>
-
-                {/* "BOXING DAY" Gift Box on left */}
-                <g transform="translate(20, 60)">
-                  {/* Gift box base */}
-                  <rect
-                    x="0"
-                    y="30"
-                    width="60"
-                    height="50"
-                    fill="#D4AF37"
-                    stroke="#000"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="0"
-                    y="30"
-                    width="60"
-                    height="50"
-                    fill="url(#goldPattern)"
-                    opacity="0.3"
-                  />
-
-                  {/* Ribbon vertical */}
-                  <rect x="25" y="30" width="10" height="50" fill="#8B0000" />
-
-                  {/* Gift box lid */}
-                  <rect
-                    x="-5"
-                    y="20"
-                    width="70"
-                    height="15"
-                    fill="#F4C430"
-                    stroke="#000"
-                    strokeWidth="1.5"
-                  />
-
-                  {/* Ribbon horizontal on lid */}
-                  <rect x="-5" y="25" width="70" height="5" fill="#8B0000" />
-
-                  {/* Bow */}
-                  <circle cx="30" cy="22" r="6" fill="#8B0000" />
-                  <circle cx="22" cy="20" r="5" fill="#8B0000" />
-                  <circle cx="38" cy="20" r="5" fill="#8B0000" />
-
-                  {/* "BOXING DAY" text */}
-                  <text
-                    x="30"
-                    y="-10"
-                    fontSize="9"
-                    fontWeight="bold"
-                    fill="#000"
-                    textAnchor="middle"
-                  >
-                    BOXING
-                  </text>
-                  <text
-                    x="30"
-                    y="2"
-                    fontSize="9"
-                    fontWeight="bold"
-                    fill="#000"
-                    textAnchor="middle"
-                  >
-                    DAY
-                  </text>
-                  <text
-                    x="30"
-                    y="12"
-                    fontSize="6"
-                    fill="#666"
-                    textAnchor="middle"
-                  >
-                    SPECIAL SALE
-                  </text>
-                </g>
-
-                {/* Small pink gift boxes on bottom left */}
-                <g transform="translate(10, 95)">
-                  <rect
-                    x="0"
-                    y="0"
-                    width="20"
-                    height="20"
-                    fill="#FFB6C1"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="8" y="0" width="4" height="20" fill="#FF69B4" />
-                  <rect x="0" y="8" width="20" height="4" fill="#FF69B4" />
-
-                  <rect
-                    x="25"
-                    y="5"
-                    width="15"
-                    height="15"
-                    fill="#FFB6C1"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="30" y="5" width="5" height="15" fill="#FF69B4" />
-                  <rect x="25" y="10" width="15" height="5" fill="#FF69B4" />
-                </g>
-
-                {/* Yellow gift box bottom left */}
-                <g transform="translate(45, 100)">
-                  <rect
-                    x="0"
-                    y="0"
-                    width="18"
-                    height="18"
-                    fill="#FFD700"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="7" y="0" width="4" height="18" fill="#FFA500" />
-                  <rect x="0" y="7" width="18" height="4" fill="#FFA500" />
-                </g>
-
-                {/* Person carrying gift boxes on right */}
-                <g transform="translate(140, 45)">
-                  {/* Person body */}
-                  <ellipse cx="25" cy="25" rx="12" ry="18" fill="#C8A870" />
-
-                  {/* Person head */}
-                  <circle cx="25" cy="10" r="8" fill="#D4A574" />
-
-                  {/* Hair */}
-                  <path
-                    d="M 17 8 Q 17 2, 25 2 Q 33 2, 33 8 L 33 12 L 17 12 Z"
-                    fill="#2C1810"
-                  />
-
-                  {/* Face features */}
-                  <circle cx="22" cy="10" r="1" fill="#000" />
-                  <circle cx="28" cy="10" r="1" fill="#000" />
-                  <path
-                    d="M 23 13 Q 25 14, 27 13"
-                    stroke="#000"
-                    strokeWidth="0.5"
-                    fill="none"
-                  />
-
-                  {/* Arms holding boxes */}
-                  <rect
-                    x="8"
-                    y="20"
-                    width="4"
-                    height="15"
-                    fill="#C8A870"
-                    rx="2"
-                  />
-                  <rect
-                    x="33"
-                    y="20"
-                    width="4"
-                    height="15"
-                    fill="#C8A870"
-                    rx="2"
-                  />
-
-                  {/* Legs */}
-                  <rect
-                    x="18"
-                    y="40"
-                    width="5"
-                    height="20"
-                    fill="#2C3E50"
-                    rx="2"
-                  />
-                  <rect
-                    x="27"
-                    y="40"
-                    width="5"
-                    height="20"
-                    fill="#2C3E50"
-                    rx="2"
-                  />
-
-                  {/* Shoes */}
-                  <ellipse cx="20" cy="62" rx="4" ry="2" fill="#000" />
-                  <ellipse cx="29" cy="62" rx="4" ry="2" fill="#000" />
-
-                  {/* Gift boxes being carried */}
-                  <g transform="translate(-8, 12)">
-                    {/* Blue/yellow box */}
-                    <rect
-                      x="0"
-                      y="0"
-                      width="25"
-                      height="18"
-                      fill="#4169E1"
-                      stroke="#000"
-                      strokeWidth="1"
-                    />
-                    <rect x="10" y="0" width="5" height="18" fill="#FFD700" />
-                    <rect x="0" y="7" width="25" height="4" fill="#FFD700" />
-
-                    {/* Yellow box on top */}
-                    <rect
-                      x="5"
-                      y="-12"
-                      width="20"
-                      height="15"
-                      fill="#FFD700"
-                      stroke="#000"
-                      strokeWidth="1"
-                    />
-                    <rect x="12" y="-12" width="6" height="15" fill="#FF69B4" />
-                    <rect x="5" y="-6" width="20" height="4" fill="#FF69B4" />
-
-                    {/* Ribbon bow */}
-                    <circle cx="15" cy="-14" r="3" fill="#FF1493" />
-                  </g>
-                </g>
-
-                {/* Scattered gift emojis */}
-                <text x="200" y="135" fontSize="14" opacity="0.6">
-                  🎁
-                </text>
-                <text x="70" y="25" fontSize="12" opacity="0.5">
-                  🎁
-                </text>
-
-                {/* Pattern definition */}
-                <defs>
-                  <pattern
-                    id="goldPattern"
-                    x="0"
-                    y="0"
-                    width="10"
-                    height="10"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <rect width="10" height="10" fill="none" />
-                    <path
-                      d="M 0 5 L 5 0 L 10 5 L 5 10 Z"
-                      fill="#FFD700"
-                      opacity="0.3"
-                    />
-                  </pattern>
-                </defs>
-              </svg>
-            </div>
-          </div>
         </div>
       </div>
 

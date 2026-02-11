@@ -470,9 +470,9 @@ export const SpinnerContest: React.FC = () => {
                   );
                 }
               }}
-              className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+              className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
             >
-              View Voucher Details
+              View Details
             </button>
           </div>
         </div>
