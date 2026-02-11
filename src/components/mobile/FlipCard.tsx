@@ -7,6 +7,7 @@ import {
   FlipCard as FlipCardType,
   Prize,
 } from "@/services/newFlipCardApi";
+import { toast } from "sonner";
 
 export const FlipCard: React.FC = () => {
   const navigate = useNavigate();
@@ -128,7 +129,7 @@ export const FlipCard: React.FC = () => {
       console.error("❌ Error flipping card:", error);
       const message =
         error instanceof Error ? error.message : "Failed to flip card";
-      alert(message);
+      toast.error(message);
       setFlippingCard(null);
     }
   };
@@ -142,7 +143,7 @@ export const FlipCard: React.FC = () => {
           : `${wonPrize.title} - ${wonPrize.points_value} points`;
 
       navigator.clipboard.writeText(textToCopy);
-      alert("Prize information copied to clipboard!");
+      toast.success("Prize information copied to clipboard!");
     }
   };
 
@@ -189,16 +190,9 @@ export const FlipCard: React.FC = () => {
       {/* Content */}
       <div className="px-4 py-6">
         {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-          {contestData.name}
-        </h1>
-
-        {/* Description */}
-        {contestData.description && (
-          <p className="text-center text-gray-700 mb-4">
-            {contestData.description}
-          </p>
-        )}
+        <p className="text-center text-gray-700 text-sm mb-6">
+          Tap on the card to reveal the rewards
+        </p>
 
         {/* Remaining Attempts */}
         <div className="text-center mb-8">
@@ -284,13 +278,6 @@ export const FlipCard: React.FC = () => {
             </button>
           ))}
         </div>
-
-        {/* Terms and Conditions */}
-        {contestData.terms_and_conditions && (
-          <p className="text-center text-xs text-gray-500 mt-8 max-w-md mx-auto whitespace-pre-line">
-            {contestData.terms_and_conditions}
-          </p>
-        )}
       </div>
 
       {/* Result Modal */}
