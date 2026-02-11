@@ -851,6 +851,8 @@ import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
 import BudgetAddNew from "./pages/ClubManagement/BudgetAddNew";
 import EditBudget from "./pages/ClubManagement/BudgetEdit";
 import BudgetDetails from "./pages/ClubManagement/BudgetDetails";
+import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
+import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1786,6 +1788,15 @@ function App() {
                       path="/settings/transactions/Edit/:id"
                       element={<TransactionsEdit />}
                     />
+                    <Route
+                      path="/settings/items"
+                      element={<ItemsDashboard/>}
+                    />
+                    <Route
+                      path="/settings/items/add"
+                      element={<ItemsAdd/>}
+                    />
+
 
                     {/* Club Management - Occupant Users */}
                     <Route
