@@ -860,6 +860,12 @@ import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
 import { SalesOrderListPage } from "./pages/SalesOrderListPage";
 import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
 import { SalesOrderDetailPage } from "./pages/SalesOrderDetailPage";
+import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
+import { PurchaseOrderCreatePage } from "./pages/PurchaseOrderCreatePage";
+import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
+import { BillListPage } from "./pages/BillListPage";
+import { BillCreatePage } from "./pages/BillCreatePage";
+import { BillDetailPage } from "./pages/BillDetailPage";
 import { ExpenseListPage } from "./pages/ExpenseListPage";
 import { ExpenseCreatePage } from "./pages/ExpenseCreatePage";
 import { ExpenseDetailPage } from "./pages/ExpenseDetailPage";
@@ -1857,6 +1863,42 @@ function App() {
                     <Route
                       path="/settings/sales-order/edit/:id"
                       element={<SalesOrderCreatePage />}
+                    />
+
+                    {/* Purchase Order Routes */}
+                    <Route
+                      path="/settings/purchase-order"
+                      element={<PurchaseOrderListPage />}
+                    />
+                    <Route
+                      path="/settings/purchase-order/create"
+                      element={<PurchaseOrderCreatePage />}
+                    />
+                    <Route
+                      path="/settings/purchase-order/:id"
+                      element={<PurchaseOrderDetailPage />}
+                    />
+                    <Route
+                      path="/settings/purchase-order/edit/:id"
+                      element={<PurchaseOrderCreatePage />}
+                    />
+
+                    {/* Bills Routes */}
+                    <Route
+                      path="/settings/bills"
+                      element={<BillListPage />}
+                    />
+                    <Route
+                      path="/settings/bills/create"
+                      element={<BillCreatePage />}
+                    />
+                    <Route
+                      path="/settings/bills/:id"
+                      element={<BillDetailPage />}
+                    />
+                    <Route
+                      path="/settings/bills/edit/:id"
+                      element={<BillCreatePage />}
                     />
 
                     {/* Expense Routes */}

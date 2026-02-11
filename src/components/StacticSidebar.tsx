@@ -1214,13 +1214,13 @@ const modulesByPackage = {
 
 
     {
-      name: "Purchase",
+      name: "Purchase Orders",
       icon: FileText,
       subItems: [
-
+        { name: "Purchase Order", href: "/settings/purchase-order" },
+        { name: "Bills", href: "/settings/bills" },
+        { name: "Vendor", href: "/maintenance/vendor" },
         { name: "Expense", href: "/settings/expense" },
-
-
         // { name: "Transactions ", href: "/settings/transactions" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
