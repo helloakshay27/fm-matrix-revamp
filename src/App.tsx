@@ -857,6 +857,12 @@ import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
 import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
 import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
 import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
+import { SalesOrderListPage } from "./pages/SalesOrderListPage";
+import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
+import { SalesOrderDetailPage } from "./pages/SalesOrderDetailPage";
+import { ExpenseListPage } from "./pages/ExpenseListPage";
+import { ExpenseCreatePage } from "./pages/ExpenseCreatePage";
+import { ExpenseDetailPage } from "./pages/ExpenseDetailPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -873,7 +879,7 @@ function App() {
   // Initialize global MUI Select search enhancer
   useEffect(() => {
     console.log(
-      "🚀 Initializing Global MUI Select Search Enhancer from App.tsx",
+      "🚀 Initializing Global MUI Select Search Enhancer from App.tsx"
     );
     const cleanup = initializeGlobalMUISelectSearchEnhancer();
 
@@ -900,7 +906,7 @@ function App() {
     const fetchCurrency = async () => {
       try {
         const response: any = await dispatch(
-          getCurrency({ baseUrl, token, id }),
+          getCurrency({ baseUrl, token, id })
         ).unwrap();
         const currency =
           Array.isArray(response) && response[0]?.currency
@@ -943,7 +949,10 @@ function App() {
                       path="master/location/account"
                       element={<OpsAccountPage />}
                     />
-                    <Route path="admin/users" element={<AdminUsersDashboard />} />
+                    <Route
+                      path="admin/users"
+                      element={<AdminUsersDashboard />}
+                    />
                     <Route
                       path="admin/create-admin-user"
                       element={<CreateAdminUserPage />}
@@ -1027,7 +1036,10 @@ function App() {
                   <Route path="/thepdf" element={<AllContent />} />
                   <Route path="/dailypdf" element={<DailyReport />} />
                   <Route path="/weeklypdf" element={<WeeklyReport />} />
-                  <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
+                  <Route
+                    path="/msafedashboard"
+                    element={<MsafeDashboardVI />}
+                  />
 
                   <Route
                     path="/login"
@@ -1035,7 +1047,10 @@ function App() {
                       isAuthenticated() ? (
                         <Navigate to="/" replace />
                       ) : (
-                        <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
+                        <LoginPage
+                          setBaseUrl={setBaseUrl}
+                          setToken={setToken}
+                        />
                       )
                     }
                   />
@@ -1062,7 +1077,10 @@ function App() {
                     path="/direct-pdf-download/:taskId"
                     element={<DirectPDFDownloadPage />}
                   />
-                  <Route path="/dashboard-mobile" element={<DashboardMobile />} />
+                  <Route
+                    path="/dashboard-mobile"
+                    element={<DashboardMobile />}
+                  />
                   <Route path="/sitemap" element={<Sitemap />} />
 
                   <Route
@@ -1379,7 +1397,10 @@ function App() {
                       element={<ChecklistGroupsPage />}
                     />
 
-                    <Route path="/settings/currency" element={<CurrencyPage />} />
+                    <Route
+                      path="/settings/currency"
+                      element={<CurrencyPage />}
+                    />
 
                     <Route
                       path="/master/checklist"
@@ -1532,7 +1553,10 @@ function App() {
                       path="/crm/customers/edit/:id"
                       element={<EditCrmCustomer />}
                     />
-                    <Route path="/crm/wallet-list" element={<CRMWalletList />} />
+                    <Route
+                      path="/crm/wallet-list"
+                      element={<CRMWalletList />}
+                    />
                     <Route
                       path="/crm/wallet-list/:id"
                       element={<CRMWalletDetails />}
@@ -1748,7 +1772,10 @@ function App() {
                       element={<BudgetDashboard />}
                     />
                     {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
-                    <Route path="/settings/Budget/add/new" element={<BudgetAddNew />} />
+                    <Route
+                      path="/settings/Budget/add/new"
+                      element={<BudgetAddNew />}
+                    />
                     <Route
                       path="/settings/Budget/Edit"
                       element={<EditBudget />}
@@ -1796,10 +1823,7 @@ function App() {
                       path="/settings/items"
                       element={<ItemsDashboard />}
                     />
-                    <Route
-                      path="/settings/items/add"
-                      element={<ItemsAdd />}
-                    />
+                    <Route path="/settings/items/add" element={<ItemsAdd />} />
                     <Route
                       path="/settings/items/details/:id"
                       element={<ItemsDetails />}
@@ -1812,9 +1836,49 @@ function App() {
                       path="/settings/customers"
                       element={<CustomersDashboard />}
                     />
-                     <Route
+                    <Route
                       path="/settings/customers/add"
                       element={<CustomersAdd />}
+                    />
+
+                    {/* Sales Order Routes */}
+                    <Route
+                      path="/settings/sales-order"
+                      element={<SalesOrderListPage />}
+                    />
+                    <Route
+                      path="/settings/sales-order/create"
+                      element={<SalesOrderCreatePage />}
+                    />
+                    <Route
+                      path="/settings/sales-order/:id"
+                      element={<SalesOrderDetailPage />}
+                    />
+                    <Route
+                      path="/settings/sales-order/edit/:id"
+                      element={<SalesOrderCreatePage />}
+                    />
+
+                    {/* Expense Routes */}
+                    <Route
+                      path="/settings/expense"
+                      element={<ExpenseListPage />}
+                    />
+                    <Route
+                      path="/settings/expense/create"
+                      element={<ExpenseCreatePage />}
+                    />
+                    <Route
+                      path="/settings/expense/:id"
+                      element={<ExpenseDetailPage />}
+                    />
+                    <Route
+                      path="/settings/expense/edit/:id"
+                      element={<ExpenseCreatePage />}
+                    />
+                    <Route
+                      path="/settings/sales-order/edit/:id"
+                      element={<SalesOrderCreatePage />}
                     />
 
                     {/* Club Management - Occupant Users */}
@@ -1889,7 +1953,6 @@ function App() {
                       element={<BookingDetailsPage />}
                     />
 
-
                     {/* Club Management - Amenities Booking seperate routes for recess */}
                     <Route
                       path="/club-management/amenities-booking-club"
@@ -1904,7 +1967,10 @@ function App() {
                       element={<AmenityBookingDetailsClubPage />}
                     />
 
-                    <Route path="/vas/booking-club/list" element={<AmenityBookingListClub />} />
+                    <Route
+                      path="/vas/booking-club/list"
+                      element={<AmenityBookingListClub />}
+                    />
                     <Route
                       path="/vas/booking-club/add"
                       element={<AddFacilityBookingClubPage />}
@@ -1913,7 +1979,6 @@ function App() {
                       path="/vas/bookings-club/details/:id"
                       element={<AmenityBookingDetailsClubPage />}
                     />
-
 
                     {/* Club Management - Broadcast */}
                     <Route
@@ -2220,7 +2285,10 @@ function App() {
                     <Route path="/crm/lead" element={<LeadDashboard />} />
 
                     {/* Utility Routes */}
-                    <Route path="/utility/energy" element={<EnergyDashboard />} />
+                    <Route
+                      path="/utility/energy"
+                      element={<EnergyDashboard />}
+                    />
 
                     {/* Security Routes */}
                     <Route
@@ -2478,7 +2546,10 @@ function App() {
                       element={<ServicePRFeedsPage />}
                     />
                     <Route path="/finance/po" element={<PODashboard />} />
-                    <Route path="/finance/po/add" element={<AddPODashboard />} />
+                    <Route
+                      path="/finance/po/add"
+                      element={<AddPODashboard />}
+                    />
                     <Route
                       path="/finance/po/details/:id"
                       element={<PODetailsPage />}
@@ -2560,7 +2631,10 @@ function App() {
                       path="/finance/deletion-requests"
                       element={<PRDeletionRequests />}
                     />
-                    <Route path="/finance/deleted-prs" element={<DeletedPRs />} />
+                    <Route
+                      path="/finance/deleted-prs"
+                      element={<DeletedPRs />}
+                    />
                     <Route
                       path="/finance/invoice"
                       element={<InvoiceDashboard />}
@@ -2602,7 +2676,10 @@ function App() {
 
                     {/* AMC Routes */}
                     <Route path="/maintenance/amc" element={<AMCDashboard />} />
-                    <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
+                    <Route
+                      path="/maintenance/amc/add"
+                      element={<AddAMCPage />}
+                    />
                     <Route
                       path="/maintenance/amc/details/:id"
                       element={<AMCDetailsPage />}
@@ -2748,7 +2825,10 @@ function App() {
                       element={<ViewPerformancePage />}
                     />
 
-                    <Route path="/maintenance/vendor" element={<VendorPage />} />
+                    <Route
+                      path="/maintenance/vendor"
+                      element={<VendorPage />}
+                    />
                     <Route
                       path="/maintenance/vendor/add"
                       element={<AddVendorPage />}
@@ -2957,7 +3037,10 @@ function App() {
                       path="/settings/visitor-management/icons/edit/:iconId"
                       element={<EditIconPage />}
                     />
-                    <Route path="/settings/staff" element={<StaffsDashboard />} />
+                    <Route
+                      path="/settings/staff"
+                      element={<StaffsDashboard />}
+                    />
 
                     <Route
                       path="/safety/report/msafe-report"
@@ -3263,7 +3346,9 @@ function App() {
                     />
                     <Route
                       path="/safety/m-safe"
-                      element={<Navigate to="/safety/m-safe/internal" replace />}
+                      element={
+                        <Navigate to="/safety/m-safe/internal" replace />
+                      }
                     />
 
                     <Route
@@ -3298,7 +3383,10 @@ function App() {
                       path="/safety/m-safe/krcc-list/:id"
                       element={<KRCCFormDetail />}
                     />
-                    <Route path="/safety/m-safe/lmc" element={<LMCDashboard />} />
+                    <Route
+                      path="/safety/m-safe/lmc"
+                      element={<LMCDashboard />}
+                    />
                     <Route
                       path="/safety/m-safe/lmc/:id"
                       element={<LMCUserDetail />}
@@ -3311,7 +3399,10 @@ function App() {
                       path="/safety/m-safe/training-list/:id"
                       element={<TrainingDetailPage />}
                     />
-                    <Route path="/safety/m-safe/smt" element={<SMTDashboard />} />
+                    <Route
+                      path="/safety/m-safe/smt"
+                      element={<SMTDashboard />}
+                    />
                     <Route
                       path="/safety/m-safe/smt/:id"
                       element={<SMTDetailPage />}
@@ -3388,14 +3479,26 @@ function App() {
                       path="/master/location/building"
                       element={<BuildingPage />}
                     />
-                    <Route path="/master/location/wing" element={<WingPage />} />
-                    <Route path="/master/location/area" element={<AreaPage />} />
+                    <Route
+                      path="/master/location/wing"
+                      element={<WingPage />}
+                    />
+                    <Route
+                      path="/master/location/area"
+                      element={<AreaPage />}
+                    />
                     <Route
                       path="/master/location/floor"
                       element={<FloorPage />}
                     />
-                    <Route path="/master/location/unit" element={<UnitPage />} />
-                    <Route path="/master/location/room" element={<RoomPage />} />
+                    <Route
+                      path="/master/location/unit"
+                      element={<UnitPage />}
+                    />
+                    <Route
+                      path="/master/location/room"
+                      element={<RoomPage />}
+                    />
                     <Route
                       path="/master/location/account"
                       element={<LocationAccountPage />}
@@ -3794,7 +3897,10 @@ function App() {
                       path="/settings/community-modules/amenity-setup/:id"
                       element={<AmenityDetailsPage />}
                     />
-                    <Route path="/settings/groups" element={<CRMGroupsPage />} />
+                    <Route
+                      path="/settings/groups"
+                      element={<CRMGroupsPage />}
+                    />
                   </Route>
 
                   {/* Setup Routes - Outside of settings parent route */}
@@ -3851,7 +3957,10 @@ function App() {
                   <Route path="/mobile/lmc" element={<MobileLMCPage />} />
 
                   {/* Mobile Routes */}
-                  <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
+                  <Route
+                    path="/mobile/tickets"
+                    element={<MobileTicketsPage />}
+                  />
                   <Route path="/mobile/orders" element={<MobileOrdersPage />} />
                   <Route
                     path="/mobile/admin/orders"
@@ -3862,7 +3971,10 @@ function App() {
                     element={<MobileAdminOrderDetailsPage />}
                   />
                   {/* External Flow Tester */}
-                  <Route path="/test-external" element={<ExternalFlowTester />} />
+                  <Route
+                    path="/test-external"
+                    element={<ExternalFlowTester />}
+                  />
                   {/* Mobile Restaurant Routes */}
                   <Route
                     path="/mr/:restaurant/:orgId"
