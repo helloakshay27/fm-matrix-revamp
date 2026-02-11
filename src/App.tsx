@@ -1801,11 +1801,11 @@ function App() {
                       element={<ItemsAdd />}
                     />
                     <Route
-                      path="/settings/items/details"
+                      path="/settings/items/details/:id"
                       element={<ItemsDetails />}
                     />
                     <Route
-                      path="/settings/items/edit"
+                      path="/settings/items/edit/:id"
                       element={<ItemsEdit />}
                     />
                     <Route

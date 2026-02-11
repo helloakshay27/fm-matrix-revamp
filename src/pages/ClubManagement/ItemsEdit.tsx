@@ -39,7 +39,6 @@ import { InputAdornment, TextField } from "@mui/material";
 //           },
 //         },
 //       },
-//     },
 //   },
 // });
 
@@ -128,41 +127,170 @@ const muiTheme = createTheme({
 
 
 
+import { useParams } from "react-router-dom";
+import axios from "axios";
+
 const ItemsEdit = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
 
     const [form, setForm] = useState({
         type: "goods",
         name: "",
         unit: "",
         sku: "",
-
         sellable: true,
         purchasable: true,
-
         selling_price: "",
         mrp: "",
         sales_account: "",
         sales_description: "",
-
         cost_price: "",
         purchase_account: "",
         purchase_description: "",
         preferred_vendor: "",
     });
+    const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        const fetchItemDetails = async () => {
+            setLoading(true);
+            try {
+                let apiBase = baseUrl;
+                if (!apiBase) {
+                    apiBase = "https://club-uat-api.lockated.com";
+                } else if (!apiBase.startsWith("http")) {
+                    apiBase = `https://${apiBase}`;
+                }
+                const response = await axios.get(`${apiBase}/lock_account_items/${id}.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = response.data || {};
+                setForm({
+                    type: data.product_type || "goods",
+                    name: data.name || "",
+                    unit: data.unit || "",
+                    sku: data.sku || "",
+                    sellable: data.can_be_sold ?? true,
+                    purchasable: data.can_be_purchased ?? true,
+                    selling_price: data.sale_rate?.toString() || "",
+                    mrp: data.sale_mrp?.toString() || "",
+                    sales_account: data.sale_lock_account_ledger_id?.toString() || "",
+                    sales_description: data.sale_description || "",
+                    cost_price: data.purchase_rate?.toString() || "",
+                    purchase_account: data.purchase_lock_account_ledger_id?.toString() || "",
+                    purchase_description: data.purchase_description || "",
+                    preferred_vendor: data.pms_supplier_id?.toString() || "",
+                });
+            } catch (error) {
+                toast.error("Failed to fetch item details");
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (id) fetchItemDetails();
+    }, [id, baseUrl, token]);
 
     const handleChange = (e: any) => {
         const { name, value, type, checked } = e.target;
-        setForm((p) => ({
-            ...p,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+        setForm((p) => {
+            let updated = { ...p, [name]: type === "checkbox" ? checked : value };
+            // If sellable is unchecked, clear sales fields
+            if (name === "sellable" && !checked) {
+                updated.selling_price = "";
+                updated.sales_account = "";
+                updated.sales_description = "";
+            }
+            // If purchasable is unchecked, clear purchase fields
+            if (name === "purchasable" && !checked) {
+                updated.cost_price = "";
+                updated.purchase_account = "";
+                updated.purchase_description = "";
+                updated.preferred_vendor = "";
+            }
+            return updated;
+        });
     };
 
-    const handleSubmit = () => {
-        console.log("Item payload:", form);
-        toast.success("Item saved (dummy)");
-        navigate("/items");
+    const handleSubmit = async () => {
+        // Validation
+        if (!form.name.trim()) {
+            toast.error("Please mention the item name.");
+            return;
+        }
+        if (!form.sellable && !form.purchasable) {
+            toast.error("Select at least one option from, Sales Information, Purchase Information to proceed.");
+            return;
+        }
+        if (form.sellable) {
+            if (!form.selling_price || isNaN(Number(form.selling_price))) {
+                toast.error("Selling Price is required for Sellable items");
+                return;
+            }
+            if (!form.sales_account) {
+                toast.error("Sales Account is required for Sellable items");
+                return;
+            }
+        }
+        if (form.purchasable) {
+            if (!form.cost_price || isNaN(Number(form.cost_price))) {
+                toast.error("Cost Price is required for Purchasable items");
+                return;
+            }
+            if (!form.purchase_account) {
+                toast.error("Purchase Account is required for Purchasable items");
+                return;
+            }
+        }
+
+        const itemPayload = {
+            name: form.name,
+            sku: form.sku,
+            product_type: form.type,
+            pms_supplier_id: form.preferred_vendor,
+            unit: form.unit,
+            can_be_sold: form.sellable,
+            can_be_purchased: form.purchasable,
+            track_inventory: false
+        };
+        if (form.sellable) {
+            itemPayload.sale_description = form.sales_description;
+            itemPayload.sale_rate = form.selling_price;
+            itemPayload.sale_lock_account_ledger_id = form.sales_account;
+            // itemPayload.sale_mrp = form.mrp;
+        }
+        if (form.purchasable) {
+            itemPayload.purchase_description = form.purchase_description;
+            itemPayload.purchase_rate = form.cost_price;
+            itemPayload.purchase_lock_account_ledger_id = form.purchase_account;
+        }
+        const payload = {
+            lock_account_item: itemPayload
+        };
+        try {
+            let apiBase = baseUrl;
+            apiBase = `https://${baseUrl}`;
+            await axios.patch(
+                `${apiBase}/lock_account_items/${id}.json`,
+                payload,
+                {
+                    headers: {
+                        "Authorization": token ? `Bearer ${token}` : undefined,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+            toast.success("Item updated successfully!");
+            navigate("/settings/items");
+        } catch (err) {
+            toast.error("Failed to update item");
+            console.error("Item update error:", err);
+        }
     };
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -216,7 +344,13 @@ const ItemsEdit = () => {
 
                         {/* NAME */}
                         <TextField
-                            label="Name *"
+                            // label="Name *"
+                            label={
+                                <>
+                                    Name <span style={{ color: "red" }}>*</span>
+                                </>
+                            }
+
                             name="name"
                             placeholder="Enter item name"
                             value={form.name}
@@ -325,7 +459,7 @@ const ItemsEdit = () => {
                 <div className="grid md:grid-cols-2 gap-6">
 
                     {/* SALES */}
-                    <div className="border rounded-lg p-5">
+                    <div className={`border rounded-lg p-5 transition-colors duration-200 ${!form.sellable ? 'bg-gray-100 text-gray-400' : ''}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-semibold">Sales Information</h2>
                             <FormControlLabel
@@ -355,8 +489,16 @@ const ItemsEdit = () => {
                             <TextField
                                 placeholder="Enter selling price"
                                 fullWidth
-                                label="Selling Price"
+                                // label=""
+                                label={
+                                <>
+                                    Selling Price <span style={{ color: "red" }}>*</span>
+                                </>
+                            }
                                 name="selling_price"
+                                value={form.selling_price}
+                                onChange={handleChange}
+                                disabled={!form.sellable}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment
@@ -399,7 +541,7 @@ const ItemsEdit = () => {
 
 
                             <FormControl disabled={!form.sellable}>
-                                <InputLabel>Account</InputLabel>
+                                <InputLabel>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
                                     name="sales_account"
                                     value={form.sales_account}
@@ -407,14 +549,9 @@ const ItemsEdit = () => {
                                     onChange={handleChange}
                                 >
                                     <MenuItem value="" disabled>Select account</MenuItem>
-                                    <MenuItem value="Sales">Sales</MenuItem>
-                                    <MenuItem value="Income">Income</MenuItem>
-                                    <MenuItem value="Discount">Discount</MenuItem>
-                                    <MenuItem value="General Income">General Income</MenuItem>
-                                    <MenuItem value="Interest Income">Interest Income</MenuItem>
-                                    <MenuItem value="Late Fee Income">Late Fee Income</MenuItem>
-                                    <MenuItem value="Other Charges">Other Charges</MenuItem>
-
+                                    <MenuItem value="181">Sales Ledger 181</MenuItem>
+                                    <MenuItem value="182">Sales Ledger 182</MenuItem>
+                                    <MenuItem value="183">Sales Ledger 183</MenuItem>
                                 </Select>
                             </FormControl>
 
@@ -432,7 +569,7 @@ const ItemsEdit = () => {
                     </div>
 
                     {/* PURCHASE */}
-                    <div className="border rounded-lg p-5">
+                    <div className={`border rounded-lg p-5 transition-colors duration-200 ${!form.purchasable ? 'bg-gray-100 text-gray-400' : ''}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-semibold">Purchase Information</h2>
                             <FormControlLabel
@@ -461,8 +598,16 @@ const ItemsEdit = () => {
                             <TextField
                                 placeholder="Enter cost price"
                                 fullWidth
-                                label="Cost Price"
+                                // label="Cost Price"
+                                label={
+                                <>
+                                    Cost Price <span style={{ color: "red" }}>*</span>
+                                </>
+                            }
                                 name="cost_price"
+                                value={form.cost_price}
+                                onChange={handleChange}
+                                disabled={!form.purchasable}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment
@@ -492,9 +637,8 @@ const ItemsEdit = () => {
                                     },
                                 }}
                             />
-
                             <FormControl disabled={!form.purchasable}>
-                                <InputLabel>Account</InputLabel>
+                                <InputLabel>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
                                     name="purchase_account"
                                     value={form.purchase_account}
@@ -502,16 +646,9 @@ const ItemsEdit = () => {
                                     onChange={handleChange}
                                 >
                                     <MenuItem value="" disabled>Select account</MenuItem>
-                                    <MenuItem value="Other Current Asset">Other Current Asset</MenuItem>
-                                    <MenuItem value="Advance Tax">Advance Tax</MenuItem>
-                                    <MenuItem value="Employee Advance">Employee Advance</MenuItem>
-                                    <MenuItem value="Prepaid Expenses">Prepaid Expenses</MenuItem>
-                                    <MenuItem value="TDS Receivable">TDS Receivable</MenuItem>
-                                    <MenuItem value="Fixed Asset">Fixed Asset</MenuItem>
-                                    <MenuItem value="Furniture and Equipment">
-                                        Furniture and Equipment
-                                    </MenuItem>
-
+                                    <MenuItem value="164">Purchase Ledger 164</MenuItem>
+                                    <MenuItem value="165">Purchase Ledger 165</MenuItem>
+                                    <MenuItem value="166">Purchase Ledger 166</MenuItem>
                                 </Select>
                             </FormControl>
 
@@ -552,7 +689,7 @@ const ItemsEdit = () => {
                         Update
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/items")}>
+                    <Button variant="outline" onClick={() => navigate("/settings/items")}>
                         Cancel
                     </Button>
                 </div>

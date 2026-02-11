@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,91 +33,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface ClubMember {
-  id: number;
-  user_id: number;
-  pms_site_id: number;
-  club_member_enabled: boolean;
-  membership_number: string;
-  access_card_enabled: boolean;
-  access_card_id: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-  updated_at: string;
-  user_name: string;
-  site_name: string;
-  user_email: string;
-  user_mobile: string;
-  identification_image: string | null;
-  avatar: string;
-  attachments: any[];
-  snag_answers: any[];
-  user: {
-    id: number;
-    email: string;
-    firstname: string;
-    lastname: string;
-    mobile: string;
-    gender: string | null;
-    birth_date: string | null;
-    full_name: string;
-    addresses: any[];
-  };
-}
-
-interface GroupMembershipData {
-  id: number;
-  membership_plan_id: number;
-  pms_site_id: number;
-  start_date: string | null;
-  end_date: string | null;
-  preferred_start_date?: string | null;
-  referred_by?: string;
-  total_members?: number;
-  group_leader_mobile?: string;
-  created_at: string;
-  updated_at: string;
-  club_members: ClubMember[];
-  allocation_payment_detail?: {
-    id: number;
-    club_member_allocation_id: number;
-    base_amount: string;
-    discount: string;
-    cgst: string;
-    sgst: string;
-    total_tax: string;
-    total_amount: string;
-    landed_amount: string;
-    payment_mode: string;
-    payment_status: string;
-    created_at: string;
-    updated_at: string;
-  } | null;
-}
-
-// Manual Journal API interfaces
-interface ManualJournalRecord {
-  id: number;
-  ledger_id: number;
-  ledger_name: string;
-  tr_type: string;
-  amount: number;
-  cost_centre_id: number | null;
-}
-
-interface ManualJournalTransaction {
-  id: number;
-  lock_account_id: number;
-  transaction_type: string;
-  reference: string | null;
-  voucher_number: string | null;
-  transaction_date: string;
-  description: string;
-  records: ManualJournalRecord[];
-  created_at: string;
-  updated_at: string;
-}
 
 interface ItemData {
   id: number;
@@ -133,11 +48,12 @@ interface ItemData {
 export const ItemsDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
-
+const baseUrl = localStorage.getItem("baseUrl");
+const token = localStorage.getItem("token");
   // State management
-  const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
+  // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   // const [journals, setJournals] = useState([]);
-  const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
+  // const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,73 +74,67 @@ export const ItemsDashboard = () => {
     endDate: ''
   });
   const [items, setItems] = useState<ItemData[]>([]);
-
   const perPage = 20;
 
-  const dummyItems: ItemData[] = [
-  {
-    id: 1,
-    name: "Water Bottle",
-    purchase_description: "Bought from vendor",
-    purchase_rate: 50,
-    description: "RO drinking water",
-    rate: 70,
-    usage_unit: "Nos"
-  },
-  {
-    id: 2,
-    name: "Maintenance Service",
-    purchase_description: "Monthly service",
-    purchase_rate: 500,
-    description: "Lift maintenance",
-    rate: 700,
-    usage_unit: "Job"
-  },
-  {
-    id: 3,
-    name: "Cleaning Material",
-    purchase_description: "Bulk purchase",
-    purchase_rate: 200,
-    description: "Floor cleaner",
-    rate: 250,
-    usage_unit: "Litre"
-  }
-];
-useEffect(() => {
-  setItems(dummyItems);
-}, []);
+  // Fetch items from API
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      try {
+        // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
+        // const token = API_CONFIG.TOKEN;
+        const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=1`;
+        const response = await axios.get(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        // The API is expected to return an array of items
+        setItems(response.data|| []);
+        console.log('Fetched items:', response.data);
+      } catch (error) {
+        console.error('Error fetching items:', error);
+        toast.error('Failed to fetch items');
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItems();
+  }, []);
 
 
   // Fetch journal entries
-  const fetchJournals = useCallback(async () => {
-    setLoading(true);
-    try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-      const response = await axios.get(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      setJournals(response.data.lock_account_transactions || []);
-      setMembershipType(response.data.lock_account_transactions || [])
-    } catch (error) {
-      console.error('Error fetching journal entries:', error);
-      toast.error('Failed to fetch journal entries');
-      setJournals([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // const fetchJournals = useCallback(async () => {
+  //   setLoading(true);
+  //   try {
+  //     const baseUrl = API_CONFIG.BASE_URL;
+  //     const token = API_CONFIG.TOKEN;
+  //     const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+  //     const response = await axios.get(url, {
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //       },
+  //     });
+  //     setJournals(response.data.lock_account_transactions || []);
+  //     setMembershipType(response.data.lock_account_transactions || [])
+  //   } catch (error) {
+  //     console.error('Error fetching journal entries:', error);
+  //     toast.error('Failed to fetch journal entries');
+  //     setJournals([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
-  console.log("journals data:", journals);
+  // console.log("journals data:", journals);
   // Effect to handle debounced search
   useEffect(() => {
     const currentSearch = filters.search || '';
@@ -243,13 +153,13 @@ useEffect(() => {
   }, [debouncedSearchQuery]);
 
   // Fetch on mount and when dependencies change
-  useEffect(() => {
-    console.log('Effect triggered - fetching memberships', {
-      currentPage,
-      filters
-    });
-    fetchJournals();
-  }, [currentPage, filters]);
+  // useEffect(() => {
+  //   console.log('Effect triggered - fetching memberships', {
+  //     currentPage,
+  //     filters
+  //   });
+  //   fetchJournals();
+  // }, [currentPage, filters]);
 
   // Handle export
   const handleExport = async () => {
@@ -563,11 +473,12 @@ useEffect(() => {
 const columns = [
   { key: 'actions', label: 'Actions', sortable: false },
   { key: 'name', label: 'Name', sortable: true },
+  { key: 'sku', label: 'SKU', sortable: true },
   { key: 'purchase_description', label: 'Purchase Description', sortable: true },
   { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
-  { key: 'description', label: 'Description', sortable: false },
-  { key: 'rate', label: 'Rate', sortable: true },
-  { key: 'usage_unit', label: 'Usage Unit', sortable: true },
+  { key: 'sale_description', label: 'Description', sortable: false },
+  { key: 'sale_rate', label: 'Rate', sortable: true },
+  { key: 'unit', label: 'Usage Unit', sortable: true },
 ];
 
 
@@ -579,7 +490,7 @@ const columns = [
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/items/details`)}
+          onClick={() => navigate(`/settings/items/details/${item.id}`)}
           title="View"
           className="p-0"
         >
@@ -588,7 +499,7 @@ const columns = [
 
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/items/edit`)}
+          onClick={() => navigate(`/settings/items/edit/${item.id}`)}
           title="Edit"
           className="p-0"
         >

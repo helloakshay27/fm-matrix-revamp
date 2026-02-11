@@ -124,20 +124,16 @@ export const ItemsDetails = () => {
     // });
 
     const [formData, setFormData] = useState({
-        billCycleName: "",
-        startDate: "",
-        endDate: "",
-        paymentDueDays: "",
-        billCycleFrequency: "",
-        fine: "",
-        fineRate: "",
-        interest: "",
-        interestRate: "",
-        charges: [],
-        expense: false,
-        frequency: "",
-        dueDate: "",
-        active: 1,
+        itemType: "",
+        unit: "",
+        createdSource: "",
+        sellingPrice: "",
+        salesAccount: "",
+        salesDescription: "",
+        costPrice: "",
+        purchaseAccount: "",
+        purchaseDescription: "",
+        reportingTags: [],
     });
 
 
@@ -157,40 +153,42 @@ export const ItemsDetails = () => {
 
 
     useEffect(() => {
-        const fetchBillCycleDetails = async () => {
+        const fetchItemDetails = async () => {
             setLoading(true);
             try {
                 // Use your API config if available, else fallback to localStorage
-                // const apiBase = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-                // const response = await axios.get(`${apiBase}/account/society_bill_cycles/1.json`, {
-                //     headers: {
-                //         Authorization: token ? `Bearer ${token}` : undefined,
-                //     },
-                // });
-                // const data = response.data.society_bill_cycle;
-                // setFormData({
-                //     billCycleName: data.name || "",
-                //     startDate: data.start_month || "",
-                //     endDate: data.end_month || "",
-                //     paymentDueDays: data.payment_due_in?.toString() || "",
-                //     billCycleFrequency: data.frequency || "",
-                //     fine: data.fine_type || "",
-                //     interest: data.interest_type || "",
-                //     charges: data.charge_names || [],
-                //     expense: !!data.expense_bill,
-                //     frequency: data.frequency || "",
-                //     dueDate: data.due_date || "",
-                //     active: data.active,
-                //     fineRate: data.fine_rate?.toString() || "",
-                //     interestRate: data.interest_rate?.toString() || "",
-                // });
+                let apiBase = baseUrl;
+                if (!apiBase) {
+                  apiBase = "https://club-uat-api.lockated.com";
+                } else if (!apiBase.startsWith("http")) {
+                  apiBase = `https://${apiBase}`;
+                }
+                const response = await axios.get(`${apiBase}/lock_account_items/${id}.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = response.data || [];
+                setFormData({
+                    itemType: data.product_type || "",
+                    unit: data.unit || "",
+                    createdSource: data.created_source || "",
+                    sellingPrice: data.sale_rate?.toString() || "",
+                    salesAccount: data.sales_account_name || "",
+                    salesDescription: data.sale_description || "",
+                    costPrice: data.purchase_rate?.toString() || "",
+                    purchaseAccount: data.purchase_account_name || "",
+                    purchaseDescription: data.purchase_description || "",
+                    reportingTags: data.reporting_tags || [],
+                });
             } catch (error) {
-                // toast.error("Failed to fetch bill cycle details");
+                toast.error("Failed to fetch item details");
             } finally {
                 setLoading(false);
             }
         };
-        fetchBillCycleDetails();
+        if (id) fetchItemDetails();
     }, [id, baseUrl, token]);
 
     const handleEditClick = () => {

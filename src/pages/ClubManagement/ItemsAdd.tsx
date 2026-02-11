@@ -1,4 +1,6 @@
+
 import React, { useState } from "react";
+import axios from "axios";
 import {
     // TextField,
     FormControl,
@@ -159,10 +161,126 @@ const ItemsAdd = () => {
         }));
     };
 
+    // Account types for sales/purchase account dropdowns
+    const [accountTypes, setAccountTypes] = React.useState([]);
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
+    const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
+
+    React.useEffect(() => {
+        const fetchAccountTypes = async () => {
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setAccountTypes(res.data.data || []);
+            } catch (e) {
+                setAccountTypes([]);
+            }
+        };
+        fetchAccountTypes();
+    }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
+    console.log("Account Types:", accountTypes)
+
+    const payload = {
+        lock_account_item: {
+            name: form.name,
+            sale_description: form.sales_description,
+            sale_rate: form.selling_price,
+            sale_lock_account_ledger_id: form.sales_account,
+            sku: form.sku,
+            purchase_rate: form.cost_price,
+            purchase_lock_account_ledger_id: form.purchase_account,
+            purchase_description: form.purchase_description,
+            product_type: form.type,
+            pms_supplier_id: form.preferred_vendor,
+            unit: form.unit,
+            // sale_mrp: form.mrp,
+            can_be_sold: form.sellable,
+            can_be_purchased: form.purchasable,
+            track_inventory: false
+        }
+    };
+    console.log("Payload for submission:", payload)
     const handleSubmit = () => {
-        console.log("Item payload:", form);
-        toast.success("Item saved (dummy)");
-        navigate("/items");
+        // Validation
+        if (!form.name.trim()) {
+            toast.error("Please mention the item name.");
+            return;
+        }
+        if (!form.sellable && !form.purchasable) {
+            toast.error("Select at least one option from, Sales Information, Purchase Information to proceed.");
+            return;
+        }
+        if (form.sellable) {
+            if (!form.selling_price || isNaN(Number(form.selling_price))) {
+                toast.error("Selling Price is required for Sellable items");
+                return;
+            }
+            if (!form.sales_account) {
+                toast.error("Sales Account is required for Sellable items");
+                return;
+            }
+        }
+        if (form.purchasable) {
+            if (!form.cost_price || isNaN(Number(form.cost_price))) {
+                toast.error("Cost Price is required for Purchasable items");
+                return;
+            }
+            if (!form.purchase_account) {
+                toast.error("Purchase Account is required for Purchasable items");
+                return;
+            }
+        }
+
+        const token = localStorage.getItem("token");
+        // Build payload conditionally
+        const itemPayload = {
+            name: form.name,
+            sku: form.sku,
+            product_type: form.type,
+            pms_supplier_id: form.preferred_vendor,
+            unit: form.unit,
+            can_be_sold: form.sellable,
+            can_be_purchased: form.purchasable,
+            track_inventory: false
+        };
+        if (form.sellable) {
+            itemPayload.sale_description = form.sales_description;
+            itemPayload.sale_rate = form.selling_price;
+            itemPayload.sale_lock_account_ledger_id = form.sales_account;
+            // itemPayload.sale_mrp = form.mrp;
+        }
+        if (form.purchasable) {
+            itemPayload.purchase_description = form.purchase_description;
+            itemPayload.purchase_rate = form.cost_price;
+            itemPayload.purchase_lock_account_ledger_id = form.purchase_account;
+        }
+        const payload = {
+            lock_account_item: itemPayload,
+            lock_account_id: "1"
+        };
+        axios.post(
+            `https://${baseUrl}/lock_account_items.json`,
+            payload,
+            {
+                headers: {
+                    "Authorization": token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            }
+        )
+            .then(res => {
+                toast.success("Item saved successfully!");
+                navigate("/settings/items");
+            })
+            .catch(err => {
+                toast.error("Failed to save item");
+                console.error("Item save error:", err);
+            });
     };
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -216,7 +334,13 @@ const ItemsAdd = () => {
 
                         {/* NAME */}
                         <TextField
-                            label="Name *"
+                            // label="Name *"
+                            label={
+                                <>
+                                    Name <span style={{ color: "red" }}>*</span>
+                                </>
+                            }
+
                             name="name"
                             placeholder="Enter item name"
                             value={form.name}
@@ -325,7 +449,9 @@ const ItemsAdd = () => {
                 <div className="grid md:grid-cols-2 gap-6">
 
                     {/* SALES */}
-                    <div className="border rounded-lg p-5">
+                    <div
+                        className={`border rounded-lg p-5 transition-colors duration-200 ${!form.sellable ? 'bg-gray-100 text-gray-400' : ''}`}
+                    >
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-semibold">Sales Information</h2>
                             <FormControlLabel
@@ -355,8 +481,15 @@ const ItemsAdd = () => {
                             <TextField
                                 placeholder="Enter selling price"
                                 fullWidth
-                                label="Selling Price"
+                                label={
+                                    <>
+                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
                                 name="selling_price"
+                                value={form.selling_price}
+                                onChange={handleChange}
+                                disabled={!form.sellable}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment
@@ -387,7 +520,10 @@ const ItemsAdd = () => {
                                 }}
                             />
 
-                            <TextField
+
+
+
+                            {/* <TextField
                                 disabled={!form.sellable}
                                 label="MRP"
                                 name="mrp"
@@ -395,26 +531,39 @@ const ItemsAdd = () => {
                                 placeholder="Enter MRP"
                                 value={form.mrp}
                                 onChange={handleChange}
-                            />
+                            /> */}
 
 
-                            <FormControl disabled={!form.sellable}>
-                                <InputLabel>Account</InputLabel>
+                            <FormControl disabled={!form.sellable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
+                                <InputLabel id="sales-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
+                                    labelId="sales-account-label"
                                     name="sales_account"
                                     value={form.sales_account}
-                                    label="Account"
+                                    label="Account*"
                                     onChange={handleChange}
+                                    open={openSalesAccount}
+                                    onOpen={() => setOpenSalesAccount(true)}
+                                    onClose={() => setOpenSalesAccount(false)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                                minWidth: 300,
+                                                maxWidth: 400,
+                                            },
+                                        },
+                                    }}
                                 >
-                                    <MenuItem value="" disabled>Select account</MenuItem>
-                                    <MenuItem value="Sales">Sales</MenuItem>
-                                    <MenuItem value="Income">Income</MenuItem>
-                                    <MenuItem value="Discount">Discount</MenuItem>
-                                    <MenuItem value="General Income">General Income</MenuItem>
-                                    <MenuItem value="Interest Income">Interest Income</MenuItem>
-                                    <MenuItem value="Late Fee Income">Late Fee Income</MenuItem>
-                                    <MenuItem value="Other Charges">Other Charges</MenuItem>
-
+                                    <MenuItem value="" disabled>
+                                        Select Account Type
+                                    </MenuItem>
+                                    {accountTypes.map(type => (
+                                        <MenuItem key={type.id} value={type.id}>
+                                            {type.group_name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
 
@@ -432,7 +581,9 @@ const ItemsAdd = () => {
                     </div>
 
                     {/* PURCHASE */}
-                    <div className="border rounded-lg p-5">
+                    <div
+                        className={`border rounded-lg p-5 transition-colors duration-200 ${!form.purchasable ? 'bg-gray-100 text-gray-400' : ''}`}
+                    >
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-semibold">Purchase Information</h2>
                             <FormControlLabel
@@ -461,8 +612,15 @@ const ItemsAdd = () => {
                             <TextField
                                 placeholder="Enter cost price"
                                 fullWidth
-                                label="Cost Price"
+                                label={
+                                    <>
+                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
                                 name="cost_price"
+                                value={form.cost_price}
+                                onChange={handleChange}
+                                disabled={!form.purchasable}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment
@@ -493,25 +651,36 @@ const ItemsAdd = () => {
                                 }}
                             />
 
-                            <FormControl disabled={!form.purchasable}>
-                                <InputLabel>Account</InputLabel>
+                            <FormControl disabled={!form.purchasable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
+                                <InputLabel id="purchase-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
+                                    labelId="purchase-account-label"
                                     name="purchase_account"
                                     value={form.purchase_account}
-                                    label="Account"
+                                    label="Account*"
                                     onChange={handleChange}
+                                    open={openPurchaseAccount}
+                                    onOpen={() => setOpenPurchaseAccount(true)}
+                                    onClose={() => setOpenPurchaseAccount(false)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                                minWidth: 300,
+                                                maxWidth: 400,
+                                            },
+                                        },
+                                    }}
                                 >
-                                    <MenuItem value="" disabled>Select account</MenuItem>
-                                    <MenuItem value="Other Current Asset">Other Current Asset</MenuItem>
-                                    <MenuItem value="Advance Tax">Advance Tax</MenuItem>
-                                    <MenuItem value="Employee Advance">Employee Advance</MenuItem>
-                                    <MenuItem value="Prepaid Expenses">Prepaid Expenses</MenuItem>
-                                    <MenuItem value="TDS Receivable">TDS Receivable</MenuItem>
-                                    <MenuItem value="Fixed Asset">Fixed Asset</MenuItem>
-                                    <MenuItem value="Furniture and Equipment">
-                                        Furniture and Equipment
+                                    <MenuItem value="" disabled>
+                                        Select Account Type
                                     </MenuItem>
-
+                                    {accountTypes.map(type => (
+                                        <MenuItem key={type.id} value={type.id}>
+                                            {type.group_name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
 
@@ -552,7 +721,7 @@ const ItemsAdd = () => {
                         Save
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/items")}>
+                    <Button variant="outline" onClick={() => navigate("/settings/items")}>
                         Cancel
                     </Button>
                 </div>
