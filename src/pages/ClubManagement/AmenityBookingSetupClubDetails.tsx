@@ -858,6 +858,10 @@ export const BookingSetupDetailClubPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {slotsConfigured[0]?.map((slot, idx) => {
                 const slotKey = `${slot.id}-${idx}`;
+                // Format hours and minutes to always be two digits
+                const pad = (n) => n.toString().padStart(2, '0');
+                const slotStart = `${pad(slot.startTime.hour)}:${pad(slot.startTime.minute)}`;
+                const slotEnd = `${pad(slot.endTime.hour)}:${pad(slot.endTime.minute)}`;
                 return (
                   <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
                     if (selectedSlots[slotKey]) {
@@ -887,7 +891,7 @@ export const BookingSetupDetailClubPage = () => {
                         <Label
                           className="cursor-pointer text-sm font-medium"
                         >
-                          {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          {slotStart} - {slotEnd}
                           {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
                             <span className="ml-2 text-xs text-gray-600">
                               ({premiumPercentage[slotKey]}%)
@@ -901,7 +905,7 @@ export const BookingSetupDetailClubPage = () => {
                         <div className="space-y-2">
                           <h4 className="font-medium text-sm">Set Premium Percentage</h4>
                           <p className="text-xs text-gray-500">
-                            {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                            {slotStart} - {slotEnd}
                           </p>
                         </div>
                         <div className="space-y-2">

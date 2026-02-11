@@ -1835,7 +1835,7 @@ export const AddGroupMembershipPage = () => {
                                                         </FormControl>
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                                                         <TextField
                                                             label="Mobile Number *"
                                                             value={member.formData.mobile}

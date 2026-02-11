@@ -29,7 +29,7 @@ const enhancedTableColumns: ColumnConfig[] = [
   { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, draggable: true },
   { key: 'bookingStatus', label: 'Booking Status', sortable: true, draggable: true },
   { key: 'createdOn', label: 'Created On', sortable: true, draggable: true },
-  { key: 'source', label: 'Source', sortable: true, draggable: true },
+  // { key: 'source', label: 'Source', sortable: true, draggable: true },
 ];
 
 const muiTheme = createTheme({
