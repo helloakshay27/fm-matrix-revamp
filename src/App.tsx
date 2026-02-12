@@ -855,6 +855,8 @@ import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
 import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
 import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
 import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
+import { RecurringBillsDashboard } from "./pages/ClubManagement/RecurringBillsDashboard";
+import { RecurringBillCreatePage } from "./pages/ClubManagement/RecurringBillCreatePage";
 import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
 import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
 import { SalesOrderListPage } from "./pages/SalesOrderListPage";
@@ -1884,10 +1886,7 @@ function App() {
                     />
 
                     {/* Bills Routes */}
-                    <Route
-                      path="/settings/bills"
-                      element={<BillListPage />}
-                    />
+                    <Route path="/settings/bills" element={<BillListPage />} />
                     <Route
                       path="/settings/bills/create"
                       element={<BillCreatePage />}
@@ -1899,6 +1898,16 @@ function App() {
                     <Route
                       path="/settings/bills/edit/:id"
                       element={<BillCreatePage />}
+                    />
+
+                    {/* Recurring Bills Routes */}
+                    <Route
+                      path="/settings/recurring-bills"
+                      element={<RecurringBillsDashboard />}
+                    />
+                    <Route
+                      path="/settings/recurring-bills/create"
+                      element={<RecurringBillCreatePage />}
                     />
 
                     {/* Expense Routes */}

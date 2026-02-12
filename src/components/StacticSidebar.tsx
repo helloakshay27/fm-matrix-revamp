@@ -313,7 +313,6 @@ const modulesByPackage = {
     //   icon: PackagePlus,
     //   href: '/master/inventory-sub-type'
     // },
-
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -510,7 +509,11 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
 
@@ -739,7 +742,10 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+      name: "Patrolling",
+      icon: Shield,
+      href: "/security/patrolling",
+      subItems: [
         {
           name: "Patrolling Info",
           href: "/security/patrolling",
@@ -750,7 +756,7 @@ const modulesByPackage = {
           href: "/security/patrolling/response",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
   ],
   "Value Added Services": [
@@ -880,24 +886,24 @@ const modulesByPackage = {
     //   ]
     // },
     {
-      name: 'Projects & Tasks',
+      name: "Projects & Tasks",
       icon: Briefcase,
       subItems: [
         {
-          name: 'Projects',
-          href: "/vas/projects"
+          name: "Projects",
+          href: "/vas/projects",
         },
         {
-          name: 'Tasks',
-          href: "/vas/tasks"
+          name: "Tasks",
+          href: "/vas/tasks",
         },
         {
-          name: 'Sprint',
-          href: "/vas/sprint"
+          name: "Sprint",
+          href: "/vas/sprint",
         },
         {
-          name: 'Issues',
-          href: "/vas/issues"
+          name: "Issues",
+          href: "/vas/issues",
         },
         {
           name: "Channels",
@@ -905,24 +911,23 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: 'Opportunity Register',
-          href: "/vas/opportunity"
+          name: "Opportunity Register",
+          href: "/vas/opportunity",
         },
         {
-          name: 'ToDo',
-          href: "/vas/todo"
+          name: "ToDo",
+          href: "/vas/todo",
         },
         {
-          name: 'Documents',
-          href: "/vas/documents"
+          name: "Documents",
+          href: "/vas/documents",
         },
         {
-          name: 'Minutes of Meeting',
-          href: "/vas/mom"
+          name: "Minutes of Meeting",
+          href: "/vas/mom",
         },
-      ]
+      ],
     },
-
   ],
   "Market Place": [
     {
@@ -1138,7 +1143,7 @@ const modulesByPackage = {
           href: "/settings/community-modules/amenity-setup",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
     {
       icon: Settings,
@@ -1176,7 +1181,7 @@ const modulesByPackage = {
           name: "Issue Types",
           href: "/settings/project-task-setup/issue-types",
         },
-      ]
+      ],
     },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
     {
@@ -1200,8 +1205,12 @@ const modulesByPackage = {
         { name: "Customers", href: "/settings/customers" },
         { name: "Sales Order", href: "/settings/sales-order" },
 
+<<<<<<< Updated upstream
 
         { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
+=======
+        // { name: "Transactions ", href: "/settings/transactions" },
+>>>>>>> Stashed changes
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
         // { name: "Opening Balance", href: "/settings/opening-balance" },
@@ -1210,15 +1219,13 @@ const modulesByPackage = {
       ],
     },
 
-
-
-
     {
       name: "Purchase Orders",
       icon: FileText,
       subItems: [
         { name: "Purchase Order", href: "/settings/purchase-order" },
         { name: "Bills", href: "/settings/bills" },
+        { name: "Recurring Bills", href: "/settings/recurring-bills" },
         { name: "Vendor", href: "/maintenance/vendor" },
         { name: "Expense", href: "/settings/expense" },
         // { name: "Transactions ", href: "/settings/transactions" },
@@ -1229,7 +1236,6 @@ const modulesByPackage = {
         // { name: "Tax Setup ", href: "/settings/tax-setup" },
       ],
     },
-
 
     {
       name: "Accountants",
@@ -1323,7 +1329,7 @@ export const StacticSidebar = () => {
     setExpandedItems((prev) =>
       prev.includes(itemName)
         ? prev.filter((name) => name !== itemName)
-        : [...prev, itemName],
+        : [...prev, itemName]
     );
   };
 
@@ -1394,7 +1400,7 @@ export const StacticSidebar = () => {
     "/master/template/corrective-action",
   ];
   const isOnTemplateRoute = templatePaths.some((t) =>
-    location.pathname.startsWith(t),
+    location.pathname.startsWith(t)
   );
 
   // Helper function to recursively filter out asset-related items
@@ -1404,9 +1410,11 @@ export const StacticSidebar = () => {
     return items
       .filter((item: any) => {
         // Filter out direct asset links
-        if (item.href === "/maintenance/asset" ||
+        if (
+          item.href === "/maintenance/asset" ||
           item.href === "/maintenance/audit/assets" ||
-          item.href?.startsWith("/settings/asset-setup")) {
+          item.href?.startsWith("/settings/asset-setup")
+        ) {
           return false;
         }
         // Filter out items named "Asset Setup" or "Assets"
@@ -1576,8 +1584,9 @@ export const StacticSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1593,8 +1602,9 @@ export const StacticSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1718,10 +1728,11 @@ export const StacticSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-            ? "bg-[#f0e8dc] shadow-inner"
-            : "hover:bg-[#DBC2A9]"
-            }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
+              ? "bg-[#f0e8dc] shadow-inner"
+              : "hover:bg-[#DBC2A9]"
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -1729,13 +1740,15 @@ export const StacticSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -1754,8 +1767,9 @@ export const StacticSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1778,15 +1792,15 @@ export const StacticSidebar = () => {
         {!isSidebarCollapsed &&
           (isOnTemplateRoute
             ? location.pathname &&
-            templatePaths.some((t) => location.pathname.startsWith(t))
+              templatePaths.some((t) => location.pathname.startsWith(t))
             : currentSection) && (
             <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
               <h3
                 className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
               >
                 {isOnTemplateRoute &&
-                  location.pathname &&
-                  templatePaths.some((t) => location.pathname.startsWith(t))
+                location.pathname &&
+                templatePaths.some((t) => location.pathname.startsWith(t))
                   ? "Settings"
                   : currentSection}
               </h3>
@@ -1822,20 +1836,22 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
-                    ? "bg-[#f0e8dc] shadow-inner"
-                    : "hover:bg-[#DBC2A9]"
-                    }`}
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href, "prefix")
+                      ? "bg-[#f0e8dc] shadow-inner"
+                      : "hover:bg-[#DBC2A9]"
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
-                      ? "text-[#C72030]"
-                      : "text-[#1a1a1a]"
-                      }`}
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href, "prefix")
+                        ? "text-[#C72030]"
+                        : "text-[#1a1a1a]"
+                    }`}
                   />
                 </button>
               ))}
