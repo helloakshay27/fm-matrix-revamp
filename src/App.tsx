@@ -4644,12 +4644,20 @@ function App() {
                       element={<ScratchCard />}
                     />
                     <Route
+                      path="/scratchcard/details/:rewardId"
+                      element={<VoucherDetails />}
+                    />
+                    <Route
                       path="/scratchcard/:cardId/voucher"
                       element={<VoucherDetails />}
                     />
                     {/* Flip Card Routes */}
                     <Route path="/flipcard" element={<FlipCard />} />
                     <Route path="/flipcard/:gameId" element={<FlipCard />} />
+                    <Route
+                      path="/flipcard/details/:rewardId"
+                      element={<FlipCardDetails />}
+                    />
                     <Route
                       path="/flipcard/:gameId/card/:cardId"
                       element={<FlipCardDetails />}

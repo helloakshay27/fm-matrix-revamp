@@ -1,5 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Quill from "quill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -41,6 +42,8 @@ interface OfferData {
   offerDescription: string;
   bannerImage: File | null;
   bannerImageName: string;
+  rewardType: string;
+  pointsValue: string;
 }
 
 export const CreateContestPage: React.FC = () => {
@@ -49,6 +52,34 @@ export const CreateContestPage: React.FC = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [createdContestId, setCreatedContestId] = useState<number | null>(null);
+
+  // Refs for Quill editors
+  const termsEditorRef = useRef<HTMLDivElement>(null);
+  const redemptionEditorRef = useRef<HTMLDivElement>(null);
+  const termsQuillRef = useRef<Quill | null>(null);
+  const redemptionQuillRef = useRef<Quill | null>(null);
+
+  // Helper function to create a default offer object
+  const createDefaultOffer = (): OfferData => ({
+    id: Date.now().toString() + Math.random(),
+    offerTitle: "",
+    couponCode: "",
+    displayName: "",
+    partner: "",
+    winningProbability: "",
+    probabilityOutOf: "",
+    offerDescription: "",
+    bannerImage: null,
+    bannerImageName: "",
+    rewardType: "Coupon Code",
+    pointsValue: "",
+  });
+
+  // Helper function to get initial offers count based on contest type
+  const getInitialOffersCount = (type: string): number => {
+    return type === "Spin" ? 4 : 1;
+  };
 
   // Form data ────────────────────────────────────────────────────────────────
   const [contestName, setContestName] = useState("");
@@ -56,21 +87,35 @@ export const CreateContestPage: React.FC = () => {
   const [contestType, setContestType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
+  // Reset redemption document when contest type changes away from Scratch
+  // Also adjust offers count based on contest type
+  const handleContestTypeChange = (newType: string) => {
+    setContestType(newType);
+
+    // Reset redemption text for non-Scratch types
+    if (newType !== "Scratch") {
+      setRedemptionText("");
+    }
+
+    // Adjust offers count based on contest type
+    const requiredCount = getInitialOffersCount(newType);
+    const currentCount = offers.length;
+
+    if (currentCount < requiredCount) {
+      // Add more offers to reach required count
+      const newOffers = Array.from(
+        { length: requiredCount - currentCount },
+        () => createDefaultOffer()
+      );
+      setOffers([...offers, ...newOffers]);
+    } else if (currentCount > requiredCount) {
+      // Keep only the required number of offers
+      setOffers(offers.slice(0, requiredCount));
+    }
+  };
+
   // Offers
-  const [offers, setOffers] = useState<OfferData[]>([
-    {
-      id: "1",
-      offerTitle: "",
-      couponCode: "",
-      displayName: "",
-      partner: "",
-      winningProbability: "",
-      probabilityOutOf: "",
-      offerDescription: "",
-      bannerImage: null,
-      bannerImageName: "",
-    },
-  ]);
+  const [offers, setOffers] = useState<OfferData[]>([createDefaultOffer()]);
 
   // Validity
   const [startDate, setStartDate] = useState("");
@@ -81,14 +126,68 @@ export const CreateContestPage: React.FC = () => {
   const [attemptsRequired, setAttemptsRequired] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  // Documents
-  const [termsDocument, setTermsDocument] = useState<File | null>(null);
-  const [termsDocumentName, setTermsDocumentName] = useState("");
-  const termsFileRef = useRef<HTMLInputElement>(null);
+  // Documents - now text inputs instead of file uploads
+  const [termsText, setTermsText] = useState("");
+  const [redemptionText, setRedemptionText] = useState("");
 
-  const [redemptionDocument, setRedemptionDocument] = useState<File | null>(null);
-  const [redemptionDocumentName, setRedemptionDocumentName] = useState("");
-  const redemptionFileRef = useRef<HTMLInputElement>(null);
+  // Initialize Quill editors
+  useEffect(() => {
+    // Initialize Terms & Conditions editor
+    if (termsEditorRef.current && !termsQuillRef.current) {
+      termsQuillRef.current = new Quill(termsEditorRef.current, {
+        theme: "snow",
+        placeholder: "Enter terms and conditions",
+        modules: {
+          toolbar: [
+            ["bold", "italic", "underline"],
+            [{ list: "bullet" }],
+            ["link"],
+          ],
+        },
+      });
+
+      // Set initial content if exists
+      if (termsText) {
+        termsQuillRef.current.root.innerHTML = termsText;
+      }
+
+      // Listen for changes
+      termsQuillRef.current.on("text-change", () => {
+        const html = termsQuillRef.current?.root.innerHTML || "";
+        setTermsText(html);
+      });
+    }
+
+    // Initialize Redemption Guide editor
+    if (redemptionEditorRef.current && !redemptionQuillRef.current) {
+      redemptionQuillRef.current = new Quill(redemptionEditorRef.current, {
+        theme: "snow",
+        placeholder: "Enter redemption guide",
+        modules: {
+          toolbar: [
+            ["bold", "italic", "underline"],
+            [{ list: "bullet" }],
+            ["link"],
+          ],
+        },
+      });
+
+      // Set initial content if exists
+      if (redemptionText) {
+        redemptionQuillRef.current.root.innerHTML = redemptionText;
+      }
+
+      // Listen for changes
+      redemptionQuillRef.current.on("text-change", () => {
+        const html = redemptionQuillRef.current?.root.innerHTML || "";
+        setRedemptionText(html);
+      });
+    }
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, [currentStep]); // Re-initialize when step changes to ensure editors are visible
 
   const steps: ContestStep[] = [
     { id: 1, title: "Basic Info", completed: completedSteps.includes(1), active: currentStep === 1 },
@@ -100,21 +199,7 @@ export const CreateContestPage: React.FC = () => {
   const contestTypes = ["Spin", "Scratch", "Flip"];
 
   const addOffer = () => {
-    setOffers([
-      ...offers,
-      {
-        id: Date.now().toString(),
-        offerTitle: "",
-        couponCode: "",
-        displayName: "",
-        partner: "",
-        winningProbability: "",
-        probabilityOutOf: "",
-        offerDescription: "",
-        bannerImage: null,
-        bannerImageName: "",
-      },
-    ]);
+    setOffers([...offers, createDefaultOffer()]);
   };
 
   const removeOffer = (id: string) => {
@@ -128,37 +213,40 @@ export const CreateContestPage: React.FC = () => {
     field: keyof OfferData,
     value: string | File | null
   ) => {
-    setOffers(
-      offers.map((offer) =>
-        offer.id === id ? { ...offer, [field]: value } : offer
-      )
+    setOffers((prev) =>
+      prev.map((offer) => (offer.id === id ? { ...offer, [field]: value } : offer))
     );
   };
 
   const handleOfferBannerUpload = (id: string, file: File | null) => {
-    if (file) {
-      updateOffer(id, "bannerImage", file);
-      updateOffer(id, "bannerImageName", file.name);
-    }
+    // Update both banner image and its name in a single state update
+    setOffers((prev) =>
+      prev.map((offer) =>
+        offer.id === id
+          ? { ...offer, bannerImage: file, bannerImageName: file ? file.name : "" }
+          : offer
+      )
+    );
   };
 
-  const handleTermsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setTermsDocument(file);
-      setTermsDocumentName(file.name);
-    }
+  const handleRewardTypeChange = (id: string, newRewardType: string) => {
+    setOffers((prev) =>
+      prev.map((offer) => {
+        if (offer.id === id) {
+          const updatedOffer = { ...offer, rewardType: newRewardType };
+          // Clear the opposite field value
+          if (newRewardType === "Coupon Code") {
+            updatedOffer.pointsValue = "";
+          } else if (newRewardType === "Points") {
+            updatedOffer.couponCode = "";
+          }
+          return updatedOffer;
+        }
+        return offer;
+      })
+    );
   };
 
-  const handleRedemptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setRedemptionDocument(file);
-      setRedemptionDocumentName(file.name);
-    }
-  };
-
-  // ── Date/Time → ISO helper ───────────────────────────────────────────────
   const buildISO = (date: string, time: string, isEnd = false): string => {
     if (!date || !time) return "";
     const [y, m, d] = date.split("-");
@@ -170,7 +258,7 @@ export const CreateContestPage: React.FC = () => {
     return dt.toISOString(); // UTC — change to +05:30 string if backend requires it
   };
 
-  // ── Submit to API ────────────────────────────────────────────────────────
+  console.log("offers", offers);
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
@@ -178,8 +266,8 @@ export const CreateContestPage: React.FC = () => {
 
     const baseUrl = localStorage.getItem('baseUrl') || '';
     const token = localStorage.getItem('token') || '';
-
-    // Build FormData instead of JSON
+    //     const baseUrl =  "https://uat-hi-society.lockated.com";
+    // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
     const formData = new FormData();
 
     // Basic contest fields
@@ -199,22 +287,20 @@ export const CreateContestPage: React.FC = () => {
 
     // Add prizes_attributes
     offers.forEach((offer, index) => {
-      const isCouponReward = offer.couponCode.trim() !== "";
-
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
-      formData.append(
-        `contest[prizes_attributes][${index}][reward_type]`,
-        isCouponReward ? "coupon" : "points"
-      );
+      
+      // Determine reward type based on offer.rewardType
+      const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
+      formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
 
-      // Add coupon_code only if it's a coupon reward
-      if (isCouponReward) {
+      // Add coupon_code only if reward type is "Coupon Code"
+      if (offer.rewardType === "Coupon Code") {
         formData.append(`contest[prizes_attributes][${index}][coupon_code]`, offer.couponCode.trim());
       }
 
-      // Add points_value only if it's NOT a coupon reward (optional: could be derived from probability)
-      if (!isCouponReward) {
-        formData.append(`contest[prizes_attributes][${index}][points_value]`, "100");
+      // Add points_value only if reward type is "Points"
+      if (offer.rewardType === "Points") {
+        formData.append(`contest[prizes_attributes][${index}][points_value]`, offer.pointsValue.trim());
       }
 
       // Add partner_name only if provided
@@ -242,14 +328,14 @@ export const CreateContestPage: React.FC = () => {
       }
     });
 
-    // Add terms document if present
-    if (termsDocument) {
-      formData.append('contest[terms_document]', termsDocument);
+    // Add terms and conditions text if present
+    if (termsText.trim()) {
+      formData.append('contest[terms_and_conditions]', termsText.trim());
     }
 
-    // Add redemption document if present
-    if (redemptionDocument) {
-      formData.append('contest[redemption_document]', redemptionDocument);
+    // Add redemption guide text if present (for all contest types)
+    if (redemptionText.trim()) {
+      formData.append('contest[redemption_guide]', redemptionText.trim());
     }
 
     try {
@@ -275,10 +361,13 @@ export const CreateContestPage: React.FC = () => {
 
       const data = await res.json();
       sonnerToast.success("Contest created successfully!");
+      
+      // Store the created contest ID for navigation
+      if (data.id) {
+        setCreatedContestId(data.id);
+      }
+      
       setShowSuccessModal(true);
-
-      // Optional: store real ID for navigation
-      // console.log("Created ID:", data.id);
 
     } catch (err: any) {
       console.error(err);
@@ -334,6 +423,14 @@ export const CreateContestPage: React.FC = () => {
             alert("Please fill all offer titles");
             return false;
           }
+          if (offer.rewardType === "Coupon Code" && !offer.couponCode.trim()) {
+            alert("Please enter coupon code for all offers");
+            return false;
+          }
+          if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
+            alert("Please enter points value for all offers");
+            return false;
+          }
         }
         return true;
 
@@ -368,7 +465,11 @@ export const CreateContestPage: React.FC = () => {
 
   const handleViewDetails = () => {
     setShowSuccessModal(false);
-    navigate("/contests/1"); // ← replace with real ID later
+    if (createdContestId) {
+      navigate(`/contests/${createdContestId}`);
+    } else {
+      navigate("/contests");
+    }
   };
 
   // MUI TextField styling (unchanged)
@@ -414,7 +515,7 @@ export const CreateContestPage: React.FC = () => {
                   <MuiSelect
                     value={contestType}
                     label="Contest Type"
-                    onChange={(e) => setContestType(e.target.value)}
+                    onChange={(e) => handleContestTypeChange(e.target.value)}
                   >
                     {contestTypes.map((type) => (
                       <MenuItem key={type} value={type}>
@@ -435,7 +536,25 @@ export const CreateContestPage: React.FC = () => {
                   variant="outlined"
                   multiline
                   rows={4}
-                  sx={textFieldSx}
+                  // sx={textFieldSx}
+                   sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
+            }}
                 />
               </div>
             </CardContent>
@@ -483,14 +602,43 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    <TextField
-                      fullWidth
-                      label="Coupon Code"
-                      value={offer.couponCode}
-                      onChange={(e) => updateOffer(offer.id, "couponCode", e.target.value)}
-                      sx={textFieldSx}
-                      size="small"
-                    />
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Reward Type</InputLabel>
+                      <MuiSelect
+                        value={offer.rewardType}
+                        label="Reward Type"
+                        onChange={(e) => handleRewardTypeChange(offer.id, e.target.value)}
+                      >
+                        <MenuItem value="Coupon Code">Coupon Code</MenuItem>
+                        <MenuItem value="Points">Points</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+
+                    {offer.rewardType === "Coupon Code" && (
+                      <TextField
+                        fullWidth
+                        label="Coupon Code"
+                        value={offer.couponCode}
+                        onChange={(e) => updateOffer(offer.id, "couponCode", e.target.value)}
+                        sx={textFieldSx}
+                        size="small"
+                        required
+                      />
+                    )}
+
+                    {offer.rewardType === "Points" && (
+                      <TextField
+                        fullWidth
+                        label="Points"
+                        value={offer.pointsValue}
+                        onChange={(e) => updateOffer(offer.id, "pointsValue", e.target.value)}
+                        sx={textFieldSx}
+                        size="small"
+                        type="number"
+                        inputProps={{ min: 0 }}
+                        required
+                      />
+                    )}
 
                     <TextField
                       fullWidth
@@ -517,6 +665,8 @@ export const CreateContestPage: React.FC = () => {
                       onChange={(e) => updateOffer(offer.id, "winningProbability", e.target.value)}
                       sx={textFieldSx}
                       size="small"
+                      type="number"
+                      inputProps={{ min: 0 }}
                     />
 
                     <TextField
@@ -526,6 +676,8 @@ export const CreateContestPage: React.FC = () => {
                       onChange={(e) => updateOffer(offer.id, "probabilityOutOf", e.target.value)}
                       sx={textFieldSx}
                       size="small"
+                      type="number"
+                      inputProps={{ min: 0 }}
                     />
                   </div>
 
@@ -703,7 +855,7 @@ export const CreateContestPage: React.FC = () => {
       case 4:
         // ... your original terms & redemption step (unchanged)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6 w-full">
             <Card className="shadow-sm w-full">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
@@ -716,69 +868,43 @@ export const CreateContestPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <Typography variant="body2" className="text-gray-700 mb-2">
-                    Upload Document<span className="text-[#C72030]">*</span>
-                  </Typography>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-sm text-gray-600 mb-4">
-                      {termsDocumentName || "Choose a file or drag & drop it here"}
-                    </p>
-                    <input
-                      type="file"
-                      ref={termsFileRef}
-                      className="hidden"
-                      onChange={handleTermsUpload}
-                      accept=".pdf,.doc,.docx"
-                    />
-                    <Button
-                      onClick={() => termsFileRef.current?.click()}
-                      variant="outline"
-                      className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
-                    >
-                      Browse
-                    </Button>
-                  </div>
+                  <div
+                    ref={termsEditorRef}
+                    style={{
+                      width: "100%",
+                      minHeight: "200px",
+                      backgroundColor: "white",
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
-                    <Trophy className="w-5 h-5 text-[#C72030]" />
+            
+              <Card className="shadow-sm w-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                      <Trophy className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                      Redemption Guide
+                    </h2>
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Redemption Guide
-                  </h2>
-                </div>
 
-                <div>
-                  <Typography variant="body2" className="text-gray-700 mb-2">
-                    Upload Document<span className="text-[#C72030]">*</span>
-                  </Typography>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-sm text-gray-600 mb-4">
-                      {redemptionDocumentName || "Choose a file or drag & drop it here"}
-                    </p>
-                    <input
-                      type="file"
-                      ref={redemptionFileRef}
-                      className="hidden"
-                      onChange={handleRedemptionUpload}
-                      accept=".pdf,.doc,.docx"
+                  <div>
+                    <div
+                      ref={redemptionEditorRef}
+                      style={{
+                        width: "100%",
+                        minHeight: "200px",
+                        backgroundColor: "white",
+                      }}
                     />
-                    <Button
-                      onClick={() => redemptionFileRef.current?.click()}
-                      variant="outline"
-                      className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
-                    >
-                      Browse
-                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+          
           </div>
         );
 
