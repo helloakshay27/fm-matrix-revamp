@@ -1205,12 +1205,9 @@ const modulesByPackage = {
         { name: "Customers", href: "/settings/customers" },
         { name: "Sales Order", href: "/settings/sales-order" },
 
-<<<<<<< Updated upstream
 
         { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
-=======
         // { name: "Transactions ", href: "/settings/transactions" },
->>>>>>> Stashed changes
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
         // { name: "Opening Balance", href: "/settings/opening-balance" },
