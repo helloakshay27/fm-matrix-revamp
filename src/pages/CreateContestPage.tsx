@@ -42,6 +42,8 @@ interface OfferData {
   offerDescription: string;
   bannerImage: File | null;
   bannerImageName: string;
+  rewardType: string;
+  pointsValue: string;
 }
 
 export const CreateContestPage: React.FC = () => {
@@ -70,6 +72,8 @@ export const CreateContestPage: React.FC = () => {
     offerDescription: "",
     bannerImage: null,
     bannerImageName: "",
+    rewardType: "Coupon Code",
+    pointsValue: "",
   });
 
   // Helper function to get initial offers count based on contest type
@@ -225,7 +229,24 @@ export const CreateContestPage: React.FC = () => {
     );
   };
 
-  // ── Date/Time → ISO helper ───────────────────────────────────────────────
+  const handleRewardTypeChange = (id: string, newRewardType: string) => {
+    setOffers((prev) =>
+      prev.map((offer) => {
+        if (offer.id === id) {
+          const updatedOffer = { ...offer, rewardType: newRewardType };
+          // Clear the opposite field value
+          if (newRewardType === "Coupon Code") {
+            updatedOffer.pointsValue = "";
+          } else if (newRewardType === "Points") {
+            updatedOffer.couponCode = "";
+          }
+          return updatedOffer;
+        }
+        return offer;
+      })
+    );
+  };
+
   const buildISO = (date: string, time: string, isEnd = false): string => {
     if (!date || !time) return "";
     const [y, m, d] = date.split("-");
@@ -238,7 +259,6 @@ export const CreateContestPage: React.FC = () => {
   };
 
   console.log("offers", offers);
-  // ── Submit to API ────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
@@ -267,22 +287,20 @@ export const CreateContestPage: React.FC = () => {
 
     // Add prizes_attributes
     offers.forEach((offer, index) => {
-      const isCouponReward = offer.couponCode.trim() !== "";
-
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
-      formData.append(
-        `contest[prizes_attributes][${index}][reward_type]`,
-        isCouponReward ? "coupon" : "points"
-      );
+      
+      // Determine reward type based on offer.rewardType
+      const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
+      formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
 
-      // Add coupon_code only if it's a coupon reward
-      if (isCouponReward) {
+      // Add coupon_code only if reward type is "Coupon Code"
+      if (offer.rewardType === "Coupon Code") {
         formData.append(`contest[prizes_attributes][${index}][coupon_code]`, offer.couponCode.trim());
       }
 
-      // Add points_value only if it's NOT a coupon reward (optional: could be derived from probability)
-      if (!isCouponReward) {
-        formData.append(`contest[prizes_attributes][${index}][points_value]`, "100");
+      // Add points_value only if reward type is "Points"
+      if (offer.rewardType === "Points") {
+        formData.append(`contest[prizes_attributes][${index}][points_value]`, offer.pointsValue.trim());
       }
 
       // Add partner_name only if provided
@@ -315,8 +333,8 @@ export const CreateContestPage: React.FC = () => {
       formData.append('contest[terms_and_conditions]', termsText.trim());
     }
 
-    // Add redemption guide text if present (only for Scratch contests)
-    if (redemptionText.trim() && contestType === "Scratch") {
+    // Add redemption guide text if present (for all contest types)
+    if (redemptionText.trim()) {
       formData.append('contest[redemption_guide]', redemptionText.trim());
     }
 
@@ -403,6 +421,14 @@ export const CreateContestPage: React.FC = () => {
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) {
             alert("Please fill all offer titles");
+            return false;
+          }
+          if (offer.rewardType === "Coupon Code" && !offer.couponCode.trim()) {
+            alert("Please enter coupon code for all offers");
+            return false;
+          }
+          if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
+            alert("Please enter points value for all offers");
             return false;
           }
         }
@@ -576,14 +602,43 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    <TextField
-                      fullWidth
-                      label="Coupon Code"
-                      value={offer.couponCode}
-                      onChange={(e) => updateOffer(offer.id, "couponCode", e.target.value)}
-                      sx={textFieldSx}
-                      size="small"
-                    />
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Reward Type</InputLabel>
+                      <MuiSelect
+                        value={offer.rewardType}
+                        label="Reward Type"
+                        onChange={(e) => handleRewardTypeChange(offer.id, e.target.value)}
+                      >
+                        <MenuItem value="Coupon Code">Coupon Code</MenuItem>
+                        <MenuItem value="Points">Points</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+
+                    {offer.rewardType === "Coupon Code" && (
+                      <TextField
+                        fullWidth
+                        label="Coupon Code"
+                        value={offer.couponCode}
+                        onChange={(e) => updateOffer(offer.id, "couponCode", e.target.value)}
+                        sx={textFieldSx}
+                        size="small"
+                        required
+                      />
+                    )}
+
+                    {offer.rewardType === "Points" && (
+                      <TextField
+                        fullWidth
+                        label="Points"
+                        value={offer.pointsValue}
+                        onChange={(e) => updateOffer(offer.id, "pointsValue", e.target.value)}
+                        sx={textFieldSx}
+                        size="small"
+                        type="number"
+                        inputProps={{ min: 0 }}
+                        required
+                      />
+                    )}
 
                     <TextField
                       fullWidth
@@ -825,7 +880,7 @@ export const CreateContestPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {contestType === "Scratch" && (
+            
               <Card className="shadow-sm w-full">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
@@ -849,7 +904,7 @@ export const CreateContestPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            )}
+          
           </div>
         );
 

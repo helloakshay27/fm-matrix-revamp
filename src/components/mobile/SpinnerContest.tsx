@@ -370,7 +370,8 @@ export const SpinnerContest: React.FC = () => {
             ref={canvasRef}
             width={360}
             height={360}
-            className="max-w-full h-auto"
+            className="max-w-full h-auto cursor-pointer"
+            onClick={handleSpin}
           />
         </div>
 
@@ -384,11 +385,11 @@ export const SpinnerContest: React.FC = () => {
         </button>
 
         {/* Terms and Conditions */}
-        {contestData.terms_and_conditions && (
+        {/* {contestData.terms_and_conditions && (
           <p className="text-center text-xs text-gray-500 mt-6 max-w-md whitespace-pre-line">
             {contestData.terms_and_conditions}
           </p>
-        )}
+        )} */}
       </div>
 
       {/* Result Modal */}
@@ -469,9 +470,9 @@ export const SpinnerContest: React.FC = () => {
                   );
                 }
               }}
-              className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+              className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
             >
-              View Voucher Details
+              View Details
             </button>
           </div>
         </div>

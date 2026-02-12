@@ -3816,34 +3816,14 @@ export const AddSchedulePage = () => {
                           },
                         }}
                       >
-                        <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <InputLabel shrink>Select Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
                         <Select
-                          multiple
-                          label="Select Assets"
+                          label="Select Asset Group"
                           notched
                           displayEmpty
-                          value={formData.asset}
-                          onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                          renderValue={(selected) => {
-                            const names = assets
-                              .filter(asset => selected.includes(asset.id.toString()))
-                              .map(asset => asset.name)
-                              .join(', ');
-                            return (
-                              <span
-                                style={{
-                                  display: 'block',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: 320, // <-- Match the input width for ellipsis
-                                }}
-                                title={names}
-                              >
-                                {selected.length === 0 ? 'Select Assets' : names}
-                              </span>
-                            );
-                          }}
+                          value={formData.assetGroup}
+                          onChange={e => handleAssetGroupChange(e.target.value)}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
                           sx={{
                             width: '100%',
                             maxWidth: 340, // <-- Match the FormControl
@@ -3856,9 +3836,9 @@ export const AddSchedulePage = () => {
                             },
                           }}
                         >
-                          <MenuItem value="" disabled>Select Assets</MenuItem>
-                          {assets && assets.map((option) => (
-                            <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
+                          <MenuItem value="">Select Asset Group</MenuItem>
+                          {assetGroups && assetGroups.map((group) => (
+                            <MenuItem key={group.id} value={group.id.toString()}>{group.name}</MenuItem>
                           ))}
                         </Select>
                       </FormControl>

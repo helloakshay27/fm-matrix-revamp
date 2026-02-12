@@ -174,18 +174,18 @@ export const ScratchCard: React.FC = () => {
     const canvasX = x - rect.left;
     const canvasY = y - rect.top;
 
-    // Use larger brush for better scratching experience
+    // Use larger brush for better scratching experience on mobile
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(canvasX, canvasY, 25, 0, 2 * Math.PI);
+    ctx.arc(canvasX, canvasY, 40, 0, 2 * Math.PI);
     ctx.fill();
 
     // Check scratch percentage periodically (not every pixel for performance)
-    if (Math.random() > 0.9) {
+    if (Math.random() > 0.85) {
       const percentage = calculateScratchPercentage(canvas);
       setScratchPercentage(percentage);
 
-      if (percentage > 40 && !isRevealed) {
+      if (percentage > 30 && !isRevealed) {
         revealCard();
       }
     }
@@ -208,12 +208,14 @@ export const ScratchCard: React.FC = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     setIsScratching(true);
     const touch = e.touches[0];
     scratch(touch.clientX, touch.clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (isScratching) {
       const touch = e.touches[0];
       scratch(touch.clientX, touch.clientY);
