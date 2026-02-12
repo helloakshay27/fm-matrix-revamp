@@ -122,8 +122,10 @@ export const VoucherDetails: React.FC = () => {
           rewardData.prize?.image?.url || rewardData.prize?.icon_url || null,
         value: rewardData.prize?.partner_name || "",
         code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
+        points_value: rewardData.points_value || rewardData.prize?.points_value,
         status: rewardData.status,
         contest_title: rewardData.contest?.name || "Contest",
+        contest_type: rewardData.contest?.content_type || "",
         valid_till: rewardData.contest?.end_at || "",
         terms: rewardData.contest?.terms_and_conditions || "",
       }
@@ -134,8 +136,10 @@ export const VoucherDetails: React.FC = () => {
           image_url: voucherData.reward.image_url,
           value: voucherData.value,
           code: voucherData.voucher_code,
+          points_value: null,
           status: voucherData.status,
           contest_title: voucherData.name,
+          contest_type: "",
           valid_till: voucherData.valid_until,
           terms: "",
         }
@@ -209,18 +213,20 @@ export const VoucherDetails: React.FC = () => {
             {displayData?.description}
           </p>
 
-          {/* Voucher Code Section */}
-          <div className="bg-[#F5E6D3] rounded-lg p-3 flex items-center justify-between mb-4">
-            <span className="text-gray-900 font-mono tracking-wider">
-              {showCode ? displayData?.code : "•".repeat(15)}
-            </span>
-            <button
-              onClick={handleGetCode}
-              className="text-gray-900 font-semibold text-sm"
-            >
-              Get Code
-            </button>
-          </div>
+          {/* Voucher Code Section - only show if there's a code */}
+          {displayData?.code && (
+            <div className="bg-[#F5E6D3] rounded-lg p-3 flex items-center justify-between mb-4">
+              <span className="text-gray-900 font-mono tracking-wider">
+                {showCode ? displayData?.code : "•".repeat(15)}
+              </span>
+              <button
+                onClick={handleGetCode}
+                className="text-gray-900 font-semibold text-sm"
+              >
+                Get Code
+              </button>
+            </div>
+          )}
 
           {/* Details Section */}
           <div className="border-t border-gray-200">
@@ -249,6 +255,19 @@ export const VoucherDetails: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-gray-600 text-sm space-y-1">
+                    {/* Show points for spin contests with no coupon code */}
+                    {displayData?.contest_type === "spin" &&
+                      !displayData?.code &&
+                      displayData?.points_value && (
+                        <div className="bg-[#FFF8E7] border border-[#D4A574] rounded-lg p-4 mb-3">
+                          <p className="text-center text-sm text-gray-600 mb-1">
+                            Loyalty Points Earned
+                          </p>
+                          <p className="text-center text-2xl font-bold text-[#B88B15]">
+                            {displayData.points_value} Points
+                          </p>
+                        </div>
+                      )}
                     {displayData?.value && (
                       <p>
                         <strong>Partner:</strong> {displayData.value}
@@ -364,7 +383,7 @@ export const VoucherDetails: React.FC = () => {
       </div>
 
       {/* Copy Code Button (if code is shown) */}
-      {showCode && (
+      {showCode && displayData?.code && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <button
             onClick={copyCode}

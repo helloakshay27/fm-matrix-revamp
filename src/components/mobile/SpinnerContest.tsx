@@ -432,20 +432,28 @@ export const SpinnerContest: React.FC = () => {
                 </>
               )}
 
-            {winResult.prize.reward_type === "points" &&
+            {(winResult.prize.reward_type === "points" ||
+              !winResult.prize.coupon_code) &&
               winResult.prize.points_value && (
-                <p className="text-center text-lg text-gray-600 mb-6">
-                  {winResult.prize.points_value} Loyalty Points
-                </p>
+                <>
+                  <p className="text-center text-gray-600 mb-3">
+                    Loyalty Points
+                  </p>
+                  <p className="text-center text-3xl font-bold text-[#B88B15] mb-6">
+                    {winResult.prize.points_value} Points
+                  </p>
+                </>
               )}
 
-            {/* Copy button */}
-            <button
-              onClick={copyPrizeInfo}
-              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
-            >
-              Copy To Clipboard
-            </button>
+            {/* Copy button - only show if coupon_code exists */}
+            {winResult.prize.coupon_code && (
+              <button
+                onClick={copyPrizeInfo}
+                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+              >
+                Copy To Clipboard
+              </button>
+            )}
 
             {/* View Voucher Details button */}
             <button
@@ -457,7 +465,9 @@ export const SpinnerContest: React.FC = () => {
                   );
                 }
               }}
-              className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
+              className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                winResult.prize.coupon_code ? "" : "mt-3"
+              }`}
             >
               View Details
             </button>
