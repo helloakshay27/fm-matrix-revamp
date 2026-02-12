@@ -273,6 +273,8 @@ export const API_CONFIG = {
     SPRINTS: "/sprints.json",
     SPRINT_DETAILS: "/sprints", // Base path, will append /:id.json
     UPDATE_SPRINT_STATUS: "/sprints", // Base path, will append /:id/update_status.json
+    // Purchase Order endpoints
+    PURCHASE_ORDER_SUPPLIERS: "/pms/purchase_orders/get_suppliers.json",
   },
 } as const;
 

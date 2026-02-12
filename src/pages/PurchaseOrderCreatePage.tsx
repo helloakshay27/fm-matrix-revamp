@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_CONFIG } from '@/config/apiConfig';
 import {
     TextField,
     Button,
-    Autocomplete,
     FormControlLabel,
     Checkbox,
     IconButton,
@@ -15,15 +15,12 @@ import {
     Typography,
     Box,
     Divider,
-    Radio,
-    RadioGroup,
     CircularProgress,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
     InputAdornment,
-    Chip
 } from '@mui/material';
 import {
     Close,
@@ -31,12 +28,11 @@ import {
     Delete,
     CloudUpload,
     AttachFile,
-    PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { Package, Calendar, FileText } from 'lucide-react';
 
-// Section component - matching PatrollingCreatePage style
+// Section component
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <section className="bg-card rounded-lg border border-border shadow-sm">
         <div className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -91,11 +87,6 @@ interface Item {
     amount: number;
 }
 
-interface ExternalUser {
-    name: string;
-    email: string;
-}
-
 export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
 
@@ -115,13 +106,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [sameAsBilling, setSameAsBilling] = useState(false);
 
     // Purchase Order Details
-    const [salesOrderNumber, setPurchaseOrderNumber] = useState('');
+    const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
-    const [salesOrderDate, setPurchaseOrderDate] = useState('');
+    const [purchaseOrderDate, setPurchaseOrderDate] = useState('');
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
-    const [buyer, setBuyer] = useState('');
 
     // Items
     const [items, setItems] = useState<Item[]>([
@@ -151,13 +141,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
-    // Email Communications
-    const [sendEmailToVendor, setSendEmailToVendor] = useState(false);
-    const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
-    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
-    const [newUserName, setNewUserName] = useState('');
-    const [newUserEmail, setNewUserEmail] = useState('');
-
     // Contact Person Dialog
     const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
     const [newContactPerson, setNewContactPerson] = useState<ContactPerson>({
@@ -175,7 +158,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Dropdowns data
     const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
-    const [buyers, setBuyers] = useState<{ id: string; name: string }[]>([]);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,12 +170,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         },
     };
 
-    // Generate auto sales order number
+    // Generate auto purchase order number
     useEffect(() => {
         const generateOrderNumber = () => {
             const timestamp = Date.now();
             const random = Math.floor(Math.random() * 1000);
-            setPurchaseOrderNumber(`SO-${timestamp.toString().slice(-5)}${random}`);
+            setPurchaseOrderNumber(`PO-${timestamp.toString().slice(-5)}${random}`);
         };
         generateOrderNumber();
     }, []);
@@ -203,53 +185,50 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const fetchVendors = async () => {
             setLoadingVendors(true);
             try {
-                // Mock data - replace with actual API call
-                const mockVendors: Vendor[] = [
-                    {
-                        id: '1',
-                        name: 'Lockated',
-                        email: 'contact@lockated.com',
+                const token = API_CONFIG.TOKEN;
+                const baseUrl = API_CONFIG.BASE_URL;
+                
+                if (!token || !baseUrl) {
+                    console.error('Missing API configuration');
+                    setLoadingVendors(false);
+                    return;
+                }
+
+                const url = `${baseUrl}${API_CONFIG.ENDPOINTS.PURCHASE_ORDER_SUPPLIERS}?access_token=${token}`;
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.suppliers) {
+                    // Transform API response to match Vendor interface
+                    const transformedVendors: Vendor[] = data.suppliers.map((supplier: { id: number; name: string }) => ({
+                        id: supplier.id.toString(),
+                        name: supplier.name,
+                        email: '',
                         currency: 'INR',
-                        billingAddress: '123 Main St, Mumbai, Maharashtra 400001',
-                        shippingAddress: '123 Main St, Mumbai, Maharashtra 400001',
+                        billingAddress: '',
+                        shippingAddress: '',
                         vendorType: 'Business',
                         paymentTerms: 'Due on Receipt',
                         portalStatus: 'Disabled',
                         language: 'English',
                         outstandingReceivables: 0,
-                        unusedCredits: 1370,
-                        contactPersons: [
-                            {
-                                id: '1',
-                                salutation: 'Mr.',
-                                firstName: 'John',
-                                lastName: 'Doe',
-                                email: 'john@lockated.com',
-                                workPhone: '+91 9876543210',
-                                mobile: '+91 9876543210',
-                                skype: 'john.doe',
-                                designation: 'Manager',
-                                department: 'Sales'
-                            }
-                        ]
-                    },
-                    {
-                        id: '2',
-                        name: 'Gurughar',
-                        email: 'info@gurughar.com',
-                        currency: 'INR',
-                        billingAddress: '456 Park Ave, Delhi 110001',
-                        shippingAddress: '456 Park Ave, Delhi 110001',
-                        vendorType: 'Business',
-                        paymentTerms: 'Net 30',
-                        portalStatus: 'Enabled',
-                        language: 'English',
-                        outstandingReceivables: 5000,
                         unusedCredits: 0,
                         contactPersons: []
-                    }
-                ];
-                setVendors(mockVendors);
+                    }));
+                    
+                    setVendors(transformedVendors);
+                }
             } catch (error) {
                 console.error('Error fetching vendors:', error);
             } finally {
@@ -260,7 +239,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchVendors();
     }, []);
 
-    // Fetch items, buyers, taxes
+    // Fetch items & taxes
     useEffect(() => {
         // Mock data - replace with actual API calls
         setItemOptions([
@@ -270,12 +249,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             { id: '4', name: 'Paint', rate: 350 }
         ]);
 
-        setBuyers([
-            { id: '1', name: 'Rajesh Kumar' },
-            { id: '2', name: 'Priya Sharma' },
-            { id: '3', name: 'Amit Patel' }
-        ]);
-
         setTaxOptions([
             { id: '1', name: 'GST 18%', rate: 18 },
             { id: '2', name: 'GST 12%', rate: 12 },
@@ -283,8 +256,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             { id: '4', name: 'No Tax', rate: 0 }
         ]);
 
-        // Set default terms and conditions
-        setTermsAndConditions('1. Use this to issue for all sales orders of all vendors.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
+        setTermsAndConditions('1. Use this to issue for all purchase orders of all vendors.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
     }, []);
 
     // When vendor is selected
@@ -320,7 +292,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], [field]: value };
 
-            // Recalculate amount
             newItems[index].amount = calculateItemAmount(newItems[index]);
 
             return newItems;
@@ -389,21 +360,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Add external user
-    const handleAddExternalUser = () => {
-        if (newUserName && newUserEmail) {
-            setExternalUsers(prev => [...prev, { name: newUserName, email: newUserEmail }]);
-            setNewUserName('');
-            setNewUserEmail('');
-            setAddUserDialogOpen(false);
-        }
-    };
-
-    // Remove external user
-    const removeExternalUser = (index: number) => {
-        setExternalUsers(prev => prev.filter((_, i) => i !== index));
-    };
-
     // Add contact person
     const handleAddContactPerson = () => {
         if (selectedVendor && newContactPerson.firstName && newContactPerson.email) {
@@ -437,7 +393,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const newErrors: Record<string, string> = {};
 
         if (!selectedVendor) newErrors.vendor = 'Vendor is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+        if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
@@ -459,13 +415,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         try {
             const payload = {
                 vendorId: selectedVendor?.id,
-                salesOrderNumber,
+                purchaseOrderNumber,
                 referenceNumber,
-                salesOrderDate,
+                purchaseOrderDate,
                 expectedDeliveryDate,
                 paymentTerms,
                 deliveryMethod,
-                buyer,
                 billingAddress,
                 shippingAddress,
                 items: items.filter(item => item.name),
@@ -478,20 +433,17 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 vendorNotes,
                 termsAndConditions,
                 attachments: attachments.map(f => f.name),
-                sendEmailToVendor,
-                externalUsers,
                 status: saveAsDraft ? 'draft' : 'confirmed'
             };
 
             // TODO: Replace with actual API call
-            // Example: await salesOrderAPI.create(payload);
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            alert(`Purchase order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/settings/purchase-order');
         } catch (error) {
-            console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            console.error('Error submitting purchase order:', error);
+            alert('Failed to create purchase order');
         } finally {
             setIsSubmitting(false);
         }
@@ -611,13 +563,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 {/* Purchase Order Details */}
                 <Section title="Purchase Order Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
+                        {/* <div>
                             <label className="block text-sm font-medium mb-2">
                                 Purchase Order #<span className="text-red-500">*</span>
                             </label>
                             <TextField
                                 fullWidth
-                                value={salesOrderNumber}
+                                value={purchaseOrderNumber}
                                 disabled
                                 sx={fieldStyles}
                                 InputProps={{
@@ -630,7 +582,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     )
                                 }}
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -652,10 +604,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             <TextField
                                 fullWidth
                                 type="date"
-                                value={salesOrderDate}
+                                value={purchaseOrderDate}
                                 onChange={(e) => setPurchaseOrderDate(e.target.value)}
-                                error={!!errors.salesOrderDate}
-                                helperText={errors.salesOrderDate}
+                                error={!!errors.purchaseOrderDate}
+                                helperText={errors.purchaseOrderDate}
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
                             />
@@ -709,30 +661,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     displayEmpty
                                     sx={fieldStyles}
                                 >
-                                    <MenuItem value="" disabled>Select a delivery method or type to add</MenuItem>
+                                    <MenuItem value="" disabled>Select a delivery method</MenuItem>
                                     <MenuItem value="courier">Courier</MenuItem>
                                     <MenuItem value="hand-delivery">Hand Delivery</MenuItem>
                                     <MenuItem value="pickup">Pickup</MenuItem>
                                     <MenuItem value="shipping">Shipping</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Buyer
-                            </label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={buyer}
-                                    onChange={(e) => setBuyer(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select or Add Buyer</MenuItem>
-                                    {buyers.map(person => (
-                                        <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
-                                    ))}
                                 </Select>
                             </FormControl>
                         </div>
@@ -891,7 +824,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </Section>
 
                 {/* Summary Section */}
-                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+                <Section title="Summary" icon={<Package className="w-5 h-5" />}>
                     <div className="flex justify-end">
                         <div className="w-full md:w-1/2 space-y-4">
                             <div className="flex justify-between items-center py-2">
@@ -918,39 +851,24 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             <Divider />
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
-                                <RadioGroup
-                                    row
-                                    value={taxType}
-                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
-                                >
-                                    <FormControlLabel
-                                        value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
-                                        label={<span className="text-sm">TDS</span>}
-                                    />
-                                    <FormControlLabel
-                                        value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
-                                        label={<span className="text-sm">TCS</span>}
-                                    />
-                                </RadioGroup>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-sm font-medium">Tax Type:</span>
+                                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                                        <Select
+                                            value={taxType}
+                                            onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                                        >
+                                            <MenuItem value="TDS">TDS</MenuItem>
+                                            <MenuItem value="TCS">TCS</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
                                 <FormControl size="small" sx={{ minWidth: 150 }}>
                                     <Select
                                         value={selectedTax}
                                         onChange={(e) => setSelectedTax(e.target.value)}
                                         displayEmpty
-                                        MenuProps={{
-                                            PaperProps: {
-                                                style: {
-                                                    maxHeight: 224,
-                                                    backgroundColor: 'white',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                },
-                                            },
-                                            disablePortal: true,
-                                        }}
                                     >
                                         <MenuItem value="">Select a Tax</MenuItem>
                                         {taxOptions.map(tax => (
@@ -1061,58 +979,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             label="Display attachments in vendor portal and emails"
                         />
                     </div>
-                </Section>
-
-                {/* Email Communications */}
-                <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={sendEmailToVendor}
-                                    onChange={(e) => setSendEmailToVendor(e.target.checked)}
-                                />
-                            }
-                            label="Send email to selected vendor above"
-                        />
-
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <Typography variant="body2" className="font-semibold">
-                                    Add external users (email users other than the selected vendor above)
-                                </Typography>
-                                <Button
-                                    startIcon={<PersonAdd />}
-                                    onClick={() => setAddUserDialogOpen(true)}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Add More
-                                </Button>
-                            </div>
-
-                            {externalUsers.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {externalUsers.map((user, index) => (
-                                        <Chip
-                                            key={index}
-                                            label={`${user.name} (${user.email})`}
-                                            onDelete={() => removeExternalUser(index)}
-                                            variant="outlined"
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </Section>
-
-                {/* Additional Fields */}
-                <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
-                    <Typography variant="body2" className="text-gray-600">
-                        Add custom fields to your sales orders by going to Settings → Sales → Purchase Orders → Field Customization
-                    </Typography>
                 </Section>
             </div>
 
@@ -1307,32 +1173,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     </div>
                 )}
             </Drawer>
-
-            {/* Add External User Dialog */}
-            <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Add External User</DialogTitle>
-                <DialogContent>
-                    <div className="space-y-4 mt-2">
-                        <TextField
-                            fullWidth
-                            label="Name"
-                            value={newUserName}
-                            onChange={(e) => setNewUserName(e.target.value)}
-                        />
-                        <TextField
-                            fullWidth
-                            label="Email"
-                            type="email"
-                            value={newUserEmail}
-                            onChange={(e) => setNewUserEmail(e.target.value)}
-                        />
-                    </div>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
-                </DialogActions>
-            </Dialog>
 
             {/* Add Contact Person Dialog */}
             <Dialog

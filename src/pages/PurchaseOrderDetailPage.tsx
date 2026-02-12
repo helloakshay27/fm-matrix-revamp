@@ -38,154 +38,143 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { API_CONFIG } from "@/config/apiConfig";
 
-// Types
-interface PurchaseOrderItem {
+// Types based on actual API response
+interface PoInventory {
     id: number;
-    name: string;
-    description: string;
     quantity: number;
+    unit: string;
     rate: number;
-    discount: number;
-    discountType: string;
-    tax: string;
-    taxRate: number;
-    amount: number;
+    total_value: number;
+    prod_desc: string;
+    inventory?: {
+        id: number;
+        name: string;
+    };
 }
 
-interface PurchaseOrderAttachment {
+interface Supplier {
+    id: number;
+    company_name: string;
+    email: string;
+    mobile1: string;
+    formatted_address: string;
+    gstin_number: string;
+    pan_number: string;
+    city?: string;
+    state?: string;
+    country?: string;
+}
+
+interface Site {
+    id: number;
     name: string;
-    size: number;
 }
 
 interface PurchaseOrder {
-    id: string;
-    vendor: {
-        name: string;
+    id: number;
+    external_id: string;
+    reference_number: number;
+    po_date: string;
+    amount: number;
+    supplier: Supplier;
+    site: Site;
+    created_by: string;
+    user?: {
+        id: number;
+        full_name: string;
         email: string;
-        phone: string;
-        billingAddress: string;
-        shippingAddress: string;
     };
-    orderDetails: {
-        orderNumber: string;
-        referenceNumber: string;
-        orderDate: string;
-        expectedDeliveryDate: string;
-        paymentTerms: string;
-        deliveryMethod: string;
-        buyer: string;
-        status: string;
-    };
-    items: PurchaseOrderItem[];
-    pricing: {
-        subTotal: number;
-        discount: number;
-        taxAmount: number;
-        adjustment: number;
-        total: number;
-    };
-    vendorNotes: string;
-    termsAndConditions: string;
-    attachments: PurchaseOrderAttachment[];
-    createdAt: string;
-    updatedAt: string;
+    pms_po_inventories: PoInventory[];
+    total_amount_formatted: string;
+    net_amount_formatted: string;
+    total_tax_amount?: number;
+    total_taxable_amount?: number;
+    amount_in_words?: string;
+    created_at: string;
+    updated_at: string;
+    terms_conditions?: string;
+    attachments: any[];
 }
 
-// Mock sales order data
-const mockPurchaseOrder = {
-    id: "SO-00001",
-    vendor: {
-        name: "Acme Corporation",
-        email: "contact@acme.com",
-        phone: "+91 98765 43210",
-        billingAddress: "123 Business Park, Sector 15, Noida, UP 201301",
-        shippingAddress: "123 Business Park, Sector 15, Noida, UP 201301",
-    },
-    orderDetails: {
-        orderNumber: "SO-00001",
-        referenceNumber: "REF-2024-001",
-        orderDate: "2024-01-15",
-        expectedDeliveryDate: "2024-01-20",
-        paymentTerms: "Net 30",
-        deliveryMethod: "Standard Shipping",
-        buyer: "John Doe",
-        status: "confirmed",
-    },
-    items: [
-        {
-            id: 1,
-            name: "Product A",
-            description: "High quality product",
-            quantity: 10,
-            rate: 500,
-            discount: 10,
-            discountType: "percentage",
-            tax: "GST 18%",
-            taxRate: 18,
-            amount: 5310,
-        },
-        {
-            id: 2,
-            name: "Product B",
-            description: "Premium quality",
-            quantity: 5,
-            rate: 1000,
-            discount: 500,
-            discountType: "amount",
-            tax: "GST 18%",
-            taxRate: 18,
-            amount: 5310,
-        },
-    ],
-    pricing: {
-        subTotal: 9500,
-        discount: 450,
-        taxAmount: 1629,
-        adjustment: 0,
-        total: 10679,
-    },
-    vendorNotes: "Please ensure timely delivery",
-    termsAndConditions: "Payment due within 30 days",
-    attachments: [
-        { name: "Purchase Order.pdf", size: 245000 },
-        { name: "Specifications.pdf", size: 128000 },
-    ],
-    createdAt: "2024-01-15T10:30:00",
-    updatedAt: "2024-01-15T14:45:00",
-};
-
 export const PurchaseOrderDetailPage = () => {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    const [salesOrder, setPurchaseOrder] = useState<PurchaseOrder>(mockPurchaseOrder);
-    const [loading, setLoading] = useState(false);
+    const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
-    const selectMenuProps = {
-        PaperProps: {
-            style: {
-                maxHeight: 224,
-                backgroundColor: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                zIndex: 9999,
-            },
-        },
-        disablePortal: true,
-        container: document.body,
+    // Fetch purchase order data from API
+    const fetchPurchaseOrderDetail = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Get base URL and token from API_CONFIG
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+
+            if (!baseUrl || !token) {
+                setError('Missing configuration. Please login again.');
+                setLoading(false);
+                return;
+            }
+
+            if (!id) {
+                setError('Purchase Order ID not found.');
+                setLoading(false);
+                return;
+            }
+
+            // Build URL using URL object
+            const url = new URL(
+                `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/pms/purchase_orders/${id}.json`
+            );
+            url.searchParams.append('access_token', token);
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    setError('Unauthorized. Please login again.');
+                    return;
+                }
+                if (response.status === 404) {
+                    setError('Purchase Order not found.');
+                    return;
+                }
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.id) {
+                setPurchaseOrder(data);
+            } else {
+                setError('Invalid purchase order data received.');
+            }
+
+        } catch (error: any) {
+            console.error('Error fetching purchase order detail:', error);
+            setError(error.message || 'Failed to fetch purchase order details');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const fieldStyles = {
-        height: { xs: 28, sm: 36, md: 45 },
-        "& .MuiInputBase-input, & .MuiSelect-select": {
-            padding: { xs: "8px", sm: "10px", md: "12px" },
-        },
-    };
+    // Load data on component mount
+    useEffect(() => {
+        fetchPurchaseOrderDetail();
+    }, [id]);
 
     const getStatusColor = (status: string) => {
         const colors: { [key: string]: string } = {
@@ -193,10 +182,11 @@ export const PurchaseOrderDetailPage = () => {
             confirmed: "bg-blue-100 text-blue-800 border-blue-200",
             processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
             shipped: "bg-purple-100 text-purple-800 border-purple-200",
+            received: "bg-green-100 text-green-800 border-green-200",
             delivered: "bg-green-100 text-green-800 border-green-200",
             cancelled: "bg-red-100 text-red-800 border-red-200",
         };
-        return colors[status] || colors.draft;
+        return colors[status?.toLowerCase()] || colors.draft;
     };
 
     const handleEdit = () => {
@@ -204,12 +194,39 @@ export const PurchaseOrderDetailPage = () => {
     };
 
     const handleDelete = async () => {
+        setDeleting(true);
         try {
-            // API call to delete sales order
-            sonnerToast.success("Sales order deleted successfully");
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+
+            if (!baseUrl || !token) {
+                sonnerToast.error('Missing configuration. Please login again.');
+                return;
+            }
+
+            const url = new URL(
+                `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/pms/purchase_orders/${id}.json`
+            );
+            url.searchParams.append('access_token', token);
+
+            const response = await fetch(url.toString(), {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete purchase order');
+            }
+
+            sonnerToast.success("Purchase order deleted successfully");
             navigate("/settings/purchase-order");
-        } catch (error) {
-            sonnerToast.error("Failed to delete sales order");
+        } catch (error: any) {
+            sonnerToast.error(error.message || "Failed to delete purchase order");
+        } finally {
+            setDeleting(false);
+            setShowDeleteDialog(false);
         }
     };
 
@@ -218,7 +235,7 @@ export const PurchaseOrderDetailPage = () => {
     };
 
     const handleDownload = () => {
-        sonnerToast.success("Downloading sales order PDF...");
+        sonnerToast.success("Downloading purchase order PDF...");
     };
 
     const handleSendEmail = () => {
@@ -226,7 +243,7 @@ export const PurchaseOrderDetailPage = () => {
     };
 
     const handleClone = () => {
-        sonnerToast.success("Sales order cloned successfully");
+        sonnerToast.success("Purchase order cloned successfully");
         navigate("/settings/purchase-order/create");
     };
 
@@ -235,11 +252,56 @@ export const PurchaseOrderDetailPage = () => {
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+                    <p className="mt-4 text-muted-foreground">Loading purchase order...</p>
                 </div>
             </div>
         );
     }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-background p-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/purchase-order")}>
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </div>
+                    <Card className="border-red-200 bg-red-50">
+                        <CardContent className="p-6">
+                            <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Purchase Order</h2>
+                            <p className="text-red-700 mb-4">{error}</p>
+                            <Button onClick={() => navigate("/settings/purchase-order")} variant="outline">
+                                Back to List
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        );
+    }
+
+    if (!purchaseOrder) {
+        return (
+            <div className="min-h-screen bg-background p-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/purchase-order")}>
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </div>
+                    <Card>
+                        <CardContent className="p-6 text-center">
+                            <p className="text-muted-foreground">No purchase order data available.</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        );
+    }
+
+    const poNumber = `PO-${String(purchaseOrder.external_id).padStart(5, '0')}`;
+    const status = 'confirmed'; // Default status - can be derived from API if available
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -253,56 +315,20 @@ export const PurchaseOrderDetailPage = () => {
                         <div>
                             <h1 className="text-2xl font-bold flex items-center gap-3">
                                 <ShoppingCart className="h-6 w-6 text-primary" />
-                                Purchase Order #{salesOrder.orderDetails.orderNumber}
+                                Purchase Order #{poNumber}
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Created on {new Date(salesOrder.createdAt).toLocaleDateString()}
+                                Created on {new Date(purchaseOrder.created_at).toLocaleDateString()}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Badge className={`${getStatusColor(salesOrder.orderDetails.status)} border`}>
-                            {salesOrder.orderDetails.status.toUpperCase()}
+                        <Badge className={`${getStatusColor(status)} border`}>
+                            {status.toUpperCase()}
                         </Badge>
                     </div>
                 </div>
-
-                {/* Action Buttons */}
-                {/* <Card>
-                    <CardContent className="p-4">
-                        <div className="flex flex-wrap gap-2">
-                            <Button variant="default" onClick={handleEdit}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                            </Button>
-                            <Button variant="outline" onClick={handlePrint}>
-                                <Printer className="h-4 w-4 mr-2" />
-                                Print
-                            </Button>
-                            <Button variant="outline" onClick={handleDownload}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download PDF
-                            </Button>
-                            <Button variant="outline" onClick={handleSendEmail}>
-                                <Send className="h-4 w-4 mr-2" />
-                                Send Email
-                            </Button>
-                            <Button variant="outline" onClick={handleClone}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Clone
-                            </Button>
-                            <Button variant="outline">
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card> */}
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -325,148 +351,127 @@ export const PurchaseOrderDetailPage = () => {
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Order Number</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder.orderDetails.orderNumber}</p>
+                                        <p className="text-sm font-medium text-muted-foreground">PO Number</p>
+                                        <p className="text-base font-semibold mt-1">{poNumber}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">External ID</p>
+                                        <p className="text-base font-semibold mt-1">{purchaseOrder.external_id}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">PO Date</p>
+                                        <p className="text-base font-semibold mt-1">
+                                            {new Date(purchaseOrder.po_date).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Site</p>
+                                        <p className="text-base font-semibold mt-1">{purchaseOrder.site?.name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Created By</p>
+                                        <p className="text-base font-semibold mt-1">{purchaseOrder.created_by || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder.orderDetails.referenceNumber}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Order Date</p>
-                                        <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder.orderDetails.orderDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Expected Delivery Date</p>
-                                        <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder.orderDetails.expectedDeliveryDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder.orderDetails.paymentTerms}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Delivery Method</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder.orderDetails.deliveryMethod}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Buyer</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder.orderDetails.buyer}</p>
+                                        <p className="text-base font-semibold mt-1">{purchaseOrder.reference_number || 'N/A'}</p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Items Table */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Package className="h-5 w-5 text-primary" />
-                                    Order Items
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="border border-border rounded-lg overflow-hidden">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-muted/50">
-                                                <TableHead>Item Details</TableHead>
-                                                <TableHead className="text-right">Quantity</TableHead>
-                                                <TableHead className="text-right">Rate</TableHead>
-                                                <TableHead className="text-right">Discount</TableHead>
-                                                <TableHead className="text-right">Tax</TableHead>
-                                                <TableHead className="text-right">Amount</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {salesOrder.items.map((item: PurchaseOrderItem) => (
-                                                <TableRow key={item.id}>
-                                                    <TableCell>
-                                                        <div>
-                                                            <p className="font-semibold">{item.name}</p>
-                                                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">{item.quantity}</TableCell>
-                                                    <TableCell className="text-right">₹{item.rate.toFixed(2)}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        {item.discount} {item.discountType === "percentage" ? "%" : "₹"}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">{item.tax}</TableCell>
-                                                    <TableCell className="text-right font-semibold">₹{item.amount.toFixed(2)}</TableCell>
+                        {purchaseOrder.pms_po_inventories && purchaseOrder.pms_po_inventories.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5 text-primary" />
+                                        Line Items
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="border border-border rounded-lg overflow-hidden">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead>Item Description</TableHead>
+                                                    <TableHead className="text-right">Quantity</TableHead>
+                                                    <TableHead className="text-right">Unit</TableHead>
+                                                    <TableHead className="text-right">Rate</TableHead>
+                                                    <TableHead className="text-right">Total Value</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {purchaseOrder.pms_po_inventories.map((item: PoInventory) => (
+                                                    <TableRow key={item.id}>
+                                                        <TableCell>
+                                                            <div>
+                                                                <p className="font-semibold">{item.prod_desc || 'N/A'}</p>
+                                                                {item.inventory?.name && (
+                                                                    <p className="text-sm text-muted-foreground">{item.inventory.name}</p>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">{item.quantity}</TableCell>
+                                                        <TableCell className="text-right">{item.unit}</TableCell>
+                                                        <TableCell className="text-right">₹{item.rate.toFixed(2)}</TableCell>
+                                                        <TableCell className="text-right font-semibold">₹{item.total_value.toFixed(2)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
 
-                                {/* Pricing Summary */}
-                                <div className="mt-6 flex justify-end">
-                                    <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Sub Total</span>
-                                            <span className="font-semibold">₹{salesOrder.pricing.subTotal.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Discount</span>
-                                            <span className="font-semibold text-red-600">-₹{salesOrder.pricing.discount.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Tax</span>
-                                            <span className="font-semibold">₹{salesOrder.pricing.taxAmount.toFixed(2)}</span>
-                                        </div>
-                                        {salesOrder.pricing.adjustment !== 0 && (
+                                    {/* Pricing Summary */}
+                                    <div className="mt-6 flex justify-end">
+                                        <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Adjustment</span>
-                                                <span className="font-semibold">₹{salesOrder.pricing.adjustment.toFixed(2)}</span>
+                                                <span className="text-muted-foreground">Net Amount</span>
+                                                <span className="font-semibold">₹{purchaseOrder.net_amount_formatted || '0.00'}</span>
                                             </div>
-                                        )}
-                                        <div className="border-t pt-3 flex justify-between text-lg">
-                                            <span className="font-bold">Total</span>
-                                            <span className="font-bold text-primary">₹{salesOrder.pricing.total.toFixed(2)}</span>
+                                            {purchaseOrder.total_tax_amount && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Tax</span>
+                                                    <span className="font-semibold">₹{purchaseOrder.total_tax_amount.toFixed(2)}</span>
+                                                </div>
+                                            )}
+                                            <div className="border-t pt-3 flex justify-between text-lg">
+                                                <span className="font-bold">Total Amount</span>
+                                                <span className="font-bold text-primary">₹{purchaseOrder.total_amount_formatted || '0.00'}</span>
+                                            </div>
+                                            {purchaseOrder.amount_in_words && (
+                                                <div className="border-t pt-3">
+                                                    <p className="text-xs text-muted-foreground">Amount in Words:</p>
+                                                    <p className="text-sm font-medium">{purchaseOrder.amount_in_words}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        )}
 
-                        {/* Notes and Terms */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {salesOrder.vendorNotes && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Vendor Notes</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.vendorNotes}</p>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {salesOrder.termsAndConditions && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Terms & Conditions</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.termsAndConditions}</p>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                        {/* Terms & Conditions */}
+                        {purchaseOrder.terms_conditions && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Terms & Conditions</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{purchaseOrder.terms_conditions}</p>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Attachments */}
-                        {salesOrder.attachments && salesOrder.attachments.length > 0 && (
+                        {purchaseOrder.attachments && purchaseOrder.attachments.length > 0 && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base">Attachments</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-2">
-                                        {salesOrder.attachments.map((file: PurchaseOrderAttachment, index: number) => (
+                                        {purchaseOrder.attachments.map((file: any, index: number) => (
                                             <div
                                                 key={index}
                                                 className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
@@ -474,8 +479,7 @@ export const PurchaseOrderDetailPage = () => {
                                                 <div className="flex items-center gap-3">
                                                     <FileText className="h-5 w-5 text-muted-foreground" />
                                                     <div>
-                                                        <p className="text-sm font-medium">{file.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</p>
+                                                        <p className="text-sm font-medium">{file.name || `Attachment ${index + 1}`}</p>
                                                     </div>
                                                 </div>
                                                 <Button variant="ghost" size="sm">
@@ -495,56 +499,74 @@ export const PurchaseOrderDetailPage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <User className="h-5 w-5 text-primary" />
-                                    Vendor Details
+                                    Supplier Details
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Vendor Name</p>
-                                    <p className="text-base font-semibold mt-1">{salesOrder.vendor.name}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Company Name</p>
+                                    <p className="text-base font-semibold mt-1">{purchaseOrder.supplier?.company_name || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         <Mail className="h-4 w-4" />
                                         Email
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder.vendor.email}</p>
+                                    <p className="text-base mt-1">{purchaseOrder.supplier?.email || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         <Phone className="h-4 w-4" />
                                         Phone
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder.vendor.phone}</p>
+                                    <p className="text-base mt-1">{purchaseOrder.supplier?.mobile1 || 'N/A'}</p>
                                 </div>
+                                {purchaseOrder.supplier?.gstin_number && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">GSTIN Number</p>
+                                        <p className="text-base mt-1">{purchaseOrder.supplier.gstin_number}</p>
+                                    </div>
+                                )}
+                                {purchaseOrder.supplier?.pan_number && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">PAN Number</p>
+                                        <p className="text-base mt-1">{purchaseOrder.supplier.pan_number}</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {purchaseOrder.supplier?.formatted_address && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <MapPin className="h-4 w-4 text-primary" />
-                                        Billing Address
+                                        Supplier Address
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-sm text-muted-foreground">{salesOrder.vendor.billingAddress}</p>
+                                    <p className="text-sm text-muted-foreground">{purchaseOrder.supplier.formatted_address}</p>
                                 </CardContent>
                             </Card>
+                        )}
 
+                        {purchaseOrder.user && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        Shipping Address
-                                    </CardTitle>
+                                    <CardTitle className="text-base">Created By</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">{salesOrder.vendor.shippingAddress}</p>
+                                <CardContent className="space-y-2">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Name</p>
+                                        <p className="text-base mt-1">{purchaseOrder.user.full_name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Email</p>
+                                        <p className="text-base mt-1">{purchaseOrder.user.email || 'N/A'}</p>
+                                    </div>
                                 </CardContent>
                             </Card>
-                        </div>
+                        )}
                     </TabsContent>
 
                     {/* History Tab */}
@@ -553,7 +575,7 @@ export const PurchaseOrderDetailPage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Calendar className="h-5 w-5 text-primary" />
-                                    Order History
+                                    Timeline
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -563,20 +585,20 @@ export const PurchaseOrderDetailPage = () => {
                                             <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-medium">Order Created</p>
+                                            <p className="font-medium">Purchase Order Created</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder.createdAt).toLocaleString()}
+                                                {new Date(purchaseOrder.created_at).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-4 pb-4 border-b">
+                                    <div className="flex gap-4">
                                         <div className="flex-shrink-0">
                                             <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-medium">Order Confirmed</p>
+                                            <p className="font-medium">Last Updated</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder.updatedAt).toLocaleString()}
+                                                {new Date(purchaseOrder.updated_at).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
@@ -593,15 +615,15 @@ export const PurchaseOrderDetailPage = () => {
                     <DialogHeader>
                         <DialogTitle>Delete Purchase Order</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete this sales order? This action cannot be undone.
+                            Are you sure you want to delete this purchase order? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex gap-3 justify-end mt-4">
                         <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
                             Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
-                            Delete
+                        <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                            {deleting ? 'Deleting...' : 'Delete'}
                         </Button>
                     </div>
                 </DialogContent>

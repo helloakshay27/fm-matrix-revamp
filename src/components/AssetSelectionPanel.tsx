@@ -20,7 +20,7 @@ interface Asset {
   name: string;
 }
 
-interface AssetSelectionPanelProps {
+interface AssetSelectionPanelProps {getAuthHeader
   selectedCount: number;
   selectedAssets: Asset[]; // For display purposes
   selectedAssetIds: string[]; // For API operations

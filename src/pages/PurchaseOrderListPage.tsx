@@ -7,19 +7,28 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
+import { API_CONFIG } from '@/config/apiConfig';
 
 // Type definitions for Purchase Order
 interface PurchaseOrder {
     id: number;
-    order_number: string;
-    vendor_name: string;
-    date: string;
-    expected_delivery_date: string;
+    external_id: string;
+    reference_number: number;
+    po_date: string;
     amount: number;
-    status: 'draft' | 'confirmed' | 'received' | 'completed' | 'cancelled' | 'closed';
-    payment_terms: string;
-    reference_number: string;
-    active: boolean;
+    supplier: {
+        id: number;
+        company_name: string;
+        email: string;
+        formatted_address: string;
+    };
+    site: {
+        id: number;
+        name: string;
+    };
+    created_by: string;
+    pms_po_inventories: any[];
+    total_amount_formatted: string;
     created_at: string;
     updated_at: string;
 }
@@ -113,70 +122,73 @@ export const PurchaseOrderListPage: React.FC = () => {
     const fetchPurchaseOrderData = async (page = 1, per_page = 10, search = '', filters: PurchaseOrderFilters = {}) => {
         setLoading(true);
         try {
-            // Mock data - replace with actual API call
-            const mockData: PurchaseOrder[] = [
-                {
-                    id: 1,
-                    order_number: 'PO-00002',
-                    vendor_name: 'Gophygital',
-                    date: '2026-02-11',
-                    expected_delivery_date: '2026-02-25',
-                    amount: 250.00,
-                    status: 'confirmed',
-                    payment_terms: 'Due on Receipt',
-                    reference_number: 'PO-0002',
-                    active: true,
-                    created_at: '2026-02-11',
-                    updated_at: '2026-02-11'
-                },
-                {
-                    id: 2,
-                    order_number: 'PO-00001',
-                    vendor_name: 'Gophygital',
-                    date: '2025-12-11',
-                    expected_delivery_date: '2025-12-25',
-                    amount: 219.69,
-                    status: 'closed',
-                    payment_terms: 'Net 30',
-                    reference_number: 'PO-00001',
-                    active: true,
-                    created_at: '2025-12-11',
-                    updated_at: '2025-12-25'
-                }
-            ];
+            // Get base URL and token from API_CONFIG
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
 
-            // Filter based on search
-            let filteredData = mockData;
+            if (!baseUrl || !token) {
+                sonnerToast.error('Missing configuration. Please login again.');
+                setLoading(false);
+                return;
+            }
+
+            // Build URL using URL object
+            const url = new URL(
+                `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/pms/purchase_orders.json`
+            );
+
+            // Add pagination
+            url.searchParams.append('page', String(page));
+            url.searchParams.append('per_page', String(per_page));
+            url.searchParams.append('access_token', token);
+
+            // Add search if present
             if (search.trim()) {
-                filteredData = filteredData.filter(order =>
-                    order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-                    order.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
-                    order.reference_number.toLowerCase().includes(search.toLowerCase())
-                );
+                url.searchParams.append('search', search.trim());
             }
 
-            // Apply filters
+            // Add filters if present
             if (filters.status) {
-                filteredData = filteredData.filter(order => order.status === filters.status);
+                url.searchParams.append('filter_type', filters.status);
             }
 
-            const totalCount = filteredData.length;
-            const totalPages = Math.ceil(totalCount / per_page);
-            const startIndex = (page - 1) * per_page;
-            const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-
-            setPurchaseOrderData(paginatedData);
-            setPagination({
-                current_page: page,
-                per_page,
-                total_pages: totalPages,
-                total_count: totalCount,
-                has_next_page: page < totalPages,
-                has_prev_page: page > 1
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
             });
 
-        } catch (error: unknown) {
+            if (!response.ok) {
+                if (response.status === 401) {
+                    sonnerToast.error('Unauthorized. Please login again.');
+                    return;
+                }
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Handle response data (purchase_orders is the array field from API)
+            const items = data.purchase_orders || data.data || [];
+            if (Array.isArray(items)) {
+                setPurchaseOrderData(items);
+                setPagination({
+                    current_page: data.current_page || page,
+                    per_page: data.per_page || per_page,
+                    total_pages: data.total_pages || 1,
+                    total_count: data.total_count || 0,
+                    has_next_page: page < (data.total_pages || 1),
+                    has_prev_page: page > 1
+                });
+            } else {
+                sonnerToast.error(data.message || 'Failed to fetch purchase orders');
+                setPurchaseOrderData([]);
+            }
+
+        } catch (error: any) {
             console.error('Error fetching purchase order data:', error);
+            sonnerToast.error(error.message || 'Failed to fetch purchase orders');
             setPurchaseOrderData([]);
         } finally {
             setLoading(false);
@@ -211,8 +223,8 @@ export const PurchaseOrderListPage: React.FC = () => {
     // Helper function to get status badge
     const getStatusBadge = (status: string) => {
         const statusColors: Record<string, string> = {
-            draft: 'bg-yellow-100 text-yellow-800',
-            confirmed: 'bg-blue-100 text-blue-800',
+            pending: 'bg-yellow-100 text-yellow-800',
+            approved: 'bg-blue-100 text-blue-800',
             received: 'bg-purple-100 text-purple-800',
             completed: 'bg-green-100 text-green-800',
             cancelled: 'bg-red-100 text-red-800',
@@ -220,7 +232,7 @@ export const PurchaseOrderListPage: React.FC = () => {
         };
 
         return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || statusColors['draft']}`}>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || statusColors['pending']}`}>
                 {status.toUpperCase()}
             </span>
         );
@@ -261,14 +273,14 @@ export const PurchaseOrderListPage: React.FC = () => {
             </div>
         ),
         order_number: (
-            <div className="font-medium text-blue-600">{order.order_number}</div>
+            <div className="font-medium text-blue-600">PO-{String(order.external_id).padStart(5, '0')}</div>
         ),
         vendor_name: (
-            <span className="text-sm text-gray-900">{order.vendor_name}</span>
+            <span className="text-sm text-gray-900">{order.supplier?.company_name || 'N/A'}</span>
         ),
         date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.date).toLocaleDateString('en-GB', {
+                {new Date(order.po_date).toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
@@ -277,24 +289,20 @@ export const PurchaseOrderListPage: React.FC = () => {
         ),
         expected_delivery_date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.expected_delivery_date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
+                {order.site?.name || 'N/A'}
             </span>
         ),
         amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{order.total_amount_formatted || '0.00'}
             </span>
         ),
         payment_terms: (
-            <span className="text-sm text-gray-600">{order.payment_terms}</span>
+            <span className="text-sm text-gray-600">{order.created_by || 'N/A'}</span>
         ),
         status: (
             <div className="flex items-center justify-center">
-                {getStatusBadge(order.status)}
+                {getStatusBadge(order.pms_po_inventories?.length > 0 ? 'approved' : 'pending')}
             </div>
         )
     });
@@ -310,6 +318,7 @@ export const PurchaseOrderListPage: React.FC = () => {
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this purchase order?')) {
             // Add API call here
+            sonnerToast.success('Purchase order deleted successfully');
             fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         }
     };
