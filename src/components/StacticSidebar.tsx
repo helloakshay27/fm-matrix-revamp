@@ -1201,7 +1201,7 @@ const modulesByPackage = {
         { name: "Sales Order", href: "/settings/sales-order" },
 
 
-        // { name: "Transactions ", href: "/settings/transactions" },
+        { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
         // { name: "Opening Balance", href: "/settings/opening-balance" },
