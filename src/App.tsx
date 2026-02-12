@@ -871,6 +871,8 @@ import { BillDetailPage } from "./pages/BillDetailPage";
 import { ExpenseListPage } from "./pages/ExpenseListPage";
 import { ExpenseCreatePage } from "./pages/ExpenseCreatePage";
 import { ExpenseDetailPage } from "./pages/ExpenseDetailPage";
+import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1865,6 +1867,16 @@ function App() {
                     <Route
                       path="/settings/sales-order/edit/:id"
                       element={<SalesOrderCreatePage />}
+                    />
+
+
+                     <Route
+                      path="/settings/recurring-invoices"
+                      element={<RecurringInvoicesListPage />}
+                    />
+                    <Route
+                      path="/settings/recurring-invoices/create"
+                      element={<RecurringInvoicesCreatePage />}
                     />
 
                     {/* Purchase Order Routes */}
