@@ -91,40 +91,43 @@ export const CustomersDashboard = () => {
   setCustomers(dummyCustomers);
 }, []);
 
+useEffect(() => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    // Fetch customer list
+    axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      console.log('Customer List:', res.data);
+      setCustomers(res.data || []);
+      // Fetch customer detail for first customer (example)
+      if (res.data && res.data.length > 0) {
+        const customerId = res.data[0].id;
+        axios.get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined,
+            'Content-Type': 'application/json'
+          }
+        }).then(detailRes => {
+          console.log('Customer Detail:', detailRes.data);
+        });
+      }
+    });
+  }, []);
 
   const perPage = 20;
 
   
-  // Fetch journal entries
-  const fetchJournals = useCallback(async () => {
-    setLoading(true);
-    try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-      const response = await axios.get(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      setJournals(response.data.lock_account_transactions || []);
-      setMembershipType(response.data.lock_account_transactions || [])
-    } catch (error) {
-      console.error('Error fetching journal entries:', error);
-      toast.error('Failed to fetch journal entries');
-      setJournals([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+ console.log("customers data:", customers)
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
-  console.log("journals data:", journals);
+//   console.log("journals data:", journals);
   // Effect to handle debounced search
   useEffect(() => {
     const currentSearch = filters.search || '';
@@ -143,13 +146,7 @@ export const CustomersDashboard = () => {
   }, [debouncedSearchQuery]);
 
   // Fetch on mount and when dependencies change
-  useEffect(() => {
-    console.log('Effect triggered - fetching memberships', {
-      currentPage,
-      filters
-    });
-    fetchJournals();
-  }, [currentPage, filters]);
+ 
 
   // Handle export
   const handleExport = async () => {
@@ -501,7 +498,7 @@ const columns = [
   }
 
   if (columnKey === "receivables" || columnKey === "unused_credits") {
-    return `₹${item[columnKey].toLocaleString()}`;
+    // return `₹${item[columnKey].toLocaleString()}`;
   }
 
   return item[columnKey as keyof CustomerData] ?? "--";
