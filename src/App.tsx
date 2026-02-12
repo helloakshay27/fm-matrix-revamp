@@ -1013,7 +1013,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1275,7 +1275,10 @@ function App() {
                       element={<ForgotPasswordOTPPage />}
                     />
                     <Route path="/new-password" element={<NewPasswordPage />} />
-                    <Route path="/login-success" element={<LoginSuccessPage />} />
+                    <Route
+                      path="/login-success"
+                      element={<LoginSuccessPage />}
+                    />
                     <Route
                       path="/password-reset-success"
                       element={<PasswordResetSuccessPage />}
@@ -1332,7 +1335,10 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/PermissionDemo" element={<PermissionDemo />} />
+                    <Route
+                      path="/PermissionDemo"
+                      element={<PermissionDemo />}
+                    />
 
                     <Route
                       path="/tickets"
@@ -1816,8 +1822,14 @@ function App() {
                       />
 
                       {/* CRM Routes */}
-                      <Route path="/crm/campaign" element={<CRMCampaignPage />} />
-                      <Route path="/crm/campaign/add" element={<AddLeadPage />} />
+                      <Route
+                        path="/crm/campaign"
+                        element={<CRMCampaignPage />}
+                      />
+                      <Route
+                        path="/crm/campaign/add"
+                        element={<AddLeadPage />}
+                      />
                       <Route
                         path="/crm/campaign/details/:id"
                         element={<LeadDetailsPage />}
@@ -1835,7 +1847,10 @@ function App() {
                         element={<CRMOccupantUsersDashboard />}
                       />
                       <Route path="/crm/events" element={<CRMEventsPage />} />
-                      <Route path="/crm/events/add" element={<AddEventPage />} />
+                      <Route
+                        path="/crm/events/add"
+                        element={<AddEventPage />}
+                      />
                       <Route
                         path="/crm/events/details/:id"
                         element={<CRMEventDetailsPage />}
@@ -2253,7 +2268,9 @@ function App() {
                       />
                       <Route
                         path="/maintenance/audit/operational/scheduled/performance/:id"
-                        element={<ViewOperationalAuditSchedulePerformancePage />}
+                        element={
+                          <ViewOperationalAuditSchedulePerformancePage />
+                        }
                       />
                       <Route
                         path="/maintenance/audit/operational/conducted"
@@ -2659,7 +2676,10 @@ function App() {
                       />
 
                       {/* AMC Routes */}
-                      <Route path="/maintenance/amc" element={<AMCDashboard />} />
+                      <Route
+                        path="/maintenance/amc"
+                        element={<AMCDashboard />}
+                      />
                       <Route
                         path="/maintenance/amc/add"
                         element={<AddAMCPage />}
@@ -2857,7 +2877,10 @@ function App() {
                         path="/vas/sprint/details/:id"
                         element={<SprintDetailsPage />}
                       />
-                      <Route path="/vas/sprint/:id" element={<SprintKanban />} />
+                      <Route
+                        path="/vas/sprint/:id"
+                        element={<SprintKanban />}
+                      />
 
                       <Route
                         path="/vas/projects/:id/milestones/:mid"
@@ -2905,7 +2928,10 @@ function App() {
 
                       <Route path="/vas/add-mom" element={<AddMoMPage />} />
 
-                      <Route path="/vas/edit-mom/:id" element={<EditMoMPage />} />
+                      <Route
+                        path="/vas/edit-mom/:id"
+                        element={<EditMoMPage />}
+                      />
 
                       <Route
                         path="/settings/project-task-setup/roles"
@@ -3307,7 +3333,10 @@ function App() {
                         path="/vas/mailroom/outbound/:id"
                         element={<OutboundDetailPage />}
                       />
-                      <Route path="/vas/parking" element={<ParkingDashboard />} />
+                      <Route
+                        path="/vas/parking"
+                        element={<ParkingDashboard />}
+                      />
                       <Route
                         path="/vas/parking/details/:clientId"
                         element={<ParkingDetailsPage />}
@@ -3647,7 +3676,10 @@ function App() {
                       />
 
                       {/* VAS Booking Routes */}
-                      <Route path="/vas/booking/list" element={<BookingList />} />
+                      <Route
+                        path="/vas/booking/list"
+                        element={<BookingList />}
+                      />
                       <Route
                         path="/vas/booking/add"
                         element={<AddFacilityBookingPage />}
@@ -4101,7 +4133,6 @@ function App() {
                         element={<EditCuratedServicePage />}
                       />
 
-
                       {/* Plus Support Service Routes */}
                       <Route
                         path="/pulse/supported-services/service"
@@ -4115,7 +4146,6 @@ function App() {
                         path="/pulse/supported-services/service/edit/:id"
                         element={<SupportedServiceEdit />}
                       />
-
 
                       {/*  curated Service  Category Routes */}
                       <Route
@@ -4455,7 +4485,10 @@ function App() {
                       path="/mobile/tickets"
                       element={<MobileTicketsPage />}
                     />
-                    <Route path="/mobile/orders" element={<MobileOrdersPage />} />
+                    <Route
+                      path="/mobile/orders"
+                      element={<MobileOrdersPage />}
+                    />
                     <Route
                       path="/mobile/admin/orders"
                       element={<MobileAdminOrdersPage />}
@@ -4509,7 +4542,10 @@ function App() {
                       element={<MobileSurveyPage />}
                     />
                     {/* Mobile Asset Routes */}
-                    <Route path="/mobile/assets" element={<MobileAssetPage />} />
+                    <Route
+                      path="/mobile/assets"
+                      element={<MobileAssetPage />}
+                    />
                     <Route
                       path="/mobile/assets/:assetId"
                       element={<MobileAssetPage />}
@@ -4534,7 +4570,10 @@ function App() {
                       path="/mobile-projects"
                       element={<ProjectsMobileView />}
                     />
-                    <Route path="/mobile-issues" element={<IssuesMobileView />} />
+                    <Route
+                      path="/mobile-issues"
+                      element={<IssuesMobileView />}
+                    />
                     <Route
                       path="/mobile-issues/add"
                       element={<AddIssueMobileView />}
@@ -4586,21 +4625,20 @@ function App() {
                       element={<ContestPromotion />}
                     />
                     {/* Spinner Contest Routes */}
-                    <Route path="/spinnercontest" element={<SpinnerContest />} />
+                    <Route
+                      path="/spinnercontest"
+                      element={<SpinnerContest />}
+                    />
                     <Route
                       path="/spinnercontest/:contestId"
                       element={<SpinnerContest />}
                     />
                     {/* Scratch Card Routes */}
-                    <Route
+                    {/* <Route
                       path="/scratchcards"
                       element={<ScratchCardListing />}
-                    />
-                    <Route path="/scratchcard" element={<ScratchCard />} />
-                    <Route
-                      path="/scratchcard/:cardId"
-                      element={<ScratchCard />}
-                    />
+                    /> */}
+                    <Route path="/scratchcards" element={<ScratchCard />} />
                     <Route
                       path="/scratchcard/details/:rewardId"
                       element={<VoucherDetails />}
