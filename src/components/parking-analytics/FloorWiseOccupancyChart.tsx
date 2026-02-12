@@ -5,6 +5,7 @@ import { Download, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast as sonnerToast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Color palette matching ResponseTATCard
 const CHART_COLORS = {
@@ -48,6 +49,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
   const [apiData, setApiData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [occupancyView, setOccupancyView] = useState<'current' | 'yoy'>('current');
+  const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const { toast } = useToast();
 
   // Fetch data from API
@@ -68,6 +70,12 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
           return date.toISOString().split('T')[0];
         })();
 
+        const previousEndDate = (() => {
+          const date = new Date(endDateStr);
+          date.setDate(date.getDate() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
         const url = getFullUrl('/parking_dashboard/floorwise_occupancy');
         const options = getAuthenticatedFetchOptions();
         
@@ -75,6 +83,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
           start_date: startDateStr,
           end_date: endDateStr,
           previous_start_date: previousStartDate,
+          previous_end_date: previousEndDate,
           compare_yoy: 'true',
         });
 
@@ -136,6 +145,12 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
         return date.toISOString().split('T')[0];
       })();
 
+      const previousEndDate = (() => {
+        const date = new Date(endDateStr);
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split('T')[0];
+      })();
+
       const url = getFullUrl('/parking_dashboard/floorwise_occupancy');
       const options = getAuthenticatedFetchOptions();
       
@@ -143,6 +158,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
         start_date: startDateStr,
         end_date: endDateStr,
         previous_start_date: previousStartDate,
+        previous_end_date: previousEndDate,
         compare_yoy: 'true',
       });
 
@@ -166,81 +182,97 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
 
   // Transform API data to chart format
   const getChartData = (): FloorOccupancyData[] => {
-    if (occupancyView === 'yoy' && apiData?.data?.current_year?.floors && apiData?.data?.previous_year?.floors) {
-      // YoY comparison: merge current and previous year data (union of floors)
-      const currentFloors = apiData.data.current_year.floors || [];
-      const previousFloors = apiData.data.previous_year.floors || [];
+    if (!apiData?.data) return propData || [];
 
-      // Normalize helper
-      const normalize = (s: any) => (s ? String(s).trim().toLowerCase().replace(/\s+/g, ' ') : '');
+    // Get buildings from current year data
+    const currentBuildings = apiData.data.current_year?.buildings || [];
+    const previousBuildings = apiData.data.last_year?.buildings || [];
 
-      // Build lookups
-      const currMap = new Map<string, any>();
-      currentFloors.forEach((cf: any) => currMap.set(normalize(cf.floor_name), cf));
-      const prevMap = new Map<string, any>();
-      previousFloors.forEach((pf: any) => prevMap.set(normalize(pf.floor_name), pf));
+    // Filter buildings based on selection
+    const filterBuildings = (buildings: any[]) => {
+      if (selectedBuilding === 'all') return buildings;
+      return buildings.filter((b: any) => b.building_id.toString() === selectedBuilding);
+    };
 
-      // Create ordered union of floor keys: prefer current order, then append previous-only floors
-      const orderedKeys: string[] = [];
-      currentFloors.forEach((cf: any) => {
-        const k = normalize(cf.floor_name);
-        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+    const filteredCurrentBuildings = filterBuildings(currentBuildings);
+    const filteredPreviousBuildings = filterBuildings(previousBuildings);
+
+    if (occupancyView === 'yoy') {
+      // YoY comparison: merge current and previous year data
+      const allFloors: FloorOccupancyData[] = [];
+
+      // Process filtered current year buildings
+      filteredCurrentBuildings.forEach((building: any) => {
+        building.floors?.forEach((floor: any) => {
+          if (floor.total_capacity === 0) return; // Skip empty floors
+          
+          allFloors.push({
+            floor: `${floor.floor_name}`,
+            twoWheeler: floor.two_wheeler?.total_occupied || 0,
+            fourWheeler: floor.four_wheeler?.total_occupied || 0,
+            percentage: floor.occupancy_pct || 0
+          });
+        });
       });
-      previousFloors.forEach((pf: any) => {
-        const k = normalize(pf.floor_name);
-        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+
+      // Add previous year data to matching floors
+      filteredPreviousBuildings.forEach((building: any) => {
+        building.floors?.forEach((floor: any) => {
+          const existingFloor = allFloors.find(f => 
+            f.floor === `${floor.floor_name}`
+          );
+          
+          if (existingFloor) {
+            existingFloor.lastYearTwoWheeler = floor.two_wheeler?.total_occupied || 0;
+            existingFloor.lastYearFourWheeler = floor.four_wheeler?.total_occupied || 0;
+          } else if (floor.total_capacity > 0) {
+            // Add floor that only exists in previous year
+            allFloors.push({
+              floor: `${floor.floor_name}`,
+              twoWheeler: 0,
+              fourWheeler: 0,
+              lastYearTwoWheeler: floor.two_wheeler?.total_occupied || 0,
+              lastYearFourWheeler: floor.four_wheeler?.total_occupied || 0,
+              percentage: 0
+            });
+          }
+        });
       });
 
-      // Build result array using union keys
-      return orderedKeys
-        .map((key) => {
-          const curr = currMap.get(key) || {};
-          const prev = prevMap.get(key) || {};
-          // Determine display name: prefer current floor_name, else previous
-          const displayName = curr.floor_name || prev.floor_name || key;
-
-          // Only include floors that have capacity in either current or previous, otherwise skip
-          const currCapacity = curr.total_capacity ?? 0;
-          const prevCapacity = prev.total_capacity ?? 0;
-          if ((currCapacity + prevCapacity) === 0) return null;
-
-          return {
-            floor: displayName,
-            twoWheeler: curr.two_wheeler?.total_occupied || 0,
-            fourWheeler: curr.four_wheeler?.total_occupied || 0,
-            lastYearTwoWheeler: prev.two_wheeler?.total_occupied || 0,
-            lastYearFourWheeler: prev.four_wheeler?.total_occupied || 0,
-            percentage: curr.occupancy_pct || prev.occupancy_pct || 0
-          } as FloorOccupancyData;
-        })
-        .filter(Boolean) as FloorOccupancyData[];
-    } else if (apiData?.data?.current_year?.floors) {
+      return allFloors;
+    } else {
       // Current year only
-      const floors = apiData.data.current_year.floors;
-      return floors
-        .filter((floor: any) => floor.total_capacity > 0) // Filter out empty floors
-        .map((floor: any) => ({
-          floor: floor.floor_name,
-          twoWheeler: floor.two_wheeler.total_occupied || 0,
-          fourWheeler: floor.four_wheeler.total_occupied || 0,
-          percentage: floor.occupancy_pct || 0
-        }));
-    }
-    
-    // Use prop data if available, otherwise use default
-    if (propData) return propData;
+      const allFloors: FloorOccupancyData[] = [];
 
-    // Default fallback data
-    return [
-      { floor: 'B2', twoWheeler: 12, fourWheeler: 8, percentage: 11.1 },
-      { floor: 'B1', twoWheeler: 10, fourWheeler: 13, percentage: 10.0 },
-      { floor: 'G', twoWheeler: 8, fourWheeler: 17, percentage: 14.3 },
-      { floor: '1', twoWheeler: 6, fourWheeler: 10, percentage: 14.3 },
-      { floor: '2', twoWheeler: 4, fourWheeler: 9, percentage: 7.7 },
-    ];
+      filteredCurrentBuildings.forEach((building: any) => {
+        building.floors?.forEach((floor: any) => {
+          if (floor.total_capacity === 0) return; // Skip empty floors
+          
+          allFloors.push({
+            floor: `${floor.floor_name}`,
+            twoWheeler: floor.two_wheeler?.total_occupied || 0,
+            fourWheeler: floor.four_wheeler?.total_occupied || 0,
+            percentage: floor.occupancy_pct || 0
+          });
+        });
+      });
+
+      return allFloors;
+    }
   };
 
   const chartData = getChartData();
+
+  // Get available buildings from API data
+  const getAvailableBuildings = () => {
+    if (!apiData?.data?.current_year?.buildings) return [];
+    return apiData.data.current_year.buildings.map((building: any) => ({
+      id: building.building_id.toString(),
+      name: building.building_name
+    }));
+  };
+
+  const availableBuildings = getAvailableBuildings();
 
   // Derive friendly compare label from selected date range
   const getCompareLabel = (start?: string, end?: string) => {
@@ -337,6 +369,22 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
             {loading && <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
           </div>
           <div className="flex items-center gap-2">
+            {/* Building Filter Dropdown */}
+            {availableBuildings.length > 0 && (
+              <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+                <SelectTrigger className="w-[200px] h-9 bg-white border-gray-300">
+                  <SelectValue placeholder="Select Building" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Buildings</SelectItem>
+                  {availableBuildings.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <RefreshCw
               className={`w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors ${loading ? 'animate-spin opacity-50' : ''}`}
               onClick={handleRefresh}
