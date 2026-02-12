@@ -39,26 +39,15 @@ export const FlipCard: React.FC = () => {
     const fetchContestData = async () => {
       setIsLoading(true);
       try {
-        let data: FlipContest;
-
-        // If contest_id is provided, fetch specific contest
-        if (urlContestId) {
-          data = await newFlipCardApi.getContestById(urlContestId);
-        } else {
-          // Otherwise, fetch all flip contests and use the first one
-          console.warn("⚠️ No contest ID provided, fetching all flip contests");
-          const contests = await newFlipCardApi.getContests();
-
-          if (contests.length === 0) {
-            console.error("❌ No flip contests available");
-            setIsLoading(false);
-            return;
-          }
-
-          data = contests[0];
-          console.warn("✅ Using first flip contest:", data);
+        // Contest ID is required
+        if (!urlContestId) {
+          console.error("❌ No contest ID provided");
+          setIsLoading(false);
+          return;
         }
 
+        // Fetch specific contest by ID
+        const data = await newFlipCardApi.getContestById(urlContestId);
         setContestData(data);
 
         // Convert prizes to cards based on attempt_required

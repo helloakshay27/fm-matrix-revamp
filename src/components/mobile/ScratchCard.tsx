@@ -42,28 +42,15 @@ export const ScratchCard: React.FC = () => {
     const fetchContestData = async () => {
       setIsLoading(true);
       try {
-        let data: ScratchContest;
-
-        // If contest_id is provided, fetch specific contest
-        if (urlContestId) {
-          data = await newScratchCardApi.getContestById(urlContestId);
-        } else {
-          // Otherwise, fetch all scratch contests and use the first one
-          console.warn(
-            "⚠️ No contest ID provided, fetching all scratch contests"
-          );
-          const contests = await newScratchCardApi.getContests();
-
-          if (contests.length === 0) {
-            console.error("❌ No scratch contests available");
-            setIsLoading(false);
-            return;
-          }
-
-          data = contests[0];
-          console.warn("✅ Using first available scratch contest:", data);
+        // Contest ID is required
+        if (!urlContestId) {
+          console.error("❌ No contest ID provided");
+          setIsLoading(false);
+          return;
         }
 
+        // Fetch specific contest by ID
+        const data = await newScratchCardApi.getContestById(urlContestId);
         setContestData(data);
         // Don't set wonPrize here - only after play API response
       } catch (error) {

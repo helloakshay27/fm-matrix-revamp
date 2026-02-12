@@ -74,29 +74,16 @@ export const SpinnerContest: React.FC = () => {
     const fetchContestData = async () => {
       setIsLoading(true);
       try {
-        let data: Contest;
-
-        // If contest_id is provided, fetch specific contest
-        if (urlContestId) {
-          data = await newSpinnerContestApi.getContestById(urlContestId);
-        } else {
-          // Otherwise, fetch all spin contests and use the first one
-          console.warn(
-            "⚠️ No contest ID provided, fetching latest active spin contest"
-          );
-          const contests = await newSpinnerContestApi.getContests();
-
-          if (contests.length === 0) {
-            console.error("❌ No active spin contests available");
-            setIsLoading(false);
-            setCanSpin(false);
-            return;
-          }
-
-          data = contests[0];
-          console.warn("✅ Using latest active spin contest:", data);
+        // Contest ID is required
+        if (!urlContestId) {
+          console.error("❌ No contest ID provided");
+          setIsLoading(false);
+          setCanSpin(false);
+          return;
         }
 
+        // Fetch specific contest by ID
+        const data = await newSpinnerContestApi.getContestById(urlContestId);
         setContestData(data);
 
         // Convert prizes to wheel segments
