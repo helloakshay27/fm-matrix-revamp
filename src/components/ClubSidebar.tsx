@@ -302,17 +302,17 @@ export const ClubSidebar: React.FC = () => {
         );
     };
 
-    // Detect section based on route if not set
-    React.useEffect(() => {
-        const path = location.pathname;
-        if (path.startsWith("/accounting")) {
-            setCurrentSection && setCurrentSection("Accounting");
-        } else if (path.startsWith("/settings")) {
-            setCurrentSection && setCurrentSection("Settings");
-        } else {
-            setCurrentSection && setCurrentSection("Club Management");
-        }
-    }, [location.pathname, setCurrentSection]);
+    // // Detect section based on route if not set
+    // React.useEffect(() => {
+    //     const path = location.pathname;
+    //     if (path.startsWith("/accounting")) {
+    //         setCurrentSection && setCurrentSection("Accounting");
+    //     } else if (path.startsWith("/settings")) {
+    //         setCurrentSection && setCurrentSection("Settings");
+    //     } else {
+    //         setCurrentSection && setCurrentSection("Club Management");
+    //     }
+    // }, [location.pathname, setCurrentSection]);
 
 
     // Get current section modules
