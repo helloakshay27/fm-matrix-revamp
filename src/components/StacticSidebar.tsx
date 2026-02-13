@@ -1452,7 +1452,7 @@ const modulesByPackage = {
       subItems: [
         { name: "Purchase Order", href: "/settings/purchase-order" },
         { name: "Bills", href: "/settings/bills" },
-        { name: "Recurring Bills", href: "/settings/recurring-bills" },
+        { name: "Recurring Bills", href: "/accounting/recurring-bills" },
         { name: "Vendor", href: "/maintenance/vendor" },
         { name: "Expense", href: "/settings/expense" },
         { name: "PaymentsMade", href: "/settings/payments-made" },
