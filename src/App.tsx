@@ -2145,235 +2145,236 @@ function App() {
                       />
 
                       <Route
-                        path="/settings/manual-journal"
+                        path="/accounting/manual-journal"
                         element={<ManualJournalDashboard />}
                       />
                       <Route
-                        path="/settings/manual-journal/add"
+                        path="/accounting/manual-journal/add"
                         element={<ManualJournalAdd />}
                       />
                       <Route
-                        path="/settings/manual-journal/details/:id"
+                        path="/accounting/manual-journal/details/:id"
                         element={<ManualJournalDetails />}
                       />
                       <Route
-                        path="/settings/manual-journal/edit/:id"
+                        path="/accounting/manual-journal/edit/:id"
                         element={<ManualJournalEdit />}
                       />
 
                       <Route
-                        path="/settings/recurring-journal"
+                        path="/accounting/recurring-journal"
                         element={<RecurringJournalDashboard />}
                       />
                       <Route
-                        path="/settings/recurring-journal/add"
+                        path="/accounting/recurring-journal/add"
                         element={<RecurringJournalAdd />}
                       />
                       <Route
-                        path="/settings/recurring-journal/details"
+                        path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
                       <Route
-                        path="/settings/chart-journal"
+                        path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
                       />
                       <Route
-                        path="/settings/chart-journal/details/:id"
+                        path="/accounting/chart-journal/details/:id"
                         element={<ChartOfAccountDetails />}
                       />
                       <Route
-                        path="/settings/opening-balance"
+                        path="/accounting/opening-balance"
                         element={<OpeningBalance />}
                       />
-                      <Route path="/settings/tax-setup" element={<TaxSetup />} />
+                      <Route path="/accounting/tax-setup" element={<TaxSetup />} />
                       <Route
-                        path="/settings/charge-setup"
+                        path="/accounting/charge-setup"
                         element={<ChargeSetupDashboard />}
                       />
                       <Route
-                        path="/settings/charge-setup/add"
+                        path="/accounting/charge-setup/add"
                         element={<ChargeSetupAdd />}
                       />
                       <Route
-                        path="/settings/charge-setup/details/:id"
+                        path="/accounting/charge-setup/details/:id"
                         element={<ChargeSetupDetails />}
                       />
                       <Route
-                        path="/settings/bill-cycles"
+                        path="/accounting/bill-cycles"
                         element={<BillCyclesDashboard />}
                       />
 
                       <Route
-                        path="/settings/bill-cycles/add"
+                        path="/accounting/bill-cycles/add"
                         element={<BillCyclesAdd />}
                       />
                       <Route
-                        path="/settings/bill-cycles/details/:id"
+                        path="/accounting/bill-cycles/details/:id"
                         element={<BillCyclesDetails />}
                       />
 
                       <Route
-                        path="/settings/Budget"
+                        path="/accounting/Budget"
                         element={<BudgetDashboard />}
                       />
                       {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
                       <Route
-                        path="/settings/Budget/add/new"
+                        path="/accounting/Budget/add/new"
                         element={<BudgetAddNew />}
                       />
                       <Route
-                        path="/settings/Budget/Edit"
+                        path="/accounting/Budget/Edit"
                         element={<EditBudget />}
                       />
                       <Route
-                        path="/settings/Budget/details"
+                        path="/accounting/Budget/details"
                         element={<BudgetDetails />}
                       />
                       <Route
-                        path="/settings/reports/balance-sheet"
+                        path="/accounting/reports/balance-sheet"
                         element={<BalanceSheetReport />}
                       />
                       {/* <Route */}
                       <Route
-                        path="/settings/reports/profit-and-loss"
+                        path="/accounting/reports/profit-and-loss"
                         element={<ProfitAndLossReport />}
                       />
                       {/* <Route */}
                       <Route
-                        path="/settings/reports/tax-summary"
+                        path="/accounting/reports/tax-summary"
                         element={<TaxSummaryReport />}
                       />
                       {/* <Route */}
                       <Route
-                        path="/settings/reports/gst-payable"
+                        path="/accounting/reports/gst-payable"
                         element={<GstPayableReport />}
                       />
                       <Route
-                        path="/settings/transactions"
+                        path="/accounting/transactions"
                         element={<TransactionsDashboard />}
                       />
                       <Route
-                        path="/settings/transactions/add"
+                        path="/accounting/transactions/add"
                         element={<TransactionsAdd />}
                       />
                       <Route
-                        path="/settings/transactions/details/:id"
+                        path="/accounting/transactions/details/:id"
                         element={<TransactionsDetails />}
                       />
                       <Route
-                        path="/settings/transactions/Edit/:id"
+                        path="/accounting/transactions/Edit/:id"
                         element={<TransactionsEdit />}
                       />
                       <Route
-                        path="/settings/items"
+                        path="/accounting/items"
                         element={<ItemsDashboard />}
                       />
-                      <Route path="/settings/items/add" element={<ItemsAdd />} />
+                      <Route path="/accounting/items/add" element={<ItemsAdd />} />
                       <Route
-                        path="/settings/items/details/:id"
+                        path="/accounting/items/details/:id"
                         element={<ItemsDetails />}
                       />
                       <Route
-                        path="/settings/items/edit/:id"
+                        path="/accounting/items/edit/:id"
                         element={<ItemsEdit />}
                       />
                       <Route
-                        path="/settings/customers"
+                        path="/accounting/customers"
                         element={<CustomersDashboard />}
                       />
                       <Route
-                        path="/settings/customers/add"
+                        path="/accounting/customers/add"
                         element={<CustomersAdd />}
                       />
 
                       {/* Sales Order Routes */}
                       <Route
-                        path="/settings/sales-order"
+                        path="/accounting/sales-order"
                         element={<SalesOrderListPage />}
                       />
                       <Route
-                        path="/settings/sales-order/create"
+                        path="/accounting/sales-order/create"
                         element={<SalesOrderCreatePage />}
                       />
                       <Route
-                        path="/settings/sales-order/:id"
+                        path="/accounting/sales-order/:id"
                         element={<SalesOrderDetailPage />}
                       />
                       <Route
-                        path="/settings/sales-order/edit/:id"
+                        path="/accounting/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
                       />
 
 
                       <Route
-                        path="/settings/recurring-invoices"
+                        path="/accounting/recurring-invoices"
                         element={<RecurringInvoicesListPage />}
                       />
                       <Route
-                        path="/settings/recurring-invoices/create"
+                        path="/accounting/recurring-invoices/create"
                         element={<RecurringInvoicesCreatePage />}
                       />
 
                       {/* Purchase Order Routes */}
                       <Route
-                        path="/settings/purchase-order"
+                        path="/accounting/purchase-order"
                         element={<PurchaseOrderListPage />}
                       />
                       <Route
-                        path="/settings/purchase-order/create"
+                        path="/accounting/purchase-order/create"
                         element={<PurchaseOrderCreatePage />}
                       />
                       <Route
-                        path="/settings/purchase-order/:id"
+                        path="/accounting/purchase-order/:id"
                         element={<PurchaseOrderDetailPage />}
                       />
                       <Route
-                        path="/settings/purchase-order/edit/:id"
+                        path="/accounting/purchase-order/edit/:id"
                         element={<PurchaseOrderCreatePage />}
                       />
 
                       {/* Bills Routes */}
-                      <Route path="/settings/bills" element={<BillListPage />} />
+                      <Route path="/accounting/bills" element={<BillListPage />} />
                       <Route
-                        path="/settings/bills/create"
+                        path="/accounting/bills/create"
                         element={<BillCreatePage />}
                       />
                       <Route
-                        path="/settings/bills/:id"
+                        path="/accounting/bills/:id"
                         element={<BillDetailPage />}
                       />
                       <Route
-                        path="/settings/bills/edit/:id"
+                        path="/accounting/bills/edit/:id"
                         element={<BillCreatePage />}
                       />
 
                       {/* Recurring Bills Routes */}
                       <Route
-                        path="/settings/recurring-bills"
+                        path="/accounting/recurring-bills"
                         element={<RecurringBillsDashboard />}
                       />
                       <Route
-                        path="/settings/recurring-bills/create"
+                        path="/accounting/recurring-bills/create"
                         element={<RecurringBillCreatePage />}
                       />
 
                       {/* Expense Routes */}
                       <Route
-                        path="/settings/expense"
+                        path="/accounting/expense"
                         element={<ExpenseListPage />}
                       />
                       <Route
-                        path="/settings/expense/create"
+                        path="/accounting/expense/create"
                         element={<ExpenseCreatePage />}
                       />
                       <Route
-                        path="/settings/expense/:id"
+                        path="/accounting/expense/:id"
                         element={<ExpenseDetailPage />}
                       />
                       <Route
-                        path="/settings/expense/edit/:id"
+                        path="/accounting/expense/edit/:id"
                         element={<ExpenseCreatePage />}
                       />
+
                       <Route
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}

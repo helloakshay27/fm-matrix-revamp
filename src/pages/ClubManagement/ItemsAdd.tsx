@@ -278,7 +278,7 @@ const ItemsAdd = () => {
         )
             .then(res => {
                 toast.success("Item saved successfully!");
-                navigate("/settings/items");
+                navigate("/accounting/items");
             })
             .catch(err => {
                 toast.error("Failed to save item");
@@ -734,7 +734,7 @@ const ItemsAdd = () => {
                         Save
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/settings/items")}>
+                    <Button variant="outline" onClick={() => navigate("/accounting/items")}>
                         Cancel
                     </Button>
                 </div>

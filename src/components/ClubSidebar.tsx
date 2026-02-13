@@ -81,13 +81,26 @@ const modulesByPackage = {
             icon: Package,
             href: "/club-management/accounting",
         },
-        {
-            name: "Accounting",
-            icon: Calculator,
-            href: "https://app.lockated.com/lock_accounts",
-            blank: true,
-        },
+        // {
+        //     name: "Accounting",
+        //     icon: Calculator,
+        //     subItems: [
+        //         {
+        //             name: "Accountants",
+        //             icon: Users,
+        //             subItems: [
+        //                 { name: "Manual Journals", href: "/settings/manual-journal" },
+        //                 { name: "Transactions", href: "/settings/transactions" },
+        //                 { name: "Chart Of Accounts", href: "/settings/chart-journal" },
+        //                 { name: "Opening Balance", href: "/settings/opening-balance" },
+        //                 { name: "Budget", href: "/settings/budget" },
+        //                 { name: "Tax Setup", href: "/settings/tax-setup" },
+        //             ],
+        //         },
+        //     ],
+        // },
     ],
+  
     Settings: [
         {
             name: "Amenities Setup",
@@ -163,11 +176,30 @@ const modulesByPackage = {
             ],
         },
         { name: "FM Groups", icon: Users, href: "/settings/groups" },
-        {
+
+        // {
+        //     name: "Accountants",
+        //     icon: Users,
+        //     subItems: [
+        //         { name: "Manual Journals ", href: "/settings/manual-journal" },
+        //         { name: "Transactions ", href: "/settings/transactions" },
+        //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        //         { name: "Opening Balance", href: "/settings/opening-balance" },
+        //         { name: "Budget", href: "/settings/budget" },
+        //         { name: "Tax Setup ", href: "/settings/tax-setup" },
+        //     ],
+        // },
+
+        
+    ],
+
+  Accounting: [
+            {
             name: "Items",
             icon: FileText,
             subItems: [
-                { name: "Items", href: "/settings/items" },
+                { name: "Items", href: "/accounting/items" },
                 // { name: "Transactions ", href: "/settings/transactions" },
                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
@@ -181,8 +213,8 @@ const modulesByPackage = {
             name: "Sales",
             icon: FileText,
             subItems: [
-                { name: "Customers", href: "/settings/customers" },
-                { name: "Sales Order", href: "/settings/sales-order" },
+                { name: "Customers", href: "/accounting/customers" },
+                { name: "Sales Order", href: "/accounting/sales-order" },
                 // { name: "Transactions ", href: "/settings/transactions" },
                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
@@ -195,13 +227,12 @@ const modulesByPackage = {
             name: "Accountants",
             icon: Users,
             subItems: [
-                { name: "Manual Journals ", href: "/settings/manual-journal" },
-                { name: "Transactions ", href: "/settings/transactions" },
-                // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-                { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-                { name: "Opening Balance", href: "/settings/opening-balance" },
-                { name: "Budget", href: "/settings/budget" },
-                { name: "Tax Setup ", href: "/settings/tax-setup" },
+                { name: "Manual Journals", href: "/accounting/manual-journal" },
+                { name: "Transactions", href: "/accounting/transactions" },
+                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+                { name: "Opening Balance", href: "/accounting/opening-balance" },
+                { name: "Budget", href: "/accounting/budget" },
+                { name: "Tax Setup", href: "/accounting/tax-setup" },
             ],
         },
 
@@ -243,7 +274,7 @@ const modulesByPackage = {
 export const ClubSidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isSidebarCollapsed, setIsSidebarCollapsed, currentSection } = useLayout();
+    const { isSidebarCollapsed, setIsSidebarCollapsed, currentSection, setCurrentSection } = useLayout();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     const toggleExpand = (name: string) => {
@@ -383,7 +414,7 @@ export const ClubSidebar: React.FC = () => {
                 } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
             style={{ top: "4rem", height: "calc(100vh - 65px)" }}
         >
-            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
+            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}> 
                 <button
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                     className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"
@@ -399,10 +430,33 @@ export const ClubSidebar: React.FC = () => {
 
                 <div className="w-full h-4 bg-[#f6f4ee] border-[#e5e1d8] mb-2"></div>
 
+                {/* Section Switcher
+                {!isSidebarCollapsed && (
+                    <div className="flex gap-2 mb-4">
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Club Management" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Club Management")}
+                        >
+                            Club Management
+                        </button>
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Accounting" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Accounting")}
+                        >
+                            Accounting
+                        </button>
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Settings" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Settings")}
+                        >
+                            Settings
+                        </button>
+                    </div>
+                )} */}
+
                 <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
                     <h3
-                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                            }`}
+                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
                     >
                         {isSidebarCollapsed ? "" : currentSection || "Club Management"}
                     </h3>

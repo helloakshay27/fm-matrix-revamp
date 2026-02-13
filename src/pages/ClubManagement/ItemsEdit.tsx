@@ -309,7 +309,7 @@ const ItemsEdit = () => {
                 }
             );
             toast.success("Item updated successfully!");
-            navigate("/settings/items");
+            navigate("/accounting/items");
         } catch (err) {
             toast.error("Failed to update item");
             console.error("Item update error:", err);
@@ -789,7 +789,7 @@ const ItemsEdit = () => {
                         Update
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/settings/items")}>
+                    <Button variant="outline" onClick={() => navigate("/accounting/items")}>
                         Cancel
                     </Button>
                 </div>

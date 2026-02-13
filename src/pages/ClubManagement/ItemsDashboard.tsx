@@ -430,7 +430,7 @@ const token = localStorage.getItem("token");
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/items/add');
+    navigate('/accounting/items/add');
   };
 
   // Render membership status badge
@@ -490,7 +490,7 @@ const columns = [
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/items/details/${item.id}`)}
+          onClick={() => navigate(`/accounting/items/details/${item.id}`)}
           title="View"
           className="p-0"
         >
@@ -499,7 +499,7 @@ const columns = [
 
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/items/edit/${item.id}`)}
+          onClick={() => navigate(`/accounting/items/edit/${item.id}`)}
           title="Edit"
           className="p-0"
         >

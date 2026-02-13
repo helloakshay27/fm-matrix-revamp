@@ -417,7 +417,7 @@ useEffect(() => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/customers/add');
+    navigate('/accounting/customers/add');
   };
 
   // Render membership status badge

@@ -196,7 +196,7 @@ export const ItemsDetails = () => {
     };
 
     const handleClose = () => {
-        navigate("/settings/items");
+        navigate("/accounting/items");
     };
 
     if (loading) {

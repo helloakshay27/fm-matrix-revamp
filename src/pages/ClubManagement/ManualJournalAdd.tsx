@@ -175,7 +175,7 @@ const ManualJournalAdd = () => {
 				},
 			});
 			console.log('API response:', response.data);
-			 navigate('/settings/manual-journal');
+			 navigate('/accounting/manual-journal');
 			// Optionally show success message or redirect
 		} catch (error) {
 			console.error('Error submitting journal entry:', error);

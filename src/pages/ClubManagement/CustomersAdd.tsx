@@ -859,7 +859,7 @@ const CustomersAdd = () => {
         )
             .then(res => {
                 toast.success("Customer saved successfully!");
-                navigate("/settings/customers");
+                navigate("/accounting/customers");
             })
             .catch(err => {
                 toast.error("Failed to save customer");
@@ -1069,7 +1069,7 @@ const CustomersAdd = () => {
                         Save
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/settings/customers")}>
+                    <Button variant="outline" onClick={() => navigate("/accounting/customers")}>
                         Cancel
                     </Button>
                 </div>

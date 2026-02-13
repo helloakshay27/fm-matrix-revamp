@@ -488,7 +488,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/settings/sales-order');
+            navigate('/accounting/sales-order');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             alert('Failed to create sales order');
@@ -1119,7 +1119,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
                     variant="outlined"
-                    onClick={() => navigate('/settings/sales-order')}
+                    onClick={() => navigate('/accounting/sales-order')}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',

@@ -1474,6 +1474,82 @@ const modulesByPackage = {
       href: "/safety/m-safe/circle",
     },
   ],
+Accounting: [
+            {
+            name: "Items",
+            icon: FileText,
+            subItems: [
+                { name: "Items", href: "/accounting/items" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Sales",
+            icon: FileText,
+            subItems: [
+                { name: "Customers", href: "/accounting/customers" },
+                { name: "Sales Order", href: "/accounting/sales-order" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+        {
+            name: "Accountants",
+            icon: Users,
+            subItems: [
+                { name: "Manual Journals", href: "/accounting/manual-journal" },
+                { name: "Transactions", href: "/accounting/transactions" },
+                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+                { name: "Opening Balance", href: "/accounting/opening-balance" },
+                { name: "Budget", href: "/accounting/budget" },
+                { name: "Tax Setup", href: "/accounting/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Configuration",
+            icon: Settings,
+            subItems: [
+                { name: "Charges ", href: "/settings/charge-setup" },
+                { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+            ],
+        },
+
+        {
+            name: "Reports",
+            icon: FileText,
+            subItems: [
+                { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+                {
+                    name: "Profit & Loss",
+                    href: "/settings/reports/profit-and-loss",
+                },
+                {
+                    name: "GST Payable",
+                    href: "/settings/reports/gst-payable",
+                },
+                {
+                    name: "GST Receivable",
+                    href: "/settings/reports/gst-receivable",
+                },
+                {
+                    name: "Tax Summary",
+                    href: "/settings/reports/tax-summary",
+                },
+            ],
+        },
+    ],
+  
 };
 
 export const StacticSidebar = () => {
@@ -1561,6 +1637,8 @@ export const StacticSidebar = () => {
       setCurrentSection("Market Place");
     } else if (path.startsWith("/master")) {
       setCurrentSection("Master");
+    } else if (path.startsWith("/accounting")) {
+      setCurrentSection("Accounting");
     }
   }, [location.pathname, setCurrentSection]);
 
@@ -1913,42 +1991,21 @@ export const StacticSidebar = () => {
             <ChevronLeft className="w-4 h-4" />
           )}
         </button>
-        {/* Add background and border below the collapse button */}
         <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
-        {/* {
-          currentSection && (
-            <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
-              <h3
-                className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                  }`}
-              >
-                {isSidebarCollapsed ? "" : currentSection}
-              </h3>
-            </div>
-          )
-        } */}
-        {/* Show 'Settings' as section label for template routes, otherwise use currentSection */}
-        {!isSidebarCollapsed &&
-          (isOnTemplateRoute
-            ? location.pathname &&
-            templatePaths.some((t) => location.pathname.startsWith(t))
-            : currentSection) && (
-            <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
-              <h3
-                className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
-              >
-                {isOnTemplateRoute &&
-                  location.pathname &&
-                  templatePaths.some((t) => location.pathname.startsWith(t))
-                  ? "Settings"
-                  : currentSection}
-              </h3>
-            </div>
-          )}
+        {/* Show section label for Settings and Accounting */}
+        {!isSidebarCollapsed && currentSection && (
+          <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
+            <h3
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
+            >
+              {currentSection}
+            </h3>
+          </div>
+        )}
 
         <nav className="space-y-2">
-          {currentSection === "Settings" ? (
+          {(currentSection === "Settings" || currentSection === "Accounting") ? (
             isSidebarCollapsed ? (
               <div className="flex flex-col items-center space-y-3 pt-4">
                 {currentModules.map((module) => (
@@ -1965,7 +2022,6 @@ export const StacticSidebar = () => {
                   key={module.name}
                   onClick={() => {
                     if (module.subItems && module.subItems.length > 0) {
-                      // Navigate to the deepest navigable sub-item's href if it exists
                       const deepestHref = findDeepestNavigableItem(module);
                       if (deepestHref) {
                         handleNavigation(deepestHref, currentSection);
