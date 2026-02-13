@@ -470,7 +470,7 @@ export const ChargeSetupDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/charge-setup/add');
+    navigate('/accounting/charge-setup/add');
   };
 
   // Render membership status badge
@@ -711,7 +711,7 @@ export const ChargeSetupDashboard = () => {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/details/${item.id}`)}
+            onClick={() => navigate(`/accounting/charge-setup/details/${item.id}`)}
             title="View"
             className="p-0"
           >
@@ -719,7 +719,7 @@ export const ChargeSetupDashboard = () => {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/edit/${item.id}`)}
+            onClick={() => navigate(`/accounting/charge-setup/edit/${item.id}`)}
             title="Edit"
             className="p-0"
           >

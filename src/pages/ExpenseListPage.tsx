@@ -367,11 +367,11 @@ export const ExpenseListPage: React.FC = () => {
     });
 
     const handleView = (id: number) => {
-        navigate(`/settings/expense/${id}`);
+        navigate(`/accounting/expense/${id}`);
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/settings/expense/edit/${id}`);
+        navigate(`/accounting/expense/edit/${id}`);
     };
 
     const handleDelete = (id: number) => {
@@ -401,7 +401,7 @@ export const ExpenseListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button onClick={() => navigate('/settings/expense/create')} className="gap-2">
+                    <Button onClick={() => navigate('/accounting/expense/create')} className="gap-2">
                         <Plus className="h-4 w-4" />
                         New Expense
                     </Button>

@@ -161,11 +161,11 @@ export const RecurringBillCreatePage: React.FC = () => {
     toast.success("Recurring bill created successfully!");
 
     // Navigate back to dashboard
-    navigate("/settings/recurring-bills");
+    navigate("/accounting/recurring-bills");
   };
 
   const handleCancel = () => {
-    navigate("/settings/recurring-bills");
+    navigate("/accounting/recurring-bills");
   };
 
   return (

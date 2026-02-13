@@ -127,11 +127,11 @@ export const ChargeSetupDetails = () => {
     }, [id]);
 
     const handleEditClick = () => {
-        navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
+        navigate(`/accounting/vas/membership-plan/setup/edit/${id}`);
     };
 
     const handleClose = () => {
-        navigate("/settings/charge-setup");
+        navigate("/accounting/charge-setup");
     };
 
     if (loading) {

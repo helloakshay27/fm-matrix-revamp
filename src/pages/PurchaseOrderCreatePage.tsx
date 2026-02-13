@@ -440,7 +440,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             alert(`Purchase order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/settings/purchase-order');
+            navigate('/accounting/purchase-order');
         } catch (error) {
             console.error('Error submitting purchase order:', error);
             alert('Failed to create purchase order');
@@ -985,7 +985,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
                     variant="outlined"
-                    onClick={() => navigate('/settings/purchase-order')}
+                    onClick={() => navigate('/accounting/purchase-order')}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',

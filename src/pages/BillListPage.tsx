@@ -325,11 +325,11 @@ export const BillListPage: React.FC = () => {
     });
 
     const handleView = (id: number) => {
-        navigate(`/settings/bills/${id}`);
+        navigate(`/accounting/bills/${id}`);
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/settings/bills/edit/${id}`);
+        navigate(`/accounting/bills/edit/${id}`);
     };
 
     const handleDelete = (id: number) => {
@@ -360,7 +360,7 @@ export const BillListPage: React.FC = () => {
                 leftActions={(
                     <Button
                         className='bg-primary text-primary-foreground hover:bg-primary/90'
-                        onClick={() => navigate('/settings/bills/create')}
+                        onClick={() => navigate('/accounting/bills/create')}
                     >
                         <Plus className="w-4 h-4 mr-2" /> New
                     </Button>

@@ -212,7 +212,7 @@ const BillCyclesAdd: React.FC = () => {
             });
             toast.success('Bill cycle created successfully!');
 
-            navigate(`/settings/bill-cycles`);
+            navigate(`/accounting/bill-cycles`);
         } catch (error: any) {
             toast.error('Failed to create bill cycle.');
         }

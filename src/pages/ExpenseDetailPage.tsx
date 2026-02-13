@@ -177,12 +177,12 @@ export const ExpenseDetailPage = () => {
                     setExpense(data);
                 } else {
                     sonnerToast.error('Failed to fetch expense details');
-                    navigate('/settings/expense');
+                    navigate('/accounting/expense');
                 }
             } catch (error) {
                 console.error('Error fetching expense:', error);
                 sonnerToast.error('Error loading expense');
-                navigate('/settings/expense');
+                navigate('/accounting/expense');
             } finally {
                 setLoading(false);
             }
@@ -208,7 +208,7 @@ export const ExpenseDetailPage = () => {
     };
 
     const handleEdit = () => {
-        navigate(`/settings/expense/edit/${id}`);
+        navigate(`/accounting/expense/edit/${id}`);
     };
 
     const handleDelete = async () => {
@@ -230,7 +230,7 @@ export const ExpenseDetailPage = () => {
 
             if (response.ok) {
                 sonnerToast.success('Expense deleted successfully');
-                navigate('/settings/expense');
+                navigate('/accounting/expense');
             } else {
                 sonnerToast.error('Failed to delete expense');
             }
@@ -254,7 +254,7 @@ export const ExpenseDetailPage = () => {
 
     const handleClone = () => {
         sonnerToast.success('Expense cloned successfully');
-        navigate('/settings/expense/create');
+        navigate('/accounting/expense/create');
     };
 
     if (loading || !expense) {
@@ -274,7 +274,7 @@ export const ExpenseDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/settings/expense')}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate('/accounting/expense')}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>

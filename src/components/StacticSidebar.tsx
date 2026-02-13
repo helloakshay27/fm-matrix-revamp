@@ -1474,81 +1474,81 @@ const modulesByPackage = {
       href: "/safety/m-safe/circle",
     },
   ],
-Accounting: [
-            {
-            name: "Items",
-            icon: FileText,
-            subItems: [
-                { name: "Items", href: "/accounting/items" },
-                // { name: "Transactions ", href: "/settings/transactions" },
-                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-                // { name: "Opening Balance", href: "/settings/opening-balance" },
-                // { name: "Budget", href: "/settings/budget" },
-                // { name: "Tax Setup ", href: "/settings/tax-setup" },
-            ],
-        },
+// Accounting: [
+//             {
+//             name: "Items",
+//             icon: FileText,
+//             subItems: [
+//                 { name: "Items", href: "/accounting/items" },
+//                 // { name: "Transactions ", href: "/settings/transactions" },
+//                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+//                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+//                 // { name: "Opening Balance", href: "/settings/opening-balance" },
+//                 // { name: "Budget", href: "/settings/budget" },
+//                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
+//             ],
+//         },
 
-        {
-            name: "Sales",
-            icon: FileText,
-            subItems: [
-                { name: "Customers", href: "/accounting/customers" },
-                { name: "Sales Order", href: "/accounting/sales-order" },
-                // { name: "Transactions ", href: "/settings/transactions" },
-                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-                // { name: "Opening Balance", href: "/settings/opening-balance" },
-                // { name: "Budget", href: "/settings/budget" },
-                // { name: "Tax Setup ", href: "/settings/tax-setup" },
-            ],
-        },
-        {
-            name: "Accountants",
-            icon: Users,
-            subItems: [
-                { name: "Manual Journals", href: "/accounting/manual-journal" },
-                { name: "Transactions", href: "/accounting/transactions" },
-                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
-                { name: "Opening Balance", href: "/accounting/opening-balance" },
-                { name: "Budget", href: "/accounting/budget" },
-                { name: "Tax Setup", href: "/accounting/tax-setup" },
-            ],
-        },
+//         {
+//             name: "Sales",
+//             icon: FileText,
+//             subItems: [
+//                 { name: "Customers", href: "/accounting/customers" },
+//                 { name: "Sales Order", href: "/accounting/sales-order" },
+//                 // { name: "Transactions ", href: "/settings/transactions" },
+//                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+//                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+//                 // { name: "Opening Balance", href: "/settings/opening-balance" },
+//                 // { name: "Budget", href: "/settings/budget" },
+//                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
+//             ],
+//         },
+//         {
+//             name: "Accountants",
+//             icon: Users,
+//             subItems: [
+//                 { name: "Manual Journals", href: "/accounting/manual-journal" },
+//                 { name: "Transactions", href: "/accounting/transactions" },
+//                 { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+//                 { name: "Opening Balance", href: "/accounting/opening-balance" },
+//                 { name: "Budget", href: "/accounting/budget" },
+//                 { name: "Tax Setup", href: "/accounting/tax-setup" },
+//             ],
+//         },
 
-        {
-            name: "Configuration",
-            icon: Settings,
-            subItems: [
-                { name: "Charges ", href: "/settings/charge-setup" },
-                { name: "Bill Cycles ", href: "/settings/bill-cycles" },
-            ],
-        },
+//         {
+//             name: "Configuration",
+//             icon: Settings,
+//             subItems: [
+//                 { name: "Charges ", href: "/settings/charge-setup" },
+//                 { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+//             ],
+//         },
 
-        {
-            name: "Reports",
-            icon: FileText,
-            subItems: [
-                { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
-                {
-                    name: "Profit & Loss",
-                    href: "/settings/reports/profit-and-loss",
-                },
-                {
-                    name: "GST Payable",
-                    href: "/settings/reports/gst-payable",
-                },
-                {
-                    name: "GST Receivable",
-                    href: "/settings/reports/gst-receivable",
-                },
-                {
-                    name: "Tax Summary",
-                    href: "/settings/reports/tax-summary",
-                },
-            ],
-        },
-    ],
+//         {
+//             name: "Reports",
+//             icon: FileText,
+//             subItems: [
+//                 { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+//                 {
+//                     name: "Profit & Loss",
+//                     href: "/settings/reports/profit-and-loss",
+//                 },
+//                 {
+//                     name: "GST Payable",
+//                     href: "/settings/reports/gst-payable",
+//                 },
+//                 {
+//                     name: "GST Receivable",
+//                     href: "/settings/reports/gst-receivable",
+//                 },
+//                 {
+//                     name: "Tax Summary",
+//                     href: "/settings/reports/tax-summary",
+//                 },
+//             ],
+//         },
+//     ],
   
 };
 

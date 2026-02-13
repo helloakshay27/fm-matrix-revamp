@@ -351,11 +351,11 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
     });
 
     const handleView = (id: number) => {
-        navigate(`/settings/sales-order/${id}`);
+        navigate(`/accounting/sales-order/${id}`);
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/settings/sales-order/edit/${id}`);
+        navigate(`/accounting/sales-order/edit/${id}`);
     };
 
     const handleDelete = (id: number) => {
@@ -388,7 +388,7 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
                 leftActions={(
                     <Button
                         className='bg-primary text-primary-foreground hover:bg-primary/90'
-                        onClick={() => navigate('/settings/recurring-invoices/create')}
+                        onClick={() => navigate('/accounting/recurring-invoices/create')}
                     >
                         <Plus className="w-4 h-4 mr-2" /> Add
                     </Button>

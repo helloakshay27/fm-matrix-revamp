@@ -194,11 +194,11 @@ export const BillCyclesDetails = () => {
     }, [id, baseUrl, token]);
 
     const handleEditClick = () => {
-        navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
+        navigate(`/accounting/vas/membership-plan/setup/edit/${id}`);
     };
 
     const handleClose = () => {
-        navigate("/settings/bill-cycles");
+        navigate("/accounting/bill-cycles");
     };
 
     if (loading) {

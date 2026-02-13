@@ -200,14 +200,14 @@ export const BillDetailPage = () => {
     };
 
     const handleEdit = () => {
-        navigate(`/settings/bills/edit/${id}`);
+        navigate(`/accounting/bills/edit/${id}`);
     };
 
     const handleDelete = async () => {
         try {
             // API call to delete sales order
             sonnerToast.success("Sales order deleted successfully");
-            navigate("/settings/bills");
+            navigate("/accounting/bills");
         } catch (error) {
             sonnerToast.error("Failed to delete sales order");
         }
@@ -227,7 +227,7 @@ export const BillDetailPage = () => {
 
     const handleClone = () => {
         sonnerToast.success("Sales order cloned successfully");
-        navigate("/settings/bills/create");
+        navigate("/accounting/bills/create");
     };
 
     if (loading) {
@@ -247,7 +247,7 @@ export const BillDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/bills")}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/bills")}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>

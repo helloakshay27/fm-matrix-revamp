@@ -224,7 +224,7 @@ export const ChartOfAccountsDashboard = () => {
           <Button
             variant="ghost"
             onClick={() =>
-              navigate(`/settings/chart-journal/details/${item.id}`)
+              navigate(`/accounting/chart-journal/details/${item.id}`)
             }
             title="View Details"
             className="p-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
@@ -1119,7 +1119,7 @@ export const ChartOfAccountsDashboard = () => {
 
           <div
             className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer group transition-all"
-            onClick={() => navigate(`/settings/chart-journal/details/${node.id}`)}
+            onClick={() => navigate(`/accounting/chart-journal/details/${node.id}`)}
             title="View Ledger Details"
           >
             <div className="w-8 h-8 flex items-center justify-center">

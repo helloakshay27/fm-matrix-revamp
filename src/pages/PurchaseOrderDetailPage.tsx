@@ -190,7 +190,7 @@ export const PurchaseOrderDetailPage = () => {
     };
 
     const handleEdit = () => {
-        navigate(`/settings/purchase-order/edit/${id}`);
+        navigate(`/accounting/purchase-order/edit/${id}`);
     };
 
     const handleDelete = async () => {
@@ -221,7 +221,7 @@ export const PurchaseOrderDetailPage = () => {
             }
 
             sonnerToast.success("Purchase order deleted successfully");
-            navigate("/settings/purchase-order");
+            navigate("/accounting/purchase-order");
         } catch (error: any) {
             sonnerToast.error(error.message || "Failed to delete purchase order");
         } finally {
@@ -244,7 +244,7 @@ export const PurchaseOrderDetailPage = () => {
 
     const handleClone = () => {
         sonnerToast.success("Purchase order cloned successfully");
-        navigate("/settings/purchase-order/create");
+        navigate("/accounting/purchase-order/create");
     };
 
     if (loading) {
@@ -263,7 +263,7 @@ export const PurchaseOrderDetailPage = () => {
             <div className="min-h-screen bg-background p-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-4 mb-6">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/purchase-order")}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/purchase-order")}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </div>
@@ -271,7 +271,7 @@ export const PurchaseOrderDetailPage = () => {
                         <CardContent className="p-6">
                             <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Purchase Order</h2>
                             <p className="text-red-700 mb-4">{error}</p>
-                            <Button onClick={() => navigate("/settings/purchase-order")} variant="outline">
+                            <Button onClick={() => navigate("/accounting/purchase-order")} variant="outline">
                                 Back to List
                             </Button>
                         </CardContent>
@@ -286,7 +286,7 @@ export const PurchaseOrderDetailPage = () => {
             <div className="min-h-screen bg-background p-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-4 mb-6">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/purchase-order")}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/purchase-order")}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </div>
@@ -309,7 +309,7 @@ export const PurchaseOrderDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/settings/purchase-order")}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/purchase-order")}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>

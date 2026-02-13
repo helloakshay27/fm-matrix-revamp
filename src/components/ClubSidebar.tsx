@@ -223,6 +223,25 @@ const modulesByPackage = {
                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
             ],
         },
+
+         {
+              name: "Purchase Orders",
+              icon: FileText,
+              subItems: [
+                { name: "Purchase Order", href: "/accounting/purchase-order" },
+                { name: "Bills", href: "/accounting/bills" },
+                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
+                { name: "Vendor", href: "/maintenance/vendor" },
+                { name: "Expense", href: "/accounting/expense" },
+                { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
+                { name: "Payments Made", href: "/accounting/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+              ],
+            },
+        
         {
             name: "Accountants",
             icon: Users,
@@ -240,8 +259,8 @@ const modulesByPackage = {
             name: "Configuration",
             icon: Settings,
             subItems: [
-                { name: "Charges ", href: "/settings/charge-setup" },
-                { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+                { name: "Charges ", href: "/accounting/charge-setup" },
+                { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
             ],
         },
 
@@ -249,22 +268,22 @@ const modulesByPackage = {
             name: "Reports",
             icon: FileText,
             subItems: [
-                { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+                { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
                 {
                     name: "Profit & Loss",
-                    href: "/settings/reports/profit-and-loss",
+                    href: "/accounting/reports/profit-and-loss",
                 },
                 {
                     name: "GST Payable",
-                    href: "/settings/reports/gst-payable",
+                    href: "/accounting/reports/gst-payable",
                 },
                 {
                     name: "GST Receivable",
-                    href: "/settings/reports/gst-receivable",
+                    href: "/accounting/reports/gst-receivable",
                 },
                 {
                     name: "Tax Summary",
-                    href: "/settings/reports/tax-summary",
+                    href: "/accounting/reports/tax-summary",
                 },
             ],
         },

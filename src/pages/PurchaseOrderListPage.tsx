@@ -308,11 +308,11 @@ export const PurchaseOrderListPage: React.FC = () => {
     });
 
     const handleView = (id: number) => {
-        navigate(`/settings/purchase-order/${id}`);
+        navigate(`/accounting/purchase-order/${id}`);
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/settings/purchase-order/edit/${id}`);
+        navigate(`/accounting/purchase-order/edit/${id}`);
     };
 
     const handleDelete = (id: number) => {
@@ -341,7 +341,7 @@ export const PurchaseOrderListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button onClick={() => navigate('/settings/purchase-order/create')} className="gap-2">
+                    <Button onClick={() => navigate('/accounting/purchase-order/create')} className="gap-2">
                         <Plus className="h-4 w-4" />
                         New
                     </Button>

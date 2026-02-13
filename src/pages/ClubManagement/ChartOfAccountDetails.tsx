@@ -130,7 +130,7 @@ export const ChartOfAccountDetails = () => {
             <Button
                 variant="ghost"
                 className="mb-4 px-0"
-                onClick={() => navigate("/settings/chart-journal")}
+                onClick={() => navigate("/accounting/chart-journal")}
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back

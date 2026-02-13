@@ -224,7 +224,7 @@ export const ExpenseCreatePage: React.FC = () => {
             if (response.ok) {
                 const result = await response.json();
                 sonnerToast.success('Expense created successfully!');
-                navigate('/settings/expense');
+                navigate('/accounting/expense');
             } else {
                 const errorData = await response.json();
                 sonnerToast.error(errorData.message || 'Failed to create expense');
@@ -253,7 +253,7 @@ export const ExpenseCreatePage: React.FC = () => {
                 <div className="flex gap-3">
                     <Button
                         variant="outlined"
-                        onClick={() => navigate('/settings/expense')}
+                        onClick={() => navigate('/accounting/expense')}
                     >
                         Cancel
                     </Button>
