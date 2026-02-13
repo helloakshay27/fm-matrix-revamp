@@ -163,7 +163,7 @@ const isPulseSite = hostname === "pulse.lockated.com";
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 const isClubSite =
-  hostname.includes("club.lockated.com") || hostname === "localhost";
+  hostname.includes("club.lockated.com");
 
   const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");
