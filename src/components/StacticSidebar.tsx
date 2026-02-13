@@ -468,7 +468,6 @@ const modulesByPackage = {
     //   icon: PackagePlus,
     //   href: '/master/inventory-sub-type'
     // },
-
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -683,7 +682,11 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
 
@@ -907,7 +910,10 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+      name: "Patrolling",
+      icon: Shield,
+      href: "/security/patrolling",
+      subItems: [
         {
           name: "Patrolling Info",
           href: "/security/patrolling",
@@ -918,7 +924,7 @@ const modulesByPackage = {
           href: "/security/patrolling/response",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
   ],
   "Value Added Services": [
@@ -1048,24 +1054,24 @@ const modulesByPackage = {
     //   ]
     // },
     {
-      name: 'Projects & Tasks',
+      name: "Projects & Tasks",
       icon: Briefcase,
       subItems: [
         {
-          name: 'Projects',
-          href: "/vas/projects"
+          name: "Projects",
+          href: "/vas/projects",
         },
         {
-          name: 'Tasks',
-          href: "/vas/tasks"
+          name: "Tasks",
+          href: "/vas/tasks",
         },
         {
-          name: 'Sprint',
-          href: "/vas/sprint"
+          name: "Sprint",
+          href: "/vas/sprint",
         },
         {
-          name: 'Issues',
-          href: "/vas/issues"
+          name: "Issues",
+          href: "/vas/issues",
         },
         {
           name: "Channels",
@@ -1073,24 +1079,23 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: 'Opportunity Register',
-          href: "/vas/opportunity"
+          name: "Opportunity Register",
+          href: "/vas/opportunity",
         },
         {
-          name: 'ToDo',
-          href: "/vas/todo"
+          name: "ToDo",
+          href: "/vas/todo",
         },
         {
-          name: 'Documents',
-          href: "/vas/documents"
+          name: "Documents",
+          href: "/vas/documents",
         },
         {
-          name: 'Minutes of Meeting',
-          href: "/vas/mom"
+          name: "Minutes of Meeting",
+          href: "/vas/mom",
         },
-      ]
+      ],
     },
-
   ],
   "Market Place": [
     {
@@ -1365,7 +1370,7 @@ const modulesByPackage = {
           href: "/settings/community-modules/amenity-setup",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
     {
       icon: Settings,
@@ -1403,14 +1408,58 @@ const modulesByPackage = {
           name: "Issue Types",
           href: "/settings/project-task-setup/issue-types",
         },
-      ]
+      ],
     },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
-    // {
-    //   name: 'Currency',
-    //   icon: Currency,
-    //   href: '/settings/currency',
-    // }
+    {
+      name: "Items",
+      icon: FileText,
+      subItems: [
+        { name: "Items", href: "/settings/items" },
+
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
+    {
+      name: "Sales",
+      icon: FileText,
+      subItems: [
+        { name: "Customers", href: "/settings/customers" },
+        { name: "Sales Order", href: "/settings/sales-order" },
+
+
+        { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
+
+    {
+      name: "Purchase Orders",
+      icon: FileText,
+      subItems: [
+        { name: "Purchase Order", href: "/settings/purchase-order" },
+        { name: "Bills", href: "/settings/bills" },
+        { name: "Recurring Bills", href: "/settings/recurring-bills" },
+        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Expense", href: "/settings/expense" },
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
 
     {
       name: "Common Modules",
@@ -1515,6 +1564,19 @@ export const StacticSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
+  // Template paths for route detection
+  const templatePaths = [
+    "/master/communication-template",
+    "/master/template/root-cause-analysis",
+    "/master/template/preventive-action",
+    "/master/template/short-term-impact",
+    "/master/template/long-term-impact",
+    "/master/template/corrective-action",
+  ];
+  const isOnTemplateRoute = templatePaths.some((t) =>
+    location.pathname.startsWith(t)
+  );
+
   // Helper function to recursively filter out asset-related items
   const filterAssetItems = (items: any[]): any[] => {
     if (!assetRestricted) return items;
@@ -1522,9 +1584,11 @@ export const StacticSidebar = () => {
     return items
       .filter((item: any) => {
         // Filter out direct asset links
-        if (item.href === "/maintenance/asset" ||
+        if (
+          item.href === "/maintenance/asset" ||
           item.href === "/maintenance/audit/assets" ||
-          item.href?.startsWith("/settings/asset-setup")) {
+          item.href?.startsWith("/settings/asset-setup")
+        ) {
           return false;
         }
         // Filter out items named "Asset Setup" or "Assets"
@@ -1852,16 +1916,36 @@ export const StacticSidebar = () => {
         {/* Add background and border below the collapse button */}
         <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
-        {currentSection && (
-          <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
-            <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
-            >
-              {isSidebarCollapsed ? "" : currentSection}
-            </h3>
-          </div>
-        )}
+        {/* {
+          currentSection && (
+            <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
+              <h3
+                className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
+                  }`}
+              >
+                {isSidebarCollapsed ? "" : currentSection}
+              </h3>
+            </div>
+          )
+        } */}
+        {/* Show 'Settings' as section label for template routes, otherwise use currentSection */}
+        {!isSidebarCollapsed &&
+          (isOnTemplateRoute
+            ? location.pathname &&
+            templatePaths.some((t) => location.pathname.startsWith(t))
+            : currentSection) && (
+            <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
+              <h3
+                className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
+              >
+                {isOnTemplateRoute &&
+                  location.pathname &&
+                  templatePaths.some((t) => location.pathname.startsWith(t))
+                  ? "Settings"
+                  : currentSection}
+              </h3>
+            </div>
+          )}
 
         <nav className="space-y-2">
           {currentSection === "Settings" ? (
@@ -1914,7 +1998,7 @@ export const StacticSidebar = () => {
             currentModules.map((module) => renderMenuItem(module))
           )}
         </nav>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

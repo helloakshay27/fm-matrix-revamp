@@ -633,26 +633,26 @@ const handleDownloadSocietyQR = async () => {
   // Custom left actions
   const renderCustomActions = () => (
     <div className="flex gap-3">
-      <Button
+      {/* <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
         onClick={handleAddMembership}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add
-      </Button>
+      </Button> */}
     </div>
   );
 
   // Custom right actions
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button
+      {/* <Button
         variant="outline"
         onClick={handleDownloadSocietyQR}
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
       >
         <QrCode className="w-4 h-4 " />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -691,7 +691,7 @@ const handleDownloadSocietyQR = async () => {
               {renderCustomActions()}
             </div>
           }
-          onFilterClick={() => setIsFilterOpen(true)}
+          // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
           searchPlaceholder="Search Members"
           onSearchChange={handleSearch}

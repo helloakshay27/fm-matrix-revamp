@@ -1,30 +1,8 @@
-// Charge Setup interface for API data
-export interface ChargeSetup {
-  id: number;
-  name: string;
-  value: number | null;
-  description: string;
-  charge_category_id: number;
-  charge_category: string;
-  flat_category_id: number | null;
-  gst_applicable: boolean;
-  basis: string;
-  hsn_code: string;
-  igst_rate: number;
-  cgst_rate: number;
-  sgst_rate: number;
-  uom: string;
-  active: number;
-  society_id: number | null;
-  created_by: number;
-  edited_by: number | null;
-  deleted_by: number | null;
-  created_at: string;
-  updated_at: string;
-}
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import Input from '@/components/ui/input';
+import axios from 'axios';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -55,75 +33,40 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface ClubMember {
+
+
+interface CustomerData {
   id: number;
-  user_id: number;
-  pms_site_id: number;
-  club_member_enabled: boolean;
-  membership_number: string;
-  access_card_enabled: boolean;
-  access_card_id: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-  updated_at: string;
-  user_name: string;
-  site_name: string;
-  user_email: string;
-  user_mobile: string;
-  identification_image: string | null;
-  avatar: string;
-  attachments: any[];
-  snag_answers: any[];
-  user: {
-    id: number;
-    email: string;
-    firstname: string;
-    lastname: string;
-    mobile: string;
-    gender: string | null;
-    birth_date: string | null;
-    full_name: string;
-    addresses: any[];
-  };
+  name: string;
+  company_name: string;
+  email: string;
+  work_phone: string;
+  receivables: number;
+  unused_credits: number;
 }
 
-interface GroupMembershipData {
-  id: number;
-  membership_plan_id: number;
-  pms_site_id: number;
-  start_date: string | null;
-  end_date: string | null;
-  preferred_start_date?: string | null;
-  referred_by?: string;
-  total_members?: number;
-  group_leader_mobile?: string;
-  created_at: string;
-  updated_at: string;
-  club_members: ClubMember[];
-  allocation_payment_detail?: {
-    id: number;
-    club_member_allocation_id: number;
-    base_amount: string;
-    discount: string;
-    cgst: string;
-    sgst: string;
-    total_tax: string;
-    total_amount: string;
-    landed_amount: string;
-    payment_mode: string;
-    payment_status: string;
-    created_at: string;
-    updated_at: string;
-  } | null;
-}
+const dummyCustomers: CustomerData[] = [
+  {
+    id: 1,
+    name: "Lockated",
+    company_name: "Lockated",
+    email: "nita@gmail.com",
+    work_phone: "0770777771",
+    receivables: 0,
+    unused_credits: 1370,
+  },
+  
+];
 
-export const ChargeSetupDashboard = () => {
+
+export const CustomersDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
 
   // State management
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
+  // const [journals, setJournals] = useState([]);
+  const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,42 +86,48 @@ export const ChargeSetupDashboard = () => {
     startDate: '',
     endDate: ''
   });
+  const [customers, setCustomers] = useState<CustomerData[]>([]);
+  useEffect(() => {
+  setCustomers(dummyCustomers);
+}, []);
+
+useEffect(() => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    // Fetch customer list
+    axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      console.log('Customer List:', res.data);
+      setCustomers(res.data || []);
+      // Fetch customer detail for first customer (example)
+      if (res.data && res.data.length > 0) {
+        const customerId = res.data[0].id;
+        axios.get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined,
+            'Content-Type': 'application/json'
+          }
+        }).then(detailRes => {
+          console.log('Customer Detail:', detailRes.data);
+        });
+      }
+    });
+  }, []);
 
   const perPage = 20;
 
-  // Fetch charge setups data
-  const [chargeSetups, setChargeSetups] = useState<ChargeSetup[]>([]);
-  const fetchChargeSetups = useCallback(async () => {
-    setLoading(true);
-    try {
-      // const token = localStorage.getItem('token');
-      // const baseUrl = localStorage.getItem("baseUrl");
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-
-      const res = await fetch(`${baseUrl}/account/charge_setups.json`, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch charge setups');
-      const data = await res.json();
-      setChargeSetups(Array.isArray(data.charge_setups) ? data.charge_setups : []);
-    } catch (err) {
-      toast.error('Failed to fetch charge setups');
-      setChargeSetups([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  
+ console.log("customers data:", customers)
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
-  console.log("chargeSetups", chargeSetups);
-
+//   console.log("journals data:", journals);
   // Effect to handle debounced search
   useEffect(() => {
     const currentSearch = filters.search || '';
@@ -196,10 +145,8 @@ export const ChargeSetupDashboard = () => {
     setCurrentPage(1);
   }, [debouncedSearchQuery]);
 
-  // Fetch charge setups on mount
-  useEffect(() => {
-    fetchChargeSetups();
-  }, [fetchChargeSetups]);
+  // Fetch on mount and when dependencies change
+ 
 
   // Handle export
   const handleExport = async () => {
@@ -470,7 +417,7 @@ export const ChargeSetupDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/charge-setup/add');
+    navigate('/settings/customers/add');
   };
 
   // Render membership status badge
@@ -510,255 +457,56 @@ export const ChargeSetupDashboard = () => {
   };
 
   // Define columns for EnhancedTable
-  // const columns = [
-  //   { key: 'actions', label: 'Actions', sortable: false },
-  //   { key: 'id', label: 'Group ID', sortable: true },
-  //   { key: 'membership_plan_id', label: 'Plan ID', sortable: true },
-  //   { key: 'member_count', label: 'Members', sortable: false },
-  //   { key: 'member_names', label: 'Member Names', sortable: false },
-  //   { key: 'member_emails', label: 'Emails', sortable: false },
-  //   { key: 'member_mobiles', label: 'Mobiles', sortable: false },
-  //   { key: 'site_name', label: 'Site Name', sortable: true },
-  //   { key: 'start_date', label: 'Start Date', sortable: true },
-  //   { key: 'end_date', label: 'End Date', sortable: true },
-  //   { key: 'referred_by', label: 'Referred By', sortable: true },
-  //   { key: 'membershipStatus', label: 'Status', sortable: false },
-  //   { key: 'created_at', label: 'Created On', sortable: true }
-  // ];
 
-  // const columns = [
-  //   { key: 'actions', label: 'Actions', sortable: false },
-  //   { key: 'date', label: 'Date', sortable: true },
-  //   { key: 'journal', label: 'Journal', sortable: true },
-  //   { key: 'reference_number', label: 'Reference Number', sortable: true },
-  //   { key: 'status', label: 'Status', sortable: true },
-  //   { key: 'notes', label: 'Notes', sortable: false },
-  //   { key: 'amount', label: 'Amount', sortable: true },
-  //   { key: 'reporting_method', label: 'Reporting Method', sortable: true }
-  // ];
-
-
-  const columns = [
-    { key: 'actions', label: 'Actions', sortable: false },
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'charge_category', label: 'Category', sortable: true },
-    { key: 'gst_applicable', label: 'GST Applicable', sortable: true },
-    // { key: 'value', label: 'Value', sortable: true },
-    // { key: 'description', label: 'Description', sortable: false },
-    // { key: 'hsn_code', label: 'HSN Code', sortable: false },
-    // { key: 'basis', label: 'Basis', sortable: false },
-    // { key: 'igst_rate', label: 'IGST', sortable: false },
-    // { key: 'cgst_rate', label: 'CGST', sortable: false },
-    // { key: 'sgst_rate', label: 'SGST', sortable: false },
-    // { key: 'uom', label: 'UOM', sortable: false },
-    // { key: 'active', label: 'Active', sortable: false },
-    { key: 'created_by', label: 'Created By', sortable: true },
-    { key: 'created_at', label: 'Created At', sortable: true },
-  ];
+const columns = [
+     { key: 'actions', label: 'Actions', sortable: false },
+  { key: "name", label: "Name", sortable: true },
+  { key: "company_name", label: "Company Name", sortable: true },
+  { key: "email", label: "Email", sortable: true },
+  { key: "work_phone", label: "Work Phone", sortable: true },
+  { key: "receivables", label: "Receivables (BCY)", sortable: true },
+  { key: "unused_credits", label: "Unused Credits (BCY)", sortable: true },
+];
 
 
 
   // Render cell content
-  //   const renderCell = (item: GroupMembershipData, columnKey: string) => {
-  //     if (columnKey === 'actions') {
-  //       return (
-  //         <div className="flex gap-2">
-  //           <Button
-  //             variant="ghost"
-  //             onClick={() => navigate(`/club-management/membership/group-details/${item.id}`)}
-  //             title="View Details"
-  //             className="p-0"
-  //           >
-  //             {/* <Eye className="w-4 h-4" /> */}
-  //           </Button>
-  //           <Button
-  //             variant="ghost"
-  //             onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
-  //             title="Edit"
-  //             className="p-0"
-  //           >
-  //             {/* <Edit className="w-4 h-4" /> */}
-  //           </Button>
-  //         </div>
-  //       );
-  //     }
 
-  //     if (columnKey === 'member_count') {
-  //       return (
-  //         <div className="flex items-center gap-2">
-  //           <Users className="w-4 h-4 text-[#C72030]" />
-  //           <span className="font-medium">{item.club_members?.length || 0}</span>
-  //         </div>
-  //       );
-  //     }
+  const renderCell = (item: CustomerData, columnKey: string) => {
+  if (columnKey === "actions") {
+    return (
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+        //   onClick={() => navigate(`/settings/items/details`)}
+          title="View"
+          className="p-0"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
 
-  //     if (columnKey === 'member_names') {
-  //       const names = item.club_members?.map(m => m.user_name).filter(Boolean);
-  //       if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
+        <Button
+          variant="ghost"
+        //   onClick={() => navigate(`/settings/items/edit`)}
+          title="Edit"
+          className="p-0"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  }
 
-  //       return (
-  //         <div className="flex flex-col gap-1">
-  //           {names.slice(0, 2).map((name, idx) => (
-  //             <span key={idx} className="text-sm">{name}</span>
-  //           ))}
-  //           {names.length > 2 && (
-  //             <span 
-  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-  //               onClick={() => {
-  //                 setModalData({
-  //                   isOpen: true,
-  //                   title: 'Member Names',
-  //                   items: names
-  //                 });
-  //               }}
-  //             >
-  //               +{names.length - 2} more
-  //             </span>
-  //           )}
-  //         </div>
-  //       );
-  //     }
+  if (columnKey === "receivables" || columnKey === "unused_credits") {
+    // return `₹${item[columnKey].toLocaleString()}`;
+  }
 
-  //     if (columnKey === 'member_emails') {
-  //       const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
-  //       if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
+  return item[columnKey as keyof CustomerData] ?? "--";
 
-  //       return (
-  //         <div className="flex flex-col gap-1">
-  //           {emails.slice(0, 2).map((email, idx) => (
-  //             <span key={idx} className="text-sm">{email}</span>
-  //           ))}
-  //           {emails.length > 2 && (
-  //             <span 
-  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-  //               onClick={() => {
-  //                 setModalData({
-  //                   isOpen: true,
-  //                   title: 'Member Emails',
-  //                   items: emails
-  //                 });
-  //               }}
-  //             >
-  //               +{emails.length - 2} more
-  //             </span>
-  //           )}
-  //         </div>
-  //       );
-  //     }
+ 
+};
 
-  //     if (columnKey === 'member_mobiles') {
-  //       const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
-  //       if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-
-  //       return (
-  //         <div className="flex flex-col gap-1">
-  //           {mobiles.slice(0, 2).map((mobile, idx) => (
-  //             <span key={idx} className="text-sm">{mobile}</span>
-  //           ))}
-  //           {mobiles.length > 2 && (
-  //             <span 
-  //               className="text-xs text-blue-600 cursor-pointer hover:underline" 
-  //               onClick={() => {
-  //                 setModalData({
-  //                   isOpen: true,
-  //                   title: 'Member Mobiles',
-  //                   items: mobiles
-  //                 });
-  //               }}
-  //             >
-  //               +{mobiles.length - 2} more
-  //             </span>
-  //           )}
-  //         </div>
-  //       );
-  //     }
-
-  //     if (columnKey === 'site_name') {
-  //       const siteName = item.club_members?.[0]?.site_name;
-  //       return siteName || <span className="text-gray-400">-</span>;
-  //     }
-
-  //     if (columnKey === 'membershipStatus') {
-  //       return renderStatusBadge(item.start_date, item.end_date, false);
-  //     }
-
-  //     if (columnKey === 'start_date' || columnKey === 'end_date') {
-  //       const dateValue = item[columnKey];
-  //       if (!dateValue) return <span className="text-gray-400">-</span>;
-  //       return new Date(dateValue).toLocaleDateString('en-GB');
-  //     }
-
-  //     if (columnKey === 'created_at') {
-  //       const createdAt = item.club_members?.[0]?.created_at;
-  //       if (!createdAt) return <span className="text-gray-400">-</span>;
-  //       return new Date(createdAt).toLocaleDateString('en-GB');
-  //     }
-
-  //     if (columnKey === 'referred_by') {
-  //       return item.referred_by || <span className="text-gray-400">-</span>;
-  //     }
-
-  //     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
-  //       return <span className="text-gray-400">--</span>;
-  //     }
-
-  //     return item[columnKey];
-  //   };
-
-  const renderCell = (item: ChargeSetup, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/details/${item.id}`)}
-            title="View"
-            className="p-0"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/edit/${item.id}`)}
-            title="Edit"
-            className="p-0"
-          >
-            {/* <Edit className="w-4 h-4" /> */}
-          </Button>
-        </div>
-      );
-    }
-    // ✅ GST Applicable
-    if (columnKey === 'gst_applicable') {
-      return item.gst_applicable ? (
-        <span className="text-green-600 font-medium">Yes</span>
-      ) : (
-        <span className="text-red-600 font-medium">No</span>
-      );
-    }
-    // if (columnKey === 'active') {
-    //   return item.active ? <span className="text-green-600 font-medium">Yes</span> : <span className="text-red-600 font-medium">No</span>;
-    // }
-    if (columnKey === 'created_at') {
-      // return item.created_at ? new Date(item.created_at).toLocaleString() : '--';
-      if (!item.created_at) return '--';
-
-      const date = new Date(item.created_at);
-
-      const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')
-        }/${date.getFullYear()}`;
-
-      const formattedTime = date.toLocaleTimeString(); // keeps time as-is
-
-      return `${formattedDate} ${formattedTime}`;
-    }
-    if (columnKey === 'value') {
-      return item.value !== null && item.value !== undefined ? item.value : '--';
-    }
-    return item[columnKey] !== null && item[columnKey] !== undefined && item[columnKey] !== '' ? item[columnKey] : <span className="text-gray-400">--</span>;
-  };
-
-
+  
   // Custom left actions
   const renderCustomActions = () => (
     <div className="flex gap-3">
@@ -775,45 +523,54 @@ export const ChargeSetupDashboard = () => {
   // Custom right actions
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button
+      {/* <Button
         variant="outline"
         onClick={handleDownloadSocietyQR}
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
       >
         <QrCode className="w-4 h-4 " />
-      </Button>
+      </Button> */}
     </div>
   );
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+         <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Customers</h1>
+      </div>
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
         {searchLoading && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-sm">Searching members...</span>
+              <span className="text-sm">Searching...</span>
             </div>
           </div>
         )}
         <EnhancedTable
-          data={chargeSetups}
+          data={customers || []}
           columns={columns}
           renderCell={renderCell}
           pagination={false}
-          enableExport={false}
-          exportFileName="charge-setups"
-          storageKey="charge-setups-table"
-          className="transition-all duration-500 ease-in-out"
-          loading={loading}
-          hideColumnsButton={true}
-          
-          loadingMessage="Loading charge setups..."
-             leftActions={
+          enableExport={true}
+          exportFileName="club-group-memberships"
+          handleExport={handleExport}
+          storageKey="club-group-memberships-table"
+          leftActions={
             <div className="flex gap-3">
               {renderCustomActions()}
-            </div>}
+            </div>
+          }
+          // onFilterClick={() => setIsFilterOpen(true)}
+          rightActions={renderRightActions()}
+          searchPlaceholder="Search "
+          onSearchChange={handleSearch}
+          hideTableExport={true}
+          hideColumnsButton={true}
+          className="transition-all duration-500 ease-in-out"
+          loading={loading}
+          loadingMessage="Loading group memberships..."
         />
 
         {/* Pagination Section */}
@@ -846,11 +603,11 @@ export const ChargeSetupDashboard = () => {
       </div>
 
       {/* Filter Dialog */}
-      <ClubMembershipFilterDialog
+      {/* <ClubMembershipFilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
-      />
+      /> */}
 
       {/* Member Details Modal */}
       <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}>
@@ -879,4 +636,4 @@ export const ChargeSetupDashboard = () => {
   );
 };
 
-export default ChargeSetupDashboard;
+export default CustomersDashboard;

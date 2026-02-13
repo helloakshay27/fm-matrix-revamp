@@ -962,6 +962,97 @@ import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
 // import RouteLogger from "./components/RouteLogger";
 
+import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
+import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
+import { AddClubEventPage } from "./pages/AddClubEventPage";
+import { AddFacilityBookingClubPage } from "./pages/ClubManagement/AmenityBookingAdd";
+import { AddGuestUserPage } from "./pages/ClubManagement/AddGuestUserPage";
+import { AddMembershipPlanPage } from "./pages/AddMembershipPlanPage";
+import { AddPaymentPlan } from "./pages/settings/AddPaymentPlan";
+import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBookingDetails";
+import { BillCreatePage } from "./pages/BillCreatePage";
+import { BillCyclesDetails } from "./pages/ClubManagement/BillCyclesDetails";
+import { BillDetailPage } from "./pages/BillDetailPage";
+import { BillListPage } from "./pages/BillListPage";
+import { BookingSetupClubDashboard } from "./pages/ClubManagement/AmenityBookingSetupClub";
+import { BookingSetupDetailClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubDetails";
+import { BudgetDashboard } from "./pages/ClubManagement/BudgetDashboard";
+import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
+import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDetails";
+import { ClubBroadcastDashboard } from "./pages/ClubBroadcastDashboard";
+import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
+import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
+import { ClubEventsPage } from "./pages/ClubEventPage";
+import { EditBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubEdit";
+import { EditGuestUserPage } from "./pages/ClubManagement/EditGuestUserPage";
+import { EditMembershipPlanPage } from "./pages/EditMembershipPlanPage";
+import { ExpenseCreatePage } from "./pages/ExpenseCreatePage";
+import { ExpenseDetailPage } from "./pages/ExpenseDetailPage";
+import { ExpenseListPage } from "./pages/ExpenseListPage";
+import { GuestUserMasterDashboard } from "./pages/ClubManagement/GuestUserMasterDashboard";
+import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
+import { ManualJournalDetails } from "./pages/ClubManagement/ManualJournalDetails";
+import { MembershipPlanDashboard } from "./pages/MembershipPlanDashboard";
+import { MembershipPlanDetailsPage } from "./pages/MembershipPlanDetailsPage";
+import { PaymentDetailPage } from "./pages/settings/PaymentDetailPage";
+import { PaymentManagementDashboard } from "./pages/settings/PaymentManagementDashboard";
+import { PaymentPlanDetails } from "./pages/settings/PaymentPlanDetails";
+import { PaymentPlanSetup } from "./pages/settings/PaymentPlanSetup";
+import { PurchaseOrderCreatePage } from "./pages/PurchaseOrderCreatePage";
+import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
+import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
+import { RecurringBillCreatePage } from "./pages/ClubManagement/RecurringBillCreatePage";
+import { RecurringBillsDashboard } from "./pages/ClubManagement/RecurringBillsDashboard";
+import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
+import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
+import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
+import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
+import { SalesOrderDetailPage } from "./pages/SalesOrderDetailPage";
+import { SalesOrderListPage } from "./pages/SalesOrderListPage";
+import { TransactionsDetails } from "./pages/ClubManagement/TransationsDetails";
+import { ViewClubOccupantUser } from "./pages/master/ViewClubOccupantUser";
+import { ViewGuestUserPage } from "./pages/ClubManagement/ViewGuestUserPage";
+import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
+import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPage";
+import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
+import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
+import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
+import BillCyclesDashboard from "./pages/ClubManagement/BillCyclesDashboard";
+import BudgetAdd from "./pages/ClubManagement/BudgetAdd";
+import BudgetAddNew from "./pages/ClubManagement/BudgetAddNew";
+import BudgetDetails from "./pages/ClubManagement/BudgetDetails";
+import ChargeSetupAdd from "./pages/ClubManagement/ChargeSetupAdd";
+import ChargeSetupDashboard from "./pages/ClubManagement/ChargeSetupDashboard";
+import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
+import ClubGroupMembershipDashboard from "./pages/ClubManagement/ClubGroupMembershipDashboard";
+import ClubGroupMembershipDetails from "./pages/ClubManagement/ClubGroupMembershipDetails";
+import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
+import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
+import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
+import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
+import EditBudget from "./pages/ClubManagement/BudgetEdit";
+import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
+import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
+import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
+import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
+import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
+import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboard";
+import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
+import OpeningBalance from "./pages/ClubManagement/OpeningBalance";
+import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
+import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
+import TaxSetup from "./pages/ClubManagement/TaxSetup";
+import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
+import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
+import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
+import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
+import useRouteLogger from "./hooks/useRouteLogger";
+import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
+import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
+
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -1013,7 +1104,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1914,6 +2005,516 @@ function App() {
                       <Route
                         path="/crm/point-expiry/edit"
                         element={<EditCRMWalletPointExpiry />}
+                      />
+
+                      {/* Club Management Routes */}
+                      <Route
+                        path="/settings/vas/booking/setup"
+                        element={<BookingSetupDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/add"
+                        element={<AddBookingSetupPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/details/:id"
+                        element={<BookingSetupDetailPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/edit/:id"
+                        element={<EditBookingSetupPage />}
+                      />
+
+                      {/* new rountes for amenity setup for recess */}
+                      <Route
+                        path="/settings/vas/booking-club/setup"
+                        element={<BookingSetupClubDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/add"
+                        element={<AddBookingSetupClubPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/details/:id"
+                        element={<BookingSetupDetailClubPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/edit/:id"
+                        element={<EditBookingSetupClubPage />}
+                      />
+                      {/* .... */}
+
+                      <Route
+                        path="/settings/vas/membership-plan/setup"
+                        element={<MembershipPlanDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/add"
+                        element={<AddMembershipPlanPage />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/edit/:id"
+                        element={<EditMembershipPlanPage />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/details/:id"
+                        element={<MembershipPlanDetailsPage />}
+                      />
+                      <Route
+                        path="/settings/accessories"
+                        element={<AccessoriesSetup />}
+                      />
+                      <Route
+                        path="/settings/accessories/:id"
+                        element={<AccessoriesDetailsPage />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/setup"
+                        element={<PaymentPlanSetup />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/add"
+                        element={<AddPaymentPlan />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/edit/:id"
+                        element={<AddPaymentPlan />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/details/:id"
+                        element={<PaymentPlanDetails />}
+                      />
+                      <Route
+                        path="/settings/payment-management"
+                        element={<PaymentManagementDashboard />}
+                      />
+                      <Route
+                        path="/settings/payment-management/:id"
+                        element={<PaymentDetailPage />}
+                      />
+                      <Route
+                        path="/club-management/membership"
+                        element={<ClubMembershipDashboard />}
+                      />
+                      <Route
+                        path="/club-management/membership/groups"
+                        element={<ClubGroupMembershipDashboard />}
+                      />
+                      <Route
+                        path="/club-management/membership/add"
+                        element={<AddClubMembershipPage />}
+                      />
+                      <Route
+                        path="/club-management/membership/add-group"
+                        element={<AddGroupMembershipPage />}
+                      />
+                      <Route
+                        path="/club-management/group-membership/:id/edit"
+                        element={<AddGroupMembershipPage />}
+                      />
+
+                      <Route
+                        path="/club-management/membership/group-details/:id"
+                        element={<ClubGroupMembershipDetails />}
+                      />
+                      <Route
+                        path="/club-management/membership/:id"
+                        element={<ClubMembershipDetailPage />}
+                      />
+                      <Route
+                        path="/club-management/membership/:id/edit"
+                        element={<AddClubMembershipPage />}
+                      />
+
+                      {/* Club Management - FM Users */}
+                      <Route
+                        path="/club-management/users/fm-users"
+                        element={<FMUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/add"
+                        element={<AddFMUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/edit/:id"
+                        element={<EditFMUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/view/:id"
+                        element={<ViewFMUserPage />}
+                      />
+
+                      <Route
+                        path="/settings/manual-journal"
+                        element={<ManualJournalDashboard />}
+                      />
+                      <Route
+                        path="/settings/manual-journal/add"
+                        element={<ManualJournalAdd />}
+                      />
+                      <Route
+                        path="/settings/manual-journal/details/:id"
+                        element={<ManualJournalDetails />}
+                      />
+                      <Route
+                        path="/settings/manual-journal/edit/:id"
+                        element={<ManualJournalEdit />}
+                      />
+
+                      <Route
+                        path="/settings/recurring-journal"
+                        element={<RecurringJournalDashboard />}
+                      />
+                      <Route
+                        path="/settings/recurring-journal/add"
+                        element={<RecurringJournalAdd />}
+                      />
+                      <Route
+                        path="/settings/recurring-journal/details"
+                        element={<RecurringJournalDetails />}
+                      />
+                      <Route
+                        path="/settings/chart-journal"
+                        element={<ChartOfAccountsDashboard />}
+                      />
+                      <Route
+                        path="/settings/chart-journal/details/:id"
+                        element={<ChartOfAccountDetails />}
+                      />
+                      <Route
+                        path="/settings/opening-balance"
+                        element={<OpeningBalance />}
+                      />
+                      <Route path="/settings/tax-setup" element={<TaxSetup />} />
+                      <Route
+                        path="/settings/charge-setup"
+                        element={<ChargeSetupDashboard />}
+                      />
+                      <Route
+                        path="/settings/charge-setup/add"
+                        element={<ChargeSetupAdd />}
+                      />
+                      <Route
+                        path="/settings/charge-setup/details/:id"
+                        element={<ChargeSetupDetails />}
+                      />
+                      <Route
+                        path="/settings/bill-cycles"
+                        element={<BillCyclesDashboard />}
+                      />
+
+                      <Route
+                        path="/settings/bill-cycles/add"
+                        element={<BillCyclesAdd />}
+                      />
+                      <Route
+                        path="/settings/bill-cycles/details/:id"
+                        element={<BillCyclesDetails />}
+                      />
+
+                      <Route
+                        path="/settings/Budget"
+                        element={<BudgetDashboard />}
+                      />
+                      {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
+                      <Route
+                        path="/settings/Budget/add/new"
+                        element={<BudgetAddNew />}
+                      />
+                      <Route
+                        path="/settings/Budget/Edit"
+                        element={<EditBudget />}
+                      />
+                      <Route
+                        path="/settings/Budget/details"
+                        element={<BudgetDetails />}
+                      />
+                      <Route
+                        path="/settings/reports/balance-sheet"
+                        element={<BalanceSheetReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/settings/reports/profit-and-loss"
+                        element={<ProfitAndLossReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/settings/reports/tax-summary"
+                        element={<TaxSummaryReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/settings/reports/gst-payable"
+                        element={<GstPayableReport />}
+                      />
+                      <Route
+                        path="/settings/transactions"
+                        element={<TransactionsDashboard />}
+                      />
+                      <Route
+                        path="/settings/transactions/add"
+                        element={<TransactionsAdd />}
+                      />
+                      <Route
+                        path="/settings/transactions/details/:id"
+                        element={<TransactionsDetails />}
+                      />
+                      <Route
+                        path="/settings/transactions/Edit/:id"
+                        element={<TransactionsEdit />}
+                      />
+                      <Route
+                        path="/settings/items"
+                        element={<ItemsDashboard />}
+                      />
+                      <Route path="/settings/items/add" element={<ItemsAdd />} />
+                      <Route
+                        path="/settings/items/details/:id"
+                        element={<ItemsDetails />}
+                      />
+                      <Route
+                        path="/settings/items/edit/:id"
+                        element={<ItemsEdit />}
+                      />
+                      <Route
+                        path="/settings/customers"
+                        element={<CustomersDashboard />}
+                      />
+                      <Route
+                        path="/settings/customers/add"
+                        element={<CustomersAdd />}
+                      />
+
+                      {/* Sales Order Routes */}
+                      <Route
+                        path="/settings/sales-order"
+                        element={<SalesOrderListPage />}
+                      />
+                      <Route
+                        path="/settings/sales-order/create"
+                        element={<SalesOrderCreatePage />}
+                      />
+                      <Route
+                        path="/settings/sales-order/:id"
+                        element={<SalesOrderDetailPage />}
+                      />
+                      <Route
+                        path="/settings/sales-order/edit/:id"
+                        element={<SalesOrderCreatePage />}
+                      />
+
+
+                      <Route
+                        path="/settings/recurring-invoices"
+                        element={<RecurringInvoicesListPage />}
+                      />
+                      <Route
+                        path="/settings/recurring-invoices/create"
+                        element={<RecurringInvoicesCreatePage />}
+                      />
+
+                      {/* Purchase Order Routes */}
+                      <Route
+                        path="/settings/purchase-order"
+                        element={<PurchaseOrderListPage />}
+                      />
+                      <Route
+                        path="/settings/purchase-order/create"
+                        element={<PurchaseOrderCreatePage />}
+                      />
+                      <Route
+                        path="/settings/purchase-order/:id"
+                        element={<PurchaseOrderDetailPage />}
+                      />
+                      <Route
+                        path="/settings/purchase-order/edit/:id"
+                        element={<PurchaseOrderCreatePage />}
+                      />
+
+                      {/* Bills Routes */}
+                      <Route path="/settings/bills" element={<BillListPage />} />
+                      <Route
+                        path="/settings/bills/create"
+                        element={<BillCreatePage />}
+                      />
+                      <Route
+                        path="/settings/bills/:id"
+                        element={<BillDetailPage />}
+                      />
+                      <Route
+                        path="/settings/bills/edit/:id"
+                        element={<BillCreatePage />}
+                      />
+
+                      {/* Recurring Bills Routes */}
+                      <Route
+                        path="/settings/recurring-bills"
+                        element={<RecurringBillsDashboard />}
+                      />
+                      <Route
+                        path="/settings/recurring-bills/create"
+                        element={<RecurringBillCreatePage />}
+                      />
+
+                      {/* Expense Routes */}
+                      <Route
+                        path="/settings/expense"
+                        element={<ExpenseListPage />}
+                      />
+                      <Route
+                        path="/settings/expense/create"
+                        element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/settings/expense/:id"
+                        element={<ExpenseDetailPage />}
+                      />
+                      <Route
+                        path="/settings/expense/edit/:id"
+                        element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/settings/sales-order/edit/:id"
+                        element={<SalesOrderCreatePage />}
+                      />
+
+                      {/* Club Management - Occupant Users */}
+                      <Route
+                        path="/club-management/users/occupant-users"
+                        element={<OccupantUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/add"
+                        element={<ClubAddOccupantUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/view/:id"
+                        element={<ViewClubOccupantUser />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/edit/:id"
+                        element={<ClubEditOccupantUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/:id"
+                        element={<CRMOccupantUserDetailPage />}
+                      />
+
+                      {/* Club Management - Guest Users */}
+                      <Route
+                        path="/club-management/users/guest"
+                        element={<GuestUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/add"
+                        element={<AddGuestUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/view/:id"
+                        element={<ViewGuestUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/edit/:id"
+                        element={<EditGuestUserPage />}
+                      />
+
+                      {/* Club Management - Helpdesk */}
+                      <Route
+                        path="/club-management/helpdesk"
+                        element={<TicketDashboard />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/add"
+                        element={<AddTicketDashboard />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/details/:id"
+                        element={<TicketDetailsPage />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/edit/:id"
+                        element={<UpdateTicketsPage />}
+                      />
+
+                      {/* Club Management - Amenities Booking */}
+                      <Route
+                        path="/club-management/amenities-booking"
+                        element={<BookingList />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking/add"
+                        element={<AddFacilityBookingPage />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking/:id"
+                        element={<BookingDetailsPage />}
+                      />
+
+                      {/* Club Management - Amenities Booking seperate routes for recess */}
+                      <Route
+                        path="/club-management/amenities-booking-club"
+                        element={<AmenityBookingListClub />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking-club/add"
+                        element={<AddFacilityBookingClubPage />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking-club/:id"
+                        element={<AmenityBookingDetailsClubPage />}
+                      />
+
+                      <Route
+                        path="/vas/booking-club/list"
+                        element={<AmenityBookingListClub />}
+                      />
+                      <Route
+                        path="/vas/booking-club/add"
+                        element={<AddFacilityBookingClubPage />}
+                      />
+                      <Route
+                        path="/vas/bookings-club/details/:id"
+                        element={<AmenityBookingDetailsClubPage />}
+                      />
+
+                      {/* Club Management - Broadcast */}
+                      <Route
+                        path="/club-management/broadcast"
+                        element={<ClubBroadcastDashboard />}
+                      />
+                      <Route
+                        path="/club-management/broadcast/add"
+                        element={<AddClubBroadcastPage />}
+                      />
+                      <Route
+                        path="/club-management/broadcast/details/:id"
+                        element={<ClubBroadcastDetailsPage />}
+                      />
+
+                      {/* Club Management - Events */}
+                      <Route
+                        path="/club-management/events"
+                        element={<ClubEventsPage />}
+                      />
+                      <Route
+                        path="/club-management/events/add"
+                        element={<AddClubEventPage />}
+                      />
+                      <Route
+                        path="/club-management/events/details/:id"
+                        element={<ClubEventDetailsPage />}
+                      />
+
+                      {/* Club Management - Accounting */}
+                      <Route
+                        path="/club-management/accounting"
+                        element={<PaymentManagementDashboard />}
+                      />
+
+                      <Route
+                        path="/club-management/accounting/details/:id"
+                        element={<PaymentDetailPage />}
                       />
 
                       {/* Snagging Routes */}

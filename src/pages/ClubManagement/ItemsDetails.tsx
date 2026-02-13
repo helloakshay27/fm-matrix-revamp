@@ -93,7 +93,7 @@ const AMENITIES_OPTIONS = [
     "Bar",
 ];
 
-export const BillCyclesDetails = () => {
+export const ItemsDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl");
@@ -124,20 +124,16 @@ export const BillCyclesDetails = () => {
     // });
 
     const [formData, setFormData] = useState({
-        billCycleName: "",
-        startDate: "",
-        endDate: "",
-        paymentDueDays: "",
-        billCycleFrequency: "",
-        fine: "",
-        fineRate: "",
-        interest: "",
-        interestRate: "",
-        charges: [],
-        expense: false,
-        frequency: "",
-        dueDate: "",
-        active: 1,
+        itemType: "",
+        unit: "",
+        createdSource: "",
+        sellingPrice: "",
+        salesAccount: "",
+        salesDescription: "",
+        costPrice: "",
+        purchaseAccount: "",
+        purchaseDescription: "",
+        reportingTags: [],
     });
 
 
@@ -157,40 +153,42 @@ export const BillCyclesDetails = () => {
 
 
     useEffect(() => {
-        const fetchBillCycleDetails = async () => {
+        const fetchItemDetails = async () => {
             setLoading(true);
             try {
                 // Use your API config if available, else fallback to localStorage
-                const apiBase = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-                const response = await axios.get(`${apiBase}/account/society_bill_cycles/${id}.json`, {
+                let apiBase = baseUrl;
+                if (!apiBase) {
+                  apiBase = "https://club-uat-api.lockated.com";
+                } else if (!apiBase.startsWith("http")) {
+                  apiBase = `https://${apiBase}`;
+                }
+                const response = await axios.get(`${apiBase}/lock_account_items/${id}.json`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
                     },
                 });
-                const data = response.data.society_bill_cycle;
+                const data = response.data || [];
                 setFormData({
-                    billCycleName: data.name || "",
-                    startDate: data.start_month || "",
-                    endDate: data.end_month || "",
-                    paymentDueDays: data.payment_due_in?.toString() || "",
-                    billCycleFrequency: data.frequency || "",
-                    fine: data.fine_type || "",
-                    interest: data.interest_type || "",
-                    charges: data.charge_names || [],
-                    expense: !!data.expense_bill,
-                    frequency: data.frequency || "",
-                    dueDate: data.due_date || "",
-                    active: data.active,
-                    fineRate: data.fine_rate?.toString() || "",
-                    interestRate: data.interest_rate?.toString() || "",
+                    itemType: data.product_type || "",
+                    unit: data.unit || "",
+                    createdSource: data.created_source || "",
+                    sellingPrice: data.sale_rate?.toString() || "",
+                    salesAccount: data.sale_lock_account_ledger || "",
+                    salesDescription: data.sale_description || "",
+                    costPrice: data.purchase_rate?.toString() || "",
+                    purchaseAccount: data.purchase_lock_account_ledger || "",
+                    purchaseDescription: data.purchase_description || "",
+                    reportingTags: data.reporting_tags || [],
                 });
             } catch (error) {
-                toast.error("Failed to fetch bill cycle details");
+                toast.error("Failed to fetch item details");
             } finally {
                 setLoading(false);
             }
         };
-        fetchBillCycleDetails();
+        if (id) fetchItemDetails();
     }, [id, baseUrl, token]);
 
     const handleEditClick = () => {
@@ -198,7 +196,7 @@ export const BillCyclesDetails = () => {
     };
 
     const handleClose = () => {
-        navigate("/settings/bill-cycles");
+        navigate("/settings/items");
     };
 
     if (loading) {
@@ -222,7 +220,7 @@ export const BillCyclesDetails = () => {
                             className="p-0"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Bill Cycle List
+                            Back to Items List
                         </Button>
                         {/* <div className="flex items-center gap-2">
                             <Button
@@ -237,14 +235,14 @@ export const BillCyclesDetails = () => {
                 </div>
 
 
-                <div className="space-y-6">
+                {/* <div className="space-y-6">
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                 <FileCog className="w-4 h-4" />
                             </div>
                             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                                Bill Cycle Details
+                                Items Details
                             </h3>
                         </div>
 
@@ -344,7 +342,123 @@ export const BillCyclesDetails = () => {
                             </div>
                         </div>
                     </div>
+                </div> */}
+
+
+                <div className="space-y-6">
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-8">
+                        {/* Header */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <FileCog className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                                Item Details
+                            </h3>
+                        </div>
+
+                        {/* Overview */}
+                        <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Overview</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Item Type</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.itemType || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Unit</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.unit || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Created Source</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.createdSource || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sales Information */}
+                        <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Sales Information</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Selling Price</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.sellingPrice || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Sales Account</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.salesAccount || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Description</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.salesDescription || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Purchase Information */}
+                        <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Purchase Information</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Cost Price</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.costPrice || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Purchase Account</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.purchaseAccount || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Description</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.purchaseDescription || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Reporting Tags */}
+                        <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Reporting Tags</h4>
+                            <p className="text-gray-500">
+                                {formData.reportingTags?.length
+                                    ? formData.reportingTags.join(", ")
+                                    : "No reporting tag has been associated with this item."}
+                            </p>
+                        </div>
+                    </div>
                 </div>
+
 
             </div>
         </ThemeProvider>

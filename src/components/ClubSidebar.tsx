@@ -163,7 +163,34 @@ const modulesByPackage = {
             ],
         },
         { name: "FM Groups", icon: Users, href: "/settings/groups" },
+        {
+            name: "Items",
+            icon: FileText,
+            subItems: [
+                { name: "Items", href: "/settings/items" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
 
+        {
+            name: "Sales",
+            icon: FileText,
+            subItems: [
+                { name: "Customers", href: "/settings/customers" },
+                { name: "Sales Order", href: "/settings/sales-order" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
         {
             name: "Accountants",
             icon: Users,

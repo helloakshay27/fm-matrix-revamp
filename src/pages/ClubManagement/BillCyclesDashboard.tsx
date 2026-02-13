@@ -1,29 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input';
-// Example usage of Input for your form fields:
-// <Input
-//   label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="date"
-//   value={date}
-//   onChange={e => setDate(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
-//   type="number"
-//   value={journalNo}
-//   onChange={e => setJournalNo(e.target.value)}
-//   required
-//   className="w-full"
-// />
-// <Input
-//   label="Reference#"
-//   value={reference}
-//   onChange={e => setReference(e.target.value)}
-//   className="w-full"
-// />
+import axios from "axios";
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -117,12 +95,32 @@ interface GroupMembershipData {
   } | null;
 }
 
+
+interface SocietyBillCycle {
+  id: number;
+  name: string;
+  start_month: string;      // YYYY-MM-DD
+  end_month: string;        // YYYY-MM-DD
+  payment_due_in: number;
+  frequency: "monthly" | "quarterly" | "half_yearly" | "yearly" | string;
+  active: number;           // 1 | 0
+  created_at: string;       // ISO string
+  created_by: number;
+}
+interface SocietyBillCycleResponse {
+  society_bill_cycles: SocietyBillCycle[];
+}
+
 export const BillCyclesDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
+  const [memberships, setMemberships] = useState<SocietyBillCycle[]>([]);
+  // const [loading, setLoading] = useState(false);
+  // const [totalMembers, setTotalMembers] = useState(0);
+  // const [totalPages, setTotalPages] = useState(1);
 
   // State management
-  const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
+  // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,7 +132,7 @@ export const BillCyclesDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
-  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
+  const [modalData, setModalData] = useState<{ isOpen: boolean, title: string, items: string[] }>({ isOpen: false, title: '', items: [] });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -145,89 +143,123 @@ export const BillCyclesDashboard = () => {
 
   const perPage = 20;
 
-  // Fetch memberships data
-  const fetchMemberships = useCallback(async (page: number = 1) => {
+
+  const fetchMemberships = useCallback(async () => {
     setLoading(true);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
     try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
+      const response = await axios.get<SocietyBillCycleResponse>(
+        `${baseUrl}/account/society_bill_cycles.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      console.log('Fetching club member allocations...', { baseUrl, hasToken: !!token, page });
+      const cycles = response.data?.society_bill_cycles || [];
 
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
-      url.searchParams.append('access_token', token || '');
-
-      // Add search filter
-      if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
-      }
-
-      // Add club member enabled filter
-      if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
-      }
-
-      // Add access card enabled filter
-      if (filters.accessCardEnabled) {
-        url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
-      }
-
-      // Add start date filter
-      if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
-      }
-
-      // Add end date filter
-      if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
-      }
-
-      // Pagination
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('per_page', perPage.toString());
-
-      console.log('API URL:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch club member allocations: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Received data:', data);
-
-      if (Array.isArray(data.club_member_allocations)) {
-        setMemberships(data.club_member_allocations);
-        setTotalMembers(data.pagination?.total_count || 0);
-        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
-      } else {
-        setMemberships([]);
-        setTotalMembers(0);
-        setTotalPages(1);
-      }
+      setMemberships(cycles);
+      setTotalMembers(cycles.length);
+      setTotalPages(1); // API does not support pagination
 
     } catch (error) {
-      console.error('Error fetching memberships:', error);
-      toast.error('Failed to fetch membership data');
+      console.error("Error fetching bill cycles:", error);
+      toast.error("Failed to fetch bill cycles");
       setMemberships([]);
-      setTotalMembers(0);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [filters, perPage]);
+  }, []);
+  useEffect(() => {
+    fetchMemberships();
+  }, [fetchMemberships]);
+
+  // Fetch memberships data
+  // const fetchMemberships = useCallback(async (page: number = 1) => {
+  //   setLoading(true);
+  //   try {
+  //     const baseUrl = API_CONFIG.BASE_URL;
+  //     const token = API_CONFIG.TOKEN;
+
+  //     console.log('Fetching club member allocations...', { baseUrl, hasToken: !!token, page });
+
+  //     const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
+  //     url.searchParams.append('access_token', token || '');
+
+  //     // Add search filter
+  //     if (filters.search) {
+  //       url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
+  //     }
+
+  //     // Add club member enabled filter
+  //     if (filters.clubMemberEnabled) {
+  //       url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
+  //     }
+
+  //     // Add access card enabled filter
+  //     if (filters.accessCardEnabled) {
+  //       url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
+  //     }
+
+  //     // Add start date filter
+  //     if (filters.startDate) {
+  //       const [year, month, day] = filters.startDate.split('-');
+  //       const formattedDate = `${day}/${month}/${year}`;
+  //       url.searchParams.append('q[start_date_eq]', formattedDate);
+  //     }
+
+  //     // Add end date filter
+  //     if (filters.endDate) {
+  //       const [year, month, day] = filters.endDate.split('-');
+  //       const formattedDate = `${day}/${month}/${year}`;
+  //       url.searchParams.append('q[end_date_eq]', formattedDate);
+  //     }
+
+  //     // Pagination
+  //     url.searchParams.append('page', page.toString());
+  //     url.searchParams.append('per_page', perPage.toString());
+
+  //     console.log('API URL:', url.toString());
+
+  //     const response = await fetch(url.toString(), {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+
+  //     console.log('Response status:', response.status);
+
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch club member allocations: ${response.status} ${response.statusText}`);
+  //     }
+
+  //     const data = await response.json();
+  //     console.log('Received data:', data);
+
+  //     if (Array.isArray(data.club_member_allocations)) {
+  //       setMemberships(data.club_member_allocations);
+  //       setTotalMembers(data.pagination?.total_count || 0);
+  //       setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
+  //     } else {
+  //       setMemberships([]);
+  //       setTotalMembers(0);
+  //       setTotalPages(1);
+  //     }
+
+  //   } catch (error) {
+  //     console.error('Error fetching memberships:', error);
+  //     toast.error('Failed to fetch membership data');
+  //     setMemberships([]);
+  //     setTotalMembers(0);
+  //     setTotalPages(1);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [filters, perPage]);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -568,32 +600,252 @@ export const BillCyclesDashboard = () => {
     );
   };
 
- 
-  const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'id', label: 'ID', sortable: true },
-  { key: 'bill_cycle_name', label: 'Bill Cycle Name', sortable: true },
-  { key: 'start_date', label: 'Start Date', sortable: true },
-  { key: 'end_date', label: 'End Date', sortable: true },
-  { key: 'frequency', label: 'Frequency', sortable: true },
-  { key: 'charges', label: 'Charges', sortable: false },
-  { key: 'payment_due_in', label: 'Payment Due In', sortable: true },
-  { key: 'interest', label: 'Interest', sortable: true },
-  { key: 'fine', label: 'Fine', sortable: true },
-  { key: 'created_on', label: 'Created On', sortable: true },
-  { key: 'created_by', label: 'Created By', sortable: true },
-  { key: 'active', label: 'Active', sortable: true }
+
+  // const columns = [
+  //   { key: 'actions', label: 'Actions', sortable: false },
+  //   { key: 'id', label: 'ID', sortable: true },
+  //   { key: 'bill_cycle_name', label: 'Bill Cycle Name', sortable: true },
+  //   { key: 'start_date', label: 'Start Date', sortable: true },
+  //   { key: 'end_date', label: 'End Date', sortable: true },
+  //   { key: 'frequency', label: 'Frequency', sortable: true },
+  //   { key: 'charges', label: 'Charges', sortable: false },
+  //   { key: 'payment_due_in', label: 'Payment Due In', sortable: true },
+  //   { key: 'interest', label: 'Interest', sortable: true },
+  //   { key: 'fine', label: 'Fine', sortable: true },
+  //   { key: 'created_on', label: 'Created On', sortable: true },
+  //   { key: 'created_by', label: 'Created By', sortable: true },
+  //   { key: 'active', label: 'Active', sortable: true }
+  // ];
+
+//   const columns = [
+//   { key: "actions", label: "Actions", sortable: false },
+//   { key: "id", label: "ID", sortable: true },
+//   { key: "name", label: "Bill Cycle Name", sortable: true },
+//   { key: "start_month", label: "Start Date", sortable: true },
+//   { key: "end_month", label: "End Date", sortable: true },
+//   { key: "frequency", label: "Frequency", sortable: true },
+//   { key: "payment_due_in", label: "Payment Due In", sortable: true },
+//   { key: "created_at", label: "Created On", sortable: true },
+//   { key: "active", label: "Status", sortable: true },
+// ];
+
+const columns = [
+  { key: "actions", label: "Actions", sortable: false },
+
+  { key: "id", label: "ID", sortable: true },
+
+  { key: "name", label: "Bill Cycle Name", sortable: true },
+
+  { key: "start_month", label: "Start Date", sortable: true },
+
+  { key: "end_month", label: "End Date", sortable: true },
+
+  { key: "frequency", label: "Frequency", sortable: true },
+
+  { key: "charges", label: "Charges", sortable: false },
+
+  { key: "payment_due_in", label: "Payment Due In", sortable: true },
+
+  { key: "interest", label: "Interest", sortable: true },
+
+  { key: "fine", label: "Fine", sortable: true },
+
+  { key: "created_at", label: "Created On", sortable: true },
+
+  { key: "created_by", label: "Created By", sortable: true },
+
+  { key: "active", label: "Status", sortable: true },
 ];
 
 
+
+
   // Render cell content
+  // const renderCell = (item: any, columnKey: string) => {
+  //   if (columnKey === 'actions') {
+  //     return (
+  //       <div className="flex gap-2">
+  //         <Button
+  //           variant="ghost"
+  //           onClick={() => navigate(`/settings/bill-cycles/details`)}
+  //           title="View"
+  //           className="p-0"
+  //         >
+  //           <Eye className="w-4 h-4" />
+  //         </Button>
+
+  //         <Button
+  //           variant="ghost"
+  //           onClick={() => navigate(`/bill-cycles/${item.id}/edit`)}
+  //           title="Edit"
+  //           className="p-0"
+  //         >
+  //           {/* <Edit className="w-4 h-4" /> */}
+  //         </Button>
+  //       </div>
+  //     );
+  //   }
+
+  //   if (columnKey === 'id') {
+  //     return item.id ?? <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'bill_cycle_name') {
+  //     return item.bill_cycle_name || <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'start_date' || columnKey === 'end_date') {
+  //     const date = item[columnKey];
+  //     if (!date) return <span className="text-gray-400">--</span>;
+  //     return new Date(date).toLocaleDateString('en-GB');
+  //   }
+
+  //   if (columnKey === 'frequency') {
+  //     return item.frequency || <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'charges') {
+  //     // adjust based on API (count / amount / array)
+  //     if (Array.isArray(item.charges)) {
+  //       return item.charges.length;
+  //     }
+  //     return item.charges ?? <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'payment_due_in') {
+  //     return item.payment_due_in
+  //       ? `${item.payment_due_in} days`
+  //       : <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'interest') {
+  //     return item.interest
+  //       ? `${item.interest}%`
+  //       : <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'fine') {
+  //     return item.fine
+  //       ? `₹${item.fine}`
+  //       : <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'created_on') {
+  //     if (!item.created_on) return <span className="text-gray-400">--</span>;
+  //     return new Date(item.created_on).toLocaleDateString('en-GB');
+  //   }
+
+  //   if (columnKey === 'created_by') {
+  //     return item.created_by || <span className="text-gray-400">--</span>;
+  //   }
+
+  //   if (columnKey === 'active') {
+  //     return (
+  //       <span
+  //         className={`px-2 py-1 text-xs font-medium rounded-full ${item.active
+  //             ? 'bg-green-100 text-green-700'
+  //             : 'bg-red-100 text-red-700'
+  //           }`}
+  //       >
+  //         {item.active ? 'Active' : 'Inactive'}
+  //       </span>
+  //     );
+  //   }
+
+  //   return <span className="text-gray-400">--</span>;
+  // };
+
+// Render cell content
+// const renderCell = (item: any, columnKey: string) => {
+//   if (columnKey === "actions") {
+//     return (
+//       <div className="flex gap-2">
+//         <Button
+//           variant="ghost"
+//           onClick={() =>
+//             navigate(`/settings/bill-cycles/details/${item.id}`)
+//           }
+//           title="View"
+//           className="p-0"
+//         >
+//           <Eye className="w-4 h-4" />
+//         </Button>
+
+//         <Button
+//           variant="ghost"
+//           onClick={() => navigate(`/bill-cycles/${item.id}/edit`)}
+//           title="Edit"
+//           className="p-0"
+//         >
+//           {/* <Edit className="w-4 h-4" /> */}
+//         </Button>
+//       </div>
+//     );
+//   }
+
+//   if (columnKey === "id") {
+//     return item.id ?? <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "name") {
+//     return item.name || <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "start_month" || columnKey === "end_month") {
+//     const date = item[columnKey];
+//     return date
+//       ? new Date(date).toLocaleDateString("en-GB")
+//       : <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "frequency") {
+//     return item.frequency || <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "payment_due_in") {
+//     return item.payment_due_in
+//       ? `${item.payment_due_in} days`
+//       : <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "created_at") {
+//     return item.created_at
+//       ? new Date(item.created_at).toLocaleDateString("en-GB")
+//       : <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "created_by") {
+//     return item.created_by || <span className="text-gray-400">--</span>;
+//   }
+
+//   if (columnKey === "active") {
+//     return (
+//       <span
+//         className={`px-2 py-1 text-xs font-medium rounded-full ${
+//           item.active
+//             ? "bg-green-100 text-green-700"
+//             : "bg-red-100 text-red-700"
+//         }`}
+//       >
+//         {item.active ? "Active" : "Inactive"}
+//       </span>
+//     );
+//   }
+
+//   return <span className="text-gray-400">--</span>;
+// };
+
+
 const renderCell = (item: any, columnKey: string) => {
-  if (columnKey === 'actions') {
+  // Actions
+  if (columnKey === "actions") {
     return (
       <div className="flex gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/settings/bill-cycles/details`)}
+          onClick={() =>
+            navigate(`/settings/bill-cycles/details/${item.id}`)
+          }
           title="View"
           className="p-0"
         >
@@ -612,69 +864,81 @@ const renderCell = (item: any, columnKey: string) => {
     );
   }
 
-  if (columnKey === 'id') {
+  // ID
+  if (columnKey === "id") {
     return item.id ?? <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'bill_cycle_name') {
-    return item.bill_cycle_name || <span className="text-gray-400">--</span>;
+  // Bill Cycle Name
+  if (columnKey === "name") {
+    return item.name || <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'start_date' || columnKey === 'end_date') {
+  // Start / End Date
+  if (columnKey === "start_month" || columnKey === "end_month") {
     const date = item[columnKey];
-    if (!date) return <span className="text-gray-400">--</span>;
-    return new Date(date).toLocaleDateString('en-GB');
+    return date
+      ? new Date(date).toLocaleDateString("en-GB")
+      : <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'frequency') {
+  // Frequency
+  if (columnKey === "frequency") {
     return item.frequency || <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'charges') {
-    // adjust based on API (count / amount / array)
-    if (Array.isArray(item.charges)) {
-      return item.charges.length;
+  // Charges (array count fallback)
+  if (columnKey === "charges") {
+    if (Array.isArray(item.charge_names)) {
+      return item.charge_names.length;
     }
-    return item.charges ?? <span className="text-gray-400">--</span>;
+    return <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'payment_due_in') {
+  // Payment Due In
+  if (columnKey === "payment_due_in") {
     return item.payment_due_in
       ? `${item.payment_due_in} days`
       : <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'interest') {
-    return item.interest
-      ? `${item.interest}%`
+  // Interest
+  if (columnKey === "interest") {
+    return item.interest_rate
+      ? `${item.interest_rate}%`
       : <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'fine') {
-    return item.fine
-      ? `₹${item.fine}`
+  // Fine
+  if (columnKey === "fine") {
+    return item.fine_rate
+      ? `₹${item.fine_rate}`
       : <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'created_on') {
-    if (!item.created_on) return <span className="text-gray-400">--</span>;
-    return new Date(item.created_on).toLocaleDateString('en-GB');
+  // Created On
+  if (columnKey === "created_at") {
+    return item.created_at
+      ? new Date(item.created_at).toLocaleDateString("en-GB")
+      : <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'created_by') {
+  // Created By
+  if (columnKey === "created_by") {
     return item.created_by || <span className="text-gray-400">--</span>;
   }
 
-  if (columnKey === 'active') {
+  // Status
+  if (columnKey === "active") {
     return (
       <span
         className={`px-2 py-1 text-xs font-medium rounded-full ${
           item.active
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
         }`}
       >
-        {item.active ? 'Active' : 'Inactive'}
+        {item.active ? "Active" : "Inactive"}
       </span>
     );
   }
@@ -700,13 +964,13 @@ const renderCell = (item: any, columnKey: string) => {
   // Custom right actions
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button
+      {/* <Button
         variant="outline"
         onClick={handleDownloadSocietyQR}
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
       >
         <QrCode className="w-4 h-4 " />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -718,7 +982,7 @@ const renderCell = (item: any, columnKey: string) => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-sm">Searching members...</span>
+              <span className="text-sm">Searching...</span>
             </div>
           </div>
         )}
@@ -736,12 +1000,12 @@ const renderCell = (item: any, columnKey: string) => {
               {renderCustomActions()}
             </div>
           }
-          onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
-          searchPlaceholder="Search Group Memberships"
+          // onFilterClick={() => setIsFilterOpen(true)}
+          // rightActions={renderRightActions()}
+          searchPlaceholder="Search "
           onSearchChange={handleSearch}
-          hideTableExport={false}
-          hideColumnsButton={true}
+          hideTableExport={true}
+          hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           loadingMessage="Loading group memberships..."
@@ -784,7 +1048,7 @@ const renderCell = (item: any, columnKey: string) => {
       />
 
       {/* Member Details Modal */}
-      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalData.title}</DialogTitle>
@@ -800,7 +1064,7 @@ const renderCell = (item: any, columnKey: string) => {
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+            <Button onClick={() => setModalData({ isOpen: false, title: '', items: [] })} variant="outline">
               Close
             </Button>
           </DialogFooter>
