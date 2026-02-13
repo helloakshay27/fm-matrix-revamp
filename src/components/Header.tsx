@@ -577,7 +577,7 @@ export const Header = () => {
 
           {!isViSite && (
             <div className="flex items-center gap-3">
-              <button
+              {/* <button
                 className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 onClick={() => {
                   navigate(`/vas/channels/tasks`);
@@ -601,8 +601,8 @@ export const Header = () => {
                     fill="black"
                   />
                 </svg>
-              </button>
-              <button
+              </button> */}
+              {/* <button
                 className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 onClick={() => {
                   navigate(`/vas/channels`);
@@ -624,7 +624,7 @@ export const Header = () => {
                     strokeLinecap="round"
                   />
                 </svg>
-              </button>
+              </button> */}
             </div>
           )}
 
@@ -634,14 +634,14 @@ export const Header = () => {
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+              {/* <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
                 <Bell className="w-5 h-5 text-[#1a1a1a]" />
                 {notificationCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
                     {notificationCount}
                   </Badge>
                 )}
-              </button>
+              </button> */}
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
