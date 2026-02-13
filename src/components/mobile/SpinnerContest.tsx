@@ -68,6 +68,7 @@ export const SpinnerContest: React.FC = () => {
   const [winResult, setWinResult] = useState<WinResult | null>(null);
   const [canSpin, setCanSpin] = useState(true);
   const [rewardId, setRewardId] = useState<number | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number>(0);
 
   // Fetch spinner contest data
   useEffect(() => {
@@ -85,6 +86,7 @@ export const SpinnerContest: React.FC = () => {
         // Fetch specific contest by ID
         const data = await newSpinnerContestApi.getContestById(urlContestId);
         setContestData(data);
+        setRemainingAttempts(data.user_caps || 0);
 
         // Convert prizes to wheel segments
         const wheelSegments = newSpinnerContestApi.convertPrizesToSegments(
@@ -251,6 +253,9 @@ export const SpinnerContest: React.FC = () => {
             setWinResult({ prize: result.prize! });
             setShowResult(true);
             setIsSpinning(false);
+
+            // Decrement remaining attempts
+            setRemainingAttempts((prev) => Math.max(0, prev - 1));
           }, 500);
         }
       };
@@ -327,56 +332,111 @@ export const SpinnerContest: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 py-8 flex flex-col items-center">
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {contestData.name}
-        </h1>
+      <div className="px-4 py-6 flex flex-col items-center">
+        {/* Title & Description Card */}
+        <div className="w-full max-w-md mb-9 bg-gradient-to-br from-[#FFF8E7] to-[#F5E6D3] rounded-2xl p-6 shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+            {contestData.name}
+          </h1>
 
-        {/* Description */}
-        {contestData.description && (
-          <p className="text-center text-gray-600 mb-8 max-w-md">
-            {contestData.description}
-          </p>
-        )}
+          {/* {contestData.description && (
+            <p className="text-center text-gray-700 text-sm mb-4">
+              {contestData.description}
+            </p>
+          )} */}
 
-        {/* Contest Period */}
-        <div className="text-xs text-gray-500 mb-6">
-          Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
-          {new Date(contestData.end_at).toLocaleDateString()}
+          {/* Contest Period */}
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+            <span className="bg-white/70 px-3 py-1.5 rounded-full">
+              📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+              {new Date(contestData.end_at).toLocaleDateString()}
+            </span>
+          </div>
         </div>
 
-        {/* Spinner Wheel */}
+        {/* Instruction Text */}
+        {/* <p className="text-center text-gray-600 text-sm mb-6 max-w-md">
+          🎁 Tap the wheel or button below to spin and win exciting prizes!
+        </p> */}
+
+        {/* Spinner Wheel with Enhanced Styling */}
         <div className="relative mb-8">
+          {/* Outer Ring Decoration */}
+          <div className="absolute inset-0 rounded-full border-8 border-[#FFF8E7] -m-4 shadow-xl" />
+
           {/* Pointer/Arrow at top */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-            <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-[#B88B15]" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 z-10 drop-shadow-lg">
+            <div className="relative">
+              <div className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[24px] border-t-[#B88B15]" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#B88B15] rounded-full -mt-2 shadow-md" />
+            </div>
           </div>
 
           <canvas
             ref={canvasRef}
             width={360}
             height={360}
-            className="max-w-full h-auto cursor-pointer"
+            className="max-w-full h-auto cursor-pointer drop-shadow-2xl rounded-full"
             onClick={handleSpin}
           />
+        </div>
+
+        {/* Attempts Remaining Badge */}
+        <div className="mb-4 bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white px-6 py-2 rounded-full shadow-md">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-lg">🎯</span>
+            <p className="text-sm font-semibold">
+              Attempts Remaining{" "}
+              <span className="text-xl font-bold">{remainingAttempts}</span>
+            </p>
+          </div>
         </div>
 
         {/* Tap to Spin Button */}
         <button
           onClick={handleSpin}
-          disabled={isSpinning || !canSpin}
-          className="w-full max-w-md bg-[#B88B15] text-white py-4 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#9a7612] transition-colors"
+          disabled={isSpinning || !canSpin || remainingAttempts <= 0}
+          className="w-full max-w-md bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white py-4 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
         >
-          {isSpinning ? "Spinning..." : "Tap To Spin"}
+          {isSpinning ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">🎰</span>
+              Spinning...
+            </span>
+          ) : remainingAttempts <= 0 ? (
+            "No Attempts Left"
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <span>🎯</span>
+              Tap To Spin
+            </span>
+          )}
         </button>
 
-        {/* Terms and Conditions */}
-        {/* {contestData.terms_and_conditions && (
-          <p className="text-center text-xs text-gray-500 mt-6 max-w-md whitespace-pre-line">
-            {contestData.terms_and_conditions}
-          </p>
-        )} */}
+        {/* Prize Preview Section */}
+        <div className="w-full max-w-md mt-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+            🏆 Available Prizes
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {contestData.prizes.slice(0, 4).map((prize) => (
+              <div
+                key={prize.id}
+                className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 text-center shadow-sm"
+              >
+                <div className="text-3xl mb-2">🎁</div>
+                <p className="font-semibold text-sm text-gray-900 mb-1">
+                  {prize.title}
+                </p>
+                {prize.points_value && (
+                  <p className="text-xs text-[#B88B15] font-medium">
+                    {prize.points_value} Points
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Result Modal */}
