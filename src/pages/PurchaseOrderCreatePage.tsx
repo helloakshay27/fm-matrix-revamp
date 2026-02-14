@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getUser } from '@/utils/auth';
 import { API_CONFIG } from '@/config/apiConfig';
 import {
     TextField,
@@ -21,6 +22,8 @@ import {
     DialogContent,
     DialogActions,
     InputAdornment,
+    Radio,
+    RadioGroup,
 } from '@mui/material';
 import {
     Close,
@@ -31,6 +34,10 @@ import {
     ChevronRight
 } from '@mui/icons-material';
 import { Package, Calendar, FileText } from 'lucide-react';
+import { toast } from 'sonner';
+import { getAddresses, getInventories } from '@/store/slices/materialPRSlice';
+import { useAppDispatch } from '@/store/hooks';
+import axios from 'axios';
 
 // Section component
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -89,6 +96,9 @@ interface Item {
 
 export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl")
 
     useEffect(() => {
         document.title = 'New Purchase Order';
@@ -104,6 +114,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [billingAddress, setBillingAddress] = useState('');
     const [shippingAddress, setShippingAddress] = useState('');
     const [sameAsBilling, setSameAsBilling] = useState(false);
+
+    // Delivery Address
+    const [deliveryAddressType, setDeliveryAddressType] = useState<'organization' | 'customer'>('organization');
+    const [deliveryAddresses, setDeliveryAddresses] = useState<any[]>([]);
+    const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState<any>(null);
+    const [deliveryOrganizationId, setDeliveryOrganizationId] = useState<string>('');
+    const [deliveryCustomerId, setDeliveryCustomerId] = useState<string>('');
 
     // Purchase Order Details
     const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
@@ -134,12 +151,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [selectedTax, setSelectedTax] = useState('');
     const [adjustment, setAdjustment] = useState(0);
+    const [addresses, setAddresses] = useState([])
 
     // Notes & Attachments
     const [vendorNotes, setVendorNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
-    const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
+    const [paymentTermsOptions, setPaymentTermsOptions] = useState([])
+    const [accountLedgers, setAccountLedgers] = useState<any[]>([]);
 
     // Contact Person Dialog
     const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
@@ -157,7 +176,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; inventory_name: string; rate: number }[]>([]);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -187,7 +206,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             try {
                 const token = API_CONFIG.TOKEN;
                 const baseUrl = API_CONFIG.BASE_URL;
-                
+
                 if (!token || !baseUrl) {
                     console.error('Missing API configuration');
                     setLoadingVendors(false);
@@ -195,7 +214,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 }
 
                 const url = `${baseUrl}${API_CONFIG.ENDPOINTS.PURCHASE_ORDER_SUPPLIERS}?access_token=${token}`;
-                
+
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -208,7 +227,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 }
 
                 const data = await response.json();
-                
+
                 if (data.status === 'success' && data.suppliers) {
                     // Transform API response to match Vendor interface
                     const transformedVendors: Vendor[] = data.suppliers.map((supplier: { id: number; name: string }) => ({
@@ -226,7 +245,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         unusedCredits: 0,
                         contactPersons: []
                     }));
-                    
+
                     setVendors(transformedVendors);
                 }
             } catch (error) {
@@ -239,25 +258,111 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchVendors();
     }, []);
 
-    // Fetch items & taxes
+    // Fetch items & taxes & original addresses
     useEffect(() => {
-        // Mock data - replace with actual API calls
-        setItemOptions([
-            { id: '1', name: 'Cement', rate: 500 },
-            { id: '2', name: 'Steel', rate: 800 },
-            { id: '3', name: 'Bricks', rate: 10 },
-            { id: '4', name: 'Paint', rate: 350 }
-        ]);
+        const fetchInventories = async () => {
+            // Mock data or dispatch - restoring original logic
+            try {
+                const response = await dispatch(
+                    getInventories({ baseUrl, token })
+                ).unwrap();
+                setItemOptions(response.inventories);
+            } catch (error) {
+                console.log(error);
+                toast.error(error as any);
+            }
+        };
 
-        setTaxOptions([
-            { id: '1', name: 'GST 18%', rate: 18 },
-            { id: '2', name: 'GST 12%', rate: 12 },
-            { id: '3', name: 'GST 5%', rate: 5 },
-            { id: '4', name: 'No Tax', rate: 0 }
-        ]);
+        const fetchAddresses = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/addresses.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                setAddresses(response.data);
+            } catch (error) {
+                console.log(error);
+                toast.error(error as any);
+            }
+        };
 
-        setTermsAndConditions('1. Use this to issue for all purchase orders of all vendors.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
+        const fetchPaymentTerms = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/payment_terms.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+
+                setPaymentTermsOptions(response.data);
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchAddresses();
+        fetchInventories();
+        fetchPaymentTerms();
     }, []);
+
+    // Initialize IDs
+    useEffect(() => {
+        const orgId = localStorage.getItem('organization_id');
+        if (orgId) setDeliveryOrganizationId(orgId);
+
+        const user = getUser();
+        if (user?.id) setDeliveryCustomerId(user.id.toString());
+    }, []);
+
+    // Fetch delivery addresses
+    useEffect(() => {
+        const fetchDeliveryAddresses = async () => {
+            try {
+                let url = `https://${baseUrl}/addresses.json`;
+
+                const params = new URLSearchParams();
+                if (deliveryAddressType === 'organization') {
+                    params.append('resource_type', "Organization");
+                    params.append('resource_id', JSON.parse(localStorage.getItem("user")).organization_id)
+                } else {
+                    params.append('resource_type', "Pms::Supplier");
+                }
+
+                const response = await axios.get(`${url}?${params.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.data) {
+                    setDeliveryAddresses(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching delivery addresses:', error);
+                toast.error('Failed to fetch delivery addresses');
+            }
+        };
+
+        const fetchAccountLedgers = async () => {
+            const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id;
+            if (!accountId) return;
+
+            try {
+                const response = await axios.get(`https://${baseUrl}/lock_accounts/${accountId}/lock_account_ledgers.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setAccountLedgers(response.data);
+            } catch (error) {
+                console.error('Error fetching account ledgers:', error);
+            }
+        };
+
+        fetchDeliveryAddresses();
+        fetchAccountLedgers();
+    }, [deliveryAddressType, deliveryOrganizationId, deliveryCustomerId]);
+
+    // When vendor is selected
 
     // When vendor is selected
     useEffect(() => {
@@ -274,6 +379,16 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             setShippingAddress(billingAddress);
         }
     }, [sameAsBilling, billingAddress]);
+
+    // When delivery address is selected, update shipping address
+    useEffect(() => {
+        if (selectedDeliveryAddress) {
+            const addressString = `${selectedDeliveryAddress.address || ''}, ${selectedDeliveryAddress.address_line_two || ''}, ${selectedDeliveryAddress.city || ''}, ${selectedDeliveryAddress.state || ''}, ${selectedDeliveryAddress.zip_code || selectedDeliveryAddress.pincode || ''}`;
+            // Clean up double commas or leading/trailing separators
+            const cleanAddress = addressString.replace(/, ,/g, ',').replace(/^, /, '').replace(/, $/, '');
+            setShippingAddress(cleanAddress);
+        }
+    }, [selectedDeliveryAddress]);
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
@@ -518,44 +633,84 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                 {/* Address Section */}
                 <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Billing Address
-                            </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={4}
-                                value={billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
-                                placeholder="Enter billing address"
-                            />
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel shrink>Billing Address*</InputLabel>
+                                <Select
+                                    label="Billing Address*"
+                                    value={billingAddress}
+                                    onChange={(e) => setBillingAddress(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select...</em>
+                                    </MenuItem>
+                                    {addresses.map((address: any) => (
+                                        <MenuItem key={address.id} value={address.id}>
+                                            {address.address + " " + (address.address_line_two || "")}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel shrink>Shipping Address*</InputLabel>
+                                <Select
+                                    label="Shipping Address*"
+                                    value={shippingAddress}
+                                    onChange={(e) => setShippingAddress(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select...</em>
+                                    </MenuItem>
+                                    {addresses.map((address: any) => (
+                                        <MenuItem key={address.id} value={address.id}>
+                                            {address.address + " " + (address.address_line_two || "")}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Shipping Address
-                            </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={4}
-                                value={shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                placeholder="Enter shipping address"
-                                disabled={sameAsBilling}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={sameAsBilling}
-                                        onChange={(e) => setSameAsBilling(e.target.checked)}
-                                    />
-                                }
-                                label="Same as Billing Address"
-                                className="mt-2"
-                            />
+                        <div className=''>
+                            <h6 className='text-sm font-medium mb-2'>Delivery Address</h6>
+                            <div className="flex items-center gap-4 mb-4">
+                                <RadioGroup
+                                    row
+                                    value={deliveryAddressType}
+                                    onChange={(e) => setDeliveryAddressType(e.target.value as 'organization' | 'customer')}
+                                >
+                                    <FormControlLabel value="organization" control={<Radio />} label="Organization" />
+                                    <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+                                </RadioGroup>
+                            </div>
+
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel shrink>Select Delivery Address</InputLabel>
+                                <Select
+                                    label="Select Delivery Address"
+                                    value={selectedDeliveryAddress?.id || ''}
+                                    onChange={(e) => {
+                                        const selected = deliveryAddresses.find(addr => addr.id === e.target.value);
+                                        setSelectedDeliveryAddress(selected || null);
+                                    }}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Address</em>
+                                    </MenuItem>
+                                    {deliveryAddresses.map((addr: any) => (
+                                        <MenuItem key={addr.id} value={addr.id}>
+                                            {addr.address}, {addr.address_line_two}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </div>
                     </div>
                 </Section>
@@ -641,11 +796,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     sx={fieldStyles}
                                 >
                                     <MenuItem value="" disabled>Select payment terms</MenuItem>
-                                    <MenuItem value="Due on Receipt">Due on Receipt</MenuItem>
-                                    <MenuItem value="Net 15">Net 15</MenuItem>
-                                    <MenuItem value="Net 30">Net 30</MenuItem>
-                                    <MenuItem value="Net 45">Net 45</MenuItem>
-                                    <MenuItem value="Net 60">Net 60</MenuItem>
+                                    {
+                                        paymentTermsOptions.map((option) => (
+                                            <MenuItem key={option.id} value={option.id}>
+                                                {option.name}
+                                            </MenuItem>
+                                        ))
+                                    }
                                 </Select>
                             </FormControl>
                         </div>
@@ -684,10 +841,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Discount</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
                                         <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
                                     </tr>
@@ -698,11 +854,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.name}
+                                                        value={item.id}
                                                         onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
+                                                            const selectedItem = itemOptions.find(opt => opt.id === e.target.value);
                                                             if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
+                                                                updateItem(index, 'id', selectedItem.id);
+                                                                updateItem(index, 'name', selectedItem.inventory_name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                             }
                                                         }}
@@ -711,20 +868,46 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                     >
                                                         <MenuItem value="" disabled>Select an item</MenuItem>
                                                         {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
+                                                            <MenuItem key={option.id} value={option.id}>
+                                                                {option.inventory_name}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
-                                                />
+                                                {
+                                                    item.id && (
+                                                        <TextField
+                                                            fullWidth
+                                                            size="small"
+                                                            placeholder="Description"
+                                                            value={item.description}
+                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                            sx={{ mt: 1 }}
+                                                        />
+                                                    )
+                                                }
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                                    <Select
+                                                        value={item.account_id || ''}
+                                                        onChange={(e) => {
+                                                            updateItem(index, 'account_id', e.target.value);
+                                                            // Optional: if you need to store account name as well
+                                                            // const selectedAccount = accountLedgers.find(acc => acc.id === e.target.value);
+                                                            // updateItem(index, 'account_name', selectedAccount?.name);
+                                                        }}
+                                                        displayEmpty
+                                                        size="small"
+                                                    >
+                                                        <MenuItem value="">Select Account</MenuItem>
+                                                        {accountLedgers.map((ledger: any) => (
+                                                            <MenuItem key={ledger.id} value={ledger.id}>
+                                                                {ledger.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <TextField
@@ -745,45 +928,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <TextField
-                                                        type="number"
-                                                        size="small"
-                                                        value={item.discount}
-                                                        onChange={(e) => updateItem(index, 'discount', parseFloat(e.target.value) || 0)}
-                                                        inputProps={{ min: 0, step: 0.01 }}
-                                                        sx={{ width: 80 }}
-                                                    />
-                                                    <FormControl size="small" sx={{ width: 80 }}>
-                                                        <Select
-                                                            value={item.discountType}
-                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value)}
-                                                        >
-                                                            <MenuItem value="percentage">%</MenuItem>
-                                                            <MenuItem value="amount">₹</MenuItem>
-                                                        </Select>
-                                                    </FormControl>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 120 }}>
-                                                    <Select
-                                                        value={item.tax}
-                                                        onChange={(e) => {
-                                                            const selectedTaxOption = taxOptions.find(t => t.name === e.target.value);
-                                                            updateItem(index, 'tax', e.target.value);
-                                                            updateItem(index, 'taxRate', selectedTaxOption?.rate || 0);
-                                                        }}
-                                                        displayEmpty
-                                                    >
-                                                        <MenuItem value="">Select a Tax</MenuItem>
-                                                        {taxOptions.map(tax => (
-                                                            <MenuItem key={tax.id} value={tax.name}>{tax.name}</MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
@@ -969,7 +1113,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             </div>
                         )}
 
-                        <FormControlLabel
+                        {/* <FormControlLabel
                             control={
                                 <Checkbox
                                     checked={displayAttachmentsInPortal}
@@ -977,7 +1121,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 />
                             }
                             label="Display attachments in vendor portal and emails"
-                        />
+                        /> */}
                     </div>
                 </Section>
             </div>
