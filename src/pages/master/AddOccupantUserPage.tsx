@@ -504,7 +504,7 @@ export const AddOccupantUserPage: React.FC = () => {
                   notched
                 >
                   <MenuItem value="">Select User Type</MenuItem>
-                  {/* <MenuItem value="pms_occupant_admin">Admin</MenuItem> */}
+                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
                   <MenuItem value="pms_occupant">Member</MenuItem>
                   {/* <MenuItem value="pms_guest">Guest</MenuItem> */}
                 </MuiSelect>
