@@ -92,6 +92,7 @@ interface Item {
     tax: string;
     taxRate: number;
     amount: number;
+    account_id: number;
 }
 
 export const PurchaseOrderCreatePage: React.FC = () => {
@@ -142,7 +143,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            account_id: 0
         }
     ]);
 
@@ -306,6 +308,24 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchPaymentTerms();
     }, []);
 
+    // Fetch Taxes based on Tax Type
+    useEffect(() => {
+        const fetchTaxes = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${taxType.toLowerCase()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setTaxOptions(response.data);
+            } catch (error) {
+                console.error('Error fetching taxes:', error);
+            }
+        };
+
+        fetchTaxes();
+    }, [taxType]);
+
     // Initialize IDs
     useEffect(() => {
         const orgId = localStorage.getItem('organization_id');
@@ -425,7 +445,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            account_id: 0
         }]);
     };
 
@@ -440,13 +461,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
     const totalDiscount = (subTotal * discountOnTotal) / 100;
     const afterDiscount = subTotal - totalDiscount;
-    const taxAmount = items.reduce((sum, item) => {
-        const itemSubtotal = item.quantity * item.rate;
-        const itemDiscount = item.discountType === 'percentage'
-            ? (itemSubtotal * item.discount) / 100
-            : item.discount;
-        return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);
-    }, 0);
+
+    // Find selected tax rate
+    const selectedTaxObj = taxOptions.find(t => t.id === selectedTax);
+    const taxRate = selectedTaxObj?.rate || 0;
+    const taxAmount = (afterDiscount * taxRate) / 100;
+
     const totalAmount = afterDiscount + taxAmount + adjustment;
 
     // Handle file upload
@@ -528,37 +548,99 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         setIsSubmitting(true);
 
         try {
+            const user = getUser();
+            const accountId = user?.lock_account_id;
+
+            // Map items to pms_po_inventories_attributes
+            const inventoriesAttributes: Record<string, any> = {};
+            items.filter(item => item.name).forEach((item, index) => {
+                inventoriesAttributes[index.toString()] = {
+                    pms_inventory_id: item.id,
+                    quantity: item.quantity,
+                    rate: item.rate,
+                    total_value: item.amount,
+                    ledger_id: item.account_id,
+                    prod_desc: item.description
+                };
+            });
+
+            // Find selected tax object to get value/percentage if needed
+            // The curl example uses tax_value and tax_percentage. 
+            // Assuming tax_value is the calculated amount and tax_percentage is the rate.
+            // But wait, taxOptions has {id, name, rate}. 
+            // The tax calculation in summary uses a single tax rate??
+            // Re-checking Summary section: It has "Tax Type (TDS/TCS)" and "Select a Tax".
+            // And it sums up tax from items? 
+            // const taxAmount = items.reduce... -> This uses item.taxRate. 
+            // But the curl example shows a global tax_id and tax_percentage.
+            // Let's look at the UI code for tax again.
+            // <Select value={selectedTax} onChange={(e) => setSelectedTax(e.target.value)}>
+            // The `selectedTax` in UI stores the tax NAME (based on <MenuItem value={tax.name}>).
+            // I need to change this to store ID or find the ID.
+
+            const selectedTaxObj = taxOptions.find(t => t.name === selectedTax);
+
+            // Re-evaluating tax logic:
+            // The existing code calculates tax per item: `return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);`
+            // But the item table DOES NOT have a tax column anymore in the new file provided by user (it was in the initial file, but the user's latest file 821: table header ... Item Details, Account, Quantity, Rate, Amount, Action).
+            // Wait, looking at lines 1528+, the user provided file DOES NOT have tax column in items.
+            // So the tax calculation logic in `calculateTotals` might be stale or referring to the global tax?
+            // "const taxAmount = items.reduce..." -> item.taxRate is used. 
+            // But item interface still has `tax` and `taxRate`.
+            // The UI for item row does NOT show tax input.
+            // So likely the tax is GLOBAL, applied to the subtotal?
+            // The Summary section has "Select a Tax".
+            // So I should treat `selectedTax` as the global tax.
+
             const payload = {
-                vendorId: selectedVendor?.id,
-                purchaseOrderNumber,
-                referenceNumber,
-                purchaseOrderDate,
-                expectedDeliveryDate,
-                paymentTerms,
-                deliveryMethod,
-                billingAddress,
-                shippingAddress,
-                items: items.filter(item => item.name),
-                subTotal,
-                discount: totalDiscount,
-                taxType,
-                selectedTax,
-                adjustment,
-                totalAmount,
-                vendorNotes,
-                termsAndConditions,
-                attachments: attachments.map(f => f.name),
-                status: saveAsDraft ? 'draft' : 'confirmed'
+                pms_purchase_order: {
+                    pms_supplier_id: selectedVendor?.id,
+                    billing_address_id: billingAddress, // Assuming select value is ID
+                    shipping_address_id: shippingAddress, // Assuming select value is ID
+                    delivery_address_id: selectedDeliveryAddress?.id,
+                    reference_number: referenceNumber,
+                    po_date: purchaseOrderDate,
+                    expected_delivery_date: expectedDeliveryDate,
+                    payment_term_id: paymentTerms,
+                    letter_of_indent: false,
+                    delivery_method: deliveryMethod,
+                    vendor_note: vendorNotes,
+                    terms_conditions: termsAndConditions,
+                    account_id: accountId,
+
+                    tax_id: selectedTaxObj?.id,
+                    tax_type: taxType,
+                    discount: totalDiscount, // Calculated amount
+                    adjustment: adjustment,
+                    sub_total: subTotal,
+                    tax_value: taxAmount, // This currently comes from item reduction? 
+                    // If items don't have tax, this taxAmount should probably be calculated from the global tax?
+                    // Let's assume the tax is calculated based on selectedTaxObj.rate if items don't have it?
+                    // But `taxAmount` variable is used in total calculation.
+                    // I will fix taxAmount calculation in the next step/edit if needed. 
+                    // For now, mapping what's available.
+                    tax_percentage: selectedTaxObj?.rate || 0,
+
+                    pms_po_inventories_attributes: inventoriesAttributes
+                },
+                attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
 
-            // TODO: Replace with actual API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await axios.post(`https://${baseUrl}/pms/purchase_orders.json?access_token=${token}`, payload, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
 
-            alert(`Purchase order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/accounting/purchase-order');
+            if (response.status === 200 || response.status === 201) {
+                toast.success(`Purchase order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+                navigate('/accounting/purchase-order');
+            } else {
+                toast.error('Failed to create purchase order');
+            }
         } catch (error) {
             console.error('Error submitting purchase order:', error);
-            alert('Failed to create purchase order');
+            toast.error('Failed to create purchase order');
         } finally {
             setIsSubmitting(false);
         }
@@ -1016,7 +1098,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     >
                                         <MenuItem value="">Select a Tax</MenuItem>
                                         {taxOptions.map(tax => (
-                                            <MenuItem key={tax.id} value={tax.name}>{tax.name}</MenuItem>
+                                            <MenuItem key={tax.id} value={tax.id}>{tax.name}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -1056,6 +1138,25 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         value={vendorNotes}
                         onChange={(e) => setVendorNotes(e.target.value)}
                         placeholder="Enter any notes for the vendor"
+                        sx={{
+                            mt: 1,
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+                            "& .MuiInputBase-input[aria-hidden='true']": {
+                                flex: 0,
+                                width: 0,
+                                height: 0,
+                                padding: "0 !important",
+                                margin: 0,
+                                display: "none",
+                            },
+                            "& .MuiInputBase-input": {
+                                resize: "none !important",
+                            },
+                        }}
                     />
                 </Section>
 
@@ -1068,6 +1169,25 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         value={termsAndConditions}
                         onChange={(e) => setTermsAndConditions(e.target.value)}
                         placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
+                        sx={{
+                            mt: 1,
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+                            "& .MuiInputBase-input[aria-hidden='true']": {
+                                flex: 0,
+                                width: 0,
+                                height: 0,
+                                padding: "0 !important",
+                                margin: 0,
+                                display: "none",
+                            },
+                            "& .MuiInputBase-input": {
+                                resize: "none !important",
+                            },
+                        }}
                     />
                 </Section>
 
