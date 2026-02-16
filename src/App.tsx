@@ -1190,6 +1190,10 @@ function App() {
                         path="settings/account/lock-module"
                         element={<LockModuleList />}
                       />
+                      <Route
+                        path="settings/modules"
+                        element={<ModulesManagement />}
+                      />
 
                       {/* <Route
                       path="settings/account/lock-module/view/:id"
@@ -4326,10 +4330,6 @@ function App() {
                       <Route
                         path="/settings/account/lock-module"
                         element={<LockModuleList />}
-                      />
-                      <Route
-                        path="settings/modules"
-                        element={<ModulesManagement />}
                       />
                       <Route
                         path="/settings/account/lock-function"
