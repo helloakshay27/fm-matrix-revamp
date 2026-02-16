@@ -12,18 +12,19 @@ import { useDebounce } from '@/hooks/useDebounce';
 // Type definitions for Sales Order
 interface SalesOrder {
     id: number;
-    order_number: string;
+    sale_order_number: string;
     customer_name: string;
     date: string;
-    expected_shipment_date: string;
-    amount: number;
-    status: 'draft' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'closed';
-    payment_terms: string;
+    shipment_date: string;
+    total_amount: number;
+    status: string;
+    payment_term: string | null;
     reference_number: string;
-    salesperson: string;
+    sales_person_name: string;
     active: boolean;
     created_at: string;
     updated_at: string;
+    fulfilled: boolean;
 }
 
 interface ApiResponse {
@@ -56,7 +57,7 @@ const columns: ColumnConfig[] = [
         draggable: false
     },
     {
-        key: 'order_number',
+        key: 'sale_order_number',
         label: 'Order Number',
         sortable: true,
         hideable: true,
@@ -77,28 +78,28 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'expected_shipment_date',
+        key: 'shipment_date',
         label: 'Expected Shipment',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
-        key: 'amount',
+        key: 'total_amount',
         label: 'Amount',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
-        key: 'payment_terms',
-        label: 'Payment Terms',
+        key: 'payment_term',
+        label: 'Payment Term',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
-        key: 'salesperson',
+        key: 'sales_person_name',
         label: 'Salesperson',
         sortable: true,
         hideable: true,
@@ -121,6 +122,7 @@ export const SalesOrderListPage: React.FC = () => {
     const debouncedSearchQuery = useDebounce(searchTerm, 1000);
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -131,103 +133,44 @@ export const SalesOrderListPage: React.FC = () => {
         has_prev_page: false
     });
 
+
+    
+
     // Fetch sales order data from API
     const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
         setLoading(true);
         try {
-            // Mock data - replace with actual API call
-            const mockData: SalesOrder[] = [
-                {
-                    id: 1,
-                    order_number: 'SO-00004',
-                    customer_name: 'Lockated',
-                    date: '2026-02-11',
-                    expected_shipment_date: '2026-02-25',
-                    amount: 2845.00,
-                    status: 'confirmed',
-                    payment_terms: 'Due on Receipt',
-                    reference_number: '12',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-02-11',
-                    updated_at: '2026-02-11'
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams({
+                lock_account_id: '1',
+                // page: String(page),
+                // per_page: String(per_page),
+            });
+            if (search) params.append('search', search);
+            if (filters.status) params.append('status', filters.status);
+            if (filters.customerId) params.append('customer_id', String(filters.customerId));
+            if (filters.dateFrom) params.append('date_from', filters.dateFrom);
+            if (filters.dateTo) params.append('date_to', filters.dateTo);
+
+            const response = await fetch(`https://${baseUrl}/sale_orders.json?${params.toString()}`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json',
                 },
-                {
-                    id: 2,
-                    order_number: 'SO-00003',
-                    customer_name: 'Lockated',
-                    date: '2026-02-11',
-                    expected_shipment_date: '2026-02-18',
-                    amount: 2987.50,
-                    status: 'draft',
-                    payment_terms: 'Net 30',
-                    reference_number: '',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-02-11',
-                    updated_at: '2026-02-11'
-                },
-                {
-                    id: 3,
-                    order_number: 'SO-00002',
-                    customer_name: 'Lockated',
-                    date: '2026-01-13',
-                    expected_shipment_date: '2026-01-28',
-                    amount: 12100.00,
-                    status: 'closed',
-                    payment_terms: 'Net 45',
-                    reference_number: 'TEST',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-01-13',
-                    updated_at: '2026-01-28'
-                },
-                {
-                    id: 4,
-                    order_number: 'SO-00001',
-                    customer_name: 'Lockated',
-                    date: '2026-01-12',
-                    expected_shipment_date: '2026-01-28',
-                    amount: 1389.90,
-                    status: 'closed',
-                    payment_terms: 'Due on Receipt',
-                    reference_number: '11',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-01-12',
-                    updated_at: '2026-01-28'
-                }
-            ];
-
-            // Filter based on search
-            let filteredData = mockData;
-            if (search.trim()) {
-                filteredData = mockData.filter(order =>
-                    order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-                    order.customer_name.toLowerCase().includes(search.toLowerCase())
-                );
-            }
-
-            // Apply filters
-            if (filters.status) {
-                filteredData = filteredData.filter(order => order.status === filters.status);
-            }
-
-            const totalCount = filteredData.length;
-            const totalPages = Math.ceil(totalCount / per_page);
-            const startIndex = (page - 1) * per_page;
-            const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-
-            setSalesOrderData(paginatedData);
-            setPagination({
+            });
+            const data = await response.json();
+            console.log('API Response:', data);
+            // Assume API returns { data: SalesOrder[], pagination: {...} }
+            setSalesOrderData(Array.isArray(data) ? data: []);
+            setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
-                total_pages: totalPages,
-                total_count: totalCount,
-                has_next_page: page < totalPages,
-                has_prev_page: page > 1
+                total_pages: 1,
+                total_count: 0,
+                has_next_page: false,
+                has_prev_page: false
             });
-
         } catch (error: unknown) {
             console.error('Error fetching sales order data:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -285,36 +228,48 @@ export const SalesOrderListPage: React.FC = () => {
     const totalRecords = pagination.total_count;
     const totalPages = pagination.total_pages;
     const displayedData = salesOrderData;
-
+console.log('Sales Order Data:', salesOrderData);
     // Render row function for enhanced table
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                <button
+                <input
+                    type="checkbox"
+                    checked={selectedRows.includes(order.id)}
+                    onChange={e => {
+                        setSelectedRows(prev =>
+                            e.target.checked
+                                ? [...prev, order.id]
+                                : prev.filter(id => id !== order.id)
+                        );
+                    }}
+                    title="Select for status update"
+                />
+                {/* <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => handleDelete(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
-        order_number: (
-            <div className="font-medium text-blue-600">{order.order_number}</div>
+        sale_order_number: (
+            <div className="font-medium text-blue-600">{order.sale_order_number}</div>
         ),
         customer_name: (
             <span className="text-sm text-gray-900">{order.customer_name}</span>
@@ -328,29 +283,56 @@ export const SalesOrderListPage: React.FC = () => {
                 })}
             </span>
         ),
-        expected_shipment_date: (
+        shipment_date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.expected_shipment_date).toLocaleDateString('en-GB', {
+                {order.shipment_date ? new Date(order.shipment_date).toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
-                })}
+                }) : ''}
             </span>
         ),
-        amount: (
+        total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{order.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
         ),
-        payment_terms: (
-            <span className="text-sm text-gray-600">{order.payment_terms}</span>
+        payment_term: (
+            <span className="text-sm text-gray-600">{order.payment_term || '-'}</span>
         ),
-        salesperson: (
-            <span className="text-sm text-gray-600">{order.salesperson}</span>
+        sales_person_name: (
+            <span className="text-sm text-gray-600">{order.sales_person_name}</span>
         ),
         status: (
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
+                <input
+                    type="checkbox"
+                    checked={order.fulfilled}
+                    onChange={async () => {
+                        try {
+                            const baseUrl = localStorage.getItem('baseUrl');
+                            const token = localStorage.getItem('token');
+                            const payload = {
+                                sale_order_ids: [order.id],
+                                fulfilled: !order.fulfilled
+                            };
+                            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+                                method: 'POST',
+                                headers: {
+                                    Authorization: token ? `Bearer ${token}` : undefined,
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+                        } catch (err) {
+                            toast.error('Failed to update fulfilled status');
+                        }
+                    }}
+                    style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
+                    title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
+                />
             </div>
         )
     });
@@ -369,6 +351,35 @@ export const SalesOrderListPage: React.FC = () => {
                 duration: 3000,
             });
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        }
+    };
+
+    const handleMarkAsConfirmed = async () => {
+        if (selectedRows.length === 0) {
+            toast.error('Select at least one sales order');
+            return;
+        }
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const payload = {
+                sale_order_ids: selectedRows,
+                status: 'confirmed',
+                fulfilled: true
+            };
+            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+                method: 'POST',
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+            toast.success('Status updated successfully');
+            setSelectedRows([]);
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (err) {
+            toast.error('Failed to update status');
         }
     };
 
@@ -391,12 +402,22 @@ export const SalesOrderListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button
-                        className='bg-primary text-primary-foreground hover:bg-primary/90'
-                        onClick={() => navigate('/accounting/sales-order/create')}
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> Add
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            onClick={() => navigate('/accounting/sales-order/create')}
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Add
+                        </Button>
+                        {selectedRows.length > 0 && (
+                            <Button
+                                className='bg-green-600 text-white hover:bg-green-700'
+                                onClick={handleMarkAsConfirmed}
+                            >
+                                Mark as Confirmed
+                            </Button>
+                        )}
+                    </div>
                 )}
             />
 

@@ -1550,6 +1550,102 @@ const modulesByPackage = {
   //             ],
   //         },
   //     ],
+
+
+  Accounting: [
+            {
+            name: "Items",
+            icon: FileText,
+            subItems: [
+                { name: "Items", href: "/accounting/items" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Sales",
+            icon: FileText,
+            subItems: [
+                { name: "Customers", href: "/accounting/customers" },
+                { name: "Sales Order", href: "/accounting/sales-order" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+         {
+              name: "Purchase Orders",
+              icon: FileText,
+              subItems: [
+                { name: "Purchase Order", href: "/accounting/purchase-order" },
+                { name: "Bills", href: "/accounting/bills" },
+                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
+                { name: "Vendor", href: "/maintenance/vendor" },
+                { name: "Expense", href: "/accounting/expense" },
+                { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
+                { name: "Payments Made", href: "/accounting/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+              ],
+            },
+        
+        {
+            name: "Accountants",
+            icon: Users,
+            subItems: [
+                { name: "Manual Journals", href: "/accounting/manual-journal" },
+                { name: "Transactions", href: "/accounting/transactions" },
+                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+                { name: "Opening Balance", href: "/accounting/opening-balance" },
+                { name: "Budget", href: "/accounting/budget" },
+                { name: "Tax Setup", href: "/accounting/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Configuration",
+            icon: Settings,
+            subItems: [
+                { name: "Charges ", href: "/accounting/charge-setup" },
+                { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
+            ],
+        },
+
+        {
+            name: "Reports",
+            icon: FileText,
+            subItems: [
+                { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
+                {
+                    name: "Profit & Loss",
+                    href: "/accounting/reports/profit-and-loss",
+                },
+                {
+                    name: "GST Payable",
+                    href: "/accounting/reports/gst-payable",
+                },
+                {
+                    name: "GST Receivable",
+                    href: "/accounting/reports/gst-receivable",
+                },
+                {
+                    name: "Tax Summary",
+                    href: "/accounting/reports/tax-summary",
+                },
+            ],
+        },
+    ],
 };
 
 export const StacticSidebar = () => {

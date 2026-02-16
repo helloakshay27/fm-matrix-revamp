@@ -14,7 +14,7 @@ const packages = [
   'Market Place',
   'Master',
   'Settings',
-  // 'Accounting'
+  'Accounting'
 ];
 
 export const StaticDynamicHeader = () => {
