@@ -659,6 +659,9 @@ import { AddFacilityBookingPage } from "./pages/AddFacilityBookingPage";
 import { PaymentRedirectPage } from "./pages/PaymentRedirectPage";
 import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 
+import { PaymentsMadePage } from "./pages/PaymentsMadePage";
+import { CreatePaymentPage } from "./pages/CreatePaymentPage";
+
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
 import AddApprovalMatrixPage from "./pages/settings/AddApprovalMatrixPage";
 
@@ -962,6 +965,96 @@ import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
 // import RouteLogger from "./components/RouteLogger";
 
+import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
+import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
+import { AddClubEventPage } from "./pages/AddClubEventPage";
+import { AddFacilityBookingClubPage } from "./pages/ClubManagement/AmenityBookingAdd";
+import { AddGuestUserPage } from "./pages/ClubManagement/AddGuestUserPage";
+import { AddMembershipPlanPage } from "./pages/AddMembershipPlanPage";
+import { AddPaymentPlan } from "./pages/settings/AddPaymentPlan";
+import { AmenityBookingDetailsClubPage } from "./pages/ClubManagement/AmenityBookingDetails";
+import { BillCreatePage } from "./pages/BillCreatePage";
+import { BillCyclesDetails } from "./pages/ClubManagement/BillCyclesDetails";
+import { BillDetailPage } from "./pages/BillDetailPage";
+import { BillListPage } from "./pages/BillListPage";
+import { BookingSetupClubDashboard } from "./pages/ClubManagement/AmenityBookingSetupClub";
+import { BookingSetupDetailClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubDetails";
+import { BudgetDashboard } from "./pages/ClubManagement/BudgetDashboard";
+import { ChargeSetupDetails } from "./pages/ClubManagement/ChargeSetupDetails";
+import { ChartOfAccountDetails } from "./pages/ClubManagement/ChartOfAccountDetails";
+import { ClubBroadcastDashboard } from "./pages/ClubBroadcastDashboard";
+import { ClubBroadcastDetailsPage } from "./pages/ClubBroadcastDetailsPage";
+import { ClubEventDetailsPage } from "./pages/ClubEventDetailsPage";
+import { ClubEventsPage } from "./pages/ClubEventPage";
+import { EditBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubEdit";
+import { EditGuestUserPage } from "./pages/ClubManagement/EditGuestUserPage";
+import { EditMembershipPlanPage } from "./pages/EditMembershipPlanPage";
+import { ExpenseCreatePage } from "./pages/ExpenseCreatePage";
+import { ExpenseDetailPage } from "./pages/ExpenseDetailPage";
+import { ExpenseListPage } from "./pages/ExpenseListPage";
+import { GuestUserMasterDashboard } from "./pages/ClubManagement/GuestUserMasterDashboard";
+import { ItemsDetails } from "./pages/ClubManagement/ItemsDetails";
+import { ManualJournalDetails } from "./pages/ClubManagement/ManualJournalDetails";
+import { MembershipPlanDashboard } from "./pages/MembershipPlanDashboard";
+import { MembershipPlanDetailsPage } from "./pages/MembershipPlanDetailsPage";
+import { PaymentDetailPage } from "./pages/settings/PaymentDetailPage";
+import { PaymentManagementDashboard } from "./pages/settings/PaymentManagementDashboard";
+import { PaymentPlanDetails } from "./pages/settings/PaymentPlanDetails";
+import { PaymentPlanSetup } from "./pages/settings/PaymentPlanSetup";
+import { PurchaseOrderCreatePage } from "./pages/PurchaseOrderCreatePage";
+import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
+import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
+import { RecurringBillCreatePage } from "./pages/ClubManagement/RecurringBillCreatePage";
+import { RecurringBillsDashboard } from "./pages/ClubManagement/RecurringBillsDashboard";
+import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
+import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
+import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
+import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
+import { SalesOrderDetailPage } from "./pages/SalesOrderDetailPage";
+import { SalesOrderListPage } from "./pages/SalesOrderListPage";
+import { TransactionsDetails } from "./pages/ClubManagement/TransationsDetails";
+import { ViewClubOccupantUser } from "./pages/master/ViewClubOccupantUser";
+import { ViewGuestUserPage } from "./pages/ClubManagement/ViewGuestUserPage";
+import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
+import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPage";
+import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
+import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
+import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
+import BillCyclesDashboard from "./pages/ClubManagement/BillCyclesDashboard";
+import BudgetAdd from "./pages/ClubManagement/BudgetAdd";
+import BudgetAddNew from "./pages/ClubManagement/BudgetAddNew";
+import BudgetDetails from "./pages/ClubManagement/BudgetDetails";
+import ChargeSetupAdd from "./pages/ClubManagement/ChargeSetupAdd";
+import ChargeSetupDashboard from "./pages/ClubManagement/ChargeSetupDashboard";
+import ChartOfAccountsDashboard from "./pages/ClubManagement/ChartOfAccountsDashboard";
+import ClubGroupMembershipDashboard from "./pages/ClubManagement/ClubGroupMembershipDashboard";
+import ClubGroupMembershipDetails from "./pages/ClubManagement/ClubGroupMembershipDetails";
+import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
+import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
+import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
+import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
+import EditBudget from "./pages/ClubManagement/BudgetEdit";
+import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
+import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
+import ItemsDashboard from "./pages/ClubManagement/ItemsDashboard";
+import ItemsEdit from "./pages/ClubManagement/ItemsEdit";
+import ManualJournalAdd from "./pages/ClubManagement/ManualJournalAdd";
+import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboard";
+import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
+import OpeningBalance from "./pages/ClubManagement/OpeningBalance";
+import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
+import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
+import TaxSetup from "./pages/ClubManagement/TaxSetup";
+import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
+import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
+import TransactionsDashboard from "./pages/ClubManagement/TransactionsDashboard";
+import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
+import useRouteLogger from "./hooks/useRouteLogger";
+import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
+import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -1013,7 +1106,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1275,7 +1368,10 @@ function App() {
                       element={<ForgotPasswordOTPPage />}
                     />
                     <Route path="/new-password" element={<NewPasswordPage />} />
-                    <Route path="/login-success" element={<LoginSuccessPage />} />
+                    <Route
+                      path="/login-success"
+                      element={<LoginSuccessPage />}
+                    />
                     <Route
                       path="/password-reset-success"
                       element={<PasswordResetSuccessPage />}
@@ -1332,7 +1428,10 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/PermissionDemo" element={<PermissionDemo />} />
+                    <Route
+                      path="/PermissionDemo"
+                      element={<PermissionDemo />}
+                    />
 
                     <Route
                       path="/tickets"
@@ -1443,7 +1542,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/bookings-overview/add"
                         element={
@@ -1452,7 +1550,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/bookings-overview/:id"
                         element={
@@ -1461,7 +1558,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/profile"
                         element={
@@ -1478,7 +1574,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/parking"
                         element={
@@ -1487,7 +1582,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/parking-booking-employee"
                         element={
@@ -1496,7 +1590,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/parking-booking-employee/add"
                         element={
@@ -1505,7 +1598,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/employee/fnb"
                         element={
@@ -1514,7 +1606,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route
                         path="/employee/fnb/add"
                         element={
@@ -1531,7 +1622,6 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-
                       <Route path="/vas/channels" element={<ChannelsLayout />}>
                         <Route
                           index
@@ -1556,29 +1646,24 @@ function App() {
                         path="/vas/channels/tasks"
                         element={<ChannelTasksAll />}
                       />
-
                       <Route path="/business-card" element={<BusinessCard />} />
                       <Route path="/ask-ai" element={<AskAI />} />
-
                       <Route
                         path="/vas/channels/tasks/:id"
                         element={<ChatTaskDetailsPage />}
                       />
-
                       {/* Dashboard Routes */}
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route
                         path="/dashboard/configuration"
                         element={<DashboardConfiguration />}
                       />
-
                       {/* Holiday Calendar Route */}
                       <Route
                         path="/holiday-calendar"
                         element={<HolidayCalendarPage />}
                       />
                       <Route path="/sitemap" element={<Sitemap />} />
-
                       {/* Rule Engine Routes */}
                       <Route
                         path="/rule-engine/rule-list"
@@ -1588,7 +1673,6 @@ function App() {
                         path="/loyalty-rule-engine"
                         element={<LoyaltyRuleEngineDashboard />}
                       />
-
                       {/* Settings Routes */}
                       <Route
                         path="/settings/users"
@@ -1662,7 +1746,6 @@ function App() {
                         path="/settings/account/roster/create"
                         element={<RosterCreatePage />}
                       />
-
                       <Route
                         path="/settings/account/roster/detail/:id"
                         element={<RosterDetailPage />}
@@ -1695,7 +1778,6 @@ function App() {
                         path="/settings/roles/role/add"
                         element={<AddRolePage />}
                       />
-
                       {/* Settings Asset Setup Routes */}
                       <Route
                         path="/settings/asset-setup/approval-matrix"
@@ -1705,18 +1787,28 @@ function App() {
                         path="/settings/asset-setup/asset-groups"
                         element={<AssetGroupsPageNew />}
                       />
-
-                      {/* Settings Checklist Setup Routes */}
+                      {/* Payments Made Routes */}
+                      <Route
+                        path="/settings/payments-made"
+                        element={<PaymentsMadePage />}
+                      />
+                      <Route
+                        path="/settings/payments-made/create"
+                        element={<CreatePaymentPage />}
+                      />
+                      <Route
+                        path="/settings/payments-made/:id"
+                        element={<PaymentDetailPage />}
+                      />
+                      -{/* Settings Checklist Setup Routes */}
                       <Route
                         path="/settings/checklist-setup/groups"
                         element={<ChecklistGroupsPage />}
                       />
-
                       <Route
                         path="/settings/currency"
                         element={<CurrencyPage />}
                       />
-
                       <Route
                         path="/master/checklist"
                         element={<ChecklistListPage />}
@@ -1761,7 +1853,6 @@ function App() {
                         path="/settings/masters/address/edit"
                         element={<EditAddressPage />}
                       />
-
                       {/* Master Routes */}
                       <Route
                         path="/master/checklist"
@@ -1791,7 +1882,6 @@ function App() {
                         path="/master/unit-default"
                         element={<UnitMasterByDefaultPage />}
                       />
-
                       <Route
                         path="/master/user/occupant-users/add"
                         element={<AddOccupantUserPage />}
@@ -1804,7 +1894,6 @@ function App() {
                         path="/master/user/occupant-users/edit/:id"
                         element={<EditOccupantUserPage />}
                       />
-
                       {/* Finance Master Routes */}
                       <Route
                         path="/master/finance"
@@ -1814,10 +1903,15 @@ function App() {
                         path="/master/plant-detail"
                         element={<PlantDetailSetupPage />}
                       />
-
                       {/* CRM Routes */}
-                      <Route path="/crm/campaign" element={<CRMCampaignPage />} />
-                      <Route path="/crm/campaign/add" element={<AddLeadPage />} />
+                      <Route
+                        path="/crm/campaign"
+                        element={<CRMCampaignPage />}
+                      />
+                      <Route
+                        path="/crm/campaign/add"
+                        element={<AddLeadPage />}
+                      />
                       <Route
                         path="/crm/campaign/details/:id"
                         element={<LeadDetailsPage />}
@@ -1835,7 +1929,10 @@ function App() {
                         element={<CRMOccupantUsersDashboard />}
                       />
                       <Route path="/crm/events" element={<CRMEventsPage />} />
-                      <Route path="/crm/events/add" element={<AddEventPage />} />
+                      <Route
+                        path="/crm/events/add"
+                        element={<AddEventPage />}
+                      />
                       <Route
                         path="/crm/events/details/:id"
                         element={<CRMEventDetailsPage />}
@@ -1886,12 +1983,10 @@ function App() {
                         path="/crm/wallet-list/:id"
                         element={<CRMWalletDetails />}
                       />
-
                       <Route
                         path="/msafedashboard"
                         element={<MsafeDashboardVI />}
                       />
-
                       <Route
                         path="/crm/point-expiry"
                         element={<CRMWalletPointExpiry />}
@@ -1900,7 +1995,499 @@ function App() {
                         path="/crm/point-expiry/edit"
                         element={<EditCRMWalletPointExpiry />}
                       />
-
+                      {/* Club Management Routes */}
+                      <Route
+                        path="/settings/vas/booking/setup"
+                        element={<BookingSetupDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/add"
+                        element={<AddBookingSetupPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/details/:id"
+                        element={<BookingSetupDetailPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking/setup/edit/:id"
+                        element={<EditBookingSetupPage />}
+                      />
+                      {/* new rountes for amenity setup for recess */}
+                      <Route
+                        path="/settings/vas/booking-club/setup"
+                        element={<BookingSetupClubDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/add"
+                        element={<AddBookingSetupClubPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/details/:id"
+                        element={<BookingSetupDetailClubPage />}
+                      />
+                      <Route
+                        path="/settings/vas/booking-club/setup/edit/:id"
+                        element={<EditBookingSetupClubPage />}
+                      />
+                      {/* .... */}
+                      <Route
+                        path="/settings/vas/membership-plan/setup"
+                        element={<MembershipPlanDashboard />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/add"
+                        element={<AddMembershipPlanPage />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/edit/:id"
+                        element={<EditMembershipPlanPage />}
+                      />
+                      <Route
+                        path="/settings/vas/membership-plan/setup/details/:id"
+                        element={<MembershipPlanDetailsPage />}
+                      />
+                      <Route
+                        path="/settings/accessories"
+                        element={<AccessoriesSetup />}
+                      />
+                      <Route
+                        path="/settings/accessories/:id"
+                        element={<AccessoriesDetailsPage />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/setup"
+                        element={<PaymentPlanSetup />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/add"
+                        element={<AddPaymentPlan />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/edit/:id"
+                        element={<AddPaymentPlan />}
+                      />
+                      <Route
+                        path="/settings/payment-plan/details/:id"
+                        element={<PaymentPlanDetails />}
+                      />
+                      <Route
+                        path="/settings/payment-management"
+                        element={<PaymentManagementDashboard />}
+                      />
+                      <Route
+                        path="/settings/payment-management/:id"
+                        element={<PaymentDetailPage />}
+                      />
+                      <Route
+                        path="/club-management/membership"
+                        element={<ClubMembershipDashboard />}
+                      />
+                      <Route
+                        path="/club-management/membership/groups"
+                        element={<ClubGroupMembershipDashboard />}
+                      />
+                      <Route
+                        path="/club-management/membership/add"
+                        element={<AddClubMembershipPage />}
+                      />
+                      <Route
+                        path="/club-management/membership/add-group"
+                        element={<AddGroupMembershipPage />}
+                      />
+                      <Route
+                        path="/club-management/group-membership/:id/edit"
+                        element={<AddGroupMembershipPage />}
+                      />
+                      <Route
+                        path="/club-management/membership/group-details/:id"
+                        element={<ClubGroupMembershipDetails />}
+                      />
+                      <Route
+                        path="/club-management/membership/:id"
+                        element={<ClubMembershipDetailPage />}
+                      />
+                      <Route
+                        path="/club-management/membership/:id/edit"
+                        element={<AddClubMembershipPage />}
+                      />
+                      {/* Club Management - FM Users */}
+                      <Route
+                        path="/club-management/users/fm-users"
+                        element={<FMUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/add"
+                        element={<AddFMUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/edit/:id"
+                        element={<EditFMUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/fm-users/view/:id"
+                        element={<ViewFMUserPage />}
+                      />
+                      <Route
+                        path="/accounting/manual-journal"
+                        element={<ManualJournalDashboard />}
+                      />
+                      <Route
+                        path="/accounting/manual-journal/add"
+                        element={<ManualJournalAdd />}
+                      />
+                      <Route
+                        path="/accounting/manual-journal/details/:id"
+                        element={<ManualJournalDetails />}
+                      />
+                      <Route
+                        path="/accounting/manual-journal/edit/:id"
+                        element={<ManualJournalEdit />}
+                      />
+                      <Route
+                        path="/accounting/recurring-journal"
+                        element={<RecurringJournalDashboard />}
+                      />
+                      <Route
+                        path="/accounting/recurring-journal/add"
+                        element={<RecurringJournalAdd />}
+                      />
+                      <Route
+                        path="/accounting/recurring-journal/details"
+                        element={<RecurringJournalDetails />}
+                      />
+                      <Route
+                        path="/accounting/chart-journal"
+                        element={<ChartOfAccountsDashboard />}
+                      />
+                      <Route
+                        path="/accounting/chart-journal/details/:id"
+                        element={<ChartOfAccountDetails />}
+                      />
+                      <Route
+                        path="/accounting/opening-balance"
+                        element={<OpeningBalance />}
+                      />
+                      <Route
+                        path="/accounting/tax-setup"
+                        element={<TaxSetup />}
+                      />
+                      <Route
+                        path="/accounting/charge-setup"
+                        element={<ChargeSetupDashboard />}
+                      />
+                      <Route
+                        path="/accounting/charge-setup/add"
+                        element={<ChargeSetupAdd />}
+                      />
+                      <Route
+                        path="/accounting/charge-setup/details/:id"
+                        element={<ChargeSetupDetails />}
+                      />
+                      <Route
+                        path="/accounting/bill-cycles"
+                        element={<BillCyclesDashboard />}
+                      />
+                      <Route
+                        path="/accounting/bill-cycles/add"
+                        element={<BillCyclesAdd />}
+                      />
+                      <Route
+                        path="/accounting/bill-cycles/details/:id"
+                        element={<BillCyclesDetails />}
+                      />
+                      <Route
+                        path="/accounting/Budget"
+                        element={<BudgetDashboard />}
+                      />
+                      {/* <Route path="/settings/Budget/add" element={<BudgetAdd />} /> */}
+                      <Route
+                        path="/accounting/Budget/add/new"
+                        element={<BudgetAddNew />}
+                      />
+                      <Route
+                        path="/accounting/Budget/Edit"
+                        element={<EditBudget />}
+                      />
+                      <Route
+                        path="/accounting/Budget/details"
+                        element={<BudgetDetails />}
+                      />
+                      <Route
+                        path="/accounting/reports/balance-sheet"
+                        element={<BalanceSheetReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/accounting/reports/profit-and-loss"
+                        element={<ProfitAndLossReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/accounting/reports/tax-summary"
+                        element={<TaxSummaryReport />}
+                      />
+                      {/* <Route */}
+                      <Route
+                        path="/accounting/reports/gst-payable"
+                        element={<GstPayableReport />}
+                      />
+                      <Route
+                        path="/accounting/transactions"
+                        element={<TransactionsDashboard />}
+                      />
+                      <Route
+                        path="/accounting/transactions/add"
+                        element={<TransactionsAdd />}
+                      />
+                      <Route
+                        path="/accounting/transactions/details/:id"
+                        element={<TransactionsDetails />}
+                      />
+                      <Route
+                        path="/accounting/transactions/Edit/:id"
+                        element={<TransactionsEdit />}
+                      />
+                      <Route
+                        path="/accounting/items"
+                        element={<ItemsDashboard />}
+                      />
+                      <Route
+                        path="/accounting/items/add"
+                        element={<ItemsAdd />}
+                      />
+                      <Route
+                        path="/accounting/items/details/:id"
+                        element={<ItemsDetails />}
+                      />
+                      <Route
+                        path="/accounting/items/edit/:id"
+                        element={<ItemsEdit />}
+                      />
+                      <Route
+                        path="/accounting/customers"
+                        element={<CustomersDashboard />}
+                      />
+                      <Route
+                        path="/accounting/customers/add"
+                        element={<CustomersAdd />}
+                      />
+                      {/* Sales Order Routes */}
+                      <Route
+                        path="/accounting/sales-order"
+                        element={<SalesOrderListPage />}
+                      />
+                      <Route
+                        path="/accounting/sales-order/create"
+                        element={<SalesOrderCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/sales-order/:id"
+                        element={<SalesOrderDetailPage />}
+                      />
+                      <Route
+                        path="/accounting/sales-order/edit/:id"
+                        element={<SalesOrderCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-invoices"
+                        element={<RecurringInvoicesListPage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-invoices/create"
+                        element={<RecurringInvoicesCreatePage />}
+                      />
+                      {/* Purchase Order Routes */}
+                      <Route
+                        path="/accounting/purchase-order"
+                        element={<PurchaseOrderListPage />}
+                      />
+                      <Route
+                        path="/accounting/purchase-order/create"
+                        element={<PurchaseOrderCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/purchase-order/:id"
+                        element={<PurchaseOrderDetailPage />}
+                      />
+                      <Route
+                        path="/accounting/purchase-order/edit/:id"
+                        element={<PurchaseOrderCreatePage />}
+                      />
+                      {/* Bills Routes */}
+                      <Route
+                        path="/accounting/bills"
+                        element={<BillListPage />}
+                      />
+                      <Route
+                        path="/accounting/bills/create"
+                        element={<BillCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/bills/:id"
+                        element={<BillDetailPage />}
+                      />
+                      <Route
+                        path="/accounting/bills/edit/:id"
+                        element={<BillCreatePage />}
+                      />
+                      {/* Recurring Bills Routes */}
+                      <Route
+                        path="/accounting/recurring-bills"
+                        element={<RecurringBillsDashboard />}
+                      />
+                      <Route
+                        path="/accounting/recurring-bills/create"
+                        element={<RecurringBillCreatePage />}
+                      />
+                      {/* Expense Routes */}
+                      <Route
+                        path="/accounting/expense"
+                        element={<ExpenseListPage />}
+                      />
+                      <Route
+                        path="/accounting/expense/create"
+                        element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/expense/:id"
+                        element={<ExpenseDetailPage />}
+                      />
+                      <Route
+                        path="/accounting/expense/edit/:id"
+                        element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/settings/sales-order/edit/:id"
+                        element={<SalesOrderCreatePage />}
+                      />
+                      {/* Club Management - Occupant Users */}
+                      <Route
+                        path="/club-management/users/occupant-users"
+                        element={<OccupantUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/add"
+                        element={<ClubAddOccupantUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/view/:id"
+                        element={<ViewClubOccupantUser />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/edit/:id"
+                        element={<ClubEditOccupantUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/occupant-users/:id"
+                        element={<CRMOccupantUserDetailPage />}
+                      />
+                      {/* Club Management - Guest Users */}
+                      <Route
+                        path="/club-management/users/guest"
+                        element={<GuestUserMasterDashboard />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/add"
+                        element={<AddGuestUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/view/:id"
+                        element={<ViewGuestUserPage />}
+                      />
+                      <Route
+                        path="/club-management/users/guest/edit/:id"
+                        element={<EditGuestUserPage />}
+                      />
+                      {/* Club Management - Helpdesk */}
+                      <Route
+                        path="/club-management/helpdesk"
+                        element={<TicketDashboard />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/add"
+                        element={<AddTicketDashboard />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/details/:id"
+                        element={<TicketDetailsPage />}
+                      />
+                      <Route
+                        path="/club-management/helpdesk/edit/:id"
+                        element={<UpdateTicketsPage />}
+                      />
+                      {/* Club Management - Amenities Booking */}
+                      <Route
+                        path="/club-management/amenities-booking"
+                        element={<BookingList />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking/add"
+                        element={<AddFacilityBookingPage />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking/:id"
+                        element={<BookingDetailsPage />}
+                      />
+                      {/* Club Management - Amenities Booking seperate routes for recess */}
+                      <Route
+                        path="/club-management/amenities-booking-club"
+                        element={<AmenityBookingListClub />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking-club/add"
+                        element={<AddFacilityBookingClubPage />}
+                      />
+                      <Route
+                        path="/club-management/amenities-booking-club/:id"
+                        element={<AmenityBookingDetailsClubPage />}
+                      />
+                      <Route
+                        path="/vas/booking-club/list"
+                        element={<AmenityBookingListClub />}
+                      />
+                      <Route
+                        path="/vas/booking-club/add"
+                        element={<AddFacilityBookingClubPage />}
+                      />
+                      <Route
+                        path="/vas/bookings-club/details/:id"
+                        element={<AmenityBookingDetailsClubPage />}
+                      />
+                      {/* Club Management - Broadcast */}
+                      <Route
+                        path="/club-management/broadcast"
+                        element={<ClubBroadcastDashboard />}
+                      />
+                      <Route
+                        path="/club-management/broadcast/add"
+                        element={<AddClubBroadcastPage />}
+                      />
+                      <Route
+                        path="/club-management/broadcast/details/:id"
+                        element={<ClubBroadcastDetailsPage />}
+                      />
+                      {/* Club Management - Events */}
+                      <Route
+                        path="/club-management/events"
+                        element={<ClubEventsPage />}
+                      />
+                      <Route
+                        path="/club-management/events/add"
+                        element={<AddClubEventPage />}
+                      />
+                      <Route
+                        path="/club-management/events/details/:id"
+                        element={<ClubEventDetailsPage />}
+                      />
+                      {/* Club Management - Accounting */}
+                      <Route
+                        path="/club-management/accounting"
+                        element={<PaymentManagementDashboard />}
+                      />
+                      <Route
+                        path="/club-management/accounting/details/:id"
+                        element={<PaymentDetailPage />}
+                      />
                       {/* Snagging Routes */}
                       <Route
                         path="/transitioning/snagging"
@@ -1914,7 +2501,6 @@ function App() {
                         path="/transitioning/hoto"
                         element={<HOTODashboard />}
                       />
-
                       {/* Design Insights Routes */}
                       <Route
                         path="/transitioning/design-insight"
@@ -1932,7 +2518,6 @@ function App() {
                         path="/transitioning/design-insight/edit/:id"
                         element={<EditDesignInsightDashboard />}
                       />
-
                       {/* Fitout Routes */}
                       <Route
                         path="/transitioning/fitout/setup"
@@ -1958,13 +2543,11 @@ function App() {
                         path="/transitioning/fitout/violation"
                         element={<FitoutViolationDashboard />}
                       />
-
                       {/* Ticket Routes */}
                       <Route
                         path="/maintenance/ticket/employee"
                         element={<TicketDashboardEmployee />}
                       />
-
                       <Route
                         path="/employee/dashboard"
                         element={<EmployeeDashboard />}
@@ -1977,7 +2560,6 @@ function App() {
                         path="/maintenance/ticket"
                         element={<TicketDashboard />}
                       />
-
                       <Route
                         path="/maintenance/ticket/add"
                         element={<AddTicketDashboard />}
@@ -2043,7 +2625,6 @@ function App() {
                         path="/maintenance/ticket/employee/details/:id"
                         element={<TicketDetailsEmployee />}
                       />
-
                       {/* Task Routes */}
                       <Route
                         path="/maintenance/task"
@@ -2053,17 +2634,14 @@ function App() {
                         path="/maintenance/task/submit/:id"
                         element={<TaskSubmissionPage />}
                       />
-
                       <Route
                         path="/maintenance/task/details/:id"
                         element={<TaskDetailsPage />}
                       />
-
                       <Route
                         path="/maintenance/task/job-sheet/:id"
                         element={<JobSheetPage />}
                       />
-
                       {/* Safety Routes */}
                       <Route
                         path="/safety/incident"
@@ -2117,7 +2695,6 @@ function App() {
                         path="/safety-check-audit"
                         element={<SafetyCheckAudit />}
                       />
-
                       <Route
                         path="/safety/permit/edit/:id"
                         element={
@@ -2168,19 +2745,16 @@ function App() {
                         path="/safety/training-list/edit/:id"
                         element={<AddTrainingRecordDashboard />}
                       />
-
                       {/* New Training User Detail route (distinct from existing training detail) */}
                       <Route
                         path="/safety/m-safe/training-list/training-user-details/:id"
                         element={<TrainingUserDetailPage />}
                       />
-
                       {/* M-Safe Routes */}
                       <Route
                         path="/safety/m-safe/internal"
                         element={<MSafeDashboard />}
                       />
-
                       <Route
                         path="/safety/training-list"
                         element={<TrainingListDashboard />}
@@ -2189,27 +2763,22 @@ function App() {
                         path="/safety/m-safe/circle"
                         element={<MsafeCirlce />}
                       />
-
                       {/* CRM Routes */}
                       <Route path="/crm/lead" element={<LeadDashboard />} />
-
                       {/* Utility Routes */}
                       <Route
                         path="/utility/energy"
                         element={<EnergyDashboard />}
                       />
-
                       {/* Security Routes */}
                       <Route
                         path="/security/visitor"
                         element={<VisitorsDashboard />}
                       />
-
                       <Route
                         path="/security/visitor/employee"
                         element={<VisitorsDashboardEmployee />}
                       />
-
                       {/* Incident Routes */}
                       <Route
                         path="/maintenance/incident"
@@ -2227,7 +2796,6 @@ function App() {
                         path="/maintenance/incident/edit/:id"
                         element={<EditIncidentDetailsPage />}
                       />
-
                       {/* Permit Routes */}
                       <Route
                         path="/maintenance/permit"
@@ -2237,7 +2805,6 @@ function App() {
                         path="/maintenance/permit/add"
                         element={<AddPermitPage />}
                       />
-
                       {/* Operational Audit Routes */}
                       <Route
                         path="/maintenance/audit/operational/scheduled"
@@ -2253,13 +2820,14 @@ function App() {
                       />
                       <Route
                         path="/maintenance/audit/operational/scheduled/performance/:id"
-                        element={<ViewOperationalAuditSchedulePerformancePage />}
+                        element={
+                          <ViewOperationalAuditSchedulePerformancePage />
+                        }
                       />
                       <Route
                         path="/maintenance/audit/operational/conducted"
                         element={<OperationalAuditConductedDashboard />}
                       />
-
                       {/* Training Audit Routes */}
                       <Route
                         path="/maintenance/audit/training/scheduled"
@@ -2289,7 +2857,6 @@ function App() {
                         path="/maintenance/audit/operational/master-checklists/add"
                         element={<AddMasterChecklistPage />}
                       />
-
                       {/* Vendor Audit Routes */}
                       <Route
                         path="/maintenance/audit/vendor/scheduled"
@@ -2315,7 +2882,6 @@ function App() {
                         path="/maintenance/audit/vendor/conducted"
                         element={<VendorAuditConductedDashboard />}
                       />
-
                       {/* Asset Audit Routes */}
                       <Route
                         path="/maintenance/audit/assets"
@@ -2337,7 +2903,6 @@ function App() {
                         path="/maintenance/audit/assets/report/:id"
                         element={<AssetAuditReportPage />}
                       />
-
                       {/* Waste Generation Routes */}
                       <Route
                         path="/maintenance/waste/generation"
@@ -2359,7 +2924,6 @@ function App() {
                         path="/maintenance/waste/generation/:id"
                         element={<WasteGenerationDetailsPage />}
                       />
-
                       {/* Survey Routes */}
                       <Route
                         path="/maintenance/survey/list"
@@ -2369,7 +2933,6 @@ function App() {
                         path="/master/survey/list"
                         element={<SurveyListDashboard />}
                       />
-
                       <Route
                         path="/maintenance/survey/add"
                         element={<AddSurveyPage />}
@@ -2414,7 +2977,6 @@ function App() {
                         path="/master/survey/edit/:id"
                         element={<EditSurveyPage />}
                       />
-
                       <Route
                         path="/maintenance/survey/mapping"
                         element={<SurveyMappingDashboard />}
@@ -2443,7 +3005,6 @@ function App() {
                         path="/maintenance/survey/response/dashboard"
                         element={<SurveyResponseDashboard />}
                       />
-
                       <Route
                         path="/maintenance/survey/response/:surveyId/:responseId"
                         element={<TabularResponseDetailsPage />}
@@ -2595,7 +3156,6 @@ function App() {
                         path="/finance/wbs"
                         element={<WBSElementDashboard />}
                       />
-
                       {/* Maintenance Routes */}
                       <Route
                         path="/maintenance/asset"
@@ -2657,9 +3217,11 @@ function App() {
                         path="/maintenance/asset/inactive"
                         element={<InActiveAssetsDashboard />}
                       />
-
                       {/* AMC Routes */}
-                      <Route path="/maintenance/amc" element={<AMCDashboard />} />
+                      <Route
+                        path="/maintenance/amc"
+                        element={<AMCDashboard />}
+                      />
                       <Route
                         path="/maintenance/amc/add"
                         element={<AddAMCPage />}
@@ -2672,7 +3234,6 @@ function App() {
                         path="/maintenance/amc/edit/:id"
                         element={<EditAMCPage />}
                       />
-
                       {/* Service Routes */}
                       <Route
                         path="/maintenance/service"
@@ -2694,11 +3255,9 @@ function App() {
                         path="/maintenance/service/edit/:id"
                         element={<EditServicePage />}
                       />
-
                       {/* SAC/HSN Routes (list + detail) */}
                       {/* <Route path="/maintenance/sac-hsn" element={<SacHsn />} />
                 <Route path="/maintenance/sac-hsn/details/:id" element={<DetailPageSacHsn />} /> */}
-
                       {/* Attendance Routes */}
                       <Route
                         path="/maintenance/attendance"
@@ -2741,7 +3300,6 @@ function App() {
                         path="/maintenance/eco-friendly-list"
                         element={<EcoFriendlyListPage />}
                       />
-
                       {/* Inventory Routes */}
                       <Route
                         path="/maintenance/inventory"
@@ -2763,7 +3321,6 @@ function App() {
                         path="/maintenance/inventory/feeds/:id"
                         element={<InventoryFeedsPage />}
                       />
-
                       {/* Task Routes */}
                       <Route
                         path="/maintenance/task"
@@ -2773,12 +3330,10 @@ function App() {
                         path="/maintenance/task/details/:id"
                         element={<TaskDetailsPage />}
                       />
-
                       <Route
                         path="/maintenance/task/job-sheet/:id"
                         element={<JobSheetPage />}
                       />
-
                       {/* Schedule Routes */}
                       <Route
                         path="/maintenance/schedule"
@@ -2800,7 +3355,6 @@ function App() {
                         path="/maintenance/schedule/clone/:id"
                         element={<CloneSchedulePage />}
                       />
-
                       <Route
                         path="/maintenance/schedule/copy/:id"
                         element={<CopySchedulePage />}
@@ -2813,7 +3367,6 @@ function App() {
                         path="/maintenance/schedule/performance/:id"
                         element={<ViewPerformancePage />}
                       />
-
                       <Route
                         path="/maintenance/vendor"
                         element={<VendorPage />}
@@ -2847,7 +3400,6 @@ function App() {
                         path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                         element={<ProjectTaskDetails />}
                       />
-
                       <Route
                         path="/vas/tasks/:taskId"
                         element={<ProjectTaskDetails />}
@@ -2857,13 +3409,14 @@ function App() {
                         path="/vas/sprint/details/:id"
                         element={<SprintDetailsPage />}
                       />
-                      <Route path="/vas/sprint/:id" element={<SprintKanban />} />
-
+                      <Route
+                        path="/vas/sprint/:id"
+                        element={<SprintKanban />}
+                      />
                       <Route
                         path="/vas/projects/:id/milestones/:mid"
                         element={<MilestoneDetailsPage />}
                       />
-
                       {/* Issues Routes */}
                       <Route path="/vas/issues" element={<IssuesListPage />} />
                       <Route
@@ -2878,75 +3431,61 @@ function App() {
                         path="/vas/projects/:id/issues/:issueId"
                         element={<IssueDetailsPage />}
                       />
-
                       <Route
                         path="/vas/opportunity"
                         element={<OpportunityDashboard />}
                       />
-
                       <Route
                         path="/vas/opportunity/:id"
                         element={<OpportunityDetailsPage />}
                       />
-
                       <Route path="/vas/todo" element={<Todo />} />
-
                       <Route
                         path="/vas/documents"
                         element={<DocumentManagement />}
                       />
-
                       <Route path="/vas/mom" element={<MinutesOfMeeting />} />
-
                       <Route
                         path="/vas/project-dashboard"
                         element={<SupersetDashboard />}
                       />
-
                       <Route path="/vas/add-mom" element={<AddMoMPage />} />
-
-                      <Route path="/vas/edit-mom/:id" element={<EditMoMPage />} />
-
+                      <Route
+                        path="/vas/edit-mom/:id"
+                        element={<EditMoMPage />}
+                      />
                       <Route
                         path="/settings/project-task-setup/roles"
                         element={<ProjectRoles />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-types"
                         element={<ProjectTypes />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-tags"
                         element={<ProjectTags />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-teams"
                         element={<ProjectTeams />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-status"
                         element={<ProjectStatus />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-groups"
                         element={<ProjectGroups />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/project-templates"
                         element={<ProjectTemplates />}
                       />
-
                       <Route
                         path="/settings/project-task-setup/issue-types"
                         element={<ProjectIssueTypes />}
                       />
-
                       {/* Utility Routes */}
                       <Route
                         path="/utility/energy"
@@ -3024,7 +3563,6 @@ function App() {
                         path="/utility/solar-generator"
                         element={<UtilitySolarGeneratorDashboard />}
                       />
-
                       {/* Energy Asset Routes */}
                       <Route
                         path="/utility/energy/details/:id"
@@ -3034,7 +3572,6 @@ function App() {
                         path="/utility/energy/edit/:id"
                         element={<EditEnergyAssetPage />}
                       />
-
                       {/* Water Asset Details Route */}
                       <Route
                         path="/utility/water/details/:id"
@@ -3044,7 +3581,6 @@ function App() {
                         path="/utility/water/edit/:id"
                         element={<EditWaterAssetDashboard />}
                       />
-
                       {/* Security/Visitors Routes */}
                       <Route
                         path="/security/gate-pass"
@@ -3158,7 +3694,6 @@ function App() {
                         path="/settings/staff"
                         element={<StaffsDashboard />}
                       />
-
                       <Route
                         path="/safety/report/msafe-report"
                         element={<MsafeReportDownload />}
@@ -3231,7 +3766,6 @@ function App() {
                         path="/security/patrolling/edit/:id"
                         element={<PatrollingEditPage />}
                       />
-
                       {/* Security Vehicle Routes */}
                       <Route
                         path="/security/vehicle/r-vehicles"
@@ -3245,7 +3779,6 @@ function App() {
                         path="/security/vehicle/g-vehicles"
                         element={<GVehiclesDashboard />}
                       />
-
                       <Route
                         path="/security/vehicle/r-vehicles/in"
                         element={<RVehiclesInDashboard />}
@@ -3255,7 +3788,6 @@ function App() {
                         element={<RVehiclesOutDashboard />}
                       />
                       {/* Value Added Services Routes */}
-
                       <Route
                         path="/mail-inbounds-create"
                         element={<NewInboundPage />}
@@ -3281,7 +3813,6 @@ function App() {
                         path="/vas/fnb/discounts"
                         element={<FnBDiscountsPage />}
                       />
-
                       {/* Mailroom Routes */}
                       <Route
                         path="/vas/mailroom/inbound"
@@ -3307,7 +3838,10 @@ function App() {
                         path="/vas/mailroom/outbound/:id"
                         element={<OutboundDetailPage />}
                       />
-                      <Route path="/vas/parking" element={<ParkingDashboard />} />
+                      <Route
+                        path="/vas/parking"
+                        element={<ParkingDashboard />}
+                      />
                       <Route
                         path="/vas/parking/details/:clientId"
                         element={<ParkingDetailsPage />}
@@ -3357,7 +3891,6 @@ function App() {
                         path="/vas/tickets/discounts"
                         element={<TicketDiscountsPage />}
                       />
-
                       {/* Value Added Services Routes */}
                       {/* <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} /> */}
                       <Route
@@ -3409,7 +3942,6 @@ function App() {
                         path="/vas/tickets/discounts"
                         element={<TicketDiscountsPage />}
                       />
-
                       {/* Handle the typo in the URL */}
                       <Route
                         path="/vas/redemonection-marketplace"
@@ -3417,7 +3949,6 @@ function App() {
                           <Navigate to="/vas/redemption-marketplace" replace />
                         }
                       />
-
                       {/* Space Management Routes */}
                       <Route
                         path="/vas/space-management/bookings"
@@ -3459,7 +3990,6 @@ function App() {
                         path="/space-management/seat-requests"
                         element={<SpaceManagementSeatRequestsDashboard />}
                       />
-
                       {/* VAS Space Management Setup Routes - moved inside main layout */}
                       <Route
                         path="/vas/space-management/setup/seat-type"
@@ -3521,9 +4051,7 @@ function App() {
                         path="/vas/space-management/setup/export"
                         element={<ExportDashboard />}
                       />
-
                       {/* M Safe Routes */}
-
                       <Route
                         path="/safety/m-safe/non-fte-users"
                         element={<NonFTEUsersDashboard />}
@@ -3538,7 +4066,6 @@ function App() {
                           <Navigate to="/safety/m-safe/internal" replace />
                         }
                       />
-
                       <Route
                         path="/safety/m-safe/external"
                         element={<ExternalUsersDashboard />}
@@ -3615,7 +4142,6 @@ function App() {
                         path="/vehicle-history/update"
                         element={<UpdateVehicleHistoryPage />}
                       />
-
                       {/* Market Place Routes */}
                       <Route
                         path="/market-place/all"
@@ -3645,9 +4171,11 @@ function App() {
                         path="/market-place/accounting"
                         element={<AccountingDetailPage />}
                       />
-
                       {/* VAS Booking Routes */}
-                      <Route path="/vas/booking/list" element={<BookingList />} />
+                      <Route
+                        path="/vas/booking/list"
+                        element={<BookingList />}
+                      />
                       <Route
                         path="/vas/booking/add"
                         element={<AddFacilityBookingPage />}
@@ -3665,12 +4193,11 @@ function App() {
                         path="/vas/booking/setup/details/:id"
                         element={<BookingSetupDetailPage />}
                       />
-
                       <Route
                         path="/payment-redirect"
                         element={<PaymentRedirectPage />}
                       />
-
+                      {/* Payments Made Routes */}
                       {/* Master Location Routes */}
                       <Route
                         path="/master/location/building"
@@ -3700,7 +4227,6 @@ function App() {
                         path="/master/location/account"
                         element={<LocationAccountPage />}
                       />
-
                       {/* Master User Routes */}
                       <Route
                         path="/master/user/fm-users"
@@ -3722,7 +4248,6 @@ function App() {
                         path="/master/user/occupant-users"
                         element={<OccupantUserMasterDashboard />}
                       />
-
                       {/* Material Master Route */}
                       <Route
                         path="/master/material-ebom"
@@ -3764,7 +4289,6 @@ function App() {
                         path="/master/document-category/edit/:id"
                         element={<EditDocumentCategoryPage />}
                       />
-
                       {/* Template Routes - Root Cause Analysis */}
                       <Route
                         path="/master/template/root-cause-analysis"
@@ -3778,7 +4302,6 @@ function App() {
                         path="/master/template/root-cause-analysis/edit/:id"
                         element={<EditRootCauseAnalysisPage />}
                       />
-
                       {/* Template Routes - Preventive Action */}
                       <Route
                         path="/master/template/preventive-action"
@@ -3792,7 +4315,6 @@ function App() {
                         path="/master/template/preventive-action/edit/:id"
                         element={<EditPreventiveActionPage />}
                       />
-
                       {/* Template Routes - Short-term Impact */}
                       <Route
                         path="/master/template/short-term-impact"
@@ -3806,7 +4328,6 @@ function App() {
                         path="/master/template/short-term-impact/edit/:id"
                         element={<EditShortTermImpactPage />}
                       />
-
                       {/* Template Routes - Long-term Impact */}
                       <Route
                         path="/master/template/long-term-impact"
@@ -3820,7 +4341,6 @@ function App() {
                         path="/master/template/long-term-impact/edit/:id"
                         element={<EditLongTermImpactPage />}
                       />
-
                       {/* Template Routes - Corrective Action */}
                       <Route
                         path="/master/template/corrective-action"
@@ -3834,7 +4354,6 @@ function App() {
                         path="/master/template/corrective-action/edit/:id"
                         element={<EditCorrectiveActionPage />}
                       />
-
                       <Route
                         path="/master/gate-pass-type"
                         element={<GatePassTypePage />}
@@ -3883,7 +4402,6 @@ function App() {
                         path="/master/inventory-sub-type/edit/:id"
                         element={<EditInventorySubTypePage />}
                       />
-
                       <Route
                         path="/maintenance/waste/generation/add"
                         element={<AddWasteGenerationPage />}
@@ -3896,17 +4414,14 @@ function App() {
                         path="/maintenance/task/task-details/:id"
                         element={<TaskDetailsPage />}
                       />
-
                       <Route
                         path="/maintenance/task/job-sheet/:id"
                         element={<JobSheetPage />}
                       />
-
                       <Route
                         path="/product-details"
                         element={<ProductDetails />}
                       />
-
                       <Route path="*" element={<NotFound />} />
                     </Route>
 
@@ -4101,7 +4616,6 @@ function App() {
                         element={<EditCuratedServicePage />}
                       />
 
-
                       {/* Plus Support Service Routes */}
                       <Route
                         path="/pulse/supported-services/service"
@@ -4115,7 +4629,6 @@ function App() {
                         path="/pulse/supported-services/service/edit/:id"
                         element={<SupportedServiceEdit />}
                       />
-
 
                       {/*  curated Service  Category Routes */}
                       <Route
@@ -4455,7 +4968,10 @@ function App() {
                       path="/mobile/tickets"
                       element={<MobileTicketsPage />}
                     />
-                    <Route path="/mobile/orders" element={<MobileOrdersPage />} />
+                    <Route
+                      path="/mobile/orders"
+                      element={<MobileOrdersPage />}
+                    />
                     <Route
                       path="/mobile/admin/orders"
                       element={<MobileAdminOrdersPage />}
@@ -4509,7 +5025,10 @@ function App() {
                       element={<MobileSurveyPage />}
                     />
                     {/* Mobile Asset Routes */}
-                    <Route path="/mobile/assets" element={<MobileAssetPage />} />
+                    <Route
+                      path="/mobile/assets"
+                      element={<MobileAssetPage />}
+                    />
                     <Route
                       path="/mobile/assets/:assetId"
                       element={<MobileAssetPage />}
@@ -4534,7 +5053,10 @@ function App() {
                       path="/mobile-projects"
                       element={<ProjectsMobileView />}
                     />
-                    <Route path="/mobile-issues" element={<IssuesMobileView />} />
+                    <Route
+                      path="/mobile-issues"
+                      element={<IssuesMobileView />}
+                    />
                     <Route
                       path="/mobile-issues/add"
                       element={<AddIssueMobileView />}
@@ -4586,21 +5108,20 @@ function App() {
                       element={<ContestPromotion />}
                     />
                     {/* Spinner Contest Routes */}
-                    <Route path="/spinnercontest" element={<SpinnerContest />} />
+                    <Route
+                      path="/spinnercontest"
+                      element={<SpinnerContest />}
+                    />
                     <Route
                       path="/spinnercontest/:contestId"
                       element={<SpinnerContest />}
                     />
                     {/* Scratch Card Routes */}
-                    <Route
+                    {/* <Route
                       path="/scratchcards"
                       element={<ScratchCardListing />}
-                    />
-                    <Route path="/scratchcard" element={<ScratchCard />} />
-                    <Route
-                      path="/scratchcard/:cardId"
-                      element={<ScratchCard />}
-                    />
+                    /> */}
+                    <Route path="/scratchcards" element={<ScratchCard />} />
                     <Route
                       path="/scratchcard/details/:rewardId"
                       element={<VoucherDetails />}

@@ -3260,7 +3260,7 @@ const ParkingBookingListSiteWise = () => {
           )}
 
           {/* Analytics Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {selectedAnalytics.includes("peak_hour_trends") && (
               <ParkingAnalyticsCard
                 title="Peak Hour Trends"

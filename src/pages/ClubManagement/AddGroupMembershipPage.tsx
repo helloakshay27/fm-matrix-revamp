@@ -233,7 +233,7 @@ export const AddGroupMembershipPage = () => {
     const [members, setMembers] = useState<MemberData[]>(() => {
         const initialMember: MemberData = {
             id: '1',
-            userSelectionMode: 'select',
+            userSelectionMode: 'manual',
             selectedUser: '',
             selectedUserId: null,
             formData: {
@@ -977,8 +977,12 @@ export const AddGroupMembershipPage = () => {
             }
 
             if (member.userSelectionMode === 'manual') {
-                if (!member.formData.firstName || !member.formData.lastName) {
-                    toast.error(`${memberLabel}: Please enter first name and last name`);
+                if (!member.formData.firstName 
+                    // || 
+                    // !member.formData.lastName
+                ) 
+                    {
+                    toast.error(`${memberLabel}: Please enter first name `);
                     return;
                 }
                 if (!member.formData.email) {
@@ -1686,11 +1690,11 @@ export const AddGroupMembershipPage = () => {
                                                         });
                                                     }}
                                                 >
-                                                    <FormControlLabel
+                                                    {/* <FormControlLabel
                                                         value="select"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
                                                         label="Select User"
-                                                    />
+                                                    /> */}
                                                     <FormControlLabel
                                                         value="manual"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
@@ -1767,16 +1771,17 @@ export const AddGroupMembershipPage = () => {
                                                             helperText={member.formData.firstName !== '' && !validateName(member.formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
                                                         />
                                                         <TextField
-                                                            label="Last Name *"
+                                                            label="Last Name "
                                                             value={member.formData.lastName}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
                                                                 // Only allow alphabets and spaces
                                                                 if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
                                                                     updateMember(member.id, { formData: { ...member.formData, lastName: value } });
-                                                                } else {
-                                                                    toast.error('Last name should contain only alphabets');
-                                                                }
+                                                                } 
+                                                                // else {
+                                                                //     toast.error('Last name should contain only alphabets');
+                                                                // }
                                                             }}
                                                             sx={fieldStyles}
                                                             fullWidth
@@ -1830,7 +1835,7 @@ export const AddGroupMembershipPage = () => {
                                                         </FormControl>
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                                                         <TextField
                                                             label="Mobile Number *"
                                                             value={member.formData.mobile}
@@ -2664,9 +2669,9 @@ export const AddGroupMembershipPage = () => {
                                             </div>
 
                                             {/* Tax Section */}
-                                            <div className="space-y-3 pb-3 border-b border-gray-200">
+                                            {/* <div className="space-y-3 pb-3 border-b border-gray-200"> */}
                                                 {/* CGST */}
-                                                <div className="flex items-center justify-between">
+                                                {/* <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <label className="text-sm text-gray-600">CGST (%):</label>
                                                         <TextField
@@ -2695,10 +2700,10 @@ export const AddGroupMembershipPage = () => {
                                                         />
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
-                                                </div>
+                                                </div> */}
 
                                                 {/* SGST */}
-                                                <div className="flex items-center justify-between">
+                                                {/* <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <label className="text-sm text-gray-600">SGST (%):</label>
                                                         <TextField
@@ -2727,8 +2732,8 @@ export const AddGroupMembershipPage = () => {
                                                         />
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
-                                                </div>
-                                            </div>
+                                                </div> */}
+                                            {/* </div> */}
 
                                             {/* Total */}
                                             <div className="flex items-center justify-between pt-2">

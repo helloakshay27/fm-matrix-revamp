@@ -13,7 +13,8 @@ const packages = [
   'Value Added Services',
   'Market Place',
   'Master',
-  'Settings'
+  'Settings',
+  // 'Accounting'
 ];
 
 export const StaticDynamicHeader = () => {

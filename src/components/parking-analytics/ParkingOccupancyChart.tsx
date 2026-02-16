@@ -61,6 +61,12 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
           return date.toISOString().split('T')[0];
         })();
 
+        const previousEndDate = (() => {
+          const date = new Date(endDateStr);
+          date.setDate(date.getDate() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
         const url = getFullUrl('/parking_dashboard/two_wheeler_four_wheeler_stacked_counts');
         const options = getAuthenticatedFetchOptions();
         
@@ -68,6 +74,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
           start_date: startDateStr,
           end_date: endDateStr,
           previous_start_date: previousStartDate,
+          previous_end_date: previousEndDate,
           compare_yoy: 'true',
         });
 
@@ -130,6 +137,12 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
         return date.toISOString().split('T')[0];
       })();
 
+      const previousEndDate = (() => {
+        const date = new Date(endDateStr);
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split('T')[0];
+      })();
+
       const url = getFullUrl('/parking_dashboard/two_wheeler_four_wheeler_stacked_counts');
       const options = getAuthenticatedFetchOptions();
       
@@ -137,6 +150,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
         start_date: startDateStr,
         end_date: endDateStr,
         previous_start_date: previousStartDate,
+        previous_end_date: previousEndDate,
         compare_yoy: 'true',
       });
 

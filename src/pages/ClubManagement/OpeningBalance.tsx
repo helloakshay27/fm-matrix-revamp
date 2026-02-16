@@ -229,7 +229,7 @@ const OpeningBalance = () => {
 
     console.log('Submitting payload:', payload);
     try {
-      const url = `${baseUrl}/lock_accounts/2/lock_account_transactions`;
+      const url = `${baseUrl}/lock_accounts/2/lock_account_transactions.json`;
       const response = await axios.post(url, payload, {
         headers: {
           'Content-Type': 'application/json',

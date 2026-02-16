@@ -42,12 +42,11 @@ export const FlipCardDetails: React.FC = () => {
   const { rewardId } = useParams<{ rewardId: string }>();
   const [searchParams] = useSearchParams();
 
-  // Get token from URL or localStorage
-  const token = searchParams.get("token") || localStorage.getItem("token");
-
   const [isLoading, setIsLoading] = useState(true);
   const [rewardData, setRewardData] = useState<UserContestReward | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>("details");
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "details"
+  );
 
   useEffect(() => {
     const fetchRewardData = async () => {
@@ -59,12 +58,26 @@ export const FlipCardDetails: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const url = `https://runwal-api.lockated.com/user_contest_rewards/${rewardId}`;
-        const params = token ? { token } : {};
+        const orgId = searchParams.get("org_id");
+        const token = searchParams.get("token");
 
-        console.warn("🌐 Fetching reward details:", url);
+        if (!orgId || !token) {
+          console.error("❌ Missing org_id or token");
+          setIsLoading(false);
+          return;
+        }
 
-        const response = await baseClient.get<UserContestReward>(url, { params });
+        // Pass org_id and token as params for baseClient interceptor
+        const params: any = {};
+        if (token) params.token = token;
+        // if (orgId) params.org_id = orgId;
+
+        console.warn("🌐 Fetching reward details for:", rewardId);
+
+        const response = await baseClient.get<UserContestReward>(
+          `/user_contest_rewards/${rewardId}`,
+          { params }
+        );
 
         console.warn("✅ Reward data received:", response.data);
         setRewardData(response.data);
@@ -79,7 +92,7 @@ export const FlipCardDetails: React.FC = () => {
     };
 
     fetchRewardData();
-  }, [rewardId, token]);
+  }, [rewardId, searchParams]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -87,9 +100,10 @@ export const FlipCardDetails: React.FC = () => {
 
   const copyCode = () => {
     if (rewardData) {
-      const textToCopy = rewardData.reward_type === "coupon"
-        ? rewardData.coupon_code || rewardData.prize.title
-        : `${rewardData.prize.title} - ${rewardData.points_value} points`;
+      const textToCopy =
+        rewardData.reward_type === "coupon"
+          ? rewardData.coupon_code || rewardData.prize.title
+          : `${rewardData.prize.title} - ${rewardData.points_value} points`;
 
       navigator.clipboard.writeText(textToCopy);
       alert("Code copied to clipboard!");
@@ -215,7 +229,9 @@ export const FlipCardDetails: React.FC = () => {
             onClick={() => toggleSection("details")}
             className="w-full flex items-center justify-between py-4"
           >
-            <span className="font-semibold text-gray-900 text-lg">Contest Details</span>
+            <span className="font-semibold text-gray-900 text-lg">
+              Contest Details
+            </span>
             {expandedSection === "details" ? (
               <ChevronDown className="w-5 h-5 text-gray-600" />
             ) : (
@@ -226,11 +242,19 @@ export const FlipCardDetails: React.FC = () => {
           {expandedSection === "details" && (
             <div className="pb-4 space-y-2">
               {rewardData.contest.description && (
-                <p className="text-gray-600 text-sm">{rewardData.contest.description}</p>
+                <p className="text-gray-600 text-sm">
+                  {rewardData.contest.description}
+                </p>
               )}
               <div className="text-sm text-gray-600">
-                <p>Start: {new Date(rewardData.contest.start_at).toLocaleDateString()}</p>
-                <p>End: {new Date(rewardData.contest.end_at).toLocaleDateString()}</p>
+                <p>
+                  Start:{" "}
+                  {new Date(rewardData.contest.start_at).toLocaleDateString()}
+                </p>
+                <p>
+                  End:{" "}
+                  {new Date(rewardData.contest.end_at).toLocaleDateString()}
+                </p>
               </div>
             </div>
           )}

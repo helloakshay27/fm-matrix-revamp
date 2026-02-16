@@ -1,4 +1,13 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Users,
   Laptop,
@@ -52,20 +61,242 @@ interface QuickLink {
   link?: string;
 }
 
+interface Attachment {
+  id: number;
+  document_content_type: string;
+  url: string;
+}
+
+interface Comment {
+  id: number;
+  body: string;
+  commentable_id: number;
+  commentable_type: string;
+  commentor_id: number;
+  active: boolean | null;
+  created_at: string;
+  updated_at: string;
+  commentor_full_name: string;
+  commentor_profile_image: string | null;
+  commentor_site_name: string;
+  attachments: any[];
+  reports_count?: number;
+}
+
+interface Post {
+  id: number;
+  title: string | null;
+  body: string;
+  active: boolean;
+  blocked: boolean;
+  resource_id: number;
+  resource_type: string;
+  created_at: string;
+  updated_at: string;
+  creator_full_name: string;
+  creator_site_name: string;
+  creator_image_url: string | null;
+  resource_name: string;
+  total_likes: number;
+  likes_with_emoji: Record<string, number>;
+  isliked: boolean;
+  attachments: Attachment[];
+  comments: Comment[];
+  poll_options?: any[];
+  type: "post" | "event" | "notice" | "document";
+}
+
+interface CompanyData {
+  id: number;
+  name: string;
+  other_config?: {
+    vision?: {
+      description?: {
+        [key: string]: {
+          bold: string;
+          text: string;
+        };
+      };
+    };
+    mission?: {
+      description?: {
+        [key: string]: {
+          bold: string;
+          text: string;
+        };
+      };
+    };
+    welcome?: {
+      description?: {
+        [key: string]: {
+          bold: string;
+          text: string;
+        };
+      };
+    };
+    ceo_info?: {
+      name: string;
+      description: string;
+      designation: string;
+      photo_relation?: string;
+      video_relation?: string;
+    };
+  };
+  ceo_photo?: {
+    document_url: string;
+  };
+  ceo_video?: {
+    document_url: string;
+  };
+}
+
 interface CompanyHubProps {
   userName?: string;
 }
 
 const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const navigate = useNavigate();
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [taskStats, setTaskStats] = useState({
+    task_count: 0,
+    todo_count: 0,
+    open_tasks: 0,
+    in_progress_tasks: 0,
+    overdue_tasks: 0,
+    on_hold_tasks: 0,
+    completed_tasks: 0,
+  });
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
 
   // Get user data from localStorage
-  const user = getUser();
+  const user = React.useMemo(() => getUser(), []);
   const displayName =
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   // State for video popup
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const userId = user?.id;
+  const companyId = user?.lock_role?.company_id || "116";
+
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    open: boolean;
+    type: "post" | "comment" | null;
+    id: number | string | null;
+  }>({ open: false, type: null, id: null });
+
+  // Fetch Company Data
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/organizations/${companyId}.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("🏢 Company Hub Data:", response.data);
+        setCompanyData(response.data);
+      } catch (error) {
+        console.error("Failed to fetch company data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchCompanyData();
+    }
+  }, [userId, companyId]);
+
+  // Fetch Task Stats
+  useEffect(() => {
+    const fetchTaskStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/task_managements/task_todo_counts.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("📊 Task Stats Data:", response.data);
+        setTaskStats(response.data);
+      } catch (error) {
+        console.error("Failed to fetch task stats:", error);
+      }
+    };
+
+    if (userId) {
+      fetchTaskStats();
+    }
+  }, [userId]);
+
+  const fetchPosts = useCallback(async () => {
+    setIsLoadingPosts(true);
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      const response = await axios.get(
+        `${protocol}${baseUrl}/communities/${companyId}/posts.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Transform posts to match our interface
+      const postsData = response.data.posts.map((post: any) => ({
+        ...post,
+        type: "post" as const,
+      }));
+
+      setPosts(postsData);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, [companyId]);
+
+  // Fetch Posts
+  useEffect(() => {
+    if (userId && companyId) {
+      fetchPosts();
+    }
+  }, [userId, companyId, fetchPosts]);
+
+  // Helper function to extract text from nested description structure
+  const getExtractedText = (
+    descObj: { description?: { [key: string]: { text: string } } } | undefined,
+    defaultText: string
+  ) => {
+    if (!descObj || !descObj.description) return defaultText;
+    const descriptions = descObj.description;
+    const texts = Object.values(descriptions)
+      .map((item: { text: string }) => item.text)
+      .filter((text: string) => text && text.trim() !== "");
+    return texts.length > 0 ? texts.join(" ") : defaultText;
+  };
 
   // State for Audio Player
   const [isPlaying, setIsPlaying] = useState(() => {
@@ -121,6 +352,11 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // State for Create Post Modal
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"post" | "poll" | null>(null);
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+
   const handleAttachClick = () => {
     fileInputRef.current?.click();
   };
@@ -138,13 +374,86 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!postText.trim() && selectedFiles.length === 0) return;
 
-    // Simulate publishing
-    setPostText("");
-    setSelectedFiles([]);
-    // You could add a toast here if you like
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      const formData = new FormData();
+      formData.append("body", postText);
+      formData.append("resource_id", String(companyId || ""));
+      formData.append("resource_type", "Community");
+
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          formData.append("attachments[]", file);
+        });
+      }
+
+      const response = await axios.post(
+        `${protocol}${baseUrl}/posts.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Post created successfully!");
+        setPostText("");
+        setSelectedFiles([]);
+        fetchPosts(); // Refresh the posts list
+      }
+    } catch (error) {
+      toast.error("Failed to create post. Please try again.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation.id || !deleteConfirmation.type) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      if (deleteConfirmation.type === "post") {
+        await axios.delete(
+          `${protocol}${baseUrl}/posts/${deleteConfirmation.id}.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Post deleted successfully");
+        fetchPosts();
+      } else {
+        await axios.delete(
+          `${protocol}${baseUrl}/comments/${deleteConfirmation.id}.json`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Comment deleted successfully");
+        fetchPosts();
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete. Please try again.");
+    } finally {
+      setDeleteConfirmation({ open: false, type: null, id: null });
+    }
   };
 
   // State for Comments
@@ -212,7 +521,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
   const handleDelete = (id: number) => {
     // User requested DELETE button not to work
-    console.log("Delete clicked for comment", id);
+    // console.log("Delete clicked for comment", id);
   };
 
   // Function to close video
@@ -239,13 +548,33 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       document.body.style.overflow = "auto";
     };
   }, [isVideoOpen]);
-  // Mock Data to match the video content
+  // Stats data from API
   const stats = [
-    { label: "Total tasks", value: "28", color: "border-blue-600" },
-    { label: "To-Do", value: "12", color: "border-red-500" },
-    { label: "In-progress", value: "16", color: "border-yellow-500" },
-    { label: "Completed", value: "08", color: "border-green-600" },
-    { label: "On Hold", value: "02", color: "border-orange-400" },
+    {
+      label: "Total tasks",
+      value: taskStats.task_count.toString().padStart(2, "0"),
+      color: "border-blue-600",
+    },
+    {
+      label: "To-Do",
+      value: taskStats.todo_count.toString().padStart(2, "0"),
+      color: "border-red-500",
+    },
+    {
+      label: "In-progress",
+      value: taskStats.in_progress_tasks.toString().padStart(2, "0"),
+      color: "border-yellow-500",
+    },
+    {
+      label: "Completed",
+      value: taskStats.completed_tasks.toString().padStart(2, "0"),
+      color: "border-green-600",
+    },
+    {
+      label: "On Hold",
+      value: taskStats.on_hold_tasks.toString().padStart(2, "0"),
+      color: "border-orange-400",
+    },
   ];
 
   const quickLinks: QuickLink[] = [
@@ -258,17 +587,45 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       image: documentDriveIcon,
       link: "/vas/documents",
     },
-    { name: "HR Policies", icon: ClipboardCheck, image: hrPoliciesIcon },
+    {
+      name: "HR Policies",
+      icon: ClipboardCheck,
+      image: hrPoliciesIcon,
+      link: "/vas/documents",
+    },
     { name: "Directory", icon: Book, image: directoryIcon },
     { name: "Eployee FAQ", icon: Book, image: employeeFaqIcon },
   ];
 
-  const pollOptions = [
+  const samplePollOptions = [
     { label: "Italian", percent: 27 },
     { label: "Chinese", percent: 23 },
     { label: "Indian", percent: 18 },
     { label: "Mexican", percent: 32 },
   ];
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) {
+      return "Just now";
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays}d ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   return (
     <div className="bg-[#fbf8f4] min-h-screen w-full font-sans text-gray-900">
@@ -294,13 +651,20 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         <div className="relative">
           <Quote className="w-12 h-12 sm:w-16 sm:h-16 text-red-300 absolute -top-6 sm:-top-8 -left-1 transform -scale-x-100 opacity-50" />
           <h2 className="text-2xl sm:text-3xl font-bold text-red-700 mb-4 relative z-10 inline-block">
-            Taking "Make in India's" PropTech products Global,
+            {getExtractedText(
+              companyData?.other_config?.welcome,
+              'Taking "Make in India\'s" PropTech products Global,'
+            )}
           </h2>
           <p className="text-[#d64545] font-sans font-medium text-base sm:text-[19px] leading-[1.65] tracking-normal">
-            by transforming every touch point of the real estate journey from
-            building, buying, managing to living — and to further spark new
-            ventures and entrepreneurs who turn industry challenges into
-            breakthrough opportunities.
+            {!companyData?.other_config?.welcome && (
+              <>
+                by transforming every touch point of the real estate journey
+                from building, buying, managing to living — and to further spark
+                new ventures and entrepreneurs who turn industry challenges into
+                breakthrough opportunities.
+              </>
+            )}
           </p>
         </div>
       </header>
@@ -315,9 +679,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 Vision
               </h2>
               <p className="text-base sm:text-lg text-gray-700">
-                To build a connected and intelligent real estate world where
-                every journey is seamless, sparks innovation, and every idea has
-                the power to become a breakthrough business.
+                {getExtractedText(
+                  companyData?.other_config?.vision,
+                  "To build a connected and intelligent real estate world where every journey is seamless, sparks innovation, and every idea has the power to become a breakthrough business."
+                )}
               </p>
             </div>
 
@@ -327,10 +692,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 Mission
               </h2>
               <p className="text-base sm:text-lg text-gray-700">
-                Our mission is to simplify and connect the entire real estate
-                lifecycle through innovative technology, while enabling
-                entrepreneurs and intrapreneurs to create impactful solutions
-                that move the industry forward.
+                {getExtractedText(
+                  companyData?.other_config?.mission,
+                  "Our mission is to simplify and connect the entire real estate lifecycle through innovative technology, while enabling entrepreneurs and intrapreneurs to create impactful solutions that move the industry forward."
+                )}
               </p>
             </div>
           </div>
@@ -362,17 +727,6 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* ⬇️ ARROW — ANCHORED TO WHITE SECTION BOTTOM */}
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-0 z-30 pointer-events-none">
-          <div className="w-20 h-20 -mb-10">
-            <DotLottieReact
-              src="https://lottiefiles.com/free-animation/scroll-down-PWraFAMNYF"
-              loop
-              autoplay
-            />
           </div>
         </div>
       </section>
@@ -421,218 +775,210 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       <main className="w-full max-w-[1920px] mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8 grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 sm:gap-8">
         {/* Left Column (Feed) */}
         <div className="space-y-4 sm:space-y-6">
-          {/* Post Composer */}
-          <div className="bg-white rounded-lg border border-gray-200 flex flex-col justify-between relative shadow-sm w-full max-w-[1173px] p-4 sm:p-6 gap-4">
-            {/* Input Section */}
-            <div className="w-full h-12 bg-white rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100 flex items-center px-1.5 gap-3">
-              <img
-                src="https://randomuser.me/api/portraits/men/32.jpg"
-                alt="User"
-                className="w-9 h-9 rounded-full object-cover"
-              />
-              <input
-                type="text"
-                placeholder="Time to express yourself, start typing!"
-                className="flex-1 bg-transparent outline-none text-sm text-gray-600 placeholder-gray-400 font-medium"
-                value={postText}
-                onChange={(e) => setPostText(e.target.value)}
-              />
-            </div>
-
-            {/* Attachments & Actions */}
-            <div className="flex-1 flex flex-col justify-center gap-2">
-              <div
-                className="flex items-center gap-2 text-gray-500 text-sm cursor-pointer hover:text-gray-700 transition-colors w-fit"
-                onClick={handleAttachClick}
-              >
-                <div className="rotate-45">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.656-5.656L6.343 10.17a6 6 0 108.485 8.485L20 13"
-                    />
-                  </svg>
-                </div>
-                <span>Attach Files, images, documents</span>
-              </div>
-
-              {/* Hidden File Input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                hidden
-                multiple
-                onChange={handleFileChange}
-              />
-
-              {/* Selected Files Preview */}
-              {selectedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-600"
-                    >
-                      <span className="max-w-[150px] truncate">
-                        {file.name}
-                      </span>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="hover:text-red-500"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Publish Button */}
-            <div className="flex justify-end">
-              <button
-                className="bg-[#C72030] text-white px-8 py-2 rounded text-base font-medium hover:bg-[#a01a26] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handlePublish}
-                disabled={!postText.trim() && selectedFiles.length === 0}
-              >
-                Publish
-              </button>
-            </div>
+          {/* Create Post Button */}
+          <div className="bg-white rounded-lg border border-gray-200 flex items-center justify-end relative shadow-sm w-full max-w-[1173px] p-4 sm:p-6">
+            <button
+              className="bg-[#C72030] text-white px-8 py-2 rounded text-base font-medium hover:bg-[#a01a26] transition-colors shadow-sm"
+              onClick={() => setIsCreatePostModalOpen(true)}
+            >
+              Create Post
+            </button>
           </div>
 
-          {/* Post 1: Gym Image */}
-
-          <div className="bg-white w-full max-w-[1173px] h-[886px] rounded-lg border border-gray-200 p-6 flex flex-col gap-4 overflow-y-auto">
-            {/* Post Header */}
-            <div className="flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <img
-                  src="https://randomuser.me/api/portraits/men/44.jpg"
-                  alt="Admin 2"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-bold text-gray-900 text-base leading-none">
-                    Admin 2
-                  </h3>
-                  <p className="text-gray-500 text-xs mt-0.5">5h ago</p>
+          {/* Dynamic Posts from API */}
+          {isLoadingPosts ? (
+            <div className="bg-white w-full max-w-[1173px] rounded-lg border border-gray-200 p-6">
+              <div className="animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-48"></div>
+                  </div>
                 </div>
-              </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreVertical className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Post Content */}
-            <div className="flex-shrink-0">
-              <p className="text-gray-800 text-sm mb-3">
-                Morning workout complete! 💪 Sharing my progress from the past 3
-                months.
-              </p>
-              <div className="w-full h-[400px] rounded-xl overflow-hidden mb-3">
-                <img
-                  src="/gym-post.png"
-                  alt="Morning workout"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Engagement Stats */}
-              <div className="flex items-center gap-6 text-sm text-gray-600 border-b border-gray-100 pb-4">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">💪</span>
-                  <span className="font-medium">45</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">🔥</span>
-                  <span className="font-medium">32</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">👏</span>
-                  <span className="font-medium">18</span>
-                </div>
-                <div className="flex items-center gap-1.5 ml-auto">
-                  <MessageSquare className="w-4 h-4" />
-                  <span className="font-medium">23 comments</span>
-                </div>
+                <div className="h-4 bg-gray-300 rounded w-3/4 mb-3"></div>
+                <div className="h-64 bg-gray-300 rounded-lg mb-4"></div>
               </div>
             </div>
+          ) : posts.length > 0 ? (
+            posts.map((post) => {
+              const thumbsUpCount = post.likes_with_emoji?.thumbs_up || 0;
+              const heartCount = post.likes_with_emoji?.heart || 0;
+              const fireCount = post.likes_with_emoji?.fire || 0;
+              const clapCount = post.likes_with_emoji?.clap || 0;
 
-            {/* Comments Section */}
-            <div className="flex flex-col gap-4 pt-2">
-              {comments.map((comment) => (
+              return (
                 <div
-                  key={comment.id}
-                  className="w-full h-[183px] border border-gray-200 rounded-lg p-6 flex flex-col justify-between flex-shrink-0"
+                  key={post.id}
+                  className="bg-white w-full max-w-[1173px] rounded-lg border border-gray-200 p-6 flex flex-col gap-4"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex gap-3">
+                  {/* Post Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
                       <img
-                        src={comment.image}
-                        alt={comment.name}
+                        src={
+                          post.creator_image_url ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.creator_full_name}`
+                        }
+                        alt={post.creator_full_name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div>
-                        <h4 className="font-bold text-gray-900 text-sm">
-                          {comment.name}
-                        </h4>
-                        <p className="text-gray-400 text-xs mt-0.5">
-                          {comment.time}
+                        <h3 className="font-bold text-gray-900 text-base leading-none">
+                          {post.creator_full_name}
+                        </h3>
+                        <p className="text-gray-500 text-xs mt-0.5">
+                          {formatTimestamp(post.created_at)}
                         </p>
                       </div>
                     </div>
-                    {comment.hasReplyBadge && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded font-medium">
-                        Reply
-                      </span>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="text-gray-400 hover:text-gray-600 outline-none">
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 cursor-pointer"
+                          onClick={() =>
+                            setDeleteConfirmation({
+                              open: true,
+                              type: "post",
+                              id: post.id,
+                            })
+                          }
+                        >
+                          Delete Post
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {comment.text}
-                  </p>
+                  {/* Post Title */}
+                  {post.title && (
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {post.title}
+                    </h2>
+                  )}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                      <button
-                        className={`flex items-center gap-1 hover:text-red-500 ${
-                          comment.isLiked ? "text-red-500" : ""
-                        }`}
-                        onClick={() => handleLike(comment.id)}
-                      >
-                        <Heart
-                          className={`w-4 h-4 ${
-                            comment.isLiked ? "fill-current" : ""
-                          }`}
-                        />{" "}
-                        {comment.likes}
-                      </button>
-                      <button className="flex items-center gap-1 hover:text-blue-500">
-                        <MessageSquare className="w-4 h-4" />{" "}
-                        {comment.replyLabel}
-                      </button>
+                  {/* Post Content */}
+                  <p className="text-gray-800 text-sm">{post.body}</p>
+
+                  {/* Post Attachments */}
+                  {post.attachments && post.attachments.length > 0 && (
+                    <div className="grid gap-2">
+                      {post.attachments.map((attachment, index) => (
+                        <div
+                          key={attachment.id}
+                          className="w-full rounded-xl overflow-hidden"
+                        >
+                          {attachment.document_content_type.startsWith(
+                            "image/"
+                          ) ? (
+                            <img
+                              src={attachment.url}
+                              alt="Post attachment"
+                              className="w-full h-auto max-h-[400px] object-cover"
+                            />
+                          ) : attachment.document_content_type.startsWith(
+                              "video/"
+                            ) ? (
+                            <video
+                              src={attachment.url}
+                              controls
+                              className="w-full h-auto max-h-[400px] object-cover"
+                            />
+                          ) : null}
+                        </div>
+                      ))}
                     </div>
-                    <button
-                      className="flex items-center gap-1.5 text-red-500 bg-red-50 px-3 py-1.5 rounded border border-red-100 text-xs font-semibold hover:bg-red-100 transition-colors"
-                      onClick={() => handleDelete(comment.id)}
-                    >
-                      <span className="w-3 h-3 border border-red-500 rounded-sm flex items-center justify-center text-[10px]">
-                        x
-                      </span>{" "}
-                      Delete
-                    </button>
+                  )}
+
+                  {/* Engagement Stats */}
+                  <div className="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4">
+                    {thumbsUpCount > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">👍</span>
+                        <span className="font-medium">{thumbsUpCount}</span>
+                      </div>
+                    )}
+                    {heartCount > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">❤️</span>
+                        <span className="font-medium">{heartCount}</span>
+                      </div>
+                    )}
+                    {fireCount > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🔥</span>
+                        <span className="font-medium">{fireCount}</span>
+                      </div>
+                    )}
+                    {clapCount > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">👏</span>
+                        <span className="font-medium">{clapCount}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      <MessageSquare className="w-4 h-4" />
+                      <span className="font-medium">
+                        {post.comments.length} comments
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Comments List */}
+                  {post.comments && post.comments.length > 0 && (
+                    <div className="border-t border-gray-100 pt-4 mt-2 space-y-4">
+                      {post.comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <img
+                            src={
+                              comment.commentor_profile_image ||
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.commentor_full_name}`
+                            }
+                            className="w-8 h-8 rounded-full object-cover"
+                            alt={comment.commentor_full_name}
+                          />
+                          <div className="bg-gray-50 rounded-2xl px-4 py-2 flex-1 relative group">
+                            <h4 className="text-sm font-bold text-gray-900">
+                              {comment.commentor_full_name}
+                            </h4>
+                            <p className="text-sm text-gray-700">
+                              {comment.body}
+                            </p>
+                            <button
+                              onClick={() =>
+                                setDeleteConfirmation({
+                                  open: true,
+                                  type: "comment",
+                                  id: comment.id,
+                                })
+                              }
+                              className="absolute top-2 right-4 text-xs text-red-600 opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+              );
+            })
+          ) : (
+            <div className="bg-white w-full max-w-[1173px] rounded-lg border border-gray-200 p-12 text-center">
+              <p className="text-gray-500">
+                No posts yet. Be the first to share something!
+              </p>
             </div>
-          </div>
+          )}
+
+          {/* Old static post - keeping one for reference */}
+          {/* Post 1: Gym Image */}
 
           {/* Post 2: Poll - Favorite Cuisine */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden w-full max-w-[1173px] flex flex-col p-4 sm:p-6 gap-4">
@@ -651,9 +997,27 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   <p className="text-xs text-gray-500">6h ago</p>
                 </div>
               </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreVertical className="w-5 h-5" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-gray-400 hover:text-gray-600 outline-none">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    onClick={() =>
+                      setDeleteConfirmation({
+                        open: true,
+                        type: "post",
+                        id: "static-2",
+                      })
+                    }
+                  >
+                    Delete Post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Poll Question */}
@@ -747,6 +1111,42 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             </div>
           </div>
 
+          {/* Delete Confirmation Modal */}
+          <Dialog
+            open={deleteConfirmation.open}
+            onOpenChange={(open) =>
+              !open &&
+              setDeleteConfirmation({ ...deleteConfirmation, open: false })
+            }
+          >
+            <DialogContent className="max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-none">
+              <div className="bg-white p-8 text-center">
+                <h3 className="text-xl font-bold text-gray-900 leading-tight">
+                  Are you sure you want to Delete <br />
+                  {deleteConfirmation.type === "post"
+                    ? "this Community Post ?"
+                    : "this Comment?"}
+                </h3>
+              </div>
+              <div className="flex w-full">
+                <button
+                  onClick={() =>
+                    setDeleteConfirmation({ open: false, type: null, id: null })
+                  }
+                  className="flex-1 py-4 bg-[#E8E1D5] text-gray-600 font-bold hover:bg-[#DDD6C8] transition-colors"
+                >
+                  No
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-[#C72030] text-white font-bold hover:bg-[#AD1C29] transition-colors"
+                >
+                  Yes
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Post 3: Video Tutorial */}
           <div
             className="bg-white rounded-lg shadow-sm overflow-hidden w-full max-w-[1173px] flex flex-col p-4 sm:p-6 gap-4"
@@ -769,9 +1169,27 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   <p className="text-xs text-gray-500">12h ago</p>
                 </div>
               </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreVertical className="w-5 h-5" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-gray-400 hover:text-gray-600 outline-none">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    onClick={() =>
+                      setDeleteConfirmation({
+                        open: true,
+                        type: "post",
+                        id: "static-3",
+                      })
+                    }
+                  >
+                    Delete Post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Post Content */}
@@ -839,9 +1257,27 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   <p className="text-xs text-gray-500">1d ago</p>
                 </div>
               </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreVertical className="w-5 h-5" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-gray-400 hover:text-gray-600 outline-none">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    onClick={() =>
+                      setDeleteConfirmation({
+                        open: true,
+                        type: "post",
+                        id: "static-4",
+                      })
+                    }
+                  >
+                    Delete Post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Post Title */}
@@ -885,7 +1321,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 }}
               >
                 <img
-                  src="C:/Users/Abcom/.gemini/antigravity/brain/2c832d08-8187-4c29-8aca-83efdfa0ee8d/uploaded_image_1_1768220061888.png"
+                  src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/8412640/original/1as.jpeg"
                   alt="Cricket Player Batting"
                   className="w-full h-full object-cover"
                 />
@@ -921,7 +1357,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             {/* Video Thumbnail Section */}
             <div className="relative h-[400px] bg-gray-200 overflow-hidden group">
               <img
-                src="https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                src={
+                  companyData?.ceo_photo?.document_url ||
+                  "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                }
                 alt="CEO's Message"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
@@ -956,8 +1395,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               {/* CEO Image - Flush to Bottom Left */}
               <div className="absolute bottom-0 left-0 w-[200px] z-20">
                 <img
-                  src={ceoImage}
-                  alt="Chetan Bafna"
+                  src={companyData?.ceo_photo?.document_url || ceoImage}
+                  alt={companyData?.other_config?.ceo_info?.name || "CEO"}
                   className="w-full object-bottom drop-shadow-2xl"
                 />
               </div>
@@ -966,8 +1405,9 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               <div className="absolute bottom-0 right-0 w-[240px] text-white text-right z-20 pb-6 pr-6 flex flex-col items-end">
                 <Quote className="text-white/20 w-12 h-12 mb-2 rotate-180" />
                 <p className="text-[16px] leading-relaxed font-light opacity-95 mb-6 text-right">
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna."
+                  {companyData?.other_config?.ceo_info?.description
+                    ? `"${companyData.other_config.ceo_info.description}"`
+                    : `"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna."`}
                 </p>
 
                 <div className="flex flex-col items-end">
@@ -975,10 +1415,12 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     className="text-4xl font-[Cursive] italic mb-1 font-light tracking-wide"
                     style={{ fontFamily: "Brush Script MT, cursive" }}
                   >
-                    Chetan Bafna
+                    {companyData?.other_config?.ceo_info?.name ||
+                      "Chetan Bafna"}
                   </h3>
                   <span className="text-white/80 text-xs font-medium uppercase tracking-wider block">
-                    CEO - Lockated
+                    {companyData?.other_config?.ceo_info?.designation ||
+                      "CEO - Lockated"}
                   </span>
                 </div>
               </div>
@@ -1019,7 +1461,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 <div className="w-full max-w-4xl aspect-video">
                   <video
                     ref={videoRef}
-                    src="https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-working-on-a-laptop-close-up-4986-large.mp4"
+                    src={
+                      companyData?.ceo_video?.document_url ||
+                      "https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-working-on-a-laptop-close-up-4986-large.mp4"
+                    }
                     controls
                     autoPlay
                     className="w-full h-full"
@@ -1127,6 +1572,305 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           </div>
         </aside>
       </main>
+
+      {/* Create Post/Poll Modal */}
+      <Dialog
+        open={isCreatePostModalOpen}
+        onOpenChange={setIsCreatePostModalOpen}
+      >
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          {!createMode ? (
+            // Initial selection screen
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Create</h2>
+                <button
+                  onClick={() => setIsCreatePostModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setCreateMode("post")}
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900">Create Post</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Share your thoughts with the community
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setCreateMode("poll")}
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900">Create Poll</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Get feedback from your community
+                  </div>
+                </button>
+              </div>
+            </div>
+          ) : createMode === "post" ? (
+            // Create Post Form
+            <div className="flex flex-col w-full">
+              <div className="px-5 py-3 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Create Post
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setCreateMode(null);
+                      setPostText("");
+                      setSelectedFiles([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-5 py-4 space-y-3">
+                {/* Add Media Section */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Add Media
+                  </label>
+                  <div
+                    onClick={handleAttachClick}
+                    className="border border-gray-200 rounded p-6 text-center cursor-pointer hover:border-gray-300 transition-colors bg-white"
+                  >
+                    <p className="text-xs text-gray-400">
+                      Choose a file or drag & drop it here
+                    </p>
+                  </div>
+
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    hidden
+                    multiple
+                    onChange={handleFileChange}
+                  />
+
+                  {/* Selected Files Preview */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 px-2.5 py-1.5 rounded border border-gray-200"
+                        >
+                          <span className="text-xs text-gray-700 truncate flex-1">
+                            {file.name}
+                          </span>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="ml-2 text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Post Content */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Post Content
+                  </label>
+                  <textarea
+                    placeholder="Write your announcement or message..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 resize-none"
+                    rows={3}
+                    value={postText}
+                    onChange={(e) => setPostText(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setCreateMode(null);
+                    setPostText("");
+                    setSelectedFiles([]);
+                  }}
+                  className="px-5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await handlePublish();
+                    setCreateMode(null);
+                    setIsCreatePostModalOpen(false);
+                    setPostText("");
+                    setSelectedFiles([]);
+                  }}
+                  disabled={!postText.trim() && selectedFiles.length === 0}
+                  className="px-5 py-1.5 bg-[#C72030] text-white text-xs font-medium rounded hover:bg-[#a01a26] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Publish Post
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Create Poll Form
+            <div className="flex flex-col w-full max-h-[85vh]">
+              <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Create Admin Post
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setCreateMode(null);
+                      setPostText("");
+                      setSelectedFiles([]);
+                      setPollOptions(["", ""]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-4 py-3 space-y-3 overflow-y-auto flex-1">
+                {/* Add Media Section */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-900 mb-1.5">
+                    Add Media
+                  </label>
+                  <div
+                    onClick={handleAttachClick}
+                    className="border-2 border-dashed border-gray-200 rounded-md p-4 text-center cursor-pointer hover:border-gray-300 transition-colors bg-gray-50"
+                  >
+                    <p className="text-xs text-gray-400">
+                      Choose a file or drag & drop it here
+                    </p>
+                  </div>
+
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    hidden
+                    multiple
+                    onChange={handleFileChange}
+                  />
+
+                  {/* Selected Files Preview */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 px-2.5 py-1.5 rounded border border-gray-200"
+                        >
+                          <span className="text-xs text-gray-700 truncate flex-1">
+                            {file.name}
+                          </span>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="ml-2 text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Post Content */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-900 mb-1.5">
+                    Post Content
+                  </label>
+                  <textarea
+                    placeholder="Write your announcement or message..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-transparent resize-none"
+                    rows={3}
+                    value={postText}
+                    onChange={(e) => setPostText(e.target.value)}
+                  />
+                </div>
+
+                {/* Poll Options */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-900 mb-1.5">
+                    Poll Options
+                  </label>
+                  <div className="space-y-2">
+                    {pollOptions.map((option, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        placeholder={`Option ${index + 1}`}
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...pollOptions];
+                          newOptions[index] = e.target.value;
+                          setPollOptions(newOptions);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-transparent"
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setPollOptions([...pollOptions, ""])}
+                    className="mt-2 text-xs text-gray-700 hover:text-gray-900 font-medium underline"
+                  >
+                    Add Option
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-4 py-3 border-t border-gray-100 flex justify-end gap-2 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setCreateMode(null);
+                    setPostText("");
+                    setSelectedFiles([]);
+                    setPollOptions(["", ""]);
+                  }}
+                  className="px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors rounded-md border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    // TODO: Implement poll creation API call
+                    toast.success("Poll creation coming soon!");
+                    setCreateMode(null);
+                    setIsCreatePostModalOpen(false);
+                    setPostText("");
+                    setSelectedFiles([]);
+                    setPollOptions(["", ""]);
+                  }}
+                  disabled={
+                    !postText.trim() ||
+                    pollOptions.filter((o) => o.trim()).length < 2
+                  }
+                  className="px-4 py-1.5 bg-[#C72030] text-white text-xs font-medium rounded-md hover:bg-[#a01a26] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Publish Poll
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

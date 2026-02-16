@@ -33,6 +33,7 @@ import { ActionSidebar } from "./ActionSidebar";
 import { ActionHeader } from "./ActionHeader";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
 import { ClubSidebar } from "./ClubSidebar";
+import ClubDynamicHeader from "./ClubDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -55,7 +56,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
-  const isClubManagementRoute = hostname === "club.lockated.com";
+  const isClubManagementRoute =
+    hostname === "club.lockated.com" ||
+    location.pathname.startsWith("/club-management");
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -170,6 +173,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 199 ||
           org_id === "90" ||
           org_id === "84" ||
+          org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
@@ -201,6 +205,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 307 ||
       org_id === "90" ||
       org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -258,7 +263,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
-      return <StaticDynamicHeader />;
+      return <ClubDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -277,6 +282,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 307 ||
       org_id === "90" ||
       org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -403,6 +409,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 199 ||
         org_id === "90" ||
         org_id === "84" ||
+        org_id === "1" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||

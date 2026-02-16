@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 // import { Button } from "./ui/button";
@@ -95,18 +95,18 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
     };
 
     const ledgerData = {
-            lock_account_id: 2, // or get from context if dynamic
-            name: formData.accountName || '',
-            lock_account_group_id: formData.accountTypeId || '',
-            ledger_of: null,
-            ledger_of_id: null,
-            account_code: formData.accountCode || '',
-            description: formData.description || '',
-            active: true,
-            watchlist: formData.addToWatchlist || false,
-            is_locked: formData.locked || false
-        };
-        console.log('Submitting ledger data:', ledgerData);
+        lock_account_id: 2, // or get from context if dynamic
+        name: formData.accountName || '',
+        lock_account_group_id: formData.accountTypeId || '',
+        ledger_of: null,
+        ledger_of_id: null,
+        account_code: formData.accountCode || '',
+        description: formData.description || '',
+        active: true,
+        watchlist: formData.addToWatchlist || false,
+        is_locked: formData.locked || false
+    };
+    console.log('Submitting ledger data:', ledgerData);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -125,7 +125,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         console.log('Submitting ledger data:', ledgerData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/2/lock_account_ledgers.json`,
+                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers.json`,
                 { lock_account_ledger: ledgerData },
                 {
                     headers: {
@@ -143,7 +143,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         }
     };
 
-    
+
 
     return (
         <Dialog open={open} onClose={onOpenChange} fullWidth>

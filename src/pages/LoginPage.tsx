@@ -74,6 +74,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work");
   const isWebSite = hostname.includes("web.gophygital.work");
+  const isClubSite = hostname === "club.lockated.com" || hostname === "recess-club.panchshil.com";
 
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
