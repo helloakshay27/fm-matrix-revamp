@@ -21,8 +21,11 @@ const Index = () => {
       hostname.includes("localhost") ||
       hostname.includes("lockated.gophygital.work") ||
       hostname.includes("fm-matrix.lockated.com");
+
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
+      hostname.includes("localhost") ||
+      hostname.includes("pulse.panchshil.com") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
     const isClubSite = hostname.includes("club.lockated.com");
@@ -54,7 +57,8 @@ const Index = () => {
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199
+      selectedCompany?.id === 199 ||
+      isPulseSite
     ) {
       // For these companies, use dynamic routing from permissions
       if (userRole) {

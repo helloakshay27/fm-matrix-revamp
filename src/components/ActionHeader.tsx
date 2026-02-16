@@ -18,8 +18,51 @@ export const ActionHeader = () => {
       module.module_name !== "Employee Projects Sidebar"
   );
 
+  // Sort modules to ensure Master is second-to-last and Settings is last
+  const sortedModules = React.useMemo(() => {
+    const modules = [...filteredModules];
+
+    // Find Master and Settings modules
+    const masterIndex = modules.findIndex(
+      (m) =>
+        m.module_name.toLowerCase() === "master" ||
+        m.module_name.toLowerCase() === "masters"
+    );
+    const settingsIndex = modules.findIndex(
+      (m) => m.module_name.toLowerCase() === "settings"
+    );
+
+    // Remove Master and Settings from their current positions
+    let masterModule = null;
+    let settingsModule = null;
+
+    if (masterIndex !== -1) {
+      masterModule = modules.splice(masterIndex, 1)[0];
+    }
+
+    // Adjust settingsIndex if master was before it
+    const adjustedSettingsIndex =
+      settingsIndex > masterIndex && masterIndex !== -1
+        ? settingsIndex - 1
+        : settingsIndex;
+
+    if (adjustedSettingsIndex !== -1) {
+      settingsModule = modules.splice(adjustedSettingsIndex, 1)[0];
+    }
+
+    // Add Master second-to-last, then Settings last
+    if (masterModule) {
+      modules.push(masterModule);
+    }
+    if (settingsModule) {
+      modules.push(settingsModule);
+    }
+
+    return modules;
+  }, [filteredModules]);
+
   // Don't render if action sidebar is not visible
-  if (!isActionSidebarVisible || filteredModules.length === 0) {
+  if (!isActionSidebarVisible || sortedModules.length === 0) {
     return null;
   }
 
@@ -32,7 +75,7 @@ export const ActionHeader = () => {
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
           <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
-            {filteredModules.map((module) => (
+            {sortedModules.map((module) => (
               <button
                 key={module.module_id}
                 onClick={() => setCurrentModule(module.module_name)}

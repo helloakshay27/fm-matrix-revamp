@@ -56,7 +56,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
-  const isClubManagementRoute = hostname === "club.lockated.com" || location.pathname.startsWith("/club-management");
+  const isClubManagementRoute =
+    hostname === "club.lockated.com" ||
+    location.pathname.startsWith("/club-management");
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -118,6 +120,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.lockated.com") ||
     hostname.includes("pulse.gophygital.work") ||
     hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -170,7 +173,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 298 ||
           selectedCompany?.id === 199 ||
           org_id === "90" ||
-          // org_id === "84" ||
+          org_id === "84" ||
+          org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
@@ -201,7 +205,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
-      // org_id === "84" ||
+      org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -277,7 +282,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
-      // org_id === "84" ||
+      org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -399,15 +405,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          // org_id === "84" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "84" ||
+        org_id === "1" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
@@ -431,12 +438,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : "ml-64"
               : "ml-0" // No margin for other modules
             : // For action sidebar, add extra top padding and adjust left margin
-            isActionSidebarVisible
+              isActionSidebarVisible
               ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-          } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
