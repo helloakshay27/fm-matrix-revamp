@@ -4,6 +4,10 @@ import "./index.css";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
+import { registerServiceWorker } from "./utils/pwa.ts";
+
+// Register service worker for PWA
+registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <Provider store={store}>

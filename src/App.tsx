@@ -424,6 +424,8 @@ import { ChecklistMasterPage } from "./pages/ChecklistMasterPage";
 // Import Master User pages
 import { FMUserMasterDashboard } from "./pages/master/FMUserMasterDashboard";
 import { OccupantUserMasterDashboard } from "./pages/master/OccupantUserMasterDashboard";
+import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
+import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { AddFMUserPage } from "./pages/master/AddFMUserPage";
 import { EditFMUserPage } from "./pages/master/EditFMUserPage";
 import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
@@ -1107,7 +1109,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1889,7 +1891,7 @@ function App() {
                       />
                       <Route
                         path="/master/user/occupant-users/view/:id"
-                        element={<ViewOccupantUserPage />}
+                        element={<OccupantUserDetailWrapper />}
                       />
                       <Route
                         path="/master/user/occupant-users/edit/:id"
@@ -4247,7 +4249,7 @@ function App() {
                       />
                       <Route
                         path="/master/user/occupant-users"
-                        element={<OccupantUserMasterDashboard />}
+                        element={<OccupantUserListWrapper />}
                       />
                       {/* Material Master Route */}
                       <Route
