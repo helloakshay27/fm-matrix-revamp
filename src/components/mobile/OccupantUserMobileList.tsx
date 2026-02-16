@@ -88,7 +88,7 @@ export const OccupantUserMobileList = () => {
   };
 
   const handleViewUser = (id: number) => {
-    navigate(`/master/user/occupant-users/view/${id}`);
+    navigate(`/ops-console/settings/account/user-list-otp/detail/${id}`);
   };
 
   return (

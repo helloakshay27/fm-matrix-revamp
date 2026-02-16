@@ -23,7 +23,7 @@ export const OccupantUserListWrapper = () => {
 
   // Render mobile version for mobile devices, desktop for others
   return isMobile ? (
-    <OccupantUserMobileList />
+    <OccupantUserMasterDashboard />
   ) : (
     <OccupantUserMasterDashboard />
   );

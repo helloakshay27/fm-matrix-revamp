@@ -424,8 +424,6 @@ import { ChecklistMasterPage } from "./pages/ChecklistMasterPage";
 // Import Master User pages
 import { FMUserMasterDashboard } from "./pages/master/FMUserMasterDashboard";
 import { OccupantUserMasterDashboard } from "./pages/master/OccupantUserMasterDashboard";
-import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
-import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { AddFMUserPage } from "./pages/master/AddFMUserPage";
 import { EditFMUserPage } from "./pages/master/EditFMUserPage";
 import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
@@ -1057,6 +1055,8 @@ import useRouteLogger from "./hooks/useRouteLogger";
 import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
 import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
 import { RideDetail } from "./pages/pulse/RideDetail";
+import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
+import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 
 const queryClient = new QueryClient();
 
@@ -1109,7 +1109,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1326,6 +1326,12 @@ function App() {
                         path="settings/account/locked-users"
                         element={<LockedUsersDashboard />}
                       />
+
+                      <Route path="settings/account/user-list-otp" element={<OccupantUserListWrapper />} />
+                      <Route path="settings/account/user-list-otp/detail/:id" element={<OccupantUserDetailWrapper />} />
+
+
+
                       {/* <Route
                       path="settings/account/lock-sub-function/create"
                       element={<LockSubFunctionCreate />}
@@ -1891,7 +1897,7 @@ function App() {
                       />
                       <Route
                         path="/master/user/occupant-users/view/:id"
-                        element={<OccupantUserDetailWrapper />}
+                        element={<ViewOccupantUserPage />}
                       />
                       <Route
                         path="/master/user/occupant-users/edit/:id"
@@ -4249,7 +4255,7 @@ function App() {
                       />
                       <Route
                         path="/master/user/occupant-users"
-                        element={<OccupantUserListWrapper />}
+                        element={<OccupantUserMasterDashboard />}
                       />
                       {/* Material Master Route */}
                       <Route
