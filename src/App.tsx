@@ -1057,6 +1057,7 @@ import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
 import { RideDetail } from "./pages/pulse/RideDetail";
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
+import ModulesManagement from "./pages/settings/ModulesManagement";
 
 const queryClient = new QueryClient();
 
@@ -1284,6 +1285,10 @@ function App() {
                       <Route
                         path="settings/account/lock-module"
                         element={<LockModuleList />}
+                      />
+                      <Route
+                        path="settings/modules"
+                        element={<ModulesManagement />}
                       />
 
                       {/* <Route
