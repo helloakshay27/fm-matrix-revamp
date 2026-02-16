@@ -961,6 +961,7 @@ import SupportedServiceDashboard from "./pages/SupportedServiceDashboard";
 import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
 // import RouteLogger from "./components/RouteLogger";
+import ModulesManagement from "./pages/settings/ModulesManagement";
 
 const queryClient = new QueryClient();
 
@@ -4102,19 +4103,19 @@ function App() {
                       />
 
 
-                     {/* Plus Support Service Routes */}
-                    <Route
-                      path="/pulse/supported-services/service"
-                      element={<SupportedServiceDashboard />}
-                    />
-                    <Route
-                      path="/pulse/supported-services/service/create"
-                      element={<SupportedServiceAdd />}
-                    />
-                    <Route
-                      path="/pulse/supported-services/service/edit/:id"
-                      element={<SupportedServiceEdit />}
-                    />
+                      {/* Plus Support Service Routes */}
+                      <Route
+                        path="/pulse/supported-services/service"
+                        element={<SupportedServiceDashboard />}
+                      />
+                      <Route
+                        path="/pulse/supported-services/service/create"
+                        element={<SupportedServiceAdd />}
+                      />
+                      <Route
+                        path="/pulse/supported-services/service/edit/:id"
+                        element={<SupportedServiceEdit />}
+                      />
 
 
                       {/*  curated Service  Category Routes */}
@@ -4325,6 +4326,10 @@ function App() {
                       <Route
                         path="/settings/account/lock-module"
                         element={<LockModuleList />}
+                      />
+                      <Route
+                        path="settings/modules"
+                        element={<ModulesManagement />}
                       />
                       <Route
                         path="/settings/account/lock-function"

@@ -59,8 +59,18 @@ const adminNavigationStructure = {
             name: "Locked Users",
             href: "/ops-console/settings/account/locked-users",
           },
+           {
+            name: "Occupant Users OTP",
+            href: "/ops-console/settings/account/user-list-otp",
+          },
+          
         ],
       },
+      {
+        name: "Modules Management",
+        icon: Shield,
+        href: "/ops-console/settings/modules",
+      }
     ],
   },
 };
@@ -95,11 +105,10 @@ export const AdminSidebar = () => {
     return (
       <div key={module.name} className="mb-2">
         <div
-          className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-            isActiveRoute(module.href)
+          className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${isActiveRoute(module.href)
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-          }`}
+            }`}
           onClick={() => {
             if (hasSubItems) {
               toggleExpanded(module.name);
@@ -113,23 +122,20 @@ export const AdminSidebar = () => {
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
             )}
             <module.icon
-              className={`w-5 h-5 ${
-                isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
-              }`}
+              className={`w-5 h-5 ${isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
+                }`}
             />
             <span
-              className={`text-sm font-medium ${
-                isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
-              }`}
+              className={`text-sm font-medium ${isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
+                }`}
             >
               {module.name}
             </span>
           </div>
           {hasSubItems && (
             <div
-              className={`transition-transform duration-200 ${
-                isExpanded ? "rotate-90" : ""
-              }`}
+              className={`transition-transform duration-200 ${isExpanded ? "rotate-90" : ""
+                }`}
             >
               <ChevronRight className="w-4 h-4 text-[#1a1a1a] opacity-70" />
             </div>
@@ -141,22 +147,20 @@ export const AdminSidebar = () => {
             {module.subItems.map((subItem: any) => (
               <div
                 key={subItem.name}
-                className={`flex items-center p-2 rounded-md cursor-pointer transition-all duration-200 ${
-                  isActiveRoute(subItem.href)
+                className={`flex items-center p-2 rounded-md cursor-pointer transition-all duration-200 ${isActiveRoute(subItem.href)
                     ? "bg-[#f0e8dc] shadow-inner"
                     : "hover:bg-[#DBC2A9]"
-                }`}
+                  }`}
                 onClick={() => handleNavigation(subItem.href)}
               >
                 {isActiveRoute(subItem.href) && (
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                 )}
                 <span
-                  className={`text-sm ${
-                    isActiveRoute(subItem.href)
+                  className={`text-sm ${isActiveRoute(subItem.href)
                       ? "text-[#C72030] font-medium"
                       : "text-[#1a1a1a] opacity-80"
-                  }`}
+                    }`}
                 >
                   {subItem.name}
                 </span>
@@ -180,20 +184,18 @@ export const AdminSidebar = () => {
           handleNavigation(module.href);
         }
       }}
-      className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-        isActiveRoute(module.href)
+      className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
           ? "bg-[#f0e8dc] shadow-inner"
           : "hover:bg-[#DBC2A9]"
-      }`}
+        }`}
       title={module.name}
     >
       {isActiveRoute(module.href) && (
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
       )}
       <module.icon
-        className={`w-5 h-5 ${
-          isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
-        }`}
+        className={`w-5 h-5 ${isActiveRoute(module.href) ? "text-[#C72030]" : "text-[#1a1a1a]"
+          }`}
       />
     </button>
   );
@@ -203,9 +205,8 @@ export const AdminSidebar = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -226,9 +227,8 @@ export const AdminSidebar = () => {
 
         <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
           <h3
-            className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
-              isSidebarCollapsed ? "text-center" : "tracking-wide"
-            }`}
+            className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
+              }`}
           >
             {isSidebarCollapsed ? "" : currentSection}
           </h3>
