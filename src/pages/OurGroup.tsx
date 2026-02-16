@@ -706,133 +706,138 @@ const OurGroup: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 5 - Where These Verticals Apply */}
+        {/* Section - Product Wise Details */}
         <div className="w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-8 lg:px-16 bg-white border-t border-gray-100">
           <div className="max-w-[1920px] mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">
-              Where These Verticals Apply
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Product Wise Details
             </h2>
+            <p className="text-gray-700 max-w-6xl mb-12 leading-relaxed text-sm sm:text-base">
+              Lockated is building an integrated PropTech ecosystem—bringing
+              together software, services, and smart technologies to connect
+              buyers, occupants, developers, and service providers across the
+              real estate lifecycle.
+            </p>
 
-            {/* Selection Tabs */}
-            <div className="flex w-full overflow-hidden border border-gray-200 mb-12 rounded-sm shadow-sm">
-              <button className="flex-1 py-4 text-center font-bold text-gray-900 bg-white border-r border-gray-200 uppercase tracking-widest text-xs sm:text-sm">
-                Real Estate
-              </button>
-              <button className="flex-1 py-4 text-center font-bold text-red-600 bg-[#F5F5F0] uppercase tracking-widest text-xs sm:text-sm">
-                Corporate
-              </button>
-            </div>
-
-            {/* Section Heading */}
-            <div className="text-center mb-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-black mb-1">
-                Lockated's Integration Solution For Real Estate
-              </h3>
-              <p className="text-gray-600 text-sm font-medium">
-                Customer Lifecycle Management Super App
-              </p>
-            </div>
-
-            {/* Transact - Engage - Retain Flow */}
-            <div className="flex items-center justify-center gap-4 sm:gap-12 mb-16 max-w-5xl mx-auto px-4">
-              <span className="text-[#D1C4A9] text-lg sm:text-2xl font-semibold uppercase tracking-wider">
-                Transact
-              </span>
-              <div className="flex-1 h-[1px] bg-[#D1C4A9] relative">
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 border-t border-r border-[#D1C4A9] rotate-45"></div>
-              </div>
-              <span className="text-[#D1C4A9] text-lg sm:text-2xl font-semibold uppercase tracking-wider">
-                Engage
-              </span>
-              <div className="flex-1 h-[1px] bg-[#D1C4A9] relative">
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 border-t border-r border-[#D1C4A9] rotate-45"></div>
-              </div>
-              <span className="text-[#D1C4A9] text-lg sm:text-2xl font-semibold uppercase tracking-wider">
-                Retain
-              </span>
-            </div>
-
-            {/* Lifecycle Stages Matrix */}
-            <div className="text-center text-gray-800 font-bold mb-8 text-xs sm:text-sm uppercase tracking-tight">
-              Real Estate Project Lifecycle (Stage-wise Applicability)
-            </div>
-
-            <div className="flex border border-gray-200 shadow-sm overflow-x-auto rounded-sm">
-              {/* Left Label Sidebar */}
-              <div className="bg-[#F5F5F0] border-r border-gray-200 flex items-center justify-center py-12 px-2 sm:px-4 min-w-[60px] sm:min-w-[80px]">
-                <div className="whitespace-nowrap font-bold text-[10px] sm:text-xs text-black -rotate-90 uppercase tracking-tight">
-                  Lockated's Micro SaaS Software (B2B/B2C)
-                </div>
-              </div>
-
-              {/* Main Matrix Content Container */}
-              <div className="flex-1 flex flex-col min-w-[800px]">
-                {/* Horizontal Header Stages */}
-                <div className="grid grid-cols-4">
-                  <div className="p-4 text-center font-bold text-[11px] sm:text-xs border-r border-b border-gray-200 bg-[#E8E1D5] uppercase tracking-tight">
-                    Pre Sales
-                  </div>
-                  <div className="p-4 text-center font-bold text-[11px] sm:text-xs border-r border-b border-gray-200 bg-[#FBFBFA] uppercase tracking-tight">
-                    Post Sales/Constructions
-                  </div>
-                  <div className="p-4 text-center font-bold text-[11px] sm:text-xs border-r border-b border-gray-200 bg-[#FBFBFA] uppercase tracking-tight">
-                    Handover/Transition
-                  </div>
-                  <div className="p-4 text-center font-bold text-[11px] sm:text-xs border-b border-gray-200 bg-[#FBFBFA] uppercase tracking-tight">
-                    Post Possession
-                  </div>
-                </div>
-
-                {/* Vertical Categories + Data Grid */}
-                <div className="flex flex-1">
-                  {/* Category Vertical Labels Side Column */}
-                  <div className="flex flex-col w-12 sm:w-16 border-r border-gray-200 bg-white">
-                    <div className="flex-1 border-b border-gray-200 flex items-center justify-center">
-                      <div className="whitespace-nowrap font-bold text-[9px] sm:text-[10px] text-black -rotate-90 uppercase tracking-tight">
-                        Customer
-                      </div>
-                    </div>
-                    <div className="flex-1 border-b border-gray-200 flex items-center justify-center">
-                      <div className="whitespace-nowrap font-bold text-[9px] sm:text-[10px] text-black -rotate-90 uppercase tracking-tight">
-                        Construction
-                      </div>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center py-4">
-                      <div className="whitespace-nowrap font-bold text-[9px] sm:text-[10px] text-black -rotate-90 uppercase tracking-tight text-center leading-none">
-                        General Management
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* The Data Grid */}
-                  <div className="grid grid-cols-4 flex-1 bg-white">
-                    {/* Column 1: Pre Sales */}
-                    <div className="flex flex-col">
-                      <div className="p-4 sm:p-6 border-r border-b border-gray-100 min-h-[140px]">
-                        <div className="space-y-1.5 text-black font-bold text-[11px] sm:text-[13px] leading-tight text-left">
-                          <p>CRM</p>
-                          <p>On-site Sales Management</p>
-                          <p>Channel partner Management</p>
-                        </div>
-                      </div>
-                      <div className="p-4 sm:p-6 border-r border-b border-gray-100 min-h-[140px]"></div>
-                      <div className="p-4 sm:p-6 border-r border-gray-100 min-h-[140px]"></div>
-                    </div>
-
-                    {/* Remaining Empty Columns for visual balance */}
-                    <div className="border-r border-gray-100"></div>
-                    <div className="border-r border-gray-100"></div>
-                    <div></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Label Sidebar */}
-              <div className="bg-[#F5F5F0] border-l border-gray-200 flex items-center justify-center py-12 px-2 sm:px-4 min-w-[60px] sm:min-w-[80px]">
-                <div className="whitespace-nowrap font-bold text-[10px] sm:text-xs text-black -rotate-90 uppercase tracking-tight">
-                  API Based Integration with any CRM & ERP
-                </div>
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-[#E8E1D5]">
+                <thead>
+                  <tr className="bg-[#F8F3EA]">
+                    <th className="p-4 text-left border-r border-[#E8E1D5] font-bold text-black min-w-[250px]">
+                      Product Name
+                    </th>
+                    <th className="p-4 text-left border-r border-[#E8E1D5] font-bold text-black min-w-[150px]">
+                      SPOC
+                    </th>
+                    <th className="p-4 text-left border-r border-[#E8E1D5] font-bold text-black min-w-[200px]">
+                      Industry & Business
+                      <br />
+                      Case Applicability
+                    </th>
+                    <th className="p-4 text-left border-r border-[#E8E1D5] font-bold text-black min-w-[100px]">
+                      Value
+                    </th>
+                    <th className="p-4 text-left font-bold text-black min-w-[100px]">
+                      View Details
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm bg-[#FEFAF6]">
+                  {[
+                    {
+                      name: "1. Loyalty",
+                      desc: "(Post Sales to Post Possession).",
+                      spoc: "Kshitij",
+                    },
+                    {
+                      name: "2. Hi Society",
+                      desc: "(Society Community Management)",
+                      spoc: "Deepak",
+                    },
+                    { name: "3. Snag 360", desc: "", spoc: "Sagar" },
+                    { name: "4. QC", desc: "", spoc: "Sagar" },
+                    { name: "4. RHB", desc: "", spoc: "Sagar" },
+                    {
+                      name: "5. Lead Infinity",
+                      desc: "",
+                      spoc: "Hold",
+                      isRed: true,
+                    },
+                    {
+                      name: "6. Live In Site",
+                      desc: "",
+                      spoc: "Hold",
+                      isRed: true,
+                    },
+                    {
+                      name: "6. Broker Management",
+                      desc: "(CP)",
+                      spoc: "Kshitij",
+                    },
+                    { name: "6. FM Matrix", desc: "", spoc: "Abdul Ghaffar" },
+                    {
+                      name: "6. Gophygital.work",
+                      desc: "(Corporate)",
+                      spoc: "Aquil",
+                    },
+                    {
+                      name: "6. Gophygital.work",
+                      desc: "(Tenants Buildings)",
+                      spoc: "Neha",
+                    },
+                    {
+                      name: "6. Project & Task",
+                      desc: "",
+                      spoc: "Sadanand & Yash",
+                    },
+                    {
+                      name: "6. Vendor Management",
+                      desc: "",
+                      spoc: "Sadanand & Yash",
+                    },
+                    {
+                      name: "6. Procurement/Contracts",
+                      desc: "",
+                      spoc: "Dinesh Shindhe",
+                    },
+                    {
+                      name: "6. Loyalty Engine",
+                      desc: "",
+                      spoc: "Vinayak/Kshitij",
+                    },
+                  ].map((row, index) => (
+                    <tr key={index} className="border-b border-[#E8E1D5]">
+                      <td className="p-4 border-r border-[#E8E1D5] text-black">
+                        <span className="font-bold">{row.name}</span>{" "}
+                        {row.desc && <span className="italic">{row.desc}</span>}
+                      </td>
+                      <td
+                        className={`p-4 border-r border-[#E8E1D5] font-bold text-black ${
+                          row.isRed ? "text-red-500" : ""
+                        }`}
+                      >
+                        • {row.spoc}
+                      </td>
+                      <td className="p-4 border-r border-[#E8E1D5]"></td>
+                      <td className="p-4 border-r border-[#E8E1D5]"></td>
+                      <td className="p-4"></td>
+                    </tr>
+                  ))}
+                  {/* Fill remaining height if necessary */}
+                  {[...Array(5)].map((_, i) => (
+                    <tr
+                      key={`empty-${i}`}
+                      className="border-b border-[#E8E1D5]"
+                    >
+                      <td className="p-4 border-r border-[#E8E1D5]">&nbsp;</td>
+                      <td className="p-4 border-r border-[#E8E1D5]">&nbsp;</td>
+                      <td className="p-4 border-r border-[#E8E1D5]">&nbsp;</td>
+                      <td className="p-4 border-r border-[#E8E1D5]">&nbsp;</td>
+                      <td className="p-4">&nbsp;</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
