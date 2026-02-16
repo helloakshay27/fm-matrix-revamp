@@ -124,7 +124,10 @@ export const AddDocumentDashboard = () => {
 
   const hostname = window.location.hostname;
   const isPulseSite =
-    hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
+    hostname.includes("pulse.lockated.com") ||
+    hostname.includes("localhost") ||
+    hostname.includes("pulse.panchshil.com") ||
+    hostname.includes("pulse.gophygital.work");
 
   const [formData, setFormData] = useState({
     documentCategory: "",

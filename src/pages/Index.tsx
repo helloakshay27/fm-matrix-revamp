@@ -21,8 +21,11 @@ const Index = () => {
       hostname.includes("localhost") ||
       hostname.includes("lockated.gophygital.work") ||
       hostname.includes("fm-matrix.lockated.com");
+
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
+      hostname.includes("localhost") ||
+      hostname.includes("pulse.panchshil.com") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
     const isClubSite = hostname.includes("club.lockated.com");
