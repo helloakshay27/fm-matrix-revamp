@@ -98,6 +98,7 @@ export const Header = () => {
   const isPulseSite =
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
     org_id === "90";
 
   const isLocalhost =

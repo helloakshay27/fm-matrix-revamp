@@ -227,7 +227,6 @@ export const FolderDetailsPage = () => {
   const hostname = window.location.hostname;
   const isPulseSite =
     hostname.includes("pulse.lockated.com") ||
-    hostname.includes("localhost") ||
     hostname.includes("pulse.panchshil.com") ||
     hostname.includes("pulse.gophygital.work") ||
     hostname.includes("pulse-uat.panchshil.com");
