@@ -1054,6 +1054,7 @@ import TransactionsEdit from "./pages/ClubManagement/TransactionsEdit";
 import useRouteLogger from "./hooks/useRouteLogger";
 import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
 import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
+import { RideDetail } from "./pages/pulse/RideDetail";
 
 const queryClient = new QueryClient();
 
@@ -1106,7 +1107,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -4648,6 +4649,11 @@ function App() {
                       <Route
                         path="/pulse/carpool"
                         element={<CarpoolDashboard />}
+                      />
+
+                      <Route
+                        path="/pulse/carpool/ride-detail"
+                        element={<RideDetail />}
                       />
 
                       <Route
