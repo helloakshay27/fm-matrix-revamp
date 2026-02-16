@@ -1055,6 +1055,8 @@ import useRouteLogger from "./hooks/useRouteLogger";
 import ClubEditOccupantUserPage from "./pages/master/ClubEditOccupantUserPage";
 import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
 import { RideDetail } from "./pages/pulse/RideDetail";
+import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
+import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 
 const queryClient = new QueryClient();
 
@@ -1324,6 +1326,12 @@ function App() {
                         path="settings/account/locked-users"
                         element={<LockedUsersDashboard />}
                       />
+
+                      <Route path="settings/account/user-list-otp" element={<OccupantUserListWrapper />} />
+                      <Route path="settings/account/user-list-otp/detail/:id" element={<OccupantUserDetailWrapper />} />
+
+
+
                       {/* <Route
                       path="settings/account/lock-sub-function/create"
                       element={<LockSubFunctionCreate />}
