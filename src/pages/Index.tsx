@@ -57,7 +57,8 @@ const Index = () => {
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199
+      selectedCompany?.id === 199 ||
+      isPulseSite
     ) {
       // For these companies, use dynamic routing from permissions
       if (userRole) {
