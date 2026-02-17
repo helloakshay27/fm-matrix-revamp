@@ -1058,6 +1058,10 @@ import { RideDetail } from "./pages/pulse/RideDetail";
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import ModulesManagement from "./pages/settings/ModulesManagement";
+import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
+import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
+import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
+import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
 
 const queryClient = new QueryClient();
 
@@ -2301,6 +2305,22 @@ function App() {
                       <Route
                         path="/accounting/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/invoices/list"
+                        element={<InvoiceDashboardAccounting />}
+                      />
+                       <Route
+                        path="/accounting/invoices/add"
+                        element={<InvoiceAdd />}
+                      />
+                       <Route
+                        path="/accounting/quotes"
+                        element={<QuotesDashboard/>}
+                      />
+                       <Route
+                        path="/accounting/quotes/add"
+                        element={<QuotesAdd />}
                       />
                       <Route
                         path="/accounting/recurring-invoices"
