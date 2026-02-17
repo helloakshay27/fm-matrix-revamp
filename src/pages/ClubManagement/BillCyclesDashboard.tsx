@@ -561,7 +561,7 @@ export const BillCyclesDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/bill-cycles/add');
+    navigate('/accounting/bill-cycles/add');
   };
 
   // Render membership status badge
@@ -667,7 +667,7 @@ const columns = [
   //       <div className="flex gap-2">
   //         <Button
   //           variant="ghost"
-  //           onClick={() => navigate(`/settings/bill-cycles/details`)}
+  //           onClick={() => navigate(`/accounting/bill-cycles/details`)}
   //           title="View"
   //           className="p-0"
   //         >
@@ -763,7 +763,7 @@ const columns = [
 //         <Button
 //           variant="ghost"
 //           onClick={() =>
-//             navigate(`/settings/bill-cycles/details/${item.id}`)
+//             navigate(`/accounting/bill-cycles/details/${item.id}`)
 //           }
 //           title="View"
 //           className="p-0"
@@ -844,7 +844,7 @@ const renderCell = (item: any, columnKey: string) => {
         <Button
           variant="ghost"
           onClick={() =>
-            navigate(`/settings/bill-cycles/details/${item.id}`)
+            navigate(`/accounting/bill-cycles/details/${item.id}`)
           }
           title="View"
           className="p-0"

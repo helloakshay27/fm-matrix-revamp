@@ -370,7 +370,7 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Sales Order List</h1>
+                <h1 className="text-2xl font-bold">Recurring Invoices List</h1>
             </header>
 
             <EnhancedTaskTable

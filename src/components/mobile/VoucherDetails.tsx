@@ -3,28 +3,38 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { scratchCardApi, ScratchCardData } from "@/services/scratchCardApi";
 import { baseClient } from "@/utils/withoutTokenBase";
+import { toast } from "sonner";
 
 interface UserContestReward {
   id: number;
+  reward_type: string;
+  status: string;
+  points_value: number | null;
+  coupon_code: string | null;
+  claimed_at?: string;
   contest: {
     id: number;
-    title: string;
+    name: string;
     description: string;
-    contest_type: string;
-    start_date: string;
-    end_date: string;
+    terms_and_conditions: string | null;
+    content_type: string;
+    start_at: string;
+    end_at: string;
     status: string;
   };
   prize: {
     id: number;
     title: string;
-    description: string;
-    image_url: string;
-    value: string;
+    description?: string;
+    display_name: string | null;
+    reward_type: string;
+    coupon_code: string | null;
+    partner_name: string | null;
+    points_value: number | null;
+    icon_url: string | null;
+    image: unknown | null;
+    product: unknown | null;
   };
-  reward_code: string;
-  claimed_at: string;
-  status: string;
 }
 
 export const VoucherDetails: React.FC = () => {
@@ -42,6 +52,7 @@ export const VoucherDetails: React.FC = () => {
     "details"
   );
   const [showCode, setShowCode] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   useEffect(() => {
     const fetchVoucherData = async () => {
@@ -58,7 +69,7 @@ export const VoucherDetails: React.FC = () => {
           }
 
           // Pass org_id and token as params for baseClient interceptor
-          const params: any = {};
+          const params: Record<string, string> = {};
           if (token) params.token = token;
           // if (orgId) params.org_id = orgId;
 
@@ -106,7 +117,53 @@ export const VoucherDetails: React.FC = () => {
       voucherData?.voucher_code;
     if (code) {
       navigator.clipboard.writeText(code);
-      alert("Voucher code copied to clipboard!");
+      toast.success("Voucher code copied to clipboard!");
+    }
+  };
+
+  const handleRedeemMerchandise = async () => {
+    if (!rewardId || isClaiming) return;
+
+    setIsClaiming(true);
+    try {
+      const token = searchParams.get("token");
+      const orgId = searchParams.get("org_id");
+
+      if (!token) {
+        toast.error("Missing authentication token");
+        return;
+      }
+
+      const params: Record<string, string> = { reward_type: "marchandise" };
+      if (token) params.token = token;
+
+      await baseClient.put(
+        `/user_contest_rewards/${rewardId}`,
+        {
+          user_contest_reward: {
+            status: "claimed",
+          },
+        },
+        { params }
+      );
+
+      // Refresh reward data
+      const response = await baseClient.get(
+        `/user_contest_rewards/${rewardId}`,
+        { params: { token } }
+      );
+      setRewardData(response.data);
+
+      toast.success("Successfully redeemed merchandise!", {
+        description: "Your reward status has been updated to claimed.",
+      });
+    } catch (error) {
+      console.error("Error redeeming merchandise:", error);
+      toast.error("Failed to redeem merchandise", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsClaiming(false);
     }
   };
 
@@ -117,9 +174,12 @@ export const VoucherDetails: React.FC = () => {
         description:
           rewardData.contest?.description ||
           rewardData.prize?.display_name ||
+          rewardData.prize?.description ||
           "",
         image_url:
-          rewardData.prize?.image?.url || rewardData.prize?.icon_url || null,
+          (rewardData.prize?.image as { url?: string })?.url ||
+          rewardData.prize?.icon_url ||
+          null,
         value: rewardData.prize?.partner_name || "",
         code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
         points_value: rewardData.points_value || rewardData.prize?.points_value,
@@ -128,30 +188,26 @@ export const VoucherDetails: React.FC = () => {
         contest_type: rewardData.contest?.content_type || "",
         valid_till: rewardData.contest?.end_at || "",
         terms: rewardData.contest?.terms_and_conditions || "",
+        reward_type: rewardData.prize?.reward_type || rewardData.reward_type,
+        product: rewardData.prize?.product || null,
       }
     : voucherData
       ? {
-          title: voucherData.reward.title,
-          description: voucherData.reward.description,
-          image_url: voucherData.reward.image_url,
-          value: voucherData.value,
-          code: voucherData.voucher_code,
+          title: voucherData.reward?.title || "",
+          description: voucherData.reward?.description || "",
+          image_url: voucherData.reward?.image_url || null,
+          value: "",
+          code: voucherData.voucher_code || "",
           points_value: null,
-          status: voucherData.status,
-          contest_title: voucherData.name,
+          status: "",
+          contest_title: "",
           contest_type: "",
-          valid_till: voucherData.valid_until,
+          valid_till: voucherData.valid_until || "",
           terms: "",
+          reward_type: "",
+          product: null,
         }
       : null;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-[#B88B15] animate-spin" />
-      </div>
-    );
-  }
 
   if (!voucherData && !rewardData) {
     return (
@@ -255,6 +311,46 @@ export const VoucherDetails: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-gray-600 text-sm space-y-1">
+                    {/* Show merchandise product details */}
+                    {displayData?.reward_type === "marchandise" &&
+                      displayData?.product && (
+                        <div className="space-y-3 mb-4">
+                          <div className="bg-[#FFF8E7] border border-[#D4A574] rounded-lg p-4">
+                            <h3 className="font-semibold text-gray-900 mb-2">
+                              Product Information
+                            </h3>
+                            {(displayData.product as { name?: string })
+                              ?.name && (
+                              <p className="mb-2">
+                                <strong>Name:</strong>{" "}
+                                {(displayData.product as { name: string }).name}
+                              </p>
+                            )}
+                            {(displayData.product as { description?: string })
+                              ?.description && (
+                              <p className="mb-2">
+                                <strong>Description:</strong>{" "}
+                                <span
+                                  dangerouslySetInnerHTML={{
+                                    __html: (
+                                      displayData.product as {
+                                        description: string;
+                                      }
+                                    ).description,
+                                  }}
+                                />
+                              </p>
+                            )}
+                            {(displayData.product as { sku?: string })?.sku && (
+                              <p className="mb-2">
+                                <strong>SKU:</strong>{" "}
+                                {(displayData.product as { sku: string }).sku}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                     {/* Show points for spin contests with no coupon code */}
                     {displayData?.contest_type === "spin" &&
                       !displayData?.code &&
@@ -307,7 +403,10 @@ export const VoucherDetails: React.FC = () => {
           </div>
 
           {/* How to Redeem Section */}
-          {voucherData?.redemption_steps && (
+          {(voucherData?.redemption_steps ||
+            (displayData?.reward_type === "marchandise" &&
+              (displayData?.product as { redemption_instructions?: string })
+                ?.redemption_instructions)) && (
             <div className="border-t border-gray-200">
               <button
                 onClick={() => toggleSection("redeem")}
@@ -325,25 +424,47 @@ export const VoucherDetails: React.FC = () => {
 
               {expandedSection === "redeem" && (
                 <div className="pb-4">
-                  <ol className="space-y-2">
-                    {voucherData.redemption_steps.map((step, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="text-gray-900 font-medium text-sm">
-                          {index + 1}.
-                        </span>
-                        <span className="text-gray-600 text-sm flex-1">
-                          {step}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
+                  {voucherData?.redemption_steps ? (
+                    <ol className="space-y-2">
+                      {voucherData.redemption_steps.map((step, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="text-gray-900 font-medium text-sm">
+                            {index + 1}.
+                          </span>
+                          <span className="text-gray-600 text-sm flex-1">
+                            {step}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : displayData?.reward_type === "marchandise" &&
+                    (
+                      displayData?.product as {
+                        redemption_instructions?: string;
+                      }
+                    )?.redemption_instructions ? (
+                    <div
+                      className="text-gray-600 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: (
+                          displayData.product as {
+                            redemption_instructions: string;
+                          }
+                        ).redemption_instructions,
+                      }}
+                    />
+                  ) : null}
                 </div>
               )}
             </div>
           )}
 
           {/* Terms & Conditions Section */}
-          {(voucherData?.terms_conditions || displayData?.terms) && (
+          {(voucherData?.terms_conditions ||
+            displayData?.terms ||
+            (displayData?.reward_type === "marchandise" &&
+              (displayData?.product as { terms_and_conditions?: string })
+                ?.terms_and_conditions)) && (
             <div className="border-t border-gray-200">
               <button
                 onClick={() => toggleSection("terms")}
@@ -370,6 +491,19 @@ export const VoucherDetails: React.FC = () => {
                         </span>
                       </div>
                     ))
+                  ) : displayData?.reward_type === "marchandise" &&
+                    (displayData?.product as { terms_and_conditions?: string })
+                      ?.terms_and_conditions ? (
+                    <div
+                      className="text-gray-600 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: (
+                          displayData.product as {
+                            terms_and_conditions: string;
+                          }
+                        ).terms_and_conditions,
+                      }}
+                    />
                   ) : displayData?.terms ? (
                     <div className="text-gray-600 text-sm whitespace-pre-wrap">
                       {displayData.terms}
@@ -393,6 +527,21 @@ export const VoucherDetails: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Redeem Now Button for merchandise rewards */}
+      {displayData?.reward_type === "marchandise" &&
+        displayData?.status === "granted" &&
+        !showCode && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+            <button
+              onClick={handleRedeemMerchandise}
+              disabled={isClaiming}
+              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isClaiming ? "Redeeming..." : "Redeem Now"}
+            </button>
+          </div>
+        )}
     </div>
   );
 };

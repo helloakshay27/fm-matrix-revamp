@@ -17,6 +17,7 @@ import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminLayout } from "./components/AdminLayout";
+import { PWALayoutWrapper } from "./components/PWALayoutWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
 import DashboardConfiguration from "./pages/DashboardConfiguration";
@@ -1006,6 +1007,9 @@ import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
 import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
 import { RecurringBillCreatePage } from "./pages/ClubManagement/RecurringBillCreatePage";
 import { RecurringBillsDashboard } from "./pages/ClubManagement/RecurringBillsDashboard";
+import NewRecurringExpensePage from "./pages/New Recurring Expense";
+import RecurringExpensesListPage from "./pages/ClubManagement/RecurringExpensesListPage";
+import RecurringExpenseDetailPage from "./pages/ClubManagement/RecurringExpenseDetailPage";
 import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
@@ -1057,6 +1061,14 @@ import ClubAddOccupantUserPage from "./pages/master/ClubAddOccupantUserPage";
 import { RideDetail } from "./pages/pulse/RideDetail";
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
+import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import ModulesManagement from "./pages/settings/ModulesManagement";
+import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
+import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
+import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
+import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
+import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
 
 const queryClient = new QueryClient();
 
@@ -1109,7 +1121,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1285,6 +1297,10 @@ function App() {
                         path="settings/account/lock-module"
                         element={<LockModuleList />}
                       />
+                      <Route
+                        path="settings/modules"
+                        element={<ModulesManagement />}
+                      />
 
                       {/* <Route
                       path="settings/account/lock-module/view/:id"
@@ -1327,10 +1343,14 @@ function App() {
                         element={<LockedUsersDashboard />}
                       />
 
-                      <Route path="settings/account/user-list-otp" element={<OccupantUserListWrapper />} />
-                      <Route path="settings/account/user-list-otp/detail/:id" element={<OccupantUserDetailWrapper />} />
-
-
+                      <Route
+                        path="settings/account/user-list-otp"
+                        element={<OccupantUserListWrapper />}
+                      />
+                      <Route
+                        path="settings/account/user-list-otp/detail/:id"
+                        element={<OccupantUserDetailWrapper />}
+                      />
 
                       {/* <Route
                       path="settings/account/lock-sub-function/create"
@@ -1357,7 +1377,20 @@ function App() {
                         isAuthenticated() ? (
                           <Navigate to="/" replace />
                         ) : (
-                          <LoginPage
+                          <LoginPageWrapper
+                            setBaseUrl={setBaseUrl}
+                            setToken={setToken}
+                          />
+                        )
+                      }
+                    />
+                    <Route
+                      path="/login-page"
+                      element={
+                        isAuthenticated() ? (
+                          <Navigate to="/" replace />
+                        ) : (
+                          <LoginPageWrapper
                             setBaseUrl={setBaseUrl}
                             setToken={setToken}
                           />
@@ -2298,6 +2331,30 @@ function App() {
                         element={<SalesOrderCreatePage />}
                       />
                       <Route
+                        path="/accounting/invoices/list"
+                        element={<InvoiceDashboardAccounting />}
+                      />
+                      <Route
+                        path="/accounting/invoices/add"
+                        element={<InvoiceAdd />}
+                      />
+                      <Route
+                        path="/accounting/quotes"
+                        element={<QuotesDashboard />}
+                      />
+                      <Route
+                        path="/accounting/quotes/add"
+                        element={<QuotesAdd />}
+                      />
+                      <Route
+                        path="/accounting/delivery-challans"
+                        element={<DeliveryChallansDashboard />}
+                      />
+                      <Route
+                        path="/accounting/delivery-challans/add"
+                        element={<DeliveryChallansAdd />}
+                      />
+                      <Route
                         path="/accounting/recurring-invoices"
                         element={<RecurringInvoicesListPage />}
                       />
@@ -2347,6 +2404,18 @@ function App() {
                       <Route
                         path="/accounting/recurring-bills/create"
                         element={<RecurringBillCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses"
+                        element={<RecurringExpensesListPage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses/create"
+                        element={<NewRecurringExpensePage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses/:id"
+                        element={<RecurringExpenseDetailPage />}
                       />
                       {/* Expense Routes */}
                       <Route

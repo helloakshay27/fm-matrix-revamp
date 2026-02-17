@@ -86,7 +86,7 @@ export const SpinnerContest: React.FC = () => {
         // Fetch specific contest by ID
         const data = await newSpinnerContestApi.getContestById(urlContestId);
         setContestData(data);
-        setRemainingAttempts(data.user_caps || 0);
+        setRemainingAttempts(data.user_attemp_remaining || 0);
 
         // Convert prizes to wheel segments
         const wheelSegments = newSpinnerContestApi.convertPrizesToSegments(
@@ -454,22 +454,31 @@ export const SpinnerContest: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Gift icon */}
+            {/* Gift icon - different for none type */}
             <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
-              <div className="text-4xl">🎁</div>
+              <div className="text-4xl">
+                {winResult.prize.reward_type === "none" ? "😔" : "🎁"}
+              </div>
             </div>
 
-            {/* Congratulations text */}
+            {/* Title text - different for none type */}
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
-              Congratulations!
+              {winResult.prize.reward_type === "none"
+                ? "Better Luck Next Time!"
+                : "Congratulations!"}
             </h2>
 
-            {/* Won prize text */}
-            <p className="text-center text-gray-600 mb-2">You've won</p>
+            {/* Description text - different for none type */}
+            {winResult.prize.reward_type !== "none" && (
+              <p className="text-center text-gray-600 mb-2">You've won</p>
+            )}
 
-            <p className="text-center text-2xl font-bold text-gray-900 mb-6">
-              {winResult.prize.title}
-            </p>
+            {/* Prize title - only show for non-none rewards */}
+            {winResult.prize.reward_type !== "none" && (
+              <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+                {winResult.prize.title}
+              </p>
+            )}
 
             {/* Display prize details based on type */}
             {winResult.prize.reward_type === "coupon" &&
@@ -505,32 +514,56 @@ export const SpinnerContest: React.FC = () => {
                 </>
               )}
 
-            {/* Copy button - only show if coupon_code exists */}
-            {winResult.prize.coupon_code && (
-              <button
-                onClick={copyPrizeInfo}
-                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
-              >
-                Copy To Clipboard
-              </button>
+            {winResult.prize.reward_type === "marchandise" && (
+              <>
+                <p className="text-center text-gray-600 mb-2">
+                  Merchandise Prize
+                </p>
+                {winResult.prize.coupon_code && (
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    Code: {winResult.prize.coupon_code}
+                  </p>
+                )}
+              </>
             )}
 
-            {/* View Voucher Details button */}
-            <button
-              onClick={() => {
-                const storedRewardId = localStorage.getItem("last_reward_id");
-                if (storedRewardId && orgId && token) {
-                  navigate(
-                    `/scratchcard/details/${storedRewardId}?org_id=${orgId}&token=${token}`
-                  );
-                }
-              }}
-              className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
-                winResult.prize.coupon_code ? "" : "mt-3"
-              }`}
-            >
-              View Details
-            </button>
+            {winResult.prize.reward_type === "none" && (
+              <>
+                <p className="text-center text-gray-600 mb-6">
+                  Don't give up! Try again for a chance to win exciting prizes.
+                </p>
+              </>
+            )}
+
+            {/* Copy button - only show if coupon_code exists and not 'none' type */}
+            {winResult.prize.coupon_code &&
+              winResult.prize.reward_type !== "none" && (
+                <button
+                  onClick={copyPrizeInfo}
+                  className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+                >
+                  Copy To Clipboard
+                </button>
+              )}
+
+            {/* View Voucher Details button - hide for 'none' type */}
+            {winResult.prize.reward_type !== "none" && (
+              <button
+                onClick={() => {
+                  const storedRewardId = localStorage.getItem("last_reward_id");
+                  if (storedRewardId && orgId && token) {
+                    navigate(
+                      `/scratchcard/details/${storedRewardId}?org_id=${orgId}&token=${token}`
+                    );
+                  }
+                }}
+                className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                  winResult.prize.coupon_code ? "" : "mt-3"
+                }`}
+              >
+                View Details
+              </button>
+            )}
           </div>
         </div>
       )}

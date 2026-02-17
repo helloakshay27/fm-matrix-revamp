@@ -45,7 +45,7 @@ curl --location 'https://runwal-api.lockated.com/contests?token=QsUjajggGCYJJGKn
   "start_at": "2026-02-01T03:02:00.000+05:30",
   "end_at": "2026-03-02T23:59:59.999+05:30",
   "user_caps": 1,
-  "attemp_required": 3,
+  "user_attemp_remaining": 3,
   "prizes": [
     {
       "id": 3,
@@ -97,7 +97,7 @@ curl --location --request POST 'https://runwal-api.lockated.com/contests/2/play?
 
 ### 🎮 Game Mechanics
 
-- **Attempts**: Defined by `attemp_required` field (default: 3)
+- **Attempts**: Defined by `user_attemp_remaining` field (default: 3)
 - **User Caps**: Max plays per user from `user_caps` field
 - **Prizes**: Based on probability distribution
 - **Card Reveal**: One-time flip per card
@@ -140,7 +140,7 @@ http://localhost:5173/flipcard?org_id=1&token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06l
 ### Step 3: Test Functionality
 
 1. ✅ Verify contest details load correctly
-2. ✅ Check that cards are displayed based on `attemp_required`
+2. ✅ Check that cards are displayed based on `user_attemp_remaining`
 3. ✅ Verify attempts counter shows correct number
 4. ✅ Click on an unflipped card
 5. ✅ Watch flip animation
@@ -186,7 +186,7 @@ When testing, check browser console for detailed logs:
 | API Filter     | `content_type: "spin"` | `content_type: "flip"`             |
 | Animation      | Rotation               | 3D Flip                            |
 | Sound          | Casino sounds          | Silent                             |
-| Cards/Segments | Based on prizes        | Based on `attemp_required`         |
+| Cards/Segments | Based on prizes        | Based on `user_attemp_remaining`   |
 | Multiple Plays | One spin               | Multiple flips (based on attempts) |
 
 ## Troubleshooting
@@ -221,7 +221,7 @@ When testing, check browser console for detailed logs:
 
 **Solution:**
 
-- Check `attemp_required` field in contest
+- Check `user_attemp_remaining` field in contest
 - User may have reached `user_caps` limit
 - Contest may have expired
 

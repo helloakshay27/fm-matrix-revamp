@@ -1,29 +1,46 @@
-const CACHE_NAME = "occupant-users-v1";
+const CACHE_NAME = "fm-admin-specific-v1";
 const PWA_ROUTES = [
-  "/master/user/occupant-users",
-  "/master/user/occupant-users/view",
+  "/login-page",
+  "/ops-console/settings/account/user-list-otp",
+  "/ops-console/settings/account/user-list-otp/detail",
 ];
+
+// Assets to never cache (avoid cache issues)
+const NEVER_CACHE = ["/api/", ".json", "/pms/", "/get_otps/", "logout"];
 
 // Check if the request is for a PWA route
 const isPWARoute = (url) => {
   return PWA_ROUTES.some((route) => url.pathname.includes(route));
 };
 
-// Install event - cache essential assets
+// Check if URL should never be cached
+const shouldNeverCache = (url) => {
+  return NEVER_CACHE.some((pattern) => url.href.includes(pattern));
+};
+
+// Install event - clear old caches and cache only specific assets
 self.addEventListener("install", (event) => {
   console.log("Service Worker installing.");
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache
-        .addAll([
-          "/master/user/occupant-users",
-          "/index.html",
-          "/manifest.json",
-        ])
-        .catch((err) => {
-          console.log("Cache addAll error:", err);
+    caches
+      .keys()
+      .then((cacheNames) => {
+        // Delete all old caches
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log("Deleting old cache:", cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      })
+      .then(() => {
+        // Only cache the manifest
+        return caches.open(CACHE_NAME).then((cache) => {
+          return cache.addAll(["/manifest.json"]).catch((err) => {
+            console.log("Cache addAll error:", err);
+          });
         });
-    })
+      })
   );
   self.skipWaiting();
 });
@@ -46,47 +63,55 @@ self.addEventListener("activate", (event) => {
   return self.clients.claim();
 });
 
-// Fetch event - serve from cache for PWA routes, network otherwise
+// Fetch event - network-first strategy, minimal caching
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Only apply PWA caching for specific routes
+  // Never cache API calls and sensitive data
+  if (shouldNeverCache(url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Only apply PWA behavior for specific routes
   if (isPWARoute(url)) {
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
+      // Always try network first
+      fetch(event.request)
+        .then((response) => {
+          // Don't cache if not successful
+          if (
+            !response ||
+            response.status !== 200 ||
+            response.type !== "basic"
+          ) {
+            return response;
+          }
 
-        return fetch(event.request)
-          .then((response) => {
-            // Check if valid response
-            if (
-              !response ||
-              response.status !== 200 ||
-              response.type !== "basic"
-            ) {
-              return response;
-            }
-
-            // Clone the response
+          // Only cache GET requests for static assets
+          if (
+            event.request.method === "GET" &&
+            (url.pathname.endsWith(".js") ||
+              url.pathname.endsWith(".css") ||
+              url.pathname.endsWith(".png") ||
+              url.pathname.endsWith(".jpg") ||
+              url.pathname.endsWith(".svg"))
+          ) {
             const responseToCache = response.clone();
-
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
+          }
 
-            return response;
-          })
-          .catch(() => {
-            // Return a custom offline page if available
-            return caches.match("/index.html");
-          });
-      })
+          return response;
+        })
+        .catch(() => {
+          // Only return cached response for static assets
+          return caches.match(event.request);
+        })
     );
   } else {
-    // For non-PWA routes, just fetch from network
+    // For non-PWA routes, always use network
     event.respondWith(fetch(event.request));
   }
 });

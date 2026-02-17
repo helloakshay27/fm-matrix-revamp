@@ -476,23 +476,23 @@ const columns = [
   if (columnKey === "actions") {
     return (
       <div className="flex gap-2">
-        <Button
+        {/* <Button
           variant="ghost"
         //   onClick={() => navigate(`/settings/items/details`)}
           title="View"
           className="p-0"
         >
           <Eye className="w-4 h-4" />
-        </Button>
+        </Button> */}
 
-        <Button
+        {/* <Button
           variant="ghost"
         //   onClick={() => navigate(`/settings/items/edit`)}
           title="Edit"
           className="p-0"
         >
           <Edit className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
     );
   }
