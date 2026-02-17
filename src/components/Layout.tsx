@@ -34,6 +34,8 @@ import { ActionHeader } from "./ActionHeader";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
 import { ClubSidebar } from "./ClubSidebar";
 import ClubDynamicHeader from "./ClubDynamicHeader";
+import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
+import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -234,6 +236,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ZycusSidebar />;
     }
 
+    if (org_id === "3") {
+      return <ZycusSidebarCopy />;
+    }
+
     if (selectedCompany?.id === 304) {
       return <PrimeSupportSidebar />;
     }
@@ -317,6 +323,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
     }
+
+    if (org_id === "3") {
+      return <ZycusDynamicHeaderCopy />;
+    }
+
+
 
     // Use company ID-based layout
     switch (layoutConfig.headerComponent) {

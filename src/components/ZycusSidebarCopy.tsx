@@ -144,15 +144,30 @@ const modulesByPackage = {
             ],
         },
         {
-            name: "Gate Number",
-            icon: DoorOpen,
-            href: "/master/gate-number",
+            name: "Checklist Master",
+            icon: CheckSquare,
+            href: "/master/checklist",
         },
         {
-            name: "Gate Pass Type",
-            icon: Ticket,
-            href: "/master/gate-pass-type",
+            name: "Question Bank",
+            icon: FileSpreadsheet,
+            href: "/master/survey/list",
         },
+        {
+            name: "Address Master",
+            icon: MapPin,
+            href: "/master/address",
+        },
+        // {
+        //     name: "Gate Number",
+        //     icon: DoorOpen,
+        //     href: "/master/gate-number",
+        // },
+        // {
+        //     name: "Gate Pass Type",
+        //     icon: Ticket,
+        //     href: "/master/gate-pass-type",
+        // },
 
         // {
         //   name: 'Inventory Sub Type',
@@ -188,353 +203,30 @@ const modulesByPackage = {
         },
         { name: "AMC", icon: FileText, href: "/maintenance/amc" },
         {
-            name: "Vendor",
-            icon: UserRoundPen,
-            href: "/maintenance/vendor",
-        },
-    ],
-    Safety: [
-        { name: "Incident", icon: AlertTriangle, href: "/safety/incident" },
-        {
-            name: "Permit",
-            icon: FileText,
-            href: "/safety/permit",
+            name: "Survey",
+            icon: FileSpreadsheet,
+            href: "/maintenance/survey",
             subItems: [
-                { name: "Permit ", href: "/safety/permit", color: "text-[#1a1a1a]" },
+                // { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
                 {
-                    name: "Pending Approvals",
-                    href: "/safety/permit/pending-approvals",
-                    color: "text-[#1a1a1a]",
-                },
-                { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
-            ],
-        },
-
-
-
-
-        {
-            name: "M-Safe",
-            icon: User,
-            href: "/safety/m-safe",
-            subItems: [
-                {
-                    name: "Internal User (FTE)",
-                    href: "/safety/m-safe/internal",
+                    name: "Survey Mapping",
+                    href: "/maintenance/survey/mapping",
                     color: "text-[#1a1a1a]",
                 },
                 {
-                    name: "External User (NON FTE)",
-                    href: "/safety/m-safe/external",
+                    name: "Response",
+                    href: "/maintenance/survey/response",
                     color: "text-[#1a1a1a]",
                 },
-                { name: "LMC", href: "/safety/m-safe/lmc" },
-                { name: "SMT", href: "/safety/m-safe/smt" },
-                { name: "Krcc List", href: "/safety/m-safe/krcc-list" },
-                { name: "Training List", href: "/safety/m-safe/training-list" },
-                {
-                    name: "Reportees Reassign",
-                    href: "/safety/m-safe/reportees-reassign",
-                },
-            ],
-        },
-        {
-            name: 'Report',
-            icon: Download,
-            href: '/safety/report',
-            subItems: [
-                { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
-                { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
             ],
         },
         // {
-        //   name: "Vi Miles",
-        //   icon: User,
-        //   href: "/safety/vi-miles",
-        //   subItems: [
-        //     {
-        //       name: "Vehicle Details",
-        //       href: "/safety/vi-miles/vehicle-details",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //     {
-        //       name: "Vehicle Check In",
-        //       href: "/safety/vi-miles/vehicle-check-in",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //   ],
+        //     name: "Vendor",
+        //     icon: UserRoundPen,
+        //     href: "/maintenance/vendor",
         // },
-        {
-            name: "Check Hierarchy Levels",
-            icon: FolderTree,
-            href: "/safety/check-hierarchy-levels",
-        },
-        {
-            name: "Employee Deletion History",
-            icon: Trash,
-            href: "/safety/employee-deletion-history",
-        },
     ],
-    Finance: [
-        {
-            name: "Procurement",
-            icon: Briefcase,
-            href: "/finance/procurement",
-            subItems: [
-                {
-                    name: "Material PR",
-                    href: "/finance/material-pr",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Service PR",
-                    href: "/finance/service-pr",
-                    color: "text-[#1a1a1a]",
-                },
-                { name: "PO", href: "/finance/po", color: "text-[#1a1a1a]" },
-                { name: "WO", href: "/finance/wo", color: "text-[#1a1a1a]" },
-                { name: "GRN/ SRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
-                {
-                    name: "Auto Saved PR",
-                    href: "/finance/auto-saved-pr",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Pending Approvals",
-                    href: "/finance/pending-approvals",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Deletion Requests",
-                    href: "/finance/deletion-requests",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Deleted PRs",
-                    href: "/finance/deleted-prs",
-                    color: "text-[#1a1a1a]",
-                },
-            ],
-        },
-        { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
-        { name: "Bill Booking", icon: Receipt, href: "/finance/bill-booking" },
-        {
-            name: "Accounting",
-            icon: Calculator,
-            href: "/finance/accounting",
-            subItems: [
-                {
-                    name: "Cost Center",
-                    href: "/finance/cost-center",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Budgeting",
-                    href: "/finance/budgeting",
-                    color: "text-[#1a1a1a]",
-                },
-            ],
-        },
-        { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
-    ],
-    CRM: [
-        { name: "Lead", icon: Target, href: "/crm/lead" },
-        { name: "Opportunity", icon: Star, href: "/crm/opportunity" },
-        {
-            name: "CRM",
-            icon: Users,
-            subItems: [
-                { name: "Customers", href: "/crm/customers" },
-                // { name: "FM Users", href: "/crm/fm-users" },
-                // { name: "Occupant Users", href: "/crm/occupant-users" },
-            ],
-        },
-        { name: "Events", icon: Calendar, href: "/crm/events" },
-        { name: "Broadcast", icon: Bell, href: "/crm/broadcast" },
-        { name: "Polls", icon: BarChart3, href: "/crm/polls" },
-        { name: "Campaign", icon: Target, href: "/crm/campaign" },
-        {
-            name: "Wallet",
-            icon: Wallet,
-            subItems: [
-                { name: "Wallet List", href: "/crm/wallet-list" },
-                { name: "Point Expiry", href: "/crm/point-expiry" },
-            ],
-        },
-    ],
-    Utility: [
-        { name: "Energy", icon: Zap, href: "/utility/energy" },
-        { name: "Water", icon: Droplets, href: "/utility/water" },
-        { name: "STP", icon: Database, href: "/utility/stp" },
-        {
-            name: "Daily Readings",
-            icon: ClipboardList,
-            href: "/utility/daily-readings",
-        },
-        {
-            name: "Utility Request",
-            icon: FileText,
-            href: "/utility/utility-request",
-        },
-        // { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
-        { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
-        { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
-    ],
-    Security: [
-        {
-            name: "Gate Pass",
-            icon: Shield,
-            href: "/security/gate-pass",
-            subItems: [
-                {
-                    name: "Inwards",
-                    href: "/security/gate-pass/inwards",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Outwards",
-                    href: "/security/gate-pass/outwards",
-                    color: "text-[#1a1a1a]",
-                },
-            ],
-        },
-        { name: "Visitor", icon: Users, href: "/security/visitor" },
-    ],
-    "Value Added Services": [
-        // { name: "F&B", icon: Coffee, href: "/vas/fnb" },
-        {
-            name: "Parking",
-            icon: Car,
-            href: "/vas/parking",
-            subItems: [
-                {
-                    name: "Parking Allocation",
-                    href: "/vas/parking",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Parking Booking",
-                    href: "/vas/parking/site-wise-bookings",
-                    color: "text-[#1a1a1a]",
-                },
-            ],
-        },
-        // { name: "OSR", icon: TreePine, href: "/vas/osr" },
-        // {
-        //   name: "Space Management",
-        //   icon: Building,
-        //   href: "/vas/space-management",
-        //   subItems: [
-        //     {
-        //       name: "Bookings",
-        //       href: "/vas/space-management/bookings",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //     {
-        //       name: "Seat Requests",
-        //       href: "/vas/space-management/seat-requests",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //     {
-        //       name: "Setup",
-        //       href: "/vas/space-management/setup",
-        //       color: "text-[#1a1a1a]",
-        //       subItems: [
-        //         {
-        //           name: "Seat Type",
-        //           href: "/vas/space-management/setup/seat-type",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Seat Setup",
-        //           href: "/vas/space-management/setup/seat-setup",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Shift",
-        //           href: "/vas/space-management/setup/shift",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Roster",
-        //           href: "/vas/space-management/setup/roster",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Employees",
-        //           href: "/vas/space-management/setup/employees",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Check in Margin",
-        //           href: "/vas/space-management/setup/check-in-margin",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Roster Calendar",
-        //           href: "/vas/space-management/setup/roster-calendar",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //         {
-        //           name: "Export",
-        //           href: "/vas/space-management/setup/export",
-        //           color: "text-[#1a1a1a]",
-        //         },
-        //       ],
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Booking",
-        //   icon: Calendar,
-        //   href: "/vas/booking/list",
-        //   // subItems: [
-        //   //   { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
-        //   //   { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
-        //   // ]
-        // },
-        // {
-        //   name: "Redemption Marketplace",
-        //   icon: Globe,
-        //   href: "/vas/redemonection-marketplace",
-        // },
-        // {
-        //   name: "Collaboration",
-        //   icon: Globe,
-        //   subItems: [
-        //     {
-        //       name: "Channels",
-        //       href: "/vas/channels",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //     {
-        //       name: "Tasks",
-        //       href: "/vas/channels/tasks",
-        //       color: "text-[#1a1a1a]",
-        //     },
-        //   ]
-        // }
-    ],
-    "Market Place": [
-        {
-            name: "All",
-            icon: Globe,
-            href: "/market-place/all",
-            color: "text-[#1a1a1a]",
-        },
-        {
-            name: "Installed",
-            icon: CheckSquare,
-            href: "/market-place/installed",
-            color: "text-[#1a1a1a]",
-        },
-        {
-            name: "Updates",
-            icon: Download,
-            href: "/market-place/updates",
-            color: "text-[#1a1a1a]",
-        },
-    ],
+
     Settings: [
         {
             name: "Account",
@@ -643,65 +335,65 @@ const modulesByPackage = {
                         },
                     ],
                 },
-                {
-                    name: "Safety",
-                    href: "/settings/safety",
-                    subItems: [
-                        { name: "Permit Setup", href: "/settings/safety/permit-setup" },
-                        { name: "Incident Setup", href: "/settings/safety/incident" },
-                    ],
-                },
-                {
-                    name: "Waste Management",
-                    href: "/settings/waste-management",
-                    subItems: [
-                        { name: "Setup", href: "/settings/waste-management/setup" },
-                    ],
-                },
+                // {
+                //     name: "Safety",
+                //     href: "/settings/safety",
+                //     subItems: [
+                //         { name: "Permit Setup", href: "/settings/safety/permit-setup" },
+                //         { name: "Incident Setup", href: "/settings/safety/incident" },
+                //     ],
+                // },
+                // {
+                //     name: "Waste Management",
+                //     href: "/settings/waste-management",
+                //     subItems: [
+                //         { name: "Setup", href: "/settings/waste-management/setup" },
+                //     ],
+                // },
 
-                {
-                    name: "Design Insight Setup",
-                    icon: Target,
-                    subItems: [
-                        { name: "Setup", href: "/settings/design-insights/setup" },
-                    ],
-                },
+                // {
+                //     name: "Design Insight Setup",
+                //     icon: Target,
+                //     subItems: [
+                //         { name: "Setup", href: "/settings/design-insights/setup" },
+                //     ],
+                // },
             ],
         },
-        {
-            name: "Security",
-            icon: Shield,
-            href: "/settings/security",
-            subItems: [
-                {
-                    name: "Visitor Management",
-                    href: "/settings/visitor-management/setup",
-                    subItems: [
-                        { name: "Setup", href: "/settings/visitor-management/setup" },
-                        {
-                            name: "Visiting Purpose",
-                            href: "/settings/visitor-management/visiting-purpose",
-                        },
-                        {
-                            name: "Support Staff",
-                            href: "/settings/visitor-management/support-staff",
-                        },
-                        { name: "Icons", href: "/settings/visitor-management/icons" },
-                    ],
-                },
-                {
-                    name: "Gate Pass",
-                    href: "/security/gate-pass",
-                    subItems: [
-                        {
-                            name: "Materials Type",
-                            href: "/security/gate-pass/materials-type",
-                        },
-                        { name: "Items Name", href: "/security/gate-pass/items-name" },
-                    ],
-                },
-            ],
-        },
+        // {
+        //     name: "Security",
+        //     icon: Shield,
+        //     href: "/settings/security",
+        //     subItems: [
+        //         {
+        //             name: "Visitor Management",
+        //             href: "/settings/visitor-management/setup",
+        //             subItems: [
+        //                 { name: "Setup", href: "/settings/visitor-management/setup" },
+        //                 {
+        //                     name: "Visiting Purpose",
+        //                     href: "/settings/visitor-management/visiting-purpose",
+        //                 },
+        //                 {
+        //                     name: "Support Staff",
+        //                     href: "/settings/visitor-management/support-staff",
+        //                 },
+        //                 { name: "Icons", href: "/settings/visitor-management/icons" },
+        //             ],
+        //         },
+        //         {
+        //             name: "Gate Pass",
+        //             href: "/security/gate-pass",
+        //             subItems: [
+        //                 {
+        //                     name: "Materials Type",
+        //                     href: "/security/gate-pass/materials-type",
+        //                 },
+        //                 { name: "Items Name", href: "/security/gate-pass/items-name" },
+        //             ],
+        //         },
+        //     ],
+        // },
 
         // {
         //     name: "Value Added Services",
@@ -739,7 +431,7 @@ const modulesByPackage = {
     ],
 };
 
-export const ZycusSidebar = () => {
+export const ZycusSidebarCopy = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const {
@@ -831,11 +523,11 @@ export const ZycusSidebar = () => {
     // Helper function to recursively filter out asset-related items
     const filterAssetItems = (items: any[]): any[] => {
         if (!assetRestricted) return items;
-        
+
         return items
             .filter((item: any) => {
                 // Filter out direct asset links
-                if (item.href === "/maintenance/asset" || 
+                if (item.href === "/maintenance/asset" ||
                     item.href === "/maintenance/audit/assets" ||
                     item.href?.startsWith("/settings/asset-setup")) {
                     return false;
@@ -859,7 +551,7 @@ export const ZycusSidebar = () => {
     };
 
     let currentModules = modulesByPackage[currentSection] || [];
-    
+
     // Apply asset restriction filtering
     if (assetRestricted) {
         currentModules = filterAssetItems(currentModules);
@@ -906,7 +598,7 @@ export const ZycusSidebar = () => {
                 currentSectionItems = [];
             }
         }
-        
+
         // Apply asset restriction filtering
         if (assetRestricted && currentSectionItems) {
             currentSectionItems = filterAssetItems(currentSectionItems);
