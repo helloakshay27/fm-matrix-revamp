@@ -390,14 +390,14 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-      name: 'Finance Master',
+      name: "Finance Master",
       icon: Wallet,
-      href: '/master/finance'
+      href: "/master/finance",
     },
     {
-      name: 'Plant Detail Setup',
+      name: "Plant Detail Setup",
       icon: DoorOpen,
-      href: '/master/plant-detail'
+      href: "/master/plant-detail",
     },
     {
       name: "Gate Number",
@@ -468,7 +468,6 @@ const modulesByPackage = {
     //   icon: PackagePlus,
     //   href: '/master/inventory-sub-type'
     // },
-
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -654,7 +653,6 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
-
     // {
     //   name: "Msafe Report",
     //   icon: Download,
@@ -683,12 +681,13 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
-
-
-
 
     {
       name: "M-Safe",
@@ -716,12 +715,20 @@ const modulesByPackage = {
       ],
     },
     {
-      name: 'Report',
+      name: "Report",
       icon: Download,
-      href: '/safety/report',
+      href: "/safety/report",
       subItems: [
-        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
+        {
+          name: "Msafe User Report",
+          icon: Download,
+          href: "/safety/report/msafe-report",
+        },
+        {
+          name: "Msafe Detail Report",
+          icon: Download,
+          href: "/safety/report/msafe-detail-report",
+        },
       ],
     },
     // {
@@ -907,7 +914,10 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+      name: "Patrolling",
+      icon: Shield,
+      href: "/security/patrolling",
+      subItems: [
         {
           name: "Patrolling Info",
           href: "/security/patrolling",
@@ -918,7 +928,7 @@ const modulesByPackage = {
           href: "/security/patrolling/response",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
   ],
   "Value Added Services": [
@@ -1048,24 +1058,24 @@ const modulesByPackage = {
     //   ]
     // },
     {
-      name: 'Projects & Tasks',
+      name: "Projects & Tasks",
       icon: Briefcase,
       subItems: [
         {
-          name: 'Projects',
-          href: "/vas/projects"
+          name: "Projects",
+          href: "/vas/projects",
         },
         {
-          name: 'Tasks',
-          href: "/vas/tasks"
+          name: "Tasks",
+          href: "/vas/tasks",
         },
         {
-          name: 'Sprint',
-          href: "/vas/sprint"
+          name: "Sprint",
+          href: "/vas/sprint",
         },
         {
-          name: 'Issues',
-          href: "/vas/issues"
+          name: "Issues",
+          href: "/vas/issues",
         },
         {
           name: "Channels",
@@ -1073,24 +1083,23 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: 'Opportunity Register',
-          href: "/vas/opportunity"
+          name: "Opportunity Register",
+          href: "/vas/opportunity",
         },
         {
-          name: 'ToDo',
-          href: "/vas/todo"
+          name: "ToDo",
+          href: "/vas/todo",
         },
         {
-          name: 'Documents',
-          href: "/vas/documents"
+          name: "Documents",
+          href: "/vas/documents",
         },
         {
-          name: 'Minutes of Meeting',
-          href: "/vas/mom"
+          name: "Minutes of Meeting",
+          href: "/vas/mom",
         },
-      ]
+      ],
     },
-
   ],
   "Market Place": [
     {
@@ -1365,7 +1374,7 @@ const modulesByPackage = {
           href: "/settings/community-modules/amenity-setup",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
     {
       icon: Settings,
@@ -1403,21 +1412,62 @@ const modulesByPackage = {
           name: "Issue Types",
           href: "/settings/project-task-setup/issue-types",
         },
-      ]
+      ],
     },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
-    // {
-    //   name: 'Currency',
-    //   icon: Currency,
-    //   href: '/settings/currency',
-    // }
+    {
+      name: "Items",
+      icon: FileText,
+      subItems: [
+        { name: "Items", href: "/settings/items" },
+
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
+    {
+      name: "Sales",
+      icon: FileText,
+      subItems: [
+        { name: "Customers", href: "/settings/customers" },
+        { name: "Sales Order", href: "/settings/sales-order" },
+
+        { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
+        // { name: "Transactions ", href: "/settings/transactions" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
+
+    {
+      name: "Purchase Orders",
+      icon: FileText,
+      subItems: [
+        { name: "Purchase Order", href: "/settings/purchase-order" },
+        { name: "Bills", href: "/settings/bills" },
+        { name: "Recurring Bills", href: "/accounting/recurring-bills" },
+        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Expense", href: "/settings/expense" },
+        { name: "PaymentsMade", href: "/settings/payments-made" },
+        // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        // { name: "Opening Balance", href: "/settings/opening-balance" },
+        // { name: "Budget", href: "/settings/budget" },
+        // { name: "Tax Setup ", href: "/settings/tax-setup" },
+      ],
+    },
 
     {
       name: "Common Modules",
       icon: IndianRupee,
-      subItems: [
-        { name: "Currency", href: "/settings/currency" },
-      ]
+      subItems: [{ name: "Currency", href: "/settings/currency" }],
     },
     {
       icon: Circle,
@@ -1425,6 +1475,177 @@ const modulesByPackage = {
       href: "/safety/m-safe/circle",
     },
   ],
+  // Accounting: [
+  //             {
+  //             name: "Items",
+  //             icon: FileText,
+  //             subItems: [
+  //                 { name: "Items", href: "/accounting/items" },
+  //                 // { name: "Transactions ", href: "/settings/transactions" },
+  //                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+  //                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+  //                 // { name: "Opening Balance", href: "/settings/opening-balance" },
+  //                 // { name: "Budget", href: "/settings/budget" },
+  //                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
+  //             ],
+  //         },
+
+  //         {
+  //             name: "Sales",
+  //             icon: FileText,
+  //             subItems: [
+  //                 { name: "Customers", href: "/accounting/customers" },
+  //                 { name: "Sales Order", href: "/accounting/sales-order" },
+  //                 // { name: "Transactions ", href: "/settings/transactions" },
+  //                 // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+  //                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+  //                 // { name: "Opening Balance", href: "/settings/opening-balance" },
+  //                 // { name: "Budget", href: "/settings/budget" },
+  //                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
+  //             ],
+  //         },
+  //         {
+  //             name: "Accountants",
+  //             icon: Users,
+  //             subItems: [
+  //                 { name: "Manual Journals", href: "/accounting/manual-journal" },
+  //                 { name: "Transactions", href: "/accounting/transactions" },
+  //                 { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+  //                 { name: "Opening Balance", href: "/accounting/opening-balance" },
+  //                 { name: "Budget", href: "/accounting/budget" },
+  //                 { name: "Tax Setup", href: "/accounting/tax-setup" },
+  //             ],
+  //         },
+
+  //         {
+  //             name: "Configuration",
+  //             icon: Settings,
+  //             subItems: [
+  //                 { name: "Charges ", href: "/settings/charge-setup" },
+  //                 { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+  //             ],
+  //         },
+
+  //         {
+  //             name: "Reports",
+  //             icon: FileText,
+  //             subItems: [
+  //                 { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+  //                 {
+  //                     name: "Profit & Loss",
+  //                     href: "/settings/reports/profit-and-loss",
+  //                 },
+  //                 {
+  //                     name: "GST Payable",
+  //                     href: "/settings/reports/gst-payable",
+  //                 },
+  //                 {
+  //                     name: "GST Receivable",
+  //                     href: "/settings/reports/gst-receivable",
+  //                 },
+  //                 {
+  //                     name: "Tax Summary",
+  //                     href: "/settings/reports/tax-summary",
+  //                 },
+  //             ],
+  //         },
+  //     ],
+
+
+  Accounting: [
+            {
+            name: "Items",
+            icon: FileText,
+            subItems: [
+                { name: "Items", href: "/accounting/items" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Sales",
+            icon: FileText,
+            subItems: [
+                { name: "Customers", href: "/accounting/customers" },
+                { name: "Sales Order", href: "/accounting/sales-order" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+         {
+              name: "Purchase Orders",
+              icon: FileText,
+              subItems: [
+                { name: "Purchase Order", href: "/accounting/purchase-order" },
+                { name: "Bills", href: "/accounting/bills" },
+                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
+                { name: "Vendor", href: "/maintenance/vendor" },
+                { name: "Expense", href: "/accounting/expense" },
+                { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
+                { name: "Payments Made", href: "/accounting/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+              ],
+            },
+        
+        {
+            name: "Accountants",
+            icon: Users,
+            subItems: [
+                { name: "Manual Journals", href: "/accounting/manual-journal" },
+                { name: "Transactions", href: "/accounting/transactions" },
+                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+                { name: "Opening Balance", href: "/accounting/opening-balance" },
+                { name: "Budget", href: "/accounting/budget" },
+                { name: "Tax Setup", href: "/accounting/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Configuration",
+            icon: Settings,
+            subItems: [
+                { name: "Charges ", href: "/accounting/charge-setup" },
+                { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
+            ],
+        },
+
+        {
+            name: "Reports",
+            icon: FileText,
+            subItems: [
+                { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
+                {
+                    name: "Profit & Loss",
+                    href: "/accounting/reports/profit-and-loss",
+                },
+                {
+                    name: "GST Payable",
+                    href: "/accounting/reports/gst-payable",
+                },
+                {
+                    name: "GST Receivable",
+                    href: "/accounting/reports/gst-receivable",
+                },
+                {
+                    name: "Tax Summary",
+                    href: "/accounting/reports/tax-summary",
+                },
+            ],
+        },
+    ],
 };
 
 export const StacticSidebar = () => {
@@ -1512,8 +1733,23 @@ export const StacticSidebar = () => {
       setCurrentSection("Market Place");
     } else if (path.startsWith("/master")) {
       setCurrentSection("Master");
+    } else if (path.startsWith("/accounting")) {
+      setCurrentSection("Accounting");
     }
   }, [location.pathname, setCurrentSection]);
+
+  // Template paths for route detection
+  const templatePaths = [
+    "/master/communication-template",
+    "/master/template/root-cause-analysis",
+    "/master/template/preventive-action",
+    "/master/template/short-term-impact",
+    "/master/template/long-term-impact",
+    "/master/template/corrective-action",
+  ];
+  const isOnTemplateRoute = templatePaths.some((t) =>
+    location.pathname.startsWith(t)
+  );
 
   // Helper function to recursively filter out asset-related items
   const filterAssetItems = (items: any[]): any[] => {
@@ -1522,9 +1758,11 @@ export const StacticSidebar = () => {
     return items
       .filter((item: any) => {
         // Filter out direct asset links
-        if (item.href === "/maintenance/asset" ||
+        if (
+          item.href === "/maintenance/asset" ||
           item.href === "/maintenance/audit/assets" ||
-          item.href?.startsWith("/settings/asset-setup")) {
+          item.href?.startsWith("/settings/asset-setup")
+        ) {
           return false;
         }
         // Filter out items named "Asset Setup" or "Assets"
@@ -1554,7 +1792,7 @@ export const StacticSidebar = () => {
     const currentPath = location.pathname;
     const exactMatch = currentPath === href;
     const prefixMatch = currentPath.startsWith(href + "/");
-    const isActive = mode === "prefix" ? (exactMatch || prefixMatch) : exactMatch;
+    const isActive = mode === "prefix" ? exactMatch || prefixMatch : exactMatch;
 
     // Debug logging for Services
     if (href === "/maintenance/service") {
@@ -1660,9 +1898,10 @@ export const StacticSidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {subItem.href && isActiveRoute(subItem.href, "exact") && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                        )}
+                        {subItem.href &&
+                          isActiveRoute(subItem.href, "exact") && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                          )}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? (
                           <ChevronDown className="w-4 h-4" />
@@ -1676,8 +1915,9 @@ export const StacticSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1693,8 +1933,9 @@ export const StacticSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1716,8 +1957,9 @@ export const StacticSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -1796,10 +2038,11 @@ export const StacticSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-            ? "bg-[#f0e8dc] shadow-inner"
-            : "hover:bg-[#DBC2A9]"
-            }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
+              ? "bg-[#f0e8dc] shadow-inner"
+              : "hover:bg-[#DBC2A9]"
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -1807,13 +2050,15 @@ export const StacticSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -1832,8 +2077,9 @@ export const StacticSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1849,22 +2095,21 @@ export const StacticSidebar = () => {
             <ChevronLeft className="w-4 h-4" />
           )}
         </button>
-        {/* Add background and border below the collapse button */}
         <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
-        {currentSection && (
+        {/* Show section label for Settings and Accounting */}
+        {!isSidebarCollapsed && currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
             >
-              {isSidebarCollapsed ? "" : currentSection}
+              {currentSection}
             </h3>
           </div>
         )}
 
         <nav className="space-y-2">
-          {currentSection === "Settings" ? (
+          {currentSection === "Settings" || currentSection === "Accounting" ? (
             isSidebarCollapsed ? (
               <div className="flex flex-col items-center space-y-3 pt-4">
                 {currentModules.map((module) => (
@@ -1881,7 +2126,6 @@ export const StacticSidebar = () => {
                   key={module.name}
                   onClick={() => {
                     if (module.subItems && module.subItems.length > 0) {
-                      // Navigate to the deepest navigable sub-item's href if it exists
                       const deepestHref = findDeepestNavigableItem(module);
                       if (deepestHref) {
                         handleNavigation(deepestHref, currentSection);
@@ -1892,20 +2136,22 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
-                    ? "bg-[#f0e8dc] shadow-inner"
-                    : "hover:bg-[#DBC2A9]"
-                    }`}
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href, "prefix")
+                      ? "bg-[#f0e8dc] shadow-inner"
+                      : "hover:bg-[#DBC2A9]"
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
-                      ? "text-[#C72030]"
-                      : "text-[#1a1a1a]"
-                      }`}
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href, "prefix")
+                        ? "text-[#C72030]"
+                        : "text-[#1a1a1a]"
+                    }`}
                   />
                 </button>
               ))}

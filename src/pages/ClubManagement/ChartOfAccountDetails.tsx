@@ -22,6 +22,14 @@ export const ChartOfAccountDetails = () => {
     const [date, setDate] = useState("");
 
     // Fetch ledger details from correct API
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "-";
+        return new Date(dateString).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    };
     const fetchLedgerDetails = async () => {
         setLedgerLoading(true);
         try {
@@ -36,6 +44,26 @@ export const ChartOfAccountDetails = () => {
             setAccountType(res.data.account_type || "");
             setDescription(res.data.description || "");
             setClosingBalance(res.data.current_total || 0);
+
+            const rows = Array.isArray(res.data.lock_account_transaction_records)
+                ? res.data.lock_account_transaction_records.map((r: any) => ({
+                    ledger_name: r.ledger_name,
+                    created_at: r.created_at, // 👈 store date
+                    tr_type: r.tr_type, // dr / cr
+                    debit: r.tr_type === "dr" ? r.amount : 0,
+                    credit: r.tr_type === "cr" ? r.amount : 0,
+                }))
+                : [];
+
+            const debitTotal = rows.reduce((s, r) => s + r.debit, 0);
+            const creditTotal = rows.reduce((s, r) => s + r.credit, 0);
+            const data = res.data.lock_account_transaction_records;
+            setDate(
+                data.created_at
+                    ? data.created_at.split("-").reverse().join("-")
+                    : ""
+            );
+            setTransactions(rows)
         } catch (err) {
             console.error(err);
             setLedgerDetails(null);
@@ -45,47 +73,47 @@ export const ChartOfAccountDetails = () => {
     };
 
     // Existing transaction fetch
-    const fetchAccountDetails = async () => {
-        setLoading(true);
-        try {
-            const res = await axios.get(
-                `https://${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+    // const fetchAccountDetails = async () => {
+    //     setLoading(true);
+    //     try {
+    //         const res = await axios.get(
+    //             `https://${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`,
+    //             {
+    //                 headers: { Authorization: `Bearer ${token}` },
+    //             }
+    //         );
 
-            const data = res.data;
+    //         const data = res.data;
 
-            setDate(
-                data.transaction_date
-                    ? data.transaction_date.split("-").reverse().join("-")
-                    : ""
-            );
-            // Don't override description from ledger
+    //         setDate(
+    //             data.transaction_date
+    //                 ? data.transaction_date.split("-").reverse().join("-")
+    //                 : ""
+    //         );
+    //         // Don't override description from ledger
 
-            const rows = Array.isArray(data.records)
-                ? data.records.map((r: any) => ({
-                    debit: r.tr_type === "dr" ? r.amount : 0,
-                    credit: r.tr_type === "cr" ? r.amount : 0,
-                }))
-                : [];
+    //         const rows = Array.isArray(data.lock_account_transaction_records)
+    //             ? data.records.map((r: any) => ({
+    //                 debit: r.tr_type === "dr" ? r.amount : 0,
+    //                 credit: r.tr_type === "cr" ? r.amount : 0,
+    //             }))
+    //             : [];
 
-            const debitTotal = rows.reduce((s, r) => s + r.debit, 0);
-            const creditTotal = rows.reduce((s, r) => s + r.credit, 0);
+    //         const debitTotal = rows.reduce((s, r) => s + r.debit, 0);
+    //         const creditTotal = rows.reduce((s, r) => s + r.credit, 0);
 
-            // Don't override closingBalance from ledger
-            setTransactions(rows);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    //         // Don't override closingBalance from ledger
+    //         // setTransactions(data.lock_account_transaction_records || rows);
+    //     } catch (err) {
+    //         console.error(err);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     useEffect(() => {
         fetchLedgerDetails();
-        fetchAccountDetails();
+        // fetchAccountDetails();
     }, [id]);
 
     if (loading || ledgerLoading) {
@@ -102,7 +130,7 @@ export const ChartOfAccountDetails = () => {
             <Button
                 variant="ghost"
                 className="mb-4 px-0"
-                onClick={() => navigate("/settings/chart-journal")}
+                onClick={() => navigate("/accounting/chart-journal")}
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -219,13 +247,13 @@ export const ChartOfAccountDetails = () => {
                                 transactions.map((t, i) => (
                                     <tr key={i} className="hover:bg-gray-50">
                                         <td className="border border-gray-300 px-4 py-3">
-                                            {date || "-"}
+                                            {formatDate(t.created_at)}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-gray-500">
-                                            --
+                                            {t.ledger_name || "--"}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3">
-                                            Journal
+                                            {t.tr_type === "dr" ? "Debit" : "Credit"}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.debit ? `₹${t.debit.toFixed(2)}` : "-"}
@@ -233,7 +261,7 @@ export const ChartOfAccountDetails = () => {
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.credit ? `₹${t.credit.toFixed(2)}` : "-"}
                                         </td>
-                                    </tr>
+                                    </tr >
                                 ))
                             ) : (
                                 <tr>
@@ -245,11 +273,11 @@ export const ChartOfAccountDetails = () => {
                                     </td>
                                 </tr>
                             )}
-                        </tbody>
-                    </table>
-                </div>
+                        </tbody >
+                    </table >
+                </div >
 
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };

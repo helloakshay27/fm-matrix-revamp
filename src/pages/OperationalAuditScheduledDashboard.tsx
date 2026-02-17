@@ -151,8 +151,8 @@ export const OperationalAuditScheduledDashboard = () => {
           data={scheduleData}
           columns={columns}
           renderCell={renderCell}
-          selectable={true}
-          selectedItems={selectedItems}
+          // selectable={true}
+          // selectedItems={selectedItems}
           onSelectAll={handleSelectAll}
           onSelectItem={handleSelectItem}
           getItemId={(item) => item.id.toString()}

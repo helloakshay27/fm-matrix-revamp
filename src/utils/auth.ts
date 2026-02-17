@@ -13,7 +13,7 @@ export interface User {
   spree_api_key?: string;
   is_login?: boolean;
   access_token?: string;
-  number_verified?: number;
+  number_verified?: number | boolean;
   lock_role?: {
     id: number;
     name: string;
@@ -45,7 +45,7 @@ export interface LoginResponse {
   longitude?: number;
   country_code?: string;
   spree_api_key?: string;
-  number_verified?: number;
+  number_verified?: number | boolean;
   lock_role?: {
     id: number;
     name: string;
@@ -79,6 +79,8 @@ export interface Organization {
   logo?: {
     url: string;
   };
+  backend_url?: string;
+  backend_domain?: string;
 }
 
 // Local storage keys
@@ -149,10 +151,10 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work");
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com" || hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -160,8 +162,14 @@ const isPulseSite = hostname === "pulse.lockated.com";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
+const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
+
 const isClubSite =
   hostname.includes("club.lockated.com");
+
+  const isPanchshilClubSite =
+  // hostname.includes("club.lockated.com");
+  hostname === "recess-club.panchshil.com";
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -255,10 +263,35 @@ export const getOrganizationsByEmail = async (
     const data = await response.json();
     return data.organizations || [];
   }
+  if (isPanchshilClubSite) {
+    const response = await fetch(
+      `https://recess-club-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isPanchshilPulseProd) {
+    const response = await fetch(
+      `https://pulse-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
 
   // Default fallback for other sitess
   const response = await fetch(
-    `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {
@@ -384,9 +417,9 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
     );
   }
 
-  if (!baseUrl) {
-    throw new Error("Base URL not found. Please login again.");
-  }
+  // if (!baseUrl) {
+  //   throw new Error("Base URL not found. Please login again.");
+  // }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -397,15 +430,12 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
     headers["Authorization"] = `Bearer ${otptoken}`;
   }
 
+  // https://pulse-api.lockated.com/get_otps/verify_otp.json?email=sumitra.patil@lockated.com&otp=999999
   const response = await fetch(
-    `https://live-api.gophygital.work/verify_code.json`,
+    `https://pulse-api.lockated.com/get_otps/verify_otp.json?email=${email}&otp=${otp}`,
     {
-      method: "POST",
+      method: "GET",
       headers,
-      body: JSON.stringify({
-        email: email,
-        otp: otp,
-      }),
     }
   );
 
@@ -414,6 +444,11 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   }
 
   const data = await response.json();
+
+  // Adapter for existing UI logic that expects 'verified: true'
+  if ((data.code === 200 || data.access_token) && !data.verified) {
+    data.verified = true;
+  }
 
   // Only clear temp email after successful verification
   // Check if the response indicates success (you might need to adjust this based on your API response structure)
@@ -581,7 +616,9 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("web.gophygital.work");
   const isFmSite =
     hostname.includes("fm-uat.gophygital.work") ||
-    hostname.includes("fm.gophygital.work");
+    hostname.includes("fm.gophygital.work") ||
+    hostname === "fm-matrix.lockated.com" ||
+    hostname === "localhost";
 
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
   const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";

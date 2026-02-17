@@ -3808,42 +3808,32 @@ export const AddSchedulePage = () => {
                       <FormControl
                         fullWidth
                         variant="outlined"
+                        error={!!fieldErrors.assetGroup}
                         sx={{
                           '& .MuiInputBase-root': {
                             ...fieldStyles,
                             width: '100%',
-                            maxWidth: 340, // <-- Set a fixed max width for the input
+                            maxWidth: '100%', // <-- Set a fixed max width for the input
                           },
                         }}
                       >
-                        <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <InputLabel shrink>Select Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
                         <Select
-                          multiple
-                          label="Select Assets"
+                          label="Select Asset Group"
                           notched
                           displayEmpty
-                          value={formData.asset}
-                          onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                          renderValue={(selected) => {
-                            const names = assets
-                              .filter(asset => selected.includes(asset.id.toString()))
-                              .map(asset => asset.name)
-                              .join(', ');
-                            return (
-                              <span
-                                style={{
-                                  display: 'block',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: 320, // <-- Match the input width for ellipsis
-                                }}
-                                title={names}
-                              >
-                                {selected.length === 0 ? 'Select Assets' : names}
-                              </span>
-                            );
+                          value={formData.assetGroup}
+                          onChange={e => {
+                            handleAssetGroupChange(e.target.value);
+                            // Clear error when user selects a value
+                            if (e.target.value && fieldErrors.assetGroup) {
+                              setFieldErrors(prev => {
+                                const { assetGroup, ...rest } = prev;
+                                return rest;
+                              });
+                            }
                           }}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
                           sx={{
                             width: '100%',
                             maxWidth: 340, // <-- Match the FormControl
@@ -3856,54 +3846,122 @@ export const AddSchedulePage = () => {
                             },
                           }}
                         >
-                          <MenuItem value="" disabled>Select Assets</MenuItem>
-                          {assets && assets.map((option) => (
-                            <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
+                          <MenuItem value="">Select Asset Group</MenuItem>
+                          {assetGroups && assetGroups.map((group) => (
+                            <MenuItem key={group.id} value={group.id.toString()}>{group.name}</MenuItem>
                           ))}
                         </Select>
+                        {fieldErrors.assetGroup && (
+                          <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                            {fieldErrors.assetGroup}
+                          </Typography>
+                        )}
+                        {loading.groups && !fieldErrors.assetGroup && (
+                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, ml: 1.5 }}>
+                            Loading asset groups...
+                          </Typography>
+                        )}
                       </FormControl>
-                      {loading.groups && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading asset groups...
-                        </Typography>
-                      )}
                     </Box>
 
                     {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
                     {selectedAssetGroup && (
-                      <FormControl fullWidth>
-                        <InputLabel>
-                          Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
-                        </InputLabel>
-                        <Select
-                          multiple
-                          value={formData.assetSubGroup}
-                          onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
-                          input={<OutlinedInput label="Select Asset Sub-Groups" />}
-                          renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {selected.map((value) => {
-                                const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
-                                return (
-                                  <Chip key={value} label={subGroup?.name || value} size="small" />
-                                );
-                              })}
-                            </Box>
-                          )}
-                          disabled={loading.subGroups}
+                      <Box sx={{ minWidth: 0 }}>
+                        <FormControl 
+                          fullWidth
+                          variant="outlined"
+                          error={!!fieldErrors.assetSubGroup}
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              ...fieldStyles,
+                              minWidth: 0,
+                            },
+                          }}
                         >
-                          {assetSubGroups && assetSubGroups.map((subGroup) => (
-                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                              {subGroup.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {loading.subGroups && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Loading sub-groups...
-                          </Typography>
-                        )}
-                      </FormControl>
+                          <InputLabel shrink>
+                            Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
+                          </InputLabel>
+                          <Select
+                            multiple
+                            label="Select Asset Sub-Groups"
+                            notched
+                            displayEmpty
+                            value={formData.assetSubGroup}
+                            onChange={(e) => {
+                              handleMultiSelectChange('assetSubGroup', e);
+                              // Clear error when user selects a value
+                              if (e.target.value.length > 0 && fieldErrors.assetSubGroup) {
+                                setFieldErrors(prev => {
+                                  const { assetSubGroup, ...rest } = prev;
+                                  return rest;
+                                });
+                              }
+                            }}
+                            renderValue={(selected) => {
+                              if (!selected || selected.length === 0) {
+                                return <span style={{ color: '#aaa' }}>Select Asset Sub-Groups</span>;
+                              }
+                              const names = assetSubGroups
+                                .filter(subGroup => selected.includes(subGroup.id.toString()))
+                                .map(subGroup => subGroup.name)
+                                .join(', ');
+                              return (
+                                <span
+                                  title={names}
+                                  style={{
+                                    display: 'inline-block',
+                                    maxWidth: '100%',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {names}
+                                </span>
+                              );
+                            }}
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.subGroups}
+                            sx={{
+                              minWidth: 0,
+                              width: '100%',
+                              maxWidth: '100%',
+                              '& .MuiSelect-select': {
+                                display: 'block',
+                                minWidth: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }
+                            }}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  minWidth: 200,
+                                  maxWidth: 520,
+                                  width: 'auto'
+                                }
+                              }
+                            }}
+                          >
+                            <MenuItem value="">Select Asset Sub-Groups</MenuItem>
+                            {assetSubGroups && assetSubGroups.map((subGroup) => (
+                              <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                                {subGroup.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          {fieldErrors.assetSubGroup && (
+                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                              {fieldErrors.assetSubGroup}
+                            </Typography>
+                          )}
+                          {loading.subGroups && !fieldErrors.assetSubGroup && (
+                            <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, ml: 1.5 }}>
+                              Loading sub-groups...
+                            </Typography>
+                          )}
+                        </FormControl>
+                      </Box>
                     )}
                   </>
                 )}

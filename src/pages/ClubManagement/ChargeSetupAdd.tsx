@@ -287,7 +287,7 @@ const ChargeSetupAdd: React.FC = () => {
                 },
             });
             toast.success("Charge setup created successfully!");
-            navigate(`/settings/charge-setup`);
+            navigate(`/accounting/charge-setup`);
         } catch (err: any) {
             toast.error("Failed to create charge setup");
         }

@@ -320,7 +320,7 @@ export const AmenityBookingDetailsClubPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 min-w-[140px]">CGST</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {bookings?.gst || "-"}%

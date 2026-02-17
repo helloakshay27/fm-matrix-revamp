@@ -33,6 +33,9 @@ import { ActionSidebar } from "./ActionSidebar";
 import { ActionHeader } from "./ActionHeader";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
 import { ClubSidebar } from "./ClubSidebar";
+import ClubDynamicHeader from "./ClubDynamicHeader";
+import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
+import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -55,7 +58,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const hostname = window.location.hostname;
 
   // Detect Club Management routes
-  const isClubManagementRoute = hostname === "club.lockated.com";
+  const isClubManagementRoute =
+    hostname === "club.lockated.com" ||
+    location.pathname.startsWith("/club-management");
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -117,6 +122,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.lockated.com") ||
     hostname.includes("pulse.gophygital.work") ||
     hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -124,7 +130,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
     userEmail === "besis69240@azeriom.com" ||
-    userEmail === "megipow156@aixind.com";
+    userEmail === "megipow156@aixind.com" ||
+    userEmail === "jevosak839@cimario.com";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -168,9 +175,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 298 ||
           selectedCompany?.id === 199 ||
           org_id === "90" ||
+          org_id === "84" ||
+          org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com"
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com"
         ) {
           return <EmployeeSidebar />;
         }
@@ -178,6 +188,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       }
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
+    }
+
+    if (selectedCompany?.id === 189) {
+      return <ZxSidebar />;
     }
 
     // Check for token-based VI access first
@@ -193,9 +207,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
+      org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
-      userEmail === "megipow156@aixind.com"
+      userEmail === "megipow156@aixind.com" ||
+      userEmail === "jevosak839@cimario.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -214,12 +231,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Company-specific logic (Admin layout)
-    if (selectedCompany?.id === 189) {
-      return <ZxSidebar />;
-    }
 
     if (selectedCompany?.id === 294) {
       return <ZycusSidebar />;
+    }
+
+    if (org_id === "3") {
+      return <ZycusSidebarCopy />;
     }
 
     if (selectedCompany?.id === 304) {
@@ -252,7 +270,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
-      return <StaticDynamicHeader />;
+      return <ClubDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -261,6 +279,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null; // No dynamic header for employees
     }
 
+    // Company-specific logic (Admin layout)
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -268,11 +288,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
+      org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
-      userEmail === "megipow156@aixind.com"
+      userEmail === "megipow156@aixind.com" ||
+      userEmail === "jevosak839@cimario.com"
     ) {
       return <ActionHeader />;
+    }
+
+    if (selectedCompany?.id === 189) {
+      return <ZxDynamicHeader />;
     }
 
     if (isFMSite) {
@@ -282,11 +309,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
-    }
-
-    // Company-specific logic (Admin layout)
-    if (selectedCompany?.id === 189) {
-      return <ZxDynamicHeader />;
     }
 
     if (selectedCompany?.id === 294) {
@@ -301,6 +323,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
     }
+
+    if (org_id === "3") {
+      return <ZycusDynamicHeaderCopy />;
+    }
+
+
 
     // Use company ID-based layout
     switch (layoutConfig.headerComponent) {
@@ -393,9 +421,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
         org_id === "90" ||
+        org_id === "84" ||
+        org_id === "1" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
-        userEmail === "megipow156@aixind.com" ? (
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />

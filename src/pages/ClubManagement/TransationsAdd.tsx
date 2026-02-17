@@ -58,9 +58,41 @@ const TransactionsAdd = () => {
     }, []);
 
 
+    // const handleRowChange = (idx, field, value) => {
+    //     const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
+    //     setRows(updated);
+    // };
+
     const handleRowChange = (idx, field, value) => {
-        const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
-        setRows(updated);
+        // Prevent negative values for debit/credit
+        if ((field === 'debit' || field === 'credit')) {
+            let val = value;
+            // Remove minus sign if present
+            if (typeof val === 'string') {
+                val = val.replace(/-/g, '');
+            }
+            // Prevent negative numbers
+            if (Number(val) < 0) val = '';
+            // Format to 2 decimal places if not empty and is a number
+            if (val !== '' && !isNaN(Number(val))) {
+                // Only format if not typing decimal point
+                if (!val.endsWith('.')) {
+                    val = Number(val).toFixed(2);
+                }
+            }
+            setRows(prevRows => prevRows.map((row, i) => {
+                if (i !== idx) return row;
+                if (field === 'debit') {
+                    return { ...row, debit: val, credit: val && Number(val) > 0 ? '' : row.credit };
+                }
+                if (field === 'credit') {
+                    return { ...row, credit: val, debit: val && Number(val) > 0 ? '' : row.debit };
+                }
+                return { ...row, [field]: val };
+            }));
+            return;
+        }
+        setRows(prevRows => prevRows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
     };
 
     const addRow = () => setRows([...rows, { ...initialRow }]);
@@ -77,54 +109,75 @@ const TransactionsAdd = () => {
     const handleRemoveFile = (index) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
-console.log('Rows transation type:', transactionType);
+    console.log('Rows transation type:', transactionType);
     // Helper to build the payload for API
-        const buildJournalPayload = () => {
-            return {
-                lock_account_transaction: {
-                    transaction_type: transactionType,
-                    transaction_date: date,
-                    voucher_number: journalNo,
-                    description: notes,
-                    reference: reference,
-                    publish: false, // Set true if publishing
-                    lock_account_id: 1, // You may want to make this dynamic
+    const buildJournalPayload = () => {
+        return {
+            lock_account_transaction: {
+                transaction_type: transactionType,
+                transaction_date: date,
+                voucher_number: journalNo,
+                description: notes,
+                reference: reference,
+                publish: false, // Set true if publishing
+                lock_account_id: 1, // You may want to make this dynamic
+            },
+            lock_account_transaction_records: rows.map(row => {
+                const record = {
+                    ledger_id: row.account ? Number(row.account) : undefined,
+                    cost_centre_id: 1, // Set as needed or make dynamic
+                };
+                if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
+                if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
+                return record;
+            }).filter(r => r.ledger_id),
+        };
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        // Required field validation
+        if (!transactionType) {
+            toast.error('Transaction Type is required.');
+            return;
+        }
+        if (!date) {
+            toast.error('Date is required.');
+            return;
+        }
+        if (!notes) {
+            toast.error('Notes are required.');
+            return;
+        }
+
+        // Validation: Debits and Credits must be equal
+        const totalDebit = rows.reduce((sum, r) => sum + Number(r.debit || 0), 0);
+        const totalCredit = rows.reduce((sum, r) => sum + Number(r.credit || 0), 0);
+        if (totalDebit !== totalCredit) {
+            toast.error('Please ensure that the Debits and Credits are equal.');
+            return;
+        }
+        const payload = buildJournalPayload();
+        console.log('Payload to send:', payload);
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+        try {
+            const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+            const response = await axios.post(url, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                lock_account_transaction_records: rows.map(row => {
-                    const record = {
-                        ledger_id: row.account ? Number(row.account) : undefined,
-                        cost_centre_id: 1, // Set as needed or make dynamic
-                    };
-                    if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
-                    if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
-                    return record;
-                }).filter(r => r.ledger_id),
-            };
-        };
-    
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            const payload = buildJournalPayload();
-            console.log('Payload to send:', payload);
-            const baseUrl = API_CONFIG.BASE_URL;
-            const token = API_CONFIG.TOKEN;
-            try {
-                const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-                const response = await axios.post(url, payload, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                });
-                console.log('API response:', response.data);
-                 navigate('/settings/transactions');
-                // Optionally show success message or redirect
-            } catch (error) {
-                console.error('Error submitting journal entry:', error);
-                toast.error('Failed to create journal entry');
-                // Optionally show error message
-            }
-        };
+            });
+            console.log('API response:', response.data);
+            navigate('/accounting/transactions');
+            // Optionally show success message or redirect
+        } catch (error) {
+            console.error('Error submitting journal entry:', error);
+            toast.error('Failed to create journal entry');
+            // Optionally show error message
+        }
+    };
 
     // const handleSubmit = (e) => {
     //     e.preventDefault();
@@ -270,18 +323,35 @@ console.log('Rows transation type:', transactionType);
                                 <tbody>
                                     {rows.map((row, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50">
-                                            <td className="border border-gray-300 px-4 py-3">
-
-                                                <FormControl size="small" fullWidth>
+                                            <td className="border border-gray-300 px-4 py-3" style={{ minWidth: 250, maxWidth: 300, width: 200 }}>
+                                                <FormControl size="small" fullWidth sx={{ minWidth: 250, maxWidth: 300, width: 200 }}>
                                                     <Select
                                                         value={row.account}
                                                         displayEmpty
                                                         onChange={e => handleRowChange(idx, 'account', e.target.value)}
                                                         inputProps={{ 'aria-label': 'Select Account' }}
+                                                        MenuProps={{
+                                                            PaperProps: {
+                                                                sx: {
+                                                                    minWidth: 250,
+                                                                    maxWidth: 300,
+                                                                    width: 200,
+                                                                    // overflowX: 'auto',
+                                                                    // whiteSpace: 'nowrap',
+                                                                },
+                                                            },
+                                                        }}
                                                     >
                                                         <MenuItem value=""><em>Select an account</em></MenuItem>
                                                         {accountOptions.map(option => (
-                                                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                                                            <MenuItem
+                                                                key={option.id}
+                                                                value={option.id}
+                                                                sx={{ minWidth: 180, maxWidth: 240, width: 200 }}
+                                                                title={option.formatted_name || option.name}
+                                                            >
+                                                                {option.formatted_name}
+                                                            </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>
@@ -320,7 +390,7 @@ console.log('Rows transation type:', transactionType);
                                                     onChange={e => handleRowChange(idx, 'debit', e.target.value)}
                                                     className="w-full"
                                                     placeholder="Debit"
-                                                    inputProps={{ min: 0 }}
+                                                    inputProps={{ min: 0, step: '0.01', onKeyDown: (e) => { if (e.key === '-') e.preventDefault(); } }}
                                                 />
                                             </td>
                                             <td className="border border-gray-300 px-4 py-3">
@@ -332,7 +402,7 @@ console.log('Rows transation type:', transactionType);
                                                     onChange={e => handleRowChange(idx, 'credit', e.target.value)}
                                                     className="w-full"
                                                     placeholder="Credit"
-                                                    inputProps={{ min: 0 }}
+                                                    inputProps={{ min: 0, step: '0.01', onKeyDown: (e) => { if (e.key === '-') e.preventDefault(); } }}
                                                 />
                                             </td>
                                             <td className="border border-gray-300 px-4 py-3">

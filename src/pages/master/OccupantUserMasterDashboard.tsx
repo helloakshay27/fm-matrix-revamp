@@ -9,7 +9,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Users, Download, X, Eye, Plus } from "lucide-react";
+import { Users, Download, X, Eye, Plus, Send, Copy, Check } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -37,6 +37,7 @@ import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialo
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 import { getUser } from "@/utils/auth";
+import { useLocation } from "react-router-dom";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
@@ -62,8 +63,16 @@ const columns: ColumnConfig[] = [
 export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = getUser();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+  const isOpsConsole = location.pathname.includes('/ops-console/');
+
+  // OTP state management
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpData, setOtpData] = useState<any>(null);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -562,6 +571,48 @@ export const OccupantUserMasterDashboard = () => {
     }
   };
 
+  // Handle OTP generation
+  const handleGenerateOTP = async (email: string) => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl) {
+      toast.error("Base URL not found");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      const response = await axios.get(
+        `https://${baseUrl}/get_otps/generate_otp.json?email=${encodeURIComponent(email)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+        setOtpData(response.data);
+        setOtpDialogOpen(true);
+        toast.success(response.data.message || "OTP generated successfully");
+    } catch (error) {
+      console.error("OTP generation failed:", error);
+      toast.error("Failed to generate OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Copy to clipboard handler
+  const handleCopy = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (error) {
+      toast.error("Failed to copy");
+    }
+  };
+
   const leftActions = (
     <>
       <Button
@@ -625,7 +676,7 @@ export const OccupantUserMasterDashboard = () => {
             columns={columns}
             renderCell={renderCell}
             renderActions={(item: any) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -641,6 +692,20 @@ export const OccupantUserMasterDashboard = () => {
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
+                {isOpsConsole && item.email && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerateOTP(item.email);
+                    }}
+                    title="Send OTP"
+                    disabled={otpLoading}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             )}
             onFilterClick={() => setFilterDialogOpen(true)}
@@ -774,6 +839,126 @@ export const OccupantUserMasterDashboard = () => {
           dispatch(fetchOccupantUserCounts('occupant'));
         }}
       />
+
+      {/* OTP Dialog */}
+      <Dialog
+        open={otpDialogOpen}
+        onClose={() => setOtpDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent className="p-0 bg-white">
+          <div className="px-6 py-3 border-b mb-3">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold">OTP Details</h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOtpDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {otpData && (
+            <div className="px-6 py-4 space-y-4">
+              {/* OTP */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">OTP Code</p>
+                    <p className="text-3xl font-bold text-green-700">
+                      {otpData.get_otp?.otp}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(String(otpData.get_otp?.otp), 'otp')}
+                    className="flex items-center gap-2"
+                  >
+                    {copiedField === 'otp' ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    Copy
+                  </Button>
+                </div>
+              </div>
+
+              {/* Email */}
+              {otpData.get_otp?.email && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium">{otpData.get_otp.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopy(otpData.get_otp.email, 'email')}
+                  >
+                    {copiedField === 'email' ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Mobile */}
+              {otpData.get_otp?.mobile && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-500">Mobile</p>
+                    <p className="text-sm font-medium">{otpData.get_otp.mobile}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopy(otpData.get_otp.mobile, 'mobile')}
+                  >
+                    {copiedField === 'mobile' ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Organization Info */}
+              {otpData.organization && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-gray-500 mb-2">Organization</p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{otpData.organization.name}</p>
+                    <p className="text-xs text-gray-600">{otpData.organization.domain}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Message */}
+              {otpData.message && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700">{otpData.message}</p>
+                </div>
+              )}
+
+              {/* Created At */}
+              {otpData.get_otp?.created_at && (
+                <div className="text-xs text-gray-500 text-center">
+                  Generated at: {new Date(otpData.get_otp.created_at).toLocaleString()}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

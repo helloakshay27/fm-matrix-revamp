@@ -2,10 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { ChevronDown, ChevronDownCircle, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import { Mic, MicOff } from "lucide-react";
 import { Mention, MentionsInput } from "react-mentions";
+import EditIssueModal from "@/components/EditIssueModal";
 
 interface Issue {
     id?: string;
@@ -22,8 +25,11 @@ interface Issue {
     start_date?: string;
     end_date?: string;
     project_management_name?: string;
+    project_management_id?: string;
     milstone_name?: string;
+    milestone_id?: string;
     task_management_name?: string;
+    task_management_id?: string;
     tags?: string[];
     attachments?: any[];
     comments?: any[];
@@ -265,6 +271,34 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editedCommentText, setEditedCommentText] = useState("");
     const textareaRef = useRef<any>(null);
+
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+    const fieldId = "issue-comment-input";
+    const isActive = isListening && activeId === fieldId;
+
+    // Update comment state when transcript changes
+    useEffect(() => {
+        if (isActive && transcript) {
+            setComment(transcript);
+        }
+    }, [isActive, transcript]);
+
+    const toggleListening = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isActive) {
+            stopListening();
+        } else {
+            startListening(fieldId);
+        }
+    };
+    // Handle updates for editing transcripts
+    useEffect(() => {
+        if (isListening && activeId?.startsWith("edit-comment-") && transcript) {
+            setEditedCommentText(transcript);
+        }
+    }, [isListening, activeId, transcript]);
+
     // Local comments state so we can optimistically prepend new comments
     const [localComments, setLocalComments] = useState<any[]>(sortCommentsDesc(comments || []));
 
@@ -474,67 +508,79 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                         {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
                     </span>
                 </div>
-                <MentionsInput
-                    inputRef={textareaRef}
-                    value={comment}
-                    onChange={(e, newValue) => setComment(newValue)}
-                    className="mentions w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none"
-                    placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
-                    style={{
-                        control: {
-                            backgroundColor: "#F2F4F4",
-                            fontSize: 14,
-                            fontWeight: "normal",
-                        },
-                        highlighter: {
-                            overflow: "hidden",
-                        },
-                        input: {
-                            margin: 0,
-                            padding: "8px",
-                            outline: "none",
-                        },
-                        suggestions: {
-                            list: {
-                                backgroundColor: "white",
-                                border: "1px solid #ccc",
+                <div className="relative w-[95%]">
+                    <MentionsInput
+                        inputRef={textareaRef}
+                        value={comment}
+                        onChange={(e, newValue) => setComment(newValue)}
+                        className="mentions w-full h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none pr-10"
+                        placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
+                        style={{
+                            control: {
+                                backgroundColor: "#F2F4F4",
                                 fontSize: 14,
-                                zIndex: 100,
-                                position: "absolute",
-                                bottom: "100%",
-                                left: 0,
-                                width: "200px",
-                                maxHeight: "150px",
-                                overflowY: "auto",
-                                borderRadius: "4px",
-                                marginBottom: "4px",
+                                fontWeight: "normal",
                             },
-                            item: {
-                                padding: "5px 10px",
-                                borderBottom: "1px solid #eee",
-                                cursor: "pointer",
+                            highlighter: {
+                                overflow: "hidden",
                             },
-                            itemFocused: {
-                                backgroundColor: "#f5f5f5",
+                            input: {
+                                margin: 0,
+                                padding: "8px",
+                                outline: "none",
                             },
-                        },
-                    }}
-                >
-                    <Mention
-                        trigger="@"
-                        data={mentionData}
-                        markup="@[__display__](__id__)"
-                        displayTransform={(id, display) => `@${display} `}
-                        appendSpaceOnAdd
-                    />
-                    <Mention
-                        trigger="#"
-                        data={tagData}
-                        markup="#[__display__](__id__)"
-                        displayTransform={(id, display) => `#${display} `}
-                        appendSpaceOnAdd
-                    />
-                </MentionsInput>
+                            suggestions: {
+                                list: {
+                                    backgroundColor: "white",
+                                    border: "1px solid #ccc",
+                                    fontSize: 14,
+                                    zIndex: 100,
+                                    position: "absolute",
+                                    bottom: "100%",
+                                    left: 0,
+                                    width: "200px",
+                                    maxHeight: "150px",
+                                    overflowY: "auto",
+                                    borderRadius: "4px",
+                                    marginBottom: "4px",
+                                },
+                                item: {
+                                    padding: "5px 10px",
+                                    borderBottom: "1px solid #eee",
+                                    cursor: "pointer",
+                                },
+                                itemFocused: {
+                                    backgroundColor: "#f5f5f5",
+                                },
+                            },
+                        }}
+                    >
+                        <Mention
+                            trigger="@"
+                            data={mentionData}
+                            markup="@[__display__](__id__)"
+                            displayTransform={(id, display) => `@${display} `}
+                            appendSpaceOnAdd
+                        />
+                        <Mention
+                            trigger="#"
+                            data={tagData}
+                            markup="#[__display__](__id__)"
+                            displayTransform={(id, display) => `#${display} `}
+                            appendSpaceOnAdd
+                        />
+                    </MentionsInput>
+                    {supported && (
+                        <button
+                            onClick={toggleListening}
+                            className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isActive ? "bg-red-100 text-red-600 animate-pulse" : "text-gray-400 hover:bg-gray-200"
+                                }`}
+                            title={isActive ? "Stop recording" : "Start voice input"}
+                        >
+                            {isActive ? <Mic size={20} /> : <MicOff size={20} />}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex justify-end">
@@ -569,42 +615,64 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                             <h1 className="font-bold">{cmt.commentor_full_name}</h1>
 
                             {isEditing ? (
-                                <MentionsInput
-                                    value={editedCommentText}
-                                    inputRef={(el: any) => {
-                                        if (el) {
-                                            const val = el.value;
-                                            el.focus();
-                                            el.setSelectionRange(val.length, val.length);
-                                        }
-                                    }}
-                                    onChange={(e, newValue) => setEditedCommentText(newValue)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            setTimeout(() => {
-                                                handleEditSave();
-                                            }, 100);
-                                        }
-                                    }}
-                                    onBlur={handleEditSave}
-                                    className="mentions w-full bg-transparent p-0 m-0 border-none outline-none"
-                                    style={mentionStyles}
-                                >
-                                    <Mention
-                                        trigger="@"
-                                        data={mentionData}
-                                        markup="@[__display__](__id__)"
-                                        displayTransform={(id, display) => `@${display} `}
-                                        appendSpaceOnAdd
-                                    />
-                                    <Mention
-                                        trigger="#"
-                                        data={tagData}
-                                        markup="#[__display__](__id__)"
-                                        displayTransform={(id, display) => `#${display} `}
-                                        appendSpaceOnAdd
-                                    />
-                                </MentionsInput>
+                                <div className="relative w-full">
+                                    <MentionsInput
+                                        value={editedCommentText}
+                                        inputRef={(el: any) => {
+                                            if (el) {
+                                                const val = el.value;
+                                                el.focus();
+                                                el.setSelectionRange(val.length, val.length);
+                                            }
+                                        }}
+                                        onChange={(e, newValue) => setEditedCommentText(newValue)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                setTimeout(() => {
+                                                    handleEditSave();
+                                                }, 100);
+                                            }
+                                        }}
+                                        onBlur={handleEditSave}
+                                        className="mentions w-full bg-transparent p-0 m-0 border-none outline-none pr-10"
+                                        style={mentionStyles}
+                                    >
+                                        <Mention
+                                            trigger="@"
+                                            data={mentionData}
+                                            markup="@[__display__](__id__)"
+                                            displayTransform={(id, display) => `@${display} `}
+                                            appendSpaceOnAdd
+                                        />
+                                        <Mention
+                                            trigger="#"
+                                            data={tagData}
+                                            markup="#[__display__](__id__)"
+                                            displayTransform={(id, display) => `#${display} `}
+                                            appendSpaceOnAdd
+                                        />
+                                    </MentionsInput>
+                                    {supported && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                const editFieldId = `edit-comment-${cmt.id}`;
+                                                if (isListening && activeId === editFieldId) {
+                                                    stopListening();
+                                                } else {
+                                                    startListening(editFieldId);
+                                                }
+                                            }}
+                                            className={`absolute right-0 top-0 p-1 rounded-full transition-all ${isListening && activeId === `edit-comment-${cmt.id}`
+                                                ? "bg-red-100 text-red-600 animate-pulse"
+                                                : "text-gray-400 hover:bg-gray-200"
+                                                }`}
+                                        >
+                                            {isListening && activeId === `edit-comment-${cmt.id}` ? <Mic size={16} /> : <MicOff size={16} />}
+                                        </button>
+                                    )}
+                                </div>
                             ) : (
                                 <div>
                                     {cmt.body
@@ -652,6 +720,7 @@ const IssueDetailsPage = () => {
     const [activeTab, setActiveTab] = useState("Comments");
     const [openStatusDropdown, setOpenStatusDropdown] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Open");
+    const [openEditModal, setOpenEditModal] = useState(false);
 
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -685,8 +754,11 @@ const IssueDetailsPage = () => {
                 start_date: issueDetail.start_date || "",
                 end_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
                 project_management_name: issueDetail.project_management_name || "",
+                project_management_id: issueDetail.project_management_id || "",
                 milstone_name: issueDetail.milstone_name || "",
+                milestone_id: issueDetail.milestone_id || "",
                 task_management_name: issueDetail.task_management_name || "",
+                task_management_id: issueDetail.task_management_id || "",
                 tags: issueDetail.tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
@@ -774,8 +846,11 @@ const IssueDetailsPage = () => {
                     start_date: issueDetail.start_date || "",
                     end_date: issueDetail.end_date || "",
                     project_management_name: issueDetail.project_management_name || "",
+                    project_management_id: issueDetail.project_management_id || "",
                     milstone_name: issueDetail.milstone_name || "",
+                    milestone_id: issueDetail.milestone_id || "",
                     task_management_name: issueDetail.task_management_name || "",
+                    task_management_id: issueDetail.task_management_id || "",
                     tags: issueDetail.tags || [],
                     attachments: issueDetail.attachments || [],
                     comments: sortCommentsDesc(issueDetail.comments || []),
@@ -890,7 +965,20 @@ const IssueDetailsPage = () => {
                             </div>
                         </span>
 
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
+                        {
+                            localStorage.getItem("selectedView") !== "employee" && (
+                                <>
+                                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                                    <span
+                                        className="flex items-center gap-1 cursor-pointer"
+                                        onClick={() => setOpenEditModal(true)}
+                                    >
+                                        <PencilIcon size={15} />
+                                        Edit Issue
+                                    </span>
+                                </>
+                            )
+                        }
                     </div>
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
@@ -1073,6 +1161,16 @@ const IssueDetailsPage = () => {
                     </div>
                 </div>
             </div>
+            {issueData && (
+                <EditIssueModal
+                    openDialog={openEditModal}
+                    handleCloseDialog={() => setOpenEditModal(false)}
+                    issueData={issueData}
+                    onIssueUpdated={() => {
+                        fetchIssueDetails();
+                    }}
+                />
+            )}
         </div>
     );
 };

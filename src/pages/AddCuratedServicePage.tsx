@@ -72,7 +72,7 @@ export const AddCuratedServicePage = () => {
   const fetchServiceCategories = async () => {
     setLoadingCategories(true);
     try {
-      const apiUrl = getFullUrl("/osr_setups/osr_categories.json");
+      const apiUrl = getFullUrl("/osr_setups/osr_categories.json?q[service_tag_eq]=curated");
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -194,6 +194,7 @@ export const AddCuratedServicePage = () => {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("osr_categories_id", formData.service_category_id);
       formDataToSend.append("active", formData.active.toString());
+      formDataToSend.append("service_tag", "curated");
 
       // if (formData.order_no) {
       //   formDataToSend.append("plus_service[order_no]", formData.order_no);
@@ -202,7 +203,7 @@ export const AddCuratedServicePage = () => {
       if (formData.mobile) {
         formDataToSend.append("mobile", formData.mobile);
       }
-       if (formData.email) {
+      if (formData.email) {
         formDataToSend.append("email", formData.email);
       }
 
@@ -254,11 +255,11 @@ export const AddCuratedServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Service List</span>
+          <span> Curated Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Service</span>
+          <span className="text-gray-900 font-medium">Create New Curated Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW CURATED SERVICE</h1>
       </div>
 
       <form
@@ -290,6 +291,11 @@ export const AddCuratedServicePage = () => {
                 slotProps={{
                   inputLabel: {
                     shrink: true,
+                    sx: {
+                      "& .MuiFormLabel-asterisk": {
+                        color: "red",
+                      },
+                    },
                   },
                 }}
                 InputProps={{
@@ -304,7 +310,13 @@ export const AddCuratedServicePage = () => {
                 variant="outlined"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <InputLabel shrink>Service Category</InputLabel>
+                <InputLabel shrink
+                  sx={{
+                    "& .MuiFormLabel-asterisk": {
+                      color: "red",   // or #d32f2f
+                    },
+                  }}
+                >Service Category</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
                   onChange={(e) => handleInputChange("service_category_id", e.target.value)}
@@ -343,7 +355,7 @@ export const AddCuratedServicePage = () => {
                 }}
               /> */}
 
-                {/* Mobile */}
+              {/* Mobile */}
               <TextField
                 fullWidth
                 label="Mobile"
@@ -371,7 +383,7 @@ export const AddCuratedServicePage = () => {
 
             {/* Second Row - Mobile and Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
 
               {/* Address */}
               <TextField

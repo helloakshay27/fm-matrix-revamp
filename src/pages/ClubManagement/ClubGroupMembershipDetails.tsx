@@ -639,9 +639,9 @@ export const ClubGroupMembershipDetails = () => {
                 </div>
               )}
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Site ID</span>
+                <span className="text-gray-500 min-w-[140px]">Site</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{membershipData.pms_site_id}</span>
+                <span className="text-gray-500 font-medium">{membershipData.site_name}</span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Total Members</span>
@@ -1309,19 +1309,19 @@ export const ClubGroupMembershipDetails = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Member ID</span>
+                        <span className="text-gray-500 min-w-[140px]">Member </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.id}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.name}</span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">User ID</span>
+                        <span className="text-gray-500 min-w-[140px]">User </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user_id}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user_name}</span>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created By</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.created_by_id || '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.created_by_name || '-'}</span>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created At</span>

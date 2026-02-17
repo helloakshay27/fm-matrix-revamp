@@ -110,89 +110,106 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   //   }
   // };
 
+  // Helper function to wait for export file to be ready
+  const waitForExportReady = async (fileName: string, baseUrl: string): Promise<Response> => {
+    while (true) {
+      const res = await fetch(
+        `https://${baseUrl}/pms/assets/export_status?key=${encodeURIComponent(fileName)}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }
+      );
+
+      // Check if the response is the actual file (Excel)
+      const contentType = res.headers.get("content-type");
+
+      if (contentType?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+        return res; // ✅ Excel file is ready
+      }
+
+      // Otherwise backend returns JSON status
+      const data = await res.json();
+
+      if (data.status === "failed" || data.status === "error") {
+        throw new Error("Export generation failed");
+      }
+
+      // ⏳ still processing → wait 1.5 seconds
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  };
+
   const handleExcelExport = async (
     columnVisibility?: Record<string, boolean>
   ) => {
     try {
-      const currentVisibility = columnVisibility || visibleColumns;
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (!baseUrl) {
+        toast.error("Configuration Error", {
+          description: "Base URL not set. Please log in again.",
+        });
+        return;
+      }
 
-      // Transform keys:
-      const customKeyToFieldMap = new Map();
-      availableCustomFields.forEach(field => {
-        const colKey = `custom_${field.key.replace(/\s+/g, '_')}`;
-        customKeyToFieldMap.set(colKey, field.key);
+      toast.info("Preparing export...", {
+        description: "Please wait while the file is being generated...",
       });
 
-      console.log("Custom Field Map:", Object.fromEntries(customKeyToFieldMap));
-      console.log("Visible Keys before processing:", Object.keys(currentVisibility).filter(k => currentVisibility[k]));
+      // STEP 1: Start export generation (without fields parameter)
+      const exportUrl = `https://${baseUrl}/pms/assets/assets_data_report_export`;
+      console.log("Initiating export with URL:", exportUrl);
 
-      // Transform keys:
-      // 1. Get all currently defined column keys from the `columns` prop
-      const definedColumnKeys = new Set(columns.map(col => col.key));
-
-      // 2. Intersect currentVisibility with definedColumnKeys to ensure we only export valid, existing columns
-      const validVisibleKeys = Object.keys(currentVisibility).filter(key =>
-        currentVisibility[key] === true && definedColumnKeys.has(key)
-      );
-
-      // Transform keys:
-      const visibleColumnKeys = validVisibleKeys
-        // remove "actions"
-        .filter((key) => key !== "actions")
-        // convert camelCase → snake_case
-        .map((key) => {
-          // Check if it's a custom field column
-          if (key.startsWith("custom_")) {
-            // Use the lookup map
-            if (customKeyToFieldMap.has(key)) {
-              return customKeyToFieldMap.get(key);
-            }
-            // Fallback: This is likely where 'PO_Number' comes from if lookup fails
-            return key.replace("custom_", "");
-          }
-
-          // Standard fields: convert camelCase to snake_case
-          return key
-            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-            .toLowerCase();
-        });
-
-      // ✅ Pass as a JSON string in the `fields` query parameter
-      const fieldsParam = encodeURIComponent(JSON.stringify(visibleColumnKeys));
-
-      const baseUrl = `https://${localStorage.getItem("baseUrl")}/pms/assets/assets_data_report.xlsx`;
-      const urlWithColumns = `${baseUrl}?fields=${fieldsParam}`;
-
-      console.log("Exporting with fields:", visibleColumnKeys);
-      console.log("Export URL:", urlWithColumns);
-
-      toast.info("Preparing export with selected columns...");
-
-      const response = await fetch(urlWithColumns, {
+      const response = await fetch(exportUrl, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          Accept:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error("Failed to export assets to Excel");
+      if (!response.ok) {
+        throw new Error("Failed to start export generation");
+      }
 
-      const blob = await response.blob();
+      const { export_key } = await response.json();
+      if (!export_key) {
+        throw new Error("Export key not returned from server");
+      }
+
+      console.log("Export initiated, export key:", export_key);
+
+      toast("Generating export file", {
+        description: "Please wait while the file is being prepared…",
+      });
+
+      // STEP 2: ⏳ Wait until file is READY
+      const fileResponse = await waitForExportReady(export_key, baseUrl);
+
+      // STEP 3: Download file (only once, guaranteed ready)
+      const blob = await fileResponse.blob();
       const url = window.URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
-      a.download = "assets_data_report.xlsx";
+      // Use export_key as filename with .xlsx extension
+      a.download = `${export_key}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast.success("Assets exported successfully!");
+      toast.success("Export complete", {
+        description: "Assets data downloaded successfully.",
+      });
+
     } catch (error) {
       console.error("Error exporting assets to Excel:", error);
-      toast.error("Failed to export assets. Please try again.");
+      toast.error("Failed to export assets", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
     }
   };
 

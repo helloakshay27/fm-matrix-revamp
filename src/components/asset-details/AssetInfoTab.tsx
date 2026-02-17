@@ -579,8 +579,8 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                             <span className="w-20 text-gray-500 text-sm">OS</span>
                             <span className="mx-2 text-gray-500">:</span>
                             <span className="font-semibold text-black">
-                              {asset.custom_fields?.system_details?.os ||
-                                asset.asset_number ||
+                              {asset.custom_fields?.system_details?.os 
+                              ||
                                 "-"}
                             </span>
                           </div>

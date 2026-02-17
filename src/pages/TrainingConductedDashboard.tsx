@@ -129,7 +129,7 @@ export const TrainingConductedDashboard = () => {
     };
 
     const columns = [
-        { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+        // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
         { key: 'report', label: 'Report', sortable: true, draggable: true },
         { key: 'id', label: 'ID', sortable: true, draggable: true },
         { key: 'trainingName', label: 'Training Name', sortable: true, draggable: true },
