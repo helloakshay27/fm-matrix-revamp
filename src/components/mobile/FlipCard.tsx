@@ -188,11 +188,11 @@ export const FlipCard: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
             {contestData.name}
           </h1>
-          {contestData.description && (
+          {/* {contestData.description && (
             <p className="text-center text-gray-700 text-sm mb-4">
               {contestData.description}
             </p>
-          )}
+          )} */}
           {/* Contest Period */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
             <span className="bg-white/70 px-3 py-1.5 rounded-full">
@@ -203,9 +203,9 @@ export const FlipCard: React.FC = () => {
         </div>
 
         {/* Title */}
-        <p className="text-center text-gray-600 text-sm mb-6">
+        {/* <p className="text-center text-gray-600 text-sm mb-6">
           👆 Tap on the card to reveal the rewards
-        </p>
+        </p> */}
 
         {/* Remaining Attempts */}
         <div className="mb-6 flex justify-center">
