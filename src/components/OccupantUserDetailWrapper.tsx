@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ViewOccupantUserPage } from "@/pages/master/ViewOccupantUserPage";
 import { OccupantUserMobileDetail } from "@/components/mobile/OccupantUserMobileDetail";
-import { registerServiceWorker } from "@/utils/pwa";
+import { registerServiceWorker, isPWARoute } from "@/utils/pwa";
 
 export const OccupantUserDetailWrapper = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
-  const isOpsConsole = location.pathname.includes("/ops-console/");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -22,15 +21,16 @@ export const OccupantUserDetailWrapper = () => {
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    // Register service worker only for ops-console routes
-    if (isOpsConsole) {
+    // Register service worker only for PWA routes
+    if (isPWARoute(location.pathname, location.search)) {
       registerServiceWorker();
     }
 
     return () => window.removeEventListener("resize", checkMobile);
-  }, [isOpsConsole]);
+  }, [location.pathname, location.search]);
 
   // Show mobile version if on ops-console route or mobile device
+  const isOpsConsole = location.pathname.includes("/ops-console/");
   return isMobile || isOpsConsole ? (
     <OccupantUserMobileDetail />
   ) : (
