@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { PWAHeader } from "./PWAHeader";
 
 interface UserDetail {
   id: number;
@@ -155,8 +156,11 @@ export const OccupantUserMobileDetail = () => {
 
   return (
     <div className="mobile-user-detail min-h-screen bg-gray-50 pb-6">
+      {/* PWA Header with Logo and Logout */}
+      <PWAHeader />
+
       {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-white shadow-sm">
+      <div className="sticky top-12 z-10 bg-white shadow-sm">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button
