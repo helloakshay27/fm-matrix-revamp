@@ -1591,6 +1591,7 @@ const modulesByPackage = {
                 { name: "Recurring Bills", href: "/accounting/recurring-bills" },
                 { name: "Vendor", href: "/maintenance/vendor" },
                 { name: "Expense", href: "/accounting/expense" },
+                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
                 { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
                 { name: "Payments Made", href: "/accounting/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },

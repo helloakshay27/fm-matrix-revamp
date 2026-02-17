@@ -1007,6 +1007,9 @@ import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
 import { PurchaseOrderListPage } from "./pages/PurchaseOrderListPage";
 import { RecurringBillCreatePage } from "./pages/ClubManagement/RecurringBillCreatePage";
 import { RecurringBillsDashboard } from "./pages/ClubManagement/RecurringBillsDashboard";
+import NewRecurringExpensePage from "./pages/New Recurring Expense";
+import RecurringExpensesListPage from "./pages/ClubManagement/RecurringExpensesListPage";
+import RecurringExpenseDetailPage from "./pages/ClubManagement/RecurringExpenseDetailPage";
 import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
@@ -2401,6 +2404,18 @@ function App() {
                       <Route
                         path="/accounting/recurring-bills/create"
                         element={<RecurringBillCreatePage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses"
+                        element={<RecurringExpensesListPage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses/create"
+                        element={<NewRecurringExpensePage />}
+                      />
+                      <Route
+                        path="/accounting/recurring-expenses/:id"
+                        element={<RecurringExpenseDetailPage />}
                       />
                       {/* Expense Routes */}
                       <Route
