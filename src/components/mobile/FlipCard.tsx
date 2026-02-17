@@ -488,7 +488,10 @@ export const FlipCard: React.FC = () => {
               </div>
             </div>
           )}
-        </>\n      )}\n      <style>{`
+        </>
+      )}
+
+      <style>{`
         .perspective-1000 {
           perspective: 1000px;
         }

@@ -628,5 +628,10 @@ export const SpinnerContest: React.FC = () => {
               </div>
             </div>
           )}
-        </>\n      )}\n    </div>\n  ); \n
-}; \n\nexport default SpinnerContest;
+        </>
+      )}
+    </div>
+  );
+};
+
+export default SpinnerContest;
