@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { OccupantUserMasterDashboard } from "@/pages/master/OccupantUserMasterDashboard";
 import { OccupantUserMobileList } from "@/components/mobile/OccupantUserMobileList";
-import { registerServiceWorker } from "@/utils/pwa";
+import { registerServiceWorker, isPWARoute } from "@/utils/pwa";
 
 export const OccupantUserListWrapper = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
-  const isOpsConsole = location.pathname.includes("/ops-console/");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -22,8 +21,8 @@ export const OccupantUserListWrapper = () => {
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    // Register service worker only for ops-console routes
-    if (isOpsConsole) {
+    // Register service worker only for PWA routes
+    if (isPWARoute(location.pathname, location.search)) {
       registerServiceWorker();
     }
 

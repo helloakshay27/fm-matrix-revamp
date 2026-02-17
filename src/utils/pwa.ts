@@ -6,8 +6,18 @@ export const PWA_ROUTES = [
   "/ops-console/settings/account/user-list-otp/detail",
 ];
 
-export const isPWARoute = (pathname: string): boolean => {
-  return PWA_ROUTES.some((route) => pathname.includes(route));
+export const isPWARoute = (pathname: string, search: string = ""): boolean => {
+  // Check if it's login page with fm_admin_login query param
+  if (pathname === "/login-page" && search.includes("fm_admin_login")) {
+    return true;
+  }
+
+  // Check if it's ops-console user list OTP routes
+  if (pathname.startsWith("/ops-console/settings/account/user-list-otp")) {
+    return true;
+  }
+
+  return false;
 };
 
 export const registerServiceWorker = async (): Promise<void> => {

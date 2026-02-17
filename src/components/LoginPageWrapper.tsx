@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { LoginPage } from "@/pages/LoginPage";
-import { registerServiceWorker } from "@/utils/pwa";
+import { registerServiceWorker, isPWARoute } from "@/utils/pwa";
 
 interface LoginPageWrapperProps {
   setBaseUrl: (url: string) => void;
@@ -15,11 +15,6 @@ export const LoginPageWrapper: React.FC<LoginPageWrapperProps> = ({
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if URL has fm_admin_login query parameter
-  const isFMAdminLogin =
-    location.search.includes("fm_admin_login") ||
-    location.pathname.includes("login-page");
-
   useEffect(() => {
     const checkMobile = () => {
       const mobile =
@@ -32,16 +27,17 @@ export const LoginPageWrapper: React.FC<LoginPageWrapperProps> = ({
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    // Register service worker only for FM admin login
-    if (isFMAdminLogin) {
+    // Register service worker only for PWA routes (login with fm_admin_login param)
+    if (isPWARoute(location.pathname, location.search)) {
       registerServiceWorker();
     }
 
     return () => window.removeEventListener("resize", checkMobile);
-  }, [isFMAdminLogin]);
+  }, [location.pathname, location.search]);
 
-  // Apply mobile styling for FM admin login or mobile devices
-  if (isMobile || isFMAdminLogin) {
+  // Apply mobile styling for PWA routes or mobile devices
+  const isPWA = isPWARoute(location.pathname, location.search);
+  if (isMobile || isPWA) {
     return (
       <div className="mobile-login-wrapper min-h-screen bg-gray-50">
         <div className="w-full max-w-full">
