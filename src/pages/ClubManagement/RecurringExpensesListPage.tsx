@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, IconButton } from '@mui/material';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil } from 'lucide-react';
 
 interface RecurringExpense {
   id: string | number;
@@ -88,6 +88,9 @@ const RecurringExpensesListPage: React.FC = () => {
               <th className="px-4 py-3 text-xs font-medium text-gray-600">ACTIONS</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-600">DATE</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-600">EXPENSE ACCOUNT</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-600">FREQUENCY</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-600">STATUS</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-600">AMOUNT</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-600">VOUCHER NUMBER</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-600">VENDOR NAME</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-600">PAID THROUGH</th>
@@ -96,26 +99,27 @@ const RecurringExpensesListPage: React.FC = () => {
           <tbody>
             {items.map((it) => (
               <tr key={it.id} className="hover:bg-muted/10 border-b border-border/30">
-                <td className="px-4 py-4">
+                <td className="px-4 py-4 text-sm text-gray-700">
                   <div className="flex items-center gap-1">
                     <IconButton size="small" onClick={() => handleView(it.id)} title="View">
                       <Eye className="w-4 h-4" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleEdit(it.id)} title="Edit">
-                      <Pencil className="w-4 h-4" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(it.id)} title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </IconButton>
+                   
                   </div>
                 </td>
-                <td className="px-4 py-4">{it.date || it.last_expense_date}</td>
-                <td className="px-4 py-4 text-primary underline cursor-pointer" onClick={() => handleView(it.id)}>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.date || it.last_expense_date}</td>
+                <td
+                  className="px-4 py-4 text-sm text-primary underline cursor-pointer"
+                  onClick={() => handleView(it.id)}
+                >
                   {it.expense_account}
                 </td>
-                <td className="px-4 py-4">{it.voucher_number || '-'}</td>
-                <td className="px-4 py-4">{it.vendor_name}</td>
-                <td className="px-4 py-4">{it.paid_through || '-'}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.frequency || '-'}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.status || '-'}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.amount || '-'}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.voucher_number || '-'}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.vendor_name}</td>
+                <td className="px-4 py-4 text-sm text-gray-700">{it.paid_through || '-'}</td>
               </tr>
             ))}
           </tbody>
