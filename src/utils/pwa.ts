@@ -23,6 +23,8 @@ export const isPWARoute = (pathname: string, search: string = ""): boolean => {
 export const registerServiceWorker = async (): Promise<void> => {
   if ("serviceWorker" in navigator) {
     try {
+      console.log("[PWA] Registering service worker...");
+
       // First, unregister all existing service workers and clear caches
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (const registration of registrations) {
@@ -39,25 +41,32 @@ export const registerServiceWorker = async (): Promise<void> => {
         }
       );
 
-      console.log("Service Worker registered:", registration);
+      console.log(
+        "[PWA] Service Worker registered successfully:",
+        registration
+      );
+      console.log("[PWA] Scope:", registration.scope);
+      console.log("[PWA] Active:", registration.active);
 
       // Check for updates
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (newWorker) {
+          console.log("[PWA] New service worker found, installing...");
           newWorker.addEventListener("statechange", () => {
+            console.log("[PWA] Service worker state changed:", newWorker.state);
             if (
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              console.log("New content available, reloading...");
+              console.log("[PWA] New content available, reloading...");
               window.location.reload();
             }
           });
         }
       });
     } catch (error) {
-      console.error("Service Worker registration failed:", error);
+      console.error("[PWA] Service Worker registration failed:", error);
     }
   }
 };
