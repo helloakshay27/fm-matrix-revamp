@@ -7,6 +7,7 @@ import { registerServiceWorker, isPWARoute } from "@/utils/pwa";
 export const OccupantUserListWrapper = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const isOpsConsole = location.pathname.includes("/ops-console/");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -27,7 +28,7 @@ export const OccupantUserListWrapper = () => {
     }
 
     return () => window.removeEventListener("resize", checkMobile);
-  }, [isOpsConsole]);
+  }, [location.pathname, location.search]);
 
   // Show mobile version if on ops-console route or mobile device
   return isMobile || isOpsConsole ? (
