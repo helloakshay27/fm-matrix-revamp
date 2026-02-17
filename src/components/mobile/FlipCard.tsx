@@ -86,7 +86,7 @@ export const FlipCard: React.FC = () => {
       // Call API to play/flip
       const result = await newFlipCardApi.playContest(contestData.id);
 
-      if (!result.success || !result.prize || !result.user_contest_reward) {
+      if (!result.success || !result.prize) {
         throw new Error(result.message || "Failed to flip card");
       }
 
@@ -108,11 +108,13 @@ export const FlipCard: React.FC = () => {
         setShowResult(true);
         setFlippingCard(null);
 
-        // Store user_contest_reward.id in localStorage for details page
-        localStorage.setItem(
-          "last_reward_id",
-          result.user_contest_reward!.id.toString()
-        );
+        // Store user_contest_reward.id in localStorage for details page (only if exists)
+        if (result.user_contest_reward) {
+          localStorage.setItem(
+            "last_reward_id",
+            result.user_contest_reward.id.toString()
+          );
+        }
       }, 600);
     } catch (error) {
       console.error("❌ Error flipping card:", error);
@@ -173,25 +175,53 @@ export const FlipCard: React.FC = () => {
           >
             <ChevronLeft className="w-6 h-6 text-gray-700" />
           </button>
+          <h1 className="text-lg font-semibold text-gray-900 ml-2">
+            Flip & Win
+          </h1>
         </div>
       </div>
 
       {/* Content */}
       <div className="px-4 py-6">
+        {/* Title & Description Card */}
+        <div className="w-full mb-6 bg-gradient-to-br from-[#FFF8E7] to-[#F5E6D3] rounded-2xl p-6 shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+            {contestData.name}
+          </h1>
+          {contestData.description && (
+            <p className="text-center text-gray-700 text-sm mb-4">
+              {contestData.description}
+            </p>
+          )}
+          {/* Contest Period */}
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+            <span className="bg-white/70 px-3 py-1.5 rounded-full">
+              📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+              {new Date(contestData.end_at).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
         {/* Title */}
-        <p className="text-center text-gray-700 text-sm mb-6">
-          Tap on the card to reveal the rewards
+        <p className="text-center text-gray-600 text-sm mb-6">
+          👆 Tap on the card to reveal the rewards
         </p>
 
         {/* Remaining Attempts */}
-        <div className="text-center mb-8">
-          <span className="inline-block bg-[#FFF8E7] border border-[#D4A574] rounded-full px-4 py-2 text-sm font-semibold text-gray-900">
-            Attempts Remaining: {remainingAttempts}
-          </span>
+        <div className="mb-6 flex justify-center">
+          <div className="bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white px-6 py-2 rounded-full shadow-md inline-block">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg">🎯</span>
+              <p className="text-sm font-semibold">
+                Attempts Remaining{" "}
+                <span className="text-xl font-bold">{remainingAttempts}</span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Cards Grid */}
-        <div className="space-y-4 max-w-md mx-auto">
+        <div className="space-y-4 w-full">
           {cards.map((card) => (
             <button
               key={card.id}
@@ -213,20 +243,36 @@ export const FlipCard: React.FC = () => {
                   {card.is_flipped ? (
                     // Revealed Card
                     <div className="bg-[#FFF8E7] border-2 border-[#D4A574] p-6 min-h-[180px] flex flex-col items-center justify-center">
-                      {/* Gift icon */}
-                      <div className="text-5xl mb-3">🎁</div>
+                      {/* Gift icon - different for none type */}
+                      <div className="text-5xl mb-3">
+                        {card.prize.reward_type === "none" ? "😔" : "🎁"}
+                      </div>
 
                       {/* Title */}
                       <h3 className="text-xl font-bold text-gray-900 mb-2">
                         {card.prize.title}
                       </h3>
 
-                      {/* Value */}
-                      <p className="text-3xl font-bold text-gray-900 mb-2">
-                        {card.prize.reward_type === "coupon"
-                          ? card.prize.partner_name || "Coupon"
-                          : `${card.prize.points_value} Points`}
-                      </p>
+                      {/* Value - only show for non-none rewards */}
+                      {card.prize.reward_type !== "none" && (
+                        <p className="text-3xl font-bold text-gray-900 mb-2">
+                          {card.prize.reward_type === "coupon"
+                            ? card.prize.partner_name || "Coupon"
+                            : card.prize.reward_type === "points" &&
+                                card.prize.points_value
+                              ? `${card.prize.points_value} Points`
+                              : card.prize.reward_type === "marchandise"
+                                ? "Merchandise Prize"
+                                : "Prize"}
+                        </p>
+                      )}
+
+                      {/* Better luck message for none type */}
+                      {card.prize.reward_type === "none" && (
+                        <p className="text-sm text-gray-600 text-center mt-2">
+                          Try again for a chance to win!
+                        </p>
+                      )}
 
                       {/* Code or Details */}
                       {card.prize.reward_type === "coupon" &&
