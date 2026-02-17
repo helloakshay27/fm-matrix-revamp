@@ -23,8 +23,20 @@ export const OccupantUserListWrapper = () => {
     window.addEventListener("resize", checkMobile);
 
     // Register service worker only for PWA routes
-    if (isPWARoute(location.pathname, location.search)) {
+    const isPWA = isPWARoute(location.pathname, location.search);
+    console.log("[OccupantUserListWrapper] Checking PWA route:", {
+      pathname: location.pathname,
+      search: location.search,
+      isPWA,
+    });
+
+    if (isPWA) {
+      console.log("[OccupantUserListWrapper] Registering service worker...");
       registerServiceWorker();
+    } else {
+      console.log(
+        "[OccupantUserListWrapper] Not a PWA route, skipping service worker registration"
+      );
     }
 
     return () => window.removeEventListener("resize", checkMobile);
