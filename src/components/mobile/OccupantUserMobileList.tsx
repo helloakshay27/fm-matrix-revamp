@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { PWAHeader } from "./PWAHeader";
 
 interface OccupantUserData {
   id: number;
@@ -166,9 +167,12 @@ export const OccupantUserMobileList = () => {
   };
 
   return (
-    <div className="mobile-user-list min-h-screen bg-gray-50 pb-20">
+    <div className="mobile-user-list min-h-screen bg-gray-50">
+      {/* PWA Header with Logo and Logout */}
+      <PWAHeader />
+
       {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-white shadow-sm">
+      <div className="sticky top-12 z-10 bg-white shadow-sm">
         <div className="px-4 py-3">
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Users className="h-6 w-6" />
