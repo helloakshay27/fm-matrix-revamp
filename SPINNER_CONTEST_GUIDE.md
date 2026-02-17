@@ -45,7 +45,7 @@ curl --location 'https://runwal-api.lockated.com/contests/1?token=QsUjajggGCYJJG
   "start_at": "2026-02-07T05:30:00.000+05:30",
   "end_at": "2026-03-01T05:29:59.000+05:30",
   "user_caps": null,
-  "attemp_required": null,
+  "user_attemp_remaining": null,
   "prizes": [
     {
       "id": 1,

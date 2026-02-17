@@ -5,7 +5,7 @@ export interface Prize {
   id: number;
   title: string;
   display_name: string | null;
-  reward_type: "points" | "coupon";
+  reward_type: "points" | "coupon" | "marchandise" | "none";
   coupon_code: string | null;
   partner_name: string | null;
   points_value: number | null;
@@ -17,6 +17,10 @@ export interface Prize {
   per_user_limit: number | null;
   position: number;
   active: boolean;
+  image: any | null;
+  resource_id: string | null;
+  resource_type: string | null;
+  product: any | null;
 }
 
 // Contest interface based on new API structure
@@ -30,7 +34,7 @@ export interface Contest {
   start_at: string;
   end_at: string;
   user_caps: number | null;
-  attemp_required: number | null;
+  user_attemp_remaining: number | null;
   prizes: Prize[];
 }
 

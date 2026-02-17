@@ -51,7 +51,7 @@ export const FlipCard: React.FC = () => {
         setContestData(data);
 
         // Convert prizes to cards based on attempt_required
-        const attemptsRequired = data.attemp_required || 3;
+        const attemptsRequired = data.user_attemp_remaining || 3;
         const flipCards = newFlipCardApi.convertPrizesToCards(
           data.prizes,
           attemptsRequired
@@ -327,28 +327,53 @@ export const FlipCard: React.FC = () => {
               </p>
             )}
 
+            {wonPrize.reward_type === "marchandise" && (
+              <>
+                <p className="text-center text-gray-600 mb-2">
+                  Merchandise Prize
+                </p>
+                {wonPrize.coupon_code && (
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    Code: {wonPrize.coupon_code}
+                  </p>
+                )}
+              </>
+            )}
+
+            {wonPrize.reward_type === "none" && (
+              <>
+                <p className="text-center text-lg text-red-600 mb-6">
+                  Better Luck Next Time!
+                </p>
+              </>
+            )}
+
             {/* Action buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={copyPrizeInfo}
-                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
-              >
-                Copy To Clipboard
-              </button>
-              <button
-                onClick={() => {
-                  const rewardId = localStorage.getItem("last_reward_id");
-                  if (rewardId && orgId && token) {
-                    navigate(
-                      `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
-                    );
-                  }
-                }}
-                className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
-              >
-                View Details
-              </button>
-            </div>
+            {wonPrize.reward_type !== "none" && (
+              <div className="space-y-3">
+                {wonPrize.coupon_code && (
+                  <button
+                    onClick={copyPrizeInfo}
+                    className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
+                  >
+                    Copy To Clipboard
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const rewardId = localStorage.getItem("last_reward_id");
+                    if (rewardId && orgId && token) {
+                      navigate(
+                        `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+                      );
+                    }
+                  }}
+                  className="w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors"
+                >
+                  View Details
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

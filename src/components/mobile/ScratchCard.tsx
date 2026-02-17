@@ -534,24 +534,49 @@ export const ScratchCard: React.FC = () => {
               </p>
             )}
 
-            {/* Copy button */}
-            <button
-              onClick={copyPrizeInfo}
-              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
-            >
-              Copy To Clipboard
-            </button>
+            {wonPrize.reward_type === "marchandise" && (
+              <>
+                <p className="text-center text-gray-600 mb-2">
+                  Merchandise Prize
+                </p>
+                {wonPrize.coupon_code && (
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    Code: {wonPrize.coupon_code}
+                  </p>
+                )}
+              </>
+            )}
 
-            {/* View Details button */}
-            <button
-              onClick={() => {
-                setShowResultModal(false);
-                handleViewVoucher();
-              }}
-              className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-            >
-              View Voucher Details
-            </button>
+            {wonPrize.reward_type === "none" && (
+              <>
+                <p className="text-center text-lg text-red-600 mb-6">
+                  Better Luck Next Time!
+                </p>
+              </>
+            )}
+
+            {/* Copy button - only show if coupon_code exists and not 'none' type */}
+            {wonPrize.coupon_code && wonPrize.reward_type !== "none" && (
+              <button
+                onClick={copyPrizeInfo}
+                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+              >
+                Copy To Clipboard
+              </button>
+            )}
+
+            {/* View Details button - hide for 'none' type */}
+            {wonPrize.reward_type !== "none" && (
+              <button
+                onClick={() => {
+                  setShowResultModal(false);
+                  handleViewVoucher();
+                }}
+                className="w-full bg-gray-100 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+              >
+                View Voucher Details
+              </button>
+            )}
           </div>
         </div>
       )}
