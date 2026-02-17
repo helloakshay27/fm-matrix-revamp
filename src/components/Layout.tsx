@@ -301,6 +301,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
     }
+    if (org_id === "3") {
+      return <ZycusDynamicHeaderCopy />;
+    }
 
     if (isFMSite) {
       return <StaticDynamicHeader />;
@@ -322,10 +325,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Pulse Privilege - Company ID 305 OR isPulseSite fallback
     if (selectedCompany?.id === 305 || isPulseSite) {
       return <PulseDynamicHeader />;
-    }
-
-    if (org_id === "3") {
-      return <ZycusDynamicHeaderCopy />;
     }
 
     // Use company ID-based layout
