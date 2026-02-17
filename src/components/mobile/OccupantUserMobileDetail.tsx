@@ -48,13 +48,15 @@ export const OccupantUserMobileDetail = () => {
   // OTP state
   const [otpDialogOpen, setOtpDialogOpen] = useState(false);
   const [otpData, setOtpData] = useState<{
-    otp_send: boolean;
+    code: number;
+    otp_sent: boolean;
     message: string;
     get_otp?: {
       id: number;
-      otp: string;
+      otp: number;
       email: string;
       mobile: string | null;
+      verified: boolean;
       created_at: string;
       updated_at: string;
     };
@@ -104,12 +106,16 @@ export const OccupantUserMobileDetail = () => {
         }
       );
 
-      if (response.data.otp_send === true) {
+      if (response.data.code === 200 && response.data.otp_sent === true) {
         setOtpData(response.data);
         setOtpDialogOpen(true);
         toast.success(response.data.message || "OTP sent successfully");
       } else {
-        toast.error(response.data.user_error_msg || "Failed to generate OTP");
+        toast.error(
+          response.data.user_error_msg ||
+            response.data.message ||
+            "Failed to generate OTP"
+        );
       }
     } catch (error) {
       console.error("OTP generation failed:", error);

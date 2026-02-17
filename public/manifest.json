@@ -2,7 +2,7 @@
   "name": "FM Admin",
   "short_name": "Admin",
   "description": "FM Admin Portal",
-  "start_url": "/login-page",
+  "start_url": "/login-page?fm_admin_login",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
