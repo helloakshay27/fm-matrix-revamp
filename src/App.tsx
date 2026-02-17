@@ -1388,7 +1388,10 @@ function App() {
                       path="/login-page"
                       element={
                         isAuthenticated() ? (
-                          <Navigate to="/" replace />
+                          <Navigate
+                            to="/ops-console/settings/account/user-list-otp"
+                            replace
+                          />
                         ) : (
                           <LoginPageWrapper
                             setBaseUrl={setBaseUrl}

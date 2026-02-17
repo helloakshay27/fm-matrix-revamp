@@ -51,7 +51,6 @@ export const PWAHeader = () => {
               e.currentTarget.style.display = "none";
             }}
           />
-          <span className="font-bold text-lg text-gray-900">FM Admin</span>
         </div>
 
         {/* Profile Dropdown */}
