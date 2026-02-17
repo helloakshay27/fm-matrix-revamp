@@ -219,7 +219,7 @@ const modulesByPackage = {
 
                 { name: "Recurring Invoices ", href: "accounting/recurring-invoices" },
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
-                // { name: "Budget", href: "/settings/budget" },
+                { name: "Delivery Challans", href: "/accounting/delivery-challans" },
                 { name: "Quotes", href: "/accounting/quotes" },
             ],
         },

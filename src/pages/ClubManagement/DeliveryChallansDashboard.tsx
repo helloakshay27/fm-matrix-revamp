@@ -65,8 +65,8 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'quote_number',
-        label: 'Quote Number',
+        key: 'delivery_challan_number',
+        label: 'Delivery Challan',
         sortable: true,
         hideable: true,
         draggable: true
@@ -86,13 +86,13 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
    
-    // {
-    //     key: 'due_date',
-    //     label: 'Due Date',
-    //     sortable: true,
-    //     hideable: true,
-    //     draggable: true
-    // },
+    {
+        key: 'due_date',
+        label: 'Due Date',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
     {
         key: 'total_amount',
         label: 'Amount',
@@ -107,13 +107,13 @@ const columns: ColumnConfig[] = [
     //     hideable: true,
     //     draggable: true
     // },
-    // {
-    //     key: 'balance_due',
-    //     label: 'Balance Due',
-    //     sortable: true,
-    //     hideable: true,
-    //     draggable: true
-    // },
+    {
+        key: 'invoice_status',
+        label: 'Invoice Status',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
     {
         key: 'status',
         label: 'Status',
@@ -123,7 +123,7 @@ const columns: ColumnConfig[] = [
     }
 ];
 
-export const QuotesDashboard: React.FC = () => {
+export const DeliveryChallansDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
@@ -162,7 +162,7 @@ export const QuotesDashboard: React.FC = () => {
             if (filters.dateFrom) params.append('date_from', filters.dateFrom);
             if (filters.dateTo) params.append('date_to', filters.dateTo);
 
-            const response = await fetch(`https://${baseUrl}/lock_account_quotes.json?${params.toString()}`, {
+            const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?${params.toString()}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json',
@@ -277,11 +277,11 @@ console.log('Sales Order Data:', salesOrderData);
                 </button> */}
             </div>
         ),
-        quote_number: (
-            <div className="font-medium text-blue-600">{order.quote_number}</div>
+        invoice_number: (
+            <div className="font-medium text-blue-600">{order.invoice_number}</div>
         ),
-                reference_number: (
-            <div className="font-medium text-blue-600">{order.reference_number}</div>
+                order_number: (
+            <div className="font-medium text-blue-600">{order.order_number}</div>
         ),
         customer_name: (
             <span className="text-sm text-gray-900">{order.customer_name}</span>
@@ -296,17 +296,17 @@ console.log('Sales Order Data:', salesOrderData);
             </span>
         ),
 
-//          due_date: (
-//     <span className="text-sm text-gray-600">
-//       {order.due_date
-//         ? new Date(order.due_date).toLocaleDateString("en-GB", {
-//             day: "2-digit",
-//             month: "2-digit",
-//             year: "numeric",
-//           })
-//         : "-"}
-//     </span>
-//   ),
+         due_date: (
+    <span className="text-sm text-gray-600">
+      {order.due_date
+        ? new Date(order.due_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "-"}
+    </span>
+  ),
 
   total_amount: (
     <span className="text-sm font-medium text-gray-900">
@@ -318,15 +318,15 @@ console.log('Sales Order Data:', salesOrderData);
     </span>
   ),
 
-//   balance_due: (
-//     <span className="text-sm font-medium text-red-600">
-//       ₹
-//       {order.balance_due?.toLocaleString("en-IN", {
-//         minimumFractionDigits: 2,
-//         maximumFractionDigits: 2,
-//       })}
-//     </span>
-//   ),
+  balance_due: (
+    <span className="text-sm font-medium text-red-600">
+      ₹
+      {order.balance_due?.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
+    </span>
+  ),
         // shipment_date: (
         //     <span className="text-sm text-gray-600">
         //         {order.shipment_date ? new Date(order.shipment_date).toLocaleDateString('en-GB', {
@@ -430,7 +430,7 @@ console.log('Sales Order Data:', salesOrderData);
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Quotes List</h1>
+                <h1 className="text-2xl font-bold">Delivery Challan List</h1>
             </header>
 
             <EnhancedTaskTable
@@ -449,7 +449,7 @@ console.log('Sales Order Data:', salesOrderData);
                     <div className="flex items-center gap-2">
                         <Button
                             className='bg-primary text-primary-foreground hover:bg-primary/90'
-                            onClick={() => navigate('/accounting/quotes/add')}
+                            onClick={() => navigate('/accounting/delivery-challans/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>

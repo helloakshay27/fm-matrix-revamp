@@ -97,9 +97,16 @@ interface ExternalUser {
     email: string;
 }
 
-export const QuotesAdd: React.FC = () => {
-    // Subject field
-    const [subject, setSubject] = useState('');
+export const DeliveryChallansAdd: React.FC = () => {
+        // Subject field
+        const [subject, setSubject] = useState('');
+        const [challanType, setChallanType] = useState("");
+const challanTypeOptions = [
+  "Supply of Liquid Gas",
+  "Job Work",
+  "Supply on Approval",
+  "Others",
+];
     // Fetch item list from API
     useEffect(() => {
         const fetchItems = async () => {
@@ -273,16 +280,6 @@ export const QuotesAdd: React.FC = () => {
     const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    // const [projects, setProjects] = useState<Project[]>([]);
-    const [selectedProject, setSelectedProject] = useState<string>("");
-
-
-    const projects = [
-        { id: "1", name: "Recess Club Phase 1" },
-        { id: "2", name: "Accounting Revamp" },
-        { id: "3", name: "CRM Integration" },
-    ];
-
 
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
@@ -623,52 +620,52 @@ export const QuotesAdd: React.FC = () => {
 
             // Build FormData for invoice
             const formData = new FormData();
-            formData.append('lock_account_quote[lock_account_customer_id]', selectedCustomer?.id || '');
-            formData.append('lock_account_quote[reference_number]', referenceNumber);
-            formData.append('lock_account_quote[date]', salesOrderDate);
-            formData.append('lock_account_quote[expiry_date]', expectedShipmentDate);
-            // formData.append('lock_account_quote[payment_term_id]', selectedTerm);
-            // formData.append('lock_account_quote[delivery_method]', deliveryMethod);
-            formData.append('lock_account_quote[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('lock_account_quote[customer_notes]', customerNotes);
-            formData.append('lock_account_quote[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_quote[subject]', subject);
-            formData.append('lock_account_quote[status]', 'draft');
-            formData.append('lock_account_quote[total_amount]', String(totalAmount));
+            formData.append('lock_account_invoice[lock_account_customer_id]', selectedCustomer?.id || '');
+            formData.append('lock_account_invoice[order_number]', referenceNumber);
+            formData.append('lock_account_invoice[date]', salesOrderDate);
+            formData.append('lock_account_invoice[due_date]', expectedShipmentDate);
+            formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
+            formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
+            formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+            formData.append('lock_account_invoice[customer_notes]', customerNotes);
+            formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
+             formData.append('lock_account_invoice[subject]', subject);
+            formData.append('lock_account_invoice[status]', 'draft');
+            formData.append('lock_account_invoice[total_amount]', String(totalAmount));
             if (discountTypeOnTotal === 'percentage') {
-                formData.append('lock_account_quote[discount_per]', String(discountOnTotal));
-                formData.append('lock_account_quote[discount_amount]', String(totalDiscount));
+                formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
+                formData.append('lock_account_invoice[discount_amount]', String(totalDiscount));
             } else {
-                formData.append('lock_account_quote[discount_amount]', String(discountOnTotal));
+                formData.append('lock_account_invoice[discount_amount]', String(discountOnTotal));
             }
-            formData.append('lock_account_quote[charge_amount]', String(adjustment));
-            formData.append('lock_account_quote[charge_name]', adjustmentLabel);
-            formData.append('lock_account_quote[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('lock_account_quote[tax_type]', taxType.toLowerCase());
+            formData.append('lock_account_invoice[charge_amount]', String(adjustment));
+            formData.append('lock_account_invoice[charge_name]', adjustmentLabel);
+            formData.append('lock_account_invoice[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+            formData.append('lock_account_invoice[tax_type]', taxType.toLowerCase());
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('lock_account_quote[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+            formData.append('lock_account_invoice[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
 
-            // Quote items
+            // Invoice items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][description]`, item.description || '');
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][description]`, item.description || '');
             });
 
             // Email contact persons
             selectedContactPersons.forEach((id, idx) => {
-                formData.append(`lock_account_quote[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+                formData.append(`lock_account_invoice[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
             });
 
             // Attachments
             attachments.forEach((file, idx) => {
-                formData.append(`lock_account_quote[attachments_attributes][${idx}][document]`, file);
-                formData.append(`lock_account_quote[attachments_attributes][${idx}][active]`, 'true');
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][document]`, file);
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_quotes.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/lock_account_invoices.json?lock_account_id=1`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -678,7 +675,7 @@ export const QuotesAdd: React.FC = () => {
             });
 
             alert(`Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/accounting/quotes');
+            navigate('/accounting/invoices/list');
         } catch (error) {
             console.error('Error submitting invoice:', error);
             alert('Failed to create invoice');
@@ -742,7 +739,7 @@ export const QuotesAdd: React.FC = () => {
             )}
 
             <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">New Quote</h1>
+                <h1 className="text-2xl font-bold">New Delivery Challan</h1>
             </header>
 
             <div className="space-y-6">
@@ -852,7 +849,7 @@ export const QuotesAdd: React.FC = () => {
                 {/* Sales Order Details */}
                 <Section title="Sales Order Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+                        
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Reference#
@@ -868,7 +865,7 @@ export const QuotesAdd: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Quote Date<span className="text-red-500">*</span>
+                                Delivery Challan Date<span className="text-red-500">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -882,9 +879,34 @@ export const QuotesAdd: React.FC = () => {
                             />
                         </div>
 
-                        <div>
+
+<div>
+  <label className="block text-sm font-medium mb-2">
+    Challan Type
+  </label>
+
+  <FormControl fullWidth>
+    <Select
+      value={challanType}
+      onChange={(e) => setCallType(e.target.value)}
+      displayEmpty
+      sx={fieldStyles}
+    >
+      <MenuItem value="" disabled>
+        Select Call Type
+      </MenuItem>
+
+      {challanTypeOptions.map((type) => (
+        <MenuItem key={type} value={type}>
+          {type}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</div>
+                        {/* <div>
                             <label className="block text-sm font-medium mb-2">
-                                Expiry Date<span className="text-red-500">*</span>
+                                Due Date<span className="text-red-500">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -896,14 +918,14 @@ export const QuotesAdd: React.FC = () => {
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
                             />
-                        </div>
+                        </div> */}
 
                         {/* <div>
                             <label className="block text-sm font-medium mb-2">
                                 Terms<span className="text-red-500">*</span>
                             </label>
                             <FormControl fullWidth error={!!errors.paymentTerms}>
-                                
+
                                 <Select
                                     value={selectedTerm}
                                     label="Payment Terms"
@@ -925,7 +947,7 @@ export const QuotesAdd: React.FC = () => {
                                     </MenuItem>
                                 </Select>
                             </FormControl>
-
+                            
                             {showConfig && (
                                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
                                     <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
@@ -1001,7 +1023,44 @@ export const QuotesAdd: React.FC = () => {
                             )}
                         </div> */}
 
-                        <div>
+                        {/* <div>
+                            <label className="block text-sm font-medium ">
+                                Subject
+                            </label>
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={0}
+                                maxRows={8}
+                                value={subject}
+                                onChange={e => setSubject(e.target.value)}
+                                placeholder="Enter subject"
+                                sx={fieldStyles}
+                            />
+                        </div> */}
+
+                        {/* <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Delivery Method
+                            </label>
+                            <FormControl fullWidth>
+                                <Select
+                                    value={deliveryMethod}
+                                    onChange={(e) => setDeliveryMethod(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>Select a delivery method or type to add</MenuItem>
+                                    {/* <MenuItem value="courier">Courier</MenuItem> */}
+                                    {/* <MenuItem value="hand-delivery">Hand Delivery</MenuItem> */}
+                                    {/* <MenuItem value="pickup">Pickup</MenuItem> */}
+                                    {/* <MenuItem value="shipping">Shipping</MenuItem> */}
+                                    {/* <MenuItem value="drive">Drive</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div> */} 
+
+                        {/* <div>
                             <label className="block text-sm font-medium mb-2">
                                 Salesperson
                             </label>
@@ -1018,70 +1077,8 @@ export const QuotesAdd: React.FC = () => {
                                     ))}
                                 </Select>
                             </FormControl>
-                        </div>
-
-                        {/* <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Project
-                            </label>
-
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectedProject}
-                                    onChange={(e) => setSelectedProject(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>
-                                        Select a project
-                                    </MenuItem>
-
-                                    {projects.map((project) => (
-                                        <MenuItem key={project.id} value={project.id}>
-                                            {project.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
                         </div> */}
-
-                        <div>
-                            <label className="block text-sm font-medium ">
-                                Subject
-                            </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={0}
-                                maxRows={8}
-                                value={subject}
-                                onChange={e => setSubject(e.target.value)}
-                                placeholder="Enter subject"
-                                sx={fieldStyles}
-                            />
-                        </div>
-
-                        {/* <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Delivery Method
-                            </label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={deliveryMethod}
-                                    onChange={(e) => setDeliveryMethod(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select a delivery method or type to add</MenuItem>
-                                    {/* <MenuItem value="courier">Courier</MenuItem> */}
-                        {/* <MenuItem value="hand-delivery">Hand Delivery</MenuItem> */}
-                        {/* <MenuItem value="pickup">Pickup</MenuItem> */}
-                        {/* <MenuItem value="shipping">Shipping</MenuItem> */}
-                        {/* <MenuItem value="drive">Drive</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </div> */}
-
+                        
                     </div>
                 </Section>
 

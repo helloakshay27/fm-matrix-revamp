@@ -1062,6 +1062,8 @@ import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
+import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
 
 const queryClient = new QueryClient();
 
@@ -2321,6 +2323,14 @@ function App() {
                        <Route
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
+                      />
+                      <Route
+                        path="/accounting/delivery-challans"
+                        element={<DeliveryChallansDashboard/>}
+                      />
+                       <Route
+                        path="/accounting/delivery-challans/add"
+                        element={<DeliveryChallansAdd />}
                       />
                       <Route
                         path="/accounting/recurring-invoices"
