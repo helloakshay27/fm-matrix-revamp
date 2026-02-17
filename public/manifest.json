@@ -1,8 +1,8 @@
 {
-  "name": "Occupant Users",
-  "short_name": "Users",
-  "description": "Occupant User Management",
-  "start_url": "/master/user/occupant-users",
+  "name": "FM Admin",
+  "short_name": "Admin",
+  "description": "FM Admin Portal",
+  "start_url": "/login-page",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

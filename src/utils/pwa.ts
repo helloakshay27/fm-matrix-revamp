@@ -1,8 +1,9 @@
-// PWA Utilities for Occupant Users routes
+// PWA Utilities for specific routes only (login and ops-console OTP pages)
 
 export const PWA_ROUTES = [
-  "/master/user/occupant-users",
-  "/master/user/occupant-users/view",
+  "/login-page",
+  "/ops-console/settings/account/user-list-otp",
+  "/ops-console/settings/account/user-list-otp/detail",
 ];
 
 export const isPWARoute = (pathname: string): boolean => {
@@ -12,6 +13,15 @@ export const isPWARoute = (pathname: string): boolean => {
 export const registerServiceWorker = async (): Promise<void> => {
   if ("serviceWorker" in navigator) {
     try {
+      // First, unregister all existing service workers and clear caches
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+
+      // Clear all caches
+      await clearAllCaches();
+
       const registration = await navigator.serviceWorker.register(
         "/service-worker.js",
         {
@@ -30,7 +40,8 @@ export const registerServiceWorker = async (): Promise<void> => {
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              console.log("New content available, please refresh.");
+              console.log("New content available, reloading...");
+              window.location.reload();
             }
           });
         }
@@ -47,6 +58,21 @@ export const unregisterServiceWorker = async (): Promise<void> => {
     for (const registration of registrations) {
       await registration.unregister();
     }
+    console.log("All service workers unregistered");
+  }
+};
+
+// Clear all caches
+export const clearAllCaches = async (): Promise<void> => {
+  if ("caches" in window) {
+    const cacheNames = await caches.keys();
+    await Promise.all(
+      cacheNames.map((cacheName) => {
+        console.log("Deleting cache:", cacheName);
+        return caches.delete(cacheName);
+      })
+    );
+    console.log("All caches cleared");
   }
 };
 

@@ -386,6 +386,19 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const isFMAdminLogin =
+          searchParams.get("fm_admin_login") !== null ||
+          location.pathname.includes("login-page");
+
+        // PRIORITY 0: FM Admin Login - redirect to ops-console user list
+        if (isFMAdminLogin) {
+          navigate("/ops-console/settings/account/user-list-otp", {
+            replace: true,
+          });
+          return;
+        }
+
         const userType = localStorage.getItem("userType");
         const isLocalhost =
           hostname.includes("localhost") ||

@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { OccupantUserMasterDashboard } from "@/pages/master/OccupantUserMasterDashboard";
 import { OccupantUserMobileList } from "@/components/mobile/OccupantUserMobileList";
+import { registerServiceWorker } from "@/utils/pwa";
 
 export const OccupantUserListWrapper = () => {
+  const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const isOpsConsole = location.pathname.includes("/ops-console/");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -18,12 +22,17 @@ export const OccupantUserListWrapper = () => {
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    // Register service worker only for ops-console routes
+    if (isOpsConsole) {
+      registerServiceWorker();
+    }
 
-  // Render mobile version for mobile devices, desktop for others
-  return isMobile ? (
-    <OccupantUserMasterDashboard />
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [isOpsConsole]);
+
+  // Show mobile version if on ops-console route or mobile device
+  return isMobile || isOpsConsole ? (
+    <OccupantUserMobileList />
   ) : (
     <OccupantUserMasterDashboard />
   );
