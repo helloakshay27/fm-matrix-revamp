@@ -454,22 +454,31 @@ export const SpinnerContest: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Gift icon */}
+            {/* Gift icon - different for none type */}
             <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
-              <div className="text-4xl">🎁</div>
+              <div className="text-4xl">
+                {winResult.prize.reward_type === "none" ? "😔" : "🎁"}
+              </div>
             </div>
 
-            {/* Congratulations text */}
+            {/* Title text - different for none type */}
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
-              Congratulations!
+              {winResult.prize.reward_type === "none"
+                ? "Better Luck Next Time!"
+                : "Congratulations!"}
             </h2>
 
-            {/* Won prize text */}
-            <p className="text-center text-gray-600 mb-2">You've won</p>
+            {/* Description text - different for none type */}
+            {winResult.prize.reward_type !== "none" && (
+              <p className="text-center text-gray-600 mb-2">You've won</p>
+            )}
 
-            <p className="text-center text-2xl font-bold text-gray-900 mb-6">
-              {winResult.prize.title}
-            </p>
+            {/* Prize title - only show for non-none rewards */}
+            {winResult.prize.reward_type !== "none" && (
+              <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+                {winResult.prize.title}
+              </p>
+            )}
 
             {/* Display prize details based on type */}
             {winResult.prize.reward_type === "coupon" &&
@@ -520,8 +529,8 @@ export const SpinnerContest: React.FC = () => {
 
             {winResult.prize.reward_type === "none" && (
               <>
-                <p className="text-center text-lg text-red-600 mb-6">
-                  Better Luck Next Time!
+                <p className="text-center text-gray-600 mb-6">
+                  Don't give up! Try again for a chance to win exciting prizes.
                 </p>
               </>
             )}
