@@ -169,7 +169,7 @@ export const OccupantUserMasterDashboard = () => {
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
         search_all_fields_cont: newFilters.search,
-        lock_user_permissions_user_type_eq: 'pms_occupant',
+        // lock_user_permissions_user_type_eq: 'pms_occupant',
       })
     );
     toast.success("Filters applied successfully");
@@ -209,7 +209,11 @@ export const OccupantUserMasterDashboard = () => {
   const fetchUsers = () => {
     try {
       dispatch(
-        fetchOccupantUsers({ page: pagination.current_page, perPage: 10, lock_user_permissions_user_type_eq: 'pms_occupant' })
+        fetchOccupantUsers({
+          page: pagination.current_page,
+          perPage: 10,
+          //  lock_user_permissions_user_type_eq: 'pms_occupant' 
+        })
       );
     } catch (error) {
       console.log(error);
