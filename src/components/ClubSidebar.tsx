@@ -218,15 +218,16 @@ const modulesByPackage = {
                 { name: "Invoices ", href: "/accounting/invoices/list" },
 
                 { name: "Recurring Invoices ", href: "accounting/recurring-invoices" },
-                // { name: "Opening Balance", href: "/settings/opening-balance" },
+
                 { name: "Delivery Challans", href: "/accounting/delivery-challans" },
                 { name: "Quotes", href: "/accounting/quotes" },
                 { name: "Payments Received", href: "/accounting/payments-received" },
+                { name: "Credit Note", href: "/accounting/credit-note" },
             ],
         },
 
         {
-            name: "Purchase Orders",
+            name: "Purchases",
             icon: FileText,
             subItems: [
                 { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -234,9 +235,10 @@ const modulesByPackage = {
                 { name: "Recurring Bills", href: "/accounting/recurring-bills" },
                 { name: "Vendor", href: "/maintenance/vendor" },
                 { name: "Expense", href: "/accounting/expense" },
-                                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
+                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
                 // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
                 { name: "Payments Made", href: "/accounting/recurring-journal" },
+                { name: "Vendor Credits", href: "/accounting/vendor-credits"}
                 // { name: "Recurring Expenses ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
@@ -291,6 +293,101 @@ const modulesByPackage = {
             ],
         },
     ],
+
+
+    Masters: [
+        {
+            name: "Amenities Setup",
+            icon: Calculator,
+            href: "/settings/vas/booking-club/setup",
+        },
+        {
+            name: "Membership Plan Setup",
+            icon: Calculator,
+            href: "/settings/vas/membership-plan/setup",
+        },
+        {
+            name: "Accessories Setup",
+            icon: Calculator,
+            href: "/settings/accessories",
+        },
+        {
+            name: "Payment Plan Setup",
+            icon: Calculator,
+            href: "/settings/payment-plan/setup",
+        },
+        {
+            name: "Templates",
+            icon: FileSpreadsheet,
+            href: "/master/communication-template",
+            subItems: [
+                {
+                    name: "Communication Template",
+                    href: "/master/communication-template",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Root Cause Analysis",
+                    href: "/master/template/root-cause-analysis",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Preventive Action",
+                    href: "/master/template/preventive-action",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Short-term Impact",
+                    href: "/master/template/short-term-impact",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Long-term Impact",
+                    href: "/master/template/long-term-impact",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Corrective Action",
+                    href: "/master/template/corrective-action",
+                    color: "text-[#1a1a1a]",
+                },
+            ],
+        },
+
+        {
+            name: "Ticket Management",
+            icon: FileText,
+            subItems: [
+                { name: "Setup", href: "/settings/ticket-management/setup" },
+                {
+                    name: "Escalation Matrix",
+                    href: "/settings/ticket-management/escalation-matrix",
+                },
+                {
+                    name: "Cost Approval",
+                    href: "/settings/ticket-management/cost-approval",
+                },
+            ],
+        },
+        { name: "FM Groups", icon: Users, href: "/settings/groups" },
+
+        // {
+        //     name: "Accountants",
+        //     icon: Users,
+        //     subItems: [
+        //         { name: "Manual Journals ", href: "/settings/manual-journal" },
+        //         { name: "Transactions ", href: "/settings/transactions" },
+        //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        //         { name: "Opening Balance", href: "/settings/opening-balance" },
+        //         { name: "Budget", href: "/settings/budget" },
+        //         { name: "Tax Setup ", href: "/settings/tax-setup" },
+        //     ],
+        // },
+
+
+    ],
+
 };
 
 export const ClubSidebar: React.FC = () => {
