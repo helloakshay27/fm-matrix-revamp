@@ -1,7 +1,7 @@
 import React from "react";
 import { useLayout } from "../contexts/LayoutContext";
 
-const clubPackages = ["Club Management", "Settings", "Accounting","Masters"];
+const clubPackages = ["Club Management", "Settings", "Accounting","Master"];
 
 export const ClubDynamicHeader = () => {
     const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
