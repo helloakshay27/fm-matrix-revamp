@@ -760,9 +760,9 @@ export const AddBookingSetupClubPage = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    // if (/^[a-zA-Z\s]*$/.test(value)) {
                       setFormData({ ...formData, facilityName: value });
-                    }
+                    // }
                   }}
                   variant="outlined"
                   required

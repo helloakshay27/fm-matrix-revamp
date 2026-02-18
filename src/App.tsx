@@ -27,6 +27,10 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
+import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
+import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
+import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -1074,6 +1078,14 @@ import PaymentsReceivedListPage from "./pages/PaymentsReceivedListPage";
 import RecordPaymentPage from "./pages/RecordPaymentPage";
 import PaymentReceivedDetailsPage from "./pages/PaymentReceivedDetailsPage";
 import SectionMaster from "./pages/ClubManagement/SectionMaster";
+import CreditNoteListPage from "./pages/ClubManagement/CreditNoteListPage";
+import { CreditNoteAddPage } from "./pages/ClubManagement/CreditNoteAddPage";
+import CreditNoteDetailPage from "./pages/ClubManagement/CreditNoteDetailPage";
+import VendorCreditsListPage from "./pages/ClubManagement/VendorCreditsListPage";
+import { VendorCreditsAdd } from "./pages/ClubManagement/VendorCreditsAdd";
+import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
+import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
+import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 
 const queryClient = new QueryClient();
 
@@ -1126,7 +1138,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1839,15 +1851,15 @@ function App() {
                       />
                       {/* Payments Made Routes */}
                       <Route
-                        path="/settings/payments-made"
+                        path="/accounting/payments-made"
                         element={<PaymentsMadePage />}
                       />
                       <Route
-                        path="/settings/payments-made/create"
+                        path="/accounting/payments-made/create"
                         element={<CreatePaymentPage />}
                       />
                       <Route
-                        path="/settings/payments-made/:id"
+                        path="/accounting/payments-made/:id"
                         element={<PaymentDetailPage />}
                       />
                       -{/* Settings Checklist Setup Routes */}
@@ -2205,6 +2217,25 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
+                      
+                       <Route
+                        path="/accounting/vendor-credits"
+                        element={<VendorCreditsListPage />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/add"
+                        element={<VendorCreditsAdd />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/details/:id"
+                        element={<VendorCreditsDetails />}
+                      />
+                       <Route
+                        path="/accounting/vendor-credits/edit/:id"
+                        element={<VendorCreditsEdit />}
+                      />
+
+
                       <Route
                         path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
@@ -2384,6 +2415,25 @@ function App() {
                         path="/accounting/payments-received/:id"
                         element={<PaymentReceivedDetailsPage />}
                       />
+
+                      <Route
+                        path="/accounting/credit-note"
+                        element={<CreditNoteListPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/add"
+                        element={<CreditNoteAddPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/:id"
+                        element={<CreditNoteDetailPage />}
+                      />
+                       <Route
+                        path="/accounting/credit-note/edit/:id"
+                        element={<CreditNoteEditPage />}
+                      />
+
+
                       {/* Purchase Order Routes */}
                       <Route
                         path="/accounting/purchase-order"
@@ -3259,6 +3309,23 @@ function App() {
                       <Route
                         path="/finance/wbs"
                         element={<WBSElementDashboard />}
+                      />
+                      {/* Accounting Routes */}
+                      <Route
+                        path="/accounting/retainer-invoices"
+                        element={<RetainerInvoicesDashboard />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/new"
+                        element={<CreateRetainerInvoicePage />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/import"
+                        element={<ImportRetainerInvoicesPage />}
+                      />
+                      <Route
+                        path="/accounting/payment-links"
+                        element={<PaymentLinksDashboard />}
                       />
                       {/* Maintenance Routes */}
                       <Route

@@ -549,6 +549,17 @@ export const EditBookingSetupClubPage = () => {
             toast.error("Please enter Cancellation Policies");
             return false;
         }
+        // Validate Maximum Person Allowed > Minimum Person Allowed
+        const min = parseInt(formData.chargeSetup.minimumPersonAllowed || "1");
+        const max = parseInt(formData.chargeSetup.maximumPersonAllowed || "1");
+        if (
+            formData.chargeSetup.maximumPersonAllowed &&
+            formData.chargeSetup.minimumPersonAllowed &&
+            max < min
+        ) {
+            toast.error("Maximum Person Allowed must be greater than or equal to Minimum Person Allowed");
+            return false;
+        }
         return true;
     };
 

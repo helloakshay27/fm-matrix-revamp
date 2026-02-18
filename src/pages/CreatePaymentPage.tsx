@@ -97,7 +97,9 @@ export const CreatePaymentPage: React.FC = () => {
       JSON.stringify([newPayment, ...existingPayments])
     );
     sonnerToast.success(`Payment saved as ${status}`);
-    navigate(`/settings/payments-made?paymentId=${newPayment.id}&view=detail`);
+    navigate(
+      `/accounting/payments-made?paymentId=${newPayment.id}&view=detail`
+    );
   };
 
   // ... (rest of existing state)
@@ -136,7 +138,7 @@ export const CreatePaymentPage: React.FC = () => {
               variant="ghost"
               size="icon"
               className="absolute right-6 top-6 z-10 hover:bg-gray-200 rounded-full h-8 w-8 text-gray-500"
-              onClick={() => navigate("/settings/payments-made")}
+              onClick={() => navigate("/accounting/payments-made")}
             >
               <X className="h-5 w-5" />
             </Button>
@@ -617,7 +619,7 @@ export const CreatePaymentPage: React.FC = () => {
                 <Button
                   variant="outline"
                   className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={() => navigate("/settings/payments-made")}
+                  onClick={() => navigate("/accounting/payments-made")}
                 >
                   Cancel
                 </Button>

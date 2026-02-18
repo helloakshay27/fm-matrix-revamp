@@ -1323,7 +1323,7 @@ export const BookingSetupDetailClubPage = () => {
                   Rules Description
                 </div>
                 <div className="font-medium text-gray-700">Time</div>
-                <div className="font-medium text-gray-700">Deduction</div>
+                <div className="font-medium text-gray-700">Deduction (%)</div>
               </div>
               {cancellationRules.map((rule, index) => (
                 <div
