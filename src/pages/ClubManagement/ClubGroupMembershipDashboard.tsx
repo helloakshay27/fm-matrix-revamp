@@ -133,9 +133,9 @@ export const ClubGroupMembershipDashboard = () => {
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
       url.searchParams.append('access_token', token || '');
 
-      // Add search filter
+      // Add global search filter
       if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
+        url.searchParams.append('global_search_term', filters.search);
       }
 
       // Add club member enabled filter
@@ -548,7 +548,7 @@ export const ClubGroupMembershipDashboard = () => {
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'id', label: 'Group ID', sortable: true },
-    { key: 'membership_plan_id', label: 'Plan ID', sortable: true },
+    { key: 'plan_name', label: 'Plan Name', sortable: true },
     { key: 'member_count', label: 'Members', sortable: false },
     { key: 'member_names', label: 'Member Names', sortable: false },
     { key: 'member_emails', label: 'Emails', sortable: false },
@@ -701,10 +701,14 @@ export const ClubGroupMembershipDashboard = () => {
       return item.referred_by || <span className="text-gray-400">-</span>;
     }
 
+    if (columnKey === 'plan_name') {
+      // If membership_plan is present, show its name
+      // If not, fallback to Plan ID or --
+      return item?.membership_plan?.name || <span className="text-gray-400">--</span>;
+    }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return <span className="text-gray-400">--</span>;
     }
-
     return item[columnKey];
   };
 
