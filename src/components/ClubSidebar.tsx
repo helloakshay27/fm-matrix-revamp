@@ -18,6 +18,7 @@ import {
     DollarSign,
     Shield,
     FileSpreadsheet,
+    MapPin,
 } from "lucide-react";
 
 const modulesByPackage = {
@@ -238,7 +239,7 @@ const modulesByPackage = {
                 { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
                 // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
                 { name: "Payments Made", href: "/accounting/recurring-journal" },
-                { name: "Vendor Credits", href: "/accounting/vendor-credits"}
+                { name: "Vendor Credits", href: "/accounting/vendor-credits" }
                 // { name: "Recurring Expenses ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
@@ -295,7 +296,49 @@ const modulesByPackage = {
     ],
 
 
-    Masters: [
+    Master: [
+        {
+            name: "Location Master",
+            icon: MapPin,
+            href: "/master/location",
+            subItems: [
+                {
+                    name: "Account",
+                    href: "/master/location/account",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Building",
+                    href: "/master/location/building",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Wing",
+                    href: "/master/location/wing",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Area",
+                    href: "/master/location/area",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Floor",
+                    href: "/master/location/floor",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Unit",
+                    href: "/master/location/unit",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Room",
+                    href: "/master/location/room",
+                    color: "text-[#1a1a1a]",
+                },
+            ],
+        },
         {
             name: "Sections",
             icon: Calculator,

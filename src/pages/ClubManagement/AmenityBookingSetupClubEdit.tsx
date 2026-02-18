@@ -2158,12 +2158,12 @@ export const EditBookingSetupClubPage = () => {
                                                     alt={`cover-preview-${index}`}
                                                     className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
                                                 />
-                                                <button
+                                                {/* <button
                                                     onClick={() => handleRemoveBookingImage(index, id)}
                                                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                                                 >
                                                     <X className="h-4 w-4" />
-                                                </button>
+                                                </button> */}
                                             </div>
                                         ))}
                                     </div>
