@@ -203,12 +203,30 @@ export const SpinnerContest: React.FC = () => {
         throw new Error(result.message || "Failed to play contest");
       }
 
+      console.log("🎲 Won prize:", result.prize);
+      console.log(
+        "🎯 Available segments:",
+        segments.map((s) => ({ id: s.prize.id, title: s.prize.title }))
+      );
+
       // Find the index of the winning segment
       const winningIndex = segments.findIndex(
         (s) => s.prize.id === result.prize!.id
       );
 
+      console.log(
+        "✅ Winning index:",
+        winningIndex,
+        "Prize ID:",
+        result.prize.id
+      );
+
       if (winningIndex === -1) {
+        console.error("❌ Prize not found! Looking for ID:", result.prize.id);
+        console.error(
+          "❌ Available prize IDs:",
+          segments.map((s) => s.prize.id)
+        );
         throw new Error("Winning prize not found in segments");
       }
 
@@ -221,7 +239,7 @@ export const SpinnerContest: React.FC = () => {
       const finalRotation = spins * 360 + (360 - targetAngle);
 
       // Animate rotation
-      let currentRotation = rotation;
+      const startRotation = rotation;
       const duration = 4000; // 4 seconds
       const startTime = Date.now();
 
@@ -233,12 +251,16 @@ export const SpinnerContest: React.FC = () => {
         // Easing function (ease-out cubic)
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
-        currentRotation = rotation + finalRotation * easeOut;
-        setRotation(currentRotation % 360);
+        const currentRotation = startRotation + finalRotation * easeOut;
+        setRotation(currentRotation);
 
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
+          // Set final rotation precisely
+          const finalRot = (startRotation + finalRotation) % 360;
+          setRotation(finalRot);
+
           // Spin complete - show result modal
           setTimeout(() => {
             spinSound.playWinSound();
@@ -338,10 +360,18 @@ export const SpinnerContest: React.FC = () => {
               <span className="text-6xl">🎉</span>
             </div>
             {/* Sparkles */}
-            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">✨</span>
-            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">✨</span>
-            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">✨</span>
-            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">✨</span>
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
+              ✨
+            </span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
+              ✨
+            </span>
           </div>
 
           {/* Message */}
@@ -349,7 +379,8 @@ export const SpinnerContest: React.FC = () => {
             You've Already Won!
           </h1>
           <p className="text-gray-600 text-center mb-8 max-w-sm">
-            Congratulations! You have already won a reward in this contest. View your prize details below.
+            Congratulations! You have already won a reward in this contest. View
+            your prize details below.
           </p>
 
           {/* Reward Info Card */}
@@ -360,7 +391,10 @@ export const SpinnerContest: React.FC = () => {
                 {contestData.name}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Reward Status: <span className="font-semibold text-[#B88B15] capitalize">{contestData.user_contest_reward.status}</span>
+                Reward Status:{" "}
+                <span className="font-semibold text-[#B88B15] capitalize">
+                  {contestData.user_contest_reward.status}
+                </span>
               </p>
             </div>
           </div>
@@ -383,10 +417,18 @@ export const SpinnerContest: React.FC = () => {
           </button>
 
           {/* Decorative elements */}
-          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">🎊</div>
-          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">🎈</div>
-          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">🎁</div>
-          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">⭐</div>
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">
+            🎊
+          </div>
+          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">
+            🎈
+          </div>
+          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">
+            🎁
+          </div>
+          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">
+            ⭐
+          </div>
         </div>
       )}
 
@@ -410,7 +452,8 @@ export const SpinnerContest: React.FC = () => {
               {/* Contest Period */}
               <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
                 <span className="bg-white/70 px-3 py-1.5 rounded-full">
-                  📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+                  📅 Valid:{" "}
+                  {new Date(contestData.start_at).toLocaleDateString()} -{" "}
                   {new Date(contestData.end_at).toLocaleDateString()}
                 </span>
               </div>
@@ -547,7 +590,9 @@ export const SpinnerContest: React.FC = () => {
                   winResult.prize.coupon_code && (
                     <>
                       {/* Coupon Code label */}
-                      <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+                      <p className="text-center text-gray-600 mb-3">
+                        Coupon Code
+                      </p>
 
                       {/* Coupon code */}
                       <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
@@ -592,7 +637,8 @@ export const SpinnerContest: React.FC = () => {
                 {winResult.prize.reward_type === "none" && (
                   <>
                     <p className="text-center text-gray-600 mb-6">
-                      Don't give up! Try again for a chance to win exciting prizes.
+                      Don't give up! Try again for a chance to win exciting
+                      prizes.
                     </p>
                   </>
                 )}
@@ -612,15 +658,17 @@ export const SpinnerContest: React.FC = () => {
                 {winResult.prize.reward_type !== "none" && (
                   <button
                     onClick={() => {
-                      const storedRewardId = localStorage.getItem("last_reward_id");
+                      const storedRewardId =
+                        localStorage.getItem("last_reward_id");
                       if (storedRewardId && orgId && token) {
                         navigate(
                           `/scratchcard/details/${storedRewardId}?org_id=${orgId}&token=${token}`
                         );
                       }
                     }}
-                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${winResult.prize.coupon_code ? "" : "mt-3"
-                      }`}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                      winResult.prize.coupon_code ? "" : "mt-3"
+                    }`}
                   >
                     View Details
                   </button>
