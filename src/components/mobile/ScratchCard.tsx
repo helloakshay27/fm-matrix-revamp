@@ -318,371 +318,431 @@ export const ScratchCard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-gray-700 hover:bg-gray-100 rounded-full"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 ml-2">
-          Scratch & Win
-        </h1>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-4 py-6 flex flex-col items-center">
-        {/* Title & Description Card */}
-        <div className="w-full mb-6 bg-gradient-to-br from-[#FFF8E7] to-[#F5E6D3] rounded-2xl p-6 shadow-lg">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-            {contestData.name}
-          </h1>
-
-          {/* Contest Period */}
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
-            <span className="bg-white/70 px-3 py-1.5 rounded-full">
-              📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
-              {new Date(contestData.end_at).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Scratch Card Container with Enhanced Styling */}
-        <div className="relative mb-6 w-full">
-          {/* Outer Ring Decoration */}
-          <div className="absolute inset-0 rounded-3xl border-8 border-[#FFF8E7] -m-4 shadow-xl" />
-
-          <div
-            className="w-full relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-[#D4A574]"
-            style={{ touchAction: "none" }}
+      {/* Already Won Reward Screen */}
+      {contestData.won_reward && contestData.user_contest_reward && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#FFF8E7] via-white to-[#F5E6D3]">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute top-4 left-4 p-2 text-gray-700 hover:bg-white/50 rounded-full"
           >
-            {/* Background reward content */}
-            <div className="relative aspect-square p-8 flex items-center justify-center bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
-              {/* Background illustration - only show when not revealed */}
-              {!isRevealed && (
-                <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                  {/* Animated gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-200/30 via-pink-200/30 to-orange-200/30 animate-pulse" />
+            <ChevronLeft className="w-6 h-6" />
+          </button>
 
-                  {/* White curved stripes */}
-                  <svg
-                    width="100%"
-                    height="100%"
-                    viewBox="0 0 300 300"
-                    className="absolute opacity-40"
-                  >
-                    <defs>
-                      <linearGradient
-                        id="stripeGradient"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="100%"
+          {/* Celebration Animation */}
+          <div className="mb-6 relative">
+            <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-6xl">🎉</span>
+            </div>
+            {/* Sparkles */}
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">✨</span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">✨</span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">✨</span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">✨</span>
+          </div>
+
+          {/* Message */}
+          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">
+            You've Already Won!
+          </h1>
+          <p className="text-gray-600 text-center mb-8 max-w-sm">
+            Congratulations! You have already won a reward in this contest. View your prize details below.
+          </p>
+
+          {/* Reward Info Card */}
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mb-6 border-2 border-[#D4A574]">
+            <div className="text-center">
+              <div className="text-5xl mb-3">🎁</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {contestData.name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Reward Status: <span className="font-semibold text-[#B88B15] capitalize">{contestData.user_contest_reward.status}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* View Details Button */}
+          <button
+            onClick={() => {
+              if (contestData.user_contest_reward && orgId && token) {
+                navigate(
+                  `/scratchcard/details/${contestData.user_contest_reward.id}?org_id=${orgId}&token=${token}`
+                );
+              }
+            }}
+            className="w-full max-w-sm bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <span>🎯</span>
+              View Reward Details
+            </span>
+          </button>
+
+          {/* Decorative elements */}
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">🎊</div>
+          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">🎈</div>
+          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">🎁</div>
+          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">⭐</div>
+        </div>
+      )}
+
+      {/* Normal Game Screen - only show if not won */}
+      {!contestData.won_reward && (
+        <>
+          {/* Main Content */}
+          <div className="px-4 py-6 flex flex-col items-center">
+            {/* Title & Description Card */}
+            <div className="w-full mb-6 bg-gradient-to-br from-[#FFF8E7] to-[#F5E6D3] rounded-2xl p-6 shadow-lg">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+                {contestData.name}
+              </h1>
+
+              {/* Contest Period */}
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+                <span className="bg-white/70 px-3 py-1.5 rounded-full">
+                  📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+                  {new Date(contestData.end_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Scratch Card Container with Enhanced Styling */}
+            <div className="relative mb-6 w-full">
+              {/* Outer Ring Decoration */}
+              <div className="absolute inset-0 rounded-3xl border-8 border-[#FFF8E7] -m-4 shadow-xl" />
+
+              <div
+                className="w-full relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-[#D4A574]"
+                style={{ touchAction: "none" }}
+              >
+                {/* Background reward content */}
+                <div className="relative aspect-square p-8 flex items-center justify-center bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
+                  {/* Background illustration - only show when not revealed */}
+                  {!isRevealed && (
+                    <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                      {/* Animated gradient background */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200/30 via-pink-200/30 to-orange-200/30 animate-pulse" />
+
+                      {/* White curved stripes */}
+                      <svg
+                        width="100%"
+                        height="100%"
+                        viewBox="0 0 300 300"
+                        className="absolute opacity-40"
                       >
-                        <stop
-                          offset="0%"
-                          style={{ stopColor: "white", stopOpacity: 0.3 }}
+                        <defs>
+                          <linearGradient
+                            id="stripeGradient"
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="100%"
+                          >
+                            <stop
+                              offset="0%"
+                              style={{ stopColor: "white", stopOpacity: 0.3 }}
+                            />
+                            <stop
+                              offset="50%"
+                              style={{ stopColor: "white", stopOpacity: 0.5 }}
+                            />
+                            <stop
+                              offset="100%"
+                              style={{ stopColor: "white", stopOpacity: 0.3 }}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <ellipse
+                          cx="60"
+                          cy="150"
+                          rx="100"
+                          ry="140"
+                          fill="url(#stripeGradient)"
+                          transform="rotate(-30 60 150)"
                         />
-                        <stop
-                          offset="50%"
-                          style={{ stopColor: "white", stopOpacity: 0.5 }}
+                        <ellipse
+                          cx="240"
+                          cy="150"
+                          rx="100"
+                          ry="140"
+                          fill="url(#stripeGradient)"
+                          transform="rotate(30 240 150)"
                         />
-                        <stop
-                          offset="100%"
-                          style={{ stopColor: "white", stopOpacity: 0.3 }}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <ellipse
-                      cx="60"
-                      cy="150"
-                      rx="100"
-                      ry="140"
-                      fill="url(#stripeGradient)"
-                      transform="rotate(-30 60 150)"
-                    />
-                    <ellipse
-                      cx="240"
-                      cy="150"
-                      rx="100"
-                      ry="140"
-                      fill="url(#stripeGradient)"
-                      transform="rotate(30 240 150)"
-                    />
-                  </svg>
-                </div>
-              )}
+                      </svg>
+                    </div>
+                  )}
 
-              {/* Revealed content - Gift box and text */}
-              <div className="relative z-10 flex flex-col items-center justify-center">
-                {/* Gift box illustration */}
-                <div className="w-40 h-40 mb-4 relative">
-                  <div className="text-9xl flex items-center justify-center animate-pulse">
-                    🎁
+                  {/* Revealed content - Gift box and text */}
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    {/* Gift box illustration */}
+                    <div className="w-40 h-40 mb-4 relative">
+                      <div className="text-9xl flex items-center justify-center animate-pulse">
+                        🎁
+                      </div>
+                      {/* Sparkle effects */}
+                      {isRevealed && (
+                        <>
+                          <span className="absolute top-0 left-0 text-2xl animate-ping">
+                            ✨
+                          </span>
+                          <span className="absolute top-0 right-0 text-2xl animate-ping delay-100">
+                            ✨
+                          </span>
+                          <span className="absolute bottom-0 left-0 text-2xl animate-ping delay-200">
+                            ✨
+                          </span>
+                          <span className="absolute bottom-0 right-0 text-2xl animate-ping delay-300">
+                            ✨
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Show prize info only after API response */}
+                    {wonPrize && (
+                      <div className="text-center space-y-3 max-w-xs">
+                        <h3 className="text-3xl font-bold text-gray-900 drop-shadow-md">
+                          {wonPrize.title}
+                        </h3>
+
+                        {/* Show coupon code if available */}
+                        {wonPrize.reward_type === "coupon" &&
+                          wonPrize.coupon_code && (
+                            <div className="bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl border-2 border-dashed border-[#B88B15] shadow-lg">
+                              <p className="text-xs text-gray-600 mb-1 font-medium">
+                                Coupon Code
+                              </p>
+                              <p className="text-2xl font-bold text-[#B88B15] tracking-wider">
+                                {wonPrize.coupon_code}
+                              </p>
+                            </div>
+                          )}
+
+                        {/* Show points if available */}
+                        {wonPrize.reward_type === "points" &&
+                          wonPrize.points_value && (
+                            <div className="bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl border-2 border-dashed border-[#B88B15] shadow-lg">
+                              <p className="text-3xl font-bold text-[#B88B15]">
+                                {wonPrize.points_value} Points
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    )}
+
+                    {/* Hand pointer with instruction - only show when not revealed */}
+                    {!isRevealed && remainingAttempts > 0 && (
+                      <div className="absolute bottom-12 right-8">
+                        <div className="relative">
+                          <div className="text-7xl animate-bounce">
+                            <span className="inline-block transform rotate-12">
+                              👆
+                            </span>
+                          </div>
+                          <div className="absolute -top-10 right-0 bg-[#B88B15] text-white text-xs font-bold px-3 py-1 rounded-lg whitespace-nowrap shadow-lg">
+                            Scratch here!
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No attempts message overlay */}
+                    {!isRevealed && remainingAttempts <= 0 && (
+                      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-3xl">
+                        <div className="text-center text-white p-6">
+                          <div className="text-5xl mb-4">😔</div>
+                          <p className="text-xl font-bold mb-2">No Attempts Left</p>
+                          <p className="text-sm opacity-90">
+                            Come back later for more chances to win!
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {/* Sparkle effects */}
-                  {isRevealed && (
-                    <>
-                      <span className="absolute top-0 left-0 text-2xl animate-ping">
-                        ✨
-                      </span>
-                      <span className="absolute top-0 right-0 text-2xl animate-ping delay-100">
-                        ✨
-                      </span>
-                      <span className="absolute bottom-0 left-0 text-2xl animate-ping delay-200">
-                        ✨
-                      </span>
-                      <span className="absolute bottom-0 right-0 text-2xl animate-ping delay-300">
-                        ✨
-                      </span>
-                    </>
+
+                  {/* Scratch canvas overlay */}
+                  {!isRevealed && remainingAttempts > 0 && (
+                    <canvas
+                      ref={canvasRef}
+                      className="absolute inset-0 w-full h-full cursor-pointer touch-none"
+                      style={{ touchAction: "none" }}
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                    />
                   )}
                 </div>
+              </div>
+            </div>
 
-                {/* Show prize info only after API response */}
-                {wonPrize && (
-                  <div className="text-center space-y-3 max-w-xs">
-                    <h3 className="text-3xl font-bold text-gray-900 drop-shadow-md">
-                      {wonPrize.title}
-                    </h3>
+            {/* Attempts Remaining Badge */}
+            <div className="mb-4 bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white px-6 py-2 rounded-full shadow-md">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg">🎯</span>
+                <p className="text-sm font-semibold">
+                  Attempts Remaining{" "}
+                  <span className="text-xl font-bold">{remainingAttempts}</span>
+                </p>
+              </div>
+            </div>
 
-                    {/* Show coupon code if available */}
-                    {wonPrize.reward_type === "coupon" &&
-                      wonPrize.coupon_code && (
-                        <div className="bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl border-2 border-dashed border-[#B88B15] shadow-lg">
-                          <p className="text-xs text-gray-600 mb-1 font-medium">
-                            Coupon Code
-                          </p>
-                          <p className="text-2xl font-bold text-[#B88B15] tracking-wider">
-                            {wonPrize.coupon_code}
-                          </p>
-                        </div>
-                      )}
+            {/* Scratch instruction */}
+            {!isRevealed && remainingAttempts > 0 && (
+              <div className="text-center mb-6">
+                <p className="text-gray-600 text-sm">
+                  👆 Scratch the card to reveal your prize
+                </p>
+              </div>
+            )}
 
-                    {/* Show points if available */}
-                    {wonPrize.reward_type === "points" &&
-                      wonPrize.points_value && (
-                        <div className="bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl border-2 border-dashed border-[#B88B15] shadow-lg">
-                          <p className="text-3xl font-bold text-[#B88B15]">
-                            {wonPrize.points_value} Points
-                          </p>
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                {/* Hand pointer with instruction - only show when not revealed */}
-                {!isRevealed && remainingAttempts > 0 && (
-                  <div className="absolute bottom-12 right-8">
-                    <div className="relative">
-                      <div className="text-7xl animate-bounce">
-                        <span className="inline-block transform rotate-12">
-                          👆
-                        </span>
-                      </div>
-                      <div className="absolute -top-10 right-0 bg-[#B88B15] text-white text-xs font-bold px-3 py-1 rounded-lg whitespace-nowrap shadow-lg">
-                        Scratch here!
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* No attempts message overlay */}
-                {!isRevealed && remainingAttempts <= 0 && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-3xl">
-                    <div className="text-center text-white p-6">
-                      <div className="text-5xl mb-4">😔</div>
-                      <p className="text-xl font-bold mb-2">No Attempts Left</p>
-                      <p className="text-sm opacity-90">
-                        Come back later for more chances to win!
+            {/* Prize Preview Section */}
+            <div className="w-full mt-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+                🏆 Available Prizes
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {contestData.prizes
+                  .filter((p) => p.reward_type !== "none")
+                  .slice(0, 4)
+                  .map((prize) => (
+                    <div
+                      key={prize.id}
+                      className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 text-center shadow-sm"
+                    >
+                      <div className="text-3xl mb-2">🎁</div>
+                      <p className="font-semibold text-sm text-gray-900 mb-1">
+                        {prize.title}
                       </p>
+                      {prize.points_value && (
+                        <p className="text-xs text-[#B88B15] font-medium">
+                          {prize.points_value} Points
+                        </p>
+                      )}
                     </div>
-                  </div>
-                )}
+                  ))}
               </div>
-
-              {/* Scratch canvas overlay */}
-              {!isRevealed && remainingAttempts > 0 && (
-                <canvas
-                  ref={canvasRef}
-                  className="absolute inset-0 w-full h-full cursor-pointer touch-none"
-                  style={{ touchAction: "none" }}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                />
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Attempts Remaining Badge */}
-        <div className="mb-4 bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white px-6 py-2 rounded-full shadow-md">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-lg">🎯</span>
-            <p className="text-sm font-semibold">
-              Attempts Remaining{" "}
-              <span className="text-xl font-bold">{remainingAttempts}</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Scratch instruction */}
-        {!isRevealed && remainingAttempts > 0 && (
-          <div className="text-center mb-6">
-            <p className="text-gray-600 text-sm">
-              👆 Scratch the card to reveal your prize
-            </p>
-          </div>
-        )}
-
-        {/* Prize Preview Section */}
-        <div className="w-full mt-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
-            🏆 Available Prizes
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {contestData.prizes
-              .filter((p) => p.reward_type !== "none")
-              .slice(0, 4)
-              .map((prize) => (
-                <div
-                  key={prize.id}
-                  className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 text-center shadow-sm"
+          {/* Result Modal */}
+          {showResultModal && wonPrize && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl p-6  w-full relative">
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    resetScratchCard();
+                  }}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
                 >
-                  <div className="text-3xl mb-2">🎁</div>
-                  <p className="font-semibold text-sm text-gray-900 mb-1">
-                    {prize.title}
-                  </p>
-                  {prize.points_value && (
-                    <p className="text-xs text-[#B88B15] font-medium">
-                      {prize.points_value} Points
-                    </p>
-                  )}
+                  <X className="w-6 h-6" />
+                </button>
+
+                {/* Gift icon - different for none type */}
+                <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
+                  <div className="text-4xl">
+                    {wonPrize.reward_type === "none" ? "😔" : "🎁"}
+                  </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Result Modal */}
-      {showResultModal && wonPrize && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6  w-full relative">
-            {/* Close button */}
-            <button
-              onClick={() => {
-                resetScratchCard();
-              }}
-              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
+                {/* Title text - different for none type */}
+                <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
+                  {wonPrize.reward_type === "none"
+                    ? "Better Luck Next Time!"
+                    : "Congratulations!"}
+                </h2>
 
-            {/* Gift icon - different for none type */}
-            <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
-              <div className="text-4xl">
-                {wonPrize.reward_type === "none" ? "😔" : "🎁"}
+                {/* Description text - different for none type */}
+                {wonPrize.reward_type !== "none" && (
+                  <p className="text-center text-gray-600 mb-2">You've won</p>
+                )}
+
+                {/* Prize title - only show for non-none rewards */}
+                {wonPrize.reward_type !== "none" && (
+                  <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+                    {wonPrize.title}
+                  </p>
+                )}
+
+                {/* Display prize details based on type */}
+                {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
+                  <>
+                    {/* Coupon Code label */}
+                    <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+
+                    {/* Coupon code */}
+                    <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                      {wonPrize.coupon_code}
+                    </p>
+
+                    {/* Partner name if available */}
+                    {wonPrize.partner_name && (
+                      <p className="text-center text-sm text-gray-500 mb-6">
+                        Partner: {wonPrize.partner_name}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {wonPrize.reward_type === "points" && wonPrize.points_value && (
+                  <p className="text-center text-lg text-gray-600 mb-6">
+                    {wonPrize.points_value} Loyalty Points
+                  </p>
+                )}
+
+                {wonPrize.reward_type === "marchandise" && (
+                  <>
+                    <p className="text-center text-gray-600 mb-2">
+                      Merchandise Prize
+                    </p>
+                    {wonPrize.coupon_code && (
+                      <p className="text-center text-sm text-gray-500 mb-6">
+                        Code: {wonPrize.coupon_code}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {wonPrize.reward_type === "none" && (
+                  <>
+                    <p className="text-center text-gray-600 mb-6">
+                      Don't give up! Try again for a chance to win exciting prizes.
+                    </p>
+                  </>
+                )}
+
+                {/* Copy button - only show if coupon_code exists and not 'none' type */}
+                {wonPrize.coupon_code && wonPrize.reward_type !== "none" && (
+                  <button
+                    onClick={copyPrizeInfo}
+                    className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+                  >
+                    Copy To Clipboard
+                  </button>
+                )}
+
+                {/* View Details button - hide for 'none' type */}
+                {wonPrize.reward_type !== "none" && (
+                  <button
+                    onClick={() => {
+                      setShowResultModal(false);
+                      handleViewVoucher();
+                    }}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${wonPrize.coupon_code ? "" : "mt-3"
+                      }`}
+                  >
+                    View Details
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Title text - different for none type */}
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
-              {wonPrize.reward_type === "none"
-                ? "Better Luck Next Time!"
-                : "Congratulations!"}
-            </h2>
-
-            {/* Description text - different for none type */}
-            {wonPrize.reward_type !== "none" && (
-              <p className="text-center text-gray-600 mb-2">You've won</p>
-            )}
-
-            {/* Prize title - only show for non-none rewards */}
-            {wonPrize.reward_type !== "none" && (
-              <p className="text-center text-2xl font-bold text-gray-900 mb-6">
-                {wonPrize.title}
-              </p>
-            )}
-
-            {/* Display prize details based on type */}
-            {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
-              <>
-                {/* Coupon Code label */}
-                <p className="text-center text-gray-600 mb-3">Coupon Code</p>
-
-                {/* Coupon code */}
-                <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
-                  {wonPrize.coupon_code}
-                </p>
-
-                {/* Partner name if available */}
-                {wonPrize.partner_name && (
-                  <p className="text-center text-sm text-gray-500 mb-6">
-                    Partner: {wonPrize.partner_name}
-                  </p>
-                )}
-              </>
-            )}
-
-            {wonPrize.reward_type === "points" && wonPrize.points_value && (
-              <p className="text-center text-lg text-gray-600 mb-6">
-                {wonPrize.points_value} Loyalty Points
-              </p>
-            )}
-
-            {wonPrize.reward_type === "marchandise" && (
-              <>
-                <p className="text-center text-gray-600 mb-2">
-                  Merchandise Prize
-                </p>
-                {wonPrize.coupon_code && (
-                  <p className="text-center text-sm text-gray-500 mb-6">
-                    Code: {wonPrize.coupon_code}
-                  </p>
-                )}
-              </>
-            )}
-
-            {wonPrize.reward_type === "none" && (
-              <>
-                <p className="text-center text-gray-600 mb-6">
-                  Don't give up! Try again for a chance to win exciting prizes.
-                </p>
-              </>
-            )}
-
-            {/* Copy button - only show if coupon_code exists and not 'none' type */}
-            {wonPrize.coupon_code && wonPrize.reward_type !== "none" && (
-              <button
-                onClick={copyPrizeInfo}
-                className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
-              >
-                Copy To Clipboard
-              </button>
-            )}
-
-            {/* View Details button - hide for 'none' type */}
-            {wonPrize.reward_type !== "none" && (
-              <button
-                onClick={() => {
-                  setShowResultModal(false);
-                  handleViewVoucher();
-                }}
-                className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
-                  wonPrize.coupon_code ? "" : "mt-3"
-                }`}
-              >
-                View Details
-              </button>
-            )}
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

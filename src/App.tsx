@@ -1067,8 +1067,13 @@ import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
+import PaymentsReceivedListPage from "./pages/PaymentsReceivedListPage";
+import RecordPaymentPage from "./pages/RecordPaymentPage";
+import PaymentReceivedDetailsPage from "./pages/PaymentReceivedDetailsPage";
+import SectionMaster from "./pages/ClubManagement/SectionMaster";
 
 const queryClient = new QueryClient();
 
@@ -1121,7 +1126,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2349,6 +2354,7 @@ function App() {
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
                       />
+
                       <Route
                         path="/accounting/delivery-challans"
                         element={<DeliveryChallansDashboard />}
@@ -2364,6 +2370,19 @@ function App() {
                       <Route
                         path="/accounting/recurring-invoices/create"
                         element={<RecurringInvoicesCreatePage />}
+
+                      />
+                      <Route
+                        path="/accounting/payments-received"
+                        element={<PaymentsReceivedListPage />}
+                      />
+                      <Route
+                        path="/accounting/payments-received/create"
+                        element={<RecordPaymentPage />}
+                      />
+                      <Route
+                        path="/accounting/payments-received/:id"
+                        element={<PaymentReceivedDetailsPage />}
                       />
                       {/* Purchase Order Routes */}
                       <Route
@@ -2436,6 +2455,10 @@ function App() {
                       <Route
                         path="/accounting/expense/edit/:id"
                         element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/master/section"
+                        element={<SectionMaster />}
                       />
                       <Route
                         path="/settings/sales-order/edit/:id"

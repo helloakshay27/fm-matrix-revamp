@@ -1969,7 +1969,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="prepaid"
-                                        checked={formData.prepaid}
+                                        checked={formData.prepaid === true || formData.prepaid === 1 || formData.prepaid === "1" || formData.prepaid === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, prepaid: !!checked })
                                         }
@@ -1979,7 +1979,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="payOnFacility"
-                                        checked={formData.payOnFacility}
+                                        checked={formData.payOnFacility === true || formData.payOnFacility === 1 || formData.payOnFacility === "1" || formData.payOnFacility === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, payOnFacility: !!checked })
                                         }
@@ -1989,7 +1989,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="complimentary"
-                                        checked={formData.complimentary}
+                                        checked={formData.complimentary === true || formData.complimentary === 1 || formData.complimentary === "1" || formData.complimentary === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, complimentary: !!checked })
                                         }
