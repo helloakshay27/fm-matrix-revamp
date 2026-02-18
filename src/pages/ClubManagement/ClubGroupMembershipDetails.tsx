@@ -1308,11 +1308,11 @@ export const ClubGroupMembershipDetails = () => {
                       System Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                      <div className="flex items-start">
+                      {/* <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Member </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.name}</span>
-                      </div>
+                      </div> */}
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">User </span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -1321,7 +1321,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created By</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.created_by_name || '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.created_by|| '-'}</span>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created At</span>

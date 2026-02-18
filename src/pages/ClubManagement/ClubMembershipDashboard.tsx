@@ -96,9 +96,9 @@ export const ClubMembershipDashboard = () => {
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.json`);
       url.searchParams.append('access_token', token || '');
 
-      // Add search filter - search by firstname, lastname, email, or mobile
+      // Add global search filter
       if (filters.search) {
-        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+        url.searchParams.append('global_search_term', filters.search);
       }
 
       // Add club member enabled filter
