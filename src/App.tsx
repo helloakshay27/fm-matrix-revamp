@@ -1074,6 +1074,14 @@ import PaymentsReceivedListPage from "./pages/PaymentsReceivedListPage";
 import RecordPaymentPage from "./pages/RecordPaymentPage";
 import PaymentReceivedDetailsPage from "./pages/PaymentReceivedDetailsPage";
 import SectionMaster from "./pages/ClubManagement/SectionMaster";
+import CreditNoteListPage from "./pages/ClubManagement/CreditNoteListPage";
+import { CreditNoteAddPage } from "./pages/ClubManagement/CreditNoteAddPage";
+import CreditNoteDetailPage from "./pages/ClubManagement/CreditNoteDetailPage";
+import VendorCreditsListPage from "./pages/ClubManagement/VendorCreditsListPage";
+import { VendorCreditsAdd } from "./pages/ClubManagement/VendorCreditsAdd";
+import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
+import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
+import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 
 const queryClient = new QueryClient();
 
@@ -2205,6 +2213,25 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
+                      
+                       <Route
+                        path="/accounting/vendor-credits"
+                        element={<VendorCreditsListPage />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/add"
+                        element={<VendorCreditsAdd />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/details/:id"
+                        element={<VendorCreditsDetails />}
+                      />
+                       <Route
+                        path="/accounting/vendor-credits/edit/:id"
+                        element={<VendorCreditsEdit />}
+                      />
+
+
                       <Route
                         path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
@@ -2384,6 +2411,25 @@ function App() {
                         path="/accounting/payments-received/:id"
                         element={<PaymentReceivedDetailsPage />}
                       />
+
+                      <Route
+                        path="/accounting/credit-note"
+                        element={<CreditNoteListPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/add"
+                        element={<CreditNoteAddPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/:id"
+                        element={<CreditNoteDetailPage />}
+                      />
+                       <Route
+                        path="/accounting/credit-note/edit/:id"
+                        element={<CreditNoteEditPage />}
+                      />
+
+
                       {/* Purchase Order Routes */}
                       <Route
                         path="/accounting/purchase-order"
