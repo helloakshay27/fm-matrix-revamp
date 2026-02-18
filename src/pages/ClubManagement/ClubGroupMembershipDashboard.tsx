@@ -556,7 +556,7 @@ export const ClubGroupMembershipDashboard = () => {
     { key: 'site_name', label: 'Site Name', sortable: true },
     { key: 'start_date', label: 'Start Date', sortable: true },
     { key: 'end_date', label: 'End Date', sortable: true },
-    { key: 'referred_by', label: 'Referred By', sortable: true },
+    // { key: 'referred_by', label: 'Referred By', sortable: true },
     { key: 'membershipStatus', label: 'Status', sortable: false },
     { key: 'created_at', label: 'Created On', sortable: true }
   ];

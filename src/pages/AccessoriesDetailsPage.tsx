@@ -136,7 +136,7 @@ const AccessoriesDetailsPage = () => {
                                 <span className="text-gray-500 min-w-[140px]">Quantity</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-                                    {accessory?.quantity}
+                                    {accessory?.quantity !== undefined && accessory?.quantity !== null && accessory?.quantity !== '' ? Number(accessory.quantity).toFixed(2) : ''}
                                 </span>
                             </div>
                             <div className="flex items-start">
@@ -150,14 +150,14 @@ const AccessoriesDetailsPage = () => {
                                 <span className="text-gray-500 min-w-[140px]">Maximum Stock Level</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-                                    {accessory?.max_stock_level}
+                                    {accessory?.max_stock_level !== undefined && accessory?.max_stock_level !== null && accessory?.max_stock_level !== '' ? Number(accessory.max_stock_level).toFixed(2) : ''}
                                 </span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Cost Per Unit</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-                                    {accessory?.cost}
+                                    {accessory?.cost !== undefined && accessory?.cost !== null && accessory?.cost !== '' ? Number(accessory.cost).toFixed(2) : ''}
                                 </span>
                             </div>
                         </div>
