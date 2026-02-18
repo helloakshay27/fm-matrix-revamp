@@ -257,7 +257,7 @@ export const OccupantUserMasterDashboard = () => {
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
           search_all_fields_cont: searchTerm,
-          lock_user_permissions_user_type_eq: 'pms_occupant',
+          // lock_user_permissions_user_type_eq: 'pms_occupant',
         })
       );
     } catch (error) {
@@ -590,9 +590,9 @@ export const OccupantUserMasterDashboard = () => {
         }
       );
 
-        setOtpData(response.data);
-        setOtpDialogOpen(true);
-        toast.success(response.data.message || "OTP generated successfully");
+      setOtpData(response.data);
+      setOtpDialogOpen(true);
+      toast.success(response.data.message || "OTP generated successfully");
     } catch (error) {
       console.error("OTP generation failed:", error);
       toast.error("Failed to generate OTP");
