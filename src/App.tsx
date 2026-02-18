@@ -27,6 +27,10 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
+import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
+import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
+import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -1134,7 +1138,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1847,15 +1851,15 @@ function App() {
                       />
                       {/* Payments Made Routes */}
                       <Route
-                        path="/settings/payments-made"
+                        path="/accounting/payments-made"
                         element={<PaymentsMadePage />}
                       />
                       <Route
-                        path="/settings/payments-made/create"
+                        path="/accounting/payments-made/create"
                         element={<CreatePaymentPage />}
                       />
                       <Route
-                        path="/settings/payments-made/:id"
+                        path="/accounting/payments-made/:id"
                         element={<PaymentDetailPage />}
                       />
                       -{/* Settings Checklist Setup Routes */}
@@ -3305,6 +3309,23 @@ function App() {
                       <Route
                         path="/finance/wbs"
                         element={<WBSElementDashboard />}
+                      />
+                      {/* Accounting Routes */}
+                      <Route
+                        path="/accounting/retainer-invoices"
+                        element={<RetainerInvoicesDashboard />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/new"
+                        element={<CreateRetainerInvoicePage />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/import"
+                        element={<ImportRetainerInvoicesPage />}
+                      />
+                      <Route
+                        path="/accounting/payment-links"
+                        element={<PaymentLinksDashboard />}
                       />
                       {/* Maintenance Routes */}
                       <Route

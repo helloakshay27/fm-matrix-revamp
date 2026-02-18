@@ -158,7 +158,7 @@ export const PaymentDetailPage = () => {
   };
 
   const handleGoBack = () => {
-    navigate("/settings/payments-made");
+    navigate("/accounting/payments-made");
   };
 
   const handleDownloadReceipt = async () => {
