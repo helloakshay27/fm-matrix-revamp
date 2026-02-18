@@ -1073,6 +1073,7 @@ import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd"
 import PaymentsReceivedListPage from "./pages/PaymentsReceivedListPage";
 import RecordPaymentPage from "./pages/RecordPaymentPage";
 import PaymentReceivedDetailsPage from "./pages/PaymentReceivedDetailsPage";
+import SectionMaster from "./pages/ClubManagement/SectionMaster";
 
 const queryClient = new QueryClient();
 
@@ -2454,6 +2455,10 @@ function App() {
                       <Route
                         path="/accounting/expense/edit/:id"
                         element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/master/section"
+                        element={<SectionMaster />}
                       />
                       <Route
                         path="/settings/sales-order/edit/:id"

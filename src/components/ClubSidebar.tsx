@@ -297,79 +297,79 @@ const modulesByPackage = {
 
     Masters: [
         {
-            name: "Amenities Setup",
+            name: "Sections",
             icon: Calculator,
-            href: "/settings/vas/booking-club/setup",
+            href: "/master/section",
         },
-        {
-            name: "Membership Plan Setup",
-            icon: Calculator,
-            href: "/settings/vas/membership-plan/setup",
-        },
-        {
-            name: "Accessories Setup",
-            icon: Calculator,
-            href: "/settings/accessories",
-        },
-        {
-            name: "Payment Plan Setup",
-            icon: Calculator,
-            href: "/settings/payment-plan/setup",
-        },
-        {
-            name: "Templates",
-            icon: FileSpreadsheet,
-            href: "/master/communication-template",
-            subItems: [
-                {
-                    name: "Communication Template",
-                    href: "/master/communication-template",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Root Cause Analysis",
-                    href: "/master/template/root-cause-analysis",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Preventive Action",
-                    href: "/master/template/preventive-action",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Short-term Impact",
-                    href: "/master/template/short-term-impact",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Long-term Impact",
-                    href: "/master/template/long-term-impact",
-                    color: "text-[#1a1a1a]",
-                },
-                {
-                    name: "Corrective Action",
-                    href: "/master/template/corrective-action",
-                    color: "text-[#1a1a1a]",
-                },
-            ],
-        },
+        // {
+        //     name: "Membership Plan Setup",
+        //     icon: Calculator,
+        //     href: "/settings/vas/membership-plan/setup",
+        // },
+        // {
+        //     name: "Accessories Setup",
+        //     icon: Calculator,
+        //     href: "/settings/accessories",
+        // },
+        // {
+        //     name: "Payment Plan Setup",
+        //     icon: Calculator,
+        //     href: "/settings/payment-plan/setup",
+        // },
+        // {
+        //     name: "Templates",
+        //     icon: FileSpreadsheet,
+        //     href: "/master/communication-template",
+        //     subItems: [
+        //         {
+        //             name: "Communication Template",
+        //             href: "/master/communication-template",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Root Cause Analysis",
+        //             href: "/master/template/root-cause-analysis",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Preventive Action",
+        //             href: "/master/template/preventive-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Short-term Impact",
+        //             href: "/master/template/short-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Long-term Impact",
+        //             href: "/master/template/long-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Corrective Action",
+        //             href: "/master/template/corrective-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //     ],
+        // },
 
-        {
-            name: "Ticket Management",
-            icon: FileText,
-            subItems: [
-                { name: "Setup", href: "/settings/ticket-management/setup" },
-                {
-                    name: "Escalation Matrix",
-                    href: "/settings/ticket-management/escalation-matrix",
-                },
-                {
-                    name: "Cost Approval",
-                    href: "/settings/ticket-management/cost-approval",
-                },
-            ],
-        },
-        { name: "FM Groups", icon: Users, href: "/settings/groups" },
+        // {
+        //     name: "Ticket Management",
+        //     icon: FileText,
+        //     subItems: [
+        //         { name: "Setup", href: "/settings/ticket-management/setup" },
+        //         {
+        //             name: "Escalation Matrix",
+        //             href: "/settings/ticket-management/escalation-matrix",
+        //         },
+        //         {
+        //             name: "Cost Approval",
+        //             href: "/settings/ticket-management/cost-approval",
+        //         },
+        //     ],
+        // },
+        // { name: "FM Groups", icon: Users, href: "/settings/groups" },
 
         // {
         //     name: "Accountants",
