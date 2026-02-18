@@ -110,10 +110,12 @@ export const AddClubBroadcastPage = () => {
             );
             formDataToSend.append("noticeboard[notice_text]", formData.description);
             formDataToSend.append("noticeboard[shared]", formData.shareWith === "all" ? "2" : "1");
+
             formDataToSend.append("noticeboard[of_phase]", "pms");
             formDataToSend.append("noticeboard[of_atype]", "Pms::Site");
             formDataToSend.append("noticeboard[of_atype_id]", localStorage.getItem("selectedSiteId") || "");
             formDataToSend.append("noticeboard[publish]", "1");
+            formDataToSend.append("noticeboard[is_important]", formData.markAsImportant ? "true" : "false");
 
             if (formData.shareWith === 'individuals') {
                 formDataToSend.append("noticeboard[swusers]", formData.selectedIndividuals);

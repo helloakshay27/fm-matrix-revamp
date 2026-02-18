@@ -139,6 +139,14 @@ export const ClubEventDetailsPage = () => {
                             {eventData.to_time && format(eventData.to_time, "hh:mm a")}
                         </span>
                     </div>
+
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">RSVP</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                            {eventData.rsvp_action_int === 1 ? 'Yes' : 'No'}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

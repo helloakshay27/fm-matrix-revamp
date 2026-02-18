@@ -1195,49 +1195,8 @@ if (currentPath.includes("/club-management/helpdesk")) {
                   <MenuItem value="fm-user">FM User</MenuItem>
                 </MuiSelect>
               </FormControl>
-              <TextField
-                label="Name"
-                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Name"}
-                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.name}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
-                fullWidth
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
-                  },
-                }}
-              />
-              <TextField
-                label="Department"
-                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Department"}
-                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.department}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
-                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
-                fullWidth
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
-                  },
-                }}
-              />
-            </div>
 
-            {/* User Selection Dropdown for behalf of others */}
+               {/* User Selection Dropdown for behalf of others */}
             {onBehalfOf !== 'self' && (
               <FormControl
                 fullWidth
@@ -1265,6 +1224,50 @@ if (currentPath.includes("/club-management/helpdesk")) {
                 </MuiSelect>
               </FormControl>
             )}
+              <TextField
+                label="Name"
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Name"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.name}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
+              
+              <TextField
+                label="Department"
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Department"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.department}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
+            </div>
+
+           
           </div>
         </div>
 

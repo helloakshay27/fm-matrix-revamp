@@ -198,7 +198,7 @@ export const ClubBroadcastDetailsPage = () => {
                             <span className="text-gray-500 min-w-[140px]">Important</span>
                             <span className="text-gray-500 mx-2">:</span>
                             <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                {broadcastDetails.isImportant ? 'Yes' : 'No'}
+                                {broadcastDetails.is_important ? 'Yes' : 'No'}
                             </span>
                         </div>
                     </div>
@@ -229,8 +229,15 @@ export const ClubBroadcastDetailsPage = () => {
 
                 <div className="px-[40px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
                     {
-                        broadcastDetails?.attachments ? (
-                            <img src={broadcastDetails?.attachments[0]?.document_url} alt="" height={100} width={150} />
+                        broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
+                            <div className="flex flex-wrap gap-4">
+                                {broadcastDetails.attachments.map((file, idx) => (
+                                    <div key={file.id || idx} className="flex flex-col items-center">
+                                        <img src={file.document_url} alt={file.document_file_name || ''} height={100} width={150} className="object-cover rounded border" />
+                                        <span className="text-xs mt-1 text-gray-700 truncate max-w-[150px]">{file.document_file_name}</span>
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
                             <div className="text-center py-8 text-gray-500">
                                 No attachments available for this event.

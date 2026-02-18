@@ -354,6 +354,7 @@ export const AddClubEventPage = () => {
                                         shrink: true,
                                     }}
                                     sx={fieldStyles}
+                                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
                                 />
                             </Box>
                             <Box
@@ -372,6 +373,7 @@ export const AddClubEventPage = () => {
                                         shrink: true,
                                     }}
                                     sx={fieldStyles}
+                                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
                                 />
                             </Box>
                             <Box
