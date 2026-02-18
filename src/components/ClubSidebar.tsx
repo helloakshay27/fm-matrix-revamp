@@ -100,7 +100,7 @@ const modulesByPackage = {
         //     ],
         // },
     ],
-  
+
     Settings: [
         {
             name: "Amenities Setup",
@@ -191,11 +191,11 @@ const modulesByPackage = {
         //     ],
         // },
 
-        
+
     ],
 
-  Accounting: [
-            {
+    Accounting: [
+        {
             name: "Items",
             icon: FileText,
             subItems: [
@@ -221,13 +221,14 @@ const modulesByPackage = {
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
                 { name: "Delivery Challans", href: "/accounting/delivery-challans" },
                 { name: "Quotes", href: "/accounting/quotes" },
+                { name: "Payments Received", href: "/accounting/payments-received" },
             ],
         },
 
-         {
-              name: "Purchase Orders",
-              icon: FileText,
-              subItems: [
+        {
+            name: "Purchase Orders",
+            icon: FileText,
+            subItems: [
                 { name: "Purchase Order", href: "/accounting/purchase-order" },
                 { name: "Bills", href: "/accounting/bills" },
                 { name: "Recurring Bills", href: "/accounting/recurring-bills" },
@@ -241,9 +242,9 @@ const modulesByPackage = {
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
                 // { name: "Budget", href: "/settings/budget" },
                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
-              ],
-            },
-        
+            ],
+        },
+
         {
             name: "Accountants",
             icon: Users,
@@ -448,7 +449,7 @@ export const ClubSidebar: React.FC = () => {
                 } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
             style={{ top: "4rem", height: "calc(100vh - 65px)" }}
         >
-            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}> 
+            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
                 <button
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                     className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"
