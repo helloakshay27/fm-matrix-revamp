@@ -344,11 +344,11 @@ const modulesByPackage = {
             icon: Calculator,
             href: "/master/section",
         },
-        // {
-        //     name: "Membership Plan Setup",
-        //     icon: Calculator,
-        //     href: "/settings/vas/membership-plan/setup",
-        // },
+        {
+            name: "Tax Setup",
+            icon: Calculator,
+            href: "/master/tax-setup",
+        },
         // {
         //     name: "Accessories Setup",
         //     icon: Calculator,
