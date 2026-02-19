@@ -12,24 +12,19 @@ import {
     Dialog,
     DialogContent,
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { saveToken, saveBaseUrl, getOrganizationsByEmailAndAutoSelect, getBaseUrl, getToken } from '@/utils/auth';
 
 const PermitSafetyCheckForm = () => {
     const location = useLocation();
-    const searchParams = new URLSearchParams(location.search);
+    const [searchParams] = useSearchParams();
     const permitId = searchParams.get("id");
     const urlToken = searchParams.get("token");
-    // Use token from URL, sessionStorage, or localStorage
-    const [token, setToken] = useState(() => urlToken || sessionStorage.getItem("mobile_token") || localStorage.getItem("token"));
+    const email = searchParams.get("email");
+    const orgId = searchParams.get("orgId");
+    const baseUrlParam = searchParams.get("baseUrl");
 
-    // Store token from URL for future use (mobile pattern)
-    useEffect(() => {
-        if (urlToken) {
-            localStorage.setItem("token", urlToken);
-            sessionStorage.setItem("mobile_token", urlToken);
-            setToken(urlToken);
-        }
-    }, [urlToken]);
+    const [token, setToken] = useState<string | null>(null);
     const [questions, setQuestions] = useState<any[]>([]);
     const [answers, setAnswers] = useState<Record<
         number,
@@ -40,40 +35,121 @@ const PermitSafetyCheckForm = () => {
     const [showDialog, setShowDialog] = useState(false);
     const navigate = useNavigate();
 
-    // Fetch questions dynamically
+    // Initialize and fetch questions
     useEffect(() => {
-        const fetchQuestions = async () => {
-            try {
-                const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
-                if (!permitId || !token) return;
-                const url = `${baseUrl}/pms/permits/${permitId}/safety_checklist_data`;
+        initializeAndFetchQuestions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [permitId, urlToken, email, orgId, baseUrlParam]);
 
-                const res = await axios.get(url, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                const data = res.data;
+    const initializeAndFetchQuestions = async () => {
+        if (!permitId) {
+            setLoading(false);
+            return;
+        }
 
-                setQuestions(data.questions || []);
+        try {
+            setLoading(true);
 
-                // Pre-fill answers if backend already returned saved answers
-                const initialAnswers: typeof answers = {};
-                (data.questions || []).forEach((q: any) => {
-                    initialAnswers[q.id] = {
-                        question_id: q.id,
-                        answer_type: data.answers?.[q.id]?.answer_type || "",
-                        remarks: data.answers?.[q.id]?.remarks || "",
-                    };
-                });
-                setAnswers(initialAnswers);
-            } catch (err) {
-                console.error("Failed to fetch questions:", err);
+            // Handle email and organization auto-selection
+            if (email && orgId) {
+                console.log('📧 Processing email and organization:', { email, orgId });
+
+                try {
+                    const { organizations, selectedOrg } = await getOrganizationsByEmailAndAutoSelect(email, orgId);
+
+                    if (selectedOrg) {
+                        console.log('✅ Organization auto-selected:', selectedOrg.name);
+
+                        // Set baseUrl from organization's domain
+                        if (selectedOrg.domain || selectedOrg.sub_domain) {
+                            const orgBaseUrl = `https://${selectedOrg.sub_domain}.${selectedOrg.domain}`;
+                            saveBaseUrl(orgBaseUrl);
+                            console.log('✅ Base URL set from organization:', orgBaseUrl);
+                        }
+                    } else {
+                        console.warn('⚠️ Organization not found with ID:', orgId);
+                    }
+                } catch (orgError) {
+                    console.error('❌ Error fetching organizations:', orgError);
+                }
             }
-        };
-        fetchQuestions();
-    }, [permitId, token]);
+
+            // Set base URL if provided in URL (overrides organization baseUrl)
+            if (baseUrlParam) {
+                saveBaseUrl(baseUrlParam);
+                console.log('✅ Base URL set from URL parameter:', baseUrlParam);
+            }
+
+            // Set token if provided in URL
+            if (urlToken) {
+                saveToken(urlToken);
+                sessionStorage.setItem("mobile_token", urlToken);
+                setToken(urlToken);
+                console.log('✅ Token set from URL parameter');
+            }
+
+            // Use token from URL or from auth utils
+            const tokenToUse = urlToken || getToken() || sessionStorage.getItem("mobile_token");
+
+            if (!tokenToUse) {
+                throw new Error("No authentication token available");
+            }
+
+            // Fetch questions with the initialized baseUrl
+            await fetchQuestions(tokenToUse);
+        } catch (error) {
+            console.error("❌ ERROR INITIALIZING:", error);
+            alert("Error initializing form. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchQuestions = async (tokenToUse: string) => {
+        try {
+            const baseUrl = getBaseUrl();
+
+            if (!baseUrl) {
+                throw new Error('Base URL not configured. Please provide baseUrl parameter or select an organization.');
+            }
+
+            if (!permitId) return;
+
+            const url = `${baseUrl}/pms/permits/${permitId}/safety_checklist_data`;
+
+            console.log("🔍 FETCHING SAFETY CHECKLIST:");
+            console.log("  - Base URL:", baseUrl);
+            console.log("  - Full URL:", url);
+            console.log("  - Permit ID:", permitId);
+            console.log("  - Token:", tokenToUse?.substring(0, 20) + "...");
+
+            const res = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${tokenToUse}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = res.data;
+
+            console.log("📦 SAFETY CHECKLIST API Response:", data);
+
+            setQuestions(data.questions || []);
+
+            // Pre-fill answers if backend already returned saved answers
+            const initialAnswers: typeof answers = {};
+            (data.questions || []).forEach((q: any) => {
+                initialAnswers[q.id] = {
+                    question_id: q.id,
+                    answer_type: data.answers?.[q.id]?.answer_type || "",
+                    remarks: data.answers?.[q.id]?.remarks || "",
+                };
+            });
+            setAnswers(initialAnswers);
+        } catch (err) {
+            console.error("❌ Failed to fetch questions:", err);
+            throw err;
+        }
+    }
 
     const handleChange = (id: number, field: string, value: string) => {
         setAnswers((prev) => ({
@@ -90,9 +166,20 @@ const PermitSafetyCheckForm = () => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
+            const baseUrl = getBaseUrl();
+
+            if (!baseUrl) {
+                throw new Error('Base URL not configured. Please provide baseUrl parameter or select an organization.');
+            }
+
             if (!permitId || !token) return;
+
             const url = `${baseUrl}/pms/permits/${permitId}/submit_checklist_form.json`;
+
+            console.log("📝 SUBMITTING SAFETY CHECKLIST:");
+            console.log("  - Base URL:", baseUrl);
+            console.log("  - Full URL:", url);
+            console.log("  - Permit ID:", permitId);
 
             const formData = new FormData();
 
@@ -133,7 +220,7 @@ const PermitSafetyCheckForm = () => {
                 // navigate(-1); // go back to previous page
             }, 3000);
         } catch (err) {
-            console.error("Submit error:", err);
+            console.error("❌ Submit error:", err);
             alert("Error submitting checklist. Please try again.");
         } finally {
             setLoading(false);
