@@ -1086,6 +1086,7 @@ import { VendorCreditsAdd } from "./pages/ClubManagement/VendorCreditsAdd";
 import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
 import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
+import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 
 const queryClient = new QueryClient();
 
@@ -2509,6 +2510,10 @@ function App() {
                       <Route
                         path="/master/section"
                         element={<SectionMaster />}
+                      />
+                        <Route
+                        path="/master/tax-setup"
+                        element={<TaxSetupMaster />}
                       />
                       <Route
                         path="/settings/sales-order/edit/:id"
