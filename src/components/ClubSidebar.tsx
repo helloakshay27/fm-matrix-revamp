@@ -344,11 +344,6 @@ const modulesByPackage = {
             icon: Calculator,
             href: "/master/section",
         },
-        {
-            name: "Tax Setup",
-            icon: Calculator,
-            href: "/master/tax-setup",
-        },
         // {
         //     name: "Accessories Setup",
         //     icon: Calculator,
