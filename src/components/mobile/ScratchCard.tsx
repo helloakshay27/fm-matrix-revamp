@@ -308,11 +308,41 @@ export const ScratchCard: React.FC = () => {
   // Reset scratch card for next attempt
   const resetScratchCard = () => {
     setShowResultModal(false);
-    setWonPrize(null);
-    setIsRevealed(false);
-    setHasScratched(false);
-    setScratchPercentage(0);
-    setIsScratching(false);
+
+    // Check if user won a reward and update contestData accordingly
+    if (wonPrize && wonPrize.reward_type !== "none") {
+      // User won a reward - show "Already Won" screen
+      const rewardId = localStorage.getItem("last_reward_id");
+      if (rewardId) {
+        setContestData((prev) =>
+          prev
+            ? {
+                ...prev,
+                won_reward: true,
+                user_contest_reward: {
+                  id: parseInt(rewardId),
+                  contest_id: prev.id,
+                  prize_id: wonPrize.id,
+                  reward_type: wonPrize.reward_type,
+                  points_value: wonPrize.points_value,
+                  coupon_code: wonPrize.coupon_code,
+                  user_id: 0,
+                  status: "granted",
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              }
+            : prev
+        );
+      }
+    } else {
+      // User didn't win or got "none" - reset to play again
+      setWonPrize(null);
+      setIsRevealed(false);
+      setHasScratched(false);
+      setScratchPercentage(0);
+      setIsScratching(false);
+    }
   };
 
   // Copy prize code or information

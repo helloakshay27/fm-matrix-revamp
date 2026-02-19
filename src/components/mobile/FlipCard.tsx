@@ -139,7 +139,7 @@ export const FlipCard: React.FC = () => {
       // Update remaining attempts
       setRemainingAttempts((prev) => prev - 1);
 
-      // Show reward section first, then modal after animation
+      // Show modal immediately after animation
       setTimeout(() => {
         setWonPrize(result.prize!);
         setFlippingCard(null);
@@ -152,10 +152,8 @@ export const FlipCard: React.FC = () => {
           );
         }
 
-        // Show result modal after reward section appears
-        setTimeout(() => {
-          setShowResult(true);
-        }, 800);
+        // Show result modal immediately
+        setShowResult(true);
       }, 600);
     } catch (error) {
       console.error("❌ Error flipping card:", error);
@@ -444,7 +442,37 @@ export const FlipCard: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowResult(false);
-                    setWonPrize(null);
+
+                    // Check if user won a reward and update contestData
+                    if (wonPrize && wonPrize.reward_type !== "none") {
+                      const rewardIdStr =
+                        localStorage.getItem("last_reward_id");
+                      if (rewardIdStr) {
+                        setContestData((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                won_reward: true,
+                                user_contest_reward: {
+                                  id: parseInt(rewardIdStr),
+                                  contest_id: prev.id,
+                                  prize_id: wonPrize.id,
+                                  reward_type: wonPrize.reward_type,
+                                  points_value: wonPrize.points_value,
+                                  coupon_code: wonPrize.coupon_code,
+                                  user_id: 0,
+                                  status: "granted",
+                                  created_at: new Date().toISOString(),
+                                  updated_at: new Date().toISOString(),
+                                },
+                              }
+                            : prev
+                        );
+                      }
+                    } else {
+                      // Reset for next attempt if didn't win
+                      setWonPrize(null);
+                    }
                   }}
                   className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
                 >

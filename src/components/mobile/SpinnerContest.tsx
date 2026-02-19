@@ -277,7 +277,7 @@ export const SpinnerContest: React.FC = () => {
           const finalRot = (startRotation + finalRotation) % 360;
           setRotation(finalRot);
 
-          // Spin complete - show reward section first, then modal
+          // Spin complete - show modal immediately
           setTimeout(() => {
             spinSound.playWinSound();
 
@@ -294,10 +294,8 @@ export const SpinnerContest: React.FC = () => {
             // Decrement remaining attempts
             setRemainingAttempts((prev) => Math.max(0, prev - 1));
 
-            // Show result modal after reward section appears
-            setTimeout(() => {
-              setShowResult(true);
-            }, 800);
+            // Show result modal immediately
+            setShowResult(true);
           }, 500);
         }
       };
@@ -572,7 +570,37 @@ export const SpinnerContest: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowResult(false);
-                    setWinResult(null);
+
+                    // Check if user won a reward and update contestData
+                    if (winResult && winResult.prize.reward_type !== "none") {
+                      const rewardIdStr =
+                        localStorage.getItem("last_reward_id");
+                      if (rewardIdStr) {
+                        setContestData((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                won_reward: true,
+                                user_contest_reward: {
+                                  id: parseInt(rewardIdStr),
+                                  contest_id: prev.id,
+                                  prize_id: winResult.prize.id,
+                                  reward_type: winResult.prize.reward_type,
+                                  points_value: winResult.prize.points_value,
+                                  coupon_code: winResult.prize.coupon_code,
+                                  user_id: 0,
+                                  status: "granted",
+                                  created_at: new Date().toISOString(),
+                                  updated_at: new Date().toISOString(),
+                                },
+                              }
+                            : prev
+                        );
+                      }
+                    } else {
+                      // Reset for next attempt if didn't win
+                      setWinResult(null);
+                    }
                   }}
                   className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
                 >
