@@ -92,7 +92,7 @@ export const Header = () => {
 
   const isWebSite = hostname.includes("web.gophygital.work");
 
-  const isClubSite = hostname === "club.lockated.com";
+  const isClubSite = hostname === "club.lockated.com" || "recess-club.panchshil.com";
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
