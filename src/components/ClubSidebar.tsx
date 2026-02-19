@@ -344,6 +344,11 @@ const modulesByPackage = {
             icon: Calculator,
             href: "/master/section",
         },
+        {
+            name :"Sales Person",
+            icon: Calculator,
+            href: "/master/sales-person",
+        }
         // {
         //     name: "Accessories Setup",
         //     icon: Calculator,
