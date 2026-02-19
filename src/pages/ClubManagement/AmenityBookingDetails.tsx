@@ -97,6 +97,7 @@ export const AmenityBookingDetailsClubPage = () => {
         }
       );
       toast.success('Booking cancelled successfully!');
+      setShowCancelModal(false); // Close the modal after success
       fetchDetails();
     } catch (error) {
       toast.error('Failed to cancel booking');
