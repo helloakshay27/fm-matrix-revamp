@@ -1006,7 +1006,7 @@ export const ticketManagementAPI = {
   // Get response TAT timings for a ticket by ID
   async getResponseTatTimings(ticketId: string) {
     try {
-      const response = await apiClient.get(`/response_tat_timings?id=${ticketId}`);
+      const response = await apiClient.get(`/response_tat_timings.json?id=${ticketId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching response TAT timings:', error);
@@ -1017,7 +1017,7 @@ export const ticketManagementAPI = {
   // Get resolution TAT timings for a ticket by ID
   async getResolutionTatTimings(ticketId: string) {
     try {
-      const response = await apiClient.get(`/resolution_tat_timings?id=${ticketId}`);
+      const response = await apiClient.get(`/resolution_tat_timings.json?id=${ticketId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching resolution TAT timings:', error);
