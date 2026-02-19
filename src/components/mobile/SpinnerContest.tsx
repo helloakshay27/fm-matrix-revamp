@@ -34,9 +34,12 @@ interface PlayContestResult {
     status: string;
     created_at: string;
     updated_at: string;
-  };
+  } | null;
   prize: Prize;
   message?: string;
+  won_reward?: boolean;
+  user_attempt_count?: number;
+  user_attemp_remaining?: number;
 }
 
 export const SpinnerContest: React.FC = () => {
@@ -203,6 +206,19 @@ export const SpinnerContest: React.FC = () => {
         throw new Error(result.message || "Failed to play contest");
       }
 
+      // Update contest data won_reward if user actually won a reward
+      if (result.won_reward === true && result.user_contest_reward) {
+        setContestData((prev) =>
+          prev
+            ? {
+                ...prev,
+                won_reward: true,
+                user_contest_reward: result.user_contest_reward,
+              }
+            : prev
+        );
+      }
+
       console.log("🎲 Won prize:", result.prize);
       console.log(
         "🎯 Available segments:",
@@ -261,7 +277,7 @@ export const SpinnerContest: React.FC = () => {
           const finalRot = (startRotation + finalRotation) % 360;
           setRotation(finalRot);
 
-          // Spin complete - show result modal
+          // Spin complete - show reward section first, then modal
           setTimeout(() => {
             spinSound.playWinSound();
 
@@ -273,11 +289,15 @@ export const SpinnerContest: React.FC = () => {
             }
 
             setWinResult({ prize: result.prize! });
-            setShowResult(true);
             setIsSpinning(false);
 
             // Decrement remaining attempts
             setRemainingAttempts((prev) => Math.max(0, prev - 1));
+
+            // Show result modal after reward section appears
+            setTimeout(() => {
+              setShowResult(true);
+            }, 800);
           }, 500);
         }
       };

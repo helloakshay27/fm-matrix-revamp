@@ -9,6 +9,28 @@ import {
 } from "@/services/newFlipCardApi";
 import { toast } from "sonner";
 
+interface PlayContestResult {
+  success: boolean;
+  contest_type: string;
+  user_contest_reward: {
+    id: number;
+    contest_id: number;
+    prize_id: number;
+    reward_type: string;
+    points_value: number | null;
+    coupon_code: string | null;
+    user_id: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  prize: Prize;
+  message?: string;
+  won_reward?: boolean;
+  user_attempt_count?: number;
+  user_attemp_remaining?: number;
+}
+
 export const FlipCard: React.FC = () => {
   const navigate = useNavigate();
   const { gameId } = useParams<{ gameId: string }>();
@@ -84,10 +106,25 @@ export const FlipCard: React.FC = () => {
 
     try {
       // Call API to play/flip
-      const result = await newFlipCardApi.playContest(contestData.id);
+      const result = (await newFlipCardApi.playContest(
+        contestData.id
+      )) as PlayContestResult;
 
       if (!result.success || !result.prize) {
         throw new Error(result.message || "Failed to flip card");
+      }
+
+      // Update contest data won_reward if user actually won a reward
+      if (result.won_reward === true && result.user_contest_reward) {
+        setContestData((prev) =>
+          prev
+            ? {
+                ...prev,
+                won_reward: true,
+                user_contest_reward: result.user_contest_reward,
+              }
+            : prev
+        );
       }
 
       // Update card to flipped state with won prize
@@ -102,10 +139,9 @@ export const FlipCard: React.FC = () => {
       // Update remaining attempts
       setRemainingAttempts((prev) => prev - 1);
 
-      // Show result modal after animation
+      // Show reward section first, then modal after animation
       setTimeout(() => {
         setWonPrize(result.prize!);
-        setShowResult(true);
         setFlippingCard(null);
 
         // Store user_contest_reward.id in localStorage for details page (only if exists)
@@ -115,6 +151,11 @@ export const FlipCard: React.FC = () => {
             result.user_contest_reward.id.toString()
           );
         }
+
+        // Show result modal after reward section appears
+        setTimeout(() => {
+          setShowResult(true);
+        }, 800);
       }, 600);
     } catch (error) {
       console.error("❌ Error flipping card:", error);
@@ -183,10 +224,18 @@ export const FlipCard: React.FC = () => {
               <span className="text-6xl">🎉</span>
             </div>
             {/* Sparkles */}
-            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">✨</span>
-            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">✨</span>
-            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">✨</span>
-            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">✨</span>
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
+              ✨
+            </span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
+              ✨
+            </span>
           </div>
 
           {/* Message */}
@@ -194,7 +243,8 @@ export const FlipCard: React.FC = () => {
             You've Already Won!
           </h1>
           <p className="text-gray-600 text-center mb-8 max-w-sm">
-            Congratulations! You have already won a reward in this contest. View your prize details below.
+            Congratulations! You have already won a reward in this contest. View
+            your prize details below.
           </p>
 
           {/* Reward Info Card */}
@@ -205,7 +255,10 @@ export const FlipCard: React.FC = () => {
                 {contestData.name}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Reward Status: <span className="font-semibold text-[#B88B15] capitalize">{contestData.user_contest_reward.status}</span>
+                Reward Status:{" "}
+                <span className="font-semibold text-[#B88B15] capitalize">
+                  {contestData.user_contest_reward.status}
+                </span>
               </p>
             </div>
           </div>
@@ -228,10 +281,18 @@ export const FlipCard: React.FC = () => {
           </button>
 
           {/* Decorative elements */}
-          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">🎊</div>
-          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">🎈</div>
-          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">🎁</div>
-          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">⭐</div>
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">
+            🎊
+          </div>
+          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">
+            🎈
+          </div>
+          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">
+            🎁
+          </div>
+          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">
+            ⭐
+          </div>
         </div>
       )}
 
@@ -253,7 +314,8 @@ export const FlipCard: React.FC = () => {
               {/* Contest Period */}
               <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
                 <span className="bg-white/70 px-3 py-1.5 rounded-full">
-                  📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+                  📅 Valid:{" "}
+                  {new Date(contestData.start_at).toLocaleDateString()} -{" "}
                   {new Date(contestData.end_at).toLocaleDateString()}
                 </span>
               </div>
@@ -271,7 +333,9 @@ export const FlipCard: React.FC = () => {
                   <span className="text-lg">🎯</span>
                   <p className="text-sm font-semibold">
                     Attempts Remaining{" "}
-                    <span className="text-xl font-bold">{remainingAttempts}</span>
+                    <span className="text-xl font-bold">
+                      {remainingAttempts}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -291,8 +355,9 @@ export const FlipCard: React.FC = () => {
                   className="w-full perspective-1000"
                 >
                   <div
-                    className={`relative transition-all duration-600 transform-style-3d ${flippingCard === card.id ? "rotate-y-180" : ""
-                      }`}
+                    className={`relative transition-all duration-600 transform-style-3d ${
+                      flippingCard === card.id ? "rotate-y-180" : ""
+                    }`}
                   >
                     {/* Card */}
                     <div className="relative rounded-2xl overflow-hidden shadow-lg">
@@ -315,7 +380,7 @@ export const FlipCard: React.FC = () => {
                               {card.prize.reward_type === "coupon"
                                 ? card.prize.partner_name || "Coupon"
                                 : card.prize.reward_type === "points" &&
-                                  card.prize.points_value
+                                    card.prize.points_value
                                   ? `${card.prize.points_value} Points`
                                   : card.prize.reward_type === "marchandise"
                                     ? "Merchandise Prize"
@@ -416,7 +481,9 @@ export const FlipCard: React.FC = () => {
                 {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
                   <>
                     {/* Coupon Code label */}
-                    <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+                    <p className="text-center text-gray-600 mb-3">
+                      Coupon Code
+                    </p>
 
                     {/* Coupon code */}
                     <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
@@ -454,7 +521,8 @@ export const FlipCard: React.FC = () => {
                 {wonPrize.reward_type === "none" && (
                   <>
                     <p className="text-center text-gray-600 mb-6">
-                      Don't give up! Try again for a chance to win exciting prizes.
+                      Don't give up! Try again for a chance to win exciting
+                      prizes.
                     </p>
                   </>
                 )}
