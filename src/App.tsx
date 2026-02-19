@@ -27,6 +27,10 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
+import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
+import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
+import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -1067,8 +1071,22 @@ import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
+import PaymentsReceivedListPage from "./pages/PaymentsReceivedListPage";
+import RecordPaymentPage from "./pages/RecordPaymentPage";
+import PaymentReceivedDetailsPage from "./pages/PaymentReceivedDetailsPage";
+import SectionMaster from "./pages/ClubManagement/SectionMaster";
+import CreditNoteListPage from "./pages/ClubManagement/CreditNoteListPage";
+import { CreditNoteAddPage } from "./pages/ClubManagement/CreditNoteAddPage";
+import CreditNoteDetailPage from "./pages/ClubManagement/CreditNoteDetailPage";
+import VendorCreditsListPage from "./pages/ClubManagement/VendorCreditsListPage";
+import { VendorCreditsAdd } from "./pages/ClubManagement/VendorCreditsAdd";
+import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
+import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
+import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
+import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 
 const queryClient = new QueryClient();
 
@@ -1388,7 +1406,10 @@ function App() {
                       path="/login-page"
                       element={
                         isAuthenticated() ? (
-                          <Navigate to="/" replace />
+                          <Navigate
+                            to="/ops-console/settings/account/user-list-otp"
+                            replace
+                          />
                         ) : (
                           <LoginPageWrapper
                             setBaseUrl={setBaseUrl}
@@ -1831,15 +1852,15 @@ function App() {
                       />
                       {/* Payments Made Routes */}
                       <Route
-                        path="/settings/payments-made"
+                        path="/accounting/payments-made"
                         element={<PaymentsMadePage />}
                       />
                       <Route
-                        path="/settings/payments-made/create"
+                        path="/accounting/payments-made/create"
                         element={<CreatePaymentPage />}
                       />
                       <Route
-                        path="/settings/payments-made/:id"
+                        path="/accounting/payments-made/:id"
                         element={<PaymentDetailPage />}
                       />
                       -{/* Settings Checklist Setup Routes */}
@@ -2197,6 +2218,25 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
+                      
+                       <Route
+                        path="/accounting/vendor-credits"
+                        element={<VendorCreditsListPage />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/add"
+                        element={<VendorCreditsAdd />}
+                      />
+                        <Route
+                        path="/accounting/vendor-credits/details/:id"
+                        element={<VendorCreditsDetails />}
+                      />
+                       <Route
+                        path="/accounting/vendor-credits/edit/:id"
+                        element={<VendorCreditsEdit />}
+                      />
+
+
                       <Route
                         path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
@@ -2346,6 +2386,7 @@ function App() {
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
                       />
+
                       <Route
                         path="/accounting/delivery-challans"
                         element={<DeliveryChallansDashboard />}
@@ -2361,7 +2402,39 @@ function App() {
                       <Route
                         path="/accounting/recurring-invoices/create"
                         element={<RecurringInvoicesCreatePage />}
+
                       />
+                      <Route
+                        path="/accounting/payments-received"
+                        element={<PaymentsReceivedListPage />}
+                      />
+                      <Route
+                        path="/accounting/payments-received/create"
+                        element={<RecordPaymentPage />}
+                      />
+                      <Route
+                        path="/accounting/payments-received/:id"
+                        element={<PaymentReceivedDetailsPage />}
+                      />
+
+                      <Route
+                        path="/accounting/credit-note"
+                        element={<CreditNoteListPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/add"
+                        element={<CreditNoteAddPage />}
+                      />
+                      <Route
+                        path="/accounting/credit-note/:id"
+                        element={<CreditNoteDetailPage />}
+                      />
+                       <Route
+                        path="/accounting/credit-note/edit/:id"
+                        element={<CreditNoteEditPage />}
+                      />
+
+
                       {/* Purchase Order Routes */}
                       <Route
                         path="/accounting/purchase-order"
@@ -2433,6 +2506,14 @@ function App() {
                       <Route
                         path="/accounting/expense/edit/:id"
                         element={<ExpenseCreatePage />}
+                      />
+                      <Route
+                        path="/master/section"
+                        element={<SectionMaster />}
+                      />
+                        <Route
+                        path="/master/tax-setup"
+                        element={<TaxSetupMaster />}
                       />
                       <Route
                         path="/settings/sales-order/edit/:id"
@@ -3233,6 +3314,23 @@ function App() {
                       <Route
                         path="/finance/wbs"
                         element={<WBSElementDashboard />}
+                      />
+                      {/* Accounting Routes */}
+                      <Route
+                        path="/accounting/retainer-invoices"
+                        element={<RetainerInvoicesDashboard />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/new"
+                        element={<CreateRetainerInvoicePage />}
+                      />
+                      <Route
+                        path="/accounting/retainer-invoices/import"
+                        element={<ImportRetainerInvoicesPage />}
+                      />
+                      <Route
+                        path="/accounting/payment-links"
+                        element={<PaymentLinksDashboard />}
                       />
                       {/* Maintenance Routes */}
                       <Route

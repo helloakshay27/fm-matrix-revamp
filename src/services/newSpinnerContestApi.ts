@@ -35,6 +35,8 @@ export interface Contest {
   end_at: string;
   user_caps: number | null;
   user_attemp_remaining: number | null;
+  won_reward: boolean;
+  user_contest_reward: any | null;
   prizes: Prize[];
 }
 
@@ -121,8 +123,8 @@ class NewSpinnerContestApi {
       // Filter spin contests that are active
       const spinContests = Array.isArray(response.data)
         ? response.data.filter(
-            (c) => c.content_type === "spin" && c.active === true
-          )
+          (c) => c.content_type === "spin" && c.active === true
+        )
         : [];
 
       // Sort by created_at or start_at descending (latest first) and return only the first one
@@ -141,8 +143,8 @@ class NewSpinnerContestApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch contests"
+          error.message ||
+          "Failed to fetch contests"
         );
       }
       throw new Error("Failed to fetch contests");
@@ -176,8 +178,8 @@ class NewSpinnerContestApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch contest"
+          error.message ||
+          "Failed to fetch contest"
         );
       }
       throw new Error("Failed to fetch contest");
@@ -210,8 +212,8 @@ class NewSpinnerContestApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to play contest"
+          error.message ||
+          "Failed to play contest"
         );
       }
       throw new Error("Failed to play contest");

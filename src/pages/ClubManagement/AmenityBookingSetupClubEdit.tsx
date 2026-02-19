@@ -549,6 +549,17 @@ export const EditBookingSetupClubPage = () => {
             toast.error("Please enter Cancellation Policies");
             return false;
         }
+        // Validate Maximum Person Allowed > Minimum Person Allowed
+        const min = parseInt(formData.chargeSetup.minimumPersonAllowed || "1");
+        const max = parseInt(formData.chargeSetup.maximumPersonAllowed || "1");
+        if (
+            formData.chargeSetup.maximumPersonAllowed &&
+            formData.chargeSetup.minimumPersonAllowed &&
+            max < min
+        ) {
+            toast.error("Maximum Person Allowed must be greater than or equal to Minimum Person Allowed");
+            return false;
+        }
         return true;
     };
 
@@ -1969,7 +1980,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="prepaid"
-                                        checked={formData.prepaid}
+                                        checked={formData.prepaid === true || formData.prepaid === 1 || formData.prepaid === "1" || formData.prepaid === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, prepaid: !!checked })
                                         }
@@ -1979,7 +1990,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="payOnFacility"
-                                        checked={formData.payOnFacility}
+                                        checked={formData.payOnFacility === true || formData.payOnFacility === 1 || formData.payOnFacility === "1" || formData.payOnFacility === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, payOnFacility: !!checked })
                                         }
@@ -1989,7 +2000,7 @@ export const EditBookingSetupClubPage = () => {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="complimentary"
-                                        checked={formData.complimentary}
+                                        checked={formData.complimentary === true || formData.complimentary === 1 || formData.complimentary === "1" || formData.complimentary === "true"}
                                         onCheckedChange={(checked) =>
                                             setFormData({ ...formData, complimentary: !!checked })
                                         }
@@ -2147,12 +2158,12 @@ export const EditBookingSetupClubPage = () => {
                                                     alt={`cover-preview-${index}`}
                                                     className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
                                                 />
-                                                <button
+                                                {/* <button
                                                     onClick={() => handleRemoveBookingImage(index, id)}
                                                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                                                 >
                                                     <X className="h-4 w-4" />
-                                                </button>
+                                                </button> */}
                                             </div>
                                         ))}
                                     </div>

@@ -18,6 +18,7 @@ import {
     DollarSign,
     Shield,
     FileSpreadsheet,
+    MapPin,
 } from "lucide-react";
 
 const modulesByPackage = {
@@ -100,7 +101,7 @@ const modulesByPackage = {
         //     ],
         // },
     ],
-  
+
     Settings: [
         {
             name: "Amenities Setup",
@@ -191,11 +192,11 @@ const modulesByPackage = {
         //     ],
         // },
 
-        
+
     ],
 
-  Accounting: [
-            {
+    Accounting: [
+        {
             name: "Items",
             icon: FileText,
             subItems: [
@@ -218,32 +219,35 @@ const modulesByPackage = {
                 { name: "Invoices ", href: "/accounting/invoices/list" },
 
                 { name: "Recurring Invoices ", href: "accounting/recurring-invoices" },
-                // { name: "Opening Balance", href: "/settings/opening-balance" },
+
                 { name: "Delivery Challans", href: "/accounting/delivery-challans" },
                 { name: "Quotes", href: "/accounting/quotes" },
+                { name: "Payments Received", href: "/accounting/payments-received" },
+                { name: "Credit Note", href: "/accounting/credit-note" },
             ],
         },
 
-         {
-              name: "Purchase Orders",
-              icon: FileText,
-              subItems: [
+        {
+            name: "Purchases",
+            icon: FileText,
+            subItems: [
                 { name: "Purchase Order", href: "/accounting/purchase-order" },
                 { name: "Bills", href: "/accounting/bills" },
                 { name: "Recurring Bills", href: "/accounting/recurring-bills" },
                 { name: "Vendor", href: "/maintenance/vendor" },
                 { name: "Expense", href: "/accounting/expense" },
-                                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
+                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
                 // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
                 { name: "Payments Made", href: "/accounting/recurring-journal" },
+                { name: "Vendor Credits", href: "/accounting/vendor-credits" }
                 // { name: "Recurring Expenses ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
                 // { name: "Opening Balance", href: "/settings/opening-balance" },
                 // { name: "Budget", href: "/settings/budget" },
                 // { name: "Tax Setup ", href: "/settings/tax-setup" },
-              ],
-            },
-        
+            ],
+        },
+
         {
             name: "Accountants",
             icon: Users,
@@ -290,6 +294,138 @@ const modulesByPackage = {
             ],
         },
     ],
+
+
+    Master: [
+        {
+            name: "Location Master",
+            icon: MapPin,
+            href: "/master/location",
+            subItems: [
+                {
+                    name: "Account",
+                    href: "/master/location/account",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Building",
+                    href: "/master/location/building",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Wing",
+                    href: "/master/location/wing",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Area",
+                    href: "/master/location/area",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Floor",
+                    href: "/master/location/floor",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Unit",
+                    href: "/master/location/unit",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Room",
+                    href: "/master/location/room",
+                    color: "text-[#1a1a1a]",
+                },
+            ],
+        },
+        {
+            name: "Sections",
+            icon: Calculator,
+            href: "/master/section",
+        },
+        // {
+        //     name: "Accessories Setup",
+        //     icon: Calculator,
+        //     href: "/settings/accessories",
+        // },
+        // {
+        //     name: "Payment Plan Setup",
+        //     icon: Calculator,
+        //     href: "/settings/payment-plan/setup",
+        // },
+        // {
+        //     name: "Templates",
+        //     icon: FileSpreadsheet,
+        //     href: "/master/communication-template",
+        //     subItems: [
+        //         {
+        //             name: "Communication Template",
+        //             href: "/master/communication-template",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Root Cause Analysis",
+        //             href: "/master/template/root-cause-analysis",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Preventive Action",
+        //             href: "/master/template/preventive-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Short-term Impact",
+        //             href: "/master/template/short-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Long-term Impact",
+        //             href: "/master/template/long-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Corrective Action",
+        //             href: "/master/template/corrective-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //     ],
+        // },
+
+        // {
+        //     name: "Ticket Management",
+        //     icon: FileText,
+        //     subItems: [
+        //         { name: "Setup", href: "/settings/ticket-management/setup" },
+        //         {
+        //             name: "Escalation Matrix",
+        //             href: "/settings/ticket-management/escalation-matrix",
+        //         },
+        //         {
+        //             name: "Cost Approval",
+        //             href: "/settings/ticket-management/cost-approval",
+        //         },
+        //     ],
+        // },
+        // { name: "FM Groups", icon: Users, href: "/settings/groups" },
+
+        // {
+        //     name: "Accountants",
+        //     icon: Users,
+        //     subItems: [
+        //         { name: "Manual Journals ", href: "/settings/manual-journal" },
+        //         { name: "Transactions ", href: "/settings/transactions" },
+        //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        //         { name: "Opening Balance", href: "/settings/opening-balance" },
+        //         { name: "Budget", href: "/settings/budget" },
+        //         { name: "Tax Setup ", href: "/settings/tax-setup" },
+        //     ],
+        // },
+
+
+    ],
+
 };
 
 export const ClubSidebar: React.FC = () => {
@@ -448,7 +584,7 @@ export const ClubSidebar: React.FC = () => {
                 } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
             style={{ top: "4rem", height: "calc(100vh - 65px)" }}
         >
-            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}> 
+            <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
                 <button
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                     className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"

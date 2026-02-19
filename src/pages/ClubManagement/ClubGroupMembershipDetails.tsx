@@ -747,21 +747,21 @@ export const ClubGroupMembershipDetails = () => {
                     <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.discount}</span>
                   </div>
                 )}
-                <div className="flex items-start">
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">CGST</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.cgst}</span>
-                </div>
-                <div className="flex items-start">
+                </div> */}
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">SGST</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.sgst}</span>
-                </div>
-                <div className="flex items-start">
+                </div> */}
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Total Tax</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.total_tax}</span>
-                </div>
+                </div> */}
                 <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Total Amount</span>
                   <span className="text-gray-500 mx-2">:</span>
@@ -939,18 +939,18 @@ export const ClubGroupMembershipDetails = () => {
                             {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               GST Rate
                             </th> */}
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               CGST
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                            </th> */}
+                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               SGST
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                            </th> */}
+                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               IGST
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                            </th> */}
+                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               GST Amount
-                            </th>
+                            </th> */}
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               Total
                             </th>
@@ -971,26 +971,26 @@ export const ClubGroupMembershipDetails = () => {
                                   ? `${charge.gst_rate.toFixed(2)}%`
                                   : '-'}
                               </td> */}
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.cgst_amount !== null && charge.cgst_amount !== undefined
                                   ? `₹ ${charge.cgst_amount.toFixed(2)}`
                                   : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              </td> */}
+                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.sgst_amount !== null && charge.sgst_amount !== undefined
                                   ? `₹ ${charge.sgst_amount.toFixed(2)}`
                                   : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              </td> */}
+                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.igst_amount !== null && charge.igst_amount !== undefined
                                   ? `₹ ${charge.igst_amount.toFixed(2)}`
                                   : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              </td> */}
+                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.gst_amount !== null && charge.gst_amount !== undefined
                                   ? `₹ ${charge.gst_amount.toFixed(2)}`
                                   : '-'}
-                              </td>
+                              </td> */}
                               <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
                                 ₹ {charge.total_amount.toFixed(2)}
                               </td>
@@ -1308,11 +1308,11 @@ export const ClubGroupMembershipDetails = () => {
                       System Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                      <div className="flex items-start">
+                      {/* <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Member </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.name}</span>
-                      </div>
+                      </div> */}
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">User </span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -1321,7 +1321,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created By</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.created_by_name || '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.created_by|| '-'}</span>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created At</span>

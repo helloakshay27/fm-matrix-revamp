@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { isAuthenticated, getToken, saveToken, saveUser, saveBaseUrl } from '@/utils/auth';
-import { useToast } from '@/components/ui/use-toast';
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import {
+  isAuthenticated,
+  getToken,
+  saveToken,
+  saveUser,
+  saveBaseUrl,
+} from "@/utils/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
+
+// PWA routes that should redirect to login-page with fm_admin_login
+const PWA_ROUTES = ["/ops-console/settings/account/user-list-otp"];
+
+const isPWARoute = (pathname: string): boolean => {
+  return PWA_ROUTES.some((route) => pathname.startsWith(route));
+};
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -38,20 +51,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       const company_id = urlParams.get("company_id");
       const user_id = urlParams.get("user_id");
 
-      console.log('ProtectedRoute Auth Check:', {
-        access_token: access_token ? 'Present' : 'Missing',
+      console.log("ProtectedRoute Auth Check:", {
+        access_token: access_token ? "Present" : "Missing",
         company_id,
         user_id,
-        currentPath: location.pathname
+        currentPath: location.pathname,
       });
 
       // If token is in URL, store it first
       if (access_token) {
-        console.log('ProtectedRoute: Storing token from URL parameters');
-        
+        console.log("ProtectedRoute: Storing token from URL parameters");
+
         // Save token using auth utility
         saveToken(access_token);
-        
+
         // Save base URL for API calls
         const hostname = window.location.hostname;
         if (hostname.includes("vi-web.gophygital.work")) {
@@ -59,29 +72,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         } else if (hostname.includes("localhost")) {
           saveBaseUrl("https://live-api.gophygital.work/");
         }
-        
+
         // Store company and user data
         if (company_id) {
           localStorage.setItem("selectedCompanyId", String(company_id));
         }
-        
+
         if (user_id) {
           localStorage.setItem("user_id", String(user_id));
-          
+
           // Create a user object for VI token access
           const viUser = {
             id: parseInt(user_id),
-            email: '',
-            firstname: 'VI',
-            lastname: 'User',
+            email: "",
+            firstname: "VI",
+            lastname: "User",
             access_token: access_token,
-            user_type: 'vi_token_user'
+            user_type: "vi_token_user",
           };
           saveUser(viUser);
-          
-          console.log('ProtectedRoute: VI User created and stored');
+
+          console.log("ProtectedRoute: VI User created and stored");
         }
-        
+
         // Token is valid, user is authorized
         setIsAuthorized(true);
         return;
@@ -92,10 +105,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       const token = getToken();
 
       if (!authenticated || !token) {
-        console.log('ProtectedRoute: No authentication found, redirecting to login');
+        console.log(
+          "ProtectedRoute: No authentication found, redirecting to login"
+        );
         setIsAuthorized(false);
       } else {
-        console.log('ProtectedRoute: User is authenticated');
+        console.log("ProtectedRoute: User is authenticated");
         setIsAuthorized(true);
       }
     };
@@ -118,6 +133,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return isAuthorized ? (
     <>{children}</>
   ) : (
-    <Navigate to="/login" state={{ from: location }} replace />
+    <Navigate
+      to={
+        isPWARoute(location.pathname) ? "/login-page?fm_admin_login" : "/login"
+      }
+      state={{ from: location }}
+      replace
+    />
   );
 };

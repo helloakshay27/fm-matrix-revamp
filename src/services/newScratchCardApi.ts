@@ -56,6 +56,8 @@ export interface ScratchContest {
   end_at: string;
   user_caps: number | null;
   user_attemp_remaining: number | null;
+  won_reward: boolean;
+  user_contest_reward: UserContestReward | null;
   prizes: Prize[];
 }
 
@@ -238,8 +240,8 @@ class NewScratchCardApi {
       // Filter only scratch contests that are active
       const scratchContests = Array.isArray(response.data)
         ? response.data.filter(
-            (c) => c.content_type === "scratch" && c.active === true
-          )
+          (c) => c.content_type === "scratch" && c.active === true
+        )
         : [];
 
       return scratchContests;

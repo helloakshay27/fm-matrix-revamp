@@ -503,7 +503,7 @@ export const PaymentsMadePage: React.FC = () => {
         leftActions={
           <Button
             className="bg-[#d23f57] hover:bg-[#b03045] text-white gap-2 h-9 px-4 rounded-[4px]"
-            onClick={() => navigate("/settings/payments-made/create")}
+            onClick={() => navigate("/accounting/payments-made/create")}
           >
             <Plus className="h-4 w-4" />
             New
