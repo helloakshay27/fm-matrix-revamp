@@ -13,6 +13,7 @@ import {
   Building,
   UserCheck,
   Database,
+  CreditCard,
 } from "lucide-react";
 
 const adminNavigationStructure = {
