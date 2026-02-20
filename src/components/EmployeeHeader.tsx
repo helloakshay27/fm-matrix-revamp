@@ -704,14 +704,14 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
+                        className={`flex flex-col items-center gap-1 px-3 sm:px-4 py-2 rounded-lg transition-all cursor-move min-w-[70px] sm:min-w-[80px] ${
                           isActive
-                            ? "bg-white text-[#C72030] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-gray-600 hover:bg-[#f6f4ee]"
                         }`}
                       >
-                        <Icon className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden lg:inline text-[10px] sm:text-xs">
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap">
                           {truncatedName}
                         </span>
                       </button>
@@ -759,9 +759,9 @@ export const EmployeeHeader: React.FC = () => {
                   onOpenChange={setIsModuleMenuOpen}
                 >
                   <DropdownMenuTrigger asChild>
-                    <button className="flex flex-col items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-all hover:bg-white/50 text-gray-600 hover:text-gray-900">
+                    <button className="flex flex-col items-center gap-1 px-3 sm:px-4 py-2 rounded-lg transition-all hover:bg-[#f6f4ee] text-gray-600 min-w-[70px] sm:min-w-[80px]">
                       <svg
-                        className="w-4 h-4"
+                        className="w-4 h-4 sm:w-5 sm:h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -770,7 +770,7 @@ export const EmployeeHeader: React.FC = () => {
                         <circle cx="12" cy="5" r="1.5" fill="currentColor" />
                         <circle cx="12" cy="19" r="1.5" fill="currentColor" />
                       </svg>
-                      <span className="text-[10px] sm:text-xs font-medium hidden lg:inline">
+                      <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap">
                         More
                       </span>
                     </button>
@@ -863,12 +863,12 @@ export const EmployeeHeader: React.FC = () => {
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <button className="relative p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                 {notificationCount > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 text-[10px] sm:text-xs"
                   >
                     {notificationCount}
                   </Badge>
@@ -991,9 +991,12 @@ export const EmployeeHeader: React.FC = () => {
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-white" />
+              <button className="flex items-center gap-2 sm:gap-3 p-1 sm:p-1.5 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <span className="hidden sm:block text-sm font-medium text-gray-700">
+                  {userDisplayName}
+                </span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </div>
               </button>
             </DropdownMenuTrigger>

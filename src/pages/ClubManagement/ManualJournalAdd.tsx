@@ -56,10 +56,49 @@ const ManualJournalAdd = () => {
 		fetchAccounts();
 	}, []);
 
-	const handleRowChange = (idx, field, value) => {
-		const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
-		setRows(updated);
-	};
+	// const handleRowChange = (idx, field, value) => {
+	// 	setRows(prevRows => prevRows.map((row, i) => {
+	// 		if (i !== idx) return row;
+	// 		if (field === 'debit') {
+	// 			return { ...row, debit: value, credit: value && Number(value) > 0 ? '' : row.credit };
+	// 		}
+	// 		if (field === 'credit') {
+	// 			return { ...row, credit: value, debit: value && Number(value) > 0 ? '' : row.debit };
+	// 		}
+	// 		return { ...row, [field]: value };
+	// 	}));
+	// };
+	  const handleRowChange = (idx, field, value) => {
+        // Prevent negative values for debit/credit
+        if ((field === 'debit' || field === 'credit')) {
+            let val = value;
+            // Remove minus sign if present
+            if (typeof val === 'string') {
+                val = val.replace(/-/g, '');
+            }
+            // Prevent negative numbers
+            if (Number(val) < 0) val = '';
+            // Format to 2 decimal places if not empty and is a number
+            if (val !== '' && !isNaN(Number(val))) {
+                // Only format if not typing decimal point
+                if (!val.endsWith('.')) {
+                    val = Number(val).toFixed(2);
+                }
+            }
+            setRows(prevRows => prevRows.map((row, i) => {
+                if (i !== idx) return row;
+                if (field === 'debit') {
+                    return { ...row, debit: val, credit: val && Number(val) > 0 ? '' : row.credit };
+                }
+                if (field === 'credit') {
+                    return { ...row, credit: val, debit: val && Number(val) > 0 ? '' : row.debit };
+                }
+                return { ...row, [field]: val };
+            }));
+            return;
+        }
+        setRows(prevRows => prevRows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    };
 
 	const addRow = () => setRows([...rows, { ...initialRow }]);
 	const removeRow = (idx) => setRows(rows.filter((_, i) => i !== idx));
@@ -103,6 +142,26 @@ const ManualJournalAdd = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		// Required field validation
+		if (!date) {
+			toast.error('Date is required.');
+			return;
+		}
+		if (!journalNo) {
+			toast.error('Journal# is required.');
+			return;
+		}
+		if (!notes) {
+			toast.error('Notes are required.');
+			return;
+		}
+		// Validation: Debits and Credits must be equal
+		const totalDebit = rows.reduce((sum, r) => sum + Number(r.debit || 0), 0);
+		const totalCredit = rows.reduce((sum, r) => sum + Number(r.credit || 0), 0);
+		if (totalDebit !== totalCredit) {
+			toast.error('Please ensure that the Debits and Credits are equal.');
+			return;
+		}
 		const payload = buildJournalPayload();
 		console.log('Payload to send:', payload);
 		const baseUrl = API_CONFIG.BASE_URL;
@@ -116,7 +175,7 @@ const ManualJournalAdd = () => {
 				},
 			});
 			console.log('API response:', response.data);
-			 navigate('/settings/manual-journal');
+			 navigate('/accounting/manual-journal');
 			// Optionally show success message or redirect
 		} catch (error) {
 			console.error('Error submitting journal entry:', error);
@@ -145,10 +204,19 @@ const ManualJournalAdd = () => {
 								label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
 								type="number"
 								value={journalNo}
-								onChange={e => setJournalNo(e.target.value)}
+								onChange={e => {
+									let val = e.target.value.replace(/-/g, '');
+									if (Number(val) < 0) val = '';
+									if (val !== '' && !isNaN(Number(val))) {
+										if (!val.endsWith('.')) {
+											val = Number(val).toFixed(2);
+										}
+									}
+									setJournalNo(val);
+								}}
 								variant="outlined"
-								// required
 								className="w-full"
+								inputProps={{ min: 0, step: '0.01', onKeyDown: (e) => { if (e.key === '-') e.preventDefault(); } }}
 							/>
 							<TextField
 								label="Reference#"
@@ -239,17 +307,35 @@ const ManualJournalAdd = () => {
 									<tbody>
 										{rows.map((row, idx) => (
 											<tr key={idx} className="hover:bg-gray-50">
-												<td className="border border-gray-300 px-4 py-3">
-													<FormControl size="small" fullWidth>
+												<td className="border border-gray-300 px-4 py-3" style={{ minWidth: 250, maxWidth: 300, width: 200 }}>
+													<FormControl size="small" fullWidth sx={{ minWidth: 250, maxWidth: 300, width: 200 }}>
 														<Select
 															value={row.account}
 															displayEmpty
 															onChange={e => handleRowChange(idx, 'account', e.target.value)}
 															inputProps={{ 'aria-label': 'Select Account' }}
+															MenuProps={{
+																PaperProps: {
+																	sx: {
+																		minWidth: 250,
+																		maxWidth: 300,
+																		width: 200,
+																		// overflowX: 'auto',
+																		// whiteSpace: 'nowrap',
+																	},
+																},
+															}}
 														>
 															<MenuItem value=""><em>Select an account</em></MenuItem>
 															{accountOptions.map(option => (
-																<MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+																<MenuItem 
+																	key={option.id} 
+																	value={option.id} 
+																	sx={{ minWidth: 180, maxWidth: 240, width: 200 }}
+																	title={option.formatted_name || option.name}
+																>
+																	{option.formatted_name}
+																</MenuItem>
 															))}
 														</Select>
 													</FormControl>
@@ -288,7 +374,8 @@ const ManualJournalAdd = () => {
 														onChange={e => handleRowChange(idx, 'debit', e.target.value)}
 														className="w-full"
 														placeholder="Debit"
-														inputProps={{ min: 0 }}
+														// inputProps={{ min: 0 }}
+													inputProps={{ min: 0, step: '0.01', onKeyDown: (e) => { if (e.key === '-') e.preventDefault(); } }}
 													/>
 												</td>
 												<td className="border border-gray-300 px-4 py-3">
@@ -300,7 +387,8 @@ const ManualJournalAdd = () => {
 														onChange={e => handleRowChange(idx, 'credit', e.target.value)}
 														className="w-full"
 														placeholder="Credit"
-														inputProps={{ min: 0 }}
+														// inputProps={{ min: 0 }}
+														inputProps={{ min: 0, step: '0.01', onKeyDown: (e) => { if (e.key === '-') e.preventDefault(); } }}
 													/>
 												</td>
 												<td className="border border-gray-300 px-4 py-3">

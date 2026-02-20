@@ -26,7 +26,7 @@ export interface Prize {
   id: number;
   title: string;
   display_name: string | null;
-  reward_type: "points" | "coupon";
+  reward_type: "points" | "coupon" | "marchandise" | "none";
   coupon_code: string | null;
   partner_name: string | null;
   points_value: number | null;
@@ -38,6 +38,10 @@ export interface Prize {
   per_user_limit: number | null;
   position: number;
   active: boolean;
+  image: any | null;
+  resource_id: string | null;
+  resource_type: string | null;
+  product: any | null;
 }
 
 // Contest interface based on API structure
@@ -51,7 +55,9 @@ export interface ScratchContest {
   start_at: string;
   end_at: string;
   user_caps: number | null;
-  attemp_required: number | null;
+  user_attemp_remaining: number | null;
+  won_reward: boolean;
+  user_contest_reward: UserContestReward | null;
   prizes: Prize[];
 }
 
@@ -90,7 +96,7 @@ const dummyScratchContests: ScratchContest[] = [
     start_at: "2026-02-01T06:06:00.000+05:30",
     end_at: "2026-03-04T23:59:59.999+05:30",
     user_caps: 8,
-    attemp_required: 3,
+    user_attemp_remaining: 3,
     prizes: [
       {
         id: 4,
@@ -138,7 +144,7 @@ const dummyScratchContests: ScratchContest[] = [
     start_at: "2026-02-10T00:00:00.000+05:30",
     end_at: "2026-02-20T23:59:59.999+05:30",
     user_caps: 5,
-    attemp_required: 2,
+    user_attemp_remaining: 2,
     prizes: [
       {
         id: 6,
@@ -234,8 +240,8 @@ class NewScratchCardApi {
       // Filter only scratch contests that are active
       const scratchContests = Array.isArray(response.data)
         ? response.data.filter(
-            (c) => c.content_type === "scratch" && c.active === true
-          )
+          (c) => c.content_type === "scratch" && c.active === true
+        )
         : [];
 
       return scratchContests;

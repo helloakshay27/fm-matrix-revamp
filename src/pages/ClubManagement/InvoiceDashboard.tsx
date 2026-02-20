@@ -1,0 +1,481 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { TicketPagination } from '@/components/TicketPagination';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
+
+// Type definitions for Sales Order
+interface SalesOrder {
+    id: number;
+    sale_order_number: string;
+    customer_name: string;
+    date: string;
+    shipment_date: string;
+    total_amount: number;
+    status: string;
+    payment_term: string | null;
+    reference_number: string;
+    sales_person_name: string;
+    active: boolean;
+    created_at: string;
+    updated_at: string;
+    fulfilled: boolean;
+}
+
+interface ApiResponse {
+    success: boolean;
+    data: SalesOrder[];
+    pagination: {
+        current_page: number;
+        per_page: number;
+        total_pages: number;
+        total_count: number;
+        has_next_page: boolean;
+        has_prev_page: boolean;
+    };
+}
+
+interface SalesOrderFilters {
+    status?: string;
+    customerId?: number;
+    dateFrom?: string;
+    dateTo?: string;
+}
+
+// Column configuration for the enhanced table
+const columns: ColumnConfig[] = [
+    {
+        key: 'actions',
+        label: 'Action',
+        sortable: false,
+        hideable: false,
+        draggable: false
+    },
+
+     {
+        key: 'date',
+        label: 'Date',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'invoice_number',
+        label: 'Invoice Number',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'order_number',
+        label: 'Order Number',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'customer_name',
+        label: 'Customer Name',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+   
+    {
+        key: 'due_date',
+        label: 'Due Date',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'total_amount',
+        label: 'Amount',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    // {
+    //     key: 'payment_term',
+    //     label: 'Payment Term',
+    //     sortable: true,
+    //     hideable: true,
+    //     draggable: true
+    // },
+    {
+        key: 'balance_due',
+        label: 'Balance Due',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    }
+];
+
+export const InvoiceDashboardAccounting: React.FC = () => {
+    const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+    const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
+    const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        per_page: 10,
+        total_pages: 1,
+        total_count: 0,
+        has_next_page: false,
+        has_prev_page: false
+    });
+
+
+    
+
+    // Fetch sales order data from API
+    const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
+        setLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams({
+                lock_account_id: '1',
+                // page: String(page),
+                // per_page: String(per_page),
+            });
+            if (search) params.append('search', search);
+            if (filters.status) params.append('status', filters.status);
+            if (filters.customerId) params.append('customer_id', String(filters.customerId));
+            if (filters.dateFrom) params.append('date_from', filters.dateFrom);
+            if (filters.dateTo) params.append('date_to', filters.dateTo);
+
+            const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?${params.toString()}`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            console.log('API Response:', data);
+            // Assume API returns { data: SalesOrder[], pagination: {...} }
+            setSalesOrderData(Array.isArray(data) ? data: []);
+            setPagination(data.pagination || {
+                current_page: page,
+                per_page: per_page,
+                total_pages: 1,
+                total_count: 0,
+                has_next_page: false,
+                has_prev_page: false
+            });
+        } catch (error: unknown) {
+            console.error('Error fetching sales order data:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed to load sales order data: ${errorMessage}`, {
+                duration: 5000,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Load data on component mount and when page/perPage/filters change
+    useEffect(() => {
+        fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+
+    // Handle search
+    const handleSearch = (term: string) => {
+        setSearchTerm(term);
+        setCurrentPage(1);
+        if (!term.trim()) {
+            fetchSalesOrderData(1, perPage, '', appliedFilters);
+        }
+    };
+
+    // Handle page change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    // Handle per page change
+    const handlePerPageChange = (newPerPage: number) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
+    };
+
+    // Helper function to get status badge
+    const getStatusBadge = (status: string) => {
+        const statusColors: Record<string, string> = {
+            draft: 'bg-yellow-100 text-yellow-800',
+            confirmed: 'bg-blue-100 text-blue-800',
+            shipped: 'bg-purple-100 text-purple-800',
+            delivered: 'bg-green-100 text-green-800',
+            cancelled: 'bg-red-100 text-red-800',
+            closed: 'bg-gray-100 text-gray-800'
+        };
+
+        return (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+                {status.toUpperCase()}
+            </span>
+        );
+    };
+
+    const totalRecords = pagination.total_count;
+    const totalPages = pagination.total_pages;
+    const displayedData = salesOrderData;
+console.log('Sales Order Data:', salesOrderData);
+    // Render row function for enhanced table
+    const renderRow = (order: SalesOrder) => ({
+        actions: (
+            <div className="flex items-center gap-2">
+                {/* <input
+                    type="checkbox"
+                    checked={selectedRows.includes(order.id)}
+                    onChange={e => {
+                        setSelectedRows(prev =>
+                            e.target.checked
+                                ? [...prev, order.id]
+                                : prev.filter(id => id !== order.id)
+                        );
+                    }}
+                    title="Select for status update"
+                /> */}
+                {/* <button
+                    onClick={() => handleView(order.id)}
+                    className="p-1 text-black hover:bg-gray-100 rounded"
+                    title="View"
+                >
+                    <Eye className="w-4 h-4" />
+                </button> */}
+                {/* <button
+                    onClick={() => handleEdit(order.id)}
+                    className="p-1 text-black hover:bg-gray-100 rounded"
+                    title="Edit"
+                >
+                    <Edit className="w-4 h-4" />
+                </button> */}
+                {/* <button
+                    onClick={() => handleDelete(order.id)}
+                    className="p-1 text-black hover:bg-gray-100 rounded"
+                    title="Delete"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button> */}
+            </div>
+        ),
+        invoice_number: (
+            <div className="font-medium text-blue-600">{order.invoice_number}</div>
+        ),
+                order_number: (
+            <div className="font-medium text-blue-600">{order.order_number}</div>
+        ),
+        customer_name: (
+            <span className="text-sm text-gray-900">{order.customer_name}</span>
+        ),
+        date: (
+            <span className="text-sm text-gray-600">
+                {new Date(order.date).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                })}
+            </span>
+        ),
+
+         due_date: (
+    <span className="text-sm text-gray-600">
+      {order.due_date
+        ? new Date(order.due_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "-"}
+    </span>
+  ),
+
+  total_amount: (
+    <span className="text-sm font-medium text-gray-900">
+      ₹
+      {order.total_amount?.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
+    </span>
+  ),
+
+  balance_due: (
+    <span className="text-sm font-medium text-red-600">
+      ₹
+      {order.balance_due?.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
+    </span>
+  ),
+        // shipment_date: (
+        //     <span className="text-sm text-gray-600">
+        //         {order.shipment_date ? new Date(order.shipment_date).toLocaleDateString('en-GB', {
+        //             day: '2-digit',
+        //             month: '2-digit',
+        //             year: 'numeric'
+        //         }) : ''}
+        //     </span>
+        // ),
+        // total_amount: (
+        //     <span className="text-sm font-medium text-gray-900">
+        //         ₹{order.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        //     </span>
+        // ),
+        // payment_term: (
+        //     <span className="text-sm text-gray-600">{order.payment_term || '-'}</span>
+        // ),
+        // sales_person_name: (
+        //     <span className="text-sm text-gray-600">{order.sales_person_name}</span>
+        // ),
+        status: (
+            <div className="flex items-center justify-center gap-2">
+                {getStatusBadge(order.status)}
+                {/* <input
+                    type="checkbox"
+                    checked={order.fulfilled}
+                    onChange={async () => {
+                        try {
+                            const baseUrl = localStorage.getItem('baseUrl');
+                            const token = localStorage.getItem('token');
+                            const payload = {
+                                sale_order_ids: [order.id],
+                                fulfilled: !order.fulfilled
+                            };
+                            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+                                method: 'POST',
+                                headers: {
+                                    Authorization: token ? `Bearer ${token}` : undefined,
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+                        } catch (err) {
+                            toast.error('Failed to update fulfilled status');
+                        }
+                    }}
+                    style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
+                    title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
+                /> */}
+            </div>
+        )
+    });
+
+    const handleView = (id: number) => {
+        navigate(`/accounting/sales-order/${id}`);
+    };
+
+    const handleEdit = (id: number) => {
+        navigate(`/accounting/sales-order/edit/${id}`);
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm('Are you sure you want to delete this sales order?')) {
+            toast.success('Sales order deleted successfully!', {
+                duration: 3000,
+            });
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        }
+    };
+
+    const handleMarkAsConfirmed = async () => {
+        if (selectedRows.length === 0) {
+            toast.error('Select at least one sales order');
+            return;
+        }
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const payload = {
+                sale_order_ids: selectedRows,
+                status: 'confirmed',
+                fulfilled: true
+            };
+            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+                method: 'POST',
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+            toast.success('Status updated successfully');
+            setSelectedRows([]);
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (err) {
+            toast.error('Failed to update status');
+        }
+    };
+
+    return (
+        <div className="p-6 space-y-6">
+            <header className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">Invoice List</h1>
+            </header>
+
+            <EnhancedTaskTable
+                data={displayedData}
+                columns={columns}
+                renderRow={renderRow}
+                storageKey="sales-order-dashboard-v1"
+                hideTableExport={true}
+                hideTableSearch={false}
+                enableSearch={true}
+                isLoading={loading}
+                searchTerm={searchTerm}
+                onSearchChange={handleSearch}
+                loading={loading}
+                leftActions={(
+                    <div className="flex items-center gap-2">
+                        <Button
+                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            onClick={() => navigate('/accounting/invoices/add')}
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Add
+                        </Button>
+                        {selectedRows.length > 0 && (
+                            <Button
+                                className='bg-green-600 text-white hover:bg-green-700'
+                                onClick={handleMarkAsConfirmed}
+                            >
+                                Mark as Confirmed
+                            </Button>
+                        )}
+                    </div>
+                )}
+            />
+
+            {totalRecords > 0 && (
+                <TicketPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalRecords={totalRecords}
+                    perPage={perPage}
+                    isLoading={loading}
+                    onPageChange={handlePageChange}
+                    onPerPageChange={handlePerPageChange}
+                />
+            )}
+        </div>
+    );
+};

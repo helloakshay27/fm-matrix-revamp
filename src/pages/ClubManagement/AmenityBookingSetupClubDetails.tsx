@@ -858,6 +858,10 @@ export const BookingSetupDetailClubPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {slotsConfigured[0]?.map((slot, idx) => {
                 const slotKey = `${slot.id}-${idx}`;
+                // Format hours and minutes to always be two digits
+                const pad = (n) => n.toString().padStart(2, '0');
+                const slotStart = `${pad(slot.startTime.hour)}:${pad(slot.startTime.minute)}`;
+                const slotEnd = `${pad(slot.endTime.hour)}:${pad(slot.endTime.minute)}`;
                 return (
                   <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
                     if (selectedSlots[slotKey]) {
@@ -887,7 +891,7 @@ export const BookingSetupDetailClubPage = () => {
                         <Label
                           className="cursor-pointer text-sm font-medium"
                         >
-                          {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          {slotStart} - {slotEnd}
                           {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
                             <span className="ml-2 text-xs text-gray-600">
                               ({premiumPercentage[slotKey]}%)
@@ -901,7 +905,7 @@ export const BookingSetupDetailClubPage = () => {
                         <div className="space-y-2">
                           <h4 className="font-medium text-sm">Set Premium Percentage</h4>
                           <p className="text-xs text-gray-500">
-                            {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                            {slotStart} - {slotEnd}
                           </p>
                         </div>
                         <div className="space-y-2">
@@ -1077,6 +1081,33 @@ export const BookingSetupDetailClubPage = () => {
               </h3>
             </div>
 
+            <div className="flex flex-wrap gap-6 mb-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="prepaid"
+                  checked={!!formData.prepaid}
+                  disabled
+                />
+                <label htmlFor="prepaid">Prepaid</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="payOnFacility"
+                  checked={!!formData.payOnFacility}
+                  disabled
+                />
+                <label htmlFor="payOnFacility">Pay on Facility</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="complimentary"
+                  checked={!!formData.complimentary}
+                  disabled
+                />
+                <label htmlFor="complimentary">Complimentary</label>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Prepaid</span>
@@ -1093,6 +1124,13 @@ export const BookingSetupDetailClubPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Complimentary</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.complimentary ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -1100,7 +1138,7 @@ export const BookingSetupDetailClubPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">GST (%)</span>
+                <span className="text-gray-500 min-w-[140px]">CGST (%)</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.gstPercentage || "-"}
@@ -1285,7 +1323,7 @@ export const BookingSetupDetailClubPage = () => {
                   Rules Description
                 </div>
                 <div className="font-medium text-gray-700">Time</div>
-                <div className="font-medium text-gray-700">Deduction</div>
+                <div className="font-medium text-gray-700">Deduction (%)</div>
               </div>
               {cancellationRules.map((rule, index) => (
                 <div

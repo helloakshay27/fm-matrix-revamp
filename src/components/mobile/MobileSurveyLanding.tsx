@@ -1872,6 +1872,12 @@ export const MobileSurveyLanding: React.FC = () => {
                   alt="OIG Logo"
                   className="w-full h-full object-contain"
                 />
+              ) : window.location.origin === "https://web.gophygital.work" && new URLSearchParams(window.location.search).get("org_id") === "3" ? (
+                <img
+                  src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
+                  alt="PSIPL Logo"
+                  className="w-full h-full object-contain"
+                />
               ) : window.location.origin === "https://web.gophygital.work" ? (
                 <img
                   src="/PSIPL-logo (1).png"

@@ -5,7 +5,7 @@ export interface Prize {
   id: number;
   title: string;
   display_name: string | null;
-  reward_type: "points" | "coupon";
+  reward_type: "points" | "coupon" | "marchandise" | "none";
   coupon_code: string | null;
   partner_name: string | null;
   points_value: number | null;
@@ -17,6 +17,10 @@ export interface Prize {
   per_user_limit: number | null;
   position: number;
   active: boolean;
+  image: any | null;
+  resource_id: string | null;
+  resource_type: string | null;
+  product: any | null;
 }
 
 // Contest interface based on API structure
@@ -30,7 +34,9 @@ export interface FlipContest {
   start_at: string;
   end_at: string;
   user_caps: number | null;
-  attemp_required: number | null;
+  user_attemp_remaining: number | null;
+  won_reward: boolean;
+  user_contest_reward: UserContestReward | null;
   prizes: Prize[];
 }
 
@@ -135,8 +141,8 @@ class NewFlipCardApi {
       // Filter only flip contests that are active
       const flipContests = Array.isArray(response.data)
         ? response.data.filter(
-            (c) => c.content_type === "flip" && c.active === true
-          )
+          (c) => c.content_type === "flip" && c.active === true
+        )
         : [];
 
       return flipContests;
@@ -147,8 +153,8 @@ class NewFlipCardApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch contests"
+          error.message ||
+          "Failed to fetch contests"
         );
       }
       throw new Error("Failed to fetch contests");
@@ -182,8 +188,8 @@ class NewFlipCardApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch contest"
+          error.message ||
+          "Failed to fetch contest"
         );
       }
       throw new Error("Failed to fetch contest");
@@ -220,8 +226,8 @@ class NewFlipCardApi {
         console.error("❌ Response data:", error.response?.data);
         throw new Error(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to play contest"
+          error.message ||
+          "Failed to play contest"
         );
       }
       throw new Error("Failed to play contest");

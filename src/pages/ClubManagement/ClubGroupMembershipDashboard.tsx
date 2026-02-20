@@ -133,9 +133,9 @@ export const ClubGroupMembershipDashboard = () => {
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations.json`);
       url.searchParams.append('access_token', token || '');
 
-      // Add search filter
+      // Add global search filter
       if (filters.search) {
-        url.searchParams.append('q[club_members_user_firstname_or_club_members_user_email_or_club_members_user_lastname_or_club_members_user_mobile_cont]', filters.search);
+        url.searchParams.append('global_search_term', filters.search);
       }
 
       // Add club member enabled filter
@@ -548,7 +548,7 @@ export const ClubGroupMembershipDashboard = () => {
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'id', label: 'Group ID', sortable: true },
-    { key: 'membership_plan_id', label: 'Plan ID', sortable: true },
+    { key: 'plan_name', label: 'Plan Name', sortable: true },
     { key: 'member_count', label: 'Members', sortable: false },
     { key: 'member_names', label: 'Member Names', sortable: false },
     { key: 'member_emails', label: 'Emails', sortable: false },
@@ -556,7 +556,7 @@ export const ClubGroupMembershipDashboard = () => {
     { key: 'site_name', label: 'Site Name', sortable: true },
     { key: 'start_date', label: 'Start Date', sortable: true },
     { key: 'end_date', label: 'End Date', sortable: true },
-    { key: 'referred_by', label: 'Referred By', sortable: true },
+    // { key: 'referred_by', label: 'Referred By', sortable: true },
     { key: 'membershipStatus', label: 'Status', sortable: false },
     { key: 'created_at', label: 'Created On', sortable: true }
   ];
@@ -701,10 +701,14 @@ export const ClubGroupMembershipDashboard = () => {
       return item.referred_by || <span className="text-gray-400">-</span>;
     }
 
+    if (columnKey === 'plan_name') {
+      // If membership_plan is present, show its name
+      // If not, fallback to Plan ID or --
+      return item?.membership_plan?.name || <span className="text-gray-400">--</span>;
+    }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return <span className="text-gray-400">--</span>;
     }
-
     return item[columnKey];
   };
 
@@ -724,13 +728,13 @@ export const ClubGroupMembershipDashboard = () => {
   // Custom right actions
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button
+      {/* <Button
         variant="outline"
         onClick={handleDownloadSocietyQR}
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
       >
         <QrCode className="w-4 h-4 " />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -760,7 +764,7 @@ export const ClubGroupMembershipDashboard = () => {
               {renderCustomActions()}
             </div>
           }
-          onFilterClick={() => setIsFilterOpen(true)}
+          // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
           searchPlaceholder="Search Group Memberships"
           onSearchChange={handleSearch}

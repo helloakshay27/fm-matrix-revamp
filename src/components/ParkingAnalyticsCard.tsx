@@ -79,6 +79,12 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           return date.toISOString().split('T')[0];
         })();
 
+        const previousEndDate = (() => {
+          const date = new Date(endDateStr);
+          date.setDate(date.getDate() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
         const url = getFullUrl('/parking_dashboard/peak_hour_trends');
         const options = getAuthenticatedFetchOptions();
         
@@ -86,6 +92,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           start_date: startDateStr,
           end_date: endDateStr,
           previous_start_date: previousStartDate,
+          previous_end_date: previousEndDate,
           compare_yoy: 'true',
         });
 
@@ -131,6 +138,12 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           return s.toISOString().split('T')[0];
         })();
 
+        const previousEndDate = (() => {
+          const s = new Date(endDateStr);
+          s.setDate(s.getDate() - 1);
+          return s.toISOString().split('T')[0];
+        })();
+
         const url = getFullUrl('/parking_dashboard/yearly_comparison');
         const options = getAuthenticatedFetchOptions();
         
@@ -138,6 +151,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           start_date: startDateStr,
           end_date: endDateStr,
           previous_start_date: previousStartDate,
+          previous_end_date: previousEndDate,
           compare_yoy: 'true',
         });
 
@@ -821,6 +835,12 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     return date.toISOString().split('T')[0];
                   })();
 
+                  const previousEndDate = (() => {
+                    const date = new Date(endDateStr);
+                    date.setDate(date.getDate() - 1);
+                    return date.toISOString().split('T')[0];
+                  })();
+
                   const url = getFullUrl('/parking_dashboard/peak_hour_trends');
                   const options = getAuthenticatedFetchOptions();
                   
@@ -828,6 +848,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     start_date: startDateStr,
                     end_date: endDateStr,
                     previous_start_date: previousStartDate,
+                    previous_end_date: previousEndDate,
                     compare_yoy: 'true',
                   });
 

@@ -229,6 +229,15 @@ export const EditMembershipPlanPage = () => {
       toast.error("Please enter HSN Code");
       return false;
     }
+    // Validate frequency for each selected amenity
+    for (const amenity of formData.amenities) {
+      const amenityId = amenity.facility_setup_id || amenity.value || amenity.id;
+      const details = formData.amenityDetails[amenityId];
+      if (!details || !details.frequency) {
+        toast.error("Please select Frequency for all selected amenities");
+        return false;
+      }
+    }
     return true;
   };
 
@@ -469,7 +478,7 @@ export const EditMembershipPlanPage = () => {
               hideColumnsButton={true}
               columns={[
                 { key: "name", label: "Amenity Name", sortable: true },
-                { key: "frequency", label: "Frequency", sortable: false },
+                { key: "frequency", label: <span>Frequency<span style={{ color: 'red' }}> *</span></span>, sortable: false },
                 { key: "slotLimit", label: "Booking Limit", sortable: false },
                 { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
                 // { key: "price", label: "Price", sortable: false },

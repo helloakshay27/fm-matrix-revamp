@@ -474,7 +474,7 @@ export const ManualJournalDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/manual-journal/add');
+    navigate('/accounting/manual-journal/add');
   };
 
   // Render membership status badge
@@ -551,7 +551,7 @@ export const ManualJournalDashboard = () => {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/manual-journal/details/${item.id}`)}
+            onClick={() => navigate(`/accounting/manual-journal/details/${item.id}`)}
             title="View Details"
             className="p-0"
           >
@@ -559,7 +559,7 @@ export const ManualJournalDashboard = () => {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/manual-journal/edit/${item.id || item.actions}`)}
+            onClick={() => navigate(`/accounting/manual-journal/edit/${item.id || item.actions}`)}
             title="Edit"
             className="p-0"
           >

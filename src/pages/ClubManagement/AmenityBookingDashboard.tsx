@@ -22,14 +22,14 @@ const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
   { key: 'bookedBy', label: 'Booked By', sortable: true, draggable: true },
   { key: 'bookedFor', label: 'Booked For', sortable: true, draggable: true },
-  { key: 'companyName', label: 'Company Name', sortable: true, draggable: true },
+  // { key: 'companyName', label: 'Company Name', sortable: true, draggable: true },
   { key: 'facility', label: 'Facility', sortable: true, draggable: true },
   { key: 'facilityType', label: 'Facility Type', sortable: true, draggable: true },
   { key: 'scheduledDate', label: 'Scheduled Date', sortable: true, draggable: true },
   { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, draggable: true },
   { key: 'bookingStatus', label: 'Booking Status', sortable: true, draggable: true },
   { key: 'createdOn', label: 'Created On', sortable: true, draggable: true },
-  { key: 'source', label: 'Source', sortable: true, draggable: true },
+  // { key: 'source', label: 'Source', sortable: true, draggable: true },
 ];
 
 const muiTheme = createTheme({

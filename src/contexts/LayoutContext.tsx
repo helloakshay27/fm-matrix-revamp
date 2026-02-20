@@ -66,6 +66,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
       hostname.includes("pulse.gophygital.work") ||
+      hostname.includes("pulse.panchshil.com") ||
       hostname.includes("pulse-uat.panchshil.com");
 
     // Template routes should be treated as Settings
@@ -119,6 +120,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       newSection = "Market Place";
     } else if (path.startsWith("/club-management")) {
       newSection = "Club Management";
+    } else if (path.startsWith("/accounting")) {
+      newSection = "Accounting";
     } else if (path.startsWith("/master")) {
       newSection = "Master";
     } else if (path.startsWith("/settings")) {

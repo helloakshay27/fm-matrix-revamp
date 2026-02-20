@@ -18,6 +18,7 @@ import {
     DollarSign,
     Shield,
     FileSpreadsheet,
+    MapPin,
 } from "lucide-react";
 
 const modulesByPackage = {
@@ -81,13 +82,26 @@ const modulesByPackage = {
             icon: Package,
             href: "/club-management/accounting",
         },
-        {
-            name: "Accounting",
-            icon: Calculator,
-            href: "https://app.lockated.com/lock_accounts",
-            blank: true,
-        },
+        // {
+        //     name: "Accounting",
+        //     icon: Calculator,
+        //     subItems: [
+        //         {
+        //             name: "Accountants",
+        //             icon: Users,
+        //             subItems: [
+        //                 { name: "Manual Journals", href: "/settings/manual-journal" },
+        //                 { name: "Transactions", href: "/settings/transactions" },
+        //                 { name: "Chart Of Accounts", href: "/settings/chart-journal" },
+        //                 { name: "Opening Balance", href: "/settings/opening-balance" },
+        //                 { name: "Budget", href: "/settings/budget" },
+        //                 { name: "Tax Setup", href: "/settings/tax-setup" },
+        //             ],
+        //         },
+        //     ],
+        // },
     ],
+
     Settings: [
         {
             name: "Amenities Setup",
@@ -164,17 +178,86 @@ const modulesByPackage = {
         },
         { name: "FM Groups", icon: Users, href: "/settings/groups" },
 
+        // {
+        //     name: "Accountants",
+        //     icon: Users,
+        //     subItems: [
+        //         { name: "Manual Journals ", href: "/settings/manual-journal" },
+        //         { name: "Transactions ", href: "/settings/transactions" },
+        //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        //         { name: "Opening Balance", href: "/settings/opening-balance" },
+        //         { name: "Budget", href: "/settings/budget" },
+        //         { name: "Tax Setup ", href: "/settings/tax-setup" },
+        //     ],
+        // },
+
+
+    ],
+
+    Accounting: [
+        {
+            name: "Items",
+            icon: FileText,
+            subItems: [
+                { name: "Items", href: "/accounting/items" },
+                // { name: "Transactions ", href: "/settings/transactions" },
+                // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
+        {
+            name: "Sales",
+            icon: FileText,
+            subItems: [
+                { name: "Customers", href: "/accounting/customers" },
+                { name: "Sales Order", href: "/accounting/sales-order" },
+                { name: "Invoices ", href: "/accounting/invoices/list" },
+
+                { name: "Recurring Invoices ", href: "accounting/recurring-invoices" },
+
+                { name: "Delivery Challans", href: "/accounting/delivery-challans" },
+                { name: "Quotes", href: "/accounting/quotes" },
+                { name: "Payments Received", href: "/accounting/payments-received" },
+                { name: "Credit Note", href: "/accounting/credit-note" },
+            ],
+        },
+
+        {
+            name: "Purchases",
+            icon: FileText,
+            subItems: [
+                { name: "Purchase Order", href: "/accounting/purchase-order" },
+                { name: "Bills", href: "/accounting/bills" },
+                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
+                { name: "Vendor", href: "/maintenance/vendor" },
+                { name: "Expense", href: "/accounting/expense" },
+                { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
+                // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
+                { name: "Payments Made", href: "/accounting/recurring-journal" },
+                { name: "Vendor Credits", href: "/accounting/vendor-credits" }
+                // { name: "Recurring Expenses ", href: "/settings/recurring-journal" },
+                // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+                // { name: "Opening Balance", href: "/settings/opening-balance" },
+                // { name: "Budget", href: "/settings/budget" },
+                // { name: "Tax Setup ", href: "/settings/tax-setup" },
+            ],
+        },
+
         {
             name: "Accountants",
             icon: Users,
             subItems: [
-                { name: "Manual Journals ", href: "/settings/manual-journal" },
-                { name: "Transactions ", href: "/settings/transactions" },
-                // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-                { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-                { name: "Opening Balance", href: "/settings/opening-balance" },
-                { name: "Budget", href: "/settings/budget" },
-                { name: "Tax Setup ", href: "/settings/tax-setup" },
+                { name: "Manual Journals", href: "/accounting/manual-journal" },
+                { name: "Transactions", href: "/accounting/transactions" },
+                { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
+                { name: "Opening Balance", href: "/accounting/opening-balance" },
+                { name: "Budget", href: "/accounting/budget" },
+                { name: "Tax Setup", href: "/accounting/tax-setup" },
             ],
         },
 
@@ -182,8 +265,8 @@ const modulesByPackage = {
             name: "Configuration",
             icon: Settings,
             subItems: [
-                { name: "Charges ", href: "/settings/charge-setup" },
-                { name: "Bill Cycles ", href: "/settings/bill-cycles" },
+                { name: "Charges ", href: "/accounting/charge-setup" },
+                { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
             ],
         },
 
@@ -191,32 +274,169 @@ const modulesByPackage = {
             name: "Reports",
             icon: FileText,
             subItems: [
-                { name: "Balance Sheet", href: "/settings/reports/balance-sheet" },
+                { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
                 {
                     name: "Profit & Loss",
-                    href: "/settings/reports/profit-and-loss",
+                    href: "/accounting/reports/profit-and-loss",
                 },
                 {
                     name: "GST Payable",
-                    href: "/settings/reports/gst-payable",
+                    href: "/accounting/reports/gst-payable",
                 },
                 {
                     name: "GST Receivable",
-                    href: "/settings/reports/gst-receivable",
+                    href: "/accounting/reports/gst-receivable",
                 },
                 {
                     name: "Tax Summary",
-                    href: "/settings/reports/tax-summary",
+                    href: "/accounting/reports/tax-summary",
                 },
             ],
         },
     ],
+
+
+    Master: [
+        {
+            name: "Location Master",
+            icon: MapPin,
+            href: "/master/location",
+            subItems: [
+                {
+                    name: "Account",
+                    href: "/master/location/account",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Building",
+                    href: "/master/location/building",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Wing",
+                    href: "/master/location/wing",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Area",
+                    href: "/master/location/area",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Floor",
+                    href: "/master/location/floor",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Unit",
+                    href: "/master/location/unit",
+                    color: "text-[#1a1a1a]",
+                },
+                {
+                    name: "Room",
+                    href: "/master/location/room",
+                    color: "text-[#1a1a1a]",
+                },
+            ],
+        },
+        {
+            name: "Sections",
+            icon: Calculator,
+            href: "/master/section",
+        },
+        {
+            name :"Sales Person",
+            icon: Calculator,
+            href: "/master/sales-person",
+        }
+        // {
+        //     name: "Accessories Setup",
+        //     icon: Calculator,
+        //     href: "/settings/accessories",
+        // },
+        // {
+        //     name: "Payment Plan Setup",
+        //     icon: Calculator,
+        //     href: "/settings/payment-plan/setup",
+        // },
+        // {
+        //     name: "Templates",
+        //     icon: FileSpreadsheet,
+        //     href: "/master/communication-template",
+        //     subItems: [
+        //         {
+        //             name: "Communication Template",
+        //             href: "/master/communication-template",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Root Cause Analysis",
+        //             href: "/master/template/root-cause-analysis",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Preventive Action",
+        //             href: "/master/template/preventive-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Short-term Impact",
+        //             href: "/master/template/short-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Long-term Impact",
+        //             href: "/master/template/long-term-impact",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //         {
+        //             name: "Corrective Action",
+        //             href: "/master/template/corrective-action",
+        //             color: "text-[#1a1a1a]",
+        //         },
+        //     ],
+        // },
+
+        // {
+        //     name: "Ticket Management",
+        //     icon: FileText,
+        //     subItems: [
+        //         { name: "Setup", href: "/settings/ticket-management/setup" },
+        //         {
+        //             name: "Escalation Matrix",
+        //             href: "/settings/ticket-management/escalation-matrix",
+        //         },
+        //         {
+        //             name: "Cost Approval",
+        //             href: "/settings/ticket-management/cost-approval",
+        //         },
+        //     ],
+        // },
+        // { name: "FM Groups", icon: Users, href: "/settings/groups" },
+
+        // {
+        //     name: "Accountants",
+        //     icon: Users,
+        //     subItems: [
+        //         { name: "Manual Journals ", href: "/settings/manual-journal" },
+        //         { name: "Transactions ", href: "/settings/transactions" },
+        //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
+        //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
+        //         { name: "Opening Balance", href: "/settings/opening-balance" },
+        //         { name: "Budget", href: "/settings/budget" },
+        //         { name: "Tax Setup ", href: "/settings/tax-setup" },
+        //     ],
+        // },
+
+
+    ],
+
 };
 
 export const ClubSidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isSidebarCollapsed, setIsSidebarCollapsed, currentSection } = useLayout();
+    const { isSidebarCollapsed, setIsSidebarCollapsed, currentSection, setCurrentSection } = useLayout();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     const toggleExpand = (name: string) => {
@@ -224,6 +444,19 @@ export const ClubSidebar: React.FC = () => {
             prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
         );
     };
+
+    // // Detect section based on route if not set
+    // React.useEffect(() => {
+    //     const path = location.pathname;
+    //     if (path.startsWith("/accounting")) {
+    //         setCurrentSection && setCurrentSection("Accounting");
+    //     } else if (path.startsWith("/settings")) {
+    //         setCurrentSection && setCurrentSection("Settings");
+    //     } else {
+    //         setCurrentSection && setCurrentSection("Club Management");
+    //     }
+    // }, [location.pathname, setCurrentSection]);
+
 
     // Get current section modules
     const currentModules = modulesByPackage[currentSection as keyof typeof modulesByPackage] || modulesByPackage["Club Management"] || [];
@@ -372,10 +605,33 @@ export const ClubSidebar: React.FC = () => {
 
                 <div className="w-full h-4 bg-[#f6f4ee] border-[#e5e1d8] mb-2"></div>
 
+                {/* Section Switcher
+                {!isSidebarCollapsed && (
+                    <div className="flex gap-2 mb-4">
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Club Management" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Club Management")}
+                        >
+                            Club Management
+                        </button>
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Accounting" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Accounting")}
+                        >
+                            Accounting
+                        </button>
+                        <button
+                            className={`text-sm font-medium px-3 py-1 rounded ${currentSection === "Settings" ? "bg-[#DBC2A9] text-[#1a1a1a]" : "bg-transparent text-[#1a1a1a] hover:bg-[#f0e8dc]"}`}
+                            onClick={() => setCurrentSection("Settings")}
+                        >
+                            Settings
+                        </button>
+                    </div>
+                )} */}
+
                 <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
                     <h3
-                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                            }`}
+                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
                     >
                         {isSidebarCollapsed ? "" : currentSection || "Club Management"}
                     </h3>

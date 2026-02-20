@@ -162,8 +162,14 @@ const isPulseSite = hostname === "pulse.lockated.com";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
+const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
+
 const isClubSite =
   hostname.includes("club.lockated.com");
+
+  const isPanchshilClubSite =
+  // hostname.includes("club.lockated.com");
+  hostname === "recess-club.panchshil.com";
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -248,6 +254,31 @@ export const getOrganizationsByEmail = async (
   if (isClubSite) {
     const response = await fetch(
       `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+  if (isPanchshilClubSite) {
+    const response = await fetch(
+      `https://recess-club-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isPanchshilPulseProd) {
+    const response = await fetch(
+      `https://pulse-api.panchshil.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
