@@ -59,18 +59,23 @@ const adminNavigationStructure = {
             name: "Locked Users",
             href: "/ops-console/settings/account/locked-users",
           },
-           {
+          {
             name: "Occupant Users OTP",
             href: "/ops-console/settings/account/user-list-otp",
           },
-          
+
         ],
       },
       {
         name: "Modules Management",
         icon: Shield,
         href: "/ops-console/settings/modules",
-      }
+      },
+      {
+        name: "Wallet Top-up",
+        icon: CreditCard,
+        href: "/settings/wallet-topup",
+      },
     ],
   },
 };
@@ -106,8 +111,8 @@ export const AdminSidebar = () => {
       <div key={module.name} className="mb-2">
         <div
           className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${isActiveRoute(module.href)
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           onClick={() => {
             if (hasSubItems) {
@@ -148,8 +153,8 @@ export const AdminSidebar = () => {
               <div
                 key={subItem.name}
                 className={`flex items-center p-2 rounded-md cursor-pointer transition-all duration-200 ${isActiveRoute(subItem.href)
-                    ? "bg-[#f0e8dc] shadow-inner"
-                    : "hover:bg-[#DBC2A9]"
+                  ? "bg-[#f0e8dc] shadow-inner"
+                  : "hover:bg-[#DBC2A9]"
                   }`}
                 onClick={() => handleNavigation(subItem.href)}
               >
@@ -158,8 +163,8 @@ export const AdminSidebar = () => {
                 )}
                 <span
                   className={`text-sm ${isActiveRoute(subItem.href)
-                      ? "text-[#C72030] font-medium"
-                      : "text-[#1a1a1a] opacity-80"
+                    ? "text-[#C72030] font-medium"
+                    : "text-[#1a1a1a] opacity-80"
                     }`}
                 >
                   {subItem.name}
@@ -185,8 +190,8 @@ export const AdminSidebar = () => {
         }
       }}
       className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-          ? "bg-[#f0e8dc] shadow-inner"
-          : "hover:bg-[#DBC2A9]"
+        ? "bg-[#f0e8dc] shadow-inner"
+        : "hover:bg-[#DBC2A9]"
         }`}
       title={module.name}
     >
