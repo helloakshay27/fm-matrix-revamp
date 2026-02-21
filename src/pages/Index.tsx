@@ -30,6 +30,12 @@ const Index = () => {
     const selectedView = localStorage.getItem("selectedView");
     const storedUserType = localStorage.getItem("userType");
 
+    // If user is already pms_occupant (employee), skip view selection modal
+    if (storedUserType === "pms_occupant") {
+      setIsViewCheckComplete(true);
+      return;
+    }
+
     // If no view is selected, show the modal
     if (!selectedView || !storedUserType) {
       setShowViewModal(true);
