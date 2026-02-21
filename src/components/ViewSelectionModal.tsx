@@ -90,18 +90,9 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
     if (viewType === "admin") {
       localStorage.setItem("userType", "pms_organization_admin");
       localStorage.setItem("selectedView", "admin");
+      localStorage.removeItem("tempType"); // Remove tempType to ensure admin view
 
-      // Use dynamic routing based on permissions
-      if (userRole) {
-        const firstRoute = findFirstAccessibleRoute(userRole);
-        if (firstRoute) {
-          navigate(firstRoute);
-          onComplete();
-          return;
-        }
-      }
-
-      // Fallback to getFirstAdminLink if findFirstAccessibleRoute doesn't return a route
+      // Use getFirstAdminLink which properly excludes employee modules
       const adminLink = getFirstAdminLink();
       navigate(adminLink);
     } else if (viewType === "employee") {

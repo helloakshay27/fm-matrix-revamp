@@ -1,18 +1,53 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { ViewSelectionModal } from "@/components/ViewSelectionModal";
 
 const Index = () => {
   const navigate = useNavigate();
   const { userRole, loading } = usePermissions();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [isViewCheckComplete, setIsViewCheckComplete] = useState(false);
 
+  // First check if view selection is needed
   useEffect(() => {
-    // Wait for permissions to load
-    if (loading) return;
+    const hostname = window.location.hostname;
+    const isLocalhost =
+      hostname.includes("localhost") ||
+      hostname.includes("lockated.gophygital.work") ||
+      hostname.includes("fm-matrix.lockated.com");
+
+    // Only check for view selection on localhost
+    if (!isLocalhost) {
+      setIsViewCheckComplete(true);
+      return;
+    }
+
+    const selectedView = localStorage.getItem("selectedView");
+    const storedUserType = localStorage.getItem("userType");
+
+    // If user is already pms_occupant (employee), skip view selection modal
+    if (storedUserType === "pms_occupant") {
+      setIsViewCheckComplete(true);
+      return;
+    }
+
+    // If no view is selected, show the modal
+    if (!selectedView || !storedUserType) {
+      setShowViewModal(true);
+    } else {
+      setIsViewCheckComplete(true);
+    }
+  }, []);
+
+  // Navigate to appropriate route after view selection is complete
+  useEffect(() => {
+    // Wait for permissions to load and view check to complete
+    if (loading || !isViewCheckComplete) return;
 
     const hostname = window.location.hostname;
     const isViSite = hostname.includes("vi-web.gophygital.work");
@@ -83,7 +118,22 @@ const Index = () => {
     } else {
       navigate("/maintenance/asset", { replace: true });
     }
-  }, [navigate, userRole, loading, selectedCompany]);
+  }, [navigate, userRole, loading, selectedCompany, isViewCheckComplete]);
+
+  const handleViewSelectionComplete = () => {
+    setShowViewModal(false);
+    setIsViewCheckComplete(true);
+  };
+
+  // Show view selection modal if needed
+  if (showViewModal) {
+    return (
+      <ViewSelectionModal
+        isOpen={showViewModal}
+        onComplete={handleViewSelectionComplete}
+      />
+    );
+  }
 
   // Show loading while redirecting
   return (

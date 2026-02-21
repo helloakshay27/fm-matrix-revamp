@@ -60,8 +60,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-    
-
     location.pathname.startsWith("/club-management");
 
   /**
@@ -77,22 +75,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isEmployeeRoute = location.pathname.startsWith("/employee");
   const userType = localStorage.getItem("userType");
   const isEmployeeUser = isEmployeeRoute || userType === "pms_occupant";
-
-  // Check if user needs to select a view (Admin or Employee)
-  const [showViewModal, setShowViewModal] = useState(false);
-
-  useEffect(() => {
-    // Check if user has already selected a view
-    const selectedView = localStorage.getItem("selectedView");
-    const storedUserType = localStorage.getItem("userType");
-
-    // If no view is selected, show the view selection modal
-    if (!selectedView || !storedUserType) {
-      setShowViewModal(true);
-    } else {
-      setShowViewModal(false);
-    }
-  }, []);
 
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
@@ -177,8 +159,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           selectedCompany?.id === 298 ||
           selectedCompany?.id === 199 ||
           org_id === "90" ||
-          org_id === "84" ||
           org_id === "1" ||
+          org_id === "84" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
@@ -209,8 +191,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
-      org_id === "84" ||
       org_id === "1" ||
+      org_id === "84" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -290,8 +272,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 199 ||
       selectedCompany?.id === 307 ||
       org_id === "90" ||
-      org_id === "84" ||
       org_id === "1" ||
+      org_id === "84" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -329,8 +311,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (org_id === "3") {
       return <ZycusDynamicHeaderCopy />;
     }
-
-
 
     // Use company ID-based layout
     switch (layoutConfig.headerComponent) {
@@ -409,13 +389,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         allowedDomains={["vi-web.gophygital.work"]}
       />
 
-      {/* View Selection Modal - Choose Admin or Employee View */}
-
-      <ViewSelectionModal
-        isOpen={!isEmployeeUser && isLocalhost ? showViewModal : false}
-        onComplete={() => setShowViewModal(false)}
-      />
-
       {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
@@ -423,8 +396,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
         org_id === "90" ||
-        org_id === "84" ||
         org_id === "1" ||
+        org_id === "84" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||
