@@ -147,8 +147,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
-    // Only show sidebar for "Project Task" module, hide for other modules
-    if (isEmployeeUser && isLocalhost) {
+    // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
+    // This prevents employee sidebar from showing in admin view on /vas/projects
+    if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
       // Only render sidebar for Project Task module
       if (currentSection === "Project Task") {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
