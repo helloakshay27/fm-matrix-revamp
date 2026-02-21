@@ -1089,6 +1089,7 @@ import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
+import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 
 
 const queryClient = new QueryClient();
@@ -2355,6 +2356,10 @@ function App() {
                       <Route
                         path="/accounting/customers/add"
                         element={<CustomersAdd />}
+                      />
+                       <Route
+                        path="/accounting/customers/details/:id"
+                        element={<CustomersDetails />}
                       />
                       {/* Sales Order Routes */}
                       <Route
