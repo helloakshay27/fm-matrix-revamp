@@ -556,7 +556,12 @@ const ParkingBookingListSiteWise = () => {
       { key: "category", label: "Category", visible: true, sortable: true },
       { key: "building", label: "Building", visible: true, sortable: true },
       { key: "floor", label: "Floor", visible: true, sortable: true },
-      { key: "designation", label: "Designation", visible: true, sortable: true },
+      {
+        key: "designation",
+        label: "Designation",
+        visible: true,
+        sortable: true,
+      },
       { key: "department", label: "Department", visible: true, sortable: true },
       // { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true, sortable: true },
       { key: "status", label: "Status", visible: true, sortable: true },
@@ -944,11 +949,11 @@ const ParkingBookingListSiteWise = () => {
     const apiParams: ApiFilterParams = {};
 
     // Only apply dialog category if not overridden by card filter
-    if (appliedFilters.category !== 'all' && !cardFilter?.active) {
+    if (appliedFilters.category !== "all" && !cardFilter?.active) {
       apiParams.category = appliedFilters.category;
     }
 
-    if (appliedFilters.user !== 'all') {
+    if (appliedFilters.user !== "all") {
       apiParams.user_ids = [appliedFilters.user];
     }
 
@@ -971,12 +976,12 @@ const ParkingBookingListSiteWise = () => {
     }
 
     // Building filter
-    if (appliedFilters.building !== 'all') {
+    if (appliedFilters.building !== "all") {
       apiParams.building_id = appliedFilters.building;
     }
 
     // Floor filter
-    if (appliedFilters.floor !== 'all') {
+    if (appliedFilters.floor !== "all") {
       apiParams.floor_id = appliedFilters.floor;
     }
 
@@ -1037,7 +1042,7 @@ const ParkingBookingListSiteWise = () => {
         setLoading(true);
         setError(null);
 
-        console.log('🔍 Load Debug - Is Initial Load:', isInitialLoad);
+        console.log("🔍 Load Debug - Is Initial Load:", isInitialLoad);
 
         // Convert UI filters to API filter parameters
         // Convert UI filters to API filter parameters using memoized functions
@@ -1159,26 +1164,26 @@ const ParkingBookingListSiteWise = () => {
               return Promise.all([
                 twoWheelerCategoryIdLocal
                   ? fetchParkingBookings(
-                    1,
-                    "",
-                    buildCancelledFilterParams("two")
-                  )
+                      1,
+                      "",
+                      buildCancelledFilterParams("two")
+                    )
                   : Promise.resolve({
-                    pagination: { total_count: 0 },
-                    parking_bookings: [],
-                    cards: {},
-                  }),
+                      pagination: { total_count: 0 },
+                      parking_bookings: [],
+                      cards: {},
+                    }),
                 fourWheelerCategoryIdLocal
                   ? fetchParkingBookings(
-                    1,
-                    "",
-                    buildCancelledFilterParams("four")
-                  )
+                      1,
+                      "",
+                      buildCancelledFilterParams("four")
+                    )
                   : Promise.resolve({
-                    pagination: { total_count: 0 },
-                    parking_bookings: [],
-                    cards: {},
-                  }),
+                      pagination: { total_count: 0 },
+                      parking_bookings: [],
+                      cards: {},
+                    }),
               ]).then(
                 ([
                   twoWheelerCancelledResponse,
@@ -1198,10 +1203,10 @@ const ParkingBookingListSiteWise = () => {
                   setCards((prev) =>
                     prev
                       ? {
-                        ...prev,
-                        two_cancelled: twoWheelerCancelled,
-                        four_cancelled: fourWheelerCancelled,
-                      }
+                          ...prev,
+                          two_cancelled: twoWheelerCancelled,
+                          four_cancelled: fourWheelerCancelled,
+                        }
                       : null
                   );
                 }
@@ -1302,7 +1307,10 @@ const ParkingBookingListSiteWise = () => {
               buildApiFilterParamsEffective()
             );
 
-            console.log("📊 Received data count:", response.parking_bookings?.length);
+            console.log(
+              "📊 Received data count:",
+              response.parking_bookings?.length
+            );
 
             // Append new data to existing bookings instead of replacing
             setBookings((prevBookings) => [
@@ -1830,21 +1838,21 @@ const ParkingBookingListSiteWise = () => {
         twoWheelerCategoryIdLocal
           ? fetchParkingBookings(1, "", buildCancelledFilterParamsImport("two"))
           : Promise.resolve({
-            pagination: { total_count: 0 },
-            parking_bookings: [],
-            cards: {},
-          }),
+              pagination: { total_count: 0 },
+              parking_bookings: [],
+              cards: {},
+            }),
         fourWheelerCategoryIdLocal
           ? fetchParkingBookings(
-            1,
-            "",
-            buildCancelledFilterParamsImport("four")
-          )
+              1,
+              "",
+              buildCancelledFilterParamsImport("four")
+            )
           : Promise.resolve({
-            pagination: { total_count: 0 },
-            parking_bookings: [],
-            cards: {},
-          }),
+              pagination: { total_count: 0 },
+              parking_bookings: [],
+              cards: {},
+            }),
       ]);
 
       // Set raw API data
@@ -1945,10 +1953,10 @@ const ParkingBookingListSiteWise = () => {
         setSummary((prev) =>
           prev
             ? {
-              ...prev,
-              confirmed_bookings: prev.confirmed_bookings - 1,
-              cancelled_bookings: prev.cancelled_bookings + 1,
-            }
+                ...prev,
+                confirmed_bookings: prev.confirmed_bookings - 1,
+                cancelled_bookings: prev.cancelled_bookings + 1,
+              }
             : null
         );
       }
@@ -2386,52 +2394,52 @@ const ParkingBookingListSiteWise = () => {
           >
             {!cards
               ? // Show skeleton loading only on initial load when cards are null
-              Array.from({ length: 8 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 animate-pulse"
-                >
-                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                    <div className="w-6 h-6 bg-gray-300 rounded"></div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-gray-400">
-                      0
-                    </div>
-                    <div className="text-sm font-medium text-gray-400">
-                      Loading...
-                    </div>
-                  </div>
-                </div>
-              ))
-              : // Show actual card data once loaded
-              parkingStats.map((stat, index) => {
-                const IconComponent = stat.icon;
-                const isClickable =
-                  stat.metric === "booked" || stat.metric === "cancelled";
-                return (
+                Array.from({ length: 8 }).map((_, index) => (
                   <div
                     key={index}
-                    className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${isClickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
-                    onClick={() =>
-                      isClickable &&
-                      handleStatCardClick(stat.vehicle, stat.metric)
-                    }
+                    className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 animate-pulse"
                   >
                     <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                      <IconComponent className="w-6 h-6 text-[#C72030]" />
+                      <div className="w-6 h-6 bg-gray-300 rounded"></div>
                     </div>
                     <div>
-                      <div className="text-2xl font-semibold text-[#1A1A1A]">
-                        {stat.count}
+                      <div className="text-2xl font-semibold text-gray-400">
+                        0
                       </div>
-                      <div className="text-sm font-medium text-[#1A1A1A]">
-                        {stat.title}
+                      <div className="text-sm font-medium text-gray-400">
+                        Loading...
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              : // Show actual card data once loaded
+                parkingStats.map((stat, index) => {
+                  const IconComponent = stat.icon;
+                  const isClickable =
+                    stat.metric === "booked" || stat.metric === "cancelled";
+                  return (
+                    <div
+                      key={index}
+                      className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${isClickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+                      onClick={() =>
+                        isClickable &&
+                        handleStatCardClick(stat.vehicle, stat.metric)
+                      }
+                    >
+                      <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                        <IconComponent className="w-6 h-6 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-semibold text-[#1A1A1A]">
+                          {stat.count}
+                        </div>
+                        <div className="text-sm font-medium text-[#1A1A1A]">
+                          {stat.title}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
           </SectionLoader>
 
           {/* Controls Section */}
@@ -2528,7 +2536,7 @@ const ParkingBookingListSiteWise = () => {
           <div className="overflow-x-auto animate-fade-in">
             <EnhancedTable
               data={paginatedData || []}
-              columns={columns.filter(col => col.visible)}
+              columns={columns.filter((col) => col.visible)}
               renderCell={(item, columnKey) => {
                 if (columnKey === "sr_no") {
                   // For lazy loading, calculate index directly from current paginatedData
@@ -2540,13 +2548,14 @@ const ParkingBookingListSiteWise = () => {
                 if (columnKey === "status") {
                   return (
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${item.status.toLowerCase() === "confirmed" ||
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        item.status.toLowerCase() === "confirmed" ||
                         item.status.toLowerCase() === "approved"
-                        ? "bg-green-100 text-green-800"
-                        : item.status.toLowerCase() === "cancelled"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                        }`}
+                          ? "bg-green-100 text-green-800"
+                          : item.status.toLowerCase() === "cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
                     >
                       {capitalizeStatus(item.status)}
                     </span>
@@ -2606,7 +2615,9 @@ const ParkingBookingListSiteWise = () => {
             {isLazyLoading && (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-4 border-[#C72030] border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-600">Loading more bookings...</p>
+                <p className="text-sm text-gray-600">
+                  Loading more bookings...
+                </p>
               </div>
             )}
             {!isLazyLoading &&
@@ -2647,9 +2658,9 @@ const ParkingBookingListSiteWise = () => {
                   appliedFilters.parking_slot.trim() ||
                   debouncedSearchTerm.trim() ||
                   cardFilter?.active) && (
-                    <div className="">
-                      {/* <p className="text-sm font-medium text-blue-800 mb-2">Current Filters Applied:</p> */}
-                      {/* <div className="text-xs text-blue-700 space-y-1">
+                  <div className="">
+                    {/* <p className="text-sm font-medium text-blue-800 mb-2">Current Filters Applied:</p> */}
+                    {/* <div className="text-xs text-blue-700 space-y-1">
                   {appliedFilters.category !== 'all' && <div>• Category: {parkingCategories.find(c => c.id.toString() === appliedFilters.category)?.name || appliedFilters.category}</div>}
                   {appliedFilters.user !== 'all' && <div>• User: {users.find(u => u.id.toString() === appliedFilters.user)?.full_name || appliedFilters.user}</div>}
                   {appliedFilters.status !== 'all' && <div>• Status: {appliedFilters.status}</div>}
@@ -2659,9 +2670,9 @@ const ParkingBookingListSiteWise = () => {
                   {debouncedSearchTerm.trim() && <div>• Search: "{debouncedSearchTerm}"</div>}
                   {cardFilter?.active && <div>• Card Filter: Active</div>}
                 </div> */}
-                      {/* <p className="text-xs text-blue-600 mt-2 italic">Export will include only the filtered data.</p> */}
-                    </div>
-                  )}
+                    {/* <p className="text-xs text-blue-600 mt-2 italic">Export will include only the filtered data.</p> */}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">
@@ -2724,8 +2735,9 @@ const ParkingBookingListSiteWise = () => {
           {/* Action Panel */}
           {showActionPanel && (
             <div
-              className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${isSidebarCollapsed ? "left-16" : "left-64"
-                } right-0 bottom-0`}
+              className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
+                isSidebarCollapsed ? "left-16" : "left-64"
+              } right-0 bottom-0`}
             >
               <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
                 <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm"></div>
@@ -3238,10 +3250,10 @@ const ParkingBookingListSiteWise = () => {
                 ).length,
                 utilization: cards?.total_slots
                   ? Math.round(
-                    (((cards?.two_booked || 0) + (cards?.four_booked || 0)) /
-                      cards.total_slots) *
-                    100
-                  )
+                      (((cards?.two_booked || 0) + (cards?.four_booked || 0)) /
+                        cards.total_slots) *
+                        100
+                    )
                   : 0,
                 two_wheeler: {
                   total: cards?.two_total || 0,
@@ -3459,7 +3471,7 @@ const ParkingBookingListSiteWise = () => {
                         const durationInDays =
                           Math.ceil(
                             (rangeAEnd.getTime() - rangeAStart.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                              (1000 * 60 * 60 * 24)
                           ) + 1;
 
                         // Calculate Range B: previous period of same duration
@@ -3547,7 +3559,7 @@ const ParkingBookingListSiteWise = () => {
                         const durationInDays =
                           Math.ceil(
                             (rangeAEnd.getTime() - rangeAStart.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                              (1000 * 60 * 60 * 24)
                           ) + 1;
 
                         // Calculate Range B: previous period of same duration

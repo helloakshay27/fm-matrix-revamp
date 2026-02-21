@@ -66,15 +66,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
    * EMPLOYEE VIEW DETECTION
    *
    * Determine if user is in Employee View based on:
-   * 1. Route pattern: /employee/* routes trigger employee layout
-   * 2. localStorage fallback: userType === "pms_occupant"
+   * 1. localStorage: userType === "pms_occupant" (primary check)
+   * 2. Route pattern: /employee/* routes (fallback)
    *
-   * Employee routes: /employee/portal, /vas/projects, etc.
+   * Employee routes: /employee/portal, /vas/projects (when userType is pms_occupant)
    * Admin routes: /admin/*, / (root), and all other routes
    */
-  const isEmployeeRoute = location.pathname.startsWith("/employee");
   const userType = localStorage.getItem("userType");
-  const isEmployeeUser = isEmployeeRoute || userType === "pms_occupant";
+  const isEmployeeUser = userType === "pms_occupant";
 
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");

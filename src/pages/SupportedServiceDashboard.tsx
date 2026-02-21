@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 
-
 const columns: ColumnConfig[] = [
   {
     key: "name",
@@ -71,7 +70,9 @@ const columns: ColumnConfig[] = [
 const SupportedServiceDashboard = () => {
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState<any[]>([]);
-  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [updatingStatus, setUpdatingStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchData = async () => {
@@ -112,11 +113,11 @@ const SupportedServiceDashboard = () => {
             address: item.address,
             active: item.active === 1,
             attachment: item.attachment
-            ? {
-                document_url: item.attachment.document_url,
-                document_content_type: item.attachment.document_content_type,
-              }
-            : undefined, // No attachment in API response
+              ? {
+                  document_url: item.attachment.document_url,
+                  document_content_type: item.attachment.document_content_type,
+                }
+              : undefined, // No attachment in API response
           }))
         : [];
       setPlusServices(servicesList);
@@ -161,7 +162,7 @@ const SupportedServiceDashboard = () => {
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify({
-         active: newStatus,
+          active: newStatus,
         }),
       });
 
@@ -175,10 +176,14 @@ const SupportedServiceDashboard = () => {
         )
       );
 
-      toast.success(`Service ${newStatus ? "activated" : "deactivated"} successfully`);
+      toast.success(
+        `Service ${newStatus ? "activated" : "deactivated"} successfully`
+      );
     } catch (error: any) {
       console.error("Error updating active status:", error);
-      toast.error(error.message || "Failed to update active status. Please try again.");
+      toast.error(
+        error.message || "Failed to update active status. Please try again."
+      );
     } finally {
       setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
     }
@@ -212,7 +217,9 @@ const SupportedServiceDashboard = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setPlusServices((prev) => prev.filter((service: any) => service.id !== item.id));
+      setPlusServices((prev) =>
+        prev.filter((service: any) => service.id !== item.id)
+      );
       toast.success("Plus service deleted successfully!");
     } catch (error: any) {
       console.error("Error deleting plus service:", error);
@@ -422,7 +429,9 @@ const SupportedServiceDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => navigate(`/pulse/supported-services/service/edit/${item.id}`)}
+          onClick={() =>
+            navigate(`/pulse/supported-services/service/edit/${item.id}`)
+          }
           disabled={!item.active}
            title="Edit"
         >
