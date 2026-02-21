@@ -1088,6 +1088,7 @@ import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
+import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 
 
 const queryClient = new QueryClient();
@@ -2524,6 +2525,10 @@ function App() {
                       <Route
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
+                      />
+                        <Route
+                        path="/master/payment-terms"
+                        element={<PaymentTermsMaster />}
                       />
                       {/* Club Management - Occupant Users */}
                       <Route
