@@ -76,22 +76,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const userType = localStorage.getItem("userType");
   const isEmployeeUser = isEmployeeRoute || userType === "pms_occupant";
 
-  // Check if user needs to select a view (Admin or Employee)
-  const [showViewModal, setShowViewModal] = useState(false);
-
-  useEffect(() => {
-    // Check if user has already selected a view
-    const selectedView = localStorage.getItem("selectedView");
-    const storedUserType = localStorage.getItem("userType");
-
-    // If no view is selected, show the view selection modal
-    if (!selectedView || !storedUserType) {
-      setShowViewModal(true);
-    } else {
-      setShowViewModal(false);
-    }
-  }, []);
-
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
@@ -405,26 +389,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         allowedDomains={["vi-web.gophygital.work"]}
       />
 
-      {/* View Selection Modal - Choose Admin or Employee View */}
-
-      <ViewSelectionModal
-        isOpen={!isEmployeeUser && isLocalhost ? showViewModal : false}
-        onComplete={() => setShowViewModal(false)}
-      />
-
       {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          org_id === "84" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "1" ||
+        org_id === "84" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
@@ -448,12 +425,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : "ml-64"
               : "ml-0" // No margin for other modules
             : // For action sidebar, add extra top padding and adjust left margin
-            isActionSidebarVisible
+              isActionSidebarVisible
               ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-          } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

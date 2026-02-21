@@ -410,24 +410,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           hostname.includes("pulse-uat.panchshil.com") ||
           hostname.includes("pulse.panchshil.com");
 
-        // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
-        if (userRole) {
-          const firstRoute = findFirstAccessibleRoute(userRole);
-          if (firstRoute) {
-            navigate(firstRoute, { replace: true });
-            return;
-          }
-        }
-
-        // PRIORITY 2: Localhost with userType-based routing
-        if (userType && isLocalhost) {
-          if (userType === "pms_organization_admin") {
-            navigate("/admin/dashboard", { replace: true });
-            return;
-          } else if (userType === "pms_occupant") {
-            navigate("/vas/projects", { replace: true });
-            return;
-          }
+        // PRIORITY 1: Localhost - always navigate to Index for view selection handling
+        if (isLocalhost) {
+          navigate("/", { replace: true });
+          return;
         }
 
         // PRIORITY 3: Company ID-based routing for specific companies

@@ -1347,7 +1347,7 @@ export const ProjectsDashboard = () => {
         newRowPlaceholder="Click to add new project"
         loading={loading}
         enableGlobalSearch={true}
-        onGlobalSearch={(searchQuery) => {
+        onSearchChange={(searchQuery) => {
           setSearchTerm(searchQuery);
           setCurrentPage(1);
           setHasMore(true);
