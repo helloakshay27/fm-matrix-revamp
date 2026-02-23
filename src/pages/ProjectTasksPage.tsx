@@ -2105,7 +2105,7 @@ const ProjectTasksPage = () => {
                         }}
                     >
                         <div className="sticky top-0 bg-white z-10">
-                            <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                             <X
                                 className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                                 onClick={handleCloseModal}
@@ -2219,7 +2219,7 @@ const ProjectTasksPage = () => {
                     }}
                 >
                     <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
+                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                         <X
                             className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                             onClick={handleCloseModal}
