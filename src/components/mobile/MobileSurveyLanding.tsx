@@ -192,6 +192,8 @@ export const MobileSurveyLanding: React.FC = () => {
   const getCurrentQuestion = (): SurveyQuestion | null => {
     if (
       !surveyData ||
+      !surveyData.snag_checklist ||
+      !surveyData.snag_checklist.snag_questions ||
       currentQuestionIndex >= surveyData.snag_checklist.snag_questions.length
     ) {
       return null;
@@ -212,7 +214,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Check if survey has text-based questions (text, input, description)
   const hasTextBasedQuestions = (): boolean => {
-    if (!surveyData) return false;
+    if (!surveyData || !surveyData.snag_checklist || !surveyData.snag_checklist.snag_questions) return false;
     return surveyData.snag_checklist.snag_questions.some(
       (question) =>
         question.qtype === "text" ||
@@ -815,7 +817,7 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_mode = "emoji_selection";
 
           // For emoji/smiley questions, find and add option_id from API response
-          if (answerData.rating !== undefined) {
+          if (answerData.rating !== undefined && surveyData.snag_checklist?.snag_questions) {
             const questionData = surveyData.snag_checklist.snag_questions.find(
               (q) => q.id === currentQuestion.id
             );
@@ -984,11 +986,11 @@ export const MobileSurveyLanding: React.FC = () => {
     setShowGenericTags(false);
 
     // Move to next question or show final comments
-    if (currentQuestionIndex < surveyData!.snag_checklist.questions_count - 1) {
+    if (currentQuestionIndex < (surveyData?.snag_checklist?.questions_count ?? 0) - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       // All questions completed, show final comments step
-      setCurrentQuestionIndex(surveyData!.snag_checklist.questions_count);
+      setCurrentQuestionIndex(surveyData?.snag_checklist?.questions_count ?? 0);
     }
   };
 
@@ -1002,11 +1004,11 @@ export const MobileSurveyLanding: React.FC = () => {
     setShowGenericTags(false);
 
     // Move to next question or show final description
-    if (currentQuestionIndex < surveyData!.snag_checklist.questions_count - 1) {
+    if (currentQuestionIndex < (surveyData?.snag_checklist?.questions_count ?? 0) - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       // All questions completed, show final description step
-      setCurrentQuestionIndex(surveyData!.snag_checklist.questions_count);
+      setCurrentQuestionIndex(surveyData?.snag_checklist?.questions_count ?? 0);
     }
   };
 
@@ -1019,7 +1021,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       // Get the previous question
       const previousQuestion =
-        surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
+        surveyData?.snag_checklist?.snag_questions?.[previousQuestionIndex];
 
       if (previousQuestion) {
         // Restore saved answer for the previous question
@@ -1173,7 +1175,7 @@ export const MobileSurveyLanding: React.FC = () => {
       for (const questionId in answers) {
         console.log(`Processing question ID: ${questionId}`);
         const answer = answers[parseInt(questionId)];
-        const question = surveyData.snag_checklist.snag_questions.find(
+        const question = surveyData.snag_checklist?.snag_questions?.find(
           (q) => q.id === parseInt(questionId)
         );
 
@@ -1643,7 +1645,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const surveyResponseArray = [];
 
       // Process each question
-      for (const question of surveyData.snag_checklist.snag_questions) {
+      for (const question of surveyData.snag_checklist?.snag_questions ?? []) {
         const answer = answers[question.id];
         if (!answer) continue;
 
@@ -1939,7 +1941,7 @@ export const MobileSurveyLanding: React.FC = () => {
           {isFormView ? (
             <div className="w-full">
               <FormViewAllQuestions
-                questions={surveyData.snag_checklist.snag_questions}
+                questions={surveyData.snag_checklist?.snag_questions ?? []}
                 answers={answers}
                 onAnswerChange={handleAnswerChange}
                 onSubmit={handleFormViewSubmit}
