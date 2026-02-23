@@ -1069,8 +1069,10 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import ModulesManagement from "./pages/settings/ModulesManagement";
 import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
+import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage"
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails"
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1086,6 +1088,11 @@ import { VendorCreditsAdd } from "./pages/ClubManagement/VendorCreditsAdd";
 import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
 import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
+import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
+import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
+import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
+import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
+
 
 const queryClient = new QueryClient();
 
@@ -1138,7 +1145,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2217,20 +2224,20 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
-                      
-                       <Route
+
+                      <Route
                         path="/accounting/vendor-credits"
                         element={<VendorCreditsListPage />}
                       />
-                        <Route
+                      <Route
                         path="/accounting/vendor-credits/add"
                         element={<VendorCreditsAdd />}
                       />
-                        <Route
+                      <Route
                         path="/accounting/vendor-credits/details/:id"
                         element={<VendorCreditsDetails />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/vendor-credits/edit/:id"
                         element={<VendorCreditsEdit />}
                       />
@@ -2352,6 +2359,10 @@ function App() {
                         path="/accounting/customers/add"
                         element={<CustomersAdd />}
                       />
+                       <Route
+                        path="/accounting/customers/details/:id"
+                        element={<CustomersDetails />}
+                      />
                       {/* Sales Order Routes */}
                       <Route
                         path="/accounting/sales-order"
@@ -2377,6 +2388,10 @@ function App() {
                         path="/accounting/invoices/add"
                         element={<InvoiceAdd />}
                       />
+                       <Route
+                        path="/accounting/dashboard/invoices/:id"
+                        element={<InvoiceDashboardDetailsPage />}
+                      />
                       <Route
                         path="/accounting/quotes"
                         element={<QuotesDashboard />}
@@ -2384,6 +2399,10 @@ function App() {
                       <Route
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
+                      />
+                        <Route
+                        path="/accounting/quotes/details/:id"
+                        element={<QuotesDetails />}
                       />
 
                       <Route
@@ -2428,7 +2447,7 @@ function App() {
                         path="/accounting/credit-note/:id"
                         element={<CreditNoteDetailPage />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/credit-note/edit/:id"
                         element={<CreditNoteEditPage />}
                       />
@@ -2511,8 +2530,20 @@ function App() {
                         element={<SectionMaster />}
                       />
                       <Route
+                        path="/master/tax-setup"
+                        element={<TaxSetupMaster />}
+                      />
+                      <Route
+                        path="/master/sales-person"
+                        element={<SalesPersonMaster />}
+                      />
+                      <Route
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
+                      />
+                        <Route
+                        path="/master/payment-terms"
+                        element={<PaymentTermsMaster />}
                       />
                       {/* Club Management - Occupant Users */}
                       <Route
@@ -5221,6 +5252,15 @@ function App() {
                     <Route
                       path="/mo/:assetId"
                       element={<MobileOwnerCostAssetPage />}
+                    />
+                    {/* Mobile Permit Safety Check Routes */}
+                    <Route
+                      path="/mobile/permit-safety-check/:permitId"
+                      element={<PermitSafetyCheckForm />}
+                    />
+                    <Route
+                      path="/ps/:permitId"
+                      element={<PermitSafetyCheckForm />}
                     />
                     {/* QR Test Route */}
                     <Route path="/qr-test" element={<QRTestPage />} />

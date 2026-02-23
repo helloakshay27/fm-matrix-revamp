@@ -79,7 +79,10 @@ interface LayoutContext {
 // Transform API data to table format
 const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   id: apiUser.id.toString(),
-  userName: `${apiUser.firstname} ${apiUser.lastname}`,
+  // userName: `${apiUser.firstname} ${apiUser.lastname}`,
+  userName: [apiUser.firstname, apiUser.lastname]
+    .filter(Boolean)          // removes null, undefined, empty
+    .join(" "),
   gender: apiUser.gender,
   mobile: apiUser.mobile,
   email: apiUser.email,

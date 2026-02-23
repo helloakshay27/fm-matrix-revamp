@@ -21,6 +21,8 @@ export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+   const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
@@ -32,6 +34,8 @@ export const AmenityBookingDetailsClubPage = () => {
       timestamp: "",
     }
   ]);
+   // Cancel modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
@@ -44,7 +48,7 @@ export const AmenityBookingDetailsClubPage = () => {
     setPaymentLoading(true);
     try {
       const response = await axios.post(
-        `https://club-uat-api.lockated.com/pms/admin/facility_bookings/${id}/payment`,
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}/payment`,
         {
           lock_payment: {
             payment_mode: paymentMode,
@@ -77,7 +81,7 @@ export const AmenityBookingDetailsClubPage = () => {
     }
     try {
       await axios.patch(
-        `https://club-uat-api.lockated.com/pms/admin/facility_bookings/${id}`,
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}`,
         {
           facility_booking: {
             canceled_by: 'user',
@@ -93,6 +97,7 @@ export const AmenityBookingDetailsClubPage = () => {
         }
       );
       toast.success('Booking cancelled successfully!');
+      setShowCancelModal(false); // Close the modal after success
       fetchDetails();
     } catch (error) {
       toast.error('Failed to cancel booking');
@@ -100,8 +105,7 @@ export const AmenityBookingDetailsClubPage = () => {
     }
   };
 
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
+ 
 
   const fetchDetails = async () => {
     try {
@@ -670,6 +674,7 @@ export const AmenityBookingDetailsClubPage = () => {
 
 
         {/* Payment & Cancel Button for Pending/Confirmed Status */}
+
         {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && (
           <div className="flex justify-end mt-6 mb-4 gap-2">
             {bookings?.current_status === 'Pending' && (
@@ -677,15 +682,18 @@ export const AmenityBookingDetailsClubPage = () => {
                 Payment
               </Button>
             )}
-            {bookings?.current_status === 'Confirmed' && (
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
+            {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowCancelModal(true)}>
                 Cancel Booking
               </Button>
             )}
           </div>
         )}
 
+      
+ 
 
+{console.log(",,,,",bookings)}
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
@@ -740,6 +748,89 @@ export const AmenityBookingDetailsClubPage = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+
+          {/* Cancel Booking Modal */}
+        <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Cancel Booking</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-700 text-base">
+                Are you sure you want to cancel this booking?
+              </p>
+              {bookings?.can_cancel && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                  <span className="text-gray-800 text-sm">
+                    You will get a refund of <b>₹{bookings.can_cancel.amount}.</b> 
+                    {/* ({bookings.can_cancel.return_percentage}% of total amount). */}
+                  </span>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+                Go Back
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
+                Cancel Booking
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
+
+        {/* <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+  <DialogContent className="sm:max-w-[420px]">
+    <DialogHeader>
+      <DialogTitle className="text-lg font-semibold text-red-600">
+        Cancel This Booking?
+      </DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <p className="text-gray-700 text-sm leading-relaxed">
+        If you proceed, this booking will be permanently cancelled and cannot be restored.
+      </p>
+
+      {bookings?.can_cancel && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
+          <p className="text-xs text-gray-500 mb-1">
+            Refund Details
+          </p>
+
+          <p className="text-base font-semibold text-gray-900">
+            ₹{bookings.can_cancel.amount}
+          </p>
+
+          <p className="text-xs text-gray-600">
+            {bookings.can_cancel.return_percentage}% of total booking amount
+          </p>
+        </div>
+      )}
+    </div>
+
+    <DialogFooter className="flex gap-3 justify-end pt-2">
+      <Button
+        variant="outline"
+        onClick={() => setShowCancelModal(false)}
+        className="min-w-[100px]"
+      >
+        Keep Booking
+      </Button>
+
+      <Button
+        className="bg-red-600 hover:bg-red-700 text-white min-w-[140px]"
+        onClick={handleCancelBooking}
+      >
+        Confirm Cancellation
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog> */}
+
       </>
     </div>
   );
