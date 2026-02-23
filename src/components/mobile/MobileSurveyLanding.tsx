@@ -203,8 +203,8 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Calculate progress percentage
   const getProgressPercentage = (): number => {
-    if (!surveyData) return 0;
-    const totalQuestions = surveyData.snag_checklist.questions_count;
+    if (!surveyData || !surveyData.snag_checklist) return 0;
+    const totalQuestions = (surveyData?.snag_checklist?.questions_count ?? 0);
     // For the final "Any additional comments?" page, show 100%
     if (currentQuestionIndex >= totalQuestions) {
       return 100;
@@ -256,7 +256,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentQuestion = getCurrentQuestion();
       if (!currentQuestion) return;
 
-      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+      const isSingleQuestion = surveyData?.snag_checklist?.questions_count === 1;
 
       // Check for negative option (option_type === 'n') from API response
       const hasNegative = option.option_type === "n";
@@ -319,7 +319,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentQuestion = getCurrentQuestion();
       if (!currentQuestion) return;
 
-      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+      const isSingleQuestion = surveyData?.snag_checklist?.questions_count === 1;
 
       // For rating questions, check if the selected rating corresponds to a negative option
       // Map rating to option index based on API options count
@@ -388,7 +388,7 @@ export const MobileSurveyLanding: React.FC = () => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+    const isSingleQuestion = surveyData?.snag_checklist?.questions_count === 1;
 
     // For emoji/smiley questions, check if the selected rating corresponds to a negative option
     // Map rating to option index based on API options count (default order: first option = highest rating)
@@ -1794,10 +1794,10 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   const currentQuestion = getCurrentQuestion();
-  const isMultiQuestion = surveyData.snag_checklist.questions_count > 1;
+  const isMultiQuestion = (surveyData?.snag_checklist?.questions_count ?? 0) > 1;
   const isLastStep =
-    currentQuestionIndex >= surveyData.snag_checklist.questions_count;
-  const isFormView = surveyData?.form_view === "true";
+    currentQuestionIndex >= (surveyData?.snag_checklist?.questions_count ?? 0);
+  const isFormView = surveyData?.snag_checklist?.form_view === true;
 
   // Debug current question data
   if (currentQuestion) {
@@ -1819,7 +1819,7 @@ export const MobileSurveyLanding: React.FC = () => {
         <div
           className="absolute inset-0 w-full h-full z-0"
           style={{
-            backgroundImage: `url('${surveyData.snag_checklist.survey_attachment.url}')`,
+            backgroundImage: `url('${surveyData?.snag_checklist?.survey_attachment?.url}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -2005,7 +2005,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {!((
                   isLastStep &&
                   currentQuestionIndex ===
-                  surveyData.snag_checklist.questions_count
+                  (surveyData?.snag_checklist?.questions_count ?? 0)
                 )) &&
                   currentQuestion &&
                   !showGenericTags &&
@@ -2088,7 +2088,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count ===
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
                                 1;
 
                               // Save current answer first
@@ -2104,7 +2104,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {surveyData!.snag_checklist.questions_count === 1
+                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2129,7 +2129,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count ===
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
                                 1;
 
                               // Save current answer first
@@ -2145,7 +2145,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {surveyData!.snag_checklist.questions_count === 1
+                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2170,7 +2170,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count ===
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
                                 1;
 
                               // Save current answer first
@@ -2186,7 +2186,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {surveyData!.snag_checklist.questions_count === 1
+                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2212,7 +2212,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count ===
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
                                 1;
 
                               // Save current answer first
@@ -2228,7 +2228,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             disabled={!isCurrentAnswerValid()}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                           >
-                            {surveyData!.snag_checklist.questions_count === 1
+                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
                               ? "Submit Survey"
                               : "Continue"}
                           </button>
@@ -2510,7 +2510,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count ===
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
                                 1;
 
                               // Save answer with tags and description, then proceed
@@ -2599,11 +2599,11 @@ export const MobileSurveyLanding: React.FC = () => {
                                   Submitting...
                                 </span>
                               </div>
-                            ) : surveyData!.snag_checklist.questions_count ===
+                            ) : (surveyData?.snag_checklist?.questions_count ?? 0) ===
                               1 ? (
                               "Submit Survey"
                             ) : currentQuestionIndex <
-                              surveyData.snag_checklist.questions_count - 1 ? (
+                              (surveyData?.snag_checklist?.questions_count ?? 0) - 1 ? (
                               "Next Question"
                             ) : (
                               "Continue"
