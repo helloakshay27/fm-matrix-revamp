@@ -41,6 +41,7 @@ const DialogContent = React.forwardRef<
         className
       )}
       {...props}
+      aria-describedby={props["aria-describedby"]}
     >
       {children}
     </DialogPrimitive.Content>

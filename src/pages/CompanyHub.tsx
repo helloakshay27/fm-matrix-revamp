@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,8 +63,8 @@ interface QuickLink {
 
 interface Attachment {
   id: number;
-  document_content_type: string;
-  url: string;
+  document_content_type: string | null;
+  document_url: string;
 }
 
 interface Comment {
@@ -98,7 +98,9 @@ interface Post {
   creator_image_url: string | null;
   resource_name: string;
   total_likes: number;
+  total_comments: number;
   likes_with_emoji: Record<string, number>;
+  likes_with_user_names: any[];
   isliked: boolean;
   attachments: Attachment[];
   comments: Comment[];
@@ -196,6 +198,14 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
+        if (!token) {
+          console.warn("❌ No token available for company data fetch");
+          setLoading(false);
+          return;
+        }
+
+        console.log("🔐 Fetching company data with token (length:", token.length, ")");
+
         const response = await axios.get(
           `${protocol}${baseUrl}/organizations/${companyId}.json`,
           {
@@ -206,8 +216,12 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         );
         console.log("🏢 Company Hub Data:", response.data);
         setCompanyData(response.data);
-      } catch (error) {
-        console.error("Failed to fetch company data:", error);
+      } catch (error: any) {
+        console.error("❌ Failed to fetch company data:", error?.response?.data || error?.message || error);
+        if (error?.response?.status === 401) {
+          console.warn("⚠️ Company data API returned 401 - token may be invalid or expired");
+          localStorage.removeItem("token");
+        }
       } finally {
         setLoading(false);
       }
@@ -227,6 +241,13 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
+        if (!token) {
+          console.warn("❌ No token available for task stats fetch");
+          return;
+        }
+
+        console.log("🔐 Fetching task stats with token (length:", token.length, ")");
+
         const response = await axios.get(
           `${protocol}${baseUrl}/task_managements/task_todo_counts.json`,
           {
@@ -237,8 +258,12 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         );
         console.log("📊 Task Stats Data:", response.data);
         setTaskStats(response.data);
-      } catch (error) {
-        console.error("Failed to fetch task stats:", error);
+      } catch (error: any) {
+        console.error("❌ Failed to fetch task stats:", error?.response?.data || error?.message || error);
+        if (error?.response?.status === 401) {
+          console.warn("⚠️ Task stats API returned 401 - token may be invalid or expired");
+          localStorage.removeItem("token");
+        }
       }
     };
 
@@ -251,12 +276,21 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     setIsLoadingPosts(true);
     try {
       const token = localStorage.getItem("token");
-      const baseUrl =
-        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const pulseBaseUrl = localStorage.getItem("pulseBaseUrl") || "pulse-api.panchshil.com";
+      const protocol = pulseBaseUrl.startsWith("http") ? "" : "https://";
+      const PULSE_API = `${protocol}${pulseBaseUrl}`;
+
+      // Debug: Log token info
+      if (!token) {
+        console.error("❌ No token found in localStorage");
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
+      console.log("🔐 Token exists (length:", token.length, ")");
 
       const response = await axios.get(
-        `${protocol}${baseUrl}/communities/${companyId}/posts.json`,
+        `${PULSE_API}/communities/3/posts.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -264,23 +298,50 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         }
       );
 
+      // Guard: API returns HTTP 200 but with error body on auth failures
+      if (response.data?.error || response.data?.code === 401) {
+        console.error("❌ Posts API auth error:", response.data);
+        toast.error("Authorization failed. Token may be expired. Please log in again.");
+        localStorage.removeItem("token");
+        return;
+      }
+
+      console.log("📰 Posts API response:", response.data);
+
+      // Handle both array and object response shapes
+      const rawPosts: any[] = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.posts)
+          ? response.data.posts
+          : [];
+
       // Transform posts to match our interface
-      const postsData = response.data.posts.map((post: any) => ({
+      const postsData = rawPosts.map((post: any) => ({
         ...post,
+        comments: Array.isArray(post.comments) ? post.comments : [],
+        attachments: Array.isArray(post.attachments) ? post.attachments : [],
+        likes_with_emoji: post.likes_with_emoji || {},
+        total_comments:
+          post.total_comments ??
+          (Array.isArray(post.comments) ? post.comments.length : 0),
         type: "post" as const,
       }));
 
       setPosts(postsData);
-    } catch (error) {
-      console.error("Failed to fetch posts:", error);
+    } catch (error: any) {
+      console.error("❌ Failed to fetch posts:", error?.response?.data || error?.message || error);
+      if (error?.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+      }
     } finally {
       setIsLoadingPosts(false);
     }
-  }, [companyId]);
+  }, []);
 
   // Fetch Posts
   useEffect(() => {
-    if (userId && companyId) {
+    if (userId) {
       fetchPosts();
     }
   }, [userId, companyId, fetchPosts]);
@@ -356,6 +417,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState<"post" | "poll" | null>(null);
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [isPublishingPoll, setIsPublishingPoll] = useState(false);
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -379,23 +441,30 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const baseUrl =
-        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const pulseBaseUrl = localStorage.getItem("pulseBaseUrl") || "pulse-api.panchshil.com";
+      const protocol = pulseBaseUrl.startsWith("http") ? "" : "https://";
+      const PULSE_API = `${protocol}${pulseBaseUrl}`;
+
+      if (!token) {
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
+      console.log("🚀 Publishing post with token (length:", token.length, ")");
 
       const formData = new FormData();
-      formData.append("body", postText);
-      formData.append("resource_id", String(companyId || ""));
-      formData.append("resource_type", "Community");
+      formData.append("post[body]", postText);
+      formData.append("post[resource_id]", "29");
+      formData.append("post[resource_type]", "Community");
 
       if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
-          formData.append("attachments[]", file);
+          formData.append("post[attachments_attributes][][document]", file);
         });
       }
 
       const response = await axios.post(
-        `${protocol}${baseUrl}/posts.json`,
+        `${PULSE_API}/posts.json`,
         formData,
         {
           headers: {
@@ -405,14 +474,125 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         }
       );
 
-      if (response.status === 200 || response.status === 201) {
+      console.log("✅ Posts API response:", response.data);
+
+      // Check for success message from API
+      if (response.data?.message === "success" || response.status === 201) {
         toast.success("Post created successfully!");
         setPostText("");
         setSelectedFiles([]);
-        fetchPosts(); // Refresh the posts list
+        fetchPosts();
+      } else if (response.data?.error || response.data?.code === 401) {
+        // Guard: API can return HTTP 200 with an error body
+        console.error("❌ Authorization failed:", response.data);
+        toast.error(
+          response.data?.error || "Not authorised. Please check your session."
+        );
+        localStorage.removeItem("token");
+        return;
+      } else {
+        toast.warning("Post creation status unclear. Refreshing posts...");
+        fetchPosts();
       }
-    } catch (error) {
-      toast.error("Failed to create post. Please try again.");
+    } catch (error: any) {
+      console.error("❌ Post creation error:", error?.response?.data || error?.message || error);
+      if (error?.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+      } else {
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to create post. Please try again."
+        );
+      }
+    }
+  };
+
+  const handlePublishPoll = async () => {
+    if (!postText.trim() || pollOptions.filter((o) => o.trim()).length < 2)
+      return;
+
+    setIsPublishingPoll(true);
+    try {
+      const token = localStorage.getItem("token");
+      const pulseBaseUrl = localStorage.getItem("pulseBaseUrl") || "pulse-api.panchshil.com";
+      const protocol = pulseBaseUrl.startsWith("http") ? "" : "https://";
+      const PULSE_API = `${protocol}${pulseBaseUrl}`;
+
+      if (!token) {
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
+      console.log("🗳️  Publishing poll with token (length:", token.length, ")");
+
+      const formData = new FormData();
+      formData.append("post[body]", postText);
+      formData.append("post[resource_id]", "29");
+      formData.append("post[resource_type]", "Community");
+
+      // Append each non-empty poll option
+      pollOptions
+        .filter((o) => o.trim() !== "")
+        .forEach((option) => {
+          formData.append(
+            "post[poll_options_attributes][][name]",
+            option.trim()
+          );
+        });
+
+      // Attach any selected media files
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          formData.append("post[attachments_attributes][][document]", file);
+        });
+      }
+
+      const response = await axios.post(
+        `${PULSE_API}/posts.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("✅ Poll API response:", response.data);
+
+      // Guard: API can return HTTP 200 with an error body
+      if (response.data?.error || response.data?.code === 401) {
+        console.error("❌ Authorization failed:", response.data);
+        toast.error(
+          response.data?.error || "Not authorised. Please check your session."
+        );
+        localStorage.removeItem("token");
+        return;
+      }
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Poll published successfully!");
+        setPostText("");
+        setSelectedFiles([]);
+        setPollOptions(["", ""]);
+        setCreateMode(null);
+        setIsCreatePostModalOpen(false);
+        fetchPosts();
+      }
+    } catch (error: any) {
+      console.error("❌ Poll creation error:", error?.response?.data || error?.message || error);
+      if (error?.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+      } else {
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to publish poll. Please try again."
+        );
+      }
+    } finally {
+      setIsPublishingPoll(false);
     }
   };
 
@@ -421,36 +601,30 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const baseUrl =
-        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const pulseBaseUrl = localStorage.getItem("pulseBaseUrl") || "pulse-api.panchshil.com";
+      const protocol = pulseBaseUrl.startsWith("http") ? "" : "https://";
+      const PULSE_API = `${protocol}${pulseBaseUrl}`;
 
       if (deleteConfirmation.type === "post") {
         await axios.delete(
-          `${protocol}${baseUrl}/posts/${deleteConfirmation.id}.json`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `${PULSE_API}/posts/${deleteConfirmation.id}.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Post deleted successfully");
         fetchPosts();
       } else {
         await axios.delete(
-          `${protocol}${baseUrl}/comments/${deleteConfirmation.id}.json`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `${PULSE_API}/comments/${deleteConfirmation.id}.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Comment deleted successfully");
         fetchPosts();
       }
-    } catch (error) {
-      console.error("Delete failed:", error);
-      toast.error("Failed to delete. Please try again.");
+    } catch (error: any) {
+      console.error("Delete failed:", error?.response?.data || error);
+      toast.error(
+        error?.response?.data?.message || "Failed to delete. Please try again."
+      );
     } finally {
       setDeleteConfirmation({ open: false, type: null, id: null });
     }
@@ -868,30 +1042,44 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   {/* Post Attachments */}
                   {post.attachments && post.attachments.length > 0 && (
                     <div className="grid gap-2">
-                      {post.attachments.map((attachment, index) => (
-                        <div
-                          key={attachment.id}
-                          className="w-full rounded-xl overflow-hidden"
-                        >
-                          {attachment.document_content_type.startsWith(
-                            "image/"
-                          ) ? (
-                            <img
-                              src={attachment.url}
-                              alt="Post attachment"
-                              className="w-full h-auto max-h-[400px] object-cover"
-                            />
-                          ) : attachment.document_content_type.startsWith(
-                              "video/"
-                            ) ? (
-                            <video
-                              src={attachment.url}
-                              controls
-                              className="w-full h-auto max-h-[400px] object-cover"
-                            />
-                          ) : null}
-                        </div>
-                      ))}
+                      {post.attachments.map((attachment) => {
+                        const url = attachment.document_url;
+                        const contentType =
+                          attachment.document_content_type || "";
+                        // Skip attachments with no URL or empty URL
+                        if (!url || url.endsWith("/")) return null;
+                        return (
+                          <div
+                            key={attachment.id}
+                            className="w-full rounded-xl overflow-hidden"
+                          >
+                            {contentType.startsWith("image/") ? (
+                              <img
+                                src={url}
+                                alt="Post attachment"
+                                className="w-full h-auto max-h-[400px] object-cover"
+                              />
+                            ) : contentType.startsWith("video/") ? (
+                              <video
+                                src={url}
+                                controls
+                                className="w-full h-auto max-h-[400px] object-cover"
+                              />
+                            ) : url ? (
+                              // Fallback: try to render as image (many APIs don't return content type)
+                              <img
+                                src={url}
+                                alt="Post attachment"
+                                className="w-full h-auto max-h-[400px] object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -924,13 +1112,14 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     <div className="flex items-center gap-1.5 ml-auto">
                       <MessageSquare className="w-4 h-4" />
                       <span className="font-medium">
-                        {post.comments.length} comments
+                        {post.total_comments ?? post.comments?.length ?? 0}{" "}
+                        comments
                       </span>
                     </div>
                   </div>
 
                   {/* Comments List */}
-                  {post.comments && post.comments.length > 0 && (
+                  {Array.isArray(post.comments) && post.comments.length > 0 && (
                     <div className="border-t border-gray-100 pt-4 mt-2 space-y-4">
                       {post.comments.map((comment) => (
                         <div key={comment.id} className="flex gap-3">
@@ -1120,6 +1309,11 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             }
           >
             <DialogContent className="max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-none">
+              <DialogTitle className="sr-only">
+                {deleteConfirmation.type === "post"
+                  ? "Delete Post"
+                  : "Delete Comment"}
+              </DialogTitle>
               <div className="bg-white p-8 text-center">
                 <h3 className="text-xl font-bold text-gray-900 leading-tight">
                   Are you sure you want to Delete <br />
@@ -1579,6 +1773,13 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         onOpenChange={setIsCreatePostModalOpen}
       >
         <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {!createMode
+              ? "Create"
+              : createMode === "post"
+                ? "Create Post"
+                : "Create Poll"}
+          </DialogTitle>
           {!createMode ? (
             // Initial selection screen
             <div className="p-6">
@@ -1849,22 +2050,40 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    // TODO: Implement poll creation API call
-                    toast.success("Poll creation coming soon!");
-                    setCreateMode(null);
-                    setIsCreatePostModalOpen(false);
-                    setPostText("");
-                    setSelectedFiles([]);
-                    setPollOptions(["", ""]);
-                  }}
+                  onClick={handlePublishPoll}
                   disabled={
+                    isPublishingPoll ||
                     !postText.trim() ||
                     pollOptions.filter((o) => o.trim()).length < 2
                   }
-                  className="px-4 py-1.5 bg-[#C72030] text-white text-xs font-medium rounded-md hover:bg-[#a01a26] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-1.5 bg-[#C72030] text-white text-xs font-medium rounded-md hover:bg-[#a01a26] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Publish Poll
+                  {isPublishingPoll ? (
+                    <>
+                      <svg
+                        className="animate-spin w-3 h-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                      </svg>
+                      Publishing...
+                    </>
+                  ) : (
+                    "Publish Poll"
+                  )}
                 </button>
               </div>
             </div>
