@@ -145,9 +145,25 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const formatDate = (d?: string) => {
     if (!d) return "-";
     try {
+      // If the string contains a space (date + time), return only the date part
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(0, spaceIdx);
       const dt = new Date(d);
       // Show only the calendar date, not the time
       return dt.toLocaleDateString();
+    } catch {
+      return d;
+    }
+  };
+
+  const formatTime = (d?: string) => {
+    if (!d) return "-";
+    try {
+      // expected_at format: "YY/MM/DD HH:MM AM" — extract time+meridiem after the first space
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(spaceIdx + 1).trim();
+      const dt = new Date(d);
+      return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     } catch {
       return d;
     }
@@ -172,7 +188,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
     ? formatDate(data.expected_at)
     : (data?.pass_start_date ?? "null");
   const timeSlot = data?.expected_at
-    ? new Date(data.expected_at).toLocaleTimeString()
+    ? formatTime(data.expected_at)
     : "null";
   const email = data?.guest_email ?? "null"; // guest_number often contains mobile; keep as a fallback
   const purpose = data?.visit_purpose ?? "null";
