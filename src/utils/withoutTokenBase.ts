@@ -22,7 +22,11 @@ baseClient.interceptors.request.use(
   async (config) => {
     try {
       // If baseURL is already set (e.g. per-request override), respect it
-      if (config.baseURL && config.baseURL !== "undefined" && config.baseURL !== "") {
+      if (
+        config.baseURL &&
+        config.baseURL !== "undefined" &&
+        config.baseURL !== ""
+      ) {
         console.log("🎯 Using pre-set Base URL:", config.baseURL);
         return config;
       }
@@ -169,10 +173,14 @@ baseClient.interceptors.request.use(
 
       // Priority 1: Use backend_url from API response (highest priority)
       if (backend_url) {
-        config.baseURL = backend_url;
+        // Ensure backend_url has protocol
+        const formattedBackendUrl = backend_url.startsWith("http")
+          ? backend_url
+          : `https://${backend_url}`;
+        config.baseURL = formattedBackendUrl;
         console.log(
           "✅ Base URL set from API response backend_url:",
-          backend_url
+          formattedBackendUrl
         );
         return config;
       }
@@ -185,10 +193,15 @@ baseClient.interceptors.request.use(
           );
 
           if (selectedOrg && selectedOrg.backend_domain) {
-            config.baseURL = selectedOrg.backend_domain;
+            // Ensure backend_domain has protocol
+            const formattedBackendDomain =
+              selectedOrg.backend_domain.startsWith("http")
+                ? selectedOrg.backend_domain
+                : `https://${selectedOrg.backend_domain}`;
+            config.baseURL = formattedBackendDomain;
             console.log(
               "✅ Base URL set from organization backend_domain:",
-              selectedOrg.backend_domain
+              formattedBackendDomain
             );
             return config;
           } else if (selectedOrg) {
@@ -207,10 +220,16 @@ baseClient.interceptors.request.use(
         // Priority 3: Use first organization's backend_domain if available
         const firstOrg = organizations[0];
         if (firstOrg.backend_domain) {
-          config.baseURL = firstOrg.backend_domain;
+          // Ensure backend_domain has protocol
+          const formattedFirstOrgDomain = firstOrg.backend_domain.startsWith(
+            "http"
+          )
+            ? firstOrg.backend_domain
+            : `https://${firstOrg.backend_domain}`;
+          config.baseURL = formattedFirstOrgDomain;
           console.log(
             "✅ Base URL set from first organization backend_domain:",
-            firstOrg.backend_domain
+            formattedFirstOrgDomain
           );
           return config;
         }
