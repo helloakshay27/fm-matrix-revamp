@@ -1811,13 +1811,13 @@ export const MobileSurveyLanding: React.FC = () => {
   // console.log("Survey Mapping", surveyData?.snag_checklist?.survey_attachment?.url);
 
   return (
-    <div className="h-screen w-screen max-w-md mx-auto flex flex-col relative bg-gray-50">
+    <div className="h-screen w-screen max-w-md mx-auto flex flex-col relative bg-gray-50 overflow-hidden">
       {/* Background Image Layer with Filter */}
       {surveyData?.snag_checklist?.survey_attachment?.url && (
         <div
-          className="absolute inset-0 z-0"
+          className="absolute inset-0 w-full h-full z-0"
           style={{
-            backgroundImage: `url(${surveyData.snag_checklist.survey_attachment.url})`,
+            backgroundImage: `url('${surveyData.snag_checklist.survey_attachment.url}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
