@@ -5243,6 +5243,15 @@ function App() {
                       path="/mo/:assetId"
                       element={<MobileOwnerCostAssetPage />}
                     />
+                    {/* Mobile Permit Safety Check Routes */}
+                    <Route
+                      path="/mobile/permit-safety-check/:permitId"
+                      element={<PermitSafetyCheckForm />}
+                    />
+                    <Route
+                      path="/ps/:permitId"
+                      element={<PermitSafetyCheckForm />}
+                    />
                     {/* QR Test Route */}
                     <Route path="/qr-test" element={<QRTestPage />} />
 
