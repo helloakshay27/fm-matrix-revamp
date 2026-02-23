@@ -45,7 +45,7 @@ import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
 
-export const QuotesEdit = () => {
+export const QuotesDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -552,4 +552,4 @@ export const QuotesEdit = () => {
     );
 };
 
-export default QuotesEdit;
+export default QuotesDetails;

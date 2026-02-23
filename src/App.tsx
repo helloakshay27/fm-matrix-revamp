@@ -1069,8 +1069,10 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import ModulesManagement from "./pages/settings/ModulesManagement";
 import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
+import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage"
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
+import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails"
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -2386,6 +2388,10 @@ function App() {
                         path="/accounting/invoices/add"
                         element={<InvoiceAdd />}
                       />
+                       <Route
+                        path="/accounting/dashboard/invoices/:id"
+                        element={<InvoiceDashboardDetailsPage />}
+                      />
                       <Route
                         path="/accounting/quotes"
                         element={<QuotesDashboard />}
@@ -2393,6 +2399,10 @@ function App() {
                       <Route
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
+                      />
+                        <Route
+                        path="/accounting/quotes/details/:id"
+                        element={<QuotesDetails />}
                       />
 
                       <Route
