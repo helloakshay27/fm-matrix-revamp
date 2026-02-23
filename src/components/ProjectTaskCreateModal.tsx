@@ -98,6 +98,8 @@ const TaskForm = ({
   const [startDateTasks, setStartDateTasks] = useState([]);
   const [targetDateTasks, setTargetDateTasks] = useState([]);
   const [showCalender, setShowCalender] = useState(false);
+  const [rosterData, setRosterData] = useState(null);
+  const [loadingRoster, setLoadingRoster] = useState(false);
   const [showStartCalender, setShowStartCalender] = useState(false);
   const [calendarTaskHours, setCalendarTaskHours] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -147,6 +149,54 @@ const TaskForm = ({
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const fetchRosterData = async (userId) => {
+    setLoadingRoster(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/user_roasters/${userId}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log('Roster data:', response.data);
+      setRosterData(response.data);
+    } catch (error) {
+      console.log('Error fetching roster:', error);
+      // If roster not found, set to null to use default Monday-Friday
+      setRosterData(null);
+    } finally {
+      setLoadingRoster(false);
+    }
+  };
+
+  // Function to check if a date should be disabled based on roster
+  const isDateDisabledByRoster = (year, month, date) => {
+    // Get day of week (0 = Sunday, 1 = Monday, etc.)
+    const dateObj = new Date(year, month, date);
+    const dayOfWeek = dateObj.getDay();
+
+    // Convert to roster day format (1 = Monday, 7 = Sunday)
+    const rosterDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+    // Default: Monday-Saturday if no roster data
+    if (!rosterData || !rosterData.no_of_days || rosterData.no_of_days.length === 0) {
+      // Disable only Sunday (Sunday = 0)
+      return dayOfWeek === 0;
+    }
+
+    // Get week number of the month (1-5)
+    const dayOfMonth = date;
+    const weekNumber = Math.ceil(dayOfMonth / 7);
+
+    const rosterSchedule = rosterData.no_of_days[0];
+    const workingDays = rosterSchedule[weekNumber.toString()] || [];
+
+    // If this day of week is not in the working days array, disable it
+    return !workingDays.includes(rosterDay.toString());
   };
 
   useEffect(() => {
@@ -495,6 +545,13 @@ const TaskForm = ({
                     fetchUserAvailability({ baseUrl, token, id: value })
                   );
                   fetchShifts(value);
+                  // Fetch roster data using user_roaster_id if available
+                  if (selectedUser?.user_roaster_id) {
+                    fetchRosterData(selectedUser.user_roaster_id);
+                  } else {
+                    // If no roster ID, set to null to use default working days
+                    setRosterData(null);
+                  }
                 }
               }}
               displayEmpty
@@ -653,6 +710,7 @@ const TaskForm = ({
               ref={startDateRef}
               maxDate={endDate}
               shift={shift}
+              isDateDisabled={isDateDisabledByRoster}
             />
           ) : (
             <TaskDatePicker
@@ -663,6 +721,7 @@ const TaskForm = ({
               setShowCalender={setShowStartCalender}
               maxDate={endDate}
               shift={shift}
+              isDateDisabled={isDateDisabledByRoster}
             />
           )
         ) : (
@@ -692,6 +751,7 @@ const TaskForm = ({
               ref={endDateRef}
               maxDate={endDate}
               shift={shift}
+              isDateDisabled={isDateDisabledByRoster}
             />
           ) : (
             <TaskDatePicker
@@ -702,6 +762,7 @@ const TaskForm = ({
               setShowCalender={setShowCalender}
               maxDate={endDate}
               shift={shift}
+              isDateDisabled={isDateDisabledByRoster}
             />
           )
         ) : (

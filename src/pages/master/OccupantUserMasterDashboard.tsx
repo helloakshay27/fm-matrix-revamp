@@ -155,8 +155,13 @@ export const OccupantUserMasterDashboard = () => {
     search?: string;
   }) => {
     setFilters(newFilters);
-    const [firstName = "", lastName = ""] =
-      newFilters?.name?.trim().split(" ") ?? [];
+    // const [firstName = "", lastName = ""] =
+    // newFilters?.name?.trim().split(" ") ?? [];
+    const nameParts = (newFilters?.name || "").trim().split(" ");
+
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts[1] || "";
+    
     await dispatch(
       fetchOccupantUsers({
         page: 1,
@@ -672,6 +677,7 @@ export const OccupantUserMasterDashboard = () => {
             className="cursor-pointer"
           />
         </div>
+        {/* {console.log("occupantUsersState",occupantUsersState)} */}
 
         {/* Table */}
         <div className="overflow-x-auto">
