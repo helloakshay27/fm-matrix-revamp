@@ -10,6 +10,7 @@ interface CustomCalendarProps {
     setShowCalender?: (show: boolean) => void;
     shift?: any;
     maxDate?: any;
+    isDateDisabled?: (year: number, month: number, date: number) => boolean;
 }
 
 export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
@@ -23,6 +24,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
             setShowCalender,
             shift = {},
             maxDate = null,
+            isDateDisabled = null,
         },
         forwardedRef
     ) => {
@@ -104,7 +106,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
             );
         };
 
-        // eslint-disable-next-line no-unused-vars
+
         const hasEvent = () => {
             // Utility function for potential future use when event dates are implemented
             return false;
@@ -230,7 +232,7 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
             const parsed = parseShiftNoOfDays(shift);
             if (!parsed) {
                 const jsDay = date.getDay();
-                return jsDay !== 0 && jsDay !== 6;
+                return jsDay !== 0;
             }
 
             const jsDay = date.getDay();
@@ -332,6 +334,12 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                         const isSelected = isSameDay(dateObj, selectedObj);
                         const isToday = isSameDay(dateObj, today);
                         const isDisabled = isDateBeforeToday(dayObj.day, dayObj.month, dayObj.year);
+
+                        // Check roster-based disabled state
+                        const isRosterDisabled = isDateDisabled
+                            ? isDateDisabled(dayObj.year, dayObj.month, dayObj.day)
+                            : false;
+
                         const isWeekoff = !isDateWorking(dateObj, shift);
                         const taskData = getTaskHoursForDate(dayObj.day, dayObj.month, dayObj.year);
 
@@ -348,12 +356,12 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                                 type="button"
                                 key={index}
                                 onClick={() => handleDateClick(dayObj)}
-                                disabled={isDisabled || isWeekoff || isAfterMaxDate}
+                                disabled={isDisabled || isWeekoff || isAfterMaxDate || isRosterDisabled}
                                 className={`
                                 relative flex flex-col items-center justify-center rounded-md text-xs font-medium transition-all py-1 mx-2 min-h-[56px]
                                 ${!dayObj.isCurrentMonth ? 'text-gray-300' : 'text-gray-900'}
-                                ${isDisabled ? 'opacity-50 cursor-not-allowed text-gray-400' : isWeekoff || isAfterMaxDate ? 'bg-red-50 opacity-60 cursor-not-allowed' : isSelected ? 'border-[#c72030] bg-red-50' : 'hover:bg-gray-100'}
-                                ${isToday && !isSelected && !isDisabled && !isWeekoff && !isAfterMaxDate ? 'border border-red-300' : ''}
+                                ${isDisabled ? 'opacity-50 cursor-not-allowed text-gray-400' : isWeekoff || isAfterMaxDate || isRosterDisabled ? 'bg-red-50 opacity-60 cursor-not-allowed' : isSelected ? 'border-[#c72030] bg-red-50' : 'hover:bg-gray-100'}
+                                ${isToday && !isSelected && !isDisabled && !isWeekoff && !isAfterMaxDate && !isRosterDisabled ? 'border border-red-300' : ''}
                             `}
                             >
                                 <span

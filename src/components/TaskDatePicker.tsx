@@ -9,6 +9,7 @@ export const TaskDatePicker = ({
     setShowCalender,
     shift = {},
     maxDate = null,
+    isDateDisabled = null,
 }) => {
     const today = new Date();
 
@@ -120,7 +121,7 @@ export const TaskDatePicker = ({
         const parsed = parseShiftNoOfDays(shift);
         if (!parsed) {
             const jsDay = date.getDay();
-            return jsDay !== 0 && jsDay !== 6;
+            return jsDay !== 0;
         }
 
         const jsDay = date.getDay();
@@ -156,6 +157,11 @@ export const TaskDatePicker = ({
                     const itemDate = new Date(dateItem.year, dateItem.month, dateItem.date);
                     const isWeekoff = !isDateWorking(itemDate, shift);
 
+                    // Check roster-based disabled state
+                    const isRosterDisabled = isDateDisabled
+                        ? isDateDisabled(dateItem.year, dateItem.month, dateItem.date)
+                        : false;
+
                     const isAfterMaxDate = maxDate
                         ? new Date(dateItem.year, dateItem.month, dateItem.date) >
                         new Date(maxDate.year, maxDate.month, maxDate.date)
@@ -166,10 +172,10 @@ export const TaskDatePicker = ({
                             key={`${dateItem.year}-${dateItem.month}-${dateItem.date}`}
                             type="button"
                             onClick={() => onDateSelect(dateItem)}
-                            disabled={isWeekoff || isAfterMaxDate}
+                            disabled={isWeekoff || isAfterMaxDate || isRosterDisabled}
                             className={`flex flex-col items-center justify-center min-w-[60px] p-3 rounded-lg transition-all ${isSelected
                                 ? 'border-[#c72030] bg-red-50'
-                                : isWeekoff || isAfterMaxDate
+                                : isWeekoff || isAfterMaxDate || isRosterDisabled
                                     ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
                                     : isCurrentMonth
                                         ? 'border-gray-200 bg-white hover:border-gray-300'
