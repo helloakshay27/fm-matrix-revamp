@@ -259,10 +259,10 @@ export const ScratchCard: React.FC = () => {
         setContestData((prev) =>
           prev
             ? {
-              ...prev,
-              won_reward: true,
-              user_contest_reward: result.user_contest_reward,
-            }
+                ...prev,
+                won_reward: true,
+                user_contest_reward: result.user_contest_reward,
+              }
             : prev
         );
       }
@@ -317,21 +317,21 @@ export const ScratchCard: React.FC = () => {
         setContestData((prev) =>
           prev
             ? {
-              ...prev,
-              won_reward: true,
-              user_contest_reward: {
-                id: parseInt(rewardId),
-                contest_id: prev.id,
-                prize_id: wonPrize.id,
-                reward_type: wonPrize.reward_type,
-                points_value: wonPrize.points_value,
-                coupon_code: wonPrize.coupon_code,
-                user_id: 0,
-                status: "granted",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-            }
+                ...prev,
+                won_reward: true,
+                user_contest_reward: {
+                  id: parseInt(rewardId),
+                  contest_id: prev.id,
+                  prize_id: wonPrize.id,
+                  reward_type: wonPrize.reward_type,
+                  points_value: wonPrize.points_value,
+                  coupon_code: wonPrize.coupon_code,
+                  user_id: 0,
+                  status: "granted",
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              }
             : prev
         );
       }
@@ -390,25 +390,25 @@ export const ScratchCard: React.FC = () => {
       {/* Already Won Reward Screen */}
       {contestData.won_reward && contestData.user_contest_reward && (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#FFF8E7] via-white to-[#F5E6D3]">
-          {/* Celebration Animation */
-            <div className="mb-6 relative">
-              <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-                <span className="text-6xl">🎉</span>
-              </div>
-              {/* Sparkles */}
-              <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
-                ✨
-              </span>
-              <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
-                ✨
-              </span>
-              <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
-                ✨
-              </span>
-              <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
-                ✨
-              </span>
+          {/* Celebration Animation */}
+          <div className="mb-6 relative">
+            <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-6xl">🎉</span>
             </div>
+            {/* Sparkles */}
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
+              ✨
+            </span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
+              ✨
+            </span>
+          </div>
 
           {/* Message */}
           <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">
@@ -820,8 +820,9 @@ export const ScratchCard: React.FC = () => {
                       setShowResultModal(false);
                       handleViewVoucher();
                     }}
-                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${wonPrize.coupon_code ? "" : "mt-3"
-                      }`}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                      wonPrize.coupon_code ? "" : "mt-3"
+                    }`}
                   >
                     View Details
                   </button>
