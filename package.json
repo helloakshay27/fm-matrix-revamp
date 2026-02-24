@@ -68,6 +68,7 @@
     "@rails/actioncable": "^8.1.100",
     "@reduxjs/toolkit": "^2.8.2",
     "@tanstack/react-query": "^5.56.2",
+    "@tanstack/react-virtual": "^3.13.19",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@types/lodash": "^4.17.20",
