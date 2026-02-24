@@ -2,13 +2,15 @@ import { useEffect, useState, useRef } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { Mic, MicOff } from "lucide-react";
 import { Mention, MentionsInput } from "react-mentions";
 import EditIssueModal from "@/components/EditIssueModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface Issue {
     id?: string;
@@ -875,8 +877,70 @@ const IssueDetailsPage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-8">
-                <div className="text-gray-500">Loading issue details...</div>
+            <div className="m-4">
+                <Button variant="ghost" onClick={() => navigate(-1)} className="py-0 !px-4">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                </Button>
+                <div className="px-4 pt-1">
+                    {/* Title skeleton */}
+                    <div className="p-3 px-0">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                    </div>
+
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+                    {/* Metadata skeletons */}
+                    <div className="flex items-center justify-between my-3 text-[12px] gap-4">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-24" />
+                        </div>
+                    </div>
+
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
+
+                    {/* Description section skeleton */}
+                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                        <div className="flex items-center gap-4 mb-4">
+                            <Skeleton className="h-8 w-8 rounded" />
+                            <Skeleton className="h-6 w-32" />
+                        </div>
+                        <div className="space-y-3 mt-3">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                    </div>
+
+                    {/* Details section skeleton */}
+                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                        <div className="flex items-center gap-4 mb-4">
+                            <Skeleton className="h-8 w-8 rounded" />
+                            <Skeleton className="h-6 w-32" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -891,6 +955,10 @@ const IssueDetailsPage = () => {
 
     return (
         <div className="m-4">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="py-0 px-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
                     <span className="mr-3">Issue-{issueData?.id}</span>

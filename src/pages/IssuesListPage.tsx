@@ -4,12 +4,13 @@ import { cache } from "@/utils/cacheUtils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIssues, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import AddIssueModal from "@/components/AddIssueModal";
-import { FormControl, MenuItem, Select } from "@mui/material";
+import IssueFilterModal from "@/components/IssueFilterModal";
+import { FormControl, MenuItem, Select, Switch } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -34,6 +35,7 @@ interface Issue {
     priority?: string;
     status?: string;
     assigned_to?: string;
+    raised_by?: string;
     created_by?: string;
     created_at?: string;
     updated_at?: string;
@@ -117,6 +119,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "raised_by",
+        label: "Raised By",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "start_date",
         label: "Start Date",
         sortable: true,
@@ -184,6 +193,8 @@ const IssuesListPage = ({
     const [filterSuccess, setFilterSuccess] = useState(false);
     const [filteredIssues, setFilteredIssues] = useState<any[]>([]);
     const [filteredLoading, setFilteredLoading] = useState(false);
+    const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(false);
+    const [appliedFilters, setAppliedFilters] = useState(""); // For IssueFilterModal
 
     // Pagination state
     const [pagination, setPagination] = useState({
@@ -235,6 +246,7 @@ const IssuesListPage = ({
             priority: issue.priority || "",
             status: issue.status || "Open",
             assigned_to: issue.responsible_person_id,
+            raised_by: issue?.created_by?.name,
             created_by: issue.created_by?.full_name || issue.created_by_name || "",
             created_at: issue.created_at || "",
             updated_at: issue.updated_at || "",
@@ -257,8 +269,13 @@ const IssuesListPage = ({
     const displayIssues = useMemo(() => {
         let issuesToDisplay;
 
+        // If showing my issues only, use filtered issues
+        if (showMyIssuesOnly) {
+            issuesToDisplay =
+                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
+        }
         // If search is active, use filtered issues
-        if (searchQuery.trim()) {
+        else if (searchQuery.trim()) {
             issuesToDisplay =
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
@@ -267,8 +284,9 @@ const IssuesListPage = ({
             issuesToDisplay =
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
-        // Check if localStorage filters are applied
+        // Check if filters are applied (either from modal or localStorage)
         else if (
+            appliedFilters ||
             localStorage.getItem("IssueFilters") ||
             localStorage.getItem("issueStatus")
         ) {
@@ -287,14 +305,17 @@ const IssuesListPage = ({
         projectId,
         projectIdParam,
         taskIdParam,
+        showMyIssuesOnly,
+        appliedFilters,
     ]);
 
     const issues: Issue[] = displayIssues.map(mapIssueData);
 
     const [users, setUsers] = useState([]);
     const [issueTypeOptions, setIssueTypeOptions] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [openIssueModal, setOpenIssueModal] = useState(false);
-
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     // Helper function to perform filtered fetch - defined early to be used in useEffects
     const performFilteredFetch = useCallback(
         async (filterOrString: any) => {
@@ -305,30 +326,37 @@ const IssuesListPage = ({
                 if (typeof filterOrString === "string") {
                     queryString = filterOrString;
                 } else {
-                    queryString = qs.stringify(filterOrString);
+                    let filter = filterOrString;
+                    // Add responsible_person_id_eq if showing my issues only
+                    if (showMyIssuesOnly) {
+                        const user = JSON.parse(localStorage.getItem("user") || "{}");
+                        if (user.id) {
+                            filter["q[responsible_person_id_eq]"] = user.id.toString();
+                        }
+                    }
+                    queryString = qs.stringify(filter);
                 }
 
-                // Create cache key for filtered issues - include projectId and taskIdParam to prevent stale cache
-                const cacheKey = `issues_filtered_${projectId}_${projectIdParam}_${taskIdParam}_${queryString}`;
+                // Add responsible_person_id_eq if showing my issues only and not already in string
+                if (showMyIssuesOnly && !queryString.includes("responsible_person_id_eq")) {
+                    const user = JSON.parse(localStorage.getItem("user") || "{}");
+                    if (user.id) {
+                        queryString += (queryString ? "&" : "") + `q[responsible_person_id_eq]=${user.id.toString()}`;
+                    }
+                }
 
-                const cachedResult = await cache.getOrFetch(
-                    cacheKey,
-                    async () => {
-                        const response = await axios.get(
-                            `https://${baseUrl}/issues.json?${queryString}`,
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${token}`,
-                                },
-                            }
-                        );
-                        return response.data.issues || [];
-                    },
-                    1 * 60 * 1000, // Fresh for 1 minute
-                    5 * 60 * 1000 // Stale up to 5 minutes
+
+                // Fetch filtered issues directly without caching
+                const response = await axios.get(
+                    `https://${baseUrl}/issues.json?${queryString}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
                 );
 
-                setFilteredIssues(cachedResult.data);
+                setFilteredIssues(response.data.issues || []);
                 setFilterSuccess(true);
             } catch (error) {
                 console.error("Error fetching filtered issues:", error);
@@ -338,7 +366,7 @@ const IssuesListPage = ({
                 setFilteredLoading(false);
             }
         },
-        [baseUrl, token, projectId, projectIdParam, taskIdParam]
+        [baseUrl, token, projectId, projectIdParam, taskIdParam, showMyIssuesOnly]
     );
 
     const getUsers = useCallback(async () => {
@@ -354,9 +382,35 @@ const IssuesListPage = ({
         }
     }, [baseUrl, token]);
 
+    const getProjects = useCallback(async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/project_managements.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const projectsList = response.data?.project_managements || response.data?.data?.project_managements || [];
+            setProjects(projectsList);
+        } catch (error) {
+            console.log("Error fetching projects:", error);
+        }
+    }, [baseUrl, token]);
+
     useEffect(() => {
-        getUsers();
-    }, [getUsers]);
+        if (token && baseUrl) {
+            getUsers();
+            getProjects();
+        }
+    }, [token, baseUrl, getUsers, getProjects]);
+
+    // Handle showMyIssuesOnly toggle
+    useEffect(() => {
+        if (!projectId && !projectIdParam && !taskIdParam && !searchQuery.trim()) {
+            allIssuesFetchInitiatedRef.current = false;
+            setFilterSuccess(false);
+            setFilteredIssues([]);
+        }
+    }, [showMyIssuesOnly, projectId, projectIdParam, taskIdParam, searchQuery]);
 
     // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
     useEffect(() => {
@@ -436,10 +490,22 @@ const IssuesListPage = ({
             baseUrl &&
             token
         ) {
-            dispatch(fetchIssues({ baseUrl, token, id: "" }));
+            if (showMyIssuesOnly) {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                if (user.id) {
+                    const filter = {
+                        "q[responsible_person_id_eq]": user.id.toString(),
+                        page: 1,
+                        per_page: 10,
+                    };
+                    performFilteredFetch(filter);
+                }
+            } else {
+                dispatch(fetchIssues({ baseUrl, token, id: "" }));
+            }
             allIssuesFetchInitiatedRef.current = true;
         }
-    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery]);
+    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
 
     // Handle pagination for search results
     useEffect(() => {
@@ -467,29 +533,30 @@ const IssuesListPage = ({
         performFilteredFetch,
     ]);
 
+    // Handle applied filters from IssueFilterModal
+    useEffect(() => {
+        if (appliedFilters !== "") {
+            setPagination({ pageIndex: 0, pageSize: 10 });
+            performFilteredFetch(appliedFilters);
+        }
+    }, [appliedFilters, performFilteredFetch]);
+
     const fetchData = useCallback(async () => {
         try {
-            const cachedResult = await cache.getOrFetch(
-                "issue_types",
-                async () => {
-                    const response = await axios.get(
-                        `https://${baseUrl}/issue_types.json`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    );
-                    const issueTypes = response.data.issue_types || response.data || [];
-                    return issueTypes.map((i: any) => ({
-                        value: i.id,
-                        label: i.name,
-                    }));
-                },
-                5 * 60 * 1000, // Fresh for 5 minutes
-                30 * 60 * 1000 // Stale up to 30 minutes
+            const response = await axios.get(
+                `https://${baseUrl}/issue_types.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
-            setIssueTypeOptions(cachedResult.data);
+            const issueTypes = response.data || [];
+            const mappedTypes = issueTypes.map((i: any) => ({
+                value: i.id,
+                label: i.name,
+            }));
+            setIssueTypeOptions(mappedTypes);
         } catch (error) {
             console.error("Error fetching issue types:", error);
             toast.error("Failed to load issue types.");
@@ -537,28 +604,30 @@ const IssuesListPage = ({
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                const newFilter: any = {
                     page: pagination.pageIndex + 1,
                     per_page: pagination.pageSize,
                 };
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
                 performFilteredFetch(queryString);
             } else if (localStorage.getItem("issueStatus")) {
@@ -598,28 +667,30 @@ const IssuesListPage = ({
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                const newFilter: any = {
                     page: pagination.pageIndex + 1,
                     per_page: pagination.pageSize,
                 };
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
                 performFilteredFetch(queryString);
             } else if (localStorage.getItem("issueStatus")) {
@@ -662,28 +733,30 @@ const IssuesListPage = ({
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                const newFilter: any = {
                     page: pagination.pageIndex + 1,
                     per_page: pagination.pageSize,
                 };
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
                 performFilteredFetch(queryString);
             } else if (localStorage.getItem("issueStatus")) {
@@ -867,6 +940,25 @@ const IssuesListPage = ({
         </>
     );
 
+    const rightActions = (
+        <div className="flex items-center gap-1 mr-4">
+            <span className="text-gray-700 font-medium text-sm">All Issues</span>
+            <Switch
+                checked={showMyIssuesOnly}
+                onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
+                sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                    },
+                }}
+            />
+            <span className="text-gray-700 font-medium text-sm">My Issues</span>
+        </div>
+    )
+
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
     };
@@ -882,11 +974,25 @@ const IssuesListPage = ({
                 renderCell={renderCell}
                 loading={loading || filteredLoading}
                 leftActions={leftActions}
+                onFilterClick={() => setIsFilterModalOpen(true)}
+                rightActions={rightActions}
                 emptyMessage={
                     filterSuccess && issues.length === 0
                         ? "Try adjusting the filters."
                         : "No issues found. Create one to get started."
                 }
+            />
+
+            {/* Issue Filter Modal */}
+            <IssueFilterModal
+                isModalOpen={isFilterModalOpen}
+                setIsModalOpen={setIsFilterModalOpen}
+                onApplyFilters={(filterString) => {
+                    setAppliedFilters(filterString);
+                }}
+                issueTypes={issueTypeOptions}
+                users={users}
+                projects={projects}
             />
 
             {/* Add Issue Modal */}
