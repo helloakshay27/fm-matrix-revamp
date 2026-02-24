@@ -483,7 +483,10 @@ const ProjectTasksPage = () => {
 
     const [users, setUsers] = useState([])
     const [openTaskModal, setOpenTaskModal] = useState(false);
-    const [selectedView, setSelectedView] = useState<"Kanban" | "List">("List");
+    const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
+        const saved = localStorage.getItem("taskPageViewPreference");
+        return (saved as "Kanban" | "List") || "List";
+    });
     const [isOpen, setIsOpen] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
@@ -628,6 +631,11 @@ const ProjectTasksPage = () => {
             fetchProjects();
         }
     }, [token, baseUrl]);
+
+    // Save selected view preference to localStorage
+    useEffect(() => {
+        localStorage.setItem("taskPageViewPreference", selectedView);
+    }, [selectedView]);
 
     // Save filter state to localStorage whenever it changes
     useEffect(() => {
@@ -809,10 +817,10 @@ const ProjectTasksPage = () => {
 
     // TanStack Query hook for fetching tasks
     const filters = buildFilters();
-    const { 
-        data: tasksData, 
-        isLoading, 
-        isFetching, 
+    const {
+        data: tasksData,
+        isLoading,
+        isFetching,
         error,
         refetch: refetchTasks
     } = useTasks({
@@ -824,11 +832,11 @@ const ProjectTasksPage = () => {
     });
 
     // Extract tasks and pagination from response
-    const tasks = tasksData?.data?.task_managements || 
-                  tasksData?.task_managements || 
-                  [];
-    const paginationData = tasksData?.data?.pagination || 
-                          tasksData?.pagination;
+    const tasks = tasksData?.data?.task_managements ||
+        tasksData?.task_managements ||
+        [];
+    const paginationData = tasksData?.data?.pagination ||
+        tasksData?.pagination;
     const hasMore = currentPage < (paginationData?.total_pages || 1);
 
     // Mutations
