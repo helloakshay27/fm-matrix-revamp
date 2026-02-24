@@ -1092,6 +1092,7 @@ import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
+import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
 
 
 const queryClient = new QueryClient();
@@ -2475,9 +2476,13 @@ function App() {
                         path="/accounting/bills"
                         element={<BillListPage />}
                       />
-                      <Route
+                      {/* <Route
                         path="/accounting/bills/create"
                         element={<BillCreatePage />}
+                      /> */}
+                       <Route
+                        path="/accounting/bills/create"
+                        element={<BillsAdd/>}
                       />
                       <Route
                         path="/accounting/bills/:id"

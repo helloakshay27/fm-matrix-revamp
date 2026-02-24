@@ -28,6 +28,7 @@ import {
 import { API_CONFIG } from "@/config/apiConfig";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { PermitFilterModal } from "@/components/PermitFilterModal";
+import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
 import { debounce } from "lodash";
 
 // Type definitions for permit data
@@ -1003,67 +1004,40 @@ export const PermitToWorkDashboard = () => {
 
         <TabsContent value="analytics" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Permit Status Distribution</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Total: {permitCounts.total}</span>
-                  <span>100%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Approved: {permitCounts.approved}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.approved / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Open: {permitCounts.open}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.open / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Closed: {permitCounts.closed}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.closed / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Draft: {permitCounts.draft}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.draft / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Hold: {permitCounts.hold}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.hold / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Rejected: {permitCounts.rejected}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.rejected / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Extended: {permitCounts.extended}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.extended / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Expired: {permitCounts.expired}</span>
-                  <span>{permitCounts.total > 0 ? ((permitCounts.expired / permitCounts.total) * 100).toFixed(1) : 0}%</span>
-                </div>
-              </div>
-            </div>
+            {/* Permit Status Bar Chart */}
+            <AssetAnalyticsCard
+              title="Permit Status"
+              type="groupWise"
+              data={[
+                { name: 'Approved', value: permitCounts.approved },
+                { name: 'Open', value: permitCounts.open },
+                { name: 'Closed', value: permitCounts.closed },
+                { name: 'Draft', value: permitCounts.draft },
+                { name: 'Hold', value: permitCounts.hold },
+                { name: 'Rejected', value: permitCounts.rejected },
+                { name: 'Extended', value: permitCounts.extended },
+                { name: 'Expired', value: permitCounts.expired },
+              ]}
+              dateRange={{ startDate: new Date(), endDate: new Date() }}
+              info="Distribution of permits by current status"
+            />
 
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Permit Types</h3>
-              <div className="space-y-2">
-                {permits.reduce((acc: any[], permit) => {
-                  const existingType = acc.find(item => item.type === permit.permit_type);
-                  if (existingType) {
-                    existingType.count++;
-                  } else {
-                    acc.push({ type: permit.permit_type, count: 1 });
-                  }
-                  return acc;
-                }, []).map((typeData, index) => (
-                  <div key={index} className="flex justify-between">
-                    <span>{typeData.type}: {typeData.count}</span>
-                    <span>{permits.length > 0 ? ((typeData.count / permits.length) * 100).toFixed(1) : 0}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Permit Type Distribution Pie Chart */}
+            <AssetAnalyticsCard
+              title="Permit Type Distribution"
+              type="categoryWise"
+              data={permits.reduce((acc: { name: string; value: number; color?: string }[], permit) => {
+                const existing = acc.find(item => item.name === permit.permit_type);
+                if (existing) {
+                  existing.value++;
+                } else {
+                  acc.push({ name: permit.permit_type, value: 1 });
+                }
+                return acc;
+              }, [])}
+              dateRange={{ startDate: new Date(), endDate: new Date() }}
+              info="Distribution of permits by type"
+            />
           </div>
         </TabsContent>
       </Tabs>
