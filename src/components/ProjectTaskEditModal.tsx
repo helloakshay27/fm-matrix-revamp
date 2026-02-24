@@ -116,6 +116,10 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
   const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [milestones, setMilestones] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState("");
   const [taskDuration, setTaskDuration] = useState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
@@ -174,6 +178,41 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     }
   }, [baseUrl, dispatch, token]);
 
+  const getProjects = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/project_managements.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const projectsList = response.data?.project_managements || response.data?.data?.project_managements || [];
+      setProjects(projectsList);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to load projects");
+    }
+  }, [baseUrl, token]);
+
+  const getMilestones = useCallback(
+    async (projectId: string) => {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/milestones.json?q[project_management_id_eq]=${projectId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const milestonesList = response.data || [];
+        setMilestones(milestonesList);
+      } catch (error) {
+        console.error("Error fetching milestones:", error);
+        setMilestones([]);
+      }
+    },
+    [baseUrl, token]
+  );
+
   const getUsers = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -226,7 +265,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     }
     getUsers();
     getTags();
-  }, [taskId, baseUrl, token, dispatch, getUsers, getTags]);
+    getProjects();
+  }, [taskId, baseUrl, token, dispatch, getUsers, getTags, getProjects]);
 
   useEffect(() => {
     if (Array.isArray(userAvailability) && userAvailability.length > 0) {
@@ -289,8 +329,11 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
       console.log(taskData);
 
-      // Fetch project and milestone details
+      // Set selected project and milestone IDs
       if (taskData.project_management_id) {
+        setSelectedProjectId(taskData.project_management_id);
+        // Fetch milestones for this project
+        getMilestones(taskData.project_management_id);
         dispatch(
           fetchProjectById({
             baseUrl,
@@ -300,6 +343,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         );
       }
       if (taskData.milestone_id) {
+        setSelectedMilestoneId(taskData.milestone_id);
         dispatch(
           fetchMilestoneById({ baseUrl, token, id: taskData.milestone_id })
         );
@@ -376,7 +420,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         fetchShifts(taskData.responsible_person_id);
       }
     }
-  }, [task, getTagName, baseUrl, token, dispatch, fetchShifts]);
+  }, [task, getTagName, baseUrl, token, dispatch, fetchShifts, getMilestones]);
 
   useEffect(() => {
     const getStartDateTasks = async () => {
@@ -569,6 +613,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         active: true,
         estimated_hour: totalWorkingHours,
         task_allocation_times_attributes: taskAllocationTimesAttributes,
+        project_management_id: selectedProjectId,
+        milestone_id: selectedMilestoneId,
       },
     };
 
@@ -594,41 +640,55 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     <form className="pb-20 overflow-y-auto text-[12px]" onSubmit={handleSubmit}>
       <div className="max-w-[95%] mx-auto pr-3">
         <div className="p-4 bg-white relative">
-          {/* Project and Milestone (Read-only) */}
-          {project && milestone && (
-            <div className="flex items-center justify-between gap-3 mb-4 mt-4">
-              <div className="w-full">
-                <TextField
-                  fullWidth
+          {/* Project and Milestone Dropdowns */}
+          <div className="flex items-center justify-between gap-3 mb-4 mt-4">
+            <div className="w-full">
+              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
+                <InputLabel id="project-select-label">Project *</InputLabel>
+                <Select
+                  labelId="project-select-label"
+                  id="project-select"
+                  value={selectedProjectId}
+                  onChange={(e) => {
+                    const projectId = e.target.value;
+                    setSelectedProjectId(projectId);
+                    setSelectedMilestoneId("");
+                    setMilestones([]);
+                    if (projectId) {
+                      getMilestones(projectId);
+                    }
+                  }}
                   label="Project *"
-                  value={
-                    typeof project === "object" && "title" in project
-                      ? project.title
-                      : ""
-                  }
-                  InputProps={{ readOnly: true }}
-                  variant="outlined"
-                  size="small"
-                  sx={fieldStyles}
-                />
-              </div>
-              <div className="w-full">
-                <TextField
-                  fullWidth
-                  label="Milestone *"
-                  value={
-                    typeof milestone === "object" && "title" in milestone
-                      ? milestone.title
-                      : ""
-                  }
-                  InputProps={{ readOnly: true }}
-                  variant="outlined"
-                  size="small"
-                  sx={fieldStyles}
-                />
-              </div>
+                >
+                  <MenuItem value="">Select a project</MenuItem>
+                  {projects.map((proj) => (
+                    <MenuItem key={proj.id} value={proj.id}>
+                      {proj.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
-          )}
+            <div className="w-full">
+              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
+                <InputLabel id="milestone-select-label">Milestone *</InputLabel>
+                <Select
+                  labelId="milestone-select-label"
+                  id="milestone-select"
+                  value={selectedMilestoneId}
+                  onChange={(e) => setSelectedMilestoneId(e.target.value)}
+                  label="Milestone *"
+                >
+                  <MenuItem value="">Select a milestone</MenuItem>
+                  {milestones.map((ms) => (
+                    <MenuItem key={ms.id} value={ms.id}>
+                      {ms.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+          </div>
 
           {/* Task Title */}
           <div className="mb-1">

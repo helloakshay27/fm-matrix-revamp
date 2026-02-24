@@ -60,14 +60,14 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "project_name",
+        key: "project_management_title",
         label: "Project",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "milestone_name",
+        key: "milestone_title",
         label: "Milestone",
         sortable: true,
         draggable: true,
@@ -90,6 +90,13 @@ const columns: ColumnConfig[] = [
     {
         key: "responsible",
         label: "Responsible Person",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "created_by",
+        label: "Created By",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -213,6 +220,7 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     status: "status",
     workflowStatus: "project_status_id",
     responsible: "responsible_person_id",
+    created_by: "created_by",
     expected_start_date: "expected_start_date",
     target_date: "target_date",
     duration: "target_date",
@@ -1655,6 +1663,9 @@ const ProjectTasksPage = () => {
                     </Select>
                 </FormControl>
             }
+            case "created_by": {
+                return item.created_by_name || "-";
+            }
             case "subtasks": {
                 const completed = item.completed_sub_tasks || 0;
                 const total = item.total_sub_tasks || 0;
@@ -2043,7 +2054,7 @@ const ProjectTasksPage = () => {
                     </div>
                 </div>
 
-                <TaskManagementKanban fetchData={() => { setCurrentPage(1); refetchTasks(); }} />
+                <TaskManagementKanban fetchData={() => { setCurrentPage(1); refetchTasks(); }} showMyTasksOnly={taskType === "my"} />
 
                 <Dialog
                     open={openTaskModal}
