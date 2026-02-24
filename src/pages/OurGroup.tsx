@@ -7,12 +7,15 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import "swiper/css/effect-fade";
+import { EmployeeHeader } from "@/components/EmployeeHeader";
 
 const OurGroup: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
     <div className="min-h-screen bg-white">
+      <EmployeeHeader />
+      <div className="pt-16"></div>
       {/* Header Image */}
       <div
         className="relative w-full h-auto"

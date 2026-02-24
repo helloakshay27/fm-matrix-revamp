@@ -178,25 +178,25 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   };
 
   // fallbacks to preserve existing UI before data loads
-  const name = data?.guest_name ?? "null";
-  const role = data?.guest_type ?? "null";
-  const otp = data?.otp_string ?? "null";
+  const name = data?.guest_name ?? "-";
+  const role = data?.guest_type ?? "-";
+  const otp = data?.otp_string ?? "-";
   const host =
-    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "null";
-  const passId = data?.pass_number ? String(data.id) : "null";
+    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "-";
+  const passId = data?.pass_number ? String(data.id) : "-";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
-    : (data?.pass_start_date ?? "null");
+    : (data?.pass_start_date ?? "-");
   const timeSlot = data?.expected_at
     ? formatTime(data.expected_at)
-    : "null";
-  const email = data?.guest_email ?? "null"; // guest_number often contains mobile; keep as a fallback
-  const purpose = data?.visit_purpose ?? "null";
-  const assets = joinAssets(data?.assets) ?? "null";
+    : "-";
+  const email = data?.guest_email ?? "-"; // guest_number often contains mobile; keep as a fallback
+  const purpose = data?.visit_purpose ?? "-";
+  const assets = joinAssets(data?.assets) ?? "-";
   const additionalVisitors = data?.plus_person ?? 0;
-  const location = data?.guest_from ?? "null";
-  const room = data?.guest_number ?? "null";
-  const status = data?.vstatus ?? "null";
+  const location = data?.guest_from ?? "-";
+  const room = data?.guest_number ?? "-";
+  const status = data?.vstatus ?? "-";
   const qrCodeUrl =
     data?.qr_code_url ??
     `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
