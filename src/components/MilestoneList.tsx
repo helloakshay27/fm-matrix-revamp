@@ -4,16 +4,23 @@ import { Button } from "./ui/button";
 import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
-import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
 import axios from "axios";
 import { baseClient } from "@/utils/withoutTokenBase";
 import { useSearchParams } from "react-router-dom";
 import { CommonImportModal } from "./CommonImportModal";
+import {
+  useMilestones,
+  useChangeMilestoneStatus,
+  useCreateMilestone,
+  useDeleteMilestone,
+  useImportMilestones,
+} from "@/hooks/useMilestones";
+import { CreateMilestonePayload } from "@/types/milestones";
 
 const columns: ColumnConfig[] = [
     {
@@ -151,16 +158,35 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const dispatch = useAppDispatch();
 
     const [isOpen, setIsOpen] = useState(false);
-    const [data, setData] = useState([])
     const [owners, setOwners] = useState([])
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [loading, setLoading] = useState(false)
+
+    // TanStack Query hooks for server state management
+    const {
+      data: milestonesData,
+      isLoading,
+      isFetching,
+      error,
+    } = useMilestones({
+      projectId: id,
+      sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
+      sortDirection: sortDirection || undefined,
+    });
+
+    // Extract milestones from response
+    const data = milestonesData ||
+                 [];
+
+    // Mutations for updates
+    const statusMutation = useChangeMilestoneStatus();
+    const createMutation = useCreateMilestone();
+    const deleteMutation = useDeleteMilestone();
+    const importMutation = useImportMilestones();
 
     const statusColorMap = {
         open: { dot: "bg-blue-500" },
@@ -174,21 +200,9 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         orderBy: string | null = sortColumn,
         orderDirection: "asc" | "desc" | null = sortDirection
     ) => {
-        setLoading(true)
-        try {
-            const response = await dispatch(fetchMilestones({
-                token,
-                baseUrl,
-                id,
-                orderBy: orderBy ? (COLUMN_TO_BACKEND_MAP[orderBy] || orderBy) : undefined,
-                orderDirection: orderDirection || undefined
-            })).unwrap();
-            setData(response)
-        } catch (error) {
-            console.log(error)
-        } finally {
-            setLoading(false)
-        }
+        // TanStack Query handles fetching automatically when sortColumn/sortDirection changes
+        setSortColumn(orderBy);
+        setSortDirection(orderDirection);
     }
 
     const getOwners = async () => {
@@ -221,13 +235,11 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
     const handleStatusChange = async (milestoneId: number, status: string) => {
         try {
-            await dispatch(updateMilestoneStatus({
-                token,
-                baseUrl,
-                id: String(milestoneId),
-                payload: { milestone: { status } }
-            })).unwrap();
-            getMilestones(sortColumn, sortDirection);
+            await statusMutation.mutateAsync({
+                projectId: id,
+                milestoneId,
+                status,
+            });
             toast.success("Milestone status updated successfully");
         } catch (error) {
             console.log(error);
@@ -254,9 +266,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     };
 
     useEffect(() => {
-        getMilestones(sortColumn, sortDirection);
         getOwners();
-    }, [sortColumn, sortDirection])
+    }, [token])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -281,14 +292,13 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                     title: data.title,
                     start_date: data.start_date,
                     end_date: data.end_date,
-                    status: "open",
+                    status: "open" as const,
                     owner_id: data.owner,
-                    project_management_id: id,
+                    project_management_id: Number(id),
                 },
-            }
-            await dispatch(createMilestone({ token, baseUrl, data: payload })).unwrap();
+            };
+            await createMutation.mutateAsync({ projectId: id, payload });
             toast.success("Milestone created successfully");
-            getMilestones();
         } catch (error) {
             console.log(error)
             toast.error(error)
@@ -323,31 +333,19 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     };
 
     const handleImport = async () => {
-        setIsUploading(true);
+        if (!selectedFile) {
+            toast.error("Please select a file");
+            return;
+        }
+
         try {
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            const response = await axios.post(`https://${baseUrl}/milestones/import.json`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            });
-            if (response.data.failed && response.data.failed.length > 0) {
-                response.data.failed.forEach((item: { row: number; errors: string[] }) => {
-                    const errorMessages = item.errors.join(', ');
-                    toast.error(`Row ${item.row}: ${errorMessages}`);
-                });
-            } else {
-                toast.success("Milestones imported successfully");
-                setIsImportModalOpen(false);
-                setSelectedFile(null);
-                getMilestones();
-            }
+            await importMutation.mutateAsync({ projectId: id, file: selectedFile });
+            toast.success("Milestones imported successfully");
+            setIsImportModalOpen(false);
+            setSelectedFile(null);
         } catch (error) {
             console.log(error);
             toast.error("Failed to import milestones");
-        } finally {
-            setIsUploading(false);
         }
     };
 
@@ -629,7 +627,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 Back
             </Button>
             <EnhancedTable
-                data={data}
+                data={data as any[]}
                 columns={columns}
                 renderActions={renderActions}
                 renderCell={renderCell}
@@ -637,7 +635,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 rightActions={rightActions}
                 storageKey="milestone-table"
                 onSort={handleColumnSort}
-                loading={loading}
+                loading={isLoading}
                 // onFilterClick={() => { }}
                 canAddRow={true}
                 readonlyColumns={["id", "tasks"]}
@@ -665,7 +663,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 entityType="milestones"
                 onSampleDownload={handleSampleDownload}
                 onImport={handleImport}
-                isUploading={isUploading}
+                isUploading={importMutation.isPending}
             />
         </div>
     )
