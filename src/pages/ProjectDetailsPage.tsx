@@ -314,6 +314,7 @@ const ProjectDetailsPage = () => {
     const dropdownRef = useRef(null);
     const secondContentRef = useRef(null);
 
+    const [isLoading, setIsLoading] = useState(true);
     const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -370,6 +371,7 @@ const ProjectDetailsPage = () => {
 
     const getProjectDetails = async () => {
         try {
+            setIsLoading(true);
             const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
             setProject(response)
             if (response?.status) {
@@ -377,6 +379,8 @@ const ProjectDetailsPage = () => {
             }
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -456,6 +460,68 @@ const ProjectDetailsPage = () => {
         hours = hours ? hours : 12;
         hours = Number(String(hours).padStart(2, "0"));
         return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+    }
+
+    // Skeleton Component
+    const SkeletonLoader = () => (
+        <div className="my-4 m-8 animate-pulse">
+            <div className="h-10 bg-gray-300 rounded w-32 mb-6"></div>
+            
+            <div className="h-6 bg-gray-300 rounded w-64 mb-4"></div>
+            <div className="border-b-[3px] border-gray-300 mb-6"></div>
+            
+            {/* Header info skeleton */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3 w-full">
+                    <div className="h-4 bg-gray-300 rounded flex-1 max-w-xs"></div>
+                    <div className="h-4 bg-gray-300 rounded flex-1 max-w-xs"></div>
+                    <div className="h-4 bg-gray-300 rounded flex-1 max-w-xs"></div>
+                    <div className="h-4 bg-gray-300 rounded flex-1 max-w-xs"></div>
+                </div>
+            </div>
+            <div className="border-b-[3px] border-gray-300 mb-6"></div>
+            
+            {/* Description section skeleton */}
+            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
+                <div className="space-y-2">
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                </div>
+            </div>
+            
+            {/* Details section skeleton */}
+            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
+                <div className="space-y-3">
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                </div>
+            </div>
+            
+            {/* Tabs skeleton */}
+            <div className="flex items-center justify-between gap-10 my-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-4 bg-gray-300 rounded w-20"></div>
+                ))}
+            </div>
+            <div className="border-b-[3px] border-gray-300 mb-6"></div>
+            
+            {/* Tab content skeleton */}
+            <div className="border rounded-[10px] shadow-md p-5">
+                <div className="space-y-3">
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-full"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (isLoading) {
+        return <SkeletonLoader />;
     }
 
     return (

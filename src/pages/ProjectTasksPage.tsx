@@ -9,7 +9,8 @@ import {
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, editProjectTask, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, editProjectTask, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
@@ -54,6 +55,20 @@ const columns: ColumnConfig[] = [
     {
         key: "title",
         label: "Task Title",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "project_name",
+        label: "Project",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "milestone_name",
+        label: "Milestone",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -466,7 +481,6 @@ const ProjectTasksPage = () => {
     const location = useLocation();
     const dispatch = useAppDispatch();
 
-    const [tasks, setTasks] = useState([])
     const [users, setUsers] = useState([])
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [selectedView, setSelectedView] = useState<"Kanban" | "List">("List");
@@ -475,14 +489,7 @@ const ProjectTasksPage = () => {
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
     const [taskType, setTaskType] = useState<"all" | "my">("all");
-    const [pagination, setPagination] = useState({
-        current_page: 1,
-        next_page: null as number | null,
-        prev_page: null as number | null,
-        total_pages: 1,
-        total_count: 0,
-    })
-    const [loading, setLoading] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -748,13 +755,88 @@ const ProjectTasksPage = () => {
                 params['q[milestone_id_eq]'] = mid;
             }
 
-            dispatch(filterTasks({ token, baseUrl, params })).then(() => {
-                setIsFilterModalOpen(false);
-            });
+            setIsFilterModalOpen(false);
+            setCurrentPage(1);
+            // Filters automatically applied through useTasks hook
         } catch (e) {
             console.log(e);
         }
     };
+
+    // Build filters for useTasks hook
+    const buildFilters = () => {
+        const filters: Record<string, any> = {};
+        const searchParams = new URLSearchParams(location.search);
+        const urlProjectId = searchParams.get('project_id');
+
+        if (selectedFilterOption !== "all") {
+            filters["q[status_eq]"] = selectedFilterOption;
+        }
+
+        if (urlProjectId) {
+            filters["q[project_management_id_eq]"] = urlProjectId;
+        }
+
+        if (mid) {
+            filters["q[milestone_id_eq]"] = mid;
+        }
+
+        // Add advanced filters
+        if (selectedStatuses.length > 0) {
+            filters['q[status_in][]'] = selectedStatuses;
+        }
+        if (selectedWorkflowStatus.length > 0) {
+            filters['q[project_status_id_in][]'] = selectedWorkflowStatus;
+        }
+        if (selectedResponsible.length > 0) {
+            filters['q[responsible_person_id_in][]'] = selectedResponsible;
+        }
+        if (selectedCreators.length > 0) {
+            filters['q[created_by_id_in][]'] = selectedCreators;
+        }
+        if (selectedProjects.length > 0) {
+            filters['q[project_management_id_in][]'] = selectedProjects;
+        }
+        if (dates.startDate) {
+            filters['q[start_date_eq]'] = dates.startDate;
+        }
+        if (dates.endDate) {
+            filters['q[end_date_eq]'] = dates.endDate;
+        }
+
+        return filters;
+    };
+
+    // TanStack Query hook for fetching tasks
+    const filters = buildFilters();
+    const { 
+        data: tasksData, 
+        isLoading, 
+        isFetching, 
+        error,
+        refetch: refetchTasks
+    } = useTasks({
+        taskType,
+        page: currentPage,
+        filters,
+        sortBy: sortColumn ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn : undefined,
+        sortDirection,
+    });
+
+    // Extract tasks and pagination from response
+    const tasks = tasksData?.data?.task_managements || 
+                  tasksData?.task_managements || 
+                  [];
+    const paginationData = tasksData?.data?.pagination || 
+                          tasksData?.pagination;
+    const hasMore = currentPage < (paginationData?.total_pages || 1);
+
+    // Mutations
+    const statusMutation = useChangeTaskStatus();
+    const createMutation = useCreateTask();
+    const completionMutation = useUpdateTaskCompletion();
+    const deleteMutation = useDeleteTask();
+    const importMutation = useImportTasks();
 
     const handleClearFilters = () => {
         setSelectedStatuses([]);
@@ -765,102 +847,9 @@ const ProjectTasksPage = () => {
         setDates({ startDate: '', endDate: '' });
         setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '' });
         localStorage.removeItem('taskFilters');
-
-        const params: any = { page: 1 };
-        if (mid) {
-            params['q[milestone_id_eq]'] = mid;
-        }
-
-        dispatch(filterTasks({ token, baseUrl, params })).then(() => {
-            setIsFilterModalOpen(false);
-        });
+        setCurrentPage(1);
+        // Filters automatically cleared and refetched through useTasks hook
     };
-
-
-    const fetchData = useCallback(async (page: number = 1, orderBy: string | null = sortColumn, orderDirection: "asc" | "desc" | null = sortDirection) => {
-        try {
-            setLoading(true);
-            const searchParams = new URLSearchParams(location.search);
-            const urlProjectId = searchParams.get('project_id');
-
-            // Determine if we're in milestone context or standalone tasks
-            const isMilestoneContext = mid !== undefined && mid !== null;
-
-            const filters: any = { page };
-
-            if (selectedFilterOption !== "all") {
-                filters["q[status_eq]"] = selectedFilterOption;
-            }
-
-            if (urlProjectId) {
-                filters["q[project_management_id_eq]"] = urlProjectId;
-            }
-
-            // Add sorting parameters if provided
-            if (orderBy && orderDirection) {
-                const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
-                filters["order_by"] = backendFieldName;
-                filters["order_direction"] = orderDirection;
-            }
-
-            let response;
-
-            // Handle URL-based context
-            if (isMilestoneContext) {
-                // In milestone context - show all tasks for that milestone
-                filters["q[milestone_id_eq]"] = mid;
-
-                response = await dispatch(
-                    filterTasks({ token, baseUrl, params: filters })
-                ).unwrap();
-            } else {
-                // Standalone tasks view - distinguish between all tasks and my tasks
-                if (taskType === "my") {
-                    // My Tasks - use dedicated endpoint with page param
-                    const params = new URLSearchParams();
-                    params.append("page", page.toString());
-                    if (selectedFilterOption !== "all") {
-                        params.append("status", selectedFilterOption);
-                    }
-
-                    // Add sorting parameters for my tasks
-                    if (orderBy && orderDirection) {
-                        const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
-                        params.append("order_by", backendFieldName);
-                        params.append("order_direction", orderDirection);
-                    }
-
-                    response = await fetch(
-                        `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    ).then(res => res.json());
-                } else {
-                    // All Tasks - use filter endpoint
-                    response = await dispatch(
-                        filterTasks({ token, baseUrl, params: filters })
-                    ).unwrap();
-                }
-            }
-
-            setTasks(response.task_managements || response.data?.task_managements || []);
-            setPagination({
-                current_page: response.pagination?.current_page || response.data?.pagination?.current_page || 1,
-                next_page: response.pagination?.next_page || response.data?.pagination?.next_page || null,
-                prev_page: response.pagination?.prev_page || response.data?.pagination?.prev_page || null,
-                total_pages: response.pagination?.total_pages || response.data?.pagination?.total_pages || 1,
-                total_count: response.pagination?.total_count || response.data?.pagination?.total_count || 0,
-            });
-        } catch (error) {
-            console.log(error);
-            toast.error("Failed to fetch tasks");
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search, sortColumn, sortDirection]);
 
     const getUsers = useCallback(async () => {
         try {
@@ -882,10 +871,6 @@ const ProjectTasksPage = () => {
     }, [baseUrl, token]);
 
     useEffect(() => {
-        fetchData(1);
-    }, [selectedFilterOption, taskType, mid, projectId, location.search, fetchData]);
-
-    useEffect(() => {
         getUsers();
     }, [getUsers])
 
@@ -898,19 +883,19 @@ const ProjectTasksPage = () => {
     };
 
     const handlePageChange = async (page: number) => {
-        if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+        if (page < 1 || page > (paginationData?.total_pages || 1) || page === currentPage || isLoading) {
             return;
         }
-        await fetchData(page);
+        setCurrentPage(page);
     };
 
     const renderPaginationItems = () => {
-        if (!pagination.total_pages || pagination.total_pages <= 0) {
+        if (!paginationData?.total_pages || paginationData.total_pages <= 0) {
             return null;
         }
         const items = [];
-        const totalPages = pagination.total_pages;
-        const currentPage = pagination.current_page;
+        const totalPages = paginationData.total_pages;
+        const paginationCurrentPage = paginationData.current_page;
         const showEllipsis = totalPages > 7;
 
         if (showEllipsis) {
@@ -918,16 +903,16 @@ const ProjectTasksPage = () => {
                 <PaginationItem key={1} className="cursor-pointer">
                     <PaginationLink
                         onClick={() => handlePageChange(1)}
-                        isActive={currentPage === 1}
-                        aria-disabled={loading}
-                        className={loading ? "pointer-events-none opacity-50" : ""}
+                        isActive={paginationCurrentPage === 1}
+                        aria-disabled={isLoading}
+                        className={isLoading ? "pointer-events-none opacity-50" : ""}
                     >
                         1
                     </PaginationLink>
                 </PaginationItem>
             );
 
-            if (currentPage > 4) {
+            if (paginationCurrentPage > 4) {
                 items.push(
                     <PaginationItem key="ellipsis1">
                         <PaginationEllipsis />
@@ -939,9 +924,9 @@ const ProjectTasksPage = () => {
                         <PaginationItem key={i} className="cursor-pointer">
                             <PaginationLink
                                 onClick={() => handlePageChange(i)}
-                                isActive={currentPage === i}
-                                aria-disabled={loading}
-                                className={loading ? "pointer-events-none opacity-50" : ""}
+                                isActive={paginationCurrentPage === i}
+                                aria-disabled={isLoading}
+                                className={isLoading ? "pointer-events-none opacity-50" : ""}
                             >
                                 {i}
                             </PaginationLink>
@@ -950,15 +935,15 @@ const ProjectTasksPage = () => {
                 }
             }
 
-            if (currentPage > 3 && currentPage < totalPages - 2) {
-                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+            if (paginationCurrentPage > 3 && paginationCurrentPage < totalPages - 2) {
+                for (let i = paginationCurrentPage - 1; i <= paginationCurrentPage + 1; i++) {
                     items.push(
                         <PaginationItem key={i} className="cursor-pointer">
                             <PaginationLink
                                 onClick={() => handlePageChange(i)}
-                                isActive={currentPage === i}
-                                aria-disabled={loading}
-                                className={loading ? "pointer-events-none opacity-50" : ""}
+                                isActive={paginationCurrentPage === i}
+                                aria-disabled={isLoading}
+                                className={isLoading ? "pointer-events-none opacity-50" : ""}
                             >
                                 {i}
                             </PaginationLink>
@@ -967,7 +952,7 @@ const ProjectTasksPage = () => {
                 }
             }
 
-            if (currentPage < totalPages - 3) {
+            if (paginationCurrentPage < totalPages - 3) {
                 items.push(
                     <PaginationItem key="ellipsis2">
                         <PaginationEllipsis />
@@ -980,9 +965,9 @@ const ProjectTasksPage = () => {
                             <PaginationItem key={i} className="cursor-pointer">
                                 <PaginationLink
                                     onClick={() => handlePageChange(i)}
-                                    isActive={currentPage === i}
-                                    aria-disabled={loading}
-                                    className={loading ? "pointer-events-none opacity-50" : ""}
+                                    isActive={paginationCurrentPage === i}
+                                    aria-disabled={isLoading}
+                                    className={isLoading ? "pointer-events-none opacity-50" : ""}
                                 >
                                     {i}
                                 </PaginationLink>
@@ -997,9 +982,9 @@ const ProjectTasksPage = () => {
                     <PaginationItem key={totalPages} className="cursor-pointer">
                         <PaginationLink
                             onClick={() => handlePageChange(totalPages)}
-                            isActive={currentPage === totalPages}
-                            aria-disabled={loading}
-                            className={loading ? "pointer-events-none opacity-50" : ""}
+                            isActive={paginationCurrentPage === totalPages}
+                            aria-disabled={isLoading}
+                            className={isLoading ? "pointer-events-none opacity-50" : ""}
                         >
                             {totalPages}
                         </PaginationLink>
@@ -1012,9 +997,9 @@ const ProjectTasksPage = () => {
                     <PaginationItem key={i} className="cursor-pointer">
                         <PaginationLink
                             onClick={() => handlePageChange(i)}
-                            isActive={currentPage === i}
-                            aria-disabled={loading}
-                            className={loading ? "pointer-events-none opacity-50" : ""}
+                            isActive={paginationCurrentPage === i}
+                            aria-disabled={isLoading}
+                            className={isLoading ? "pointer-events-none opacity-50" : ""}
                         >
                             {i}
                         </PaginationLink>
@@ -1097,7 +1082,7 @@ const ProjectTasksPage = () => {
             await dispatch(createProjectTask({ token, baseUrl, data: payload })).unwrap();
 
             toast.success("Task created successfully");
-            await fetchData();
+            await refetchTasks();
         } catch (error) {
             console.log(error)
             // toast.error(String(error) || "Failed to create task")
@@ -1158,7 +1143,7 @@ const ProjectTasksPage = () => {
                 toast.success("Tasks imported successfully");
                 setIsImportModalOpen(false);
                 setSelectedFile(null);
-                fetchData();
+                refetchTasks();
             }
         } catch (error) {
             console.log(error);
@@ -1224,10 +1209,8 @@ const ProjectTasksPage = () => {
                 }
             }
 
-            // If not overdue or not being marked as complete, proceed normally
-            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
-
-            fetchData(1, sortColumn, sortDirection);
+            // Use TanStack Query mutation for status change
+            await statusMutation.mutateAsync({ id, status });
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1237,8 +1220,7 @@ const ProjectTasksPage = () => {
     const handleWorkflowStatusChange = async (id: number, status: string) => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
-
-            fetchData(1, sortColumn, sortDirection);
+            setCurrentPage(1);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
@@ -1248,8 +1230,7 @@ const ProjectTasksPage = () => {
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
-
-            fetchData(1, sortColumn, sortDirection);
+            setCurrentPage(1);
             toast.success("Task updated successfully");
         } catch (error) {
             console.log(error)
@@ -1269,9 +1250,8 @@ const ProjectTasksPage = () => {
 
         setSortColumn(newDirection ? columnKey : null);
         setSortDirection(newDirection);
-
-        // Fetch with new sort
-        fetchData(1, newDirection ? columnKey : null, newDirection);
+        setCurrentPage(1);
+        // Sorting automatically applied through useTasks hook
     };
 
     const handlePauseTaskSubmit = async (reason: string, tid: number) => {
@@ -1281,13 +1261,7 @@ const ProjectTasksPage = () => {
         try {
             // Update task status to "on_hold" (paused)
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
-
-            // Update local state immediately for instant UI feedback
-            setTasks((prevTasks) =>
-                prevTasks.map((task) =>
-                    task.id === tid ? { ...task, is_started: false } : task
-                )
-            );
+            setCurrentPage(1);
 
             const commentPayload = {
                 comment: {
@@ -1310,7 +1284,7 @@ const ProjectTasksPage = () => {
             setPauseTaskId(null);
 
             // Refresh task list in background
-            fetchData();
+            refetchTasks();
         } catch (error) {
             console.error('Failed to pause task:', error);
             toast.error(
@@ -1329,12 +1303,8 @@ const ProjectTasksPage = () => {
             // Update task status to "completed"
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'completed' } })).unwrap();
 
-            // Update local state
-            setTasks((prevTasks) =>
-                prevTasks.map((task) =>
-                    task.id === tid ? { ...task, status: 'completed', is_started: false } : task
-                )
-            );
+            // TanStack Query will refetch and update the cache automatically
+            await refetchTasks();
 
             const commentPayload = {
                 comment: {
@@ -1357,7 +1327,7 @@ const ProjectTasksPage = () => {
             setPauseTaskId(null);
 
             // Refresh task list in background
-            fetchData();
+            refetchTasks();
         } catch (error) {
             console.error('Failed to end task:', error);
             toast.error(
@@ -1372,12 +1342,8 @@ const ProjectTasksPage = () => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status: 'started' } })).unwrap();
 
-            // Update local state immediately for instant UI feedback
-            setTasks((prevTasks) =>
-                prevTasks.map((task) =>
-                    task.id === id ? { ...task, is_started: true } : task
-                )
-            );
+            // TanStack Query will refetch and update the cache automatically
+            await refetchTasks();
 
             toast.success("Task started successfully");
         } catch (error) {
@@ -1424,16 +1390,10 @@ const ProjectTasksPage = () => {
             setPendingCompletionPercentage(percentage);
             setIsOverdueModalOpen(true);
         } else {
-            // Directly save the percentage if not overdue
+            // Directly save the percentage if not overdue using TanStack Query mutation
             try {
-                await dispatch(editProjectTask({
-                    token,
-                    baseUrl,
-                    id: String(id),
-                    data: { completion_percent: percentage }
-                })).unwrap();
+                await completionMutation.mutateAsync({ id, completionPercent: percentage });
                 toast.success("Completion percentage updated successfully");
-                fetchData();
             } catch (error) {
                 console.log(error);
                 toast.error("Failed to update completion percentage");
@@ -1448,20 +1408,10 @@ const ProjectTasksPage = () => {
         try {
             // If this is a status change (marking as complete)
             if (pendingStatusChange) {
-                await dispatch(updateTaskStatus({
-                    token,
-                    baseUrl,
-                    id: String(overdueTaskId),
-                    data: { status: pendingStatusChange.status }
-                })).unwrap();
+                await statusMutation.mutateAsync({ id: overdueTaskId, status: pendingStatusChange.status });
             } else {
                 // Otherwise it's a completion percentage change
-                await dispatch(editProjectTask({
-                    token,
-                    baseUrl,
-                    id: String(overdueTaskId),
-                    data: { completion_percent: pendingCompletionPercentage }
-                })).unwrap();
+                await completionMutation.mutateAsync({ id: overdueTaskId, completionPercent: pendingCompletionPercentage });
             }
 
             // Save the overdue reason as a comment
@@ -1481,7 +1431,7 @@ const ProjectTasksPage = () => {
                 },
             });
 
-            fetchData();
+            refetchTasks();
 
             const message = pendingStatusChange
                 ? 'Task marked as complete with overdue reason'
@@ -2085,7 +2035,7 @@ const ProjectTasksPage = () => {
                     </div>
                 </div>
 
-                <TaskManagementKanban fetchData={fetchData} />
+                <TaskManagementKanban fetchData={() => { setCurrentPage(1); refetchTasks(); }} />
 
                 <Dialog
                     open={openTaskModal}
@@ -2189,7 +2139,7 @@ const ProjectTasksPage = () => {
                 onSort={handleColumnSort}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 canAddRow={true}
-                loading={loading}
+                loading={isLoading}
                 readonlyColumns={["id", "duration", "predecessor", "successor"]}
                 onAddRow={(newRowData) => {
                     handleSubmit(newRowData)
@@ -2236,21 +2186,21 @@ const ProjectTasksPage = () => {
                 </DialogContent>
             </Dialog>
 
-            {pagination.total_pages > 1 && (
+            {paginationData && paginationData.total_pages > 1 && (
                 <div className="flex justify-center mt-6">
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                    onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                                    className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    onClick={() => handlePageChange(Math.max(1, paginationData.current_page - 1))}
+                                    className={paginationData.current_page === 1 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
                                 />
                             </PaginationItem>
                             {renderPaginationItems()}
                             <PaginationItem>
                                 <PaginationNext
-                                    onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                                    className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    onClick={() => handlePageChange(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
+                                    className={paginationData.current_page === paginationData.total_pages || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
                                 />
                             </PaginationItem>
                         </PaginationContent>
@@ -2558,7 +2508,7 @@ const ProjectTasksPage = () => {
                 entityType="tasks"
                 onSampleDownload={handleSampleDownload}
                 onImport={handleImportTasks}
-                isUploading={isUploading}
+                isUploading={importMutation.isPending}
             />
         </div>
     );
