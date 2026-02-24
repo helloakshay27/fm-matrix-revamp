@@ -123,7 +123,11 @@ export default function Todo() {
   const toggleTodo = async (id) => {
     const updatedTodos = todos.map((todo) =>
       todo.id === id
-        ? { ...todo, status: todo.status === "open" ? "completed" : "open" }
+        ? {
+          ...todo,
+          status: todo.status === "open" ? "completed" : "open",
+          updated_at: todo.status === "open" ? new Date().toISOString() : todo.updated_at
+        }
         : todo
     );
 
@@ -253,8 +257,43 @@ export default function Todo() {
   const pendingTodos = todos.filter((t) => t.status !== "completed");
   const completedTodos = todos.filter((t) => t.status === "completed");
 
+  // Group completed todos by updated_at date
+  const groupedCompletedTodos = completedTodos.reduce((groups, todo) => {
+    const date = todo.updated_at ? todo.updated_at.split("T")[0] : "No Date";
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(todo);
+    return groups;
+  }, {} as Record<string, any[]>);
+
+  // Get sorted dates (descending)
+  const sortedCompletedDates = Object.keys(groupedCompletedTodos).sort((a, b) => {
+    if (a === "No Date") return 1;
+    if (b === "No Date") return -1;
+    return new Date(b).getTime() - new Date(a).getTime();
+  });
+
+  const getCompletionDateLabel = (dateStr: string) => {
+    if (dateStr === "No Date") return "No Completion Date";
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    if (dateStr === todayStr) return "Today";
+    if (dateStr === yesterdayStr) return "Yesterday";
+
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   // ------------------------------
-  // DATE GROUPING
+  // DATE GROUPING (Pending Todos)
   // ------------------------------
   const today = new Date().toISOString().split("T")[0];
 
@@ -298,26 +337,6 @@ export default function Todo() {
             </div>
 
             <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-6 min-h-96 overflow-auto">
-              {/* Overdue */}
-              {overdueTodos.length > 0 && (
-                <div>
-                  <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
-                  {overdueTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      toggleTodo={toggleTodo}
-                      deleteTodo={deleteTodo}
-                      handlePlayTask={handlePlayTask}
-                      setPauseTaskId={setPauseTaskId}
-                      setIsPauseModalOpen={setIsPauseModalOpen}
-                      handleEditTodo={handleEditTodo}
-                      handleConvertTodo={handleConvertTodo}
-                    />
-                  ))}
-                </div>
-              )}
-
               {/* Today */}
               {todayTodos.length > 0 && (
                 <div>
@@ -343,6 +362,26 @@ export default function Todo() {
                 <div>
                   <h3 className="text-blue-600 font-semibold mb-2">Upcoming</h3>
                   {upcomingTodos.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      toggleTodo={toggleTodo}
+                      deleteTodo={deleteTodo}
+                      handlePlayTask={handlePlayTask}
+                      setPauseTaskId={setPauseTaskId}
+                      setIsPauseModalOpen={setIsPauseModalOpen}
+                      handleEditTodo={handleEditTodo}
+                      handleConvertTodo={handleConvertTodo}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Overdue */}
+              {overdueTodos.length > 0 && (
+                <div>
+                  <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
+                  {overdueTodos.map((todo) => (
                     <TodoItem
                       key={todo.id}
                       todo={todo}
@@ -403,7 +442,7 @@ export default function Todo() {
               </span>
             </div>
 
-            <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-2 min-h-96 overflow-auto">
+            <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-4 min-h-96 overflow-auto">
               {completedTodos.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-muted-foreground text-center">
@@ -411,12 +450,19 @@ export default function Todo() {
                   </p>
                 </div>
               ) : (
-                completedTodos.map((todo) => (
-                  <CompletedTodoItem
-                    key={todo.id}
-                    todo={todo}
-                    toggleTodo={toggleTodo}
-                  />
+                sortedCompletedDates.map((date) => (
+                  <div key={date} className="space-y-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1 mb-2">
+                      {getCompletionDateLabel(date)}
+                    </h3>
+                    {groupedCompletedTodos[date].map((todo) => (
+                      <CompletedTodoItem
+                        key={todo.id}
+                        todo={todo}
+                        toggleTodo={toggleTodo}
+                      />
+                    ))}
+                  </div>
                 ))
               )}
             </div>

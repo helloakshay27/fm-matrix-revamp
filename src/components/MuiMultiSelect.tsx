@@ -24,6 +24,7 @@ interface MuiMultiSelectProps {
     placeholder?: string;
     fullWidth?: boolean;
     disabled?: boolean;
+    maxHeight?: string | number;
 }
 
 export const MuiMultiSelect = ({
@@ -36,6 +37,7 @@ export const MuiMultiSelect = ({
     placeholder,
     fullWidth = true,
     disabled = false,
+    maxHeight = "65px",
 }: MuiMultiSelectProps) => {
     const handleChange = (event: any) => {
         const selectedValues = event.target.value;
@@ -62,14 +64,26 @@ export const MuiMultiSelect = ({
             variant="outlined"
             sx={{
                 "& .MuiInputBase-root": {
-                    minHeight: "45px",
+                    minHeight: "65px",
+                    maxHeight: maxHeight,
                     height: "auto",
+                },
+                "& .MuiInputLabel-root": {
+                    backgroundColor: "white",
+                    padding: "0 4px",
+                    marginLeft: "-2px",
+                },
+                "& .MuiInputLabel-shrink": {
+                    transform: "translate(14px, -9px) scale(0.75)",
                 },
             }}
         >
-            <InputLabel shrink>{label}</InputLabel>
+            <InputLabel id="mui-multi-select-label" shrink>
+                {label}
+            </InputLabel>
             <Select
                 multiple
+                labelId="mui-multi-select-label"
                 value={value.map((item) => item.value)}
                 onChange={handleChange}
                 label={label}
@@ -89,8 +103,31 @@ export const MuiMultiSelect = ({
                             flexWrap: "wrap",
                             gap: "4px",
                             padding: "4px 0",
+                            maxHeight: maxHeight,
+                            overflowY: "auto",
+                            width: "100%",
+                            scrollbarWidth: "none", // For Firefox
+                            msOverflowStyle: "none", // For Internet Explorer and Edge
                         }}
+                        className="custom-scrollbar"
                     >
+                        <style>
+                            {`
+                                .custom-scrollbar::-webkit-scrollbar {
+                                    width: 4px;
+                                }
+                                .custom-scrollbar::-webkit-scrollbar-track {
+                                    background: transparent;
+                                }
+                                .custom-scrollbar::-webkit-scrollbar-thumb {
+                                    background: #e0e0e0;
+                                    border-radius: 4px;
+                                }
+                                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                                    background: #bdbdbd;
+                                }
+                            `}
+                        </style>
                         {value.length > 0 ? (
                             value.map((item) => (
                                 <Chip
@@ -116,7 +153,7 @@ export const MuiMultiSelect = ({
                                 />
                             ))
                         ) : (
-                            <span style={{ color: "#999", lineHeight: "normal" }}>
+                            <span style={{ color: "#999", lineHeight: "normal", fontSize: "0.875rem" }}>
                                 {placeholder || "Select..."}
                             </span>
                         )}
@@ -125,11 +162,12 @@ export const MuiMultiSelect = ({
                 sx={{
                     "& .MuiSelect-select": {
                         padding: "6px 12px !important",
-                        minHeight: "auto !important",
+                        minHeight: "45px !important",
                         display: "flex !important",
-                        alignItems: "flex-start",
-                        paddingTop: "8px !important",
-                        paddingBottom: "8px !important",
+                        alignItems: "center",
+                        paddingTop: "4px !important",
+                        paddingBottom: "4px !important",
+                        boxSizing: "border-box",
                     },
                     "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: "rgba(0, 0, 0, 0.23)",

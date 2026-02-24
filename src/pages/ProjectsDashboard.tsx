@@ -6,13 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
+import { useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import {
-  changeProjectStatus,
-  createProject,
-  filterProjects,
-} from "@/store/slices/projectManagementSlice";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
@@ -22,7 +17,7 @@ import {
   LogOut,
   Plus,
 } from "lucide-react";
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { baseClient } from "@/utils/withoutTokenBase";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
@@ -39,6 +34,15 @@ import axios from "axios";
 import { useDebounce } from "@/hooks/useDebounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import {
+  useProjects,
+  useChangeProjectStatus,
+  useCreateProject,
+  useDeleteProject,
+  useImportProjects,
+} from "@/hooks/useProjects";
+import { CreateProjectPayload } from "@/types/projects";
 
 const columns: ColumnConfig[] = [
   {
@@ -296,13 +300,18 @@ export const ProjectsDashboard = () => {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
     );
-  }, [setCurrentSection]);
+  }, [setCurrentSection, view]);
 
   const { teams } = useAppSelector((state) => state.projectTeams);
   const { projectTags: tags } = useAppSelector((state) => state.projectTags);
 
+  // Pagination and Search - declare FIRST before useDebounce
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // UI State
   const [selectedFilterOption, setSelectedFilterOption] = useState("all");
-  const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState({});
@@ -312,23 +321,54 @@ export const ProjectsDashboard = () => {
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [scrollLoading, setScrollLoading] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState("");
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false)
+  const [appliedFilters, setAppliedFilters] = useState(""); // For ProjectFilterModal
 
-  // Refs for click outside detection
-  const viewDropdownRef = useRef<HTMLDivElement>(null);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  // Build filter string for TanStack Query (combines status filter + applied filters)
+  let filterString = "";
+  if (appliedFilters !== "") {
+    filterString = appliedFilters;
+  } else if (selectedFilterOption !== "all") {
+    filterString = `q[status_eq]=${selectedFilterOption}&`;
+  }
+
+  // TanStack Query hooks for server state management
+  const {
+    data: projectsData,
+    isLoading,
+    isFetching,
+    error
+  } = useProjects({
+    page: currentPage,
+    filters: filterString,
+    search: debouncedSearchTerm,
+    sortBy: sortColumn ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn : undefined,
+    sortDirection,
+  });
+
+  // Extract projects and pagination
+  const projects = projectsData?.data?.project_managements ||
+    projectsData?.project_managements ||
+    [];
+  const paginationData = projectsData?.data?.pagination ||
+    projectsData?.pagination;
+  const hasMore = currentPage < (paginationData?.total_pages || 1);
+
+  // Mutations for updates
+  const statusMutation = useChangeProjectStatus();
+  const createMutation = useCreateProject();
+  const deleteMutation = useDeleteProject();
+  const importMutation = useImportProjects();
+
+  // Helper function for Kanban when it needs to refresh data
+  const refetchProjects = useCallback(() => {
+    setCurrentPage(1);
+    // TanStack Query will automatically refetch with the reset page
+  }, []);
 
   // Helper function to safely get user ID from sessionStorage or localStorage
   const getUserId = useCallback(() => {
@@ -352,144 +392,9 @@ export const ProjectsDashboard = () => {
     return null;
   }, []);
 
-  const fetchData = useCallback(
-    async (
-      page = 1,
-      filterString = "",
-      isLoadMore = false,
-      searchQuery = "",
-      orderBy = sortColumn,
-      orderDirection = sortDirection
-    ) => {
-      // Guard: don't proceed if token is not available
-      if (!token) {
-        console.warn("⚠️ fetchData called without token");
-        return;
-      }
-
-      try {
-        if (!hasMore && isLoadMore) return;
-
-        // Use scrollLoading for infinite scroll, regular loading for initial load
-        if (isLoadMore) {
-          setScrollLoading(true);
-        } else {
-          setLoading(true);
-        }
-
-        let filters = filterString !== "" ? filterString : appliedFilters;
-
-        if (!filters) {
-          if (selectedFilterOption !== "all") {
-            filters = `q[status_eq]=${selectedFilterOption}&`;
-          }
-        }
-
-        // Add search query using Ransack's cont (contains) matcher
-        if (searchQuery && searchQuery.trim() !== "") {
-          const searchFilter = `q[title_or_project_type_name_or_project_owner_name_cont]=${encodeURIComponent(searchQuery.trim())}`;
-          filters += (filters ? "&" : "") + searchFilter + "&";
-        }
-
-        // Add sorting parameters
-        if (orderBy && orderDirection) {
-          const backendFieldName = COLUMN_TO_BACKEND_MAP[orderBy] || orderBy;
-          filters += (filters ? "&" : "") + `order_by=${backendFieldName}&order_direction=${orderDirection}`;
-        }
-
-        filters +=
-          (filters ? "&" : "") +
-          `page=${page}`;
-
-        // Fetch data
-        if (!isLoadMore && page === 1) {
-          const response = await dispatch(
-            filterProjects({ token, baseUrl, filters })
-          ).unwrap();
-
-          const projectsData = response?.data?.project_managements || response?.project_managements || [];
-          const transformedData = transformedProjects(projectsData);
-          setProjects(transformedData);
-
-          const paginationData = response?.data?.pagination || response?.pagination;
-          setHasMore(page < (paginationData?.total_pages || 1));
-          setCurrentPage(page);
-        } else {
-          // For pagination, fetch fresh data
-          const response = await dispatch(
-            filterProjects({ token, baseUrl, filters })
-          ).unwrap();
-
-          const projectsData = response?.data?.project_managements || response?.project_managements || [];
-          const transformedData = transformedProjects(projectsData);
-
-          if (isLoadMore) {
-            setProjects((prev) => [...prev, ...transformedData]);
-          } else {
-            setProjects(transformedData);
-          }
-
-          const paginationData = response?.data?.pagination || response?.pagination;
-          setHasMore(page < (paginationData?.total_pages || 1));
-          setCurrentPage(page);
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-        setScrollLoading(false);
-      }
-    },
-    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl, sortColumn, sortDirection]
-  );
-
-  useEffect(() => {
-    if (token) {
-      setCurrentPage(1);
-      setHasMore(true);
-      fetchData(1, "", false, debouncedSearchTerm);
-      setAppliedFilters("");
-    }
-  }, [token, selectedFilterOption, debouncedSearchTerm]);
-
-  // Infinite scroll handler with debouncing
-  useEffect(() => {
-    let scrollTimeout: ReturnType<typeof setTimeout>;
-    let lastLoadedPage = currentPage;
-
-    const handleScroll = () => {
-      // Clear any existing timeout
-      clearTimeout(scrollTimeout);
-
-      // Debounce the scroll check to avoid excessive calls
-      scrollTimeout = setTimeout(async () => {
-        const scrollElement = document.documentElement;
-        const scrollTop = window.pageYOffset || scrollElement.scrollTop;
-        const scrollHeight = scrollElement.scrollHeight;
-        const clientHeight = window.innerHeight;
-
-        // Load more when user is 500px from bottom
-        const threshold = 500;
-        if (
-          scrollTop + clientHeight >= scrollHeight - threshold &&
-          !scrollLoading &&
-          !loading &&
-          hasMore &&
-          lastLoadedPage === currentPage // Prevent duplicate requests
-        ) {
-          const nextPage = currentPage + 1;
-          lastLoadedPage = nextPage;
-          await fetchData(nextPage, "", true, debouncedSearchTerm);
-        }
-      }, 150); // Debounce for 150ms
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [currentPage, scrollLoading, loading, hasMore, debouncedSearchTerm, fetchData]);
+  // Refs for click outside detection
+  const viewDropdownRef = useRef<HTMLDivElement>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -585,23 +490,24 @@ export const ProjectsDashboard = () => {
     setOpenDialog(false);
   };
 
-  const handleSubmit = async (data) => {
+  const handleSubmit = async (data: any) => {
     try {
       const payload = {
         project_management: {
           title: data.title,
           start_date: data.start_date,
           end_date: data.end_date,
-          status: "active",
+          status: "active" as const,
           owner_id: data.manager,
-          priority: data.priority,
+          priority: (data.priority || "medium") as "low" | "medium" | "high",
           active: true,
           project_type_id: data.type,
         },
       };
-      await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+      await createMutation.mutateAsync(payload);
       toast.success("Project created successfully");
-      fetchData(1, "", false, debouncedSearchTerm);
+      setCurrentPage(1);
+      // Cache automatically invalidated by the mutation hook
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -648,41 +554,23 @@ export const ProjectsDashboard = () => {
   };
 
   const handleImport = async () => {
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      // Use baseClient for mobile flow (when baseUrl not available)
-      const response = baseUrl
-        ? await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-        })
-        : await baseClient.post(`/project_managements/import.json`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-        });
-
-      if (response.data.failed && response.data.failed.length > 0) {
-        response.data.failed.forEach((item: { row: number; errors: string[] }) => {
-          const errorMessages = item.errors.join(', ');
-          toast.error(`Row ${item.row}: ${errorMessages}`);
-        });
-      } else {
-        toast.success("Projects imported successfully");
-        setIsImportModalOpen(false);
-        setSelectedFile(null);
-        fetchData(1, "", false, debouncedSearchTerm);
-      }
-    } catch (error) {
-      console.log(error)
-    } finally {
-      setIsUploading(false);
+    if (!selectedFile) {
+      toast.error("Please select a file");
+      return;
     }
-  }
+
+    try {
+      await importMutation.mutateAsync(selectedFile);
+      toast.success("Projects imported successfully");
+      setIsImportModalOpen(false);
+      setSelectedFile(null);
+      setCurrentPage(1);
+      // Cache automatically invalidated by the mutation hook
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to import projects");
+    }
+  };
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
@@ -711,20 +599,15 @@ export const ProjectsDashboard = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await dispatch(
-        changeProjectStatus({
-          token,
-          baseUrl,
-          id: String(id),
-          payload: { project_management: { status } },
-        })
-      ).unwrap();
-      fetchData(1, "", false, debouncedSearchTerm, sortColumn, sortDirection);
-      setCurrentPage(1);
-      setHasMore(true);
+      await statusMutation.mutateAsync({
+        id,
+        status,
+      });
       toast.success("Project status changed successfully");
+      // Cache automatically invalidated by the mutation hook
     } catch (error) {
       console.log(error);
+      toast.error("Failed to update project status");
     }
   };
 
@@ -741,11 +624,8 @@ export const ProjectsDashboard = () => {
 
     setSortColumn(newDirection ? columnKey : null);
     setSortDirection(newDirection);
-
-    // Reset to page 1 and fetch with new sort
+    // Reset to page 1 when sorting changes
     setCurrentPage(1);
-    setHasMore(true);
-    fetchData(1, "", false, debouncedSearchTerm, newDirection ? columnKey : null, newDirection);
   };
 
   const renderCell = (item: any, columnKey: string) => {
@@ -997,15 +877,19 @@ export const ProjectsDashboard = () => {
 
   const leftActions = (
     <>
-      {shouldShow("employee_projects", "create") && (
-        <Button
-          className="bg-[#C72030] hover:bg-[#A01020] text-white"
-          onClick={() => setShowActionPanel(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Action
-        </Button>
-      )}
+      {/* {shouldShow("employee_projects", "create") && ( */}
+      {
+        localStorage.getItem("selectedView") === "admin" && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => setShowActionPanel(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Action
+          </Button>
+        )
+      }
+      {/* )} */}
     </>
   );
 
@@ -1288,7 +1172,7 @@ export const ProjectsDashboard = () => {
           </div>
         </div>
 
-        <ProjectManagementKanban fetchData={fetchData} />
+        <ProjectManagementKanban fetchData={refetchProjects} />
 
         <AddProjectModal
           openDialog={openDialog}
@@ -1308,7 +1192,7 @@ export const ProjectsDashboard = () => {
           projectTypes={projectTypes}
           tags={tags}
           teams={teams}
-          fetchProjects={fetchData}
+          fetchProjects={refetchProjects}
           templateDetails={selectedTemplate}
         />
 
@@ -1318,8 +1202,7 @@ export const ProjectsDashboard = () => {
           onApplyFilters={(filterString) => {
             setAppliedFilters(filterString);
             setCurrentPage(1);
-            setHasMore(true);
-            fetchData(1, filterString, false, debouncedSearchTerm);
+            // TanStack Query hook will automatically refetch with new filters
           }}
         />
       </div>
@@ -1345,12 +1228,11 @@ export const ProjectsDashboard = () => {
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
-        loading={loading}
+        loading={isLoading}
         enableGlobalSearch={true}
-        onGlobalSearch={(searchQuery) => {
+        onSearchChange={(searchQuery) => {
           setSearchTerm(searchQuery);
           setCurrentPage(1);
-          setHasMore(true);
         }}
         searchValue={searchTerm}
         searchPlaceholder="Search by title, type, or manager..."
@@ -1359,7 +1241,7 @@ export const ProjectsDashboard = () => {
         hideTableExport={true}
       />
 
-      {scrollLoading && hasMore && (
+      {isFetching && hasMore && !isLoading && (
         <div className="flex justify-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
         </div>
@@ -1388,7 +1270,7 @@ export const ProjectsDashboard = () => {
         entityType="projects"
         onSampleDownload={handleSampleDownload}
         onImport={handleImport}
-        isUploading={isUploading}
+        isUploading={importMutation.isPending}
       />
 
       <AddProjectModal
@@ -1409,7 +1291,7 @@ export const ProjectsDashboard = () => {
         projectTypes={projectTypes}
         tags={tags}
         teams={teams}
-        fetchProjects={fetchData}
+        fetchProjects={refetchProjects}
         templateDetails={selectedTemplate}
       />
 
@@ -1419,8 +1301,6 @@ export const ProjectsDashboard = () => {
         onApplyFilters={(filterString) => {
           setAppliedFilters(filterString);
           setCurrentPage(1);
-          setHasMore(true);
-          fetchData(1, filterString, false, debouncedSearchTerm);
         }}
       />
     </div>

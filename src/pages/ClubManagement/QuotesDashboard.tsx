@@ -254,13 +254,13 @@ console.log('Sales Order Data:', salesOrderData);
                     }}
                     title="Select for status update"
                 /> */}
-                {/* <button
+                <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
-                </button> */}
+                </button>
                 {/* <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -382,7 +382,7 @@ console.log('Sales Order Data:', salesOrderData);
     });
 
     const handleView = (id: number) => {
-        navigate(`/accounting/sales-order/${id}`);
+        navigate(`/accounting/quotes/details/${id}`);
     };
 
     const handleEdit = (id: number) => {

@@ -1,7 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -375,7 +381,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   };
 
   const handlePublish = async () => {
-    if (!postText.trim() && selectedFiles.length === 0) return;
+    if (!postText.trim() && selectedFiles.length === 0 && createMode !== "poll")
+      return;
 
     try {
       const token = localStorage.getItem("token");
@@ -385,8 +392,24 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
       const formData = new FormData();
       formData.append("body", postText);
-      formData.append("resource_id", String(companyId || ""));
+
+      // Pulse sites often require a specific resource_id (29) for the global community
+      const isPulse =
+        baseUrl.includes("pulse") ||
+        baseUrl.includes("panchshil") ||
+        companyId === 305 ||
+        companyId === "305";
+      const actualResourceId = isPulse ? "29" : String(companyId || "");
+
+      formData.append("resource_id", actualResourceId);
       formData.append("resource_type", "Community");
+
+      if (createMode === "poll") {
+        const validOptions = pollOptions.filter((opt) => opt.trim() !== "");
+        validOptions.forEach((option, index) => {
+          formData.append(`poll_options_attributes[${index}][name]`, option);
+        });
+      }
 
       if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
@@ -406,13 +429,23 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Post created successfully!");
+        toast.success(
+          createMode === "poll"
+            ? "Poll created successfully!"
+            : "Post created successfully!"
+        );
         setPostText("");
         setSelectedFiles([]);
+        setPollOptions(["", ""]);
+        setCreateMode(null);
+        setIsCreatePostModalOpen(false);
         fetchPosts(); // Refresh the posts list
       }
-    } catch (error) {
-      toast.error("Failed to create post. Please try again.");
+    } catch (error: any) {
+      console.error("Failed to publish:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to publish. Please try again."
+      );
     }
   };
 
@@ -1579,6 +1612,15 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         onOpenChange={setIsCreatePostModalOpen}
       >
         <DialogContent className="max-w-md p-0 overflow-hidden">
+          <div className="sr-only">
+            <DialogHeader>
+              <DialogTitle>Create Post or Poll</DialogTitle>
+              <DialogDescription>
+                Choose whether you want to create a post or a poll for the
+                community.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
           {!createMode ? (
             // Initial selection screen
             <div className="p-6">
@@ -1849,15 +1891,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    // TODO: Implement poll creation API call
-                    toast.success("Poll creation coming soon!");
-                    setCreateMode(null);
-                    setIsCreatePostModalOpen(false);
-                    setPostText("");
-                    setSelectedFiles([]);
-                    setPollOptions(["", ""]);
-                  }}
+                  onClick={handlePublish}
                   disabled={
                     !postText.trim() ||
                     pollOptions.filter((o) => o.trim()).length < 2
@@ -1869,6 +1903,40 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmation.open}
+        onOpenChange={(open) =>
+          !open && setDeleteConfirmation({ open: false, type: null, id: null })
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {deleteConfirmation.type}?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <button
+              onClick={() =>
+                setDeleteConfirmation({ open: false, type: null, id: null })
+              }
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md border border-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+            >
+              Delete
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -9,6 +9,28 @@ import {
 } from "@/services/newScratchCardApi";
 import { toast } from "sonner";
 
+interface PlayContestResult {
+  success: boolean;
+  contest_type: string;
+  user_contest_reward: {
+    id: number;
+    contest_id: number;
+    prize_id: number;
+    reward_type: string;
+    points_value: number | null;
+    coupon_code: string | null;
+    user_id: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  prize: Prize;
+  message?: string;
+  won_reward?: boolean;
+  user_attempt_count?: number;
+  user_attemp_remaining?: number;
+}
+
 export const ScratchCard: React.FC = () => {
   const navigate = useNavigate();
   const { cardId } = useParams<{ cardId: string }>();
@@ -224,10 +246,25 @@ export const ScratchCard: React.FC = () => {
 
     try {
       // Call API to play/scratch
-      const result = await newScratchCardApi.playContest(contestData.id);
+      const result = (await newScratchCardApi.playContest(
+        contestData.id
+      )) as PlayContestResult;
 
       if (!result.success || !result.prize) {
         throw new Error(result.message || "Failed to scratch card");
+      }
+
+      // Update contest data won_reward if user actually won a reward
+      if (result.won_reward === true && result.user_contest_reward) {
+        setContestData((prev) =>
+          prev
+            ? {
+                ...prev,
+                won_reward: true,
+                user_contest_reward: result.user_contest_reward,
+              }
+            : prev
+        );
       }
 
       // Update with actual won prize
@@ -241,11 +278,13 @@ export const ScratchCard: React.FC = () => {
         );
       }
 
-      // Show result modal
-      setShowResultModal(true);
-
       // Decrement remaining attempts
       setRemainingAttempts((prev) => Math.max(0, prev - 1));
+
+      // Show result modal after a delay to let reward section appear first
+      setTimeout(() => {
+        setShowResultModal(true);
+      }, 800);
 
       console.warn("🎁 Won prize:", result.prize);
     } catch (error) {
@@ -269,11 +308,41 @@ export const ScratchCard: React.FC = () => {
   // Reset scratch card for next attempt
   const resetScratchCard = () => {
     setShowResultModal(false);
-    setWonPrize(null);
-    setIsRevealed(false);
-    setHasScratched(false);
-    setScratchPercentage(0);
-    setIsScratching(false);
+
+    // Check if user won a reward and update contestData accordingly
+    if (wonPrize && wonPrize.reward_type !== "none") {
+      // User won a reward - show "Already Won" screen
+      const rewardId = localStorage.getItem("last_reward_id");
+      if (rewardId) {
+        setContestData((prev) =>
+          prev
+            ? {
+                ...prev,
+                won_reward: true,
+                user_contest_reward: {
+                  id: parseInt(rewardId),
+                  contest_id: prev.id,
+                  prize_id: wonPrize.id,
+                  reward_type: wonPrize.reward_type,
+                  points_value: wonPrize.points_value,
+                  coupon_code: wonPrize.coupon_code,
+                  user_id: 0,
+                  status: "granted",
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              }
+            : prev
+        );
+      }
+    } else {
+      // User didn't win or got "none" - reset to play again
+      setWonPrize(null);
+      setIsRevealed(false);
+      setHasScratched(false);
+      setScratchPercentage(0);
+      setIsScratching(false);
+    }
   };
 
   // Copy prize code or information
@@ -335,10 +404,18 @@ export const ScratchCard: React.FC = () => {
               <span className="text-6xl">🎉</span>
             </div>
             {/* Sparkles */}
-            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">✨</span>
-            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">✨</span>
-            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">✨</span>
-            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">✨</span>
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
+              ✨
+            </span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
+              ✨
+            </span>
           </div>
 
           {/* Message */}
@@ -346,7 +423,8 @@ export const ScratchCard: React.FC = () => {
             You've Already Won!
           </h1>
           <p className="text-gray-600 text-center mb-8 max-w-sm">
-            Congratulations! You have already won a reward in this contest. View your prize details below.
+            Congratulations! You have already won a reward in this contest. View
+            your prize details below.
           </p>
 
           {/* Reward Info Card */}
@@ -357,7 +435,10 @@ export const ScratchCard: React.FC = () => {
                 {contestData.name}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Reward Status: <span className="font-semibold text-[#B88B15] capitalize">{contestData.user_contest_reward.status}</span>
+                Reward Status:{" "}
+                <span className="font-semibold text-[#B88B15] capitalize">
+                  {contestData.user_contest_reward.status}
+                </span>
               </p>
             </div>
           </div>
@@ -380,10 +461,18 @@ export const ScratchCard: React.FC = () => {
           </button>
 
           {/* Decorative elements */}
-          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">🎊</div>
-          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">🎈</div>
-          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">🎁</div>
-          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">⭐</div>
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">
+            🎊
+          </div>
+          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">
+            🎈
+          </div>
+          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">
+            🎁
+          </div>
+          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">
+            ⭐
+          </div>
         </div>
       )}
 
@@ -401,7 +490,8 @@ export const ScratchCard: React.FC = () => {
               {/* Contest Period */}
               <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
                 <span className="bg-white/70 px-3 py-1.5 rounded-full">
-                  📅 Valid: {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+                  📅 Valid:{" "}
+                  {new Date(contestData.start_at).toLocaleDateString()} -{" "}
                   {new Date(contestData.end_at).toLocaleDateString()}
                 </span>
               </div>
@@ -552,7 +642,9 @@ export const ScratchCard: React.FC = () => {
                       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-3xl">
                         <div className="text-center text-white p-6">
                           <div className="text-5xl mb-4">😔</div>
-                          <p className="text-xl font-bold mb-2">No Attempts Left</p>
+                          <p className="text-xl font-bold mb-2">
+                            No Attempts Left
+                          </p>
                           <p className="text-sm opacity-90">
                             Come back later for more chances to win!
                           </p>
@@ -673,7 +765,9 @@ export const ScratchCard: React.FC = () => {
                 {wonPrize.reward_type === "coupon" && wonPrize.coupon_code && (
                   <>
                     {/* Coupon Code label */}
-                    <p className="text-center text-gray-600 mb-3">Coupon Code</p>
+                    <p className="text-center text-gray-600 mb-3">
+                      Coupon Code
+                    </p>
 
                     {/* Coupon code */}
                     <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
@@ -711,7 +805,8 @@ export const ScratchCard: React.FC = () => {
                 {wonPrize.reward_type === "none" && (
                   <>
                     <p className="text-center text-gray-600 mb-6">
-                      Don't give up! Try again for a chance to win exciting prizes.
+                      Don't give up! Try again for a chance to win exciting
+                      prizes.
                     </p>
                   </>
                 )}
@@ -733,8 +828,9 @@ export const ScratchCard: React.FC = () => {
                       setShowResultModal(false);
                       handleViewVoucher();
                     }}
-                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${wonPrize.coupon_code ? "" : "mt-3"
-                      }`}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                      wonPrize.coupon_code ? "" : "mt-3"
+                    }`}
                   >
                     View Details
                   </button>

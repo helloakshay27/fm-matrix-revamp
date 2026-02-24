@@ -145,9 +145,25 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const formatDate = (d?: string) => {
     if (!d) return "-";
     try {
+      // If the string contains a space (date + time), return only the date part
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(0, spaceIdx);
       const dt = new Date(d);
       // Show only the calendar date, not the time
       return dt.toLocaleDateString();
+    } catch {
+      return d;
+    }
+  };
+
+  const formatTime = (d?: string) => {
+    if (!d) return "-";
+    try {
+      // expected_at format: "YY/MM/DD HH:MM AM" — extract time+meridiem after the first space
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(spaceIdx + 1).trim();
+      const dt = new Date(d);
+      return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     } catch {
       return d;
     }
@@ -162,25 +178,25 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   };
 
   // fallbacks to preserve existing UI before data loads
-  const name = data?.guest_name ?? "null";
-  const role = data?.guest_type ?? "null";
-  const otp = data?.otp_string ?? "null";
+  const name = data?.guest_name ?? "-";
+  const role = data?.guest_type ?? "-";
+  const otp = data?.otp_string ?? "-";
   const host =
-    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "null";
-  const passId = data?.pass_number ? String(data.id) : "null";
+    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "-";
+  const passId = data?.pass_number ? String(data.id) : "-";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
-    : (data?.pass_start_date ?? "null");
+    : (data?.pass_start_date ?? "-");
   const timeSlot = data?.expected_at
-    ? new Date(data.expected_at).toLocaleTimeString()
-    : "null";
-  const email = data?.guest_email ?? "null"; // guest_number often contains mobile; keep as a fallback
-  const purpose = data?.visit_purpose ?? "null";
-  const assets = joinAssets(data?.assets) ?? "null";
+    ? formatTime(data.expected_at)
+    : "-";
+  const email = data?.guest_email ?? "-"; // guest_number often contains mobile; keep as a fallback
+  const purpose = data?.visit_purpose ?? "-";
+  const assets = joinAssets(data?.assets) ?? "-";
   const additionalVisitors = data?.plus_person ?? 0;
-  const location = data?.guest_from ?? "null";
-  const room = data?.guest_number ?? "null";
-  const status = data?.vstatus ?? "null";
+  const location = data?.guest_from ?? "-";
+  const room = data?.guest_number ?? "-";
+  const status = data?.vstatus ?? "-";
   const qrCodeUrl =
     data?.qr_code_url ??
     `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
