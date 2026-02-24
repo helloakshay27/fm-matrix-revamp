@@ -94,15 +94,15 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
       if (errorShownRef.current !== errorMessage) {
         errorShownRef.current = errorMessage;
 
-        if (errorMessage === "NO_ROLE_ASSIGNED") {
-          toast.error("No role assigned to your account. Please contact administrator.", {
-            duration: 5000,
-          });
-        } else if (errorMessage === "SERVER_ERROR_500") {
-          toast.error("Server error (500). Unable to fetch user permissions. Please assign role and try again later.", {
-            duration: 5000,
-          });
-        }
+        // if (errorMessage === "NO_ROLE_ASSIGNED") {
+        //   toast.error("No role assigned to your account. Please contact administrator.", {
+        //     duration: 5000,
+        //   });
+        // } else if (errorMessage === "SERVER_ERROR_500") {
+        //   toast.error("Server error (500). Unable to fetch user permissions. Please assign role and try again later.", {
+        //     duration: 5000,
+        //   });
+        // }
       }
     } finally {
       setLoading(false);
