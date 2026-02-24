@@ -77,7 +77,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const isClubSite =
     hostname === "club.lockated.com" ||
     hostname === "recess-club.panchshil.com";
+  const org_id = localStorage.getItem("org_id");
 
+  const isPulseSite =
+    hostname.includes("localhost") ||
+    hostname === "pulse.lockated.com" ||
+    hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
+    org_id === "90";
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -401,10 +408,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
         const userType = localStorage.getItem("userType");
         const isLocalhost =
-          hostname.includes("localhost") ||
           hostname.includes("lockated.gophygital.work") ||
           hostname.includes("fm-matrix.lockated.com");
         const isPulseSite =
+          hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||
           hostname.includes("pulse.gophygital.work") ||
           hostname.includes("pulse-uat.panchshil.com") ||
@@ -870,6 +877,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
                     />
                   </defs>
                 </svg>
+              ) : isPulseSite ? (
+                <img
+                  src="https://www.panchshil.com/assets/images/home/logo.png"
+                  alt="Pulse Logo"
+                  style={{ height: 80, width: "auto", objectFit: "contain" }}
+                />
               ) : (
                 <svg
                   width="173"
