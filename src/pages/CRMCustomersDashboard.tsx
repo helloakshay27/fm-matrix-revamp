@@ -61,6 +61,13 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
+   {
+    key: "enable_sites",
+    label: "Sites",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
   {
     key: "status",
     label: "Status",
@@ -158,6 +165,7 @@ const CRMCustomersDashboard = () => {
             email: item.email,
             mobile: item.mobile,
             domains: item.domains || [],
+            enable_sites: item.enable_sites,
             status: item.active ?? true,
             // plant_code: item.plant_code,
             company_code: item.company_code,
@@ -183,6 +191,13 @@ const CRMCustomersDashboard = () => {
   }, []);
 
   console.log(customers);
+
+  const getShortText = (text: string, wordLimit = 5) => {
+  if (!text) return "-";
+  const words = text.split(" ");
+  if (words.length <= wordLimit) return text;
+  return words.slice(0, wordLimit).join(" ") + "...";
+};
 
   const handleStatusToggle = async (customerId: number, currentStatus: boolean) => {
     try {
@@ -275,6 +290,15 @@ const CRMCustomersDashboard = () => {
             ))}
           </div>
         );
+case "enable_sites":
+  return (
+    <span
+      title={item.enable_sites}
+      className="cursor-pointer"
+    >
+      {getShortText(item.enable_sites, 5)}
+    </span>
+  );
 
       case "status":
         return (
