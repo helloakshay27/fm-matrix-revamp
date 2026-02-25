@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import axios from 'axios';
 
 // Type definitions for Credit Note
 interface CreditNote {
@@ -33,13 +34,13 @@ interface CreditNoteFilters {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-    {
-        key: 'actions',
-        label: 'Action',
-        sortable: false,
-        hideable: false,
-        draggable: false
-    },
+    // {
+    //     key: 'actions',
+    //     label: 'Action',
+    //     sortable: false,
+    //     hideable: false,
+    //     draggable: false
+    // },
     {
         key: 'credit_note_number',
         label: 'Credit Note#',
@@ -61,13 +62,13 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     },
-    {
-        key: 'invoice_number',
-        label: 'Invoice#',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
+    // {
+    //     key: 'invoice_number',
+    //     label: 'Invoice#',
+    //     sortable: true,
+    //     hideable: true,
+    //     draggable: true
+    // },
     {
         key: 'date',
         label: 'Date',
@@ -83,7 +84,7 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'amount',
+        key: 'total_amount',
         label: 'Amount',
         sortable: true,
         hideable: true,
@@ -116,75 +117,129 @@ export const CreditNoteListPage: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+      const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
 
     // Fetch credit note data
     const fetchCreditNoteData = async (page = 1, per_page = 10, search = '', filters: CreditNoteFilters = {}) => {
         setLoading(true);
+          const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
         try {
-            const mockData: CreditNote[] = [
-                {
-                    id: 1,
-                    credit_note_number: 'CN-10023',
-                    customer_name: 'Lockated',
-                    date: '2026-02-10',
-                    reference_number: 'REF-001',
-                    invoice_number: 'INV-1023',
-                    amount: 3550.00,
-                    balance_due: 0.00,
-                    status: 'open',
-                    active: true,
-                    created_at: '2026-02-10',
-                    updated_at: '2026-02-10'
-                },
-                {
-                    id: 2,
-                    credit_note_number: 'CN-10024',
-                    customer_name: 'Gurughar',
-                    date: '2026-02-15',
-                    reference_number: 'REF-002',
-                    invoice_number: 'INV-1045',
-                    amount: 1600.00,
-                    balance_due: 1600.00,
-                    status: 'draft',
-                    active: true,
-                    created_at: '2026-02-15',
-                    updated_at: '2026-02-15'
+                    const response = await axios.get(
+                        `https://${baseUrl}/lock_account_credit_notes.json?lock_account_id=1`,
+                        {
+                            params: {
+                                // lock_account_id: 1,
+                                //   page,
+                                //   per_page,
+                                //   search,
+                                //   status: filters.status || undefined,
+                            },
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+                            },
+                        }
+                    );
+        
+                    // 🔥 Adjust this based on actual API response structure
+                    const apiData = response.data;
+        
+                    const bills: CreditNote[] = apiData?.data || apiData || [];
+        
+                    setCreditNoteData(apiData);
+        
+                    setPagination({
+                        current_page: apiData?.current_page || page,
+                        per_page: apiData?.per_page || per_page,
+                        total_pages: apiData?.total_pages || 1,
+                        total_count: apiData?.total_count || bills.length,
+                        has_next_page:
+                            (apiData?.current_page || page) <
+                            (apiData?.total_pages || 1),
+                        has_prev_page:
+                            (apiData?.current_page || page) > 1,
+                    });
+        
+                } catch (error: unknown) {
+                    console.error("Error fetching bill data:", error);
+        
+                    const errorMessage =
+                        error instanceof Error ? error.message : "Unknown error";
+        
+                    toast.error(`Failed to load bill data: ${errorMessage}`, {
+                        duration: 5000,
+                    });
+        
+                } finally {
+                    setLoading(false);
                 }
-            ];
+        // try {
+        //     const mockData: CreditNote[] = [
+        //         {
+        //             id: 1,
+        //             credit_note_number: 'CN-10023',
+        //             customer_name: 'Lockated',
+        //             date: '2026-02-10',
+        //             reference_number: 'REF-001',
+        //             invoice_number: 'INV-1023',
+        //             amount: 3550.00,
+        //             balance_due: 0.00,
+        //             status: 'open',
+        //             active: true,
+        //             created_at: '2026-02-10',
+        //             updated_at: '2026-02-10'
+        //         },
+        //         {
+        //             id: 2,
+        //             credit_note_number: 'CN-10024',
+        //             customer_name: 'Gurughar',
+        //             date: '2026-02-15',
+        //             reference_number: 'REF-002',
+        //             invoice_number: 'INV-1045',
+        //             amount: 1600.00,
+        //             balance_due: 1600.00,
+        //             status: 'draft',
+        //             active: true,
+        //             created_at: '2026-02-15',
+        //             updated_at: '2026-02-15'
+        //         }
+        //     ];
 
-            let filteredData = mockData;
-            if (search.trim()) {
-                filteredData = mockData.filter(cn =>
-                    cn.credit_note_number.toLowerCase().includes(search.toLowerCase()) ||
-                    cn.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-                    cn.reference_number.toLowerCase().includes(search.toLowerCase())
-                );
-            }
-            if (filters.status) {
-                filteredData = filteredData.filter(cn => cn.status === filters.status);
-            }
+        //     let filteredData = mockData;
+        //     if (search.trim()) {
+        //         filteredData = mockData.filter(cn =>
+        //             cn.credit_note_number.toLowerCase().includes(search.toLowerCase()) ||
+        //             cn.customer_name.toLowerCase().includes(search.toLowerCase()) ||
+        //             cn.reference_number.toLowerCase().includes(search.toLowerCase())
+        //         );
+        //     }
+        //     if (filters.status) {
+        //         filteredData = filteredData.filter(cn => cn.status === filters.status);
+        //     }
 
-            const totalCount = filteredData.length;
-            const totalPages = Math.ceil(totalCount / per_page);
-            const startIndex = (page - 1) * per_page;
-            const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+        //     const totalCount = filteredData.length;
+        //     const totalPages = Math.ceil(totalCount / per_page);
+        //     const startIndex = (page - 1) * per_page;
+        //     const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
 
-            setCreditNoteData(paginatedData);
-            setPagination({
-                current_page: page,
-                per_page,
-                total_pages: totalPages,
-                total_count: totalCount,
-                has_next_page: page < totalPages,
-                has_prev_page: page > 1
-            });
-        } catch (error: unknown) {
-            console.error('Error fetching credit note data:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast.error(`Failed to load credit note data: ${errorMessage}`, { duration: 5000 });
-        } finally {
-            setLoading(false);
-        }
+        //     setCreditNoteData(paginatedData);
+        //     setPagination({
+        //         current_page: page,
+        //         per_page,
+        //         total_pages: totalPages,
+        //         total_count: totalCount,
+        //         has_next_page: page < totalPages,
+        //         has_prev_page: page > 1
+        //     });
+        // } catch (error: unknown) {
+        //     console.error('Error fetching credit note data:', error);
+        //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        //     toast.error(`Failed to load credit note data: ${errorMessage}`, { duration: 5000 });
+        // } finally {
+        //     setLoading(false);
+        // }
     };
 
     useEffect(() => {
@@ -290,14 +345,14 @@ export const CreditNoteListPage: React.FC = () => {
                 {getStatusBadge(cn.status)}
             </div>
         ),
-        amount: (
+        total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{cn.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{cn?.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
         ),
         balance_due: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{cn.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {/* ₹{cn.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
             </span>
         )
     });

@@ -2531,15 +2531,15 @@ function App() {
                         element={<ExpenseCreatePage />}
                       />
                       <Route
-                        path="/master/section"
+                        path="/accounting/section"
                         element={<SectionMaster />}
                       />
                       <Route
-                        path="/master/tax-setup"
+                        path="/accounting/tax-setup-master"
                         element={<TaxSetupMaster />}
                       />
                       <Route
-                        path="/master/sales-person"
+                        path="/accounting/sales-person"
                         element={<SalesPersonMaster />}
                       />
                       <Route
@@ -2547,7 +2547,7 @@ function App() {
                         element={<SalesOrderCreatePage />}
                       />
                         <Route
-                        path="/master/payment-terms"
+                        path="/accounting/payment-terms"
                         element={<PaymentTermsMaster />}
                       />
                       {/* Club Management - Occupant Users */}
