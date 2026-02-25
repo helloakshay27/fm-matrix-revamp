@@ -1,7 +1,34 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
+
+// Bill shape from lock_account_bill.json
+interface LockAccountBill {
+  id: number;
+  bill_number: string;
+  bill_date: string;
+  due_date: string;
+  total_amount: number;
+  order_number: string;
+  status: string;
+  vendor_name: string;
+  payment_term: string;
+  subject: string;
+  pms_supplier_id: number;
+}
+
+// Supplier shape from pms/suppliers.json
+interface Supplier {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  company_name: string | null;
+  pan_number: string | null;
+  payment_terms: string | null;
+  currency: string | null;
+}
 import {
   X,
   Settings,
@@ -58,6 +85,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const CreatePaymentPage: React.FC = () => {
   const navigate = useNavigate();
+
+  // Accounting API always lives on club-uat-api.lockated.com
+  const ACCOUNTING_BASE_URL = "https://club-uat-api.lockated.com";
   const [activeSheetTab, setActiveSheetTab] = useState("details");
   const [activeTab, setActiveTab] = useState("bill_payment");
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
@@ -82,6 +112,83 @@ export const CreatePaymentPage: React.FC = () => {
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Bills fetched from API after vendor selection
+  const [bills, setBills] = useState<LockAccountBill[]>([]);
+  const [billsLoading, setBillsLoading] = useState(false);
+  // Map of billId -> payment amount entered by user
+  const [appliedAmounts, setAppliedAmounts] = useState<Record<number, string>>(
+    {}
+  );
+
+  // Suppliers fetched from pms/suppliers.json
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
+
+  const fetchSuppliers = useCallback(async () => {
+    const token = API_CONFIG.TOKEN;
+    if (!token) return;
+    setSuppliersLoading(true);
+    try {
+      const url = `${ACCOUNTING_BASE_URL}/pms/suppliers.json`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const list: Supplier[] = Array.isArray(data)
+        ? data
+        : (data.suppliers ?? data.pms_suppliers ?? []);
+      setSuppliers(list);
+    } catch (err) {
+      console.error("Failed to fetch suppliers:", err);
+      sonnerToast.error("Could not load vendor list.");
+    } finally {
+      setSuppliersLoading(false);
+    }
+  }, [ACCOUNTING_BASE_URL]);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
+
+  const fetchBills = useCallback(
+    async (vendorId: string) => {
+      const token = API_CONFIG.TOKEN;
+      if (!token) return;
+
+      setBillsLoading(true);
+      setBills([]);
+      setAppliedAmounts({});
+      try {
+        const url = new URL(`${ACCOUNTING_BASE_URL}/lock_account_bill.json`);
+        url.searchParams.append("lock_account_id", "1");
+        url.searchParams.append("q[pms_supplier_id_eq]", vendorId);
+
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: LockAccountBill[] = await response.json();
+        setBills(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch bills:", err);
+        sonnerToast.error("Could not load bills for this vendor.");
+      } finally {
+        setBillsLoading(false);
+      }
+    },
+    [ACCOUNTING_BASE_URL]
+  );
+
   // Convert a File to base64 string
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -103,9 +210,8 @@ export const CreatePaymentPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      if (!baseUrl || !token) {
+      if (!token) {
         sonnerToast.error("API not configured. Please log in.");
         return;
       }
@@ -122,32 +228,51 @@ export const CreatePaymentPage: React.FC = () => {
         attachments_attributes.push({ document: "", active: true });
       }
 
+      // Build lock_bill_payments_attributes from bills the user has entered amounts for
+      const paymentDate = date
+        ? format(date, "dd/MM/yyyy")
+        : format(new Date(), "dd/MM/yyyy");
+
+      const lock_bill_payments_attributes = Object.entries(appliedAmounts)
+        .filter(([, v]) => parseFloat(v) > 0)
+        .map(([billId, v]) => ({
+          lock_account_bill_id: parseInt(billId, 10),
+          amount: parseFloat(v),
+          payment_date: paymentDate,
+        }));
+
+      const paidAmount = parseFloat(amount) || 0;
+      const paymentAmount = totalApplied;
+      const excessAmount = Math.max(0, paidAmount - totalApplied);
+
       const payload = {
         lock_payment: {
           payment_of: "Pms::Supplier",
           payment_of_id: parseInt(selectedVendor, 10),
-          paid_amount: parseFloat(amount),
+          paid_amount: paidAmount,
           lock_account_tax_id: lockAccountTaxId,
-          payment_date: date
-            ? format(date, "dd/MM/yyyy")
-            : format(new Date(), "dd/MM/yyyy"),
+          payment_date: paymentDate,
           payment_mode: paymentMode,
           order_number: paymentNumber || "",
           paid_from_ledger_id: paidFromLedgerId,
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
           notes: notes,
+          payment_amount: paymentAmount,
+          excess_amount: excessAmount,
+          lock_bill_payments_attributes,
           attachments_attributes,
         },
       };
 
-      const url = `${
-        baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`
-      }/lock_payments.json?access_token=${token}`;
+      const url = `${ACCOUNTING_BASE_URL}/lock_payments.json`;
 
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -181,27 +306,31 @@ export const CreatePaymentPage: React.FC = () => {
 
   // ... (rest of existing code)
 
-  const vendors = [
-    {
-      id: "1",
-      name: "Gophygital",
-      email: "ajay.pihulkar@gophygital.com",
-      company: "Gophygital",
-      avatar: "G",
-    },
-    {
-      id: "2",
-      name: "Acme Corp",
-      email: "contact@acme.com",
-      company: "Acme Corp",
-      avatar: "A",
-    },
-  ];
+  // Helper: get the currently selected supplier object
+  const selectedSupplier =
+    suppliers.find((s) => String(s.id) === selectedVendor) ?? null;
 
   const handleVendorSelect = (vendorId: string) => {
     setSelectedVendor(vendorId);
     setIsVendorOpen(false);
+    // Always fetch bills when a vendor is selected
+    fetchBills(vendorId);
   };
+
+  // If user switches to Bill Payment tab and a vendor is already chosen, re-fetch bills
+  useEffect(() => {
+    if (activeTab === "bill_payment" && selectedVendor) {
+      fetchBills(selectedVendor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Total applied across all bill rows
+  const totalApplied = Object.values(appliedAmounts).reduce(
+    (sum, v) => sum + (parseFloat(v) || 0),
+    0
+  );
+  const amountInExcess = Math.max(0, (parseFloat(amount) || 0) - totalApplied);
 
   return (
     <div className="min-h-screen bg-white">
@@ -251,14 +380,31 @@ export const CreatePaymentPage: React.FC = () => {
                           role="combobox"
                           aria-expanded={isVendorOpen}
                           className={cn(
-                            "w-full justify-between text-left font-normal border-gray-300 text-gray-700 h-9 bg-white hover:bg-white focus:ring-0 focus:border-blue-500 rounded-[4px]",
-                            !selectedVendor && "border-red-300 text-gray-400"
+                            "w-full justify-between text-left font-normal h-9 bg-white hover:bg-white focus:ring-0 rounded-[4px]",
+                            selectedVendor
+                              ? "border-gray-300 text-gray-900"
+                              : "text-gray-400 border-red-300"
                           )}
                         >
-                          {selectedVendor
-                            ? vendors.find((v) => v.id === selectedVendor)?.name
-                            : "Select Vendor"}
-                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          {selectedSupplier ? (
+                            <span className="flex items-center gap-2 truncate">
+                              <span className="h-5 w-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-semibold flex items-center justify-center shrink-0">
+                                {selectedSupplier.name[0].toUpperCase()}
+                              </span>
+                              <span className="font-medium text-gray-900 truncate">
+                                {selectedSupplier.name}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="truncate">
+                              {selectedVendor
+                                ? "Loading..."
+                                : suppliersLoading
+                                  ? "Loading vendors..."
+                                  : "Select Vendor"}
+                            </span>
+                          )}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-shrink-0" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[400px] p-0" align="start">
@@ -267,32 +413,45 @@ export const CreatePaymentPage: React.FC = () => {
                           <CommandList>
                             <CommandEmpty>No vendor found.</CommandEmpty>
                             <CommandGroup>
-                              {vendors.map((vendor) => (
-                                <CommandItem
-                                  key={vendor.id}
-                                  value={vendor.name}
-                                  onSelect={() => handleVendorSelect(vendor.id)}
-                                  className="flex items-center gap-3 p-2 cursor-pointer aria-selected:bg-blue-50"
-                                >
-                                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                                    {vendor.avatar}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium text-blue-600 text-sm">
-                                      {vendor.name}
-                                    </span>
-                                    <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                                      <span>{vendor.email}</span>
-                                      <span className="border-l border-gray-300 pl-2">
-                                        {vendor.company}
-                                      </span>
+                              {suppliersLoading ? (
+                                <div className="py-4 text-center text-xs text-gray-500">
+                                  Loading suppliers...
+                                </div>
+                              ) : (
+                                suppliers.map((supplier) => (
+                                  <CommandItem
+                                    key={supplier.id}
+                                    value={supplier.name}
+                                    onSelect={() =>
+                                      handleVendorSelect(String(supplier.id))
+                                    }
+                                    onClick={() =>
+                                      handleVendorSelect(String(supplier.id))
+                                    }
+                                    className="flex items-center gap-3 p-2 cursor-pointer aria-selected:bg-blue-50"
+                                  >
+                                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
+                                      {(supplier.name ?? "?")[0].toUpperCase()}
                                     </div>
-                                  </div>
-                                  {selectedVendor === vendor.id && (
-                                    <Check className="ml-auto h-4 w-4 text-blue-600" />
-                                  )}
-                                </CommandItem>
-                              ))}
+                                    <div className="flex flex-col">
+                                      <span className="font-medium text-blue-600 text-sm">
+                                        {supplier.name}
+                                      </span>
+                                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                                        <span>{supplier.email ?? "-"}</span>
+                                        {supplier.company_name && (
+                                          <span className="border-l border-gray-300 pl-2">
+                                            {supplier.company_name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {selectedVendor === String(supplier.id) && (
+                                      <Check className="ml-auto h-4 w-4 text-blue-600" />
+                                    )}
+                                  </CommandItem>
+                                ))
+                              )}
                             </CommandGroup>
                           </CommandList>
                         </Command>
@@ -301,18 +460,15 @@ export const CreatePaymentPage: React.FC = () => {
                   </div>
 
                   {/* Vendor Details Button */}
-                  {selectedVendor && (
+                  {/* {selectedSupplier && (
                     <Button
                       onClick={() => setIsDetailsOpen(true)}
                       className="bg-[#404b69] hover:bg-[#353f5a] text-white text-xs h-9 px-4 flex items-center gap-2 rounded-md shrink-0"
                     >
-                      <span>
-                        {vendors.find((v) => v.id === selectedVendor)?.name}'s
-                        Details
-                      </span>
+                      <span>{selectedSupplier.name}'s Details</span>
                       <ChevronRight className="h-3 w-3" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
@@ -558,33 +714,108 @@ export const CreatePaymentPage: React.FC = () => {
               {activeTab === "bill_payment" && (
                 <div className="mb-8 pl-4">
                   <div className="flex justify-end mb-2">
-                    <button className="text-blue-500 text-xs hover:underline">
+                    <button
+                      type="button"
+                      className="text-blue-500 text-xs hover:underline"
+                      onClick={() => setAppliedAmounts({})}
+                    >
                       Clear Applied Amount
                     </button>
                   </div>
 
                   {/* Table Header */}
                   <div className="grid grid-cols-12 gap-4 border-b border-gray-200 pb-2 text-xs font-medium text-gray-500">
-                    <div className="col-span-1">Date</div>
+                    <div className="col-span-2">Date</div>
                     <div className="col-span-2">Bill#</div>
                     <div className="col-span-2">PO#</div>
                     <div className="col-span-2 text-right">Bill Amount</div>
                     <div className="col-span-2 text-right">Amount Due</div>
-                    <div className="col-span-3 text-right flex items-center justify-end gap-1">
-                      Payment Made on <Info className="h-3 w-3" />
+                    <div className="col-span-2 text-right flex items-center justify-end gap-1">
+                      Payment Made <Info className="h-3 w-3" />
                     </div>
-                    <div className="hidden">Payment</div>
                   </div>
 
+                  {/* Loading */}
+                  {billsLoading && (
+                    <div className="py-10 text-center text-sm text-gray-500">
+                      Loading bills...
+                    </div>
+                  )}
+
                   {/* Empty State */}
-                  <div className="py-12 text-center text-gray-800 text-sm border-b border-gray-200">
-                    There are no bills for this vendor.
-                  </div>
+                  {!billsLoading && bills.length === 0 && (
+                    <div className="py-12 text-center text-gray-800 text-sm border-b border-gray-200">
+                      {selectedVendor
+                        ? "There are no bills for this vendor."
+                        : "Select a vendor to view bills."}
+                    </div>
+                  )}
+
+                  {/* Bill Rows */}
+                  {!billsLoading &&
+                    bills.map((bill) => (
+                      <div
+                        key={bill.id}
+                        className="grid grid-cols-12 gap-4 border-b border-gray-100 py-3 text-sm items-center hover:bg-gray-50 transition-colors"
+                      >
+                        {/* Date */}
+                        <div className="col-span-2 text-gray-600 text-xs">
+                          {bill.bill_date
+                            ? new Date(bill.bill_date).toLocaleDateString(
+                                "en-GB"
+                              )
+                            : "-"}
+                        </div>
+                        {/* Bill# */}
+                        <div className="col-span-2">
+                          <span className="text-blue-600 font-medium text-xs">
+                            {bill.bill_number || "-"}
+                          </span>
+                          {bill.subject && (
+                            <div className="text-[10px] text-gray-400 truncate">
+                              {bill.subject}
+                            </div>
+                          )}
+                        </div>
+                        {/* PO# */}
+                        <div className="col-span-2 text-gray-600 text-xs">
+                          {bill.order_number || "-"}
+                        </div>
+                        {/* Bill Amount */}
+                        <div className="col-span-2 text-right text-gray-800 text-xs font-medium">
+                          ₹{bill.total_amount.toFixed(2)}
+                        </div>
+                        {/* Amount Due (same as total for draft bills) */}
+                        <div className="col-span-2 text-right text-gray-800 text-xs">
+                          ₹{bill.total_amount.toFixed(2)}
+                        </div>
+                        {/* Payment Made input */}
+                        <div className="col-span-2 flex justify-end">
+                          <input
+                            type="number"
+                            min="0"
+                            max={bill.total_amount}
+                            step="0.01"
+                            placeholder="0.00"
+                            value={appliedAmounts[bill.id] ?? ""}
+                            onChange={(e) =>
+                              setAppliedAmounts((prev) => ({
+                                ...prev,
+                                [bill.id]: e.target.value,
+                              }))
+                            }
+                            className="w-24 text-right border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white"
+                          />
+                        </div>
+                      </div>
+                    ))}
 
                   {/* Total Row */}
                   <div className="flex justify-between items-center py-4 border-b border-gray-200">
                     <div className="text-sm font-medium">Total :</div>
-                    <div className="text-sm text-gray-700">0.00</div>
+                    <div className="text-sm text-gray-700 font-medium">
+                      ₹{totalApplied.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               )}
@@ -596,6 +827,7 @@ export const CreatePaymentPage: React.FC = () => {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Amount Paid:</span>
                       <span className="font-medium text-gray-800">
+                        ₹
                         {parseFloat(amount)
                           ? parseFloat(amount).toFixed(2)
                           : "0.00"}
@@ -605,11 +837,13 @@ export const CreatePaymentPage: React.FC = () => {
                       <span className="text-gray-600">
                         Amount used for Payments:
                       </span>
-                      <span className="text-gray-800">0.00</span>
+                      <span className="text-gray-800">
+                        ₹{totalApplied.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Amount Refunded:</span>
-                      <span className="text-gray-800">0.00</span>
+                      <span className="text-gray-800">₹0.00</span>
                     </div>
                     <div className="flex justify-between text-sm pt-2">
                       <span className="text-gray-600 flex items-center gap-1">
@@ -617,10 +851,7 @@ export const CreatePaymentPage: React.FC = () => {
                         Amount in Excess:
                       </span>
                       <span className="font-medium text-gray-800">
-                        ₹{" "}
-                        {parseFloat(amount)
-                          ? parseFloat(amount).toFixed(2)
-                          : "0.00"}
+                        ₹{amountInExcess.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -759,14 +990,13 @@ export const CreatePaymentPage: React.FC = () => {
               </SheetClose>
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-medium">
-                  {vendors.find((v) => v.id === selectedVendor)?.avatar || "G"}
+                  {(selectedSupplier?.name ?? "?")[0].toUpperCase()}
                 </div>
                 <div className="space-y-0.5">
                   <div className="text-xs text-gray-500">Vendor</div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold text-gray-900">
-                      {vendors.find((v) => v.id === selectedVendor)?.name ||
-                        "Gophygital"}
+                      {selectedSupplier?.name ?? "-"}
                     </h2>
                     <ExternalLink className="h-4 w-4 text-blue-500 cursor-pointer" />
                   </div>
@@ -781,16 +1011,12 @@ export const CreatePaymentPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <FileText className="h-4 w-4 text-gray-400" />
-                    <span>
-                      {vendors.find((v) => v.id === selectedVendor)?.name ||
-                        "Gophygital"}
-                    </span>
+                    <span>{selectedSupplier?.name ?? "-"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Mail className="h-4 w-4 text-gray-400" />
                     <span className="text-blue-500">
-                      {vendors.find((v) => v.id === selectedVendor)?.email ||
-                        "ajay.pihulkar@gophygital.work"}
+                      {selectedSupplier?.email ?? "-"}
                     </span>
                   </div>
                 </div>
@@ -856,18 +1082,21 @@ export const CreatePaymentPage: React.FC = () => {
                       <div className="p-4 space-y-4 bg-white">
                         <div className="grid grid-cols-2 text-sm">
                           <div className="text-gray-500">Currency</div>
-                          <div className="text-gray-900 font-medium">INR</div>
+                          <div className="text-gray-900 font-medium">
+                            {selectedSupplier?.currency ?? "INR"}
+                          </div>
                         </div>
                         <div className="grid grid-cols-2 text-sm">
                           <div className="text-gray-500">Payment Terms</div>
                           <div className="text-gray-900 font-medium">
-                            Due on Receipt
+                            {selectedSupplier?.payment_terms ??
+                              "Due on Receipt"}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 text-sm">
                           <div className="text-gray-500">PAN</div>
                           <div className="text-gray-900 font-medium">
-                            AFLPC8131J
+                            {selectedSupplier?.pan_number ?? "-"}
                           </div>
                         </div>
                       </div>
