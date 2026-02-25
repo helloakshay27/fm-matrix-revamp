@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast as sonnerToast } from "sonner";
+import { API_CONFIG } from "@/config/apiConfig";
 import {
   X,
   Settings,
@@ -63,43 +64,117 @@ export const CreatePaymentPage: React.FC = () => {
   const [isVendorOpen, setIsVendorOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date("2026-02-12"));
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form State
-  const [paymentNumber, setPaymentNumber] = useState("3");
+  const [paymentNumber, setPaymentNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [paidThrough, setPaidThrough] = useState("Petty Cash");
   const [reference, setReference] = useState("");
+  const [notes, setNotes] = useState("");
+  const [depositTo, setDepositTo] = useState("prepaid_expenses");
+  // Ledger & tax IDs (hardcoded defaults matching API spec; can be driven by dropdowns)
+  const [paidFromLedgerId] = useState(1);
+  const [depositToLedgerId] = useState(2);
+  const [lockAccountTaxId] = useState(1);
+  // Attachments as File objects from file input
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = (status: "DRAFT" | "PAID") => {
-    const newPayment = {
-      id: Math.random().toString(36).substr(2, 9),
-      payment_number: paymentNumber,
-      vendor_name:
-        vendors.find((v) => v.id === selectedVendor)?.name || "Unknown Vendor",
-      date: date
-        ? format(date, "dd/MM/yyyy")
-        : format(new Date(), "dd/MM/yyyy"),
-      mode: paymentMode,
-      status: status,
-      amount: parseFloat(amount) || 0,
-      unused_amount: 0,
-      bank_reference_number: reference,
-      paid_through_account: paidThrough,
-      currency_symbol: "₹",
-    };
+  // Convert a File to base64 string
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-    const existingPayments = JSON.parse(
-      localStorage.getItem("mock_payments") || "[]"
-    );
-    localStorage.setItem(
-      "mock_payments",
-      JSON.stringify([newPayment, ...existingPayments])
-    );
-    sonnerToast.success(`Payment saved as ${status}`);
-    navigate(
-      `/accounting/payments-made?paymentId=${newPayment.id}&view=detail`
-    );
+  const handleSave = async (status: "DRAFT" | "PAID") => {
+    if (!selectedVendor) {
+      sonnerToast.error("Please select a vendor.");
+      return;
+    }
+    if (!amount || isNaN(parseFloat(amount))) {
+      sonnerToast.error("Please enter a valid amount.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      if (!baseUrl || !token) {
+        sonnerToast.error("API not configured. Please log in.");
+        return;
+      }
+
+      // Build attachments_attributes (base64-encode each file)
+      const attachments_attributes = await Promise.all(
+        attachmentFiles.map(async (file) => ({
+          document: await fileToBase64(file),
+          active: true,
+        }))
+      );
+      // Always include at least one empty attachment entry as per API spec
+      if (attachments_attributes.length === 0) {
+        attachments_attributes.push({ document: "", active: true });
+      }
+
+      const payload = {
+        lock_payment: {
+          payment_of: "Pms::Supplier",
+          payment_of_id: parseInt(selectedVendor, 10),
+          paid_amount: parseFloat(amount),
+          lock_account_tax_id: lockAccountTaxId,
+          payment_date: date
+            ? format(date, "dd/MM/yyyy")
+            : format(new Date(), "dd/MM/yyyy"),
+          payment_mode: paymentMode,
+          order_number: paymentNumber || "",
+          paid_from_ledger_id: paidFromLedgerId,
+          deposit_to_ledger_id: depositToLedgerId,
+          advance: activeTab === "vendor_advance",
+          notes: notes,
+          attachments_attributes,
+        },
+      };
+
+      const url = `${
+        baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`
+      }/lock_payments.json?access_token=${token}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.message || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      sonnerToast.success(`Payment saved successfully!`);
+      // Navigate to detail view with the new payment ID
+      const newId = data?.id || data?.lock_payment?.id;
+      if (newId) {
+        navigate(`/accounting/payments-made?paymentId=${newId}&view=detail`);
+      } else {
+        navigate("/accounting/payments-made");
+      }
+    } catch (err: unknown) {
+      console.error("Error creating payment:", err);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Failed to save payment. Please try again.";
+      sonnerToast.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // ... (rest of existing state)
@@ -559,7 +634,12 @@ export const CreatePaymentPage: React.FC = () => {
                     <Label className="text-gray-700 font-medium text-sm">
                       Notes (Internal use. Not visible to vendor)
                     </Label>
-                    <Textarea className="min-h-24 w-full border-gray-300 bg-white" />
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="min-h-24 w-full border-gray-300 bg-white"
+                      placeholder="Add internal notes..."
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -570,20 +650,54 @@ export const CreatePaymentPage: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        type="button"
                         className="h-8 border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 gap-2 font-normal text-xs"
+                        onClick={() => fileInputRef.current?.click()}
                       >
                         <Upload className="h-3 w-3" />
                         Upload File
-                        <ChevronDown className="h-3 w-3 opacity-50" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs text-gray-500 hover:bg-transparent cursor-pointer"
-                      >
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        accept="*/*"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          if (attachmentFiles.length + files.length > 5) {
+                            sonnerToast.error("Maximum 5 files allowed.");
+                            return;
+                          }
+                          setAttachmentFiles((prev) => [...prev, ...files]);
+                        }}
+                      />
                     </div>
+                    {attachmentFiles.length > 0 && (
+                      <ul className="mt-2 space-y-1">
+                        {attachmentFiles.map((file, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-center gap-2 text-xs text-gray-700"
+                          >
+                            <span className="truncate max-w-[200px]">
+                              {file.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAttachmentFiles((prev) =>
+                                  prev.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-400 hover:text-red-600 ml-auto"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     <p className="text-[11px] text-gray-500 mt-1">
                       You can upload a maximum of 5 files, 10MB each
                     </p>
@@ -605,19 +719,22 @@ export const CreatePaymentPage: React.FC = () => {
               <div className="mt-12 flex items-center gap-2 border-t border-gray-200 pt-4 pb-4">
                 <Button
                   variant="outline"
+                  disabled={isSaving}
                   className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => handleSave("DRAFT")}
                 >
-                  Save as Draft
+                  {isSaving ? "Saving..." : "Save as Draft"}
                 </Button>
                 <Button
+                  disabled={isSaving}
                   className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => handleSave("PAID")}
                 >
-                  Save as Paid
+                  {isSaving ? "Saving..." : "Save as Paid"}
                 </Button>
                 <Button
                   variant="outline"
+                  disabled={isSaving}
                   className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => navigate("/accounting/payments-made")}
                 >
