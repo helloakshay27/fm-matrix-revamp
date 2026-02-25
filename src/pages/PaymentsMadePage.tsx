@@ -1,34 +1,75 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PaymentDetailView } from "./components/PaymentDetailView";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
-  MoreVertical,
   ChevronDown,
-  Search,
-  Filter,
-  Paperclip,
-  MessageSquare,
   X,
-  Edit,
-  Printer,
-  CheckCircle,
   MoreHorizontal,
   Download,
   Upload,
   Star,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { toast as sonnerToast } from "sonner";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
+import { API_CONFIG } from "@/config/apiConfig";
 
-// Type definitions for Payment
+// API shape returned by lock_payments.json
+interface LockPayment {
+  id: number;
+  order_number: string;
+  payment_of: string;
+  payment_of_id: number;
+  payment_mode: string | null;
+  sub_total: string | null;
+  gst: string | null;
+  discount: string | null;
+  total_amount: string;
+  paid_amount: string | null;
+  payment_status: string | null;
+  pg_state: string | null;
+  pg_response_code: string | null;
+  pg_response_msg: string | null;
+  pg_transaction_id: string | null;
+  created_at: string;
+  updated_at: string;
+  payment_method: string | null;
+  card_type: string | null;
+  cheque_number: string | null;
+  cheque_date: string | null;
+  bank_name: string | null;
+  ifsc: string | null;
+  branch: string | null;
+  neft_reference: string | null;
+  notes: string | null;
+  payment_gateway: string | null;
+  user_id: number | null;
+  redirect: string;
+  payment_type: string | null;
+  convenience_charge: string | null;
+  refunded_amount: string | null;
+  refund_mode: string | null;
+  refund_transaction_no: string | null;
+  refund_note: string | null;
+  refunded_by: string | null;
+  refunded_on: string | null;
+  receipt_number: string | null;
+  created_by_id: number | null;
+  updt_balance: string | null;
+  recon_status: string | null;
+  reconciled_by: string | null;
+  reconciled_on: string | null;
+  resource_id: number;
+  resource_type: string;
+  sgst: string | null;
+}
+
+// Internal display type for the table / detail view
 interface Payment {
   id: string;
   payment_number: string;
@@ -49,6 +90,36 @@ interface PaymentFilters {
   dateFrom?: string;
   dateTo?: string;
 }
+
+// Helper: map API LockPayment → internal Payment
+const mapLockPayment = (lp: LockPayment): Payment => {
+  const statusRaw = (lp.payment_status || "").toLowerCase();
+  let status: Payment["status"] = "DRAFT";
+  if (statusRaw === "paid" || statusRaw === "success") status = "PAID";
+  else if (statusRaw === "void" || statusRaw === "failed") status = "VOID";
+
+  const date = lp.created_at
+    ? new Date(lp.created_at).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "-";
+
+  return {
+    id: String(lp.id),
+    payment_number: lp.receipt_number || lp.order_number || String(lp.id),
+    vendor_name: lp.payment_of || "-",
+    date,
+    mode: lp.payment_mode || lp.payment_method || "-",
+    status,
+    amount: parseFloat(lp.total_amount || "0") || 0,
+    unused_amount: 0,
+    bank_reference_number: lp.neft_reference || lp.pg_transaction_id || "",
+    paid_through_account: lp.payment_gateway || lp.bank_name || "-",
+    currency_symbol: "₹",
+  };
+};
 
 export const PaymentsMadePage: React.FC = () => {
   const navigate = useNavigate();
@@ -85,63 +156,13 @@ export const PaymentsMadePage: React.FC = () => {
   };
 
   const handleDelete = () => {
-    const remainingPayments = payments.filter(
-      (p) => !selectedPaymentIds.includes(p.id)
+    setPayments((prev) =>
+      prev.filter((p) => !selectedPaymentIds.includes(p.id))
     );
-    setPayments(remainingPayments);
-    localStorage.setItem("mock_payments", JSON.stringify(remainingPayments));
     setSelectedPaymentIds([]);
     sonnerToast.success("Payments deleted successfully");
   };
-  const [payments, setPayments] = useState<Payment[]>(() => {
-    const savedPayments = localStorage.getItem("mock_payments");
-    if (savedPayments) {
-      return JSON.parse(savedPayments);
-    }
-    const initialMock: Payment[] = [
-      {
-        id: "1",
-        payment_number: "3",
-        vendor_name: "Gophygital",
-        date: "12/02/2026",
-        mode: "Cash",
-        status: "DRAFT",
-        amount: 12333.0,
-        unused_amount: 0.0,
-        bank_reference_number: "",
-        paid_through_account: "Petty Cash",
-        currency_symbol: "₹",
-      },
-      {
-        id: "2",
-        payment_number: "2",
-        vendor_name: "Gophygital",
-        date: "12/02/2026",
-        mode: "Cash",
-        status: "PAID",
-        amount: 250.0,
-        unused_amount: 0.0,
-        bank_reference_number: "",
-        paid_through_account: "Distributions",
-        currency_symbol: "₹",
-      },
-      {
-        id: "3",
-        payment_number: "1",
-        vendor_name: "Gophygital",
-        date: "12/11/2025",
-        mode: "Cash",
-        status: "PAID",
-        amount: 250.0,
-        unused_amount: 0.0,
-        bank_reference_number: "",
-        paid_through_account: "Petty Cash",
-        currency_symbol: "₹",
-      },
-    ];
-    localStorage.setItem("mock_payments", JSON.stringify(initialMock));
-    return initialMock;
-  });
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -190,10 +211,65 @@ export const PaymentsMadePage: React.FC = () => {
     current_page: 1,
     per_page: 10,
     total_pages: 1,
-    total_count: 3, // Mock count
+    total_count: 0,
     has_next_page: false,
     has_prev_page: false,
   });
+
+  // Fetch payment list from API
+  const fetchPayments = useCallback(
+    async (page: number = 1) => {
+      setLoading(true);
+      try {
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+        if (!baseUrl || !token) {
+          sonnerToast.error("API not configured. Please log in.");
+          return;
+        }
+        const url = new URL(
+          `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_payments.json`
+        );
+        url.searchParams.append("access_token", token);
+        url.searchParams.append("page", String(page));
+        url.searchParams.append("per_page", String(perPage));
+
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const list: LockPayment[] = data.lock_payments || [];
+        setPayments(list.map(mapLockPayment));
+
+        if (data.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            current_page: data.pagination.current_page ?? page,
+            total_pages: data.pagination.total_pages ?? 1,
+            total_count: data.pagination.total_count ?? list.length,
+          }));
+        } else {
+          setPagination((prev) => ({ ...prev, total_count: list.length }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch payments:", err);
+        sonnerToast.error("Failed to load payments");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [perPage]
+  );
+
+  useEffect(() => {
+    fetchPayments(currentPage);
+  }, [currentPage, fetchPayments]);
 
   // Payment view options
   const paymentViews = [
@@ -330,8 +406,13 @@ export const PaymentsMadePage: React.FC = () => {
     },
   ];
 
-  const handlePageChange = (page: number) => setCurrentPage(page);
-  const handlePerPageChange = (newPerPage: number) => setPerPage(newPerPage);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1);
+  };
 
   const renderRow = (payment: Payment) => ({
     date: <span className="text-sm text-gray-900">{payment.date}</span>,
@@ -602,7 +683,7 @@ export const PaymentsMadePage: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsMoreMenuOpen(false);
-                      sonnerToast.info("Refresh List clicked");
+                      fetchPayments(currentPage);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
                   >
