@@ -142,27 +142,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         };
         fetchSalespersons();
     }, []);
-    // Fetch payment terms from API and set as dropdown options
-    useEffect(() => {
-        const fetchPaymentTerms = async () => {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (res && res.data && Array.isArray(res.data)) {
-                    setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
-                }
-            } catch (err) {
-                setPaymentTermsList([]);
-            }
-        };
-        fetchPaymentTerms();
-    }, []);
+   
     // Payment Terms Modal Handlers
     const handleAddNewTerm = () => {
         setEditTerms((prev) => [...prev, { name: '', days: '' }]);
@@ -328,6 +308,27 @@ export const SalesOrderCreatePage: React.FC = () => {
     }, []);
 
     console.log('Customers:', customers)
+     // Fetch payment terms from API and set as dropdown options
+    useEffect(() => {
+        const fetchPaymentTerms = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+                }
+            } catch (err) {
+                setPaymentTermsList([]);
+            }
+        };
+        fetchPaymentTerms();
+    }, []);
     // Fetch items, salespersons, taxes
     useEffect(() => {
         // Mock data - replace with actual API calls
@@ -354,7 +355,69 @@ export const SalesOrderCreatePage: React.FC = () => {
         // Set default terms and conditions
         setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
     }, []);
+        const handleSaveTerms = async () => {
 
+            // Only add valid new rows
+            const validEdit = editTerms.filter(row => row.name.trim());
+            setEditTerms([]);
+            setShowConfig(false);
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+
+            // Build payment_terms array for API
+            const paymentTermsPayload = validEdit.map(term => ({
+                id: term.id ?? null,
+                name: term.name,
+                no_of_days: term.days || 0
+            }));
+            console.log("Saving Payment Terms Payload:", paymentTermsPayload);
+            const payload = {
+                payment_terms: paymentTermsPayload,
+                lock_account_id: 1
+            };
+
+            await axios.post(
+                `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+                payload,
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            )
+                .then(res => {
+                    // Optionally handle success
+                })
+                .catch(err => {
+                    alert('Failed to save payment terms');
+                });
+
+            // Refresh payment terms list after save
+            fetchPaymentTerms();
+        };
+
+         // Remove (deactivate) payment term by id
+                const handleRemovePaymentTerm = async (id, idx) => {
+                    const baseUrl = localStorage.getItem("baseUrl");
+                    const token = localStorage.getItem("token");
+                    try {
+                        await axios.patch(
+                            `https://${baseUrl}/payment_terms/${id}.json`,
+                            { payment_term: { id, active: false } },
+                            {
+                                headers: {
+                                    Authorization: token ? `Bearer ${token}` : undefined,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                    } catch (err) {
+                        alert('Failed to deactivate payment term');
+                    }
+                    setEditTerms(terms => terms.filter((_, i) => i !== idx));
+                    fetchPaymentTerms();
+                };
     // When customer is selected
     useEffect(() => {
         if (selectedCustomer) {
@@ -939,11 +1002,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     {filteredTerms.map(term => (
                                         <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
                                     ))}
-                                    <MenuItem>
+                                    {/* <MenuItem>
                                         <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
                                             Configure Terms
                                         </span>
-                                    </MenuItem>
+                                    </MenuItem> */}
                                 </Select>
                             </FormControl>
                             {/* Configure Payment Terms Modal */}
