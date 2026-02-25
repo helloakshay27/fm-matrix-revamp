@@ -130,6 +130,8 @@ export const BillListPage: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+      const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
 
     // Fetch bill data from API
     // const fetchBillData = async (page = 1, per_page = 10, search = '', filters: BillFilters = {}) => {
@@ -219,7 +221,7 @@ export const BillListPage: React.FC = () => {
 
         try {
             const response = await axios.get(
-                "https://club-uat-api.lockated.com/lock_account_bills.json?lock_account_id=1",
+                `https://${baseUrl}/lock_account_bills.json?lock_account_id=1`,
                 {
                     params: {
                         lock_account_id: 1,

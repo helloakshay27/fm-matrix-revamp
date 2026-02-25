@@ -215,15 +215,18 @@ const modulesByPackage = {
             icon: FileText,
             subItems: [
                 { name: "Customers", href: "/accounting/customers" },
+                { name: "Quotes", href: "/accounting/quotes" },
+                { name: "Retainer Invoice", href: "/accounting/retainer-invoices" },
                 { name: "Sales Order", href: "/accounting/sales-order" },
                 { name: "Invoices ", href: "/accounting/invoices/list" },
 
                 { name: "Recurring Invoices ", href: "accounting/recurring-invoices" },
 
                 { name: "Delivery Challans", href: "/accounting/delivery-challans" },
-                { name: "Quotes", href: "/accounting/quotes" },
+                { name: "Payment Links", href: "/accounting/payment-links" },
                 { name: "Payments Received", href: "/accounting/payments-received" },
-                { name: "Credit Note", href: "/accounting/credit-note" },
+                { name: "Credit Note", href: "/accounting/credit-note" }
+
             ],
         },
 
@@ -231,12 +234,12 @@ const modulesByPackage = {
             name: "Purchases",
             icon: FileText,
             subItems: [
-                { name: "Purchase Order", href: "/accounting/purchase-order" },
-                { name: "Bills", href: "/accounting/bills" },
-                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
                 { name: "Vendor", href: "/maintenance/vendor" },
                 { name: "Expense", href: "/accounting/expense" },
                 { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
+                { name: "Purchase Order", href: "/accounting/purchase-order" },
+                { name: "Bills", href: "/accounting/bills" },
+                { name: "Recurring Bills", href: "/accounting/recurring-bills" },
                 // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
                 { name: "Payments Made", href: "/accounting/payments-made" },
                 { name: "Vendor Credits", href: "/accounting/vendor-credits" }
@@ -265,7 +268,7 @@ const modulesByPackage = {
             name: "Configuration",
             icon: Settings,
             subItems: [
-                  {
+                {
                     name: "Sales Person",
                     icon: Calculator,
                     href: "/accounting/sales-person",
@@ -280,7 +283,7 @@ const modulesByPackage = {
                     icon: Calculator,
                     href: "/accounting/section",
                 },
-               
+
                 {
                     name: "Taxes",
                     icon: Calculator,
@@ -288,7 +291,7 @@ const modulesByPackage = {
                 },
                 { name: "Charges ", href: "/accounting/charge-setup" },
                 { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
-               
+
             ],
         },
 

@@ -773,7 +773,7 @@ console.log("items:",items)
             });
 
             alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            // navigate('/accounting/sales-order');
+            navigate('/accounting/bills');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             alert('Failed to create sales order');
