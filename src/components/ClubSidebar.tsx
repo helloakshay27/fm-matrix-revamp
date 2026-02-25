@@ -238,7 +238,7 @@ const modulesByPackage = {
                 { name: "Expense", href: "/accounting/expense" },
                 { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
                 // { name: "Recurring Bill", href: "/accounting/recurring-bills/create" },
-                { name: "Payments Made", href: "/accounting/recurring-journal" },
+                { name: "Payments Made", href: "/accounting/payments-made" },
                 { name: "Vendor Credits", href: "/accounting/vendor-credits" }
                 // { name: "Recurring Expenses ", href: "/settings/recurring-journal" },
                 // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
@@ -353,6 +353,11 @@ const modulesByPackage = {
             name: "Payment Terms",
             icon: Calculator,
             href: "/master/payment-terms",
+        },
+         {
+            name: "Taxes",
+            icon: Calculator,
+            href: "/master/tax-setup",
         },
         // {
         //     name: "Payment Plan Setup",
