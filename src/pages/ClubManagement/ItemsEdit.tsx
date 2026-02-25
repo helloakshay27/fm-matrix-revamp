@@ -285,7 +285,7 @@ const ItemsEdit = () => {
             itemPayload.sale_description = form.sales_description;
             itemPayload.sale_rate = form.selling_price;
             itemPayload.sale_lock_account_ledger_id = form.sales_account;
-            // itemPayload.sale_mrp = form.mrp;
+            itemPayload.sale_mrp = form.mrp;
         }
         if (form.purchasable) {
             itemPayload.purchase_description = form.purchase_description;
@@ -509,7 +509,7 @@ const ItemsEdit = () => {
                             /> */}
 
 
-                            <TextField
+                            {/* <TextField
                                 placeholder="Enter selling price"
                                 fullWidth
                                 // label=""
@@ -550,9 +550,84 @@ const ItemsEdit = () => {
                                         paddingLeft: "12px",
                                     },
                                 }}
-                            />
+                            /> */}
 
                             <TextField
+                                placeholder="Enter selling price"
+                                fullWidth
+                                label={
+                                    <>
+                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
+                                name="selling_price"
+                                value={form.selling_price}
+                                disabled={!form.sellable}
+                                onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    // Remove anything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    // Prevent multiple dots
+                                    const parts = value.split(".");
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        selling_price: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.selling_price) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            selling_price: Number(prev.selling_price).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment
+                                            position="start"
+                                            sx={{
+                                                backgroundColor: "#f3f3f3",
+                                                borderRight: "1px solid #dcdcdc",
+                                                height: "44px",
+                                                maxHeight: "44px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                px: 1.5,
+                                                color: "#555",
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            INR
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        paddingLeft: 0,
+                                    },
+                                    "& input": {
+                                        paddingLeft: "12px",
+                                    },
+                                }}
+                            />
+
+                            {/* <TextField
                                 disabled={!form.sellable}
                                 label="MRP"
                                 name="mrp"
@@ -560,6 +635,50 @@ const ItemsEdit = () => {
                                 placeholder="Enter MRP"
                                 value={form.mrp}
                                 onChange={handleChange}
+                            /> */}
+
+                            <TextField
+                                disabled={!form.sellable}
+                                label="MRP"
+                                name="mrp"
+                                placeholder="Enter MRP"
+                                value={form.mrp}
+                                fullWidth
+                                onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    // Remove everything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    const parts = value.split(".");
+
+                                    // Prevent multiple dots
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        mrp: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.mrp) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            mrp: Number(prev.mrp).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
                             />
 
 
@@ -616,7 +735,7 @@ const ItemsEdit = () => {
                                 </Select>
                             </FormControl>
 
-                            <TextField
+                            {/* <TextField
                                 disabled={!form.sellable}
                                 label="Description"
                                 name="sales_description"
@@ -625,6 +744,54 @@ const ItemsEdit = () => {
                                 onChange={handleChange}
                                 multiline
                                 rows={3}
+                            /> */}
+
+                            <TextField
+                                disabled={!form.sellable}
+                                label={
+                                    <span>
+                                        Description
+                                    </span>
+                                }
+                                name="sales_description"
+                                value={form.sales_description}
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        sales_description: e.target.value,
+                                    }))
+                                }
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& textarea": {
+                                        resize: "none !important", // ✅ removes expand icon
+                                    },
+                                }}
+                                helperText={
+                                    <span style={{ textAlign: "right", display: "block" }}>
+                                        {`${form.sales_description?.length || 0}/500 characters`}
+                                    </span>
+                                }
+                                error={(form.sales_description?.length || 0) > 500}
                             />
                         </div>
                     </div>
@@ -656,7 +823,7 @@ const ItemsEdit = () => {
                                 onChange={handleChange}
                             /> */}
 
-                            <TextField
+                            {/* <TextField
                                 placeholder="Enter cost price"
                                 fullWidth
                                 // label="Cost Price"
@@ -669,6 +836,82 @@ const ItemsEdit = () => {
                                 value={form.cost_price}
                                 onChange={handleChange}
                                 disabled={!form.purchasable}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment
+                                            position="start"
+                                            sx={{
+                                                backgroundColor: "#f3f3f3",
+                                                borderRight: "1px solid #dcdcdc",
+                                                height: "44px",
+                                                maxHeight: "44px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                px: 1.5,
+                                                color: "#555",
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            INR
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        paddingLeft: 0,
+                                    },
+                                    "& input": {
+                                        paddingLeft: "12px",
+                                    },
+                                }}
+                            /> */}
+
+                            <TextField
+                                placeholder="Enter cost price"
+                                fullWidth
+                                label={
+                                    <>
+                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
+                                name="cost_price"
+                                value={form.cost_price}
+                                disabled={!form.purchasable}
+                                onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    // Remove everything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    const parts = value.split(".");
+
+                                    // Prevent multiple dots
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        cost_price: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.cost_price) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            cost_price: Number(prev.cost_price).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment
@@ -752,7 +995,7 @@ const ItemsEdit = () => {
                                 </Select>
                             </FormControl>
 
-                            <TextField
+                            {/* <TextField
                                 disabled={!form.purchasable}
                                 label="Description"
                                 name="purchase_description"
@@ -761,6 +1004,55 @@ const ItemsEdit = () => {
                                 onChange={handleChange}
                                 multiline
                                 rows={3}
+                            /> */}
+
+                            <TextField
+                                disabled={!form.purchasable}
+                                label={
+                                    <span>
+                                        Description
+                                    </span>
+                                }
+                                name="purchase_description"
+                                value={form.purchase_description}
+                                placeholder="Enter purchase description"
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        purchase_description: e.target.value,
+                                    }))
+                                }
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& textarea": {
+                                        resize: "none !important", // ✅ removes resize icon
+                                    },
+                                }}
+                                helperText={
+                                    <span style={{ textAlign: "right", display: "block" }}>
+                                        {`${form.purchase_description?.length || 0}/500 characters`}
+                                    </span>
+                                }
+                                error={(form.purchase_description?.length || 0) > 500}
                             />
 
                             <FormControl disabled={!form.purchasable}>

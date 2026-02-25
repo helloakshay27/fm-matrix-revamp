@@ -32,6 +32,13 @@ export const ForgotPasswordOTPPage = () => {
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes("oig.gophygital.work");
   const isViSite = hostname.includes("vi-web.gophygital.work");
+  const org_id = localStorage.getItem("org_id");
+  const isPulseSite =
+    hostname.includes("localhost") ||
+    hostname === "pulse.lockated.com" ||
+    hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
+    org_id === "90";
 
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
@@ -239,6 +246,12 @@ export const ForgotPasswordOTPPage = () => {
               />
             </defs>
           </svg>
+        ) : isPulseSite ? (
+          <img
+            src="https://www.panchshil.com/assets/images/home/logo.png"
+            alt="Pulse Logo"
+            style={{ height: 80, width: "auto", objectFit: "contain" }}
+          />
         ) : isViSite ? (
           <svg
             width="218"

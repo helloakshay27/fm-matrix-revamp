@@ -170,8 +170,8 @@ const ProjectTeams = () => {
                     team_lead_id: selectedLead,
                     user_ids: Array.from(
                         new Set([
-                            selectedLead, // include team lead
-                            ...selectedMembers.map(member => member.value),
+                            ...(isEditMode ? [] : [selectedLead]), // include lead only when NOT editing
+                            ...selectedMembers.map((member) => member.value),
                         ])
                     ), // Extract IDs from MuiMultiSelect format
                 },

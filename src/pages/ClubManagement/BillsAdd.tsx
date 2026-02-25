@@ -11,6 +11,7 @@ import {
     Select,
     FormControl,
     InputLabel,
+    ListSubheader,
     Drawer,
     Typography,
     Box,
@@ -66,6 +67,22 @@ interface Customer {
     contactPersons: ContactPerson[];
 }
 
+interface CustomerOptions {
+    id: string;
+    name: string;
+    email: string;
+    currency: string;
+    billingAddress: string;
+    shippingAddress: string;
+    customerType: string;
+    paymentTerms: string;
+    portalStatus: string;
+    language: string;
+    outstandingReceivables: number;
+    unusedCredits: number;
+    contactPersons: ContactPerson[];
+}
+
 interface ContactPerson {
     id: string;
     salutation: string;
@@ -90,6 +107,8 @@ interface Item {
     tax: string;
     taxRate: number;
     amount: number;
+    account:string ;
+    customer: string
 }
 
 interface ExternalUser {
@@ -98,7 +117,7 @@ interface ExternalUser {
 }
 
 export const BillsAdd: React.FC = () => {
-     const [subject, setSubject] = useState('');
+    const [subject, setSubject] = useState('');
     // Fetch item list from API
     useEffect(() => {
         const fetchItems = async () => {
@@ -223,7 +242,9 @@ export const BillsAdd: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            customer: "",
+            account: "",
         }
     ]);
 
@@ -272,7 +293,7 @@ export const BillsAdd: React.FC = () => {
     const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-
+    const [customerOptions, setCustomerOptions] = useState<CustomerOptions[]>([]);
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
         '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -304,7 +325,7 @@ export const BillsAdd: React.FC = () => {
                 }
             })
             .then(res => {
-                console.log("cust:",res)
+                console.log("cust:", res)
                 setCustomers(res?.data?.pms_suppliers || []);
                 // Optionally fetch detail for first customer
                 if (res.data && res.data.length > 0) {
@@ -329,7 +350,71 @@ export const BillsAdd: React.FC = () => {
             });
     }, []);
 
+
+    // Fetch customers on mount
+    useEffect(() => {
+        // setLoadingCustomers(true);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        // Fetch customer list
+        axios
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => {
+                setCustomerOptions(res.data || []);
+                // Optionally fetch detail for first customer
+                if (res.data && res.data.length > 0) {
+                    const customerId = res.data[0].id;
+                    axios
+                        .get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
+                            headers: {
+                                Authorization: token ? `Bearer ${token}` : undefined,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(detailRes => {
+                            // Optionally handle detailRes.data
+                        });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching customers:', error);
+            })
+            .finally(() => {
+                setLoadingCustomers(false);
+            });
+    }, []);
+
     console.log('Customers:', customers)
+
+    // Account groups and ledgers for sales/purchase account dropdowns
+    const [accountGroups, setAccountGroups] = React.useState([]);
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
+    const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
+
+    React.useEffect(() => {
+        const fetchAccountGroups = async () => {
+            try {
+                // Replace with your actual endpoint for groups/ledgers
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                console.log("Account Groups Response:", res.data);
+                setAccountGroups(res.data.data || []);
+            } catch (e) {
+                setAccountGroups([]);
+            }
+        };
+        fetchAccountGroups();
+    }, [baseUrl, token]);
     // Fetch items, salespersons, taxes
     useEffect(() => {
         // Mock data - replace with actual API calls
@@ -362,7 +447,7 @@ export const BillsAdd: React.FC = () => {
         if (selectedCustomer) {
             // setBillingAddress(selectedCustomer.billingAddress);
             // setShippingAddress(selectedCustomer.shippingAddress);
-             setBillingAddress(selectedCustomer.address);
+            setBillingAddress(selectedCustomer.address);
             setShippingAddress(selectedCustomer.address2);
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
@@ -411,7 +496,9 @@ export const BillsAdd: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            customer: "",
+            account: "",
         }]);
     };
 
@@ -614,7 +701,7 @@ export const BillsAdd: React.FC = () => {
         }
     };
     console.log('Sale Order Payload:', saleOrderPayload2);
-
+console.log("items:",items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
         if (!saveAsDraft && !validate()) {
@@ -629,51 +716,54 @@ export const BillsAdd: React.FC = () => {
 
             // Build FormData for sale order
             const formData = new FormData();
-            formData.append('sale_order[lock_account_customer_id]', selectedCustomer?.id || '');
-            formData.append('sale_order[reference_number]', referenceNumber);
-            formData.append('sale_order[date]', salesOrderDate);
-            formData.append('sale_order[shipment_date]', expectedShipmentDate);
-            formData.append('sale_order[payment_term_id]', selectedTerm);
-            formData.append('sale_order[delivery_method]', deliveryMethod);
-            formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('sale_order[customer_notes]', customerNotes);
-            formData.append('sale_order[terms_and_conditions]', termsAndConditions);
-            formData.append('sale_order[status]', 'draft');
-            formData.append('sale_order[total_amount]', String(totalAmount));
+            formData.append('lock_account_bill[pms_supplier_id]', selectedCustomer?.id || '');
+            formData.append('lock_account_bill[order_number]', referenceNumber);
+            formData.append('lock_account_bill[bill_date]', salesOrderDate);
+            formData.append('lock_account_bill[due_date]', expectedShipmentDate);
+            formData.append('lock_account_bill[payment_term_id]', selectedTerm);
+            // formData.append('sale_order[delivery_method]', deliveryMethod);
+            // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+            formData.append('lock_account_bill[notes]', customerNotes);
+            // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
+            formData.append('lock_account_bill[status]', 'draft');
+            formData.append('lock_account_bill[subject]', subject || '');
+            formData.append('lock_account_bill[total_amount]', String(totalAmount));
             if (discountTypeOnTotal === 'percentage') {
-                formData.append('sale_order[discount_per]', String(discountOnTotal));
-                formData.append('sale_order[discount_amount]', String(totalDiscount));
+                formData.append('lock_account_bill[discount_per]', String(discountOnTotal));
+                formData.append('lock_account_bill[discount_amount]', String(totalDiscount));
             } else {
-                formData.append('sale_order[discount_amount]', String(discountOnTotal));
+                formData.append('lock_account_bill[discount_amount]', String(discountOnTotal));
             }
-            formData.append('sale_order[charge_amount]', String(adjustment));
-            formData.append('sale_order[charge_name]', adjustmentLabel);
-            formData.append('sale_order[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('sale_order[tax_type]', taxType.toLowerCase());
+            formData.append('lock_account_bill[charge_amount]', String(adjustment));
+            formData.append('lock_account_bill[charge_name]', adjustmentLabel);
+            formData.append('lock_account_bill[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+            formData.append('lock_account_bill[tax_type]', taxType.toLowerCase());
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('sale_order[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+            formData.append('lock_account_bill[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
 
             // Sale order items
             items.forEach((item, idx) => {
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][description]`, item.description || '');
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][total_amount]`, String(item.amount));
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][name]`, item.description || '');
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
             });
 
             // Email contact persons
-            selectedContactPersons.forEach((id, idx) => {
-                formData.append(`sale_order[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
-            });
+            // selectedContactPersons.forEach((id, idx) => {
+            //     formData.append(`lock_account_bill[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+            // });
 
             // Attachments
             attachments.forEach((file, idx) => {
-                formData.append(`sale_order[attachments_attributes][${idx}][document]`, file);
-                formData.append(`sale_order[attachments_attributes][${idx}][active]`, 'true');
+                formData.append(`lock_account_bill[attachments_attributes][${idx}][document]`, file);
+                formData.append(`lock_account_bill[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/sale_orders.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=1`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -683,7 +773,7 @@ export const BillsAdd: React.FC = () => {
             });
 
             alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/accounting/sales-order');
+            // navigate('/accounting/sales-order');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             alert('Failed to create sales order');
@@ -1028,20 +1118,20 @@ export const BillsAdd: React.FC = () => {
                         </div>
 
                         <div>
-                                                    <label className="block text-sm font-medium ">
-                                                        Subject
-                                                    </label>
-                                                    <TextField
-                                                        fullWidth
-                                                        multiline
-                                                        minRows={0}
-                                                        maxRows={8}
-                                                        value={subject}
-                                                        onChange={e => setSubject(e.target.value)}
-                                                        placeholder="Enter subject"
-                                                        sx={fieldStyles}
-                                                    />
-                                                </div>
+                            <label className="block text-sm font-medium ">
+                                Subject
+                            </label>
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={0}
+                                maxRows={8}
+                                value={subject}
+                                onChange={e => setSubject(e.target.value)}
+                                placeholder="Enter subject"
+                                sx={fieldStyles}
+                            />
+                        </div>
 
                         {/* <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1056,13 +1146,13 @@ export const BillsAdd: React.FC = () => {
                                 >
                                     <MenuItem value="" disabled>Select a delivery method or type to add</MenuItem>
                                     {/* <MenuItem value="courier">Courier</MenuItem> */}
-                                    {/* <MenuItem value="hand-delivery">Hand Delivery</MenuItem> */}
-                                    {/* <MenuItem value="pickup">Pickup</MenuItem> */}
-                                    {/* <MenuItem value="shipping">Shipping</MenuItem> */}
-                                    {/* <MenuItem value="drive">Drive</MenuItem>
+                        {/* <MenuItem value="hand-delivery">Hand Delivery</MenuItem> */}
+                        {/* <MenuItem value="pickup">Pickup</MenuItem> */}
+                        {/* <MenuItem value="shipping">Shipping</MenuItem> */}
+                        {/* <MenuItem value="drive">Drive</MenuItem>
                                 </Select>
                             </FormControl>
-                        </div> */} 
+                        </div> */}
 
                         {/* <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1097,8 +1187,10 @@ export const BillsAdd: React.FC = () => {
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Customer</th>
                                         {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                         {/* <th className="px-4 py-3 text-left text-sm font-medium">Tax</th> */}
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
@@ -1141,6 +1233,49 @@ export const BillsAdd: React.FC = () => {
                                                     sx={{ mt: 1 }}
                                                 />
                                             </td>
+
+
+                                            <td className="px-4 py-3">
+                                                <FormControl fullWidth size="small">
+                                                    <InputLabel id={`account-label-${index}`}>
+                                                        Account
+                                                    </InputLabel>
+
+                                                    <Select
+                                                        labelId={`account-label-${index}`}
+                                                        value={item.account || ""}
+                                                        label="Account*"
+                                                        onChange={(e) => updateItem(index, "account", e.target.value)}
+                                                        displayEmpty
+                                                        MenuProps={{
+                                                            PaperProps: {
+                                                                style: {
+                                                                    maxHeight: 300,
+                                                                    minWidth: 250,
+                                                                    maxWidth: 350,
+                                                                },
+                                                            },
+                                                        }}
+                                                    >
+                                                        <MenuItem value="" disabled>
+                                                            Select Account
+                                                        </MenuItem>
+
+                                                        {accountGroups.map((group) =>
+                                                            group.ledgers && group.ledgers.length > 0 ? [
+                                                                <ListSubheader key={`group-${group.id}`}>
+                                                                    {group.group_name}
+                                                                </ListSubheader>,
+                                                                ...group.ledgers.map((ledger) => (
+                                                                    <MenuItem key={ledger.id} value={ledger.id}>
+                                                                        {ledger.name}
+                                                                    </MenuItem>
+                                                                )),
+                                                            ] : null
+                                                        )}
+                                                    </Select>
+                                                </FormControl>
+                                            </td>
                                             <td className="px-4 py-3">
                                                 <TextField
                                                     type="number"
@@ -1161,6 +1296,24 @@ export const BillsAdd: React.FC = () => {
                                                     sx={{ width: 100 }}
                                                 />
                                             </td>
+                                            {/* Customer Dropdown */}
+                                            <td className="px-4 py-3">
+                                                <FormControl size="small" fullWidth>
+                                                    <Select
+                                                        value={item.customer || ""}
+                                                        onChange={(e) => updateItem(index, "customer", e.target.value)}
+                                                        displayEmpty
+                                                    >
+                                                        <MenuItem value="">Select Customer</MenuItem>
+                                                        {customerOptions.map((cust) => (
+                                                            <MenuItem key={cust.id} value={cust.id}>
+                                                                {cust.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </td>
+                                            {/* {console.log("cust ops:",customerOptions)} */}
                                             {/* <td className="px-4 py-3"> */}
                                             {/* <div className="flex items-center gap-2">
                                                     <TextField
@@ -1440,8 +1593,8 @@ export const BillsAdd: React.FC = () => {
                             label="Send email to selected customer above"
                         /> */}
 
-                        {/* Contact Persons Section */}
-                        {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                {/* Contact Persons Section */}
+                {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
                             <div>
                                 <Typography variant="body2" className="font-semibold mb-2">
                                     Select contact persons to email
@@ -1470,8 +1623,8 @@ export const BillsAdd: React.FC = () => {
                             </div>
                         )} */}
 
-                        {/* External Users Section */}
-                        {/* <div>
+                {/* External Users Section */}
+                {/* <div>
                             <div className="flex items-center justify-between mb-2">
                                 <Typography variant="body2" className="font-semibold">
                                     Add external users (email users other than the selected customer above)
@@ -1485,7 +1638,7 @@ export const BillsAdd: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-                            {/* </div>
+                {/* </div>
 
                             {externalUsers.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
@@ -1501,7 +1654,7 @@ export const BillsAdd: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </Section> */} 
+                </Section> */}
 
                 {/* Additional Fields */}
                 <Section title="Additional Fields" icon={<FileText className="w-5 h-5" />}>

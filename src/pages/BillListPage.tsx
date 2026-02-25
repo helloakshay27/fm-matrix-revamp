@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import axios from 'axios';
 
 // Type definitions for Bill
 interface Bill {
@@ -47,15 +48,15 @@ interface BillFilters {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
+    // {
+    //     key: 'actions',
+    //     label: 'Action',
+    //     sortable: false,
+    //     hideable: false,
+    //     draggable: false
+    // },
     {
-        key: 'actions',
-        label: 'Action',
-        sortable: false,
-        hideable: false,
-        draggable: false
-    },
-    {
-        key: 'date',
+        key: 'bill_date',
         label: 'Date',
         sortable: true,
         hideable: true,
@@ -69,7 +70,7 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'reference_number',
+        key: 'order_number',
         label: 'Reference Number',
         sortable: true,
         hideable: true,
@@ -97,7 +98,7 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'amount',
+        key: 'total_amount',
         label: 'Amount',
         sortable: true,
         hideable: true,
@@ -131,77 +132,137 @@ export const BillListPage: React.FC = () => {
     });
 
     // Fetch bill data from API
-    const fetchBillData = async (page = 1, per_page = 10, search = '', filters: BillFilters = {}) => {
+    // const fetchBillData = async (page = 1, per_page = 10, search = '', filters: BillFilters = {}) => {
+    //     setLoading(true);
+    //     try {
+    //         // Mock data - replace with actual API call
+    //         const mockData: Bill[] = [
+    //             {
+    //                 id: 1,
+    //                 bill_number: '123',
+    //                 vendor_name: 'Gophygital',
+    //                 date: '2026-02-10',
+    //                 due_date: '2026-02-10',
+    //                 amount: 250.00,
+    //                 balance_due: 0.00,
+    //                 status: 'paid',
+    //                 reference_number: 'PO-00002',
+    //                 active: true,
+    //                 created_at: '2026-02-10',
+    //                 updated_at: '2026-02-10'
+    //             },
+    //             {
+    //                 id: 2,
+    //                 bill_number: '555',
+    //                 vendor_name: 'Gophygital',
+    //                 date: '2025-11-04',
+    //                 due_date: '2025-11-28',
+    //                 amount: 250.00,
+    //                 balance_due: 0.00,
+    //                 status: 'paid',
+    //                 reference_number: 'es.PO-00001',
+    //                 active: true,
+    //                 created_at: '2025-11-04',
+    //                 updated_at: '2025-11-28'
+    //             }
+    //         ];
+
+    //         // Filter based on search
+    //         let filteredData = mockData;
+    //         if (search.trim()) {
+    //             filteredData = mockData.filter(bill =>
+    //                 bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
+    //                 bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
+    //                 bill.reference_number.toLowerCase().includes(search.toLowerCase())
+    //             );
+    //         }
+
+    //         // Apply filters
+    //         if (filters.status) {
+    //             filteredData = filteredData.filter(order => order.status === filters.status);
+    //         }
+
+    //         const totalCount = filteredData.length;
+    //         const totalPages = Math.ceil(totalCount / per_page);
+    //         const startIndex = (page - 1) * per_page;
+    //         const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+
+    //         setBillData(paginatedData);
+    //         setPagination({
+    //             current_page: page,
+    //             per_page: per_page,
+    //             total_pages: totalPages,
+    //             total_count: totalCount,
+    //             has_next_page: page < totalPages,
+    //             has_prev_page: page > 1
+    //         });
+
+    //     } catch (error: unknown) {
+    //         console.error('Error fetching bill data:', error);
+    //         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    //         toast.error(`Failed to load bill data: ${errorMessage}`, {
+    //             duration: 5000,
+    //         });
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+
+    const fetchBillData = async (
+        page = 1,
+        per_page = 10,
+        search = '',
+        filters: BillFilters = {}
+    ) => {
         setLoading(true);
+
         try {
-            // Mock data - replace with actual API call
-            const mockData: Bill[] = [
+            const response = await axios.get(
+                "https://club-uat-api.lockated.com/lock_account_bills.json?lock_account_id=1",
                 {
-                    id: 1,
-                    bill_number: '123',
-                    vendor_name: 'Gophygital',
-                    date: '2026-02-10',
-                    due_date: '2026-02-10',
-                    amount: 250.00,
-                    balance_due: 0.00,
-                    status: 'paid',
-                    reference_number: 'PO-00002',
-                    active: true,
-                    created_at: '2026-02-10',
-                    updated_at: '2026-02-10'
-                },
-                {
-                    id: 2,
-                    bill_number: '555',
-                    vendor_name: 'Gophygital',
-                    date: '2025-11-04',
-                    due_date: '2025-11-28',
-                    amount: 250.00,
-                    balance_due: 0.00,
-                    status: 'paid',
-                    reference_number: 'es.PO-00001',
-                    active: true,
-                    created_at: '2025-11-04',
-                    updated_at: '2025-11-28'
+                    params: {
+                        lock_account_id: 1,
+                        //   page,
+                        //   per_page,
+                        //   search,
+                        //   status: filters.status || undefined,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+                    },
                 }
-            ];
+            );
 
-            // Filter based on search
-            let filteredData = mockData;
-            if (search.trim()) {
-                filteredData = mockData.filter(bill =>
-                    bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
-                    bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
-                    bill.reference_number.toLowerCase().includes(search.toLowerCase())
-                );
-            }
+            // 🔥 Adjust this based on actual API response structure
+            const apiData = response.data;
 
-            // Apply filters
-            if (filters.status) {
-                filteredData = filteredData.filter(order => order.status === filters.status);
-            }
+            const bills: Bill[] = apiData?.data || apiData || [];
 
-            const totalCount = filteredData.length;
-            const totalPages = Math.ceil(totalCount / per_page);
-            const startIndex = (page - 1) * per_page;
-            const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+            setBillData(bills);
 
-            setBillData(paginatedData);
             setPagination({
-                current_page: page,
-                per_page: per_page,
-                total_pages: totalPages,
-                total_count: totalCount,
-                has_next_page: page < totalPages,
-                has_prev_page: page > 1
+                current_page: apiData?.current_page || page,
+                per_page: apiData?.per_page || per_page,
+                total_pages: apiData?.total_pages || 1,
+                total_count: apiData?.total_count || bills.length,
+                has_next_page:
+                    (apiData?.current_page || page) <
+                    (apiData?.total_pages || 1),
+                has_prev_page:
+                    (apiData?.current_page || page) > 1,
             });
 
         } catch (error: unknown) {
-            console.error('Error fetching bill data:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error("Error fetching bill data:", error);
+
+            const errorMessage =
+                error instanceof Error ? error.message : "Unknown error";
+
             toast.error(`Failed to load bill data: ${errorMessage}`, {
                 duration: 5000,
             });
+
         } finally {
             setLoading(false);
         }
@@ -257,43 +318,55 @@ export const BillListPage: React.FC = () => {
     const renderRow = (bill: Bill) => ({
         actions: (
             <div className="flex items-center gap-2">
-                <button
+                {/* <button
                     onClick={() => handleView(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => handleEdit(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => handleDelete(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
-        date: (
+        // bill_date: (
+        //     <span className="text-sm text-gray-600">
+        //         {new Date(bill.bill_date).toLocaleDateString('en-GB', {
+        //             day: '2-digit',
+        //             month: '2-digit',
+        //             year: 'numeric'
+        //         })}
+        //     </span>
+        // ),
+
+        bill_date: (
             <span className="text-sm text-gray-600">
-                {new Date(bill.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
+                {bill.bill_date
+                    ? new Date(bill.bill_date).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                    })
+                    : "-"}
             </span>
         ),
         bill_number: (
             <div className="font-medium text-blue-600">{bill.bill_number}</div>
         ),
-        reference_number: (
-            <span className="text-sm text-gray-900">{bill.reference_number}</span>
+        order_number: (
+            <span className="text-sm text-gray-900">{bill.order_number}</span>
         ),
         vendor_name: (
             <span className="text-sm text-gray-900">{bill.vendor_name}</span>
@@ -312,14 +385,14 @@ export const BillListPage: React.FC = () => {
                 })}
             </span>
         ),
-        amount: (
+        total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{bill.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{bill?.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
         ),
         balance_due: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{bill.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {/* ₹{bill.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
             </span>
         )
     });

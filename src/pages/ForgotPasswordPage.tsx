@@ -23,7 +23,16 @@ export const ForgotPasswordPage = () => {
   // Site detection
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite = hostname.includes("vi-web.gophygital.work ") || hostname.includes("vi.gophygital.work");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work ") ||
+    hostname.includes("vi.gophygital.work");
+  const org_id = localStorage.getItem("org_id");
+  const isPulseSite =
+    hostname.includes("localhost") ||
+    hostname === "pulse.lockated.com" ||
+    hostname.includes("pulse-uat.panchshil.com") ||
+    hostname.includes("pulse.panchshil.com") ||
+    org_id === "90";
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +62,9 @@ export const ForgotPasswordPage = () => {
         // Pass email or mobile to OTP page
         navigate("/forgot-password-otp", { state: { emailOrMobile } });
       } else {
-        toast.error(response.message || "Failed to send OTP. Please try again.");
+        toast.error(
+          response.message || "Failed to send OTP. Please try again."
+        );
       }
     } catch (error) {
       toast.error(
@@ -112,6 +123,12 @@ export const ForgotPasswordPage = () => {
               />
             </defs>
           </svg>
+        ) : isPulseSite ? (
+          <img
+            src="https://www.panchshil.com/assets/images/home/logo.png"
+            alt="Pulse Logo"
+            style={{ height: 80, width: "auto", objectFit: "contain" }}
+          />
         ) : isViSite ? (
           <svg
             width="218"
@@ -151,6 +168,12 @@ export const ForgotPasswordPage = () => {
               />
             </defs>
           </svg>
+        ) : isPulseSite ? (
+          <img
+            src="https://www.panchshil.com/assets/images/home/logo.png"
+            alt="Pulse Logo"
+            style={{ height: 80, width: "auto", objectFit: "contain" }}
+          />
         ) : (
           <svg
             width="173"

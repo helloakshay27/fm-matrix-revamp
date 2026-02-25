@@ -208,14 +208,6 @@ export const FlipCard: React.FC = () => {
       {/* Already Won Reward Screen */}
       {contestData.won_reward && contestData.user_contest_reward && (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#FFF8E7] via-white to-[#F5E6D3]">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 p-2 text-gray-700 hover:bg-white/50 rounded-full"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
           {/* Celebration Animation */}
           <div className="mb-6 relative">
             <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">

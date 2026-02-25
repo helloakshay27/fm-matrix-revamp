@@ -185,7 +185,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const userId = user?.id;
-  const companyId = user?.lock_role?.company_id || "116";
+  const companyId = String(user?.lock_role?.company_id || "116");
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
@@ -262,7 +262,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
       const response = await axios.get(
-        `${protocol}${baseUrl}/communities/${companyId}/posts.json`,
+        `${protocol}${baseUrl}/communities/3/posts.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -393,15 +393,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       const formData = new FormData();
       formData.append("body", postText);
 
-      // Pulse sites often require a specific resource_id (29) for the global community
-      const isPulse =
-        baseUrl.includes("pulse") ||
-        baseUrl.includes("panchshil") ||
-        companyId === 305 ||
-        companyId === "305";
-      const actualResourceId = isPulse ? "29" : String(companyId || "");
-
-      formData.append("resource_id", actualResourceId);
+      formData.append("resource_id", "3");
       formData.append("resource_type", "Community");
 
       if (createMode === "poll") {
@@ -2253,17 +2245,29 @@ const PostCard = ({ post }: { post: Post }) => {
   const [showCommentsForPost, setShowCommentsForPost] = React.useState<
     string | null
   >(null);
-  const navigate = {}; // Mock navigate function, replace with actual navigation if needed
-  const communityId = "1"; // Mock community ID, replace with actual value if needed
+  const navigate = useNavigate();
+  const communityId = "3";
 
   // Function to handle comment deletion
-  const deleteComment = (commentId: string) => {
+  const deleteComment = async (commentId: string) => {
     try {
-      // In a real implementation, this would make an API call to delete the comment
-      // For now, we'll just show a success message
-      alert(`Comment ${commentId} would be deleted in a real implementation`);
-    } catch (error) {
-      alert(`Error deleting comment: ${error.message}`);
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      await fetch(`${protocol}${baseUrl}/comments/${commentId}.json`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error: unknown) {
+      console.error(
+        "Error deleting comment:",
+        error instanceof Error ? error.message : error
+      );
     }
   };
 

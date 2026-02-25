@@ -170,43 +170,43 @@ export const VoucherDetails: React.FC = () => {
   // Use appropriate data based on which is available
   const displayData = rewardData
     ? {
-        title: rewardData.prize?.title || "Voucher",
-        description:
-          rewardData.contest?.description ||
-          rewardData.prize?.display_name ||
-          rewardData.prize?.description ||
-          "",
-        image_url:
-          (rewardData.prize?.image as { url?: string })?.url ||
-          rewardData.prize?.icon_url ||
-          null,
-        value: rewardData.prize?.partner_name || "",
-        code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
-        points_value: rewardData.points_value || rewardData.prize?.points_value,
-        status: rewardData.status,
-        contest_title: rewardData.contest?.name || "Contest",
-        contest_type: rewardData.contest?.content_type || "",
-        valid_till: rewardData.contest?.end_at || "",
-        terms: rewardData.contest?.terms_and_conditions || "",
-        reward_type: rewardData.prize?.reward_type || rewardData.reward_type,
-        product: rewardData.prize?.product || null,
-      }
+      title: rewardData.prize?.title || "Voucher",
+      description:
+        rewardData.contest?.description ||
+        rewardData.prize?.display_name ||
+        rewardData.prize?.description ||
+        "",
+      image_url:
+        (rewardData.prize?.image as { url?: string })?.url ||
+        rewardData.prize?.icon_url ||
+        null,
+      value: rewardData.prize?.partner_name || "",
+      code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
+      points_value: rewardData.points_value || rewardData.prize?.points_value,
+      status: rewardData.status,
+      contest_title: rewardData.contest?.name || "Contest",
+      contest_type: rewardData.contest?.content_type || "",
+      valid_till: rewardData.contest?.end_at || "",
+      terms: rewardData.contest?.terms_and_conditions || "",
+      reward_type: rewardData.prize?.reward_type || rewardData.reward_type,
+      product: rewardData.prize?.product || null,
+    }
     : voucherData
       ? {
-          title: voucherData.reward?.title || "",
-          description: voucherData.reward?.description || "",
-          image_url: voucherData.reward?.image_url || null,
-          value: "",
-          code: voucherData.voucher_code || "",
-          points_value: null,
-          status: "",
-          contest_title: "",
-          contest_type: "",
-          valid_till: voucherData.valid_until || "",
-          terms: "",
-          reward_type: "",
-          product: null,
-        }
+        title: voucherData.reward?.title || "",
+        description: voucherData.reward?.description || "",
+        image_url: voucherData.reward?.image_url || null,
+        value: "",
+        code: voucherData.voucher_code || "",
+        points_value: null,
+        status: "",
+        contest_title: "",
+        contest_type: "",
+        valid_till: voucherData.valid_until || "",
+        terms: "",
+        reward_type: "",
+        product: null,
+      }
       : null;
 
   if (isLoading) {
@@ -238,19 +238,6 @@ export const VoucherDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-[#9EAFC9] text-white px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-1 -ml-1 hover:bg-white/10 rounded-full"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-lg font-medium">Contest & promotion</h1>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="pb-8">
         {/* Product Image */}
@@ -332,26 +319,26 @@ export const VoucherDetails: React.FC = () => {
                             </h3>
                             {(displayData.product as { name?: string })
                               ?.name && (
-                              <p className="mb-2">
-                                <strong>Name:</strong>{" "}
-                                {(displayData.product as { name: string }).name}
-                              </p>
-                            )}
+                                <p className="mb-2">
+                                  <strong>Name:</strong>{" "}
+                                  {(displayData.product as { name: string }).name}
+                                </p>
+                              )}
                             {(displayData.product as { description?: string })
                               ?.description && (
-                              <p className="mb-2">
-                                <strong>Description:</strong>{" "}
-                                <span
-                                  dangerouslySetInnerHTML={{
-                                    __html: (
-                                      displayData.product as {
-                                        description: string;
-                                      }
-                                    ).description,
-                                  }}
-                                />
-                              </p>
-                            )}
+                                <p className="mb-2">
+                                  <strong>Description:</strong>{" "}
+                                  <span
+                                    dangerouslySetInnerHTML={{
+                                      __html: (
+                                        displayData.product as {
+                                          description: string;
+                                        }
+                                      ).description,
+                                    }}
+                                  />
+                                </p>
+                              )}
                             {(displayData.product as { sku?: string })?.sku && (
                               <p className="mb-2">
                                 <strong>SKU:</strong>{" "}
@@ -418,57 +405,57 @@ export const VoucherDetails: React.FC = () => {
             (displayData?.reward_type === "marchandise" &&
               (displayData?.product as { redemption_instructions?: string })
                 ?.redemption_instructions)) && (
-            <div className="border-t border-gray-200">
-              <button
-                onClick={() => toggleSection("redeem")}
-                className="w-full flex items-center justify-between py-4"
-              >
-                <span className="font-semibold text-gray-900">
-                  How to redeem
-                </span>
-                {expandedSection === "redeem" ? (
-                  <ChevronDown className="w-5 h-5 text-gray-600" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
+              <div className="border-t border-gray-200">
+                <button
+                  onClick={() => toggleSection("redeem")}
+                  className="w-full flex items-center justify-between py-4"
+                >
+                  <span className="font-semibold text-gray-900">
+                    How to redeem
+                  </span>
+                  {expandedSection === "redeem" ? (
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  )}
+                </button>
 
-              {expandedSection === "redeem" && (
-                <div className="pb-4">
-                  {voucherData?.redemption_steps ? (
-                    <ol className="space-y-2">
-                      {voucherData.redemption_steps.map((step, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <span className="text-gray-900 font-medium text-sm">
-                            {index + 1}.
-                          </span>
-                          <span className="text-gray-600 text-sm flex-1">
-                            {step}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : displayData?.reward_type === "marchandise" &&
-                    (
-                      displayData?.product as {
-                        redemption_instructions?: string;
-                      }
-                    )?.redemption_instructions ? (
-                    <div
-                      className="text-gray-600 text-sm prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: (
-                          displayData.product as {
-                            redemption_instructions: string;
-                          }
-                        ).redemption_instructions,
-                      }}
-                    />
-                  ) : null}
-                </div>
-              )}
-            </div>
-          )}
+                {expandedSection === "redeem" && (
+                  <div className="pb-4">
+                    {voucherData?.redemption_steps ? (
+                      <ol className="space-y-2">
+                        {voucherData.redemption_steps.map((step, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <span className="text-gray-900 font-medium text-sm">
+                              {index + 1}.
+                            </span>
+                            <span className="text-gray-600 text-sm flex-1">
+                              {step}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : displayData?.reward_type === "marchandise" &&
+                      (
+                        displayData?.product as {
+                          redemption_instructions?: string;
+                        }
+                      )?.redemption_instructions ? (
+                      <div
+                        className="text-gray-600 text-sm prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: (
+                            displayData.product as {
+                              redemption_instructions: string;
+                            }
+                          ).redemption_instructions,
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Terms & Conditions Section */}
           {(voucherData?.terms_conditions ||
@@ -476,54 +463,54 @@ export const VoucherDetails: React.FC = () => {
             (displayData?.reward_type === "marchandise" &&
               (displayData?.product as { terms_and_conditions?: string })
                 ?.terms_and_conditions)) && (
-            <div className="border-t border-gray-200">
-              <button
-                onClick={() => toggleSection("terms")}
-                className="w-full flex items-center justify-between py-4"
-              >
-                <span className="font-semibold text-gray-900">
-                  Terms & Conditions
-                </span>
-                {expandedSection === "terms" ? (
-                  <ChevronDown className="w-5 h-5 text-gray-600" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
+              <div className="border-t border-gray-200">
+                <button
+                  onClick={() => toggleSection("terms")}
+                  className="w-full flex items-center justify-between py-4"
+                >
+                  <span className="font-semibold text-gray-900">
+                    Terms & Conditions
+                  </span>
+                  {expandedSection === "terms" ? (
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  )}
+                </button>
 
-              {expandedSection === "terms" && (
-                <div className="pb-4 space-y-2">
-                  {voucherData?.terms_conditions ? (
-                    voucherData.terms_conditions.map((term, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <span className="text-gray-600 text-sm">•</span>
-                        <span className="text-gray-600 text-sm flex-1">
-                          {term}
-                        </span>
+                {expandedSection === "terms" && (
+                  <div className="pb-4 space-y-2">
+                    {voucherData?.terms_conditions ? (
+                      voucherData.terms_conditions.map((term, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-gray-600 text-sm">•</span>
+                          <span className="text-gray-600 text-sm flex-1">
+                            {term}
+                          </span>
+                        </div>
+                      ))
+                    ) : displayData?.reward_type === "marchandise" &&
+                      (displayData?.product as { terms_and_conditions?: string })
+                        ?.terms_and_conditions ? (
+                      <div
+                        className="text-gray-600 text-sm prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: (
+                            displayData.product as {
+                              terms_and_conditions: string;
+                            }
+                          ).terms_and_conditions,
+                        }}
+                      />
+                    ) : displayData?.terms ? (
+                      <div className="text-gray-600 text-sm whitespace-pre-wrap">
+                        {displayData.terms}
                       </div>
-                    ))
-                  ) : displayData?.reward_type === "marchandise" &&
-                    (displayData?.product as { terms_and_conditions?: string })
-                      ?.terms_and_conditions ? (
-                    <div
-                      className="text-gray-600 text-sm prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: (
-                          displayData.product as {
-                            terms_and_conditions: string;
-                          }
-                        ).terms_and_conditions,
-                      }}
-                    />
-                  ) : displayData?.terms ? (
-                    <div className="text-gray-600 text-sm whitespace-pre-wrap">
-                      {displayData.terms}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          )}
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
 
