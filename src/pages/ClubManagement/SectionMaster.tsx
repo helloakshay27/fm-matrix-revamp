@@ -223,7 +223,7 @@ export const SectionMaster: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Section Master</h1>
+        <h1 className="text-2xl font-bold">Sections </h1>
       </header>
 
       <EnhancedTaskTable

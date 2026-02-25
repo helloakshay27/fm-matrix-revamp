@@ -265,8 +265,30 @@ const modulesByPackage = {
             name: "Configuration",
             icon: Settings,
             subItems: [
+                  {
+                    name: "Sales Person",
+                    icon: Calculator,
+                    href: "/accounting/sales-person",
+                },
+                {
+                    name: "Payment Terms",
+                    icon: Calculator,
+                    href: "/accounting/payment-terms",
+                },
+                {
+                    name: "Tax Sections",
+                    icon: Calculator,
+                    href: "/accounting/section",
+                },
+               
+                {
+                    name: "Taxes",
+                    icon: Calculator,
+                    href: "/accounting/tax-setup-master",
+                },
                 { name: "Charges ", href: "/accounting/charge-setup" },
                 { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
+               
             ],
         },
 
@@ -339,26 +361,7 @@ const modulesByPackage = {
                 },
             ],
         },
-        {
-            name: "Sections",
-            icon: Calculator,
-            href: "/master/section",
-        },
-        {
-            name :"Sales Person",
-            icon: Calculator,
-            href: "/master/sales-person",
-        },
-        {
-            name: "Payment Terms",
-            icon: Calculator,
-            href: "/master/payment-terms",
-        },
-         {
-            name: "Taxes",
-            icon: Calculator,
-            href: "/master/tax-setup",
-        },
+
         // {
         //     name: "Payment Plan Setup",
         //     icon: Calculator,
