@@ -606,6 +606,7 @@ export const EditInventoryPage = () => {
       // New fields in payload
       sap_plant_code: formData.plantCode || null,
       category_code: formData.categoryCode || null,
+      cost: formData.cost
     };
 
     if (taxApplicable) {
