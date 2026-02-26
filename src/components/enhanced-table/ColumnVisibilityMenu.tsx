@@ -56,7 +56,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
 
     // Check if all columns in the group are currently visible
     const allVisible = columnsInGroup.every((col) => columnVisibility[col.key]);
-    
+
     // Toggle all columns in the group to the opposite state
     columnsInGroup.forEach((col) => {
       if (columnVisibility[col.key] === allVisible) {
@@ -78,15 +78,19 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
   };
 
   // Check if a group is fully visible, partially visible, or hidden
-  const getGroupVisibilityState = (groupName: string): 'all' | 'some' | 'none' => {
+  const getGroupVisibilityState = (
+    groupName: string
+  ): "all" | "some" | "none" => {
     const columnsInGroup = groupedColumns[groupName];
-    if (!columnsInGroup || columnsInGroup.length === 0) return 'none';
+    if (!columnsInGroup || columnsInGroup.length === 0) return "none";
 
-    const visibleColumnsInGroup = columnsInGroup.filter((col) => columnVisibility[col.key]);
-    
-    if (visibleColumnsInGroup.length === columnsInGroup.length) return 'all';
-    if (visibleColumnsInGroup.length > 0) return 'some';
-    return 'none';
+    const visibleColumnsInGroup = columnsInGroup.filter(
+      (col) => columnVisibility[col.key]
+    );
+
+    if (visibleColumnsInGroup.length === columnsInGroup.length) return "all";
+    if (visibleColumnsInGroup.length > 0) return "some";
+    return "none";
   };
 
   // Persist column visibility state whenever it changes
@@ -118,9 +122,9 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
   // Format group name for display
   const formatGroupName = (groupName: string): string => {
     return groupName
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   return (
@@ -136,7 +140,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align="end"
+        align="start"
         className="w-80 max-h-[280px] overflow-y-auto"
       >
         <DropdownMenuLabel className="flex items-center justify-between">
@@ -155,13 +159,13 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           </Button>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         {/* Render grouped columns first */}
         {Object.keys(groupedColumns).map((groupName) => {
           const groupState = getGroupVisibilityState(groupName);
-          const isChecked = groupState === 'all';
-          const isIndeterminate = groupState === 'some';
-          
+          const isChecked = groupState === "all";
+          const isIndeterminate = groupState === "some";
+
           return (
             <DropdownMenuItem
               key={`group-${groupName}`}
@@ -174,24 +178,29 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
               <Checkbox
                 checked={isChecked}
                 className={`border-gray-[#4B4B4B] data-[state=checked]:bg-transparent data-[state=checked]:border-gray-[#4B4B4B] [&>*]:data-[state=checked]:text-red-500 ${
-                  isIndeterminate ? 'data-[state=unchecked]:bg-gray-200' : ''
+                  isIndeterminate ? "data-[state=unchecked]:bg-gray-200" : ""
                 }`}
               />
               <div className="flex items-center gap-2 flex-1">
                 <span>{formatGroupName(groupName)}</span>
                 <span className="text-xs text-gray-500">
-                  ({groupedColumns[groupName].filter(col => columnVisibility[col.key]).length}/{groupedColumns[groupName].length})
+                  (
+                  {
+                    groupedColumns[groupName].filter(
+                      (col) => columnVisibility[col.key]
+                    ).length
+                  }
+                  /{groupedColumns[groupName].length})
                 </span>
               </div>
             </DropdownMenuItem>
           );
         })}
-        
+
         {/* Add separator if both grouped and ungrouped columns exist */}
-        {Object.keys(groupedColumns).length > 0 && ungroupedColumns.length > 0 && (
-          <DropdownMenuSeparator />
-        )}
-        
+        {Object.keys(groupedColumns).length > 0 &&
+          ungroupedColumns.length > 0 && <DropdownMenuSeparator />}
+
         {/* Render ungrouped columns */}
         {ungroupedColumns.map((column) => {
           const isVisible = columnVisibility[column.key];

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   X,
@@ -47,6 +47,21 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
   onClose,
 }) => {
   const selectedPayment = payments.find((p) => p.id === selectedPaymentId);
+  const [isPdfMenuOpen, setIsPdfMenuOpen] = useState(false);
+  const pdfMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        pdfMenuRef.current &&
+        !pdfMenuRef.current.contains(e.target as Node)
+      ) {
+        setIsPdfMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!selectedPayment) return null;
 
@@ -167,14 +182,41 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
             <Edit className="h-4 w-4" /> Edit
           </Button>
           <div className="w-px h-4 bg-gray-300"></div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-700 hover:bg-gray-100 gap-2 h-8"
-          >
-            <FileText className="h-4 w-4" /> PDF/Print{" "}
-            <span className="text-[10px]">▼</span>
-          </Button>
+          <div className="relative" ref={pdfMenuRef}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-700 hover:bg-gray-100 gap-2 h-8"
+              onClick={() => setIsPdfMenuOpen((prev) => !prev)}
+            >
+              <FileText className="h-4 w-4" /> PDF/Print
+              <span className="text-[10px]">▼</span>
+            </Button>
+            {isPdfMenuOpen && (
+              <div className="absolute top-full left-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                <button
+                  onClick={() => {
+                    setIsPdfMenuOpen(false);
+                    window.print();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  Save as PDF
+                </button>
+                <button
+                  onClick={() => {
+                    setIsPdfMenuOpen(false);
+                    window.print();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <Printer className="h-4 w-4 text-gray-500" />
+                  Print
+                </button>
+              </div>
+            )}
+          </div>
           <div className="w-px h-4 bg-gray-300"></div>
           {selectedPayment.status === "DRAFT" && (
             <Button
