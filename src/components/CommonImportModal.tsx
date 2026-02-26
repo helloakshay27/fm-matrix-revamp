@@ -10,7 +10,7 @@ interface CommonImportModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
-    entityType: "projects" | "milestones" | "tasks";
+    entityType: "projects" | "milestones" | "tasks" | "issues";
     onSampleDownload?: () => void;
     onImport?: () => void;
     isUploading?: boolean;
