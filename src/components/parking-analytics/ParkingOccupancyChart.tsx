@@ -285,59 +285,54 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
       color: string;
       name: string;
       value: number;
+      dataKey?: string;
     }>;
     label?: string;
   }) => {
-    if (active) {
-      // Prefer reading values from chartData so zero values from backend are displayed
-      const category = typeof label === 'string' ? label : '';
-      const datum = chartData.find(d => d.category === category);
+    if (!active || !payload || payload.length === 0) return null;
 
-    if (datum) {
-        return (
-          <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
-            <p className="font-bold text-gray-800 mb-2">{category}</p>
-            <div className="space-y-1">
-              {occupancyView === 'yoy' && (
-                <>
-                  <div className="text-sm flex justify-between">
-          <span style={{ color: CHART_COLORS.lastYearOccupied }}>{seriesLabels.compare} Occupied</span>
-          <span className="font-semibold">{hasYoy ? datum.lastYearOccupied : 'N/A'}</span>
-                  </div>
-                  <div className="text-sm flex justify-between">
-          <span style={{ color: CHART_COLORS.lastYearVacant }}>{seriesLabels.compare} Vacant</span>
-          <span className="font-semibold">{hasYoy ? datum.lastYearVacant : 'N/A'}</span>
-                  </div>
-                </>
-              )}
-              <div className="text-sm flex justify-between">
-        <span style={{ color: CHART_COLORS.thisYearOccupied }}>{seriesLabels.current} Occupied</span>
-        <span className="font-semibold">{datum.thisYearOccupied}</span>
-              </div>
-              <div className="text-sm flex justify-between">
-        <span style={{ color: CHART_COLORS.thisYearVacant }}>{seriesLabels.current} Vacant</span>
-        <span className="font-semibold">{datum.thisYearVacant}</span>
-              </div>
-            </div>
-          </div>
-        );
-      }
+    const hovered = payload[0];
+    const dataKey = hovered?.dataKey || hovered?.name;
+    const category = typeof label === 'string' ? label : '';
+    const datum = chartData.find(d => d.category === category);
 
-      // Fallback to payload if chartData doesn't have the category
-      if (payload && payload.length) {
-        return (
-          <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
-            <p className="font-bold text-gray-800 mb-2">{label}</p>
-            {payload.map((entry, index: number) => (
-              <p key={index} style={{ color: entry.color }} className="text-sm">
-                {entry.name}: {entry.value}
-              </p>
-            ))}
-          </div>
-        );
-      }
-    }
-    return null;
+    const labelMap: Record<string, { text: string; color: string; value: number | string }> = {
+      lastYearOccupied: {
+        text: `${seriesLabels.compare} Occupied`,
+        color: CHART_COLORS.lastYearOccupied,
+        value: hasYoy ? datum?.lastYearOccupied ?? 0 : 'N/A',
+      },
+      lastYearVacant: {
+        text: `${seriesLabels.compare} Vacant`,
+        color: CHART_COLORS.lastYearVacant,
+        value: hasYoy ? datum?.lastYearVacant ?? 0 : 'N/A',
+      },
+      thisYearOccupied: {
+        text: `${seriesLabels.current} Occupied`,
+        color: CHART_COLORS.thisYearOccupied,
+        value: datum?.thisYearOccupied ?? 0,
+      },
+      thisYearVacant: {
+        text: `${seriesLabels.current} Vacant`,
+        color: CHART_COLORS.thisYearVacant,
+        value: datum?.thisYearVacant ?? 0,
+      },
+    };
+
+    const item = typeof dataKey === 'string' ? labelMap[dataKey] : undefined;
+    const displayText = item?.text || hovered?.name || '';
+    const displayColor = item?.color || hovered?.color || '#111827';
+    const displayValue = item?.value ?? hovered?.value;
+
+    return (
+      <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-lg">
+        <p className="font-bold text-gray-800 mb-2">{category || label}</p>
+        <div className="text-sm flex justify-between gap-6">
+          <span style={{ color: displayColor }}>{displayText}</span>
+          <span className="font-semibold">{displayValue}</span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -406,7 +401,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
                   ticks={yTicks}
                   interval={0}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Tooltip content={<CustomTooltip />} cursor={false} shared={false} />
                 <Legend 
                   wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
                   iconType="square"
