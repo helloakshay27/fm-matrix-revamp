@@ -309,6 +309,7 @@ export const ProjectsDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [allProjects, setAllProjects] = useState([]); // Accumulated projects for infinite scroll
 
   // UI State
   const [selectedFilterOption, setSelectedFilterOption] = useState("all");
@@ -351,12 +352,49 @@ export const ProjectsDashboard = () => {
   });
 
   // Extract projects and pagination
-  const projects = projectsData?.data?.project_managements ||
+  const currentPageProjects = projectsData?.data?.project_managements ||
     projectsData?.project_managements ||
     [];
   const paginationData = projectsData?.data?.pagination ||
     projectsData?.pagination;
   const hasMore = currentPage < (paginationData?.total_pages || 1);
+
+  // Accumulate projects for infinite scroll
+  useEffect(() => {
+    if (currentPage === 1) {
+      // Reset on first page (when filters/search changes)
+      setAllProjects(currentPageProjects);
+    } else if (currentPageProjects.length > 0) {
+      // Append new projects on subsequent pages
+      setAllProjects((prev) => [...prev, ...currentPageProjects]);
+    }
+  }, [currentPageProjects, currentPage]);
+
+  // Ref for infinite scroll loader
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Infinite scroll observer - only trigger when user scrolls near bottom
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Only load next page if user is near the loader AND data isn't already loading
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isFetching) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [hasMore, isLoading, isFetching]);
 
   // Mutations for updates
   const statusMutation = useChangeProjectStatus();
@@ -876,8 +914,8 @@ export const ProjectsDashboard = () => {
   };
 
   const leftActions = (
-    <>
-      {/* {shouldShow("employee_projects", "create") && ( */}
+    <div className="flex items-center gap-4">
+      {/* Action Button */}
       {
         localStorage.getItem("selectedView") === "admin" && (
           <Button
@@ -889,8 +927,15 @@ export const ProjectsDashboard = () => {
           </Button>
         )
       }
-      {/* )} */}
-    </>
+
+      {/* Total Projects Count */}
+      <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+        <span className="text-gray-700 font-medium text-sm">Total Projects:</span>
+        <span className="text-lg font-bold text-[#C72030]">
+          {paginationData?.total_count || 0}
+        </span>
+      </div>
+    </div>
   );
 
 
@@ -1209,10 +1254,13 @@ export const ProjectsDashboard = () => {
     );
   }
 
+  // Transform projects for display
+  const displayProjects = transformedProjects(allProjects);
+
   return (
     <div className="p-6">
       <EnhancedTable
-        data={projects}
+        data={displayProjects}
         columns={columns}
         renderActions={renderActions}
         renderCell={renderCell}
@@ -1241,13 +1289,20 @@ export const ProjectsDashboard = () => {
         hideTableExport={true}
       />
 
+      {/* Infinite Scroll Loader - Only visible when loading more data */}
       {isFetching && hasMore && !isLoading && (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+        <div className="flex justify-center py-8">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+            <span className="text-sm text-gray-500">Loading more projects...</span>
+          </div>
         </div>
       )}
 
-      {!hasMore && projects.length > 0 && (
+      {/* Invisible trigger element for infinite scroll - always present so observer can watch it */}
+      {hasMore && <div ref={loaderRef} className="h-1" />}
+
+      {!hasMore && allProjects.length > 0 && (
         <div className="flex justify-center py-4 text-gray-500 text-sm">
           No more projects to load
         </div>

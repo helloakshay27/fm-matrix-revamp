@@ -22,6 +22,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
 
 interface Issue {
     id?: string;
@@ -195,6 +197,10 @@ const IssuesListPage = ({
     const [filteredLoading, setFilteredLoading] = useState(false);
     const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState(""); // For IssueFilterModal
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Pagination state
     const [pagination, setPagination] = useState({
@@ -776,6 +782,65 @@ const IssuesListPage = ({
         }
     };
 
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/sample_issue.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_issues.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImportIssues = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            const response = await axios.post(`https://${baseUrl}/issues/import_issues.xlsx`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'issues_response.xlsx';
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            window.location.reload();
+
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import issues");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const renderCell = (item: any, columnKey: string) => {
         if (columnKey === "priority") {
             return item[columnKey];
@@ -929,12 +994,19 @@ const IssuesListPage = ({
     const leftActions = (
         <>
             {shouldShow("employee_project_issues", "create") && (
+                // <Button
+                //     className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                //     onClick={handleOpenDialog}
+                // >
+                //     <Plus className="w-4 h-4 mr-2" />
+                //     Add
+                // </Button>
                 <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                    onClick={handleOpenDialog}
+                    onClick={() => setShowActionPanel(true)}
                 >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add
+                    Action
                 </Button>
             )}
         </>
@@ -983,6 +1055,14 @@ const IssuesListPage = ({
                 }
             />
 
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={handleOpenDialog}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
             {/* Issue Filter Modal */}
             <IssueFilterModal
                 isModalOpen={isFilterModalOpen}
@@ -1002,6 +1082,18 @@ const IssuesListPage = ({
                 preSelectedProjectId={
                     preSelectedProjectId || projectId || projectIdParam
                 }
+            />
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Issues"
+                entityType="issues"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImportIssues}
+                isUploading={isUploading}
             />
         </div>
     );

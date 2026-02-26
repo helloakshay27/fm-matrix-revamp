@@ -100,9 +100,9 @@ interface Item {
     id: string;
     name: string;
     description: string;
-    quantity: number;
-    rate: number;
-    discount: number;
+    quantity: number | '';
+    rate: number | '';
+    discount: number | '';
     discountType: 'percentage' | 'amount';
     tax: string;
     taxRate: number;
@@ -1281,7 +1281,7 @@ console.log("items:",items)
                                                     type="number"
                                                     size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
                                                     inputProps={{ min: 1, step: 1 }}
                                                     sx={{ width: 80 }}
                                                 />
@@ -1291,7 +1291,7 @@ console.log("items:",items)
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1407,7 +1407,7 @@ console.log("items:",items)
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1485,7 +1485,7 @@ console.log("items:",items)
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />

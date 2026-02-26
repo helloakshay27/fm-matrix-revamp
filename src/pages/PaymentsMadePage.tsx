@@ -230,13 +230,15 @@ export const PaymentsMadePage: React.FC = () => {
         const url = new URL(
           `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_payments.json`
         );
-        url.searchParams.append("access_token", token);
         url.searchParams.append("page", String(page));
         url.searchParams.append("per_page", String(perPage));
 
         const response = await fetch(url.toString(), {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!response.ok) {
