@@ -208,7 +208,7 @@ export const MilestoneDetailsPage = () => {
     try {
       setIsDependenciesLoading(true);
       const response = await dispatch(fetchDependentMilestones({ baseUrl, token, id: mid })).unwrap();
-      setDependencies(response);
+      setDependencies(response.milestones || []);
     } catch (error) {
       console.error("Error fetching dependencies:", error);
       toast.error(String(error) || "Failed to fetch dependencies");
@@ -657,93 +657,93 @@ export const MilestoneDetailsPage = () => {
               ) : (
                 <EnhancedTable
                   data={dependencies}
-                columns={dependencyColumns}
-                storageKey="milestone-dependencies-table"
-                hideColumnsButton={true}
-                hideTableExport={true}
-                hideTableSearch={true}
-                exportFileName="milestone-dependencies"
-                pagination={true}
-                pageSize={10}
-                emptyMessage="No dependencies available"
-                className="min-w-[1200px]"
-                renderCell={renderDependencyCell}
-                renderActions={(item) => (
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="p-1"
-                      onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
-                      title="View Task Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-                canAddRow={true}
-                newRowPlaceholder="Add Milestone title"
-                onAddRow={handleAddDependency}
-                readonlyColumns={["duration"]}
-                renderEditableCell={(columnKey: string, value: any, onChange: (value: any) => void) => {
-                  if (columnKey === "milestone_title") {
+                  columns={dependencyColumns}
+                  storageKey="milestone-dependencies-table"
+                  hideColumnsButton={true}
+                  hideTableExport={true}
+                  hideTableSearch={true}
+                  exportFileName="milestone-dependencies"
+                  pagination={true}
+                  pageSize={10}
+                  emptyMessage="No dependencies available"
+                  className="min-w-[1200px]"
+                  renderCell={renderDependencyCell}
+                  renderActions={(item) => (
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="p-1"
+                        onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
+                        title="View Task Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  canAddRow={true}
+                  newRowPlaceholder="Add Milestone title"
+                  onAddRow={handleAddDependency}
+                  readonlyColumns={["duration"]}
+                  renderEditableCell={(columnKey: string, value: any, onChange: (value: any) => void) => {
+                    if (columnKey === "milestone_title") {
+                      return (
+                        <TextField
+                          type="text"
+                          value={value || ""}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder="Enter milestone title"
+                          size="small"
+                          sx={{ minWidth: 200 }}
+                        />
+                      );
+                    }
+                    if (columnKey === "status") {
+                      return <span className="text-gray-500">Open</span>;
+                    }
+                    if (columnKey === "owner_name") {
+                      return (
+                        <Select
+                          value={value || ""}
+                          onChange={(e) => onChange(e.target.value)}
+                          displayEmpty
+                          size="small"
+                          sx={{ minWidth: 200 }}
+                        >
+                          <MenuItem value="">
+                            <em>Select owner</em>
+                          </MenuItem>
+                          {owners?.map((owner: any) => (
+                            <MenuItem key={owner.id} value={owner.id}>
+                              {owner.full_name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      );
+                    }
+                    if (columnKey === "start_date" || columnKey === "end_date") {
+                      return (
+                        <TextField
+                          type="date"
+                          value={value || ""}
+                          onChange={(e) => onChange(e.target.value)}
+                          size="small"
+                          sx={{ minWidth: 150 }}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      );
+                    }
                     return (
                       <TextField
                         type="text"
                         value={value || ""}
                         onChange={(e) => onChange(e.target.value)}
-                        placeholder="Enter milestone title"
-                        size="small"
-                        sx={{ minWidth: 200 }}
-                      />
-                    );
-                  }
-                  if (columnKey === "status") {
-                    return <span className="text-gray-500">Open</span>;
-                  }
-                  if (columnKey === "owner_name") {
-                    return (
-                      <Select
-                        value={value || ""}
-                        onChange={(e) => onChange(e.target.value)}
-                        displayEmpty
-                        size="small"
-                        sx={{ minWidth: 200 }}
-                      >
-                        <MenuItem value="">
-                          <em>Select owner</em>
-                        </MenuItem>
-                        {owners?.map((owner: any) => (
-                          <MenuItem key={owner.id} value={owner.id}>
-                            {owner.full_name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    );
-                  }
-                  if (columnKey === "start_date" || columnKey === "end_date") {
-                    return (
-                      <TextField
-                        type="date"
-                        value={value || ""}
-                        onChange={(e) => onChange(e.target.value)}
                         size="small"
                         sx={{ minWidth: 150 }}
-                        InputLabelProps={{ shrink: true }}
                       />
                     );
-                  }
-                  return (
-                    <TextField
-                      type="text"
-                      value={value || ""}
-                      onChange={(e) => onChange(e.target.value)}
-                      size="small"
-                      sx={{ minWidth: 150 }}
-                    />
-                  );
-                }}
-              />
+                  }}
+                />
               )}
             </div>
           </div>
