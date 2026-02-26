@@ -145,9 +145,25 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const formatDate = (d?: string) => {
     if (!d) return "-";
     try {
+      // If the string contains a space (date + time), return only the date part
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(0, spaceIdx);
       const dt = new Date(d);
       // Show only the calendar date, not the time
       return dt.toLocaleDateString();
+    } catch {
+      return d;
+    }
+  };
+
+  const formatTime = (d?: string) => {
+    if (!d) return "-";
+    try {
+      // expected_at format: "YY/MM/DD HH:MM AM" — extract time+meridiem after the first space
+      const spaceIdx = d.indexOf(" ");
+      if (spaceIdx > 0) return d.substring(spaceIdx + 1).trim();
+      const dt = new Date(d);
+      return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     } catch {
       return d;
     }
@@ -162,25 +178,32 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   };
 
   // fallbacks to preserve existing UI before data loads
-  const name = data?.guest_name ?? "null";
-  const role = data?.guest_type ?? "null";
-  const otp = data?.otp_string ?? "null";
+  const name = data?.guest_name ?? "-";
+  const role = data?.guest_type ?? "-";
+  const otp = data?.otp_string ?? "-";
   const host =
-    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "null";
-  const passId = data?.pass_number ? String(data.id) : "null";
+    data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "-";
+  const passId = data?.pass_number ? String(data.id) : "-";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
-    : (data?.pass_start_date ?? "null");
+    : (data?.pass_start_date ?? "-");
   const timeSlot = data?.expected_at
-    ? new Date(data.expected_at).toLocaleTimeString()
-    : "null";
-  const email = data?.guest_email ?? "null"; // guest_number often contains mobile; keep as a fallback
-  const purpose = data?.visit_purpose ?? "null";
-  const assets = joinAssets(data?.assets) ?? "null";
+    ? formatTime(data.expected_at)
+    : "-";
+  const email = data?.guest_email ?? "-"; // guest_number often contains mobile; keep as a fallback
+  const purpose = data?.visit_purpose ?? "-";
+  const assets = joinAssets(data?.assets) ?? "-";
   const additionalVisitors = data?.plus_person ?? 0;
-  const location = data?.guest_from ?? "null";
-  const room = data?.guest_number ?? "null";
-  const status = data?.vstatus ?? "null";
+  const location = data?.guest_from ?? "-";
+  const room = data?.guest_number ?? "-";
+  const status = data?.vstatus ?? "-";
+  const createdOn = data?.created_at.split(" ")[0] ?? "-";
+  const createdOnTime = data?.created_at.split(" ")[1] ?? "-";
+  const vehicalNumber = data?.guest_vehicle_number ?? "-";
+  const validFrom = data?.pass_start_date ?? "-";
+  const validTo = data?.pass_end_date ?? "-";
+  const daysPermitted = data?.pass_details ?? "-";
+  const locationTo = data?.visit_to ?? "-";
   const qrCodeUrl =
     data?.qr_code_url ??
     `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
@@ -308,68 +331,116 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
               <div className="font-medium text-[12px]">{host}</div>
             </div>
 
-            <div className="pl-10">
-              <div className="text-xs text-gray-500">Visitor Pass ID:</div>
-              <div className="font-medium text-[12px]">{passId}</div>
-            </div>
-
-            {/* Row 2: Visitor Number (left) / Purpose (right) */}
             <div>
-              <div className="text-xs text-gray-500">Visitor Number:</div>
+              <div className="text-xs text-gray-500">Visitor Contact Number:</div>
               <div className="font-medium text-[12px]">{room}</div>
             </div>
 
-            <div className="pl-10">
-              <div className="text-xs text-gray-500">Purpose:</div>
-              <div className="font-medium text-[12px]">{purpose}</div>
+            <div>
+              <div className="text-xs text-gray-500">Created On:</div>
+              <div className="font-medium text-[12px]">{createdOn}</div>
             </div>
 
-            {/* Row 3: Visit Date / Expected Time */}
+            <div>
+              <div className="text-xs text-gray-500">Created Time:</div>
+              <div className="font-medium text-[12px]">{createdOnTime}</div>
+            </div>
+
             <div>
               <div className="text-xs text-gray-500">Visit Date:</div>
               <div className="font-medium text-[12px]">{visitDate}</div>
             </div>
 
-            <div className="pl-10">
-              <div className="text-xs text-gray-500">Expected Time:</div>
+            <div>
+              <div className="text-xs text-gray-500">Visit Time:</div>
               <div className="font-medium text-[12px]">{timeSlot}</div>
             </div>
 
-            {/* Row 4: Visitor Email ID / Additional Visitor */}
             <div>
               <div className="text-xs text-gray-500">Visitor Email ID:</div>
-              <div className="font-medium text-[12px] break-words whitespace-normal">
-                {email}
-              </div>
+              <div className="font-medium text-[12px]">{email}</div>
             </div>
 
-            <div className="pl-10">
-              <div className="text-xs text-gray-500">Additional Visitor:</div>
-              <div className="font-medium text-[12px]">
-                {additionalVisitors}
-              </div>
+            <div>
+              <div className="text-xs text-gray-500">Visitor Pass ID:</div>
+              <div className="font-medium text-[12px]">{passId}</div>
             </div>
 
-            {/* Row 5: Coming From / To */}
             <div>
               <div className="text-xs text-gray-500">Coming From:</div>
               <div className="font-medium text-[12px]">{location}</div>
             </div>
 
-            <div className="pl-10">
-              <div className="text-xs text-gray-500">To:</div>
-              <div className="font-medium text-[12px]">
-                {data?.visit_to ?? "-"}
-              </div>
+            <div>
+              <div className="text-xs text-gray-500">Purpose:</div>
+              <div className="font-medium text-[12px]">{purpose}</div>
             </div>
 
-            {/* Row 6: Assets carried on the left */}
-            <div className="col-span-2 sm:col-span-1">
-              <div className="text-xs text-gray-500">Assets carried:</div>
+            <div>
+              <div className="text-xs text-gray-500">Vehical No.:</div>
+              <div className="font-medium text-[12px]">{vehicalNumber}</div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Valid From:</div>
+              <div className="font-medium text-[12px]">{validFrom}</div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Valid Till:</div>
+              <div className="font-medium text-[12px]">{validTo}</div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Days Permitted:</div>
+              <div className="font-medium text-[12px]">{daysPermitted}</div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Assets Carried:</div>
               <div className="font-medium text-[12px]">{assets}</div>
             </div>
-            <div />
+
+            <div>
+              <div className="text-xs text-gray-500">Additional Visitor:</div>
+              <div className="font-medium text-[12px]">{additionalVisitors}</div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Location To:</div>
+              <div className="font-medium text-[12px]">{locationTo}</div>
+            </div>
           </div>
+
+          {/* Additional Visitors List Section */}
+          {data?.additional_visitors && data.additional_visitors.length > 0 && (
+            <div className="mt-4">
+              <div className="text-[12px] font-semibold text-gray-800 mb-2">
+                Additional Visitor Details :
+              </div>
+              <div className="border-t border-b border-dashed border-gray-400 px-3 py-2">
+                <div className="space-y-1">
+                  {data.additional_visitors.map((visitor, index) => (
+                    <div
+                      key={visitor.id || index}
+                      className="flex items-center gap-2 text-[12px] py-1"
+                    >
+                      <span className="font-semibold text-gray-700 min-w-6">
+                        {index + 1}.
+                      </span>
+                      <span className="font-medium text-gray-800 flex-shrink-0">
+                        {visitor.name || "-"}
+                      </span>
+                      <span className="flex-1 border-gray-400" />
+                      <span className="font-medium text-gray-700 flex-shrink-0 ml-2">
+                        {visitor.mobile || "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="mt-3 rounded text-[12px] text-[#C72030]">
             Important: Please present this pass along with a valid government ID
             at the security desk.
