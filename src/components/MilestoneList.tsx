@@ -14,11 +14,11 @@ import { baseClient } from "@/utils/withoutTokenBase";
 import { useSearchParams } from "react-router-dom";
 import { CommonImportModal } from "./CommonImportModal";
 import {
-  useMilestones,
-  useChangeMilestoneStatus,
-  useCreateMilestone,
-  useDeleteMilestone,
-  useImportMilestones,
+    useMilestones,
+    useChangeMilestoneStatus,
+    useCreateMilestone,
+    useDeleteMilestone,
+    useImportMilestones,
 } from "@/hooks/useMilestones";
 import { CreateMilestonePayload } from "@/types/milestones";
 
@@ -168,19 +168,19 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
     // TanStack Query hooks for server state management
     const {
-      data: milestonesData,
-      isLoading,
-      isFetching,
-      error,
+        data: milestonesData,
+        isLoading,
+        isFetching,
+        error,
     } = useMilestones({
-      projectId: id,
-      sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
-      sortDirection: sortDirection || undefined,
+        projectId: id,
+        sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
+        sortDirection: sortDirection || undefined,
     });
 
     // Extract milestones from response
-    const data = milestonesData ||
-                 [];
+    const data = milestonesData?.milestones ||
+        [];
 
     // Mutations for updates
     const statusMutation = useChangeMilestoneStatus();
