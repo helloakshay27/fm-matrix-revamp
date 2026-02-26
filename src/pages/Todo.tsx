@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useLayout } from "@/contexts/LayoutContext";
 import { toast } from "sonner";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { Switch } from "@mui/material";
 
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
@@ -76,10 +77,36 @@ const CountdownTimer = ({
   );
 };
 
+// Skeleton Loader Component
+const TodoSkeleton = () => {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-100 animate-pulse">
+      <div className="flex items-center gap-1">
+        <div className="w-4 h-4 bg-gray-300 rounded" />
+        <div className="w-4 h-4 bg-gray-300 rounded" />
+        <div className="w-4 h-4 bg-gray-300 rounded border-2" />
+      </div>
+
+      <div className="flex flex-col flex-1 gap-2">
+        <div className="h-4 bg-gray-300 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+      </div>
+
+      <div className="flex flex-col items-end gap-1 min-w-max">
+        <div className="h-3 bg-gray-300 rounded w-20" />
+        <div className="h-3 bg-gray-300 rounded w-16" />
+      </div>
+
+      <div className="w-4 h-4 bg-gray-300 rounded" />
+    </div>
+  );
+};
+
 export default function Todo() {
   const { setCurrentSection } = useLayout();
 
   const view = localStorage.getItem("selectedView");
+  const [taskType, setTaskType] = useState<"all" | "my">("my");
 
   useEffect(() => {
     setCurrentSection(
@@ -91,6 +118,7 @@ export default function Todo() {
   const token = localStorage.getItem("token");
   const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
   const [todos, setTodos] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
   const [isPauseLoading, setIsPauseLoading] = useState(false);
@@ -102,23 +130,33 @@ export default function Todo() {
 
   const getTodos = async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/todos.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      setIsLoading(true);
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = user?.id;
+
+      let url = `https://${baseUrl}/todos.json`;
+
+      // Add user_id filter if viewing "My Task"
+      if (taskType === "my" && userId) {
+        url += `?q[user_id_eq]=${userId}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setTodos(response.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     getTodos();
-  }, []);
+  }, [taskType]);
 
   const toggleTodo = async (id) => {
     const updatedTodos = todos.map((todo) =>
@@ -149,8 +187,11 @@ export default function Todo() {
           },
         }
       );
+      // Refresh todos to reflect changes
+      getTodos();
     } catch (error) {
       console.log(error);
+      toast.error("Failed to update task");
     }
   };
 
@@ -313,7 +354,23 @@ export default function Todo() {
   return (
     <div className="p-6">
       <div className="space-y-4">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-4">
+          <div className="flex items-center px-4 py-2">
+            <span className="text-gray-700 font-medium text-sm">My Todos</span>
+            <Switch
+              checked={taskType === "all"}
+              onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#C72030',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#C72030',
+                },
+              }}
+            />
+            <span className="text-gray-700 font-medium text-sm">All Todos</span>
+          </div>
           <Button
             onClick={() => setIsAddTodoModalOpen(true)}
             className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-max"
@@ -337,95 +394,105 @@ export default function Todo() {
             </div>
 
             <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-6 min-h-96 overflow-auto">
-              {/* Today */}
-              {todayTodos.length > 0 && (
-                <div>
-                  <h3 className="text-primary font-semibold mb-2">Today</h3>
-                  {todayTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      toggleTodo={toggleTodo}
-                      deleteTodo={deleteTodo}
-                      handlePlayTask={handlePlayTask}
-                      setPauseTaskId={setPauseTaskId}
-                      setIsPauseModalOpen={setIsPauseModalOpen}
-                      handleEditTodo={handleEditTodo}
-                      handleConvertTodo={handleConvertTodo}
-                    />
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <TodoSkeleton key={i} />
                   ))}
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Today */}
+                  {todayTodos.length > 0 && (
+                    <div>
+                      <h3 className="text-primary font-semibold mb-2">Today</h3>
+                      {todayTodos.map((todo) => (
+                        <TodoItem
+                          key={todo.id}
+                          todo={todo}
+                          toggleTodo={toggleTodo}
+                          deleteTodo={deleteTodo}
+                          handlePlayTask={handlePlayTask}
+                          setPauseTaskId={setPauseTaskId}
+                          setIsPauseModalOpen={setIsPauseModalOpen}
+                          handleEditTodo={handleEditTodo}
+                          handleConvertTodo={handleConvertTodo}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-              {/* Upcoming */}
-              {upcomingTodos.length > 0 && (
-                <div>
-                  <h3 className="text-blue-600 font-semibold mb-2">Upcoming</h3>
-                  {upcomingTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      toggleTodo={toggleTodo}
-                      deleteTodo={deleteTodo}
-                      handlePlayTask={handlePlayTask}
-                      setPauseTaskId={setPauseTaskId}
-                      setIsPauseModalOpen={setIsPauseModalOpen}
-                      handleEditTodo={handleEditTodo}
-                      handleConvertTodo={handleConvertTodo}
-                    />
-                  ))}
-                </div>
-              )}
+                  {/* Upcoming */}
+                  {upcomingTodos.length > 0 && (
+                    <div>
+                      <h3 className="text-blue-600 font-semibold mb-2">Upcoming</h3>
+                      {upcomingTodos.map((todo) => (
+                        <TodoItem
+                          key={todo.id}
+                          todo={todo}
+                          toggleTodo={toggleTodo}
+                          deleteTodo={deleteTodo}
+                          handlePlayTask={handlePlayTask}
+                          setPauseTaskId={setPauseTaskId}
+                          setIsPauseModalOpen={setIsPauseModalOpen}
+                          handleEditTodo={handleEditTodo}
+                          handleConvertTodo={handleConvertTodo}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-              {/* Overdue */}
-              {overdueTodos.length > 0 && (
-                <div>
-                  <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
-                  {overdueTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      toggleTodo={toggleTodo}
-                      deleteTodo={deleteTodo}
-                      handlePlayTask={handlePlayTask}
-                      setPauseTaskId={setPauseTaskId}
-                      setIsPauseModalOpen={setIsPauseModalOpen}
-                      handleEditTodo={handleEditTodo}
-                      handleConvertTodo={handleConvertTodo}
-                    />
-                  ))}
-                </div>
-              )}
+                  {/* Overdue */}
+                  {overdueTodos.length > 0 && (
+                    <div>
+                      <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
+                      {overdueTodos.map((todo) => (
+                        <TodoItem
+                          key={todo.id}
+                          todo={todo}
+                          toggleTodo={toggleTodo}
+                          deleteTodo={deleteTodo}
+                          handlePlayTask={handlePlayTask}
+                          setPauseTaskId={setPauseTaskId}
+                          setIsPauseModalOpen={setIsPauseModalOpen}
+                          handleEditTodo={handleEditTodo}
+                          handleConvertTodo={handleConvertTodo}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-              {/* No Target Date */}
-              {noDateTodos.length > 0 && (
-                <div>
-                  <h3 className="text-gray-500 font-semibold mb-2">
-                    No Target Date
-                  </h3>
-                  {noDateTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      toggleTodo={toggleTodo}
-                      deleteTodo={deleteTodo}
-                      handlePlayTask={handlePlayTask}
-                      setPauseTaskId={setPauseTaskId}
-                      setIsPauseModalOpen={setIsPauseModalOpen}
-                      handleEditTodo={handleEditTodo}
-                      handleConvertTodo={handleConvertTodo}
-                    />
-                  ))}
-                </div>
-              )}
+                  {/* No Target Date */}
+                  {noDateTodos.length > 0 && (
+                    <div>
+                      <h3 className="text-gray-500 font-semibold mb-2">
+                        No Target Date
+                      </h3>
+                      {noDateTodos.map((todo) => (
+                        <TodoItem
+                          key={todo.id}
+                          todo={todo}
+                          toggleTodo={toggleTodo}
+                          deleteTodo={deleteTodo}
+                          handlePlayTask={handlePlayTask}
+                          setPauseTaskId={setPauseTaskId}
+                          setIsPauseModalOpen={setIsPauseModalOpen}
+                          handleEditTodo={handleEditTodo}
+                          handleConvertTodo={handleConvertTodo}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-              {/* Empty State */}
-              {pendingTodos.length === 0 && (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-muted-foreground text-center">
-                    No pending tasks! You're all caught up.
-                  </p>
-                </div>
+                  {/* Empty State */}
+                  {!isLoading && pendingTodos.length === 0 && (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-muted-foreground text-center">
+                        No pending tasks! You're all caught up.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -443,7 +510,13 @@ export default function Todo() {
             </div>
 
             <div className="flex-1 bg-white rounded-lg border border-border shadow-sm p-4 space-y-4 min-h-96 overflow-auto">
-              {completedTodos.length === 0 ? (
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <TodoSkeleton key={i} />
+                  ))}
+                </div>
+              ) : completedTodos.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-muted-foreground text-center">
                     Complete tasks to see them here.

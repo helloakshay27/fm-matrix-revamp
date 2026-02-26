@@ -908,11 +908,11 @@ export const InvoiceAdd: React.FC = () => {
                                     {filteredTerms.map(term => (
                                         <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
                                     ))}
-                                    <MenuItem>
+                                    {/* <MenuItem>
                                         <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
                                             Configure Terms
                                         </span>
-                                    </MenuItem>
+                                    </MenuItem> */}
                                 </Select>
                             </FormControl>
                             {/* Configure Payment Terms Modal */}
