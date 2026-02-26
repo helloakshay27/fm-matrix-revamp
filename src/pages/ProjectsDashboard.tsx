@@ -1254,10 +1254,13 @@ export const ProjectsDashboard = () => {
     );
   }
 
+  // Transform projects for display
+  const displayProjects = transformedProjects(allProjects);
+
   return (
     <div className="p-6">
       <EnhancedTable
-        data={allProjects}
+        data={displayProjects}
         columns={columns}
         renderActions={renderActions}
         renderCell={renderCell}
