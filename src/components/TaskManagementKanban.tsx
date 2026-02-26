@@ -75,7 +75,7 @@ const VirtualizedTaskColumn = ({
     const virtualizer = useVirtualizer({
         count: filteredTasks.length,
         getScrollElement: () => containerRef.current,
-        estimateSize: () => 150, // closer average
+        estimateSize: () => 170, // closer average
         measureElement: (el) => el.getBoundingClientRect().height,
         overscan: 5,
     });

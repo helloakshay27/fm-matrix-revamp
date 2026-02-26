@@ -1,7 +1,7 @@
 import { useAppDispatch } from "@/store/hooks";
 import { editProjectTask } from "@/store/slices/projectTasksSlice";
 import { useDraggable } from "@dnd-kit/core";
-import { Flag, Timer, User2 } from "lucide-react";
+import { Briefcase, Flag, Timer, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CSS } from "@dnd-kit/utilities";
@@ -117,8 +117,12 @@ const TaskCard = ({
                     {...listeners}
                     className="flex items-center gap-1"
                 >
+                    <Briefcase className="text-[#C72030] flex-shrink-0" size={14} />
+                    <span className="text-[10px] truncate">{task?.project_management_title || "No Project"}</span>
+                </div>
+                <div className="flex items-start gap-1">
                     <Flag className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{task?.milestone_title}</span>
+                    <span className="text-[10px] truncate">{task?.milestone_title || "No Milestone"}</span>
                 </div>
                 <div className="flex items-start gap-1">
                     <User2 className="text-[#C72030] flex-shrink-0" size={14} />
