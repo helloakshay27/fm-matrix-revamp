@@ -206,16 +206,11 @@ export const SpinnerContest: React.FC = () => {
         throw new Error(result.message || "Failed to play contest");
       }
 
-      // Update contest data won_reward if user actually won a reward
+      // Store reward ID if user won (don't update won_reward state yet)
       if (result.won_reward === true && result.user_contest_reward) {
-        setContestData((prev) =>
-          prev
-            ? {
-                ...prev,
-                won_reward: true,
-                user_contest_reward: result.user_contest_reward,
-              }
-            : prev
+        localStorage.setItem(
+          "last_reward_id",
+          result.user_contest_reward.id.toString()
         );
       }
 
@@ -281,11 +276,9 @@ export const SpinnerContest: React.FC = () => {
           setTimeout(() => {
             spinSound.playWinSound();
 
-            // Store reward ID in localStorage
-            const userRewardId = result.user_contest_reward?.id;
-            if (userRewardId) {
-              localStorage.setItem("last_reward_id", userRewardId.toString());
-              setRewardId(userRewardId);
+            // Store result data
+            if (result.user_contest_reward?.id) {
+              setRewardId(result.user_contest_reward.id);
             }
 
             setWinResult({ prize: result.prize! });
@@ -563,34 +556,19 @@ export const SpinnerContest: React.FC = () => {
                   onClick={() => {
                     setShowResult(false);
 
-                    // Check if user won a reward and update contestData
+                    // If user won a real reward (not 'none'), navigate to details
                     if (winResult && winResult.prize.reward_type !== "none") {
-                      const rewardIdStr =
-                        localStorage.getItem("last_reward_id");
-                      if (rewardIdStr) {
-                        setContestData((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                won_reward: true,
-                                user_contest_reward: {
-                                  id: parseInt(rewardIdStr),
-                                  contest_id: prev.id,
-                                  prize_id: winResult.prize.id,
-                                  reward_type: winResult.prize.reward_type,
-                                  points_value: winResult.prize.points_value,
-                                  coupon_code: winResult.prize.coupon_code,
-                                  user_id: 0,
-                                  status: "granted",
-                                  created_at: new Date().toISOString(),
-                                  updated_at: new Date().toISOString(),
-                                },
-                              }
-                            : prev
+                      const rewardId = localStorage.getItem("last_reward_id");
+                      if (rewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
                         );
+                        return;
                       }
-                    } else {
-                      // Reset for next attempt if didn't win
+                    }
+
+                    // For 'none' type, just close modal and reset
+                    if (winResult && winResult.prize.reward_type === "none") {
                       setWinResult(null);
                     }
                   }}

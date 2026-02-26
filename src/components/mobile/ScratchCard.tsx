@@ -254,29 +254,16 @@ export const ScratchCard: React.FC = () => {
         throw new Error(result.message || "Failed to scratch card");
       }
 
-      // Update contest data won_reward if user actually won a reward
+      // Store reward ID if user won (don't update won_reward state yet)
       if (result.won_reward === true && result.user_contest_reward) {
-        setContestData((prev) =>
-          prev
-            ? {
-                ...prev,
-                won_reward: true,
-                user_contest_reward: result.user_contest_reward,
-              }
-            : prev
-        );
-      }
-
-      // Update with actual won prize
-      setWonPrize(result.prize);
-
-      // Store user_contest_reward.id in localStorage for details page (only if not null)
-      if (result.user_contest_reward) {
         localStorage.setItem(
           "last_reward_id",
           result.user_contest_reward.id.toString()
         );
       }
+
+      // Update with actual won prize
+      setWonPrize(result.prize);
 
       // Decrement remaining attempts
       setRemainingAttempts((prev) => Math.max(0, prev - 1));
@@ -302,46 +289,6 @@ export const ScratchCard: React.FC = () => {
       navigate(
         `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
       );
-    }
-  };
-
-  // Reset scratch card for next attempt
-  const resetScratchCard = () => {
-    setShowResultModal(false);
-
-    // Check if user won a reward and update contestData accordingly
-    if (wonPrize && wonPrize.reward_type !== "none") {
-      // User won a reward - show "Already Won" screen
-      const rewardId = localStorage.getItem("last_reward_id");
-      if (rewardId) {
-        setContestData((prev) =>
-          prev
-            ? {
-                ...prev,
-                won_reward: true,
-                user_contest_reward: {
-                  id: parseInt(rewardId),
-                  contest_id: prev.id,
-                  prize_id: wonPrize.id,
-                  reward_type: wonPrize.reward_type,
-                  points_value: wonPrize.points_value,
-                  coupon_code: wonPrize.coupon_code,
-                  user_id: 0,
-                  status: "granted",
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                },
-              }
-            : prev
-        );
-      }
-    } else {
-      // User didn't win or got "none" - reset to play again
-      setWonPrize(null);
-      setIsRevealed(false);
-      setHasScratched(false);
-      setScratchPercentage(0);
-      setIsScratching(false);
     }
   };
 
@@ -720,7 +667,27 @@ export const ScratchCard: React.FC = () => {
                 {/* Close button */}
                 <button
                   onClick={() => {
-                    resetScratchCard();
+                    setShowResultModal(false);
+
+                    // If user won a real reward (not 'none'), navigate to details
+                    if (wonPrize && wonPrize.reward_type !== "none") {
+                      const rewardId = localStorage.getItem("last_reward_id");
+                      if (rewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+                        );
+                        return;
+                      }
+                    }
+
+                    // For 'none' type, reset to play again
+                    if (wonPrize && wonPrize.reward_type === "none") {
+                      setWonPrize(null);
+                      setIsRevealed(false);
+                      setHasScratched(false);
+                      setScratchPercentage(0);
+                      setIsScratching(false);
+                    }
                   }}
                   className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
                 >
