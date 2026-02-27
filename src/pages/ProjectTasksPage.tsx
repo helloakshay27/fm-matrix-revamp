@@ -1511,7 +1511,7 @@ const ProjectTasksPage = () => {
                 const hasSubtasks = item.total_sub_tasks > 0;
 
                 return (
-                    <div className="flex items-center gap-2 w-full">
+                    <div className="flex items-center gap-2 w-[20rem]">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>

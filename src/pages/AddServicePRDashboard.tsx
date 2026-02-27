@@ -159,7 +159,7 @@ export const AddServicePRDashboard = () => {
         }
       );
       console.log("GL Code Response:", response.data);
-      
+
       // Update the detail with the GL code from API
       if (response.data && response.data.gl_code) {
         setDetailsForms((prevForms) =>
@@ -189,7 +189,7 @@ export const AddServicePRDashboard = () => {
         }
       );
       console.log("GL Code Response:", response.data);
-      
+
       if (response.data && response.data.gl_code) {
         setOverallGlCode(response.data.gl_code);
         toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
@@ -526,7 +526,7 @@ export const AddServicePRDashboard = () => {
     if (data.length > 0) {
       setShowRadio(true);
     }
-    if (data.length <= 0 ){
+    if (data.length <= 0) {
       setShowRadio(false)
       setWbsSelection("")
     }
@@ -593,9 +593,31 @@ export const AddServicePRDashboard = () => {
     };
   };
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setAttachedFiles((prev) => [...prev, ...selectedFiles]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []) as File[];
+    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
+    const validFiles: File[] = [];
+
+    selectedFiles.forEach((file) => {
+      // Validate file type
+      if (!validFileTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        return;
+      }
+
+      // Validate file size
+      if (file.size > maxFileSizeBytes) {
+        toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setAttachedFiles((prev) => [...prev, ...validFiles]);
+    }
   };
 
   const handleDetailsChange = (id, field, value) => {
@@ -723,7 +745,7 @@ export const AddServicePRDashboard = () => {
       toast.error("Amc Declared is required");
       return false;
     }
-    
+
     for (const item of detailsForms) {
       if (!item.service) {
         toast.error("Service is required for all items");
@@ -1303,7 +1325,7 @@ export const AddServicePRDashboard = () => {
                     InputLabelProps={{ shrink: true }}
                     sx={{ ...fieldStyles, mt: 1 }}
                   />
-                    {wbsSelection === "individual" && (
+                  {wbsSelection === "individual" && (
                     <div className="flex gap-2 items-end">
                       <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                         <InputLabel shrink>WBS Code*</InputLabel>
@@ -1408,7 +1430,7 @@ export const AddServicePRDashboard = () => {
                     </MuiSelect>
                   </FormControl>
 
-                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Storage Location*</InputLabel>
                     <MuiSelect
                       label="Storage Location*"
@@ -1671,9 +1693,9 @@ export const AddServicePRDashboard = () => {
                     }}
                   />
 
-                 
 
-                
+
+
                 </div>
               </div>
             ))}
@@ -1826,6 +1848,10 @@ export const AddServicePRDashboard = () => {
                     ? `${attachedFiles.length} file(s) selected`
                     : "No files chosen"}
                 </span>
+              </div>
+              <div className="text-xs text-gray-500 mt-3 space-y-1">
+                <p>Accepts up to 12 MB files</p>
+                <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
               </div>
             </div>
 
