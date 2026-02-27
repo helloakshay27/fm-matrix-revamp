@@ -1511,7 +1511,7 @@ const ProjectTasksPage = () => {
                 const hasSubtasks = item.total_sub_tasks > 0;
 
                 return (
-                    <div className="flex items-center gap-2 w-full">
+                    <div className="flex items-center gap-2 w-[20rem]">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -1896,6 +1896,7 @@ const ProjectTasksPage = () => {
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
+                                    setTaskType("my");
                                     setIsOpen(false);
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
@@ -2074,7 +2075,7 @@ const ProjectTasksPage = () => {
                         }}
                     >
                         <div className="sticky top-0 bg-white z-10">
-                            <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                             <X
                                 className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                                 onClick={handleCloseModal}
@@ -2188,7 +2189,7 @@ const ProjectTasksPage = () => {
                     }}
                 >
                     <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
+                        <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
                         <X
                             className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                             onClick={handleCloseModal}
