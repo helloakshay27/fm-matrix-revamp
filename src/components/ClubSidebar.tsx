@@ -289,6 +289,11 @@ const modulesByPackage = {
                     icon: Calculator,
                     href: "/accounting/tax-setup-master",
                 },
+                 {
+                    name: "Tax Rates Setup",
+                    icon: Calculator,
+                    href: "/accounting/tax-rates-setup",
+                },
                 {
                     name: "Default Tax Preferences",
                     icon: Calculator,
