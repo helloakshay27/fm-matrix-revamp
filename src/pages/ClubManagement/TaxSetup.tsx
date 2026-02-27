@@ -152,7 +152,7 @@ const TaxSetup: React.FC = () => {
   }, []);
 
   // ── Text / Select field change handler ────────────────────────────────────
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const checked = (e.target as HTMLInputElement).checked;
     setForm((prev) => ({

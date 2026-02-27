@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { ClipboardPlus, FileText, X, Reply, Forward, Search, Users, MessageCircle, CornerDownRight, Pin, PinOff } from "lucide-react";
 import CreateChatTask from "./CreateChatTask";
 import PinnedMessagesHeader from "./PinnedMessagesHeader";
@@ -439,8 +440,9 @@ const Chats = ({ messages, onReply, bottomRef }) => {
     const filteredGroups = filterConversations(groups, searchQuery);
 
     return (
-        <div className="flex flex-col h-full">
-            <style>{`
+        <TooltipProvider>
+            <div className="flex flex-col h-full">
+                <style>{`
                 .highlight-message {
                     animation: highlightPulse 2s ease-in-out;
                 }
@@ -451,331 +453,342 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                 }
             `}</style>
 
-            <PinnedMessagesHeader
-                messages={messages}
-                onUnpin={handlePin}
-                onMessageClick={(message) => scrollToMessage(message.id)}
-            />
-
-            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5">
-                {[...messages].reverse().map((message, index) => {
-                    const isMe = message?.user_id?.toString() === currentUserId;
-                    const shouldShowActions = hoveredMessageIndex === index && showActions;
-                    const parentMessage = message.parent_id ? findParentMessage(message.parent_id) : null;
-
-                    return (
-                        <div
-                            key={index}
-                            ref={(el) => messageRefs.current[message.id] = el}
-                            className={`mb-6 flex flex-col transition-colors duration-300 ${isMe ? "items-end" : "items-start"
-                                }`}
-                            onMouseEnter={() => handleMouseEnter(index)}
-                            onMouseLeave={handleMouseLeave}
-                        >
-                            <div
-                                className={`text-xs text-gray-500 mb-2 ${isMe ? "mr-12" : "ml-12"
-                                    }`}
-                            >
-                                {message.created_at &&
-                                    format(message.created_at, "dd MMM yyyy, hh:mm a")}
-                            </div>
-
-                            <ContextMenu>
-                                <ContextMenuTrigger asChild>
-                                    <div className="flex items-start space-x-3 cursor-pointer relative">
-                                        <div
-                                            className={`absolute top-1/2 -translate-y-1/2 flex gap-1 z-10 transition-all duration-300 ease-out ${isMe ? "left-[-65px]" : "right-[-75px]"
-                                                } ${shouldShowActions
-                                                    ? "opacity-100 scale-100"
-                                                    : "opacity-0 scale-90 pointer-events-none"
-                                                }`}
-                                        >
-                                            <button
-                                                onClick={() => handleReply(message)}
-                                                className="bg-white hover:bg-gray-100 rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110"
-                                                title="Reply"
-                                            >
-                                                <Reply className="w-4 h-4 text-gray-600" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleForward(message)}
-                                                className="bg-white hover:bg-gray-100 rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110"
-                                                title="Forward"
-                                            >
-                                                <Forward className="w-4 h-4 text-gray-600" />
-                                            </button>
-                                        </div>
-
-                                        {!isMe && (
-                                            <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
-                                                {(message.user_name || message.user?.firstname || 'U')[0].toUpperCase()}
-                                            </div>
-                                        )}
-                                        <div
-                                            className={`rounded-2xl px-4 py-2 text-sm shadow max-w-xs bg-white relative`}
-                                        >
-                                            {message.is_pinned && (
-                                                <div className="absolute -top-2 -right-2 bg-[#C72030] rounded-full p-1">
-                                                    <Pin className="w-3 h-3 text-white fill-white" />
-                                                </div>
-                                            )}
-                                            {message.is_forwarded && (
-                                                <div className="flex items-center gap-1 text-gray-500 text-xs mb-1 italic">
-                                                    <CornerDownRight className="w-3 h-3" />
-                                                    <span>Forwarded</span>
-                                                </div>
-                                            )}
-                                            {parentMessage && renderReplyPreview(parentMessage, isMe)}
-                                            {renderAttachments(message.attachments)}
-                                            {message.body && (
-                                                <div
-                                                    className={`${message.attachments?.length > 0 || parentMessage ? "mt-2" : ""
-                                                        }`}
-                                                >
-                                                    {renderMessageWithMentions(message.body)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isMe && (
-                                            <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
-                                                {(message.user_name || "U")[0].toUpperCase()}
-                                            </div>
-                                        )}
-                                    </div>
-                                </ContextMenuTrigger>
-
-                                <ContextMenuContent className="w-48 rounded-lg p-1 shadow-lg">
-                                    <ContextMenuItem
-                                        onClick={() => handleReply(message)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
-                                    >
-                                        <Reply className="w-4 h-4 text-gray-600" />
-                                        <span>Reply</span>
-                                    </ContextMenuItem>
-
-                                    <ContextMenuItem
-                                        onClick={() => handleForward(message)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
-                                    >
-                                        <Forward className="w-4 h-4 text-gray-600" />
-                                        <span>Forward</span>
-                                    </ContextMenuItem>
-
-                                    <ContextMenuItem
-                                        onClick={() => handlePin(message)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
-                                    >
-                                        {message.is_pinned ? (
-                                            <>
-                                                <PinOff className="w-4 h-4 text-gray-600" />
-                                                <span>Unpin Message</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Pin className="w-4 h-4 text-gray-600" />
-                                                <span>Pin Message</span>
-                                            </>
-                                        )}
-                                    </ContextMenuItem>
-
-                                    <ContextMenuItem
-                                        onClick={() => setSelectedMessage(message)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
-                                    >
-                                        <ClipboardPlus className="w-4 h-4 text-gray-600" />
-                                        <span>Create Task</span>
-                                    </ContextMenuItem>
-
-                                    <ContextMenuSeparator />
-
-                                    <ContextMenuItem
-                                        inset
-                                        onClick={() => { }}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
-                                    >
-                                        <X className="w-4 h-4 text-gray-600" />
-                                        <span>Cancel</span>
-                                    </ContextMenuItem>
-                                </ContextMenuContent>
-                            </ContextMenu>
-                        </div>
-                    );
-                })}
-
-                <Dialog open={showForwardDialog} onOpenChange={setShowForwardDialog}>
-                    <DialogContent className="sm:max-w-lg">
-                        <DialogHeader>
-                            <DialogTitle>Forward Message</DialogTitle>
-                            <DialogDescription>
-                                Select conversations or groups to forward this message to
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input
-                                    placeholder="Search conversations or groups..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-
-                            <Tabs defaultValue="conversations" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="conversations" className="flex items-center gap-2">
-                                        <MessageCircle className="w-4 h-4" />
-                                        Conversations
-                                    </TabsTrigger>
-                                    <TabsTrigger value="groups" className="flex items-center gap-2">
-                                        <Users className="w-4 h-4" />
-                                        Groups
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="conversations" className="mt-4">
-                                    <ScrollArea className="h-[300px] pr-4">
-                                        {filteredConversations && filteredConversations.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {filteredConversations.map((conv) => {
-                                                    const displayName = conv.receiver_name || conv.sender_name || "Unknown";
-                                                    const targetId = `conversation-${conv.id}`;
-                                                    const isSelected = selectedForwardTargets.some(t => t.id === targetId);
-
-                                                    return (
-                                                        <div
-                                                            key={conv.id}
-                                                            onClick={() => toggleForwardTarget(conv, "conversation")}
-                                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
-                                                                ? "bg-[#C72030] text-white"
-                                                                : "hover:bg-gray-100"
-                                                                }`}
-                                                        >
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${isSelected
-                                                                ? "bg-white text-[#C72030]"
-                                                                : "bg-[#F2EEE9] text-[#C72030]"
-                                                                }`}>
-                                                                {displayName[0]?.toUpperCase()}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="font-medium truncate">{displayName}</div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-8 text-gray-500">
-                                                No conversations found
-                                            </div>
-                                        )}
-                                    </ScrollArea>
-                                </TabsContent>
-
-                                <TabsContent value="groups" className="mt-4">
-                                    <ScrollArea className="h-[300px] pr-4">
-                                        {filteredGroups && filteredGroups.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {filteredGroups.map((group) => {
-                                                    const targetId = `group-${group.id}`;
-                                                    const isSelected = selectedForwardTargets.some(t => t.id === targetId);
-
-                                                    return (
-                                                        <div
-                                                            key={group.id}
-                                                            onClick={() => toggleForwardTarget(group, "group")}
-                                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
-                                                                ? "bg-[#C72030] text-white"
-                                                                : "hover:bg-gray-100"
-                                                                }`}
-                                                        >
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${isSelected
-                                                                ? "bg-white text-[#C72030]"
-                                                                : "bg-[#F2EEE9] text-[#C72030]"
-                                                                }`}>
-                                                                {group.name?.[0]?.toUpperCase() || "G"}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="font-medium truncate">{group.name}</div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-8 text-gray-500">
-                                                No groups found
-                                            </div>
-                                        )}
-                                    </ScrollArea>
-                                </TabsContent>
-                            </Tabs>
-
-                            {selectedForwardTargets.length > 0 && (
-                                <div className="text-sm text-gray-600">
-                                    {selectedForwardTargets.length} {selectedForwardTargets.length === 1 ? 'chat' : 'chats'} selected
-                                </div>
-                            )}
-                        </div>
-
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setShowForwardDialog(false)}>
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleSendForward}
-                                disabled={selectedForwardTargets.length === 0}
-                                className="bg-[#C72030] hover:bg-[#a01828]"
-                            >
-                                Forward
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Create Task Dialog */}
-                <Dialog
-                    open={!!selectedMessage}
-                    onOpenChange={() => setSelectedMessage(null)}
-                >
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Create a Task</DialogTitle>
-                            <DialogDescription>
-                                Do you want to create a task for this message?
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
-                            {selectedMessage?.body.slice(0, 100) + (selectedMessage?.body.length > 100 ? '...' : '')}
-                        </div>
-                        <DialogFooter className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" onClick={() => setSelectedMessage(null)}>
-                                No
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    setSelectedMessage(selectedMessage);
-                                    setOpenTaskModal(true);
-                                }}
-                            >
-                                Yes
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <CreateChatTask
-                    openTaskModal={openTaskModal}
-                    setOpenTaskModal={setOpenTaskModal}
-                    onCreateTask={handleCreateTask}
-                    message={selectedMessage}
-                    id={id}
+                <PinnedMessagesHeader
+                    messages={messages}
+                    onUnpin={handlePin}
+                    onMessageClick={(message) => scrollToMessage(message.id)}
                 />
 
-                <div ref={bottomRef} className="h-0" />
+                <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5">
+                    {[...messages].reverse().map((message, index) => {
+                        const isMe = message?.user_id?.toString() === currentUserId;
+                        const shouldShowActions = hoveredMessageIndex === index && showActions;
+                        const parentMessage = message.parent_id ? findParentMessage(message.parent_id) : null;
+
+                        return (
+                            <div
+                                key={index}
+                                ref={(el) => messageRefs.current[message.id] = el}
+                                className={`mb-6 flex flex-col transition-colors duration-300 ${isMe ? "items-end" : "items-start"
+                                    }`}
+                                onMouseEnter={() => handleMouseEnter(index)}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                <div
+                                    className={`text-xs text-gray-500 mb-2 ${isMe ? "mr-12" : "ml-16"
+                                        }`}
+                                >
+                                    {!isMe && <span className="mr-2">
+                                        {message.user_name || message.user?.firstname || 'Unknown User'}
+                                    </span>}
+                                    {message.created_at &&
+                                        format(message.created_at, "dd MMM yyyy, hh:mm a")}
+                                </div>
+
+                                <ContextMenu>
+                                    <ContextMenuTrigger asChild>
+                                        <div className="flex items-start space-x-3 cursor-pointer relative">
+                                            <div
+                                                className={`absolute top-1/2 -translate-y-1/2 flex gap-1 z-10 transition-all duration-300 ease-out ${isMe ? "left-[-65px]" : "right-[-75px]"
+                                                    } ${shouldShowActions
+                                                        ? "opacity-100 scale-100"
+                                                        : "opacity-0 scale-90 pointer-events-none"
+                                                    }`}
+                                            >
+                                                <button
+                                                    onClick={() => handleReply(message)}
+                                                    className="bg-white hover:bg-gray-100 rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110"
+                                                    title="Reply"
+                                                >
+                                                    <Reply className="w-4 h-4 text-gray-600" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleForward(message)}
+                                                    className="bg-white hover:bg-gray-100 rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110"
+                                                    title="Forward"
+                                                >
+                                                    <Forward className="w-4 h-4 text-gray-600" />
+                                                </button>
+                                            </div>
+
+                                            {!isMe && (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px] cursor-pointer">
+                                                            {(message.user_name || message.user?.firstname || 'U')[0].toUpperCase()}
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{message.user_name || message.user?.firstname || 'Unknown User'}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                            <div
+                                                className={`rounded-2xl px-4 py-2 text-sm shadow max-w-xs bg-white relative`}
+                                            >
+                                                {message.is_pinned && (
+                                                    <div className="absolute -top-2 -right-2 bg-[#C72030] rounded-full p-1">
+                                                        <Pin className="w-3 h-3 text-white fill-white" />
+                                                    </div>
+                                                )}
+                                                {message.is_forwarded && (
+                                                    <div className="flex items-center gap-1 text-gray-500 text-xs mb-1 italic">
+                                                        <CornerDownRight className="w-3 h-3" />
+                                                        <span>Forwarded</span>
+                                                    </div>
+                                                )}
+                                                {parentMessage && renderReplyPreview(parentMessage, isMe)}
+                                                {renderAttachments(message.attachments)}
+                                                {message.body && (
+                                                    <div
+                                                        className={`${message.attachments?.length > 0 || parentMessage ? "mt-2" : ""
+                                                            }`}
+                                                    >
+                                                        {renderMessageWithMentions(message.body)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {isMe && (
+                                                <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
+                                                    {(message.user_name || "U")[0].toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </ContextMenuTrigger>
+
+                                    <ContextMenuContent className="w-48 rounded-lg p-1 shadow-lg">
+                                        <ContextMenuItem
+                                            onClick={() => handleReply(message)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                                        >
+                                            <Reply className="w-4 h-4 text-gray-600" />
+                                            <span>Reply</span>
+                                        </ContextMenuItem>
+
+                                        <ContextMenuItem
+                                            onClick={() => handleForward(message)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                                        >
+                                            <Forward className="w-4 h-4 text-gray-600" />
+                                            <span>Forward</span>
+                                        </ContextMenuItem>
+
+                                        <ContextMenuItem
+                                            onClick={() => handlePin(message)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                                        >
+                                            {message.is_pinned ? (
+                                                <>
+                                                    <PinOff className="w-4 h-4 text-gray-600" />
+                                                    <span>Unpin Message</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Pin className="w-4 h-4 text-gray-600" />
+                                                    <span>Pin Message</span>
+                                                </>
+                                            )}
+                                        </ContextMenuItem>
+
+                                        <ContextMenuItem
+                                            onClick={() => setSelectedMessage(message)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                                        >
+                                            <ClipboardPlus className="w-4 h-4 text-gray-600" />
+                                            <span>Create Task</span>
+                                        </ContextMenuItem>
+
+                                        <ContextMenuSeparator />
+
+                                        <ContextMenuItem
+                                            inset
+                                            onClick={() => { }}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                                        >
+                                            <X className="w-4 h-4 text-gray-600" />
+                                            <span>Cancel</span>
+                                        </ContextMenuItem>
+                                    </ContextMenuContent>
+                                </ContextMenu>
+                            </div>
+                        );
+                    })}
+
+                    <Dialog open={showForwardDialog} onOpenChange={setShowForwardDialog}>
+                        <DialogContent className="sm:max-w-lg">
+                            <DialogHeader>
+                                <DialogTitle>Forward Message</DialogTitle>
+                                <DialogDescription>
+                                    Select conversations or groups to forward this message to
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        placeholder="Search conversations or groups..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+
+                                <Tabs defaultValue="conversations" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="conversations" className="flex items-center gap-2">
+                                            <MessageCircle className="w-4 h-4" />
+                                            Conversations
+                                        </TabsTrigger>
+                                        <TabsTrigger value="groups" className="flex items-center gap-2">
+                                            <Users className="w-4 h-4" />
+                                            Groups
+                                        </TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="conversations" className="mt-4">
+                                        <ScrollArea className="h-[300px] pr-4">
+                                            {filteredConversations && filteredConversations.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {filteredConversations.map((conv) => {
+                                                        const displayName = conv.receiver_name || conv.sender_name || "Unknown";
+                                                        const targetId = `conversation-${conv.id}`;
+                                                        const isSelected = selectedForwardTargets.some(t => t.id === targetId);
+
+                                                        return (
+                                                            <div
+                                                                key={conv.id}
+                                                                onClick={() => toggleForwardTarget(conv, "conversation")}
+                                                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
+                                                                    ? "bg-[#C72030] text-white"
+                                                                    : "hover:bg-gray-100"
+                                                                    }`}
+                                                            >
+                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${isSelected
+                                                                    ? "bg-white text-[#C72030]"
+                                                                    : "bg-[#F2EEE9] text-[#C72030]"
+                                                                    }`}>
+                                                                    {displayName[0]?.toUpperCase()}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-medium truncate">{displayName}</div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    No conversations found
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </TabsContent>
+
+                                    <TabsContent value="groups" className="mt-4">
+                                        <ScrollArea className="h-[300px] pr-4">
+                                            {filteredGroups && filteredGroups.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {filteredGroups.map((group) => {
+                                                        const targetId = `group-${group.id}`;
+                                                        const isSelected = selectedForwardTargets.some(t => t.id === targetId);
+
+                                                        return (
+                                                            <div
+                                                                key={group.id}
+                                                                onClick={() => toggleForwardTarget(group, "group")}
+                                                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
+                                                                    ? "bg-[#C72030] text-white"
+                                                                    : "hover:bg-gray-100"
+                                                                    }`}
+                                                            >
+                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${isSelected
+                                                                    ? "bg-white text-[#C72030]"
+                                                                    : "bg-[#F2EEE9] text-[#C72030]"
+                                                                    }`}>
+                                                                    {group.name?.[0]?.toUpperCase() || "G"}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-medium truncate">{group.name}</div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    No groups found
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </TabsContent>
+                                </Tabs>
+
+                                {selectedForwardTargets.length > 0 && (
+                                    <div className="text-sm text-gray-600">
+                                        {selectedForwardTargets.length} {selectedForwardTargets.length === 1 ? 'chat' : 'chats'} selected
+                                    </div>
+                                )}
+                            </div>
+
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowForwardDialog(false)}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSendForward}
+                                    disabled={selectedForwardTargets.length === 0}
+                                    className="bg-[#C72030] hover:bg-[#a01828]"
+                                >
+                                    Forward
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Create Task Dialog */}
+                    <Dialog
+                        open={!!selectedMessage}
+                        onOpenChange={() => setSelectedMessage(null)}
+                    >
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Create a Task</DialogTitle>
+                                <DialogDescription>
+                                    Do you want to create a task for this message?
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
+                                {selectedMessage?.body.slice(0, 100) + (selectedMessage?.body.length > 100 ? '...' : '')}
+                            </div>
+                            <DialogFooter className="flex justify-end gap-2 mt-4">
+                                <Button variant="outline" onClick={() => setSelectedMessage(null)}>
+                                    No
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setSelectedMessage(selectedMessage);
+                                        setOpenTaskModal(true);
+                                    }}
+                                >
+                                    Yes
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <CreateChatTask
+                        openTaskModal={openTaskModal}
+                        setOpenTaskModal={setOpenTaskModal}
+                        onCreateTask={handleCreateTask}
+                        message={selectedMessage}
+                        id={id}
+                    />
+
+                    <div ref={bottomRef} className="h-0" />
+                </div>
             </div>
-        </div>
+        </TooltipProvider>
     );
 };
 

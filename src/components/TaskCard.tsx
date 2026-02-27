@@ -30,36 +30,35 @@ const TaskCard = ({
 
     const [countdown, setCountdown] = useState("");
 
-    // useEffect(() => {
-    //     if (!task?.target_date || task.status === "completed" || task.status === "overdue") {
-    //         if (task.status === "overdue") {
-    //             setCountdown("Overdue");
-    //         } else if (task.status === "completed") {
-    //             setCountdown("Completed");
-    //         }
-    //         return;
-    //     }
+    useEffect(() => {
+        if (!task?.target_date || task.status === "completed" || task.status === "overdue") {
+            if (task.status === "overdue") {
+                setCountdown("Overdue");
+            } else if (task.status === "completed") {
+                setCountdown("Completed");
+            }
+            return;
+        }
 
-    //     const interval = setInterval(() => {
-    //         const now = new Date();
-    //         const end = new Date(task.target_date);
-    //         // use end of day for display (23:59:59.999)
-    //         const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(task.target_date);
+            // use end of day for display (23:59:59.999)
+            const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
 
-    //         const diff = endOfDay.getTime() - now.getTime();
+            const diff = endOfDay.getTime() - now.getTime();
 
-    //         if (diff <= 0 && task.status !== "completed") {
-    //             // mark overdue and update display
-    //             dispatch(editProjectTask({ baseUrl, token, id: task.id, data: { status: "overdue" } }));
-    //             setCountdown("Overdue");
-    //             clearInterval(interval);
-    //         } else {
-    //             setCountdown(formatCountdown(diff));
-    //         }
-    //     }, 1000);
+            if (diff <= 0 && task.status !== "completed") {
+                // mark overdue and update display
+                setCountdown("Overdue");
+                clearInterval(interval);
+            } else {
+                setCountdown(formatCountdown(diff));
+            }
+        }, 1000);
 
-    //     return () => clearInterval(interval);
-    // }, [task.target_date, task.status, task.id, token, dispatch]);
+        return () => clearInterval(interval);
+    }, [task.target_date, task.status, task.id]);
 
     const formatCountdown = (ms) => {
         // Format milliseconds into dd:hh:mm:ss
@@ -295,7 +294,7 @@ const TaskCard = ({
                             </span>
                         </span>
                         <span className="h-5 w-5 flex items-center justify-center bg-green-600 text-white rounded-full text-[7px] font-light">
-                            {getInitials(task?.responsible_person?.name)}
+                            {getInitials(task?.responsible_person_name)}
                         </span>
                     </div>
                 </div>

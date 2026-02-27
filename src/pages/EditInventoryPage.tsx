@@ -53,6 +53,8 @@ export const EditInventoryPage = () => {
   const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
   // Plants list for Plant Code dropdown
   const [plants, setPlants] = useState<Array<{ id?: string | number; plant_name?: string }>>([]);
+  // org_id for conditional field disabling
+  const [orgId, setOrgId] = useState<number | null>(null);
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -95,6 +97,8 @@ export const EditInventoryPage = () => {
     minStockLevel?: string;
     maxStockLevel?: string;
     expiryDate?: string;
+    inventoryType?: string;
+    criticality?: string;
   }>({});
   // Inventory name suggestion state
   const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
@@ -246,6 +250,21 @@ export const EditInventoryPage = () => {
     }
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
+
+    // Fetch org_id from localStorage
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const foundOrgId = user?.org_id || user?.organization_id;
+      if (foundOrgId) {
+        setOrgId(Number(foundOrgId));
+      } else {
+        const standalonOrgId = localStorage.getItem('org_id');
+        if (standalonOrgId) setOrgId(Number(standalonOrgId));
+      }
+    } catch (e) {
+      const standalonOrgId = localStorage.getItem('org_id');
+      if (standalonOrgId) setOrgId(Number(standalonOrgId));
+    }
 
     return () => {
       dispatch(resetInventoryState());
@@ -516,7 +535,7 @@ export const EditInventoryPage = () => {
   };
 
   // Validate full form for required fields
-  const validateForm = () => {
+  const validateForm = (): typeof errors => {
     const newErrors: typeof errors = {};
     if (!formData.inventoryName.trim()) newErrors.inventoryName = 'Inventory Name is required.';
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
@@ -534,6 +553,9 @@ export const EditInventoryPage = () => {
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
     if (!formData.maxStockLevel.trim()) newErrors.maxStockLevel = 'Max. Stock Level is required.';
     else if (!/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+    // required radio groups
+    if (!inventoryType) newErrors.inventoryType = 'Type of Inventory is required.';
+    if (!criticality) newErrors.criticality = 'Criticality is required.';
     // Cross-field: Min <= Max when both provided and valid
     if (/^\d+$/.test(formData.minStockLevel) && /^\d+$/.test(formData.maxStockLevel)) {
       const minStock = parseInt(formData.minStockLevel, 10);
@@ -551,15 +573,18 @@ export const EditInventoryPage = () => {
       }
     }
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSubmit = () => {
     if (!id) return;
 
     // Block submit if required fields invalid
-    if (!validateForm()) {
-      toast.error('Please correct the highlighted fields.');
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      Object.values(newErrors).forEach(msg => {
+        if (msg) toast.error(msg);
+      });
       return;
     }
 
@@ -721,7 +746,10 @@ export const EditInventoryPage = () => {
                 <RadioGroup
                   row
                   value={inventoryType}
-                  onChange={(e) => setInventoryType(e.target.value)}
+                  onChange={(e) => {
+                    setInventoryType(e.target.value);
+                    setErrors(prev => ({ ...prev, inventoryType: '' }));
+                  }}
                   sx={{
                     '& .MuiFormControlLabel-label': {
                       color: '#1A1A1A',
@@ -738,6 +766,9 @@ export const EditInventoryPage = () => {
                   <FormControlLabel value="spares" control={<Radio />} label="Spares" />
                   <FormControlLabel value="consumable" control={<Radio />} label="Consumable" />
                 </RadioGroup>
+                {errors.inventoryType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.inventoryType}</p>
+                )}
               </div>
 
               {/* Criticality */}
@@ -748,7 +779,10 @@ export const EditInventoryPage = () => {
                 <RadioGroup
                   row
                   value={criticality}
-                  onChange={(e) => setCriticality(e.target.value)}
+                  onChange={(e) => {
+                    setCriticality(e.target.value);
+                    setErrors(prev => ({ ...prev, criticality: '' }));
+                  }}
                   sx={{
                     '& .MuiFormControlLabel-label': {
                       color: '#1A1A1A',
@@ -765,6 +799,9 @@ export const EditInventoryPage = () => {
                   <FormControlLabel value="critical" control={<Radio />} label="Critical" />
                   <FormControlLabel value="non-critical" control={<Radio />} label="Non-Critical" />
                 </RadioGroup>
+                {errors.criticality && (
+                  <p className="text-red-500 text-sm mt-1">{errors.criticality}</p>
+                )}
               </div>
 
               {/* Eco-friendly toggle (parity with Add page) */}
@@ -981,7 +1018,7 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit} disabled={orgId === 63}>
                     <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.unit}
@@ -989,6 +1026,7 @@ export const EditInventoryPage = () => {
                       label="Select Unit"
                       notched
                       displayEmpty
+                      disabled={orgId === 63}
                     >
                       <MenuItem value="">Select Unit</MenuItem>
                       <MenuItem value="Ea">Each</MenuItem>
@@ -1065,7 +1103,7 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category} disabled={orgId === 63}>
                     <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.category}
@@ -1073,6 +1111,7 @@ export const EditInventoryPage = () => {
                       label="Select Category"
                       notched
                       displayEmpty
+                      disabled={orgId === 63}
                     >
                       <MenuItem value="" sx={{ color: '#C72030' }}>
                         Select an Option...

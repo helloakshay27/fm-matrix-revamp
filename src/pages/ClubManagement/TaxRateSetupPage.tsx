@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Edit,
-  Trash2,
   GripVertical,
   Info,
   ChevronRight,
@@ -13,18 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
-import TextField from "@mui/material/TextField";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MuiSelect from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
-import { User, FileCog, NotepadText } from "lucide-react";
-import { div } from "@tensorflow/tfjs";
 
 // ─────────────────────────── MUI theme ───────────────────────────────────────
 const muiTheme = createTheme({
@@ -70,572 +62,224 @@ const muiTheme = createTheme({
 });
 
 // ─────────────────────────── Types ───────────────────────────────────────────
-interface GstForm {
-  gstin: string;
-  compositionScheme: boolean;
-  reverseCharge: boolean;
-  overseasTrading: boolean;
-  digitalServices: boolean;
-  gstRegisteredOn: string;
-  gstinUsername: string;
-  reportingPeriod: string;
-  generateFirstTaxReturnFrom: string;
-}
 
-interface Tax {
+/** Shape returned by /lock_accounts/1/tax_rates.json */
+interface TaxRate {
   id: number;
   name: string;
-  percentage: number;
-  tax_type: string;
-  higher_rate: boolean;
-  diff_rate_reason: string | null;
-  start_date: string;
-  end_date: string;
-  lock_account_tax_section_id: number;
-  active: boolean;
+  rate: number;
+  rate_type: string;   // e.g. "CGST"
+  rate_of: string;
+  rate_of_id: number;
+  created_at: string;
+  updated_at: string;
 }
 
+/** Shape returned by /lock_accounts/1/tax_groups_view.json */
 interface TaxGroup {
   id: number;
   name: string;
-  tax_type: string;
-  percentage: number;
-  associated_taxes?: Tax[];
+  tax_rates?: TaxRate[];  // associated rates
+  rate?: number;          // optional aggregate
 }
 
-interface TaxSection {
-  id: number;
-  name: string;
-  tax_type: string;
-  group_name: string | null;
-  active: boolean;
-}
+// ─────────────────────────── Constants ───────────────────────────────────────
+
+/** Tax type options for the dropdown */
+const RATE_TYPE_OPTIONS = [
+  { value: "CGST",  label: "CGST" },
+  { value: "SGST",  label: "SGST" },
+  { value: "IGST",  label: "IGST" },
+  { value: "UTGST", label: "UTGST" },
+  { value: "Cess",  label: "Cess" },
+];
 
 // ─────────────────────────── Helpers ─────────────────────────────────────────
-const defaultGstForm: GstForm = {
-  gstin: "",
-  compositionScheme: false,
-  reverseCharge: false,
-  overseasTrading: false,
-  digitalServices: false,
-  gstRegisteredOn: "",
-  gstinUsername: "",
-  reportingPeriod: "",
-  generateFirstTaxReturnFrom: "",
+const getBaseUrl = () =>
+  (API_CONFIG.BASE_URL?.replace(/\/$/, "") || "").replace(/\/$/, "");
+
+const extractErrorMsg = (err: unknown, fallback: string): string => {
+  if (err && typeof err === "object" && "response" in err) {
+    const r = (err as { response?: { data?: { message?: string; error?: string } } }).response;
+    return r?.data?.message || r?.data?.error || fallback;
+  }
+  return fallback;
 };
 
-const getFullUrl = (endpoint: string): string => {
-  const baseUrl = API_CONFIG.BASE_URL?.replace(/\/$/, "") || "";
-  return `${baseUrl}${endpoint}`;
-};
-
-const getAuthOptions = (
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
-  body?: Record<string, unknown>
-): RequestInit => {
+const authHeaders = () => {
   const token = API_CONFIG.TOKEN;
-  const options: RequestInit = {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  if (body && (method === "POST" || method === "PUT")) {
-    options.body = JSON.stringify(body);
-  }
-  return options;
 };
-
-const TAX_TYPE_OPTIONS = [
-  { value: "tds", label: "TDS" },
-  { value: "tcs", label: "TCS" },
-];
-
-// ─────────────────────────── Shared table columns ────────────────────────────
-const taxTableColumns: ColumnConfig[] = [
-  {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
-  {
-    key: "name",
-    label: "Tax Name",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
-  {
-    key: "tax_type",
-    label: "Tax Type",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
-  {
-    key: "percentage",
-    label: "Rate (%)",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
-];
-
-// ─── Dummy fallback data ─────────────────────────────────────────────────────
-const DUMMY_TAXES: Tax[] = [
-  { id: 1,  name: "GST 5%",   percentage: 5,   tax_type: "tds", higher_rate: false, diff_rate_reason: "", start_date: "2024-01-01", end_date: "2024-12-31", lock_account_tax_section_id: 0, active: true },
-  { id: 2,  name: "GST 12%",  percentage: 12,  tax_type: "tds", higher_rate: false, diff_rate_reason: "", start_date: "2024-01-01", end_date: "2024-12-31", lock_account_tax_section_id: 0, active: true },
-  { id: 3,  name: "GST 18%",  percentage: 18,  tax_type: "tcs", higher_rate: false, diff_rate_reason: "", start_date: "2024-01-01", end_date: "2024-12-31", lock_account_tax_section_id: 0, active: true },
-  { id: 4,  name: "TDS 2%",   percentage: 2,   tax_type: "tds", higher_rate: false, diff_rate_reason: "", start_date: "2024-01-01", end_date: "2024-12-31", lock_account_tax_section_id: 0, active: true },
-  { id: 5,  name: "TCS 1%",   percentage: 1,   tax_type: "tcs", higher_rate: false, diff_rate_reason: "", start_date: "2024-01-01", end_date: "2024-12-31", lock_account_tax_section_id: 0, active: true },
-];
-
-const DUMMY_TAX_GROUPS: TaxGroup[] = [
-  {
-    id: 1,
-    name: "GST 18%",
-    tax_type: "group",
-    percentage: 18,
-    associated_taxes: [
-      DUMMY_TAXES[1], // GST 12%
-      DUMMY_TAXES[2], // GST 18%
-    ],
-  },
-  {
-    id: 2,
-    name: "TDS Group",
-    tax_type: "group",
-    percentage: 2,
-    associated_taxes: [
-      DUMMY_TAXES[3], // TDS 2%
-    ],
-  }
-];
 
 // ════════════════════════════════════════════════════════════════════════════
-//  TaxRatesTable  – shared table + add/edit/delete for individual tax rates
+//  TaxRatesTable  – list / create / edit for individual tax rates
+//  APIs:
+//    GET  /lock_accounts/1/tax_rates.json          → list
+//    POST /lock_accounts/1/tax_rates.json           → create
+//    POST /lock_accounts/1/tax_rates.json (patch)  → edit  (body includes id)
 // ════════════════════════════════════════════════════════════════════════════
 const TaxRatesTable: React.FC = () => {
-  const navigate = useNavigate();
-  const [taxes, setTaxes] = useState<Tax[]>([]);
+  const [taxes, setTaxes] = useState<TaxRate[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [sections, setSections] = useState<TaxSection[]>([]);
-  const [loadingSec, setLoadingSec] = useState(false);
 
-  const emptyForm = {
-    name: "",
-    percentage: "",
-    tax_type: "",
-    higher_rate: false,
-    diff_rate_reason: "",
-    start_date: "",
-    end_date: "",
-    lock_account_tax_section_id: "",
-  };
+  const emptyForm = { name: "", rate: "", rate_type: "" };
 
-  const [panelOpen, setPanelOpen] = useState(false); // Replaced addOpen/editOpen
-  const [editingTaxId, setEditingTaxId] = useState<number | null>(null); // To differentiate add/edit
-  const [currentForm, setCurrentForm] = useState(emptyForm); // Single form state for panel
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({}); // Single errors state
-  const [formBusy, setFormBusy] = useState(false); // Single busy state
-  const [formFetching, setFormFetching] = useState(false); // For edit mode fetching
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editingTax, setEditingTax] = useState<TaxRate | null>(null);
+  const [currentForm, setCurrentForm] = useState(emptyForm);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formBusy, setFormBusy] = useState(false);
 
-  // ── fetch all taxes ──────────────────────────────────────────────────────
+  // ── fetch list ──────────────────────────────────────────────────────────
   const fetchTaxes = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch(
-        getFullUrl("/lock_account_taxes.json?lock_account_id=1"),
-        getAuthOptions("GET")
-      );
-      if (!r.ok) throw new Error();
-      const data: Tax[] = await r.json();
-      const list = data.length > 0 ? data : DUMMY_TAXES;
-      // Preserve local edits if any
-      setTaxes(prev => {
-        if (prev.length > 0 && prev.some(t => t.id >= 1000 || t.name !== DUMMY_TAXES.find(d => d.id === t.id)?.name)) {
-          return prev;
-        }
-        return list;
-      });
+      const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
+      const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
+      const list: TaxRate[] = Array.isArray(res.data) ? res.data : [];
+      setTaxes(list);
       setTotalRecords(list.length);
-      setTotalPages(Math.ceil(list.length / perPage));
-    } catch {
-      setTaxes((prev) => prev.length > 0 ? prev : DUMMY_TAXES);
-      setTotalRecords(DUMMY_TAXES.length);
-      setTotalPages(Math.ceil(DUMMY_TAXES.length / perPage));
+      setTotalPages(Math.ceil(list.length / perPage) || 1);
+    } catch (err) {
+      console.error("Failed to fetch tax rates", err);
+      toast.error("Failed to load tax rates.");
     } finally {
       setLoading(false);
     }
   }, [perPage]);
 
-  const fetchSections = useCallback(async (taxType: string) => {
-    setLoadingSec(true);
-    try {
-      const r = await fetch(
-        getFullUrl(`/lock_account_tax_sections.json?q[tax_type_eq]=${taxType}`),
-        getAuthOptions("GET")
-      );
-      if (!r.ok) throw new Error();
-      setSections(await r.json());
-    } catch {
-      setSections([]);
-    } finally {
-      setLoadingSec(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchTaxes();
   }, [fetchTaxes]);
 
+  // ── validate ─────────────────────────────────────────────────────────────
   const validate = (f: typeof emptyForm) => {
     const e: Record<string, string> = {};
     if (!f.name.trim()) e.name = "Tax Name is required";
-    if (!f.percentage) e.percentage = "Rate (%) is required";
-    if (!f.tax_type) e.tax_type = "Tax Type is required";
-    if (!f.lock_account_tax_section_id) e.section = "Section is required";
-    if (!f.start_date) e.start_date = "Start Date is required";
-    if (!f.end_date) e.end_date = "End Date is required";
-    if (f.higher_rate && !f.diff_rate_reason.trim())
-      e.diff_rate_reason = "Reason is required";
+    if (!f.rate) e.rate = "Rate (%) is required";
+    if (!f.rate_type) e.rate_type = "Tax Type is required";
     return e;
   };
 
+  // ── save (create or edit) ─────────────────────────────────────────────────
   const handleSave = async () => {
     const errs = validate(currentForm);
-    if (Object.keys(errs).length) {
-      setFormErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setFormErrors({});
     setFormBusy(true);
 
-    const payload = {
-      lock_account_tax: {
-        name: currentForm.name,
-        percentage: parseFloat(currentForm.percentage),
-        tax_type: currentForm.tax_type,
-        higher_rate: currentForm.higher_rate,
-        diff_rate_reason: currentForm.higher_rate
-          ? currentForm.diff_rate_reason
-          : null,
-        start_date: currentForm.start_date,
-        end_date: currentForm.end_date,
-        lock_account_tax_section_id: parseInt(
-          currentForm.lock_account_tax_section_id,
-          10
-        ),
-      },
-    };
+    const baseUrl = getBaseUrl();
 
     try {
-      let r;
-      if (editingTaxId) {
-        // Edit mode
-        r = await fetch(
-          getFullUrl(`/lock_account_taxes/${editingTaxId}.json`),
-          getAuthOptions("PUT", payload)
+      if (editingTax) {
+        // PATCH via POST with id in body
+        const payload = {
+          tax_rate: {
+            id: editingTax.id,
+            name: currentForm.name,
+            rate_type: currentForm.rate_type,
+            rate: parseFloat(currentForm.rate),
+          },
+        };
+        await axios.patch(
+          `${baseUrl}/lock_accounts/1/tax_rates/${editingTax.id}.json`,
+          payload,
+          { headers: authHeaders() }
         );
-        if (!r.ok) throw new Error();
-        toast.success("Tax updated successfully");
+        toast.success("Tax rate updated successfully!");
       } else {
-        // Add mode
-        r = await fetch(
-          getFullUrl("/lock_account_taxes.json?lock_account_id=1"),
-          getAuthOptions("POST", payload)
+        // POST – create
+        const payload = {
+          tax_rate: {
+            name: currentForm.name,
+            rate_type: currentForm.rate_type,
+            rate: parseFloat(currentForm.rate),
+          },
+        };
+        await axios.post(
+          `${baseUrl}/lock_accounts/1/tax_rates.json`,
+          payload,
+          { headers: authHeaders() }
         );
-        if (!r.ok) throw new Error();
-        toast.success("Tax added successfully");
+        toast.success("Tax rate created successfully!");
       }
-      setPanelOpen(false);
-      setCurrentForm(emptyForm);
-      setSections([]);
+      closePanel();
       fetchTaxes();
-    } catch {
-      toast.success(`Tax ${editingTaxId ? "updated" : "added"} (Local Mode)`);
-      const newTax: Tax = {
-         id: editingTaxId ? editingTaxId : Date.now(),
-         name: currentForm.name,
-         percentage: parseFloat(currentForm.percentage),
-         tax_type: currentForm.tax_type,
-         higher_rate: currentForm.higher_rate,
-         diff_rate_reason: currentForm.higher_rate ? currentForm.diff_rate_reason : null,
-         start_date: currentForm.start_date,
-         end_date: currentForm.end_date,
-         lock_account_tax_section_id: parseInt(currentForm.lock_account_tax_section_id, 10) || 0,
-         active: true
-      };
-      setTaxes((prev) => {
-         const list = editingTaxId ? prev.map(t => t.id === editingTaxId ? newTax : t) : [...prev, newTax];
-         setTotalRecords(list.length);
-         setTotalPages(Math.ceil(list.length / perPage));
-         return list;
-      });
-      setPanelOpen(false);
-      setCurrentForm(emptyForm);
-      setSections([]);
+    } catch (err: unknown) {
+      toast.error(extractErrorMsg(err, "Failed to save tax rate."));
     } finally {
       setFormBusy(false);
     }
   };
 
-  const handleOpenPanel = async (id: number | null = null) => {
+  // ── open panel ────────────────────────────────────────────────────────────
+  const openAdd = () => {
+    setEditingTax(null);
+    setCurrentForm(emptyForm);
+    setFormErrors({});
     setPanelOpen(true);
-    setEditingTaxId(id);
-    setFormErrors({}); // Clear errors on open
-
-    if (id) {
-      // Edit mode
-      setFormFetching(true);
-      try {
-        const r = await fetch(
-          getFullUrl(`/lock_account_taxes/${id}.json`),
-          getAuthOptions("GET")
-        );
-        if (!r.ok) throw new Error();
-        const d: Tax = await r.json();
-        setCurrentForm({
-          name: d.name,
-          percentage: d.percentage.toString(),
-          tax_type: d.tax_type || "",
-          higher_rate: d.higher_rate || false,
-          diff_rate_reason: d.diff_rate_reason || "",
-          start_date: d.start_date || "",
-          end_date: d.end_date || "",
-          lock_account_tax_section_id: d.lock_account_tax_section_id ? d.lock_account_tax_section_id.toString() : "",
-        });
-        if (d.tax_type) await fetchSections(d.tax_type);
-      } catch {
-        // Fallback to local state if fetch fails
-        const localData = taxes.find((t) => t.id === id);
-        if (localData) {
-          setCurrentForm({
-            name: localData.name,
-            percentage: localData.percentage.toString(),
-            tax_type: localData.tax_type || "",
-            higher_rate: localData.higher_rate || false,
-            diff_rate_reason: localData.diff_rate_reason || "",
-            start_date: localData.start_date || "",
-            end_date: localData.end_date || "",
-            lock_account_tax_section_id: localData.lock_account_tax_section_id ? localData.lock_account_tax_section_id.toString() : "",
-          });
-          if (localData.tax_type) await fetchSections(localData.tax_type);
-        } else {
-          toast.error("Failed to load tax");
-          setPanelOpen(false);
-        }
-      } finally {
-        setFormFetching(false);
-      }
-    } else {
-      // Add mode
-      setCurrentForm(emptyForm);
-      setSections([]); // Clear sections for new form
-    }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this tax?")) return;
-    try {
-      const r = await fetch(
-        getFullUrl(`/lock_account_taxes/${id}.json`),
-        getAuthOptions("DELETE")
-      );
-      if (!r.ok) throw new Error();
-      toast.success("Tax deleted");
-      fetchTaxes();
-    } catch {
-      toast.success("Tax deleted (Local Mode)");
-      setTaxes((prev) => {
-        const list = prev.filter(t => t.id !== id);
-        setTotalRecords(list.length);
-        setTotalPages(Math.ceil(list.length / perPage));
-        return list;
-      });
-    }
+  const openEdit = (tax: TaxRate) => {
+    setEditingTax(tax);
+    setCurrentForm({
+      name: tax.name,
+      rate: tax.rate.toString(),
+      rate_type: tax.rate_type,
+    });
+    setFormErrors({});
+    setPanelOpen(true);
   };
 
-  const paginated = taxes.slice(
-    (currentPage - 1) * perPage,
-    currentPage * perPage
-  );
+  const closePanel = () => {
+    setPanelOpen(false);
+    setEditingTax(null);
+    setCurrentForm(emptyForm);
+    setFormErrors({});
+  };
 
-  const renderRow = (tax: Tax) => ({
+  // ── table columns & rows ─────────────────────────────────────────────────
+  const columns: ColumnConfig[] = [
+    { key: "actions",   label: "Action",    sortable: false, hideable: false, draggable: false },
+    { key: "name",      label: "Tax Name",  sortable: true,  hideable: true,  draggable: true },
+    { key: "rate_type", label: "Tax Type",  sortable: true,  hideable: true,  draggable: true },
+    { key: "rate",      label: "Rate (%)",  sortable: true,  hideable: true,  draggable: true },
+  ];
+
+  const paginated = taxes.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  const renderRow = (tax: TaxRate) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => handleOpenPanel(tax.id)} // Open panel for edit
-        >
+        <Button size="icon" variant="ghost" onClick={() => openEdit(tax)}>
           <Edit className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => handleDelete(tax.id)}
-        >
-          <Trash2 className="w-4 h-4" />
         </Button>
       </div>
     ),
-    name: <span className="font-medium">{tax.name}</span>,
-    tax_type: <span className="uppercase font-semibold">{tax.tax_type}</span>,
-    percentage: <span>{tax.percentage}%</span>,
+    name:      <span className="font-medium">{tax.name}</span>,
+    rate_type: <span className="font-semibold text-[#C72030]">{tax.rate_type}</span>,
+    rate:      <span>{tax.rate}%</span>,
   });
-
-  // ── Panel form: label-left / input-right layout (matches screenshot) ────────
-  const PanelFormFields = ({
-    form,
-    setForm,
-    errors,
-    setErrors,
-  }: {
-    form: typeof emptyForm;
-    setForm: React.Dispatch<React.SetStateAction<typeof emptyForm>>;
-    errors: Record<string, string>;
-    setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  }) => (
-    <div className="space-y-6">
-      {/* Tax Name */}
-      <div className="flex items-start gap-6">
-        <label className="w-32 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
-          Tax Name<span className="text-[#C72030]">*</span>
-        </label>
-        <div className="flex-1">
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => {
-              setForm((s) => ({ ...s, name: e.target.value }));
-              if (e.target.value.trim()) setErrors((s) => ({ ...s, name: "" }));
-            }}
-            className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${
-              errors.name ? "border-red-400" : "border-gray-300"
-            }`}
-          />
-          {errors.name && (
-            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Rate (%) */}
-      <div className="flex items-start gap-6">
-        <label className="w-32 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
-          Rate (%)<span className="text-[#C72030]">*</span>
-        </label>
-        <div className="flex-1">
-          <div className="flex">
-            <input
-              type="number"
-              step="0.01"
-              value={form.percentage}
-              onChange={(e) => {
-                setForm((s) => ({ ...s, percentage: e.target.value }));
-                if (e.target.value)
-                  setErrors((s) => ({ ...s, percentage: "" }));
-              }}
-              className={`flex-1 h-10 border rounded-l px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${
-                errors.percentage ? "border-red-400" : "border-gray-300"
-              }`}
-            />
-            <span className="h-10 px-4 flex items-center justify-center border border-l-0 border-gray-300 rounded-r bg-gray-50 text-sm text-gray-600 font-medium">
-              %
-            </span>
-          </div>
-          {errors.percentage && (
-            <p className="text-xs text-red-500 mt-1">{errors.percentage}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Tax Type */}
-      <div className="flex items-start gap-6">
-        <label className="w-32 pt-2 text-sm font-semibold text-gray-800 shrink-0">
-          Tax Type
-        </label>
-        <div className="flex-1">
-          <select
-            value={form.tax_type}
-            onChange={(e) => {
-              const v = e.target.value;
-              setForm((s) => ({
-                ...s,
-                tax_type: v,
-                lock_account_tax_section_id: "",
-              }));
-              if (v) fetchSections(v);
-            }}
-            className="w-full h-10 border border-gray-300 rounded px-3 text-sm text-gray-600 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white transition"
-          >
-            <option value="">Select a Tax Type.</option>
-            {TAX_TYPE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Section – shown after tax type chosen */}
-      {form.tax_type && (
-        <div className="flex items-start gap-6">
-          <label className="w-32 pt-2 text-sm font-semibold text-gray-800 shrink-0">
-            Section
-          </label>
-          <div className="flex-1">
-            <select
-              value={form.lock_account_tax_section_id}
-              disabled={loadingSec}
-              onChange={(e) =>
-                setForm((s) => ({
-                  ...s,
-                  lock_account_tax_section_id: e.target.value,
-                }))
-              }
-              className="w-full h-10 border border-gray-300 rounded px-3 text-sm text-gray-600 outline-none focus:border-blue-400 bg-white transition disabled:opacity-50"
-            >
-              <option value="">
-                {loadingSec ? "Loading…" : "Select section"}
-              </option>
-              {sections.map((sec) => (
-                <option key={sec.id} value={sec.id.toString()}>
-                  {sec.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="relative">
       <EnhancedTaskTable
         data={paginated}
-        columns={taxTableColumns}
+        columns={columns}
         renderRow={renderRow}
-        storageKey="tax-rates-main-table-v1"
+        storageKey="tax-rates-main-table-v2"
         hideTableExport={true}
-        hideTableSearch={false}
         enableSearch={true}
         loading={loading}
         leftActions={
-          <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => handleOpenPanel(null)}
-          >
+          <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={openAdd}>
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
         }
@@ -657,79 +301,101 @@ const TaxRatesTable: React.FC = () => {
         />
       )}
 
-      {/* ── New / Edit Tax popup dialog ──────────────────────────────── */}
+      {/* ── Add / Edit modal ───────────────────────────────────────────────── */}
       {panelOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/40 z-40"
-            onClick={() => {
-              setPanelOpen(false);
-              setCurrentForm(emptyForm);
-              setFormErrors({});
-              setEditingTaxId(null);
-              setSections([]);
-            }}
-          />
-          {/* Centered modal */}
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            aria-modal="true"
-          >
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={closePanel} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
             <div
-              className="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col"
+              className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col"
               style={{ animation: "taxPopIn 0.18s ease-out" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b">
                 <h2 className="text-lg font-bold text-[#1A1A1A]">
-                  {editingTaxId ? "Edit Tax" : "New Tax"}
+                  {editingTax ? "Edit Tax Rate" : "New Tax Rate"}
                 </h2>
-                <button
-                  onClick={() => {
-                    setPanelOpen(false);
-                    setCurrentForm(emptyForm);
-                    setFormErrors({});
-                    setEditingTaxId(null);
-                    setSections([]);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition text-xl leading-none"
-                  aria-label="Close"
-                >
+                <button onClick={closePanel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
                   &times;
                 </button>
               </div>
+
               {/* Body */}
-              <div className="px-6 py-6 overflow-y-auto max-h-[60vh]">
-                {formFetching ? (
-                  <div className="flex items-center justify-center h-32">
-                    <CircularProgress style={{ color: "#C72030" }} size={28} />
+              <div className="px-6 py-6 space-y-5">
+                {/* Tax Name */}
+                <div className="flex items-start gap-4">
+                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
+                    Tax Name<span className="text-[#C72030]">*</span>
+                  </label>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={currentForm.name}
+                      onChange={(e) => {
+                        setCurrentForm((s) => ({ ...s, name: e.target.value }));
+                        if (e.target.value.trim()) setFormErrors((s) => ({ ...s, name: "" }));
+                      }}
+                      placeholder="e.g. GST10"
+                      className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${formErrors.name ? "border-red-400" : "border-gray-300"}`}
+                    />
+                    {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
                   </div>
-                ) : (
-                  <PanelFormFields
-                    form={currentForm}
-                    setForm={setCurrentForm}
-                    errors={formErrors}
-                    setErrors={setFormErrors}
-                  />
-                )}
+                </div>
+
+                {/* Tax Type (rate_type) */}
+                <div className="flex items-start gap-4">
+                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
+                    Tax Type<span className="text-[#C72030]">*</span>
+                  </label>
+                  <div className="flex-1">
+                    <select
+                      value={currentForm.rate_type}
+                      onChange={(e) => {
+                        setCurrentForm((s) => ({ ...s, rate_type: e.target.value }));
+                        if (e.target.value) setFormErrors((s) => ({ ...s, rate_type: "" }));
+                      }}
+                      className={`w-full h-10 border rounded px-3 text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white transition ${formErrors.rate_type ? "border-red-400" : "border-gray-300"}`}
+                    >
+                      <option value="">Select Tax Type</option>
+                      {RATE_TYPE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    {formErrors.rate_type && <p className="text-xs text-red-500 mt-1">{formErrors.rate_type}</p>}
+                  </div>
+                </div>
+
+                {/* Rate */}
+                <div className="flex items-start gap-4">
+                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
+                    Rate (%)<span className="text-[#C72030]">*</span>
+                  </label>
+                  <div className="flex-1">
+                    <div className="flex">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={currentForm.rate}
+                        onChange={(e) => {
+                          setCurrentForm((s) => ({ ...s, rate: e.target.value }));
+                          if (e.target.value) setFormErrors((s) => ({ ...s, rate: "" }));
+                        }}
+                        className={`flex-1 h-10 border rounded-l px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${formErrors.rate ? "border-red-400" : "border-gray-300"}`}
+                      />
+                      <span className="h-10 px-4 flex items-center border border-l-0 border-gray-300 rounded-r bg-gray-50 text-sm text-gray-600 font-medium">
+                        %
+                      </span>
+                    </div>
+                    {formErrors.rate && <p className="text-xs text-red-500 mt-1">{formErrors.rate}</p>}
+                  </div>
+                </div>
               </div>
+
               {/* Footer */}
               <div className="px-6 py-4 border-t flex gap-3 justify-end bg-white rounded-b-lg">
-                <Button
-                  variant="outline"
-                  disabled={formBusy}
-                  onClick={() => {
-                    setPanelOpen(false);
-                    setCurrentForm(emptyForm);
-                    setFormErrors({});
-                    setEditingTaxId(null);
-                    setSections([]);
-                  }}
-                >
-                  Cancel
-                </Button>
+                <Button variant="outline" disabled={formBusy} onClick={closePanel}>Cancel</Button>
                 <Button
                   className="bg-[#C72030] hover:bg-[#A01020] text-white"
                   onClick={handleSave}
@@ -753,713 +419,187 @@ const TaxRatesTable: React.FC = () => {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-//  TaxSetupTab  – GST form  +  shared tax rates table below
+//  TaxSetupTab  – wraps TaxRatesTable
 // ════════════════════════════════════════════════════════════════════════════
-const TaxSetupTab: React.FC = () => {
-  const [form, setForm] = useState<GstForm>(defaultGstForm);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+const TaxSetupTab: React.FC = () => (
+  <ThemeProvider theme={muiTheme}>
+    <div className="px-6 pb-8 pt-4 space-y-4">
+      <TaxRatesTable />
+    </div>
+  </ThemeProvider>
+);
 
+// ════════════════════════════════════════════════════════════════════════════
+//  GroupTaxTab  – inline form (no list, no modal)
+//  APIs:
+//    GET  /lock_accounts/1/tax_rates.json          → all rates to associate
+//    POST /lock_accounts/1/create_tax_group.json   → create group
+// ════════════════════════════════════════════════════════════════════════════
+const GroupTaxTab: React.FC = () => {
+  const [allRates, setAllRates] = useState<TaxRate[]>([]);
+  const [loadingRates, setLoadingRates] = useState(true);
+
+  const [groupName, setGroupName]     = useState("");
+  const [groupNameErr, setGroupNameErr] = useState("");
+  const [checkedIds, setCheckedIds]   = useState<Set<number>>(new Set());
+  const [saving, setSaving]           = useState(false);
+
+  // ── fetch available tax rates on mount ──────────────────────────────────
   useEffect(() => {
     const fetch = async () => {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-      if (!baseUrl) {
-        toast.error("Base URL not configured.");
-        setLoading(false);
-        return;
-      }
+      setLoadingRates(true);
       try {
-        const r = await axios.get(
-          `${baseUrl}/lock_accounts/1/gst_settings.json`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          }
-        );
-        const d = r.data?.gst_setting || r.data || {};
-        setForm({
-          gstin: d.gstin ?? "",
-          compositionScheme: !!d.composition_scheme,
-          reverseCharge: !!d.reverse_charge,
-          overseasTrading: !!d.overseas_trading,
-          digitalServices: !!d.digi_service,
-          gstRegisteredOn: d.gst_regi_on ? d.gst_regi_on.split("T")[0] : "",
-          gstinUsername: d.gstin_uname ?? "",
-          reportingPeriod: d.reporting_period ?? "",
-          generateFirstTaxReturnFrom: d.first_return
-            ? d.first_return.split("T")[0]
-            : "",
-        });
-      } catch (err: unknown) {
-        const e = err as { response?: { status?: number } };
-        if (e?.response?.status !== 404)
-          toast.error("Failed to load GST settings.");
+        const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
+        const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
+        setAllRates(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error("Failed to fetch tax rates", err);
       } finally {
-        setLoading(false);
+        setLoadingRates(false);
       }
     };
     fetch();
   }, []);
 
-  const handleChange = (
-    ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = ev.target as HTMLInputElement;
-    const checked = (ev.target as HTMLInputElement).checked;
-    setForm((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
-  };
-
-  const handleSubmit = async (ev: React.FormEvent) => {
-    ev.preventDefault();
-    const baseUrl = API_CONFIG.BASE_URL;
-    const token = API_CONFIG.TOKEN;
-    if (!baseUrl) {
-      toast.error("Base URL not configured.");
-      return;
-    }
-    setSaving(true);
-    try {
-      await axios.post(
-        `${baseUrl}/lock_accounts/1/gst_settings.json`,
-        {
-          gst_setting: {
-            gstin: form.gstin,
-            composition_scheme: form.compositionScheme,
-            reverse_charge: form.reverseCharge,
-            overseas_trading: form.overseasTrading,
-            digi_service: form.digitalServices,
-            gst_regi_on: form.gstRegisteredOn || null,
-            gstin_uname: form.gstinUsername,
-            reporting_period: form.reportingPeriod,
-            first_return: form.generateFirstTaxReturnFrom || null,
-          },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
-      );
-      toast.success("GST settings saved!");
-    } catch (err: unknown) {
-      const e = err as {
-        response?: { data?: { message?: string; error?: string } };
-      };
-      toast.error(
-        e?.response?.data?.message ||
-          e?.response?.data?.error ||
-          "Failed to save GST settings."
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading)
-    return (
-      <div className="w-full flex items-center justify-center min-h-[400px]">
-        <CircularProgress style={{ color: "#C72030" }} />
-      </div>
-    );
-
-  return (
-    <ThemeProvider theme={muiTheme}>
-      <form className="w-full bg-white p-6" onSubmit={handleSubmit}>
-        {/* GST Info – commented out */}
-        {/*
-        <div className="bg-white rounded-lg border-2 p-6 space-y-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <User className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              GST Info
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6">
-            <TextField
-              label={
-                <span>
-                  GSTIN <span className="text-red-600">*</span>{" "}
-                  <span className="text-xs text-gray-500">(Max 15 digits)</span>
-                </span>
-              }
-              size="small"
-              variant="outlined"
-              name="gstin"
-              value={form.gstin}
-              onChange={handleChange}
-              placeholder="Enter GSTIN"
-              inputProps={{ maxLength: 15 }}
-            />
-            <TextField
-              label={
-                <span>
-                  GST Registered On <span className="text-red-600">*</span>
-                </span>
-              }
-              size="small"
-              variant="outlined"
-              name="gstRegisteredOn"
-              type="date"
-              value={form.gstRegisteredOn}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-            />
-          </div>
-        </div>
-        */}
-
-        {/* GST Options – commented out */}
-        {/*
-        <div className="bg-white rounded-lg border-2 p-6 space-y-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <FileCog className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              GST Options
-            </h3>
-          </div>
-          <div className="flex flex-col gap-4">
-            {[
-              {
-                id: "compositionScheme",
-                label: "Composition Scheme",
-                desc: "My business is registered for Composition Scheme.",
-              },
-              {
-                id: "reverseCharge",
-                label: "Reverse Charge",
-                desc: "Enable Reverse Charge in Sales transactions",
-              },
-              {
-                id: "overseasTrading",
-                label: "Import / Export (Overseas Trading)",
-                desc: "My business is involved in Overseas Trading",
-              },
-              {
-                id: "digitalServices",
-                label: "Digital Services",
-                desc: "Track export of Digital Services",
-              },
-            ].map((opt) => (
-              <div key={opt.id}>
-                <div className="block text-sm font-semibold text-gray-700 mb-1">
-                  {opt.label}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={opt.id}
-                    checked={form[opt.id as keyof GstForm] as boolean}
-                    onCheckedChange={(v) =>
-                      setForm((p) => ({ ...p, [opt.id]: !!v }))
-                    }
-                  />
-                  <label htmlFor={opt.id} className="text-sm cursor-pointer">
-                    {opt.desc}
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        */}
-
-        {/* Direct Filing Settings – commented out */}
-        {/*
-        <div className="bg-white rounded-lg border-2 p-6 space-y-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]"><NotepadText className="w-6 h-6" /></div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Direct Filing Settings</h3>
-          </div>
-          ...GSTIN Username, Reporting Period, Generate First Tax Return From...
-        </div>
-        */}
-
-        {/* Save / Cancel */}
-        {/*<div className="flex gap-3 justify-center mb-6">
-          <Button
-            type="submit"
-            disabled={saving}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
-          >
-            {saving ? "Saving…" : "Save"}
-          </Button>
-          <Button
-            variant="outline"
-            type="button"
-            disabled={saving}
-            onClick={() => window.history.back()}
-            className="min-w-[100px]"
-          >
-            Cancel
-          </Button>
-        </div>
-        */}
-      </form>
-
-      {/* ── Tax Rates Table ── */}
-      <div className="px-6 pb-8 space-y-4">
-        <h2 className="text-lg font-semibold text-[#1A1A1A]">Tax Rates</h2>
-        <TaxRatesTable />
-      </div>
-    </ThemeProvider>
-  );
-};
-
-// ════════════════════════════════════════════════════════════════════════════
-//  GroupTaxTab  – list of tax groups  +  "New Tax Group" slide-in form
-// ════════════════════════════════════════════════════════════════════════════
-const GroupTaxTab: React.FC = () => {
-  const navigate = useNavigate();
-  // ── individual taxes (to associate) ─────────────────────────────────────
-  const [allTaxes, setAllTaxes] = useState<Tax[]>([]);
-  const [taxGroups, setTaxGroups] = useState<TaxGroup[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
-
-  // ── "New Tax Group" panel state ──────────────────────────────────────────
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<TaxGroup | null>(null);
-  const [groupName, setGroupName] = useState("");
-  const [groupNameErr, setGroupNameErr] = useState("");
-  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
-  const [orderedTaxes, setOrderedTaxes] = useState<Tax[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  // ── drag-to-reorder refs ─────────────────────────────────────────────────
-  const dragItem = useRef<number | null>(null);
-  const dragOver = useRef<number | null>(null);
-
-  // pagination (group table)
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [tableLoading, setTableLoading] = useState(false);
-
-  // ── fetch individual taxes ───────────────────────────────────────────────
-  const fetchAllTaxes = useCallback(async () => {
-    try {
-      const r = await fetch(
-        getFullUrl("/lock_account_taxes.json?lock_account_id=1"),
-        getAuthOptions("GET")
-      );
-      if (!r.ok) throw new Error();
-      const data: Tax[] = await r.json();
-      setAllTaxes(data.length > 0 ? data : DUMMY_TAXES);
-    } catch {
-      setAllTaxes((prev) => prev.length > 0 ? prev : DUMMY_TAXES);
-    }
-  }, []);
-
-  // ── fetch tax groups list ────────────────────────────────────────────────
-  const fetchGroups = useCallback(async () => {
-    setTableLoading(true);
-    try {
-      const r = await fetch(
-        getFullUrl("/lock_account_tax_groups.json?lock_account_id=1"),
-        getAuthOptions("GET")
-      );
-      if (!r.ok) throw new Error();
-      const data: TaxGroup[] = await r.json();
-      const list = data.length > 0 ? data : DUMMY_TAX_GROUPS;
-      setTaxGroups((prev) => {
-        if (prev.length > 0 && prev.some(g => g.id >= 1000 || g.name !== DUMMY_TAX_GROUPS.find(d => d.id === g.id)?.name)) {
-          return prev;
-        }
-        return list;
-      });
-      setTotalRecords(list.length);
-      setTotalPages(Math.ceil(list.length / perPage));
-    } catch {
-      setTaxGroups((prev) => {
-        const list = prev.length > 0 ? prev : DUMMY_TAX_GROUPS;
-        setTotalRecords(list.length);
-        setTotalPages(Math.ceil(list.length / perPage));
-        return list;
-      });
-    } finally {
-      setTableLoading(false);
-    }
-  }, [perPage]);
-
-  useEffect(() => {
-    fetchGroups();
-    fetchAllTaxes();
-  }, [fetchGroups, fetchAllTaxes]);
-
-  // ── open panel for new or edit ───────────────────────────────────────────
-  const openNew = () => {
-    setEditingGroup(null);
-    setGroupName("");
-    setGroupNameErr("");
-    setCheckedIds(new Set());
-    setOrderedTaxes([...allTaxes]);
-    setPanelOpen(true);
-  };
-
-  const openEdit = (group: TaxGroup) => {
-    setEditingGroup(group);
-    setGroupName(group.name);
-    setGroupNameErr("");
-    const assocIds = new Set((group.associated_taxes ?? []).map((t) => t.id));
-    setCheckedIds(assocIds);
-    // put associated taxes first, then the rest
-    const assoc = allTaxes.filter((t) => assocIds.has(t.id));
-    const rest = allTaxes.filter((t) => !assocIds.has(t.id));
-    setOrderedTaxes([...assoc, ...rest]);
-    setPanelOpen(true);
-  };
-
-  const closePanel = () => {
-    setPanelOpen(false);
-    setEditingGroup(null);
-  };
-
-  // ── toggle checkbox ───────────────────────────────────────────────────────
+  // ── checkbox toggle ───────────────────────────────────────────────────────
   const toggleCheck = (id: number) => {
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  // ── drag handlers ─────────────────────────────────────────────────────────
-  const onDragStart = (idx: number) => {
-    dragItem.current = idx;
-  };
-  const onDragEnter = (idx: number) => {
-    dragOver.current = idx;
-  };
-  const onDragEnd = () => {
-    const from = dragItem.current;
-    const to = dragOver.current;
-    if (from === null || to === null || from === to) return;
-    const next = [...orderedTaxes];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setOrderedTaxes(next);
-    dragItem.current = null;
-    dragOver.current = null;
+  // ── reset form ────────────────────────────────────────────────────────────
+  const resetForm = () => {
+    setGroupName("");
+    setGroupNameErr("");
+    setCheckedIds(new Set());
   };
 
-  // ── save group ────────────────────────────────────────────────────────────
+  // ── save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!groupName.trim()) {
-      setGroupNameErr("Tax Group Name is required");
-      return;
-    }
+    if (!groupName.trim()) { setGroupNameErr("Tax Group Name is required"); return; }
     setGroupNameErr("");
     setSaving(true);
-    const selectedIds = orderedTaxes
-      .filter((t) => checkedIds.has(t.id))
-      .map((t) => t.id);
+
+    const selectedIds = allRates
+      .filter((r) => checkedIds.has(r.id))
+      .map((r) => r.id);
+
     try {
-      const url = editingGroup
-        ? getFullUrl(`/lock_account_tax_groups/${editingGroup.id}.json`)
-        : getFullUrl("/lock_account_tax_groups.json?lock_account_id=1");
-      const method = editingGroup ? "PUT" : "POST";
-      const r = await fetch(
-        url,
-        getAuthOptions(method, {
-          lock_account_tax_group: {
-            name: groupName,
-            lock_account_tax_ids: selectedIds,
-          },
-        })
+      await axios.post(
+        `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
+        { tax_group: { name: groupName, tax_rates: selectedIds } },
+        { headers: authHeaders() }
       );
-      if (!r.ok) throw new Error();
-      toast.success(editingGroup ? "Tax group updated!" : "Tax group created!");
-      closePanel();
-      fetchGroups();
-    } catch {
-      toast.success(editingGroup ? "Tax group updated (Local Mode)!" : "Tax group created (Local Mode)!");
-      const newGroup: TaxGroup = {
-        id: editingGroup ? editingGroup.id : Date.now(),
-        name: groupName,
-        tax_type: "group",
-        percentage: orderedTaxes.filter(t => checkedIds.has(t.id)).reduce((sum, t) => sum + t.percentage, 0),
-        associated_taxes: orderedTaxes.filter(t => checkedIds.has(t.id))
-      };
-      setTaxGroups((prev) => {
-         const list = editingGroup ? prev.map(g => g.id === editingGroup.id ? newGroup : g) : [...prev, newGroup];
-         setTotalRecords(list.length);
-         setTotalPages(Math.ceil(list.length / perPage));
-         return list;
-      });
-      closePanel();
+      toast.success("Tax group created successfully!");
+      resetForm();
+    } catch (err: unknown) {
+      toast.error(extractErrorMsg(err, "Failed to save tax group."));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteGroup = async (id: number) => {
-    if (!confirm("Delete this tax group?")) return;
-    try {
-      const r = await fetch(
-        getFullUrl(`/lock_account_tax_groups/${id}.json`),
-        getAuthOptions("DELETE")
-      );
-      if (!r.ok) throw new Error();
-      toast.success("Tax group deleted.");
-      fetchGroups();
-    } catch {
-      toast.success("Tax group deleted (Local Mode).");
-      setTaxGroups((prev) => {
-        const list = prev.filter(g => g.id !== id);
-        setTotalRecords(list.length);
-        setTotalPages(Math.ceil(list.length / perPage));
-        return list;
-      });
-    }
-  };
-
-  // ── group table columns ────────────────────────────────────────────────────
-  const groupColumns: ColumnConfig[] = [
-    {
-      key: "actions",
-      label: "Action",
-      sortable: false,
-      hideable: false,
-      draggable: false,
-    },
-    {
-      key: "name",
-      label: "Tax Name",
-      sortable: true,
-      hideable: true,
-      draggable: true,
-    },
-    {
-      key: "rate",
-      label: "Rate (%)",
-      sortable: true,
-      hideable: true,
-      draggable: true,
-    },
-  ];
-
-  const paginatedGroups = taxGroups.slice(
-    (currentPage - 1) * perPage,
-    currentPage * perPage
-  );
-
-  const renderGroupRow = (group: TaxGroup) => ({
-    actions: (
-      <div className="flex items-center gap-2">
-        <Button size="icon" variant="ghost" onClick={() => openEdit(group)}>
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => handleDeleteGroup(group.id)}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    ),
-    name: <span className="font-medium text-[#C72030]">{group.name}</span>,
-    rate: (
-      <span>
-        {group.percentage ?? "—"}
-        {group.percentage != null ? "%" : ""}
-      </span>
-    ),
-  });
-
-  // ── percentage label for list row ────────────────────────────────────────
-  const fmtPct = (p: number) => {
-    if (Number.isInteger(p)) return `${p} %`;
-    return `${p} %`;
-  };
-
   return (
-    <div className="relative">
-      {/* ── Group list table ─────────────────────────────────────────────── */}
-      <div className="p-6 space-y-4">
-        <EnhancedTaskTable
-          data={paginatedGroups}
-          columns={groupColumns}
-          renderRow={renderGroupRow}
-          storageKey="tax-groups-table-v1"
-          hideTableExport={true}
-          hideTableSearch={false}
-          enableSearch={true}
-          loading={tableLoading}
-          leftActions={
-            <Button
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
-              onClick={openNew}
-            >
-              <Plus className="w-4 h-4 mr-2" /> New Tax Group
-            </Button>
-          }
+    <div className="bg-white p-6">
+      {/* Title */}
+      <h2 className="text-xl font-bold text-[#1A1A1A] mb-6">New Tax Group</h2>
+
+      {/* Tax Group Name */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-[#C72030] mb-1">
+          Tax Group Name<span className="text-[#C72030]">*</span>
+        </label>
+        <input
+          type="text"
+          value={groupName}
+          onChange={(e) => {
+            setGroupName(e.target.value);
+            if (e.target.value.trim()) setGroupNameErr("");
+          }}
+          placeholder="e.g. GST20"
+          className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition ${
+            groupNameErr ? "border-red-500" : "border-gray-300"
+          }`}
         />
-        {totalRecords > 0 && (
-          <TicketPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRecords={totalRecords}
-            perPage={perPage}
-            isLoading={tableLoading}
-            onPageChange={setCurrentPage}
-            onPerPageChange={(pp) => {
-              setPerPage(pp);
-              setCurrentPage(1);
-              setTotalPages(Math.ceil(totalRecords / pp));
-            }}
-          />
+        {groupNameErr && <p className="text-xs text-red-500 mt-1">{groupNameErr}</p>}
+      </div>
+
+      {/* Associate Taxes */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-semibold text-[#C72030]">
+            Associate Taxes<span className="text-[#C72030]">*</span>
+          </label>
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            <GripVertical className="w-3 h-3" />
+            <span>Drag taxes to reorder</span>
+            <Info className="w-3 h-3" />
+          </div>
+        </div>
+
+        {loadingRates ? (
+          <div className="flex items-center justify-center py-10">
+            <CircularProgress size={24} style={{ color: "#C72030" }} />
+          </div>
+        ) : allRates.length === 0 ? (
+          <div className="py-8 text-center text-sm text-gray-400 border border-gray-200 rounded">
+            No tax rates available. Add individual tax rates first.
+          </div>
+        ) : (
+          <div>
+            {allRates.map((rate) => (
+              <div
+                key={rate.id}
+                className="flex items-center border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+                style={{ minHeight: "42px" }}
+              >
+                <input
+                  type="checkbox"
+                  id={`rate-${rate.id}`}
+                  checked={checkedIds.has(rate.id)}
+                  onChange={() => toggleCheck(rate.id)}
+                  className="w-4 h-4 mr-3 accent-[#C72030] cursor-pointer flex-shrink-0"
+                />
+                <label
+                  htmlFor={`rate-${rate.id}`}
+                  className="flex-1 text-sm text-gray-800 cursor-pointer select-none"
+                >
+                  {rate.name}
+                </label>
+                <span className="text-sm text-gray-600 ml-2">{rate.rate} %</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* ── New / Edit Tax Group popup dialog ──────────────────────────── */}
-      {panelOpen && (
-        <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={closePanel} />
-
-          {/* Centered modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
-            <div
-              className="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col"
-              style={{ animation: "groupPopIn 0.18s ease-out" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b">
-                <h2 className="text-lg font-bold text-[#1A1A1A]">
-                  {editingGroup ? "Edit Tax Group" : "New Tax Group"}
-                </h2>
-                <button
-                  onClick={closePanel}
-                  className="text-gray-400 hover:text-gray-600 transition text-xl leading-none"
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-              </div>
-
-              {/* Body */}
-              <div className="px-6 py-5 overflow-y-auto max-h-[60vh] space-y-5">
-                {/* Tax Group Name */}
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-[#C72030]">
-                    Tax Group Name<span className="text-[#C72030]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={groupName}
-                    onChange={(e) => {
-                      setGroupName(e.target.value);
-                      if (e.target.value.trim()) setGroupNameErr("");
-                    }}
-                    placeholder=""
-                    className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-300 transition ${groupNameErr ? "border-red-500" : "border-gray-300"}`}
-                  />
-                  {groupNameErr && (
-                    <p className="text-xs text-red-500">{groupNameErr}</p>
-                  )}
-                </div>
-
-                {/* Associate Taxes */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-[#C72030]">
-                      Associate Taxes<span className="text-[#C72030]">*</span>
-                    </label>
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <GripVertical className="w-3 h-3" />
-                      <span>Drag taxes to reorder</span>
-                      <Info className="w-3 h-3" />
-                    </div>
-                  </div>
-
-                  {/* Tax list */}
-                  <div className="border border-gray-200 rounded overflow-hidden">
-                    {orderedTaxes.length === 0 ? (
-                      <div className="py-8 text-center text-sm text-gray-400">
-                        No taxes available
-                      </div>
-                    ) : (
-                      orderedTaxes.map((tax, idx) => (
-                        <div
-                          key={tax.id}
-                          draggable
-                          onDragStart={() => onDragStart(idx)}
-                          onDragEnter={() => onDragEnter(idx)}
-                          onDragEnd={onDragEnd}
-                          onDragOver={(e) => e.preventDefault()}
-                          className="flex items-center border-b border-gray-100 last:border-b-0 bg-white hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing"
-                          style={{ minHeight: "44px" }}
-                        >
-                          {/* Checkbox */}
-                          <div className="px-3">
-                            <input
-                              type="checkbox"
-                              checked={checkedIds.has(tax.id)}
-                              onChange={() => toggleCheck(tax.id)}
-                              className="w-4 h-4 accent-[#C72030] cursor-pointer"
-                            />
-                          </div>
-                          
-                          {/* Name */}
-                          <span className="flex-1 text-sm text-gray-800 py-2.5">
-                            {tax.name}
-                          </span>
-                          
-                          {/* Percentage */}
-                          <span className="text-sm text-gray-600 pr-3">
-                            {fmtPct(tax.percentage)}
-                          </span>
-                          
-                          {/* Drag handle */}
-                          <div className="pr-3 text-gray-300">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t flex gap-3 justify-end bg-white rounded-b-lg">
-                <Button variant="outline" onClick={closePanel} disabled={saving}>
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? "Saving…" : "Save"}
-                </Button>
-              </div>
-            </div>
-          </div>
-          <style>{`
-            @keyframes groupPopIn {
-              from { transform: scale(0.93); opacity: 0; }
-              to   { transform: scale(1);    opacity: 1; }
-            }
-          `}</style>
-        </>
-      )}
+      {/* Actions */}
+      <div className="flex gap-3 pt-4 border-t">
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[72px]"
+          onClick={handleSave}
+          disabled={saving || loadingRates}
+        >
+          {saving ? "Saving…" : "Save"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={resetForm}
+          disabled={saving}
+          className="min-w-[72px]"
+        >
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-//  TaxRateSetupPage  – main page
+//  TaxRateSetupPage  – main page with tabs
 // ════════════════════════════════════════════════════════════════════════════
 const TaxRateSetupPage: React.FC = () => (
   <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -1527,16 +667,16 @@ const TaxRateSetupPage: React.FC = () => (
 export default TaxRateSetupPage;
 
 // ════════════════════════════════════════════════════════════════════════════
-//  AddTaxGroupPage  – full-page form for creating a new tax group
+//  AddTaxGroupPage  – standalone full-page "New Tax Group" form
 // ════════════════════════════════════════════════════════════════════════════
 export const AddTaxGroupPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [allTaxes, setAllTaxes] = useState<Tax[]>([]);
+  const [allRates, setAllRates] = useState<TaxRate[]>([]);
   const [groupName, setGroupName] = useState("");
   const [groupNameErr, setGroupNameErr] = useState("");
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
-  const [orderedTaxes, setOrderedTaxes] = useState<Tax[]>([]);
+  const [orderedRates, setOrderedRates] = useState<TaxRate[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -1544,84 +684,64 @@ export const AddTaxGroupPage: React.FC = () => {
   const dragOver = useRef<number | null>(null);
 
   useEffect(() => {
-    const fetchTaxes = async () => {
+    const fetchRates = async () => {
       setLoading(true);
       try {
-        const r = await fetch(
-          getFullUrl("/lock_account_taxes.json?lock_account_id=1"),
-          getAuthOptions("GET")
-        );
-        if (!r.ok) throw new Error();
-        const data: Tax[] = await r.json();
-        setAllTaxes(data);
-        setOrderedTaxes(data);
+        const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
+        const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
+        const list = Array.isArray(res.data) ? res.data : [];
+        setAllRates(list);
+        setOrderedRates(list);
       } catch {
-        /* silent */
+        toast.error("Failed to load tax rates.");
       } finally {
         setLoading(false);
       }
     };
-    fetchTaxes();
+    fetchRates();
   }, []);
 
   const toggleCheck = (id: number) => {
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  const onDragStart = (idx: number) => {
-    dragItem.current = idx;
-  };
-  const onDragEnter = (idx: number) => {
-    dragOver.current = idx;
-  };
+  const onDragStart = (idx: number) => { dragItem.current = idx; };
+  const onDragEnter = (idx: number) => { dragOver.current = idx; };
   const onDragEnd = () => {
     const from = dragItem.current;
-    const to = dragOver.current;
+    const to   = dragOver.current;
     if (from === null || to === null || from === to) return;
-    const next = [...orderedTaxes];
+    const next = [...orderedRates];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-    setOrderedTaxes(next);
+    setOrderedRates(next);
     dragItem.current = null;
     dragOver.current = null;
   };
 
   const handleSave = async () => {
-    if (!groupName.trim()) {
-      setGroupNameErr("Tax Group Name is required");
-      return;
-    }
+    if (!groupName.trim()) { setGroupNameErr("Tax Group Name is required"); return; }
     setGroupNameErr("");
     setSaving(true);
-    const selectedIds = orderedTaxes
-      .filter((t) => checkedIds.has(t.id))
-      .map((t) => t.id);
+    const selectedIds = orderedRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
     try {
-      const r = await fetch(
-        getFullUrl("/lock_account_tax_groups.json?lock_account_id=1"),
-        getAuthOptions("POST", {
-          lock_account_tax_group: {
-            name: groupName,
-            lock_account_tax_ids: selectedIds,
-          },
-        })
+      await axios.post(
+        `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
+        { tax_group: { name: groupName, tax_rates: selectedIds } },
+        { headers: authHeaders() }
       );
-      if (!r.ok) throw new Error();
       toast.success("Tax group created!");
       navigate("/accounting/tax-rates-setup");
-    } catch {
-      toast.error("Failed to save tax group.");
+    } catch (err: unknown) {
+      toast.error(extractErrorMsg(err, "Failed to save tax group."));
     } finally {
       setSaving(false);
     }
   };
-
-  const fmtPct = (p: number) => `${p} %`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1652,13 +772,10 @@ export const AddTaxGroupPage: React.FC = () => {
                 setGroupName(e.target.value);
                 if (e.target.value.trim()) setGroupNameErr("");
               }}
-              className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${
-                groupNameErr ? "border-red-400" : "border-gray-300"
-              }`}
+              placeholder="e.g. GST20"
+              className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${groupNameErr ? "border-red-400" : "border-gray-300"}`}
             />
-            {groupNameErr && (
-              <p className="text-xs text-red-500 mt-1">{groupNameErr}</p>
-            )}
+            {groupNameErr && <p className="text-xs text-red-500 mt-1">{groupNameErr}</p>}
           </div>
         </div>
 
@@ -1666,31 +783,29 @@ export const AddTaxGroupPage: React.FC = () => {
         <div className="flex items-start gap-6">
           <div className="w-40 pt-2 shrink-0">
             <label className="text-sm font-semibold text-[#C72030]">
-              Associate Taxes<span className="text-[#C72030]">*</span>
+              Associate Tax Rates<span className="text-[#C72030]">*</span>
             </label>
           </div>
           <div className="flex-1 space-y-2">
-            {/* hint */}
             <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
               <GripVertical className="w-3 h-3" />
-              <span>Drag taxes to reorder</span>
+              <span>Drag to reorder</span>
               <Info className="w-3 h-3" />
             </div>
 
-            {/* Tax list */}
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <CircularProgress size={24} style={{ color: "#C72030" }} />
               </div>
-            ) : orderedTaxes.length === 0 ? (
+            ) : orderedRates.length === 0 ? (
               <div className="py-8 text-center text-sm text-gray-400 border border-gray-200 rounded">
-                No taxes available. Add individual taxes first.
+                No tax rates available. Add individual tax rates first.
               </div>
             ) : (
               <div className="border border-gray-200 rounded overflow-hidden">
-                {orderedTaxes.map((tax, idx) => (
+                {orderedRates.map((rate, idx) => (
                   <div
-                    key={tax.id}
+                    key={rate.id}
                     draggable
                     onDragStart={() => onDragStart(idx)}
                     onDragEnter={() => onDragEnter(idx)}
@@ -1702,17 +817,14 @@ export const AddTaxGroupPage: React.FC = () => {
                     <div className="px-3">
                       <input
                         type="checkbox"
-                        checked={checkedIds.has(tax.id)}
-                        onChange={() => toggleCheck(tax.id)}
+                        checked={checkedIds.has(rate.id)}
+                        onChange={() => toggleCheck(rate.id)}
                         className="w-4 h-4 accent-[#C72030] cursor-pointer"
                       />
                     </div>
-                    <span className="flex-1 text-sm text-gray-800 py-2.5">
-                      {tax.name}
-                    </span>
-                    <span className="text-sm text-gray-500 pr-3">
-                      {fmtPct(tax.percentage)}
-                    </span>
+                    <span className="flex-1 text-sm text-gray-800 py-2.5">{rate.name}</span>
+                    <span className="text-xs font-semibold text-[#C72030] px-2">{rate.rate_type}</span>
+                    <span className="text-sm text-gray-500 pr-3">{rate.rate}%</span>
                     <div className="pr-3 text-gray-300">
                       <GripVertical className="w-4 h-4" />
                     </div>
@@ -1723,13 +835,9 @@ export const AddTaxGroupPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer buttons */}
+        {/* Footer */}
         <div className="flex gap-3 pt-4 border-t justify-end">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/accounting/tax-rates-setup")}
-            disabled={saving}
-          >
+          <Button variant="outline" onClick={() => navigate("/accounting/tax-rates-setup")} disabled={saving}>
             Cancel
           </Button>
           <Button

@@ -27,6 +27,7 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import NotificationsPage from "./pages/NotificationsPage";
 import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
@@ -1146,7 +1147,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -3643,6 +3644,10 @@ function App() {
                         element={<OpportunityDetailsPage />}
                       />
                       <Route path="/vas/todo" element={<Todo />} />
+                      <Route
+                        path="/notifications"
+                        element={<NotificationsPage />}
+                      />
                       <Route
                         path="/vas/documents"
                         element={<DocumentManagement />}
