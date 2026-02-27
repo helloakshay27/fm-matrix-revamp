@@ -158,7 +158,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
-    {
+  {
     key: "gl_account",
     label: "GL Account",
     sortable: true,
@@ -980,19 +980,31 @@ export const MaterialPRDetailsPage = () => {
                           />
                         </>
                       ) : isPdf ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <div
+                          className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2 cursor-pointer hover:bg-red-50"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        >
                           <FileText className="w-6 h-6" />
                         </div>
                       ) : isExcel ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <div
+                          className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2 cursor-pointer hover:bg-green-50"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        >
                           <FileSpreadsheet className="w-6 h-6" />
                         </div>
                       ) : isWord ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <div
+                          className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2 cursor-pointer hover:bg-blue-50"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        >
                           <FileText className="w-6 h-6" />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <div
+                          className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2 cursor-pointer hover:bg-gray-50"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        >
                           <File className="w-6 h-6" />
                         </div>
                       )}
@@ -1006,10 +1018,7 @@ export const MaterialPRDetailsPage = () => {
                           size="icon"
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                          onClick={() => {
-                            setSelectedDoc(attachment);
-                            setIsModalOpen(true);
-                          }}
+                          onClick={() => window.open(attachment.url, "_blank")}
                         >
                           <Download className="w-4 h-4" />
                         </Button>
@@ -1218,17 +1227,16 @@ export const MaterialPRDetailsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                      <p className={`text-sm font-medium ${
-                        apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                        }`}>
                         {apiCall.response_status || '-'}
                       </p>
                     </div>
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 font-semibold">Message</p>
                       <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.eval_status && apiCall.eval_status.trim() 
-                          ? apiCall.eval_status 
+                        {apiCall.eval_status && apiCall.eval_status.trim()
+                          ? apiCall.eval_status
                           : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
                       </p>
                     </div>
