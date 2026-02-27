@@ -285,9 +285,14 @@ const modulesByPackage = {
                 },
 
                 {
-                    name: "Taxes",
+                    name: "Direct Taxes",
                     icon: Calculator,
                     href: "/accounting/tax-setup-master",
+                },
+                {
+                    name: "Default Tax Preferences",
+                    icon: Calculator,
+                    href: "/accounting/default-tax-preferences",
                 },
                 { name: "Charges ", href: "/accounting/charge-setup" },
                 { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
