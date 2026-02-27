@@ -58,6 +58,8 @@ interface VirtualizedColumnProps {
     arrowLinks: any[];
     toggleSubCard: (taskId: number) => void;
     handleLink: (sourceId: string, targetIds: string[]) => void;
+    columnScrollRef?: (el: HTMLDivElement | null) => void;
+    onColumnScroll?: (columnId: number, scrollTop: number) => void;
 }
 
 const VirtualizedTaskColumn = ({
@@ -69,8 +71,17 @@ const VirtualizedTaskColumn = ({
     arrowLinks,
     toggleSubCard,
     handleLink,
+    columnScrollRef,
+    onColumnScroll,
 }: VirtualizedColumnProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
+
+    // Sync with parent ref
+    useEffect(() => {
+        if (columnScrollRef) {
+            columnScrollRef(containerRef.current);
+        }
+    }, [columnScrollRef]);
 
     const virtualizer = useVirtualizer({
         count: filteredTasks.length,
@@ -81,6 +92,13 @@ const VirtualizedTaskColumn = ({
     });
 
     const virtualItems = virtualizer.getVirtualItems();
+
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.currentTarget;
+        if (onColumnScroll) {
+            onColumnScroll(card.id, target.scrollTop);
+        }
+    }, [card.id, onColumnScroll]);
 
     return (
         <KanbanBoard
@@ -94,6 +112,7 @@ const VirtualizedTaskColumn = ({
             {filteredTasks.length > 0 ? (
                 <div
                     ref={containerRef}
+                    onScroll={handleScroll}
                     style={{
                         height: "500px",
                         overflow: "auto",
@@ -286,6 +305,32 @@ const TaskManagementKanban = ({ fetchData, showMyTasksOnly = false }) => {
     const [droppedTasks, setDroppedTasks] = useState<{ [key: string]: string }>({});
     const [droppedSubtasks, setDroppedSubtasks] = useState<{ [key: string]: string }>({});
 
+    // Refs for column scroll positions
+    const columnScrollRefs = useRef<Record<number, HTMLDivElement | null>>({});
+    const scrollPositionsRef = useRef<Record<number, number>>({});
+
+    // Session storage key for this project's Kanban board state
+    const stateKey = `kanban_board_state_${id}`;
+
+    // Restore state from sessionStorage on mount
+    useEffect(() => {
+        const savedState = sessionStorage.getItem(stateKey);
+        if (savedState) {
+            try {
+                const { arrowLinks: savedArrows, subCardVisibility: savedVisibility, droppedTasks: savedDropped, droppedSubtasks: savedSubDropped, scrollPositions } = JSON.parse(savedState);
+                setArrowLinks(savedArrows || []);
+                setSubCardVisibility(savedVisibility || {});
+                setDroppedTasks(savedDropped || {});
+                setDroppedSubtasks(savedSubDropped || {});
+                if (scrollPositions) {
+                    scrollPositionsRef.current = scrollPositions;
+                }
+            } catch (error) {
+                console.error("Failed to restore Kanban state:", error);
+            }
+        }
+    }, [id, stateKey]);
+
     // Fetch Kanban tasks when component mounts or project_id changes
     useEffect(() => {
         if (token && baseUrl) {
@@ -299,6 +344,48 @@ const TaskManagementKanban = ({ fetchData, showMyTasksOnly = false }) => {
             dispatch(fetchKanbanTasksOfProject(params));
         }
     }, [dispatch, token, baseUrl, id, showMyTasksOnly]);
+
+    // Restore scroll positions after data loads
+    useEffect(() => {
+        if (!loading && Object.keys(scrollPositionsRef.current).length > 0) {
+            // Use setTimeout to ensure DOM is ready
+            const timer = setTimeout(() => {
+                Object.entries(scrollPositionsRef.current).forEach(([columnId, scrollPos]) => {
+                    const ref = columnScrollRefs.current[parseInt(columnId)];
+                    if (ref) {
+                        ref.scrollTop = scrollPos;
+                    }
+                });
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
+    // Save state to sessionStorage whenever it changes
+    useEffect(() => {
+        const stateToSave = {
+            arrowLinks,
+            subCardVisibility,
+            droppedTasks,
+            droppedSubtasks,
+            scrollPositions: scrollPositionsRef.current,
+        };
+        sessionStorage.setItem(stateKey, JSON.stringify(stateToSave));
+    }, [arrowLinks, subCardVisibility, droppedTasks, droppedSubtasks, stateKey]);
+
+    // Save scroll positions when scrolling
+    const handleColumnScroll = useCallback((columnId: number, scrollTop: number) => {
+        scrollPositionsRef.current[columnId] = scrollTop;
+        // Update sessionStorage periodically while scrolling (debounced via ref)
+        const stateToSave = {
+            arrowLinks,
+            subCardVisibility,
+            droppedTasks,
+            droppedSubtasks,
+            scrollPositions: scrollPositionsRef.current,
+        };
+        sessionStorage.setItem(stateKey, JSON.stringify(stateToSave));
+    }, [arrowLinks, subCardVisibility, droppedTasks, droppedSubtasks, stateKey]);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const activeData = event.active.data.current;
@@ -554,6 +641,10 @@ const TaskManagementKanban = ({ fetchData, showMyTasksOnly = false }) => {
                                     arrowLinks={arrowLinks}
                                     toggleSubCard={toggleSubCard}
                                     handleLink={handleLink}
+                                    columnScrollRef={(el) => {
+                                        if (el) columnScrollRefs.current[card.id] = el;
+                                    }}
+                                    onColumnScroll={handleColumnScroll}
                                 />
                             );
                         })}

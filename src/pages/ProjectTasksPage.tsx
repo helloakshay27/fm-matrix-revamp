@@ -1896,6 +1896,7 @@ const ProjectTasksPage = () => {
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
+                                    setTaskType("my");
                                     setIsOpen(false);
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
