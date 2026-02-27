@@ -27,6 +27,7 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import NotificationsPage from "./pages/NotificationsPage";
 import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
