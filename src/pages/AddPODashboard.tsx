@@ -362,11 +362,33 @@ export const AddPODashboard = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    setFormData({
-      ...formData,
-      attachments: [...formData.attachments, ...files],
+    const selectedFiles = e.target.files ? Array.from(e.target.files) as File[] : [];
+    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
+    const validFiles: File[] = [];
+
+    selectedFiles.forEach((file) => {
+      // Validate file type
+      if (!validFileTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        return;
+      }
+
+      // Validate file size
+      if (file.size > maxFileSizeBytes) {
+        toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        return;
+      }
+
+      validFiles.push(file);
     });
+
+    if (validFiles.length > 0) {
+      setFormData({
+        ...formData,
+        attachments: [...formData.attachments, ...validFiles],
+      });
+    }
   };
 
   const removeFile = (index: number) => {
@@ -1145,6 +1167,10 @@ export const AddPODashboard = () => {
                         ? `${formData.attachments.length} file(s) selected`
                         : "No files chosen"}
                     </span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-3 space-y-1">
+                    <p>Accepts up to 12 MB files</p>
+                    <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
                   </div>
                 </div>
 
