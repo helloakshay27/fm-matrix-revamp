@@ -187,6 +187,7 @@ export const InventoryDashboard = () => {
   const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
   const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] =
     useState(false);
+  const [orgId, setOrgId] = useState<number | null>(null);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -388,6 +389,34 @@ export const InventoryDashboard = () => {
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<
     string[]
   >(["itemsStatus", "categoryWise", "greenConsumption"]);
+
+  // Load org_id from user account
+  useEffect(() => {
+    try {
+      // first try explicit org_id stored separately (common pattern)
+      const storedOrg = localStorage.getItem('org_id');
+      if (storedOrg) {
+        const num = Number(storedOrg);
+        if (!Number.isNaN(num)) {
+          setOrgId(num);
+          return;
+        }
+      }
+
+      // fallback to user object which may contain org_id/company_id
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.org_id) {
+          setOrgId(user.org_id);
+        } else if (user.company_id) {
+          setOrgId(user.company_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load org_id:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (inventoryItems) {
@@ -923,17 +952,23 @@ export const InventoryDashboard = () => {
     setShowBulkUpload(true);
   };
 
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3 items-center">
-      <Button
-        onClick={handleActionClick}
-        className="bg-primary text-primary-foreground hover:bg-primary/90"
-        variant="default"
-      >
-        <Plus className="w-4 h-4" /> Action
-      </Button>
-    </div>
-  );
+  const renderCustomActions = () => {
+    // Hide Action button for org_id 63
+    if (orgId === 63) {
+      return null;
+    }
+    return (
+      <div className="flex flex-wrap gap-3 items-center">
+        <Button
+          onClick={handleActionClick}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          variant="default"
+        >
+          <Plus className="w-4 h-4" /> Action
+        </Button>
+      </div>
+    );
+  };
 
   const handleExport = async () => {
     const baseUrl = localStorage.getItem("baseUrl");
