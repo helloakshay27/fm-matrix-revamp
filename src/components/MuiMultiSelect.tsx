@@ -57,6 +57,11 @@ export const MuiMultiSelect = ({
         }
     };
 
+    // Determine min height based on max height
+    const minHeight = typeof maxHeight === 'string'
+        ? (maxHeight === '36px' ? '36px' : '65px')
+        : (maxHeight as number) < 50 ? '36px' : '65px';
+
     return (
         <FormControl
             fullWidth={fullWidth}
@@ -64,7 +69,7 @@ export const MuiMultiSelect = ({
             variant="outlined"
             sx={{
                 "& .MuiInputBase-root": {
-                    minHeight: "65px",
+                    minHeight: minHeight,
                     maxHeight: maxHeight,
                     height: "auto",
                 },
@@ -101,8 +106,8 @@ export const MuiMultiSelect = ({
                         style={{
                             display: "flex",
                             flexWrap: "wrap",
-                            gap: "4px",
-                            padding: "4px 0",
+                            gap: "3px",
+                            padding: "2px 0",
                             maxHeight: maxHeight,
                             overflowY: "auto",
                             width: "100%",
@@ -140,14 +145,14 @@ export const MuiMultiSelect = ({
                                         e.stopPropagation();
                                     }}
                                     sx={{
-                                        height: "20px",
-                                        fontSize: "0.7rem",
+                                        height: "18px",
+                                        fontSize: "0.65rem",
                                         "& .MuiChip-label": {
-                                            padding: "0 6px",
+                                            padding: "0 5px",
                                         },
                                         "& .MuiChip-deleteIcon": {
-                                            fontSize: "14px",
-                                            margin: "0 2px 0 -4px",
+                                            fontSize: "12px",
+                                            margin: "0 1px 0 -3px",
                                         },
                                     }}
                                 />
