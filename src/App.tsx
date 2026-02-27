@@ -1069,10 +1069,10 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import ModulesManagement from "./pages/settings/ModulesManagement";
 import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
-import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage"
+import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage";
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
-import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails"
+import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1089,11 +1089,11 @@ import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
 import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
+import TaxRateSetupPage from "./pages/ClubManagement/TaxRateSetupPage";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
-
 
 const queryClient = new QueryClient();
 
@@ -1146,7 +1146,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2225,7 +2225,6 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
-
                       <Route
                         path="/accounting/vendor-credits"
                         element={<VendorCreditsListPage />}
@@ -2242,8 +2241,6 @@ function App() {
                         path="/accounting/vendor-credits/edit/:id"
                         element={<VendorCreditsEdit />}
                       />
-
-
                       <Route
                         path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
@@ -2360,7 +2357,7 @@ function App() {
                         path="/accounting/customers/add"
                         element={<CustomersAdd />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/customers/details/:id"
                         element={<CustomersDetails />}
                       />
@@ -2389,7 +2386,7 @@ function App() {
                         path="/accounting/invoices/add"
                         element={<InvoiceAdd />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/dashboard/invoices/:id"
                         element={<InvoiceDashboardDetailsPage />}
                       />
@@ -2401,11 +2398,10 @@ function App() {
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
                       />
-                        <Route
+                      <Route
                         path="/accounting/quotes/details/:id"
                         element={<QuotesDetails />}
                       />
-
                       <Route
                         path="/accounting/delivery-challans"
                         element={<DeliveryChallansDashboard />}
@@ -2421,7 +2417,6 @@ function App() {
                       <Route
                         path="/accounting/recurring-invoices/create"
                         element={<RecurringInvoicesCreatePage />}
-
                       />
                       <Route
                         path="/accounting/payments-received"
@@ -2435,7 +2430,6 @@ function App() {
                         path="/accounting/payments-received/:id"
                         element={<PaymentReceivedDetailsPage />}
                       />
-
                       <Route
                         path="/accounting/credit-note"
                         element={<CreditNoteListPage />}
@@ -2452,8 +2446,6 @@ function App() {
                         path="/accounting/credit-note/edit/:id"
                         element={<CreditNoteEditPage />}
                       />
-
-
                       {/* Purchase Order Routes */}
                       <Route
                         path="/accounting/purchase-order"
@@ -2480,9 +2472,9 @@ function App() {
                         path="/accounting/bills/create"
                         element={<BillCreatePage />}
                       /> */}
-                       <Route
+                      <Route
                         path="/accounting/bills/create"
-                        element={<BillsAdd/>}
+                        element={<BillsAdd />}
                       />
                       <Route
                         path="/accounting/bills/:id"
@@ -2539,6 +2531,10 @@ function App() {
                         element={<TaxSetupMaster />}
                       />
                       <Route
+                        path="/accounting/tax-rates-setup"
+                        element={<TaxRateSetupPage />}
+                      />
+                      <Route
                         path="/accounting/sales-person"
                         element={<SalesPersonMaster />}
                       />
@@ -2546,7 +2542,7 @@ function App() {
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
                       />
-                        <Route
+                      <Route
                         path="/accounting/payment-terms"
                         element={<PaymentTermsMaster />}
                       />
