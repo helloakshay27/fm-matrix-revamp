@@ -24,14 +24,16 @@ export const todosQueryKeys = {
     list: (
         taskType: "my" | "all",
         userIds: string[],
-        search?: string
+        search?: string,
+        fromDate?: string,
+        toDate?: string
     ) =>
         [
             ...todosQueryKeys.lists(),
-            { taskType, userIds: userIds.join(","), search },
+            { taskType, userIds: userIds.join(","), search, fromDate, toDate },
         ] as const,
-    infinite: (taskType: "my" | "all", userIds: string[], search?: string) =>
-        [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search }] as const,
+    infinite: (taskType: "my" | "all", userIds: string[], search?: string, fromDate?: string, toDate?: string) =>
+        [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search, fromDate, toDate }] as const,
     details: () => [...todosQueryKeys.all, "detail"] as const,
     detail: (id: number | string) =>
         [...todosQueryKeys.details(), id] as const,
@@ -41,6 +43,8 @@ interface UseTodosOptions {
     taskType?: "my" | "all";
     userIds?: string[];
     search?: string;
+    fromDate?: string;
+    toDate?: string;
 }
 
 /**
@@ -52,23 +56,28 @@ interface UseTodosOptions {
  * - Filter by task type (my/all)
  * - Filter by user IDs
  * - Search support
+ * - Date range filtering
  * - Dashboard data (p1_count, p2_count, etc.)
  *
  * Example:
  * const { data, fetchNextPage, hasNextPage, isLoading } = useTodos({
  *   taskType: "my",
- *   search: "urgent"
+ *   search: "urgent",
+ *   fromDate: "2026-02-28",
+ *   toDate: "2026-03-07"
  * });
  */
 export const useTodos = ({
     taskType = "my",
     userIds = [],
     search,
+    fromDate,
+    toDate,
 }: UseTodosOptions = {}) => {
     return useInfiniteQuery({
-        queryKey: todosQueryKeys.infinite(taskType, userIds, search),
+        queryKey: todosQueryKeys.infinite(taskType, userIds, search, fromDate, toDate),
         queryFn: ({ pageParam = 1 }) =>
-            fetchTodos(pageParam, taskType, userIds, search),
+            fetchTodos(pageParam, taskType, userIds, search, fromDate, toDate),
         getNextPageParam: (lastPage) => lastPage.pagination.next_page,
         initialPageParam: 1,
         staleTime: 30 * 1000, // 30 seconds
