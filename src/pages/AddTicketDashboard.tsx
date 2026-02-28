@@ -318,6 +318,9 @@ export const AddTicketDashboard = () => {
   const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [entities, setEntities] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingEntities, setLoadingEntities] = useState(false);
+  const [orgId, setOrgId] = useState<number | null>(null);
 
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -353,7 +356,9 @@ export const AddTicketDashboard = () => {
     building: '',
     wing: '',
     floor: '',
-    room: ''
+    room: '',
+    // Customer name field (for org_id 63)
+    customer_name: ''
   });
   // Set default proactiveReactive based on onBehalfOf selection
   useEffect(() => {
@@ -496,6 +501,48 @@ export const AddTicketDashboard = () => {
       }));
     }
   }, [userAccount, onBehalfOf]);
+
+  // Load org_id and entities on mount
+  useEffect(() => {
+    // Fetch org_id from localStorage
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const foundOrgId = user?.org_id || user?.organization_id;
+      if (foundOrgId) {
+        setOrgId(Number(foundOrgId));
+      } else {
+        const standalonOrgId = localStorage.getItem('org_id');
+        if (standalonOrgId) setOrgId(Number(standalonOrgId));
+      }
+    } catch (e) {
+      const standalonOrgId = localStorage.getItem('org_id');
+      if (standalonOrgId) setOrgId(Number(standalonOrgId));
+    }
+
+    // Load entities if org_id is 63
+    const loadEntities = async () => {
+      setLoadingEntities(true);
+      try {
+        const url = getFullUrl('/entities.json');
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch entities');
+        const data = await response.json();
+        // Extract entities array and map to id and name
+        const entityList = Array.isArray(data?.entities) ? data.entities : [];
+        setEntities(entityList.map(entity => ({
+          id: entity.id,
+          name: entity.name
+        })));
+      } catch (error) {
+        console.error('Error loading entities:', error);
+      } finally {
+        setLoadingEntities(false);
+      }
+    };
+
+    loadEntities();
+  }, []);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -1054,6 +1101,7 @@ export const AddTicketDashboard = () => {
         ...(formData.wing && { wing_id: parseInt(formData.wing) }),
         ...(formData.floor && { floor_id: parseInt(formData.floor) }),
         ...(formData.room && { room_id: parseInt(formData.room) }),
+        ...(formData.customer_name && { entity_id: parseInt(formData.customer_name) }),
         is_golden_ticket: isGoldenTicket,
         is_flagged: isFlagged
       };
@@ -1357,7 +1405,33 @@ export const AddTicketDashboard = () => {
                   <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
                 </div> */}
 
-
+            {/* Customer Name Dropdown - Only for org_id 63 */}
+            {orgId === 63 && (
+              <div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Customer Name</InputLabel>
+                  <MuiSelect
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    label="Customer Name"
+                    notched
+                    displayEmpty
+                    disabled={loadingEntities}
+                  >
+                    <MenuItem value="">Select Customer</MenuItem>
+                    {entities.map((entity) => (
+                      <MenuItem key={entity.id} value={entity.id.toString()}>
+                        {entity.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            )}
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
