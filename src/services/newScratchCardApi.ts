@@ -26,7 +26,7 @@ export interface Prize {
   id: number;
   title: string;
   display_name: string | null;
-  reward_type: "points" | "coupon" | "marchandise" | "none";
+  reward_type: "points" | "coupon" | "merchandise" | "none";
   coupon_code: string | null;
   partner_name: string | null;
   points_value: number | null;

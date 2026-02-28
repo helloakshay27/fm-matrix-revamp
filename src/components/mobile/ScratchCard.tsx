@@ -748,7 +748,7 @@ export const ScratchCard: React.FC = () => {
                   </p>
                 )}
 
-                {wonPrize.reward_type === "marchandise" && (
+                {wonPrize.reward_type === "merchandise" && (
                   <>
                     <p className="text-center text-gray-600 mb-2">
                       Merchandise Prize
@@ -787,9 +787,8 @@ export const ScratchCard: React.FC = () => {
                       setShowResultModal(false);
                       handleViewVoucher();
                     }}
-                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
-                      wonPrize.coupon_code ? "" : "mt-3"
-                    }`}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${wonPrize.coupon_code ? "" : "mt-3"
+                      }`}
                   >
                     View Details
                   </button>

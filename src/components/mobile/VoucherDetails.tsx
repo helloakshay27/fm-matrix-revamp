@@ -134,7 +134,7 @@ export const VoucherDetails: React.FC = () => {
         return;
       }
 
-      const params: Record<string, string> = { reward_type: "marchandise" };
+      const params: Record<string, string> = { reward_type: "merchandise" };
       if (token) params.token = token;
 
       await baseClient.put(
@@ -310,7 +310,7 @@ export const VoucherDetails: React.FC = () => {
                 ) : (
                   <div className="text-gray-600 text-sm space-y-1">
                     {/* Show merchandise product details */}
-                    {displayData?.reward_type === "marchandise" &&
+                    {displayData?.reward_type === "merchandise" &&
                       displayData?.product && (
                         <div className="space-y-3 mb-4">
                           <div className="bg-[#FFF8E7] border border-[#D4A574] rounded-lg p-4">
@@ -402,7 +402,7 @@ export const VoucherDetails: React.FC = () => {
 
           {/* How to Redeem Section */}
           {(voucherData?.redemption_steps ||
-            (displayData?.reward_type === "marchandise" &&
+            (displayData?.reward_type === "merchandise" &&
               (displayData?.product as { redemption_instructions?: string })
                 ?.redemption_instructions)) && (
               <div className="border-t border-gray-200">
@@ -435,7 +435,7 @@ export const VoucherDetails: React.FC = () => {
                           </li>
                         ))}
                       </ol>
-                    ) : displayData?.reward_type === "marchandise" &&
+                    ) : displayData?.reward_type === "merchandise" &&
                       (
                         displayData?.product as {
                           redemption_instructions?: string;
@@ -460,7 +460,7 @@ export const VoucherDetails: React.FC = () => {
           {/* Terms & Conditions Section */}
           {(voucherData?.terms_conditions ||
             displayData?.terms ||
-            (displayData?.reward_type === "marchandise" &&
+            (displayData?.reward_type === "merchandise" &&
               (displayData?.product as { terms_and_conditions?: string })
                 ?.terms_and_conditions)) && (
               <div className="border-t border-gray-200">
@@ -489,7 +489,7 @@ export const VoucherDetails: React.FC = () => {
                           </span>
                         </div>
                       ))
-                    ) : displayData?.reward_type === "marchandise" &&
+                    ) : displayData?.reward_type === "merchandise" &&
                       (displayData?.product as { terms_and_conditions?: string })
                         ?.terms_and_conditions ? (
                       <div
@@ -527,7 +527,7 @@ export const VoucherDetails: React.FC = () => {
       )}
 
       {/* Redeem Now Button for merchandise rewards */}
-      {displayData?.reward_type === "marchandise" &&
+      {displayData?.reward_type === "merchandise" &&
         displayData?.status === "granted" &&
         !showCode && (
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">

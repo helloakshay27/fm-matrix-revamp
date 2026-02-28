@@ -332,9 +332,8 @@ export const FlipCard: React.FC = () => {
                   className="w-full perspective-1000"
                 >
                   <div
-                    className={`relative transition-all duration-600 transform-style-3d ${
-                      flippingCard === card.id ? "rotate-y-180" : ""
-                    }`}
+                    className={`relative transition-all duration-600 transform-style-3d ${flippingCard === card.id ? "rotate-y-180" : ""
+                      }`}
                   >
                     {/* Card */}
                     <div className="relative rounded-2xl overflow-hidden shadow-lg">
@@ -357,9 +356,9 @@ export const FlipCard: React.FC = () => {
                               {card.prize.reward_type === "coupon"
                                 ? card.prize.partner_name || "Coupon"
                                 : card.prize.reward_type === "points" &&
-                                    card.prize.points_value
+                                  card.prize.points_value
                                   ? `${card.prize.points_value} Points`
-                                  : card.prize.reward_type === "marchandise"
+                                  : card.prize.reward_type === "merchandise"
                                     ? "Merchandise Prize"
                                     : "Prize"}
                             </p>
@@ -497,7 +496,7 @@ export const FlipCard: React.FC = () => {
                   </p>
                 )}
 
-                {wonPrize.reward_type === "marchandise" && (
+                {wonPrize.reward_type === "merchandise" && (
                   <>
                     <p className="text-center text-gray-600 mb-2">
                       Merchandise Prize
