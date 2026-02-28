@@ -37,12 +37,16 @@ const getBaseUrl = () => {
  * @param taskType - "my" for current user or "all" for all tasks
  * @param userIds - Array of user IDs to filter by (when taskType is "all")
  * @param search - Search term
+ * @param fromDate - Start date for filtering (YYYY-MM-DD format)
+ * @param toDate - End date for filtering (YYYY-MM-DD format)
  */
 export const fetchTodos = async (
     page = 1,
     taskType: "my" | "all" = "my",
     userIds: string[] = [],
-    search?: string
+    search?: string,
+    fromDate?: string,
+    toDate?: string
 ): Promise<TodosResponse> => {
     const token = getToken();
     const baseUrl = getBaseUrl();
@@ -70,6 +74,14 @@ export const fetchTodos = async (
     // Add search if provided
     if (search && search.trim()) {
         params.append("q[title_cont]", search.trim());
+    }
+
+    // Add date range filters if provided
+    if (fromDate) {
+        params.append("q[target_date_or_updated_at_gteq]", fromDate);
+    }
+    if (toDate) {
+        params.append("q[target_date_or_updated_at_lteq]", toDate);
     }
 
     const url = `https://${baseUrl}/todos.json?${params.toString()}`;

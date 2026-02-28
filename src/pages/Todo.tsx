@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus } from "lucide-react";
+import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
@@ -113,6 +113,10 @@ export default function Todo() {
   const [taskType, setTaskType] = useState<"all" | "my">("my");
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
 
+  // Date filter state
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   useEffect(() => {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
@@ -132,6 +136,9 @@ export default function Todo() {
   const [convertTodoId, setConvertTodoId] = useState(null);
   const [users, setUsers] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
+  const [isToggleConfirmOpen, setIsToggleConfirmOpen] = useState(false);
+  const [todoToToggle, setTodoToToggle] = useState<any>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);
@@ -145,6 +152,8 @@ export default function Todo() {
   } = useTodos({
     taskType,
     userIds,
+    fromDate,
+    toDate,
   });
 
   // Combine all pages into a single todos array
@@ -195,17 +204,28 @@ export default function Todo() {
 
   const toggleTodo = async (id: number | string) => {
     const todo = todos.find(t => t.id === id);
-    const isCompleted = todo?.status === "open";
+    setTodoToToggle(todo);
+    setIsToggleConfirmOpen(true);
+  };
 
+  const handleConfirmToggle = async () => {
+    if (!todoToToggle) return;
+
+    setToggleLoading(true);
     try {
+      const isCompleted = todoToToggle?.status === "open";
       await toggleMutation.mutateAsync({
-        id,
+        id: todoToToggle.id,
         completed: isCompleted,
       });
-      toast.success("Task updated successfully");
+      toast.success(isCompleted ? "Task completed successfully" : "Task reopened successfully");
+      setIsToggleConfirmOpen(false);
+      setTodoToToggle(null);
     } catch (error) {
       console.log(error);
       toast.error("Failed to update task");
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -372,56 +392,89 @@ export default function Todo() {
         {/* Eisenhower Matrix */}
         <EisenhowerMatrix dashboardData={dashboardData} />
 
-        <div className="flex items-center justify-end gap-3">
-          <div className="flex items-center px-4 py-2">
-            <span className="text-gray-700 font-medium text-sm">My Todos</span>
-            <Switch
-              checked={taskType === "all"}
-              onChange={() => {
-                const newTaskType = taskType === "all" ? "my" : "all";
-                setTaskType(newTaskType);
-                if (newTaskType === "my") {
-                  setSelectedUsers([]);
-                }
-              }}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#C72030',
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#C72030',
-                },
-              }}
-            />
-            <span className="text-gray-700 font-medium text-sm">All Todos</span>
-          </div>
-          {
-            taskType === "all" && (
-              <div className="w-full max-w-[24rem]">
-                <MuiMultiSelect
-                  label="Members"
-                  options={users
-                    ?.filter(Boolean)
-                    .map((user: any) => ({
-                      label: user.name || user?.full_name || "Unknown",
-                      value: user?.id,
-                      id: user?.id,
-                    }))}
-                  placeholder="Select Members"
-                  value={selectedUsers}
-                  onChange={(values) => handleMultiSelectChange("members", values)}
-                  maxHeight="36px"
+        <div className="flex items-end justify-between gap-6 flex-wrap">
+          {/* Date Filters - Left Side */}
+          <div className="flex items-end gap-3 flex-shrink-0">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="fromDate" className="text-xs font-semibold text-gray-600">From Date</label>
+              <div className="relative flex items-center">
+                <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
+                <input
+                  id="fromDate"
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                 />
               </div>
-            )
-          }
-          <Button
-            onClick={() => setIsAddTodoModalOpen(true)}
-            className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-max"
-          >
-            <Plus size={18} />
-            Add To-Do
-          </Button>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="toDate" className="text-xs font-semibold text-gray-600">To Date</label>
+              <div className="relative flex items-center">
+                <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
+                <input
+                  id="toDate"
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Existing Controls - Right Side */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center px-4 py-2">
+              <span className="text-gray-700 font-medium text-sm">My Todos</span>
+              <Switch
+                checked={taskType === "all"}
+                onChange={() => {
+                  const newTaskType = taskType === "all" ? "my" : "all";
+                  setTaskType(newTaskType);
+                  if (newTaskType === "my") {
+                    setSelectedUsers([]);
+                  }
+                }}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#C72030',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#C72030',
+                  },
+                }}
+              />
+              <span className="text-gray-700 font-medium text-sm">All Todos</span>
+            </div>
+            {
+              taskType === "all" && (
+                <div className="w-64">
+                  <MuiMultiSelect
+                    label="Members"
+                    options={users
+                      ?.filter(Boolean)
+                      .map((user: any) => ({
+                        label: user.name || user?.full_name || "Unknown",
+                        value: user?.id,
+                        id: user?.id,
+                      }))}
+                    placeholder="Select Members"
+                    value={selectedUsers}
+                    onChange={(values) => handleMultiSelectChange("members", values)}
+                    maxHeight="36px"
+                  />
+                </div>
+              )
+            }
+            <Button
+              onClick={() => setIsAddTodoModalOpen(true)}
+              className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
+            >
+              <Plus size={18} />
+              Add To-Do
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -574,9 +627,9 @@ export default function Todo() {
                   </p>
                 </div>
               ) : (
-                sortedCompletedDates.map((date) => (
+                sortedCompletedDates.map((date, idx) => (
                   <div key={date} className="space-y-2">
-                    <h3 className="font-semibold text-muted-foreground mb-2">
+                    <h3 className={`font-semibold text-muted-foreground mb-2 mt-3 ${idx === 0 ? 'first:mt-0' : ''}`}>
                       {getCompletionDateLabel(date)}
                     </h3>
                     {groupedCompletedTodos[date].map((todo) => (
@@ -628,6 +681,18 @@ export default function Todo() {
         isLoading={isPauseLoading}
         taskId={pauseTaskId}
       />
+
+      {/* Toggle Todo Confirmation Modal */}
+      <ToggleTodoConfirmModal
+        isOpen={isToggleConfirmOpen}
+        onClose={() => {
+          setIsToggleConfirmOpen(false);
+          setTodoToToggle(null);
+        }}
+        onConfirm={handleConfirmToggle}
+        isLoading={toggleLoading}
+        todo={todoToToggle}
+      />
     </div>
   );
 }
@@ -654,17 +719,25 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">
-          Reason for Pause
-        </h2>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+          <h2 className="text-lg font-bold text-gray-900">
+            Pause Task
+          </h2>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          Please provide a reason for pausing this task. This will help track the pause history.
+        </p>
 
         <div className="mb-6">
+          <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Enter reason for pausing this task..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
             rows={4}
             disabled={isLoading}
           />
@@ -674,16 +747,16 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
           >
-            {isLoading ? "Submitting..." : "Pause Task"}
+            {isLoading ? "Processing..." : "Pause Task"}
           </button>
         </div>
       </div>
@@ -691,8 +764,52 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
   );
 };
 
-// ----------------------------------------------
+// Toggle Todo Confirmation Modal Component
+const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo }) => {
+  if (!isOpen || !todo) return null;
+
+  const isCompleting = todo?.status === "open";
+  const title = isCompleting ? "Complete Todo" : "Reopen Todo";
+  const message = isCompleting
+    ? `Are you sure you want to mark "${todo?.title}" as completed?`
+    : `Are you sure you want to reopen "${todo?.title}"?`;
+  const buttonText = isCompleting ? "Complete" : "Reopen";
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-lg font-bold text-gray-900">
+            {title}
+          </h2>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          {message}
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? "Processing..." : buttonText}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Separate Todo Item Component (Cleaner UI)
+// ----------------------------------------------
 // ----------------------------------------------
 const TodoItem = ({
   todo,
@@ -737,7 +854,7 @@ const TodoItem = ({
       );
 
       toast.success(
-        newFlaggedStatus ? "Todo flagged for focus" : "Todo unflagged"
+        newFlaggedStatus ? "Todo flagged for focus" : "Todo unflagged from focus"
       );
       refetch();
     } catch (error) {
@@ -750,11 +867,31 @@ const TodoItem = ({
   const isTaskStarted = todo.task_management?.is_started || false;
   const isCompleted = todo.status === "completed";
 
+  // Get background color based on priority
+  const getPriorityBgColor = () => {
+    // If flagged, use flagged styling
+    // if (todo.is_flagged) {
+    //   return 'bg-orange-100 border-l-4 border-orange-500';
+    // }
+
+    const priority = todo.priority || '';
+
+    switch (priority) {
+      case 'P1':
+        return 'bg-red-100 border-l-4 border-red-500';
+      case 'P2':
+        return 'bg-green-100 border-l-4 border-green-500';
+      case 'P3':
+        return 'bg-yellow-100 border-l-4 border-yellow-500';
+      case 'P4':
+        return 'bg-gray-200 border-l-4 border-blue-500';
+      default:
+        return 'bg-[rgba(213,219,219,0.7)] border-l-4 border-gray-400';
+    }
+  };
+
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 ${todo.is_flagged
-      ? 'bg-red-50 border-l-4 border-red-500'
-      : 'bg-[rgba(213,219,219,0.7)]'
-      }`}>
+    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 ${getPriorityBgColor()}`}>
       <div className="flex items-center gap-1">
         <button
           onClick={() => toggleTodo(todo.id)}
@@ -872,8 +1009,8 @@ const TodoItem = ({
         title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
       >
         <Focus
-          size={16}
-          className={todo.is_flagged ? "text-red-600" : "text-gray-400"}
+          size={14}
+          color={todo.is_flagged ? "#fa0202" : "#4b5563"}
         />
       </button>
     </div>
@@ -893,7 +1030,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-[rgba(213,219,219,0.7)] transition-colors group mb-2">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-[rgba(213,219,219,0.7)] border-l-4 border-gray-400 transition-colors group mb-2">
       <button
         onClick={() => toggleTodo(todo.id)}
         className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"

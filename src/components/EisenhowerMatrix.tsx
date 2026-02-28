@@ -11,36 +11,36 @@ interface QuadrantConfig {
 }
 
 const QUADRANTS: Record<string, QuadrantConfig> = {
-    'Q1': {
-        value: 'Q1',
-        title: 'Q1',
+    'P1': {
+        value: 'P1',
+        title: 'P1',
         description: 'Urgent & Important',
         bgColor: 'bg-red-100',
         borderColor: 'border-red-300',
         textColor: 'text-red-700',
         icon: '🔥'
     },
-    'Q2': {
-        value: 'Q2',
-        title: 'Q2',
+    'P2': {
+        value: 'P2',
+        title: 'P2',
         description: 'Important, Not Urgent',
         bgColor: 'bg-green-100',
         borderColor: 'border-green-300',
         textColor: 'text-green-700',
         icon: '🎯'
     },
-    'Q3': {
-        value: 'Q3',
-        title: 'Q3',
+    'P3': {
+        value: 'P3',
+        title: 'P3',
         description: 'Urgent, Not Important',
         bgColor: 'bg-yellow-100',
         borderColor: 'border-yellow-300',
         textColor: 'text-yellow-700',
         icon: '⚡'
     },
-    'Q4': {
-        value: 'Q4',
-        title: 'Q4',
+    'P4': {
+        value: 'P4',
+        title: 'P4',
         description: 'Not Urgent or Important',
         bgColor: 'bg-gray-200',
         borderColor: 'border-gray-400',
@@ -61,32 +61,32 @@ interface EisenhowerMatrixProps {
 export const EisenhowerMatrix = ({ dashboardData }: EisenhowerMatrixProps) => {
     // Use dashboard data from API or default to zeros
     const quadrantCounts = {
-        'Q1': dashboardData?.p1_count || 0,
-        'Q2': dashboardData?.p2_count || 0,
-        'Q3': dashboardData?.p3_count || 0,
-        'Q4': dashboardData?.p4_count || 0,
+        'P1': dashboardData?.p1_count || 0,
+        'P2': dashboardData?.p2_count || 0,
+        'P3': dashboardData?.p3_count || 0,
+        'P4': dashboardData?.p4_count || 0,
     };
 
     return (
         <Card className="shadow-sm border border-border mb-6">
             <CardContent className="p-3">
                 <div className="grid grid-cols-2 gap-3">
-                    {['Q1', 'Q2', 'Q3', 'Q4'].map((quadrant) => {
+                    {['P1', 'P2', 'P3', 'P4'].map((quadrant) => {
                         const config = QUADRANTS[quadrant];
                         const count = quadrantCounts[quadrant as keyof typeof quadrantCounts];
 
                         return (
                             <div
                                 key={quadrant}
-                                className={`${config.bgColor} ${config.borderColor} border-2 rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[90px]`}
+                                className={`${config.bgColor} ${config.borderColor} border-2 rounded-[10px] p-3 flex flex-col items-center justify-center min-h-[70px]`}
                             >
-                                <h4 className={`text-xl font-bold ${config.textColor} mb-1`}>
+                                <h4 className={`text-[18px] font-bold ${config.textColor} mb-1`}>
                                     {config.title}
                                 </h4>
-                                <p className={`text-2xl font-semibold ${config.textColor} mb-2`}>
+                                <p className={`text-xl font-semibold ${config.textColor} mb-1`}>
                                     {count}
                                 </p>
-                                <p className={`text-sm text-center ${config.textColor} opacity-75`}>
+                                <p className={`text-xs text-center ${config.textColor} opacity-75`}>
                                     {config.description}
                                 </p>
                             </div>
