@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
 import {
@@ -30,6 +30,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  IconButton,
 } from "@mui/material";
 import { DurationPicker } from "./DurationPicker";
 import { CustomCalender } from "./CustomCalender";
@@ -41,6 +42,9 @@ import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { RecurringTaskModal } from "./RecurringTaskModal";
 import { SpeechInput } from "./SpeechInput";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -87,7 +91,10 @@ const TaskForm = ({
     : [];
   const baseUrl = localStorage.getItem("baseUrl");
 
-  console.log(users);
+  const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+  const [baseValue, setBaseValue] = useState("");
+  const quillRef = useRef<HTMLDivElement>(null);
+  const quillEditorRef = useRef<Quill | null>(null);
 
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
@@ -198,6 +205,60 @@ const TaskForm = ({
     // If this day of week is not in the working days array, disable it
     return !workingDays.includes(rosterDay.toString());
   };
+
+  // Handle STT for Description
+  useEffect(() => {
+    if (isListening && transcript && activeId === "task-description") {
+      const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+      if (quillEditorRef.current) {
+        const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+        quillEditorRef.current.root.innerHTML = formattedValue;
+        setFormData(prev => ({
+          ...prev,
+          description: formattedValue,
+        }));
+      }
+    }
+  }, [isListening, transcript, activeId, baseValue, setFormData]);
+
+  // Initialize Quill Editor
+  useEffect(() => {
+    if (quillRef.current && !quillEditorRef.current) {
+      // Clear previous instance if it exists
+      if (quillEditorRef.current) {
+        quillEditorRef.current = null;
+      }
+
+      quillEditorRef.current = new Quill(quillRef.current, {
+        theme: "snow",
+        placeholder: "Enter Description...",
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link"],
+            ["clean"],
+          ],
+        },
+      });
+
+      // Set initial description if exists
+      if (formData.description) {
+        quillEditorRef.current.root.innerHTML = formData.description;
+      }
+
+      // Handle text changes
+      quillEditorRef.current.on("text-change", () => {
+        const htmlContent = quillEditorRef.current?.root.innerHTML;
+        setFormData((prev) => ({
+          ...prev,
+          description: htmlContent || "",
+        }));
+      });
+    }
+  }, [formData.description, setFormData]);
 
   useEffect(() => {
     getProjects();
@@ -478,45 +539,49 @@ const TaskForm = ({
       </div>
 
       <div className="mb-1">
-        <SpeechInput
-          fullWidth
-          label={
-            <>
-              Description<span className="text-red-500">*</span>
-            </>
-          }
-          name="description"
-          placeholder="Enter Description"
-          multiline
-          rows={3}
-          value={formData.description}
-          onChange={(value) => setFormData({ ...formData, description: value })}
-          disabled={isReadOnly}
-          variant="outlined"
-          size="small"
-          sx={{
-            mt: 1,
-            "& .MuiOutlinedInput-root": {
-              height: "auto !important",
-              padding: "2px !important",
-              display: "flex",
-            },
-            "& .MuiInputBase-input[aria-hidden='true']": {
-              flex: 0,
-              width: 0,
-              height: 0,
-              padding: "0 !important",
-              margin: 0,
-              display: "none",
-            },
-            "& .MuiInputBase-input": {
-              resize: "none !important",
-            },
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">
+            Description<span className="text-red-500">*</span>
+          </label>
+          {supported && (
+            <IconButton
+              size="small"
+              onClick={() => {
+                if (isListening && activeId === "task-description") {
+                  stopListening();
+                } else {
+                  const currentText = quillEditorRef.current
+                    ? quillEditorRef.current.root.innerHTML
+                    : formData.description;
+                  setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                  startListening("task-description");
+                }
+              }}
+              color={isListening && activeId === "task-description" ? "secondary" : "default"}
+              sx={{ color: isListening && activeId === "task-description" ? "#C72030" : "inherit" }}
+              disabled={isReadOnly}
+            >
+              {isListening && activeId === "task-description" ? (
+                <Mic size={18} />
+              ) : (
+                <MicOff size={18} />
+              )}
+            </IconButton>
+          )}
+        </div>
+        <div
+          ref={quillRef}
+          style={{
+            border: "1px solid rgba(0, 0, 0, 0.23)",
+            borderRadius: "4px",
+            minHeight: "150px",
+            opacity: isReadOnly ? 0.5 : 1,
+            pointerEvents: isReadOnly ? "none" : "auto",
           }}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-2 gap-3 mb-3 mt-6">
         <div>
           <FormControl fullWidth variant="outlined">
             <InputLabel shrink>
@@ -1342,6 +1407,46 @@ const ProjectTaskCreateModal = ({
             ))}
         </div>
       </div>
+
+      <style>{`
+        .ql-toolbar {
+          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+          border-radius: 4px 4px 0 0;
+          background-color: #fafafa;
+          margin-bottom: 0 !important;
+        }
+
+        .ql-container {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-radius: 0 0 4px 4px;
+          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+          margin-top: 0 !important;
+        }
+
+        .ql-editor {
+          padding: 12px 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: rgba(0, 0, 0, 0.6);
+          font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+          color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+          color: #01569E;
+        }
+      `}</style>
     </form>
   );
 };

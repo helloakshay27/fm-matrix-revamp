@@ -821,14 +821,14 @@ export const ProjectsDashboard = () => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span
-                  className="truncate cursor-pointer"
+                <div
+                  className="max-w-[250px] truncate cursor-pointer"
                   onClick={() =>
                     navigate(`/vas/projects/${item.id}/milestones`)
                   }
                 >
                   {item.title}
-                </span>
+                </div>
               </TooltipTrigger>
               <TooltipContent className="rounded-[5px]">
                 <p>{item.title}</p>
@@ -917,15 +917,15 @@ export const ProjectsDashboard = () => {
     <div className="flex items-center gap-4">
       {/* Action Button */}
       {
-        localStorage.getItem("selectedView") === "admin" && (
-          <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => setShowActionPanel(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
-        )
+        // localStorage.getItem("selectedView") === "admin" && (
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          onClick={() => setShowActionPanel(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Action
+        </Button>
+        // )
       }
 
       {/* Total Projects Count */}
