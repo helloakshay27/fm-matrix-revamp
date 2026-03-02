@@ -466,10 +466,10 @@ const ProjectDetailsPage = () => {
     const SkeletonLoader = () => (
         <div className="my-4 m-8 animate-pulse">
             <div className="h-10 bg-gray-300 rounded w-32 mb-6"></div>
-            
+
             <div className="h-6 bg-gray-300 rounded w-64 mb-4"></div>
             <div className="border-b-[3px] border-gray-300 mb-6"></div>
-            
+
             {/* Header info skeleton */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3 w-full">
@@ -480,7 +480,7 @@ const ProjectDetailsPage = () => {
                 </div>
             </div>
             <div className="border-b-[3px] border-gray-300 mb-6"></div>
-            
+
             {/* Description section skeleton */}
             <div className="border rounded-[10px] shadow-md p-5 mb-4">
                 <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
@@ -490,7 +490,7 @@ const ProjectDetailsPage = () => {
                     <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                 </div>
             </div>
-            
+
             {/* Details section skeleton */}
             <div className="border rounded-[10px] shadow-md p-5 mb-4">
                 <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
@@ -500,7 +500,7 @@ const ProjectDetailsPage = () => {
                     <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                 </div>
             </div>
-            
+
             {/* Tabs skeleton */}
             <div className="flex items-center justify-between gap-10 my-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -508,7 +508,7 @@ const ProjectDetailsPage = () => {
                 ))}
             </div>
             <div className="border-b-[3px] border-gray-300 mb-6"></div>
-            
+
             {/* Tab content skeleton */}
             <div className="border rounded-[10px] shadow-md p-5">
                 <div className="space-y-3">
@@ -638,9 +638,15 @@ const ProjectDetailsPage = () => {
                         }}
                     >
                         <div className="flex flex-col">
-                            <div className="text-[13px]">
+                            {/* <div className="text-[13px]">
                                 {project.description || 'No description available'}
-                            </div>
+                            </div> */}
+                            <div
+                                className="prose prose-sm max-w-none quill-content text-[13px]"
+                                dangerouslySetInnerHTML={{
+                                    __html: project?.description || '<p>No description provided</p>'
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

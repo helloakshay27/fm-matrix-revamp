@@ -13,6 +13,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import MuiMultiSelect from "@/components/MuiMultiSelect";
 import EisenhowerMatrix from "@/components/EisenhowerMatrix";
 import { useTodos, useToggleTodo } from "@/hooks/useTodos";
+import PriorityTodo from "@/components/PriorityTodo";
+import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
 
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
@@ -112,6 +114,7 @@ export default function Todo() {
   const view = localStorage.getItem("selectedView");
   const [taskType, setTaskType] = useState<"all" | "my">("my");
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+  const [selectedPriority, setSelectedPriority] = useState<string | null>('P1');
 
   // Date filter state
   const [fromDate, setFromDate] = useState("");
@@ -311,6 +314,36 @@ export default function Todo() {
     setIsAddTodoModalOpen(true);
   };
 
+  const handleFlagTodo = async (todo: any) => {
+    try {
+      const newFlaggedStatus = !todo.is_flagged;
+      const payload = {
+        todo: {
+          is_flagged: newFlaggedStatus,
+          flagged_at: newFlaggedStatus ? new Date().toISOString() : null,
+        },
+      };
+
+      await axios.put(
+        `https://${baseUrl}/todos/${todo.id}.json`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success(
+        newFlaggedStatus ? "Todo flagged for focus" : "Todo unflagged from focus"
+      );
+      refetch();
+    } catch (error) {
+      console.error("Failed to flag todo:", error);
+      toast.error("Failed to update focus status");
+    }
+  };
+
   const handleCloseModal = () => {
     setIsAddTodoModalOpen(false);
     setEditingTodo(null);
@@ -386,314 +419,278 @@ export default function Todo() {
   // fallback group if any todo has no target date
   const noDateTodos = pendingTodos.filter((t) => !t.target_date);
 
-  return (
-    <div className="p-6">
-      <div className="space-y-4">
-        {/* Eisenhower Matrix */}
-        <EisenhowerMatrix dashboardData={dashboardData} />
+  // Handle drag and drop
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-        <div className="flex items-end justify-between gap-6 flex-wrap">
-          {/* Date Filters - Left Side */}
-          <div className="flex items-end gap-3 flex-shrink-0">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="fromDate" className="text-xs font-semibold text-gray-600">From Date</label>
-              <div className="relative flex items-center">
-                <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
-                <input
-                  id="fromDate"
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                />
-              </div>
+    const todoId = active.data.current?.todoId;
+    const currentStatus = active.data.current?.status;
+
+    try {
+      const token = sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl") || "";
+
+      // Handle status change (open <-> completed)
+      if (over.id === "pending-section" && currentStatus === "completed") {
+        await axios.patch(
+          `https://${baseUrl}/todos/${todoId}.json`,
+          { status: "open" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Todo moved to open");
+        refetch();
+      } else if (over.id === "completed-section" && currentStatus !== "completed") {
+        await axios.patch(
+          `https://${baseUrl}/todos/${todoId}.json`,
+          { status: "completed" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Todo marked as completed");
+        refetch();
+      }
+
+      // Handle priority change (drag to Eisenhower quadrant)
+      if (over.id?.toString().startsWith("priority-")) {
+        const newPriority = over.id.toString().replace("priority-", "");
+        const currentPriority = active.data.current?.priority;
+
+        if (newPriority !== currentPriority) {
+          await axios.patch(
+            `https://${baseUrl}/todos/${todoId}.json`,
+            { priority: newPriority },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          toast.success(`Priority changed to ${newPriority}`);
+          refetch();
+        }
+      }
+    } catch (error) {
+      console.error("Drag and drop error:", error);
+      toast.error("Failed to update todo");
+    }
+  };
+
+  // State for drag overlay
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const activeTodo = activeDragId
+    ? todos.find(t => `todo-${t.id}` === activeDragId)
+    : null;
+
+  return (
+    <DndContext
+      onDragEnd={handleDragEnd}
+      onDragStart={(event) => setActiveDragId(event.active.id.toString())}
+      onDragCancel={() => setActiveDragId(null)}
+    >
+      <div className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-stretch gap-2 w-full h-96">
+            {/* Eisenhower Matrix */}
+            <div className="w-1/2 h-full">
+              <EisenhowerMatrix dashboardData={dashboardData} onQuadrantClick={setSelectedPriority} selectedPriority={selectedPriority} />
             </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="toDate" className="text-xs font-semibold text-gray-600">To Date</label>
-              <div className="relative flex items-center">
-                <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
-                <input
-                  id="toDate"
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                />
-              </div>
+            <div className="w-1/2 h-full">
+              <PriorityTodo
+                selectedPriority={selectedPriority || undefined}
+                todos={todos}
+                onTodoToggle={toggleTodo}
+                onEditTodo={handleEditTodo}
+                onConvertTodo={handleConvertTodo}
+                onFlagTodo={(todo) => handleFlagTodo(todo)}
+              />
             </div>
           </div>
 
-          {/* Existing Controls - Right Side */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center px-4 py-2">
-              <span className="text-gray-700 font-medium text-sm">My Todos</span>
-              <Switch
-                checked={taskType === "all"}
-                onChange={() => {
-                  const newTaskType = taskType === "all" ? "my" : "all";
-                  setTaskType(newTaskType);
-                  if (newTaskType === "my") {
-                    setSelectedUsers([]);
-                  }
-                }}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#C72030',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#C72030',
-                  },
-                }}
-              />
-              <span className="text-gray-700 font-medium text-sm">All Todos</span>
-            </div>
-            {
-              taskType === "all" && (
-                <div className="w-64">
-                  <MuiMultiSelect
-                    label="Members"
-                    options={users
-                      ?.filter(Boolean)
-                      .map((user: any) => ({
-                        label: user.name || user?.full_name || "Unknown",
-                        value: user?.id,
-                        id: user?.id,
-                      }))}
-                    placeholder="Select Members"
-                    value={selectedUsers}
-                    onChange={(values) => handleMultiSelectChange("members", values)}
-                    maxHeight="36px"
+          <div className="flex items-end justify-between gap-6 flex-wrap">
+            {/* Date Filters - Left Side */}
+            <div className="flex items-end gap-3 flex-shrink-0">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="fromDate" className="text-xs font-semibold text-gray-600">From Date</label>
+                <div className="relative flex items-center">
+                  <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
+                  <input
+                    id="fromDate"
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                   />
                 </div>
-              )
-            }
-            <Button
-              onClick={() => setIsAddTodoModalOpen(true)}
-              className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
-            >
-              <Plus size={18} />
-              Add To-Do
-            </Button>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="toDate" className="text-xs font-semibold text-gray-600">To Date</label>
+                <div className="relative flex items-center">
+                  <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
+                  <input
+                    id="toDate"
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Existing Controls - Right Side */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center px-4 py-2">
+                <span className="text-gray-700 font-medium text-sm">My Todos</span>
+                <Switch
+                  checked={taskType === "all"}
+                  onChange={() => {
+                    const newTaskType = taskType === "all" ? "my" : "all";
+                    setTaskType(newTaskType);
+                    if (newTaskType === "my") {
+                      setSelectedUsers([]);
+                    }
+                  }}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#C72030',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#C72030',
+                    },
+                  }}
+                />
+                <span className="text-gray-700 font-medium text-sm">All Todos</span>
+              </div>
+              {
+                taskType === "all" && (
+                  <div className="w-64">
+                    <MuiMultiSelect
+                      label="Members"
+                      options={users
+                        ?.filter(Boolean)
+                        .map((user: any) => ({
+                          label: user.name || user?.full_name || "Unknown",
+                          value: user?.id,
+                          id: user?.id,
+                        }))}
+                      placeholder="Select Members"
+                      value={selectedUsers}
+                      onChange={(values) => handleMultiSelectChange("members", values)}
+                      maxHeight="36px"
+                    />
+                  </div>
+                )
+              }
+              <Button
+                onClick={() => setIsAddTodoModalOpen(true)}
+                className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
+              >
+                <Plus size={18} />
+                Add To-Do
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* ------------------------------------
+                        Pending Tasks Section
+                    ------------------------------------ */}
+            <PendingTasksCard
+              pendingTodos={pendingTodos}
+              todayTodos={todayTodos}
+              upcomingTodos={upcomingTodos}
+              overdueTodos={overdueTodos}
+              noDateTodos={noDateTodos}
+              isLoading={isLoading}
+              isFetchingNextPage={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              fetchNextPage={fetchNextPage}
+              {...{ toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen, handleEditTodo, handleConvertTodo, handleFlagTodo, refetch }}
+            />
+
+            {/* ------------------------------------
+                        Completed Section
+                    ------------------------------------ */}
+            <CompletedTasksCard
+              completedTodos={completedTodos}
+              sortedCompletedDates={sortedCompletedDates}
+              groupedCompletedTodos={groupedCompletedTodos}
+              getCompletionDateLabel={getCompletionDateLabel}
+              isLoading={isLoading}
+              toggleTodo={toggleTodo}
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* ------------------------------------
-                        Pending Tasks Section
-                    ------------------------------------ */}
-          <Card className="shadow-sm border border-border">
-            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
-              <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                {pendingTodos.length.toString().padStart(2, "0")}
-              </div>
-              <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">TO DO</h3>
-            </div>
-            <CardContent className="py-4 !px-3">
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <TodoSkeleton key={i} />
-                  ))}
-                </div>
-              ) : (
-                <>
-                  {todayTodos.length > 0 && (
-                    <div>
-                      <h3 className="text-primary font-semibold mb-2">Today</h3>
-                      {todayTodos.map((todo) => (
-                        <TodoItem
-                          key={todo.id}
-                          todo={todo}
-                          toggleTodo={toggleTodo}
-                          deleteTodo={deleteTodo}
-                          handlePlayTask={handlePlayTask}
-                          setPauseTaskId={setPauseTaskId}
-                          setIsPauseModalOpen={setIsPauseModalOpen}
-                          handleEditTodo={handleEditTodo}
-                          handleConvertTodo={handleConvertTodo}
-                          refetch={refetch}
-                        />
-                      ))}
-                    </div>
-                  )}
+        {isAddTodoModalOpen && (
+          <AddToDoModal
+            isModalOpen={isAddTodoModalOpen}
+            setIsModalOpen={handleCloseModal}
+            getTodos={refetch}
+            editingTodo={editingTodo}
+            isEditMode={isEditMode}
+          />
+        )}
 
-                  {upcomingTodos.length > 0 && (
-                    <div>
-                      <h3 className="text-blue-600 font-semibold mb-2">Upcoming</h3>
-                      {upcomingTodos.map((todo) => (
-                        <TodoItem
-                          key={todo.id}
-                          todo={todo}
-                          toggleTodo={toggleTodo}
-                          deleteTodo={deleteTodo}
-                          handlePlayTask={handlePlayTask}
-                          setPauseTaskId={setPauseTaskId}
-                          setIsPauseModalOpen={setIsPauseModalOpen}
-                          handleEditTodo={handleEditTodo}
-                          handleConvertTodo={handleConvertTodo}
-                          refetch={refetch}
-                        />
-                      ))}
-                    </div>
-                  )}
+        {isConvertModalOpen && (
+          <TodoConvertModal
+            isModalOpen={isConvertModalOpen}
+            setIsModalOpen={setIsConvertModalOpen}
+            prefillData={convertTodoData}
+            todoId={convertTodoId}
+            onSuccess={() => {
+              refetch();
+              setIsConvertModalOpen(false);
+            }}
+          />
+        )}
 
-                  {overdueTodos.length > 0 && (
-                    <div>
-                      <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
-                      {overdueTodos.map((todo) => (
-                        <TodoItem
-                          key={todo.id}
-                          todo={todo}
-                          toggleTodo={toggleTodo}
-                          deleteTodo={deleteTodo}
-                          handlePlayTask={handlePlayTask}
-                          setPauseTaskId={setPauseTaskId}
-                          setIsPauseModalOpen={setIsPauseModalOpen}
-                          handleEditTodo={handleEditTodo}
-                          handleConvertTodo={handleConvertTodo}
-                          refetch={refetch}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {noDateTodos.length > 0 && (
-                    <div>
-                      <h3 className="text-gray-500 font-semibold mb-2">
-                        No Target Date
-                      </h3>
-                      {noDateTodos.map((todo) => (
-                        <TodoItem
-                          key={todo.id}
-                          todo={todo}
-                          toggleTodo={toggleTodo}
-                          deleteTodo={deleteTodo}
-                          handlePlayTask={handlePlayTask}
-                          setPauseTaskId={setPauseTaskId}
-                          setIsPauseModalOpen={setIsPauseModalOpen}
-                          handleEditTodo={handleEditTodo}
-                          handleConvertTodo={handleConvertTodo}
-                          refetch={refetch}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {!isLoading && pendingTodos.length === 0 && (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-muted-foreground text-center">
-                        No pending tasks! You're all caught up.
-                      </p>
-                    </div>
-                  )}
-
-                  {hasNextPage && (
-                    <div className="flex justify-center mt-4">
-                      <Button
-                        onClick={() => fetchNextPage()}
-                        disabled={isFetchingNextPage}
-                        className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      >
-                        {isFetchingNextPage ? "Loading..." : "Load More"}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ------------------------------------
-                        Completed Section
-                    ------------------------------------ */}
-          <Card className="shadow-sm border border-border">
-            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
-              <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                {completedTodos.length.toString().padStart(2, "0")}
-              </div>
-              <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Completed</h3>
-            </div>
-            <CardContent className="py-4 !px-3">
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <TodoSkeleton key={i} />
-                  ))}
-                </div>
-              ) : completedTodos.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-muted-foreground text-center">
-                    Complete tasks to see them here.
-                  </p>
-                </div>
-              ) : (
-                sortedCompletedDates.map((date, idx) => (
-                  <div key={date} className="space-y-2">
-                    <h3 className={`font-semibold text-muted-foreground mb-2 mt-3 ${idx === 0 ? 'first:mt-0' : ''}`}>
-                      {getCompletionDateLabel(date)}
-                    </h3>
-                    {groupedCompletedTodos[date].map((todo) => (
-                      <CompletedTodoItem
-                        key={todo.id}
-                        todo={todo}
-                        toggleTodo={toggleTodo}
-                      />
-                    ))}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {isAddTodoModalOpen && (
-        <AddToDoModal
-          isModalOpen={isAddTodoModalOpen}
-          setIsModalOpen={handleCloseModal}
-          getTodos={refetch}
-          editingTodo={editingTodo}
-          isEditMode={isEditMode}
-        />
-      )}
-
-      {isConvertModalOpen && (
-        <TodoConvertModal
-          isModalOpen={isConvertModalOpen}
-          setIsModalOpen={setIsConvertModalOpen}
-          prefillData={convertTodoData}
-          todoId={convertTodoId}
-          onSuccess={() => {
-            refetch();
-            setIsConvertModalOpen(false);
+        {/* Pause Reason Modal */}
+        <PauseReasonModal
+          isOpen={isPauseModalOpen}
+          onClose={() => {
+            setIsPauseModalOpen(false);
+            setPauseTaskId(null);
           }}
+          onSubmit={handlePauseTaskSubmit}
+          isLoading={isPauseLoading}
+          taskId={pauseTaskId}
         />
-      )}
 
-      {/* Pause Reason Modal */}
-      <PauseReasonModal
-        isOpen={isPauseModalOpen}
-        onClose={() => {
-          setIsPauseModalOpen(false);
-          setPauseTaskId(null);
-        }}
-        onSubmit={handlePauseTaskSubmit}
-        isLoading={isPauseLoading}
-        taskId={pauseTaskId}
-      />
+        {/* Toggle Todo Confirmation Modal */}
+        <ToggleTodoConfirmModal
+          isOpen={isToggleConfirmOpen}
+          onClose={() => {
+            setIsToggleConfirmOpen(false);
+            setTodoToToggle(null);
+          }}
+          onConfirm={handleConfirmToggle}
+          isLoading={toggleLoading}
+          todo={todoToToggle}
+        />
 
-      {/* Toggle Todo Confirmation Modal */}
-      <ToggleTodoConfirmModal
-        isOpen={isToggleConfirmOpen}
-        onClose={() => {
-          setIsToggleConfirmOpen(false);
-          setTodoToToggle(null);
-        }}
-        onConfirm={handleConfirmToggle}
-        isLoading={toggleLoading}
-        todo={todoToToggle}
-      />
-    </div>
+        {/* Drag Overlay - shows preview of dragged item */}
+        <DragOverlay>
+          {activeTodo ? (
+            <div className={`flex items-center gap-3 p-3 rounded-lg border shadow-lg bg-white cursor-grabbing`}>
+              <div className="flex flex-col flex-1 min-w-0 max-w-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700 font-medium truncate">{activeTodo.title}</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-gray-500">{activeTodo.user}</span>
+                  {activeTodo.target_date && (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-gray-500">Due: {activeTodo.target_date}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded">
+                {activeTodo.priority || 'N/A'}
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </div>
+    </DndContext>
   );
 }
 
@@ -811,6 +808,209 @@ const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo })
 // Separate Todo Item Component (Cleaner UI)
 // ----------------------------------------------
 // ----------------------------------------------
+// Pending Tasks Card (with droppable zone)
+const PendingTasksCard = ({
+  pendingTodos,
+  todayTodos,
+  upcomingTodos,
+  overdueTodos,
+  noDateTodos,
+  isLoading,
+  isFetchingNextPage,
+  hasNextPage,
+  fetchNextPage,
+  toggleTodo,
+  deleteTodo,
+  handlePlayTask,
+  setPauseTaskId,
+  setIsPauseModalOpen,
+  handleEditTodo,
+  handleConvertTodo,
+  handleFlagTodo,
+  refetch,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id: "pending-section" });
+
+  return (
+    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+        <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+          {pendingTodos.length.toString().padStart(2, "0")}
+        </div>
+        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">TO DO</h3>
+      </div>
+      <CardContent className="py-4 !px-3">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <TodoSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <>
+            {todayTodos.length > 0 && (
+              <div>
+                <h3 className="text-primary font-semibold mb-2">Today</h3>
+                {todayTodos.map((todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    toggleTodo={toggleTodo}
+                    deleteTodo={deleteTodo}
+                    handlePlayTask={handlePlayTask}
+                    setPauseTaskId={setPauseTaskId}
+                    setIsPauseModalOpen={setIsPauseModalOpen}
+                    handleEditTodo={handleEditTodo}
+                    handleConvertTodo={handleConvertTodo}
+                    handleFlagTodo={handleFlagTodo}
+                    refetch={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+            {upcomingTodos.length > 0 && (
+              <div>
+                <h3 className="text-blue-600 font-semibold mb-2">Upcoming</h3>
+                {upcomingTodos.map((todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    toggleTodo={toggleTodo}
+                    deleteTodo={deleteTodo}
+                    handlePlayTask={handlePlayTask}
+                    setPauseTaskId={setPauseTaskId}
+                    setIsPauseModalOpen={setIsPauseModalOpen}
+                    handleEditTodo={handleEditTodo}
+                    handleConvertTodo={handleConvertTodo}
+                    handleFlagTodo={handleFlagTodo}
+                    refetch={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+            {overdueTodos.length > 0 && (
+              <div>
+                <h3 className="text-red-600 font-semibold mb-2">Overdue</h3>
+                {overdueTodos.map((todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    toggleTodo={toggleTodo}
+                    deleteTodo={deleteTodo}
+                    handlePlayTask={handlePlayTask}
+                    setPauseTaskId={setPauseTaskId}
+                    setIsPauseModalOpen={setIsPauseModalOpen}
+                    handleEditTodo={handleEditTodo}
+                    handleConvertTodo={handleConvertTodo}
+                    handleFlagTodo={handleFlagTodo}
+                    refetch={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+            {noDateTodos.length > 0 && (
+              <div>
+                <h3 className="text-gray-500 font-semibold mb-2">No Target Date</h3>
+                {noDateTodos.map((todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    toggleTodo={toggleTodo}
+                    deleteTodo={deleteTodo}
+                    handlePlayTask={handlePlayTask}
+                    setPauseTaskId={setPauseTaskId}
+                    setIsPauseModalOpen={setIsPauseModalOpen}
+                    handleEditTodo={handleEditTodo}
+                    handleConvertTodo={handleConvertTodo}
+                    handleFlagTodo={handleFlagTodo}
+                    refetch={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+            {!isLoading && pendingTodos.length === 0 && (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground text-center">
+                  No pending tasks! You're all caught up.
+                </p>
+              </div>
+            )}
+
+            {hasNextPage && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
+                >
+                  {isFetchingNextPage ? "Loading..." : "Load More"}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Completed Tasks Card (with droppable zone)
+const CompletedTasksCard = ({
+  completedTodos,
+  sortedCompletedDates,
+  groupedCompletedTodos,
+  getCompletionDateLabel,
+  isLoading,
+  toggleTodo,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id: "completed-section" });
+
+  return (
+    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-green-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+        <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+          {completedTodos.length.toString().padStart(2, "0")}
+        </div>
+        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Completed</h3>
+      </div>
+      <CardContent className="py-4 !px-3">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <TodoSkeleton key={i} />
+            ))}
+          </div>
+        ) : completedTodos.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground text-center">
+              Complete tasks to see them here.
+            </p>
+          </div>
+        ) : (
+          sortedCompletedDates.map((date, idx) => (
+            <div key={date} className="space-y-2">
+              <h3 className={`font-semibold text-muted-foreground mb-2 mt-3 ${idx === 0 ? 'first:mt-0' : ''}`}>
+                {getCompletionDateLabel(date)}
+              </h3>
+              {groupedCompletedTodos[date].map((todo) => (
+                <CompletedTodoItem
+                  key={todo.id}
+                  todo={todo}
+                  toggleTodo={toggleTodo}
+                />
+              ))}
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const TodoItem = ({
   todo,
   toggleTodo,
@@ -820,46 +1020,23 @@ const TodoItem = ({
   setIsPauseModalOpen,
   handleEditTodo,
   handleConvertTodo,
+  handleFlagTodo,
   refetch,
 }) => {
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  // Make this todo item draggable
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `todo-${todo.id}`,
+    data: { todoId: todo.id, priority: todo.priority, status: todo.status }
+  });
+
   const handleTaskClick = () => {
     if (todo.task_management_id) {
       // Navigate to task details page
       navigate(`/vas/tasks/${todo.task_management_id}`);
-    }
-  };
-
-  const handleFlagTodo = async () => {
-    try {
-      const newFlaggedStatus = !todo.is_flagged;
-      const payload = {
-        todo: {
-          is_flagged: newFlaggedStatus,
-          flagged_at: newFlaggedStatus ? new Date().toISOString() : null,
-        },
-      };
-
-      await axios.put(
-        `https://${baseUrl}/todos/${todo.id}.json`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      toast.success(
-        newFlaggedStatus ? "Todo flagged for focus" : "Todo unflagged from focus"
-      );
-      refetch();
-    } catch (error) {
-      console.error("Failed to flag todo:", error);
-      toast.error("Failed to update focus status");
     }
   };
 
@@ -878,53 +1055,76 @@ const TodoItem = ({
 
     switch (priority) {
       case 'P1':
-        return 'bg-red-100 border-l-4 border-red-500';
+        return 'border-l-4 border-l-red-500';
       case 'P2':
-        return 'bg-green-100 border-l-4 border-green-500';
+        return 'border-l-4 border-l-green-500';
       case 'P3':
-        return 'bg-yellow-100 border-l-4 border-yellow-500';
+        return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'bg-gray-200 border-l-4 border-blue-500';
+        return 'border-l-4 border-l-blue-500';
       default:
-        return 'bg-[rgba(213,219,219,0.7)] border-l-4 border-gray-400';
+        return 'border-l-4 border-l-gray-400';
     }
   };
 
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 ${getPriorityBgColor()}`}>
+    <div
+      ref={setNodeRef}
+      className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor()} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+    >
       <div className="flex items-center gap-1">
         <button
-          onClick={() => toggleTodo(todo.id)}
-          className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-        >
-          <Check
-            size={16}
-            className="text-primary opacity-0 group-hover:opacity-100"
-          />
-        </button>
-        <button
-          onClick={() => handleEditTodo(todo)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditTodo(todo);
+          }}
           className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
           title="Edit todo"
         >
           <Pencil size={14} />
         </button>
         <button
-          onClick={() => handleConvertTodo(todo)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleConvertTodo(todo);
+          }}
           className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors disabled:opacity-50"
           title="Convert to Task"
           disabled={!!todo.task_management_id}
         >
           <ArrowRightLeft size={14} />
         </button>
+
+        {/* Focus button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleFlagTodo(todo);
+          }}
+          disabled={isCompleted}
+          className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+          title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
+        >
+          <Focus
+            size={14}
+            color={todo.is_flagged ? "#fa0202" : "#4b5563"}
+          />
+        </button>
       </div>
 
-      <div className="flex flex-col flex-1">
+      <div
+        {...listeners}
+        {...attributes}
+        className="flex flex-col flex-1 cursor-grab active:cursor-grabbing"
+      >
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">
             {todo.task_management_id && (
               <span
-                onClick={handleTaskClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTaskClick();
+                }}
                 className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
               >
                 T-{todo.task_management_id}
@@ -980,7 +1180,8 @@ const TodoItem = ({
       {todo.task_management_id &&
         (isTaskStarted ? (
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setPauseTaskId(todo.task_management_id);
               setIsPauseModalOpen(true);
             }}
@@ -992,7 +1193,10 @@ const TodoItem = ({
           </button>
         ) : (
           <button
-            onClick={() => handlePlayTask(todo.task_management_id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePlayTask(todo.task_management_id);
+            }}
             disabled={isCompleted}
             className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
             title="Play task"
@@ -1001,16 +1205,16 @@ const TodoItem = ({
           </button>
         ))}
 
-      {/* Focus button */}
       <button
-        onClick={handleFlagTodo}
-        disabled={isCompleted}
-        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-        title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleTodo(todo.id);
+        }}
+        className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
       >
-        <Focus
-          size={14}
-          color={todo.is_flagged ? "#fa0202" : "#4b5563"}
+        <Check
+          size={16}
+          className="text-primary opacity-0 group-hover:opacity-100"
         />
       </button>
     </div>
@@ -1030,13 +1234,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-[rgba(213,219,219,0.7)] border-l-4 border-gray-400 transition-colors group mb-2">
-      <button
-        onClick={() => toggleTodo(todo.id)}
-        className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"
-      >
-        <Check size={16} className="text-accent-foreground" />
-      </button>
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-green-100 border-l-4 border-green-500 transition-colors group mb-2">
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">
@@ -1064,6 +1262,12 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
           )}
         </div>
       </div>
+      <button
+        onClick={() => toggleTodo(todo.id)}
+        className="flex-shrink-0 w-5 h-5 !bg-green-300 !text-white flex items-center justify-center hover:opacity-90 transition-all"
+      >
+        <Check size={15} color="black" />
+      </button>
     </div>
   );
 };
