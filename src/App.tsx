@@ -1100,6 +1100,7 @@ import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
 import BillDetails from "./pages/ClubManagement/BillDetails";
+import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
 
 const queryClient = new QueryClient();
 
@@ -2455,7 +2456,7 @@ function App() {
                       />
                       <Route
                         path="/accounting/credit-note/:id"
-                        element={<CreditNoteDetailPage />}
+                        element={<CreditNoteDetails />}
                       />
                       <Route
                         path="/accounting/credit-note/edit/:id"
