@@ -842,6 +842,13 @@ const IssuesListPage = ({
     };
 
     const renderCell = (item: any, columnKey: string) => {
+        if (columnKey === "title") {
+            return (
+                <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={item.title}>
+                    {item.title}
+                </div>
+            )
+        }
         if (columnKey === "priority") {
             return item[columnKey];
         }

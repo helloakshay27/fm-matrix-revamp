@@ -15,6 +15,7 @@ import EditOpportunityModal from '@/components/EditOpportunityModal';
 import { useLayout } from '@/contexts/LayoutContext';
 import { FormControl, MenuItem, Select } from '@mui/material';
 import { useAppDispatch } from '@/store/hooks';
+import { div } from '@tensorflow/tfjs';
 
 // Types
 interface Opportunity {
@@ -200,9 +201,15 @@ const OpportunityDashboard = () => {
                     </button>
                 );
             case 'title':
-                return item.title
-                    .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
-                    .replace(/#\[(.*?)\]\(\d+\)/g, '#$1');
+                return (
+                    <div className="max-w-sm truncate" title={item.title.replace(/@\[(.*?)\]\(\d+\)/g, '@$1').replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}>
+                        {
+                            item.title
+                                .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                                .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')
+                        }
+                    </div>
+                )
             case "status": {
                 const statusColorMap = {
                     active: { dot: "bg-emerald-500" },

@@ -7,10 +7,11 @@ import {
   Select,
   Slide,
   TextField,
+  IconButton,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
-import { X } from "lucide-react";
-import { forwardRef, useEffect, useState } from "react";
+import { X, Mic, MicOff } from "lucide-react";
+import { forwardRef, useEffect, useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -24,6 +25,9 @@ import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { SpeechInput } from "./SpeechInput";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -114,6 +118,11 @@ const ProjectCreateModal = ({
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const quillRef = useRef<HTMLDivElement>(null);
+  const quillEditorRef = useRef<Quill | null>(null);
+
+  const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+  const [baseValue, setBaseValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState("details");
@@ -133,6 +142,21 @@ const ProjectCreateModal = ({
     priority: "",
     tags: [],
   });
+
+  // Handle STT for Description
+  useEffect(() => {
+    if (isListening && transcript && activeId === "project-description") {
+      const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+      if (quillEditorRef.current) {
+        const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+        quillEditorRef.current.root.innerHTML = formattedValue;
+        setFormData((prev) => ({
+          ...prev,
+          description: formattedValue,
+        }));
+      }
+    }
+  }, [isListening, transcript, activeId, baseValue]);
 
   // Populate form when template is selected
   useEffect(() => {
@@ -184,6 +208,58 @@ const ProjectCreateModal = ({
       });
     }
   }, [templateDetails, openDialog]);
+
+  // Initialize Quill Editor
+  useEffect(() => {
+    if (openDialog) {
+      const initTimer = setTimeout(() => {
+        if (quillRef.current) {
+          // Clear previous instance if it exists
+          if (quillEditorRef.current) {
+            quillEditorRef.current = null;
+          }
+
+          quillEditorRef.current = new Quill(quillRef.current, {
+            theme: "snow",
+            placeholder: "Type description...",
+            modules: {
+              toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ["bold", "italic", "underline", "strike"],
+                ["blockquote"],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["link"],
+                ["clean"],
+              ],
+            },
+          });
+
+          // Set initial description if exists
+          if (formData.description) {
+            quillEditorRef.current.root.innerHTML = formData.description;
+          }
+
+          // Handle text changes
+          quillEditorRef.current.on("text-change", () => {
+            const htmlContent = quillEditorRef.current?.root.innerHTML;
+            setFormData((prev) => ({
+              ...prev,
+              description: htmlContent || "",
+            }));
+          });
+        }
+      }, 100);
+
+      return () => {
+        clearTimeout(initTimer);
+      };
+    } else {
+      // Reset editor ref when modal closes
+      if (quillEditorRef.current) {
+        quillEditorRef.current = null;
+      }
+    }
+  }, [openDialog]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -397,39 +473,42 @@ const ProjectCreateModal = ({
                     ))}
                   </div>
 
-                  <div className="mt-4 space-y-2 h-[100px]">
-                    <SpeechInput
-                      label={
-                        <>
-                          Description<span className="text-[#c72030]">*</span>
-                        </>
-                      }
-                      name="description"
-                      placeholder=""
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      minRows={2}
-                      value={formData.description}
-                      onChange={(value) => setFormData({ ...formData, description: value })}
-                      InputLabelProps={{ shrink: true }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: "auto !important",
-                          padding: "2px !important",
-                          display: "flex",
-                        },
-                        "& .MuiInputBase-input[aria-hidden='true']": {
-                          flex: 0,
-                          width: 0,
-                          height: 0,
-                          padding: "0 !important",
-                          margin: 0,
-                          display: "none",
-                        },
-                        "& .MuiInputBase-input": {
-                          resize: "none !important",
-                        },
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium">
+                        Description<span className="text-[#c72030]">*</span>
+                      </label>
+                      {supported && (
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (isListening && activeId === "project-description") {
+                              stopListening();
+                            } else {
+                              const currentText = quillEditorRef.current
+                                ? quillEditorRef.current.root.innerHTML
+                                : formData.description;
+                              setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                              startListening("project-description");
+                            }
+                          }}
+                          color={isListening && activeId === "project-description" ? "secondary" : "default"}
+                          sx={{ color: isListening && activeId === "project-description" ? "#C72030" : "inherit" }}
+                        >
+                          {isListening && activeId === "project-description" ? (
+                            <Mic size={18} />
+                          ) : (
+                            <MicOff size={18} />
+                          )}
+                        </IconButton>
+                      )}
+                    </div>
+                    <div
+                      ref={quillRef}
+                      style={{
+                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                        borderRadius: "4px",
+                        minHeight: "200px",
                       }}
                     />
                   </div>
@@ -670,6 +749,46 @@ const ProjectCreateModal = ({
           onTagCreated={() => fetchProjects()}
         />
       </DialogContent>
+
+      <style>{`
+        .ql-toolbar {
+          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+          border-radius: 4px 4px 0 0;
+          background-color: #fafafa;
+          margin-bottom: 0 !important;
+        }
+
+        .ql-container {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-radius: 0 0 4px 4px;
+          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+          margin-top: 0 !important;
+        }
+
+        .ql-editor {
+          padding: 12px 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: rgba(0, 0, 0, 0.6);
+          font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+          color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+          color: #01569E;
+        }
+      `}</style>
     </Dialog>
   );
 };

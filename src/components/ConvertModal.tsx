@@ -25,6 +25,7 @@ import { Button } from "./ui/button";
 import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
 import MuiMultiSelect from "./MuiMultiSelect";
+import AddSubtaskModal from "./AddSubtaskModal";
 
 const Transition = forwardRef(function Transition(props: any, ref: any) {
   return <Slide direction="left" ref={ref} {...props} />;
@@ -70,6 +71,7 @@ const ConvertModal = ({
   const [isLoadingOwners, setIsLoadingOwners] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [subtaskFormOpen, setSubtaskFormOpen] = useState(false);
 
   // For Project Form
   const [projectFormData, setProjectFormData] = useState({
@@ -255,6 +257,11 @@ const ConvertModal = ({
     closeModal();
   };
 
+  const handleSubtaskSuccess = () => {
+    setSubtaskFormOpen(false);
+    closeModal();
+  };
+
   const handleProjectFormChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setProjectFormData((prev) => ({
@@ -428,6 +435,18 @@ const ConvertModal = ({
                 className="w-4 h-4 cursor-pointer"
               />
               <span className="text-[14px] font-medium">Convert to Task</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="convertType"
+                value="Subtask"
+                checked={selectedType === "Subtask"}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <span className="text-[14px] font-medium">Convert to Subtask</span>
             </label>
           </div>
         </div>
@@ -694,9 +713,39 @@ const ConvertModal = ({
               isEdit={false}
               onCloseModal={closeModal}
               className="mx-0 w-full"
-              prefillData={prefillData}
+              prefillData={{
+                ...prefillData,
+                title: prefillData?.title
+                  ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                  .replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+                description: prefillData?.description
+                  ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                  .replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+              }}
               opportunityId={opportunityId}
               onSuccess={handleTaskSuccess}
+            />
+          )}
+
+          {selectedType === "Subtask" && (
+            <AddSubtaskModal
+              openTaskModal={true}
+              setOpenTaskModal={(value) => {
+                if (!value) {
+                  closeModal();
+                }
+              }}
+              fetchData={handleSubtaskSuccess}
+              prefillData={{
+                title: prefillData?.title
+                  ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                  .replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+                responsiblePerson: prefillData?.responsible_person?.id,
+                description: prefillData?.description
+                  ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                  .replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
+              }}
+              isInlineMode={true}
             />
           )}
         </div>

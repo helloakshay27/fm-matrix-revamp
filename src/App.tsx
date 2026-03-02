@@ -1094,10 +1094,14 @@ import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import TaxRateSetupPage from "./pages/ClubManagement/TaxRateSetupPage";
+import DefaultTaxPreferencesPage from "./pages/ClubManagement/DefaultTaxPreferencesPage";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
+import BillDetails from "./pages/ClubManagement/BillDetails";
+import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
+import StepathonPage from "./pages/StepathonPage";
 
 const queryClient = new QueryClient();
 
@@ -2453,7 +2457,7 @@ function App() {
                       />
                       <Route
                         path="/accounting/credit-note/:id"
-                        element={<CreditNoteDetailPage />}
+                        element={<CreditNoteDetails />}
                       />
                       <Route
                         path="/accounting/credit-note/edit/:id"
@@ -2489,9 +2493,13 @@ function App() {
                         path="/accounting/bills/create"
                         element={<BillsAdd />}
                       />
-                      <Route
+                      {/* <Route
                         path="/accounting/bills/:id"
                         element={<BillDetailPage />}
+                      /> */}
+                                            <Route
+                        path="/accounting/bills/:id"
+                        element={<BillDetails/>}
                       />
                       <Route
                         path="/accounting/bills/edit/:id"
@@ -2546,6 +2554,10 @@ function App() {
                       <Route
                         path="/accounting/tax-rates-setup"
                         element={<TaxRateSetupPage />}
+                      />
+                      <Route
+                        path="/accounting/default-tax-preferences"
+                        element={<DefaultTaxPreferencesPage />}
                       />
                       <Route
                         path="/accounting/sales-person"
@@ -4673,6 +4685,7 @@ function App() {
                         path="/pulse/community-modules/banner-list/:id"
                         element={<BannerDetailsPage />}
                       />
+                      <Route path="/pulse/stepathon" element={<StepathonPage />} />
                       <Route path="/pulse/events" element={<CRMEventsPage />} />
                       <Route
                         path="/pulse/events/add"

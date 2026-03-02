@@ -24,8 +24,8 @@ import {
 export const milestonesQueryKeys = {
   all: ["milestones"] as const,
   lists: () => [...milestonesQueryKeys.all, "list"] as const,
-  list: (projectId: number | string, sortBy?: string, sortDirection?: "asc" | "desc") =>
-    [...milestonesQueryKeys.lists(), { projectId, sortBy, sortDirection }] as const,
+  list: (projectId: number | string, sortBy?: string, sortDirection?: "asc" | "desc", page?: number) =>
+    [...milestonesQueryKeys.lists(), { projectId, sortBy, sortDirection, page }] as const,
   details: () => [...milestonesQueryKeys.all, "detail"] as const,
   detail: (projectId: number | string, milestoneId: number | string) =>
     [...milestonesQueryKeys.details(), { projectId, milestoneId }] as const,
@@ -38,33 +38,41 @@ export const milestonesQueryKeys = {
  * - Automatic caching with 30s stale time
  * - Automatic refetch on focus
  * - Sorting support
+ * - Pagination support
  *
  * Example:
  * const { data, isLoading, error, isFetching } = useMilestones({
  *   projectId: 1,
  *   sortBy: "title",
- *   sortDirection: "asc"
+ *   sortDirection: "asc",
+ *   page: 1
  * });
  */
 interface UseMilestonesOptions {
   projectId: number | string;
   sortBy?: string;
   sortDirection?: "asc" | "desc";
+  page?: number;
 }
 
 export const useMilestones = ({
   projectId,
   sortBy,
   sortDirection,
+  page = 1,
 }: UseMilestonesOptions) => {
+  console.log(`[useMilestones Hook] Called with projectId=${projectId}, page=${page}, sortBy=${sortBy}, sortDirection=${sortDirection}`);
+
   return useQuery({
-    queryKey: milestonesQueryKeys.list(projectId, sortBy, sortDirection),
-    queryFn: () =>
-      fetchMilestones(projectId, sortBy, sortDirection),
+    queryKey: milestonesQueryKeys.list(projectId, sortBy, sortDirection, page),
+    queryFn: () => {
+      console.log(`[useMilestones QueryFn] Calling fetchMilestones with projectId=${projectId}, page=${page}`);
+      return fetchMilestones(projectId, sortBy, sortDirection, page);
+    },
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false, // Disable to prevent full page reload on pagination
+    refetchOnMount: false, // Disable to prevent full page reload on pagination
     retry: 1,
   });
 };

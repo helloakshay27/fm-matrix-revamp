@@ -1333,6 +1333,7 @@ export const ProjectTaskDetails = () => {
           task_management_id: taskDetails.id,
           status: "open",
           target_date: taskDetails.target_date,
+          user_id: JSON.parse(localStorage.getItem("user"))?.id,
         },
       };
 
@@ -1488,369 +1489,369 @@ export const ProjectTaskDetails = () => {
             </h2>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
             <div className="flex items-center justify-between my-3 text-[12px]">
-          <div className="flex items-center gap-3 text-[#323232]">
-            <span>
-              Created By:{" "}
-              {typeof taskDetails?.created_by === "string"
-                ? taskDetails.created_by
-                : (taskDetails?.created_by as any)?.name}
-            </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span className="flex items-center gap-3">
-              Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
-            </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span
-              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
-            >
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="flex items-center gap-1 cursor-pointer px-2 py-1"
-                  onClick={() => setOpenDropdown(!openDropdown)}
-                  role="button"
-                  aria-haspopup="true"
-                  aria-expanded={openDropdown}
-                  tabIndex={0}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && setOpenDropdown(!openDropdown)
-                  }
+              <div className="flex items-center gap-3 text-[#323232]">
+                <span>
+                  Created By:{" "}
+                  {typeof taskDetails?.created_by === "string"
+                    ? taskDetails.created_by
+                    : (taskDetails?.created_by as any)?.name}
+                </span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <span className="flex items-center gap-3">
+                  Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
+                </span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <span
+                  className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
                 >
-                  <span className="text-[13px]">{selectedOption}</span>
-                  <ChevronDown
-                    size={15}
-                    className={`${openDropdown ? "rotate-180" : ""
-                      } transition-transform`}
+                  <div className="relative" ref={dropdownRef}>
+                    <div
+                      className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                      onClick={() => setOpenDropdown(!openDropdown)}
+                      role="button"
+                      aria-haspopup="true"
+                      aria-expanded={openDropdown}
+                      tabIndex={0}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && setOpenDropdown(!openDropdown)
+                      }
+                    >
+                      <span className="text-[13px]">{selectedOption}</span>
+                      <ChevronDown
+                        size={15}
+                        className={`${openDropdown ? "rotate-180" : ""
+                          } transition-transform`}
+                      />
+                    </div>
+                    <ul
+                      className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                        }`}
+                      role="menu"
+                      style={{
+                        minWidth: "150px",
+                        maxHeight: "400px",
+                        overflowY: "auto",
+                        zIndex: 1000,
+                      }}
+                    >
+                      {dropdownOptions.map((option, idx) => (
+                        <li key={idx} role="menuitem">
+                          <button
+                            className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                              ? "bg-gray-100 font-semibold"
+                              : ""
+                              }`}
+                            onClick={() => handleOptionSelect(option)}
+                          >
+                            {option}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <span className="cursor-pointer flex items-center gap-1">
+                  <ActiveTimer
+                    activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
+                    isStarted={(taskDetails as any)?.is_started}
                   />
-                </div>
-                <ul
-                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
-                    }`}
-                  role="menu"
-                  style={{
-                    minWidth: "150px",
-                    maxHeight: "400px",
-                    overflowY: "auto",
-                    zIndex: 1000,
-                  }}
-                >
-                  {dropdownOptions.map((option, idx) => (
-                    <li key={idx} role="menuitem">
-                      <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                          ? "bg-gray-100 font-semibold"
-                          : ""
-                          }`}
-                        onClick={() => handleOptionSelect(option)}
-                      >
-                        {option}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span className="cursor-pointer flex items-center gap-1">
-              <ActiveTimer
-                activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
-                isStarted={(taskDetails as any)?.is_started}
-              />
-            </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            {taskDetails.todo_converted ? (
-              <span
-                className="flex items-center gap-1 cursor-pointer"
-                onClick={() => navigate(`/vas/todo`)}
-              >
-                <CircleCheckBig size={15} />
-                <span>Added To Do</span>
-              </span>
-            ) : (
-              <span
-                className="flex items-center gap-1 cursor-pointer"
-                onClick={handleAddToDo}
-              >
-                <CircleCheckBig size={15} />
-                <span>Add To Do</span>
-              </span>
-            )}
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span
-              className="flex items-center gap-1 cursor-pointer"
-              onClick={() => setOpenEditModal(true)}
-            >
-              <PencilIcon size={15} />
-              {taskDetails.parent_id ? "Edit Subtask" : "Edit Task"}
-            </span>
-            {!taskDetails.parent_id && (
-              <>
+                </span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                {taskDetails.todo_converted ? (
+                  <span
+                    className="flex items-center gap-1 cursor-pointer"
+                    onClick={() => navigate(`/vas/todo`)}
+                  >
+                    <CircleCheckBig size={15} />
+                    <span>Added To Do</span>
+                  </span>
+                ) : (
+                  <span
+                    className="flex items-center gap-1 cursor-pointer"
+                    onClick={handleAddToDo}
+                  >
+                    <CircleCheckBig size={15} />
+                    <span>Add To Do</span>
+                  </span>
+                )}
                 <span className="h-6 w-[1px] border border-gray-300"></span>
                 <span
                   className="flex items-center gap-1 cursor-pointer"
-                  onClick={() => setOpenSubTaskModal(true)}
+                  onClick={() => setOpenEditModal(true)}
                 >
-                  <Plus size={15} />
-                  <span>Add Subtask</span>
+                  <PencilIcon size={15} />
+                  {taskDetails.parent_id ? "Edit Subtask" : "Edit Task"}
                 </span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-
-        {/* Description Section */}
-        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-            <ChevronDownCircle
-              color="#E95420"
-              size={30}
-              className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
-              onClick={toggleFirstCollapse}
-            />
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Description
-            </h3>
-          </div>
-
-          <div className="mt-4 overflow-hidden" ref={firstContentRef}>
-            <p className="text-sm text-gray-900">{taskDetails.description}</p>
-          </div>
-        </div>
-
-        {/* Details Section */}
-        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-            <ChevronDownCircle
-              color="#E95420"
-              size={30}
-              className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
-              onClick={toggleSecondCollapse}
-            />
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Details
-            </h3>
-          </div>
-
-          {/* Collapsed View Summary */}
-          {isSecondCollapsed && (
-            <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
-              <div className="flex items-center justify-start gap-3">
-                <div className="text-right font-[500]">Responsible Person:</div>
-                <div className="text-left">
-                  {taskDetails.responsible_person.name || "-"}
-                </div>
-              </div>
-              <div className="flex items-center justify-start gap-3">
-                <div className="text-right font-[500]">Priority:</div>
-                <div className="text-left">{taskDetails.priority || "-"}</div>
-              </div>
-              <div className="flex items-center justify-start gap-3">
-                <div className="text-right font-[500]">End Date:</div>
-                <div className="text-left">
-                  {formatToDDMMYYYY(taskDetails.target_date || "")}
-                </div>
-              </div>
-              <div className="flex items-center justify-start gap-3">
-                <div className="text-right font-[500]">Efforts Duration:</div>
-                <div className="text-left">
-                  {taskDetails.estimated_hour || 0} hours
-                </div>
+                {!taskDetails.parent_id && (
+                  <>
+                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                    <span
+                      className="flex items-center gap-1 cursor-pointer"
+                      onClick={() => setOpenSubTaskModal(true)}
+                    >
+                      <Plus size={15} />
+                      <span>Add Subtask</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-          )}
+            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
-          {/* Expanded View */}
-          <div
-            className={`mt-3 ${isSecondCollapsed ? "overflow-hidden" : ""}`}
-            ref={secondContentRef}
-          >
-            <div className="flex flex-col space-y-4">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      Responsible Person:
-                    </p>
+            {/* Description Section */}
+            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                <ChevronDownCircle
+                  color="#E95420"
+                  size={30}
+                  className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
+                  onClick={toggleFirstCollapse}
+                />
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  Description
+                </h3>
+              </div>
+
+              <div className="mt-4 overflow-hidden" ref={firstContentRef}>
+                <p className="text-sm text-gray-900">{taskDetails.description}</p>
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                <ChevronDownCircle
+                  color="#E95420"
+                  size={30}
+                  className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
+                  onClick={toggleSecondCollapse}
+                />
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  Details
+                </h3>
+              </div>
+
+              {/* Collapsed View Summary */}
+              {isSecondCollapsed && (
+                <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
+                  <div className="flex items-center justify-start gap-3">
+                    <div className="text-right font-[500]">Responsible Person:</div>
+                    <div className="text-left">
+                      {taskDetails.responsible_person.name || "-"}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {taskDetails?.responsible_person?.name || "-"}
-                    </p>
+                  <div className="flex items-center justify-start gap-3">
+                    <div className="text-right font-[500]">Priority:</div>
+                    <div className="text-left">{taskDetails.priority || "-"}</div>
+                  </div>
+                  <div className="flex items-center justify-start gap-3">
+                    <div className="text-right font-[500]">End Date:</div>
+                    <div className="text-left">
+                      {formatToDDMMYYYY(taskDetails.target_date || "")}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-start gap-3">
+                    <div className="text-right font-[500]">Efforts Duration:</div>
+                    <div className="text-left">
+                      {taskDetails.estimated_hour || 0} hours
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">Priority:</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {taskDetails.priority || "-"}
-                    </p>
-                  </div>
-                </div>
+              {/* Expanded View */}
+              <div
+                className={`mt-3 ${isSecondCollapsed ? "overflow-hidden" : ""}`}
+                ref={secondContentRef}
+              >
+                <div className="flex flex-col space-y-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          Responsible Person:
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {taskDetails?.responsible_person?.name || "-"}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      Start Date:
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {formatToDDMMYYYY(taskDetails.expected_start_date || "")}
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">Priority:</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {taskDetails.priority || "-"}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start">
-                  {/* <div className="min-w-[200px]">
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          Start Date:
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {formatToDDMMYYYY(taskDetails.expected_start_date || "")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start">
+                      {/* <div className="min-w-[200px]">
                     <p className="text-sm font-medium text-gray-600">Milestone:</p>
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
                   </div> */}
 
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      {taskDetails.parent_id ? "Task" : "Milestones"}:
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {taskDetails.parent_id
-                        ? taskDetails.parent_task_title
-                        : taskDetails.milestone?.title}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">End Date:</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {formatToDDMMYYYY(taskDetails.target_date || "")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">Tags:</p>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex gap-1 flex-wrap">
-                      {taskDetails.task_tags &&
-                        taskDetails.task_tags.length > 0 ? (
-                        taskDetails.task_tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-[#c72030] text-white rounded-full text-xs font-medium"
-                          >
-                            {tag?.company_tag?.name || tag.name || "Unknown"}
-                          </span>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-900">-</p>
-                      )}
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          {taskDetails.parent_id ? "Task" : "Milestones"}:
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {taskDetails.parent_id
+                            ? taskDetails.parent_task_title
+                            : taskDetails.milestone?.title}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      Efforts Duration:
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      {taskDetails.estimated_hour || 0} hours
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">End Date:</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {formatToDDMMYYYY(taskDetails.target_date || "")}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">Observer:</p>
-                  </div>
-                  <div className="flex-1">
-                    {taskDetails.observers && taskDetails.observers.length > 0 ? (
-                      <TooltipProvider>
-                        <div className="flex gap-1">
-                          {taskDetails.observers.map((observer, idx) => (
-                            <Tooltip key={idx}>
-                              <TooltipTrigger asChild>
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030] text-white text-xs font-medium cursor-default">
-                                  {getInitials(observer.user_name)}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-sm">
-                                {observer.user_name}
-                              </TooltipContent>
-                            </Tooltip>
-                          ))}
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">Tags:</p>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex gap-1 flex-wrap">
+                          {taskDetails.task_tags &&
+                            taskDetails.task_tags.length > 0 ? (
+                            taskDetails.task_tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="px-3 py-1 bg-[#c72030] text-white rounded-full text-xs font-medium"
+                              >
+                                {tag?.company_tag?.name || tag.name || "Unknown"}
+                              </span>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-900">-</p>
+                          )}
                         </div>
-                      </TooltipProvider>
-                    ) : (
-                      <p className="text-sm text-gray-900">-</p>
-                    )}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      {calculateDuration(
-                        taskDetails.expected_start_date,
-                        taskDetails.target_date
-                      ).isOverdue
-                        ? "Overdued Time:"
-                        : "Time Left:"}
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <CountdownTimer
-                      startDate={taskDetails.expected_start_date}
-                      targetDate={taskDetails.target_date}
-                    />
-                  </div>
-                </div>
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          Efforts Duration:
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {taskDetails.estimated_hour || 0} hours
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start">
-                  <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">
-                      Workflow Status:
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <Select
-                      value={
-                        taskDetails.project_status_id
-                          ? String(taskDetails.project_status_id)
-                          : "1"
-                      }
-                      onValueChange={(value) => handleWorkflowChange(value)}
-                    >
-                      <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses.map((status: any) => (
-                          <SelectItem key={status.id} value={String(status.id)}>
-                            {status.status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">Observer:</p>
+                      </div>
+                      <div className="flex-1">
+                        {taskDetails.observers && taskDetails.observers.length > 0 ? (
+                          <TooltipProvider>
+                            <div className="flex gap-1">
+                              {taskDetails.observers.map((observer, idx) => (
+                                <Tooltip key={idx}>
+                                  <TooltipTrigger asChild>
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030] text-white text-xs font-medium cursor-default">
+                                      {getInitials(observer.user_name)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-sm">
+                                    {observer.user_name}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                            </div>
+                          </TooltipProvider>
+                        ) : (
+                          <p className="text-sm text-gray-900">-</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          {calculateDuration(
+                            taskDetails.expected_start_date,
+                            taskDetails.target_date
+                          ).isOverdue
+                            ? "Overdued Time:"
+                            : "Time Left:"}
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <CountdownTimer
+                          startDate={taskDetails.expected_start_date}
+                          targetDate={taskDetails.target_date}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          Workflow Status:
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <Select
+                          value={
+                            taskDetails.project_status_id
+                              ? String(taskDetails.project_status_id)
+                              : "1"
+                          }
+                          onValueChange={(value) => handleWorkflowChange(value)}
+                        >
+                          <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses.map((status: any) => (
+                              <SelectItem key={status.id} value={String(status.id)}>
+                                {status.status}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
           </>
         )}
       </div>
