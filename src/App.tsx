@@ -962,6 +962,7 @@ import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
 // import RouteLogger from "./components/RouteLogger";
 import ModulesManagement from "./pages/settings/ModulesManagement";
+import NotificationsPage from "./pages/NotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -2895,7 +2896,10 @@ function App() {
                       />
 
                       <Route path="/vas/todo" element={<Todo />} />
-
+                      <Route
+                        path="/notifications"
+                        element={<NotificationsPage />}
+                      />
                       <Route
                         path="/vas/documents"
                         element={<DocumentManagement />}
