@@ -48,13 +48,13 @@ interface BillFilters {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-    // {
-    //     key: 'actions',
-    //     label: 'Action',
-    //     sortable: false,
-    //     hideable: false,
-    //     draggable: false
-    // },
+    {
+        key: 'actions',
+        label: 'Action',
+        sortable: false,
+        hideable: false,
+        draggable: false
+    },
     {
         key: 'bill_date',
         label: 'Date',
@@ -320,13 +320,13 @@ export const BillListPage: React.FC = () => {
     const renderRow = (bill: Bill) => ({
         actions: (
             <div className="flex items-center gap-2">
-                {/* <button
+                <button
                     onClick={() => handleView(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
-                </button> */}
+                </button>
                 {/* <button
                     onClick={() => handleEdit(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
