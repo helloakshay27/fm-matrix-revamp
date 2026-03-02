@@ -834,8 +834,11 @@ import { ChannelsLayout } from "./pages/ChannelsLayout";
 import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
+import { UsersManagementDashboard } from "./pages/admin/UsersManagementDashboard";
+
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
+import { AdminUsersDetails } from "./pages/admin/AdminUsersDetails";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
 import { EditDocumentPage } from "./pages/EditDocumentPage";
@@ -1287,9 +1290,18 @@ function App() {
                         element={<AdminUsersDashboard />}
                       />
                       <Route
+                        path="admin/users/manage"
+                        element={<UsersManagementDashboard />}
+                      />
+                      <Route
                         path="admin/users/:id"
                         element={<UserDetailsPage />}
                       />
+                      <Route
+                        path="admin/users/edit/:id"
+                        element={<AdminUsersDetails />}
+                      />
+
                       <Route
                         path="admin/create-admin-user"
                         element={<CreateAdminUserPage />}
