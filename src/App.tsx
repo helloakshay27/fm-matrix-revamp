@@ -1101,6 +1101,7 @@ import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
 import BillDetails from "./pages/ClubManagement/BillDetails";
 import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
+import StepathonPage from "./pages/StepathonPage";
 
 const queryClient = new QueryClient();
 
@@ -4684,6 +4685,7 @@ function App() {
                         path="/pulse/community-modules/banner-list/:id"
                         element={<BannerDetailsPage />}
                       />
+                      <Route path="/pulse/stepathon" element={<StepathonPage />} />
                       <Route path="/pulse/events" element={<CRMEventsPage />} />
                       <Route
                         path="/pulse/events/add"
