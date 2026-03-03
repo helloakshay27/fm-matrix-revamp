@@ -32,6 +32,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const SingleSeriesTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const entry = payload[0];
+  if (!entry) return null;
+
+  return (
+    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+      <p className="font-semibold text-gray-900 mb-2">{label}</p>
+      <p style={{ color: entry.color }} className="text-sm">
+        {entry.name}: <span className="font-semibold">{Number(entry.value || 0).toLocaleString()}</span>
+      </p>
+    </div>
+  );
+};
+
 interface ParkingAnalyticsCardProps {
   title: string;
   data: any;
@@ -484,7 +500,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                     tickFormatter={formatNumber}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={false} />
+                  <Tooltip content={<SingleSeriesTooltip />} cursor={false} shared={false} />
                   <Legend 
                     verticalAlign="bottom" 
                     height={36} 
@@ -613,6 +629,27 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           { date: '2025-12-03', thisYearCancelled: 3, lastYearCancelled: 4 },
         ];
 
+        const compareLabel = getCompareLabel(startDate, endDate);
+
+        const mapLabel = (label: string) => {
+          switch (label) {
+            case 'Day Comparison':
+              return { current: 'This Day', compare: 'Last Day' };
+            case 'Week Comparison':
+              return { current: 'This Week', compare: 'Last Week' };
+            case 'Month Comparison':
+              return { current: 'This Month', compare: 'Last Month' };
+            case 'Year Comparison':
+              return { current: 'This Year', compare: 'Last Year' };
+            case 'Multi-year Comparison':
+              return { current: 'This Period', compare: 'Previous Period' };
+            default:
+              return { current: 'This Period', compare: 'Previous Period' };
+          }
+        };
+
+        const seriesLabels = mapLabel(compareLabel);
+
         return (
           <div className="w-full">
             {/* Toggle Buttons */}
@@ -625,7 +662,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Current Year
+                {seriesLabels.current}
               </button>
               <button
                 onClick={() => setOccupancyView('yoy')}
@@ -635,7 +672,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Compare
+                {seriesLabels.compare}
               </button>
             </div>
 
@@ -812,6 +849,19 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     : label === 'Day Comparison'
                       ? 'Daily Parking Comparison'
                       : 'Parking Comparison';
+              return <h3 className="text-lg font-bold text-[#1A1A1A]">{dynamicTitle}</h3>;
+            }
+            if (type === 'occupancyRate') {
+              const label = getCompareLabel(startDate, endDate);
+              const dynamicTitle = label === 'Year Comparison' 
+                ? 'Yearly Cancelled Bookings Comparison' 
+                : label === 'Month Comparison'
+                  ? 'Monthly Cancelled Bookings Comparison'
+                  : label === 'Week Comparison'
+                    ? 'Weekly Cancelled Bookings Comparison'
+                    : label === 'Day Comparison'
+                      ? 'Daily Cancelled Bookings Comparison'
+                      : 'Cancelled Bookings Comparison';
               return <h3 className="text-lg font-bold text-[#1A1A1A]">{dynamicTitle}</h3>;
             }
             return <h3 className="text-lg font-bold text-[#1A1A1A]">{title}</h3>;

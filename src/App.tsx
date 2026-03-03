@@ -27,6 +27,7 @@ import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 // Import existing pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import NotificationsPage from "./pages/NotificationsPage";
 import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
@@ -833,8 +834,11 @@ import { ChannelsLayout } from "./pages/ChannelsLayout";
 import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
+import { UsersManagementDashboard } from "./pages/admin/UsersManagementDashboard";
+
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
+import { AdminUsersDetails } from "./pages/admin/AdminUsersDetails";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
 import { EditDocumentPage } from "./pages/EditDocumentPage";
@@ -1069,10 +1073,10 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import ModulesManagement from "./pages/settings/ModulesManagement";
 import { InvoiceAdd } from "./pages/ClubManagement/InvoiceAdd";
 import { InvoiceDashboardAccounting } from "./pages/ClubManagement/InvoiceDashboard";
-import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage"
+import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashboardDetailsPage";
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
-import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails"
+import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1089,11 +1093,15 @@ import VendorCreditsDetails from "./pages/ClubManagement/VendorCreditsDetails";
 import { CreditNoteEditPage } from "./pages/ClubManagement/CreditNoteEditPage";
 import { VendorCreditsEdit } from "./pages/ClubManagement/VendorCreditsEdit";
 import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
+import TaxRateSetupPage from "./pages/ClubManagement/TaxRateSetupPage";
+import DefaultTaxPreferencesPage from "./pages/ClubManagement/DefaultTaxPreferencesPage";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
 import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
-
+import BillDetails from "./pages/ClubManagement/BillDetails";
+import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
+import StepathonPage from "./pages/StepathonPage";
 
 const queryClient = new QueryClient();
 
@@ -1286,9 +1294,18 @@ function App() {
                         element={<AdminUsersDashboard />}
                       />
                       <Route
+                        path="admin/users/manage"
+                        element={<UsersManagementDashboard />}
+                      />
+                      <Route
                         path="admin/users/:id"
                         element={<UserDetailsPage />}
                       />
+                      <Route
+                        path="admin/users/edit/:id"
+                        element={<AdminUsersDetails />}
+                      />
+
                       <Route
                         path="admin/create-admin-user"
                         element={<CreateAdminUserPage />}
@@ -2225,7 +2242,6 @@ function App() {
                         path="/accounting/recurring-journal/details"
                         element={<RecurringJournalDetails />}
                       />
-
                       <Route
                         path="/accounting/vendor-credits"
                         element={<VendorCreditsListPage />}
@@ -2242,8 +2258,6 @@ function App() {
                         path="/accounting/vendor-credits/edit/:id"
                         element={<VendorCreditsEdit />}
                       />
-
-
                       <Route
                         path="/accounting/chart-journal"
                         element={<ChartOfAccountsDashboard />}
@@ -2360,7 +2374,7 @@ function App() {
                         path="/accounting/customers/add"
                         element={<CustomersAdd />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/customers/details/:id"
                         element={<CustomersDetails />}
                       />
@@ -2389,7 +2403,7 @@ function App() {
                         path="/accounting/invoices/add"
                         element={<InvoiceAdd />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/dashboard/invoices/:id"
                         element={<InvoiceDashboardDetailsPage />}
                       />
@@ -2401,11 +2415,10 @@ function App() {
                         path="/accounting/quotes/add"
                         element={<QuotesAdd />}
                       />
-                        <Route
+                      <Route
                         path="/accounting/quotes/details/:id"
                         element={<QuotesDetails />}
                       />
-
                       <Route
                         path="/accounting/delivery-challans"
                         element={<DeliveryChallansDashboard />}
@@ -2421,7 +2434,6 @@ function App() {
                       <Route
                         path="/accounting/recurring-invoices/create"
                         element={<RecurringInvoicesCreatePage />}
-
                       />
                       <Route
                         path="/accounting/payments-received"
@@ -2435,7 +2447,6 @@ function App() {
                         path="/accounting/payments-received/:id"
                         element={<PaymentReceivedDetailsPage />}
                       />
-
                       <Route
                         path="/accounting/credit-note"
                         element={<CreditNoteListPage />}
@@ -2446,14 +2457,12 @@ function App() {
                       />
                       <Route
                         path="/accounting/credit-note/:id"
-                        element={<CreditNoteDetailPage />}
+                        element={<CreditNoteDetails />}
                       />
                       <Route
                         path="/accounting/credit-note/edit/:id"
                         element={<CreditNoteEditPage />}
                       />
-
-
                       {/* Purchase Order Routes */}
                       <Route
                         path="/accounting/purchase-order"
@@ -2480,13 +2489,17 @@ function App() {
                         path="/accounting/bills/create"
                         element={<BillCreatePage />}
                       /> */}
-                       <Route
-                        path="/accounting/bills/create"
-                        element={<BillsAdd/>}
-                      />
                       <Route
+                        path="/accounting/bills/create"
+                        element={<BillsAdd />}
+                      />
+                      {/* <Route
                         path="/accounting/bills/:id"
                         element={<BillDetailPage />}
+                      /> */}
+                                            <Route
+                        path="/accounting/bills/:id"
+                        element={<BillDetails/>}
                       />
                       <Route
                         path="/accounting/bills/edit/:id"
@@ -2531,23 +2544,31 @@ function App() {
                         element={<ExpenseCreatePage />}
                       />
                       <Route
-                        path="/master/section"
+                        path="/accounting/section"
                         element={<SectionMaster />}
                       />
                       <Route
-                        path="/master/tax-setup"
+                        path="/accounting/tax-setup-master"
                         element={<TaxSetupMaster />}
                       />
                       <Route
-                        path="/master/sales-person"
+                        path="/accounting/tax-rates-setup"
+                        element={<TaxRateSetupPage />}
+                      />
+                      <Route
+                        path="/accounting/default-tax-preferences"
+                        element={<DefaultTaxPreferencesPage />}
+                      />
+                      <Route
+                        path="/accounting/sales-person"
                         element={<SalesPersonMaster />}
                       />
                       <Route
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
                       />
-                        <Route
-                        path="/master/payment-terms"
+                      <Route
+                        path="/accounting/payment-terms"
                         element={<PaymentTermsMaster />}
                       />
                       {/* Club Management - Occupant Users */}
@@ -3648,6 +3669,10 @@ function App() {
                       />
                       <Route path="/vas/todo" element={<Todo />} />
                       <Route
+                        path="/notifications"
+                        element={<NotificationsPage />}
+                      />
+                      <Route
                         path="/vas/documents"
                         element={<DocumentManagement />}
                       />
@@ -4660,6 +4685,7 @@ function App() {
                         path="/pulse/community-modules/banner-list/:id"
                         element={<BannerDetailsPage />}
                       />
+                      <Route path="/pulse/stepathon" element={<StepathonPage />} />
                       <Route path="/pulse/events" element={<CRMEventsPage />} />
                       <Route
                         path="/pulse/events/add"

@@ -30,7 +30,7 @@ export const fetchMilestones = createAsyncThunk(
     "fetchMilestones",
     async ({ token, baseUrl, id, orderBy, orderDirection }: { token: string, baseUrl: string, id: string, orderBy?: string, orderDirection?: string }, { rejectWithValue }) => {
         try {
-            let url = `https://${baseUrl || ''}/milestones.json?q[project_management_id_eq]=${id}`;
+            let url = `https://${baseUrl || ''}/milestones/milestone_kanban.json?q[project_management_id_eq]=${id}`;
 
             // Add sorting parameters if provided
             if (orderBy && orderDirection) {

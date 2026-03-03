@@ -530,7 +530,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                         style="width: ${task.completionPercent ?? 0}%"
                                     ></div>
                                     <div class="gantt-progress-bar-label">
-                                        ${task.completionPercent}%
+                                        ${task.completionPercent ?? 0}%
                                     </div>
                                 </div>
                                 <span>${task.totalTasks}</span>
@@ -704,7 +704,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
           cacheKey,
           async () => {
             const response = await axios.get(
-              `${baseURL}/milestones.json?q[project_management_id_eq]=${id}`,
+              `${baseURL}/milestones/milestone_kanban.json?q[project_management_id_eq]=${id}`,
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("token")}`,

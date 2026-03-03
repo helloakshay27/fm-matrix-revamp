@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -7,17 +7,24 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from "@dnd-kit/sortable";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -26,48 +33,60 @@ import {
   PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,
-} from '@/components/ui/pagination';
-import { SortableColumnHeader } from './SortableColumnHeader';
-import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
-import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/pagination";
+import { SortableColumnHeader } from "./SortableColumnHeader";
+import { ColumnVisibilityMenu } from "./ColumnVisibilityMenu";
+import { useEnhancedTable, ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  Search,
+  Download,
+  Loader2,
+  Grid3x3,
+  Plus,
+  X,
+  Filter,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
   data: T[],
   columns: ColumnConfig[],
-  fileName: string = 'table-export'
+  fileName: string = "table-export"
 ) => {
   if (data.length === 0) {
-    alert('No data to export');
+    alert("No data to export");
     return;
   }
 
   // Create CSV content
-  const headers = columns.map(col => col.label).join(',');
+  const headers = columns.map((col) => col.label).join(",");
   const csvContent = [
     headers,
-    ...data.map(row =>
-      columns.map(col => {
-        const value = row[col.key];
-        // Handle values that might contain commas or quotes
-        const stringValue = String(value || '').replace(/"/g, '""');
-        return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
-          ? `"${stringValue}"`
-          : stringValue;
-      }).join(',')
-    )
-  ].join('\n');
+    ...data.map((row) =>
+      columns
+        .map((col) => {
+          const value = row[col.key];
+          // Handle values that might contain commas or quotes
+          const stringValue = String(value || "").replace(/"/g, '""');
+          return stringValue.includes(",") ||
+            stringValue.includes('"') ||
+            stringValue.includes("\n")
+            ? `"${stringValue}"`
+            : stringValue;
+        })
+        .join(",")
+    ),
+  ].join("\n");
 
   // Create and trigger download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${fileName}.csv`);
-  link.style.visibility = 'hidden';
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${fileName}.csv`);
+  link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -78,7 +97,13 @@ interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
   onClick: (selectedItems: T[]) => void;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
 }
 
 interface EnhancedTableProps<T> {
@@ -138,9 +163,9 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   selectAllLabel = "Select all",
   searchTerm: externalSearchTerm,
   onSearchChange,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = "Search...",
   enableExport = false,
-  exportFileName = 'table-export',
+  exportFileName = "table-export",
   onExport,
   bulkActions = [],
   showBulkActions = false,
@@ -156,8 +181,8 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   rightActions,
   onFilterClick,
 }: EnhancedTableProps<T>) {
-  const [internalSearchTerm, setInternalSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const [internalSearchTerm, setInternalSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -179,7 +204,8 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
     }
   }, [externalSearchTerm]);
 
-  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  const searchTerm =
+    externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Get initial column visibility state from localStorage
   const getSavedColumnVisibility = () => {
@@ -189,7 +215,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         try {
           return JSON.parse(savedVisibility);
         } catch (e) {
-          console.error('Error parsing saved column visibility:', e);
+          console.error("Error parsing saved column visibility:", e);
         }
       }
     }
@@ -204,12 +230,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
     handleSort,
     toggleColumnVisibility,
     reorderColumns,
-    resetToDefaults
+    resetToDefaults,
   } = useEnhancedTable({
     data,
     columns,
     storageKey,
-    initialColumnVisibility: getSavedColumnVisibility()
+    initialColumnVisibility: getSavedColumnVisibility(),
   });
 
   // Wrap resetToDefaults to handle localStorage
@@ -221,15 +247,24 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       localStorage.removeItem(`${storageKey}-column-order`);
 
       // Set default column visibility state
-      const defaultVisibility = columns.reduce((acc, column) => ({
-        ...acc,
-        [column.key]: column.defaultVisible !== false
-      }), {});
-      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(defaultVisibility));
+      const defaultVisibility = columns.reduce(
+        (acc, column) => ({
+          ...acc,
+          [column.key]: column.defaultVisible !== false,
+        }),
+        {}
+      );
+      localStorage.setItem(
+        `${storageKey}-columns`,
+        JSON.stringify(defaultVisibility)
+      );
 
       // Set default column order
-      const defaultOrder = columns.map(column => column.key);
-      localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(defaultOrder));
+      const defaultOrder = columns.map((column) => column.key);
+      localStorage.setItem(
+        `${storageKey}-column-order`,
+        JSON.stringify(defaultOrder)
+      );
     }
   };
 
@@ -239,9 +274,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
     if (storageKey) {
       const updatedVisibility = {
         ...columnVisibility,
-        [columnKey]: !columnVisibility[columnKey]
+        [columnKey]: !columnVisibility[columnKey],
       };
-      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(updatedVisibility));
+      localStorage.setItem(
+        `${storageKey}-columns`,
+        JSON.stringify(updatedVisibility)
+      );
     }
   };
 
@@ -261,8 +299,8 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
     // Otherwise, apply client-side filtering
     if (!searchTerm) return baseSortedData;
 
-    return baseSortedData.filter(item =>
-      Object.values(item).some(value =>
+    return baseSortedData.filter((item) =>
+      Object.values(item).some((value) =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -293,23 +331,31 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       reorderColumns(String(active.id), String(over.id));
       // Save the new column order to localStorage
       if (storageKey) {
-        const newOrder = columnIds.filter(id => id !== active.id);
+        const newOrder = columnIds.filter((id) => id !== active.id);
         const overIndex = newOrder.indexOf(String(over.id));
         newOrder.splice(overIndex, 0, String(active.id));
-        localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(newOrder));
+        localStorage.setItem(
+          `${storageKey}-column-order`,
+          JSON.stringify(newOrder)
+        );
       }
     }
   };
 
   // Create column IDs for drag and drop, excluding checkbox and actions columns
-  const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
+  const columnIds = visibleColumns
+    .map((col) => col.key)
+    .filter((key) => key !== "__checkbox__");
 
   // Check if all visible items are selected
-  const isAllSelected = selectable && sortedData.length > 0 &&
-    sortedData.every(item => selectedItems.includes(getItemId(item)));
+  const isAllSelected =
+    selectable &&
+    sortedData.length > 0 &&
+    sortedData.every((item) => selectedItems.includes(getItemId(item)));
 
   // Check if some (but not all) items are selected
-  const isIndeterminate = selectable && selectedItems.length > 0 && !isAllSelected;
+  const isIndeterminate =
+    selectable && selectedItems.length > 0 && !isAllSelected;
 
   const handleSelectAllChange = (checked: boolean) => {
     if (onSelectAll) {
@@ -326,7 +372,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   const handleRowClick = (item: T, event: React.MouseEvent) => {
     // Don't trigger row click if clicking on checkbox or actions
     const target = event.target as HTMLElement;
-    if (target.closest('[data-checkbox]') || target.closest('[data-actions]')) {
+    if (target.closest("[data-checkbox]") || target.closest("[data-actions]")) {
       return;
     }
     onRowClick?.(item);
@@ -343,17 +389,19 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   };
 
   const handleClearSearch = () => {
-    setSearchInput('');
-    setInternalSearchTerm('');
+    setSearchInput("");
+    setInternalSearchTerm("");
     setApiSearchResults(null);
     setCurrentPage(1);
     if (onSearchChange) {
-      onSearchChange('');
+      onSearchChange("");
     }
   };
 
   const selectedItemObjects = useMemo(() => {
-    return filteredData.filter(item => selectedItems.includes(getItemId(item)));
+    return filteredData.filter((item) =>
+      selectedItems.includes(getItemId(item))
+    );
   }, [filteredData, selectedItems, getItemId]);
 
   // Generate page numbers for pagination
@@ -371,7 +419,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
       if (startPage > 1) {
         pages.push(1);
-        if (startPage > 2) pages.push('ellipsis-start');
+        if (startPage > 2) pages.push("ellipsis-start");
       }
 
       for (let i = startPage; i <= endPage; i++) {
@@ -379,7 +427,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       }
 
       if (endPage < totalPages) {
-        if (endPage < totalPages - 1) pages.push('ellipsis-end');
+        if (endPage < totalPages - 1) pages.push("ellipsis-end");
         pages.push(totalPages);
       }
     }
@@ -390,43 +438,43 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   // Custom export handler for schedules table
   const handleSchedulesExport = async () => {
     // Dynamically import toast to avoid circular dependency
-    const { toast } = await import('sonner');
+    const { toast } = await import("sonner");
     try {
-      const { API_CONFIG } = await import('@/config/apiConfig');
+      const { API_CONFIG } = await import("@/config/apiConfig");
       const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': API_CONFIG.TOKEN ? `Bearer ${API_CONFIG.TOKEN}` : '',
+          Authorization: API_CONFIG.TOKEN ? `Bearer ${API_CONFIG.TOKEN}` : "",
         },
       });
-      if (!response.ok) throw new Error('Failed to download checklist export');
+      if (!response.ok) throw new Error("Failed to download checklist export");
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = 'checklist.xlsx';
+      a.download = "checklist.xlsx";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
-      toast.success('Checklist export downloaded successfully.', {
-        position: 'top-right',
+      toast.success("Checklist export downloaded successfully.", {
+        position: "top-right",
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
-          border: 'none',
+          background: "#10b981",
+          color: "white",
+          border: "none",
         },
       });
     } catch (error) {
-      toast.error('Failed to download checklist export. Please try again.', {
-        position: 'top-right',
+      toast.error("Failed to download checklist export. Please try again.", {
+        position: "top-right",
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
+          background: "#ef4444",
+          color: "white",
+          border: "none",
         },
       });
     }
@@ -439,8 +487,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           {leftActions}
 
           {showBulkActions && selectedItems.length > 0 && (
-            <div className="flex items-center gap-2">
-            </div>
+            <div className="flex items-center gap-2"></div>
           )}
         </div>
 
@@ -450,11 +497,17 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
-                value={externalSearchTerm !== undefined ? externalSearchTerm : searchInput}
+                value={
+                  externalSearchTerm !== undefined
+                    ? externalSearchTerm
+                    : searchInput
+                }
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 className="pl-10 pr-10"
               />
-              {(externalSearchTerm !== undefined ? externalSearchTerm : searchInput) && (
+              {(externalSearchTerm !== undefined
+                ? externalSearchTerm
+                : searchInput) && (
                 <button
                   onClick={handleClearSearch}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -476,6 +529,31 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
             </Button>
           )}
 
+          {/* Schedules export button: use API if exportFileName === 'schedules' */}
+          {!hideTableExport && enableExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={
+                exportFileName === "schedules"
+                  ? handleSchedulesExport
+                  : () =>
+                      handleExport
+                        ? handleExport(columnVisibility)
+                        : exportToExcel(
+                            filteredData,
+                            visibleColumns,
+                            exportFileName
+                          )
+              }
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
+
+          {rightActions}
+
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -484,20 +562,6 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
               onResetToDefaults={handleResetToDefaults}
             />
           )}
-
-          {/* Schedules export button: use API if exportFileName === 'schedules' */}
-          {!hideTableExport && enableExport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportFileName === 'schedules' ? handleSchedulesExport : (() => (handleExport ? handleExport(columnVisibility) : exportToExcel(filteredData, visibleColumns, exportFileName)))}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          )}
-
-          {rightActions}
         </div>
       </div>
 
@@ -511,22 +575,33 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
             <Table className={className}>
               <TableHeader>
                 <TableRow>
-                  <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                  <SortableContext
+                    items={columnIds}
+                    strategy={horizontalListSortingStrategy}
+                  >
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center hover:bg-[#f0ede2] transition-colors duration-200" data-actions>
+                      <TableHead
+                        className="bg-[#f6f4ee] text-center hover:bg-[#f0ede2] transition-colors duration-200"
+                        data-actions
+                      >
                         <div className="flex justify-center items-center">
                           Actions
                         </div>
                       </TableHead>
                     )}
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-center hover:bg-[#f0ede2] transition-colors duration-200" data-checkbox>
+                      <TableHead
+                        className="bg-[#f6f4ee] w-12 text-center hover:bg-[#f0ede2] transition-colors duration-200"
+                        data-checkbox
+                      >
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
                             aria-label={selectAllLabel}
-                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                            {...(isIndeterminate && {
+                              "data-state": "indeterminate",
+                            })}
                           />
                         </div>
                       </TableHead>
@@ -537,8 +612,14 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         id={column.key}
                         sortable={column.sortable !== false}
                         draggable={column.draggable}
-                        sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => column.sortable !== false && handleSort(column.key)}
+                        sortDirection={
+                          sortState.column === column.key
+                            ? sortState.direction
+                            : null
+                        }
+                        onSort={() =>
+                          column.sortable !== false && handleSort(column.key)
+                        }
                         className="bg-[#f6f4ee] text-left text-black hover:bg-[#f0ede2] transition-colors duration-200"
                       >
                         {column.label}
@@ -579,51 +660,67 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     </TableCell>
                   </TableRow>
                 )}
-                {!loading && sortedData.map((item, index) => {
-                  const itemId = getItemId(item);
-                  const isSelected = selectedItems.includes(itemId);
+                {!loading &&
+                  sortedData.map((item, index) => {
+                    const itemId = getItemId(item);
+                    const isSelected = selectedItems.includes(itemId);
 
-                  return (
-                    <TableRow
-                      key={index}
-                      className={cn(
-                        onRowClick && "cursor-pointer",
-                        "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
-                        isSelected && "bg-blue-100 hover:bg-blue-150"
-                      )}
-                      onClick={(e) => handleRowClick(item, e)}
-                    >
-                      {renderActions && (
-                        <TableCell className="p-4 text-center hover:bg-blue-25 transition-colors duration-150" data-actions>
-                          <div className="flex justify-center items-center gap-2">
-                            {renderActions(item)}
-                          </div>
-                        </TableCell>
-                      )}
-                      {selectable && (
-                        <TableCell className="p-4 w-12 text-center hover:bg-blue-25 transition-colors duration-150" data-checkbox>
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                              aria-label={`Select row ${index + 1}`}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </TableCell>
-                      )}
-                      {visibleColumns.map((column) => {
-                        const renderedRow = renderRow ? renderRow(item) : item;
-                        const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
-                        return (
-                          <TableCell key={column.key} className="p-4 text-left hover:bg-blue-25 transition-colors duration-150">
-                            {cellContent}
+                    return (
+                      <TableRow
+                        key={index}
+                        className={cn(
+                          onRowClick && "cursor-pointer",
+                          "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
+                          isSelected && "bg-blue-100 hover:bg-blue-150"
+                        )}
+                        onClick={(e) => handleRowClick(item, e)}
+                      >
+                        {renderActions && (
+                          <TableCell
+                            className="p-4 text-center hover:bg-blue-25 transition-colors duration-150"
+                            data-actions
+                          >
+                            <div className="flex justify-center items-center gap-2">
+                              {renderActions(item)}
+                            </div>
                           </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })}
+                        )}
+                        {selectable && (
+                          <TableCell
+                            className="p-4 w-12 text-center hover:bg-blue-25 transition-colors duration-150"
+                            data-checkbox
+                          >
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) =>
+                                  handleSelectItemChange(itemId, !!checked)
+                                }
+                                aria-label={`Select row ${index + 1}`}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </TableCell>
+                        )}
+                        {visibleColumns.map((column) => {
+                          const renderedRow = renderRow
+                            ? renderRow(item)
+                            : item;
+                          const cellContent = renderRow
+                            ? renderedRow[column.key]
+                            : renderCell?.(item, column.key);
+                          return (
+                            <TableCell
+                              key={column.key}
+                              className="p-4 text-left hover:bg-blue-25 transition-colors duration-150"
+                            >
+                              {cellContent}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </DndContext>
@@ -636,14 +733,18 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => setCurrentPage(prev => prev - 1)}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+                className={
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
 
             {generatePageNumbers().map((page, index) => (
               <PaginationItem key={index}>
-                {page === 'ellipsis-start' || page === 'ellipsis-end' ? (
+                {page === "ellipsis-start" || page === "ellipsis-end" ? (
                   <PaginationEllipsis />
                 ) : (
                   <PaginationLink
@@ -659,8 +760,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage(prev => prev + 1)}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
           </PaginationContent>

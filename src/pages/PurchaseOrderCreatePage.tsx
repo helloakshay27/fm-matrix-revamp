@@ -24,6 +24,7 @@ import {
     InputAdornment,
     Radio,
     RadioGroup,
+    ListSubheader,
 } from '@mui/material';
 import {
     Close,
@@ -33,9 +34,10 @@ import {
     AttachFile,
     ChevronRight
 } from '@mui/icons-material';
-import { Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart,Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAddresses, getInventories } from '@/store/slices/materialPRSlice';
+
 import { useAppDispatch } from '@/store/hooks';
 import axios from 'axios';
 
@@ -150,17 +152,23 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Summary
     const [discountOnTotal, setDiscountOnTotal] = useState(0);
+    const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [selectedTax, setSelectedTax] = useState('');
     const [adjustment, setAdjustment] = useState(0);
+    const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
+    const [taxAmount2, setTaxAmount2] = useState(0);
     const [addresses, setAddresses] = useState([])
 
     // Notes & Attachments
     const [vendorNotes, setVendorNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
-    const [paymentTermsOptions, setPaymentTermsOptions] = useState([])
+    const [paymentTermsOptions, setPaymentTermsOptions] = useState<
+        { id: string; name: string; days: number }[]
+    >([]);
     const [accountLedgers, setAccountLedgers] = useState<any[]>([]);
+    const [accountGroups, setAccountGroups] = useState<any[]>([]);
 
     // Contact Person Dialog
     const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
@@ -260,7 +268,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchVendors();
     }, []);
 
-    // Fetch items & taxes & original addresses
+    // Fetch items, addresses & payment terms
     useEffect(() => {
         const fetchInventories = async () => {
             // Mock data or dispatch - restoring original logic
@@ -281,7 +289,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
-                })
+                });
                 setAddresses(response.data);
             } catch (error) {
                 console.log(error);
@@ -289,19 +297,30 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
         };
 
+        // Payment terms dropdown data
         const fetchPaymentTerms = async () => {
             try {
-                const response = await axios.get(`https://${baseUrl}/payment_terms.json`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                const res = await axios.get(
+                    `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                            'Content-Type': 'application/json'
+                        }
                     }
-                })
+                );
 
-                setPaymentTermsOptions(response.data);
-            } catch (error) {
-                console.log(error)
+                if (res && res.data && Array.isArray(res.data)) {
+                    // map to { id, name, days } structure that the dropdown expects
+                    setPaymentTermsOptions(
+                        res.data.map((pt: any) => ({ id: pt.id?.toString?.() || String(pt.id), name: pt.name, days: pt.no_of_days }))
+                    );
+                }
+            } catch (err) {
+                console.log('Error fetching payment terms', err);
+                setPaymentTermsOptions([]);
             }
-        }
+        };
 
         fetchAddresses();
         fetchInventories();
@@ -312,19 +331,29 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const fetchTaxes = async () => {
             try {
-                const response = await axios.get(`https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${taxType.toLowerCase()}`, {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const type = taxType.toLowerCase();
+                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                const response = await fetch(url, {
                     headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
                 });
-                setTaxOptions(response.data);
+                const data = await response.json();
+                setTaxOptions(Array.isArray(data) ? data : data?.tax_sections || []);
             } catch (error) {
                 console.error('Error fetching taxes:', error);
+                setTaxOptions([]);
             }
         };
-
         fetchTaxes();
+        setSelectedTax('');
     }, [taxType]);
+
+    // Update taxAmount2 using percentage from selected tax option
+    // Moved after calculations to avoid ReferenceError
 
     // Initialize IDs
     useEffect(() => {
@@ -378,9 +407,50 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
         };
 
+        // fetch account groups (for dropdown with group/ledger structure)
+        const fetchAccountGroups = async () => {
+            try {
+                // using lock_account_id from user (defaults to 1 if absent)
+                const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id || 1;
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                console.log("Account Groups Response:", res.data);
+                setAccountGroups(res.data.data || []);
+            } catch (e) {
+                setAccountGroups([]);
+            }
+        };
+
         fetchDeliveryAddresses();
         fetchAccountLedgers();
     }, [deliveryAddressType, deliveryOrganizationId, deliveryCustomerId]);
+
+    useEffect(() => {
+        const fetchAccountGroups = async () => {
+            try {
+                const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id || 1;
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                console.log("Account Groups Response:", res.data);
+                setAccountGroups(res.data.data || []);
+            } catch (e) {
+                setAccountGroups([]);
+            }
+        };
+        fetchAccountGroups();
+    }, [baseUrl, token]);
 
     // When vendor is selected
 
@@ -457,9 +527,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         }
     };
 
-    // Calculate totals
+    // Calculate totals (matching BillsAdd logic)
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const totalDiscount = (subTotal * discountOnTotal) / 100;
+    const totalDiscount = discountTypeOnTotal === 'percentage'
+        ? (subTotal * discountOnTotal) / 100
+        : discountOnTotal;
     const afterDiscount = subTotal - totalDiscount;
 
     // Find selected tax rate
@@ -467,7 +539,26 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const taxRate = selectedTaxObj?.rate || 0;
     const taxAmount = (afterDiscount * taxRate) / 100;
 
-    const totalAmount = afterDiscount + taxAmount + adjustment;
+    // Update totalAmount to subtract TDS/TCS (taxAmount2)
+    const totalAmount = afterDiscount + adjustment - taxAmount2;
+
+    // Update taxAmount2 using percentage from selected tax option
+    useEffect(() => {
+        // Recalculate afterDiscount within the effect to avoid dependency issues
+        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
+            ? (subTotal * discountOnTotal) / 100
+            : discountOnTotal;
+        const calcAfterDiscount = subTotal - calcTotalDiscount;
+        
+        const selected = taxOptions.find(t => t.name === selectedTax);
+        // Use percentage key for calculation
+        if (selected && typeof selected.percentage === 'number') {
+            // Calculate tax on afterDiscount
+            setTaxAmount2((calcAfterDiscount * selected.percentage) / 100);
+        } else {
+            setTaxAmount2(0);
+        }
+    }, [selectedTax, taxOptions, subTotal, discountOnTotal, discountTypeOnTotal]);
 
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -926,6 +1017,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
                                         <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
                                     </tr>
@@ -983,11 +1075,29 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         size="small"
                                                     >
                                                         <MenuItem value="">Select Account</MenuItem>
-                                                        {accountLedgers.map((ledger: any) => (
-                                                            <MenuItem key={ledger.id} value={ledger.id}>
-                                                                {ledger.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
+                                                        {accountGroups.length > 0
+                                                            ? accountGroups.map((group) =>
+                                                                  group.ledgers && group.ledgers.length > 0
+                                                                      ? [
+                                                                            <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
+                                                                            ...group.ledgers.map((ledger: any) => (
+                                                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                                                    {ledger.name}
+                                                                                </MenuItem>
+                                                                            )),
+                                                                        ]
+                                                                      : (
+                                                                            <MenuItem key={`group-${group.id}`} value={group.id}>
+                                                                                {group.group_name}
+                                                                            </MenuItem>
+                                                                        )
+                                                              )
+                                                            : accountLedgers.map((ledger: any) => (
+                                                                  <MenuItem key={ledger.id} value={ledger.id}>
+                                                                      {ledger.name}
+                                                                  </MenuItem>
+                                                              ))}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1010,6 +1120,40 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <FormControl fullWidth sx={{ minWidth: 200 }}>
+                                                    <Select
+                                                        value={item.tax || ''}
+                                                        onChange={(e) => updateItem(index, 'tax', e.target.value)}
+                                                        displayEmpty
+                                                        size="small"
+                                                    >
+                                                        <MenuItem value="">Select Tax Type</MenuItem>
+                                                        <MenuItem value="non-taxable">Non-Taxable</MenuItem>
+                                                        <MenuItem value="out-of-scope">
+                                                            <div>
+                                                                <div>Out of Scope</div>
+                                                                <div style={{ fontSize: '0.75rem', color: '#666' }}>Supplies on which you don't charge any GST or include them in the returns.</div>
+                                                            </div>
+                                                        </MenuItem>
+                                                        <MenuItem value="non-gst">
+                                                            <div>
+                                                                <div>Non-GST Supply</div>
+                                                                <div style={{ fontSize: '0.75rem', color: '#666' }}>Supplies which do not come under GST such as petroleum products and liquor.</div>
+                                                            </div>
+                                                        </MenuItem>
+                                                        <Divider sx={{ my: 1 }} />
+                                                        <ListSubheader>Tax Group</ListSubheader>
+                                                        <MenuItem value="gst0">GST0 [0%]</MenuItem>
+                                                        <MenuItem value="gst5">GST5 [5%]</MenuItem>
+                                                        <MenuItem value="gst12">GST12 [12%]</MenuItem>
+                                                        <MenuItem value="gst18">GST18 [18%]</MenuItem>
+                                                        <MenuItem value="gst40">GST40 [40%]</MenuItem>
+                                                        <MenuItem value="gst28">GST28 [28%]</MenuItem>
+                                                        <MenuItem value="gst23">GST [23%]</MenuItem>
+                                                    </Select>
+                                                </FormControl>
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
@@ -1050,7 +1194,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </Section>
 
                 {/* Summary Section */}
-                <Section title="Summary" icon={<Package className="w-5 h-5" />}>
+                {/* <Section title="Summary" icon={<Package className="w-5 h-5" />}>
                     <div className="flex justify-end">
                         <div className="w-full md:w-1/2 space-y-4">
                             <div className="flex justify-between items-center py-2">
@@ -1113,6 +1257,116 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         size="small"
                                         value={adjustment}
                                         onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
+                                        inputProps={{ step: 0.01 }}
+                                        sx={{ width: 100 }}
+                                    />
+                                </div>
+                            </div>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                <span className="font-bold text-base">Total ( ₹ )</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </Section> */}
+
+                 <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+                    <div className="flex justify-end">
+                        <div className="w-full md:w-1/2 space-y-4">
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                                <div className="flex items-center gap-2">
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={discountOnTotal}
+                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 80 }}
+                                    />
+                                    <Select
+                                        size="small"
+                                        value={discountTypeOnTotal}
+                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                                        sx={{ width: 100 }}
+                                    >
+                                        <MenuItem value="percentage">%</MenuItem>
+                                        <MenuItem value="amount">Amount</MenuItem>
+                                    </Select>
+                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
+                                </div>
+                            </div>
+
+                            <Divider />
+
+                            <div className="flex flex-wrap items-center gap-3 py-2">
+                                <RadioGroup
+                                    row
+                                    value={taxType}
+                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                                >
+                                    <FormControlLabel
+                                        value="TDS"
+                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        label={<span className="text-sm">TDS</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="TCS"
+                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        label={<span className="text-sm">TCS</span>}
+                                    />
+                                </RadioGroup>
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <Select
+                                        value={selectedTax}
+                                        onChange={(e) => setSelectedTax(e.target.value)}
+                                        displayEmpty
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 224,
+                                                    backgroundColor: 'white',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                                },
+                                            },
+                                            disablePortal: true,
+                                        }}
+                                    >
+                                        <MenuItem value="">Select a Tax</MenuItem>
+                                        {taxOptions.map(tax => (
+                                            <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}
+                                                {/* {typeof tax.percentage === 'number' ? `(${tax.percentage}%)` : ''} */}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center py-2">
+                                <div className="flex items-center gap-2">
+                                    <TextField
+                                        size="small"
+                                        value={adjustmentLabel}
+                                        onChange={e => setAdjustmentLabel(e.target.value)}
+                                        sx={{ width: 120 }}
+                                        placeholder="Adjustment Name"
+                                    />
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={adjustment}
+                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />

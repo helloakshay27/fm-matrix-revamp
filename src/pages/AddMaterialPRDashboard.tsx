@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Info } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   TextField,
@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import axios from "axios";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -314,7 +315,7 @@ export const AddMaterialPRDashboard = () => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
     }
-     if (Array.isArray(data) && data.length <= 0){
+    if (Array.isArray(data) && data.length <= 0) {
       setShowRadio(false)
       setWbsSelection("")
     }
@@ -485,7 +486,7 @@ export const AddMaterialPRDashboard = () => {
         }
       );
       console.log("GL Code Response:", response.data);
-      
+
       // Update the item with the GL code from API
       if (response.data && response.data.gl_code) {
         setItems((prevItems) =>
@@ -515,7 +516,7 @@ export const AddMaterialPRDashboard = () => {
         }
       );
       console.log("GL Code Response:", response.data);
-      
+
       if (response.data && response.data.gl_code) {
         setOverallGlCode(response.data.gl_code);
         toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
@@ -526,9 +527,31 @@ export const AddMaterialPRDashboard = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []) as File[];
+    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
+    const validFiles: File[] = [];
+
+    selectedFiles.forEach((file) => {
+      // Validate file type
+      if (!validFileTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        return;
+      }
+
+      // Validate file size
+      if (file.size > maxFileSizeBytes) {
+        toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setFiles((prevFiles) => [...prevFiles, ...validFiles]);
+    }
   };
 
   const removeFile = (indexToRemove) => {
@@ -673,7 +696,7 @@ export const AddMaterialPRDashboard = () => {
         return false;
       }
     }
-    
+
     // WBS validation - mandatory only when radio option is visible
     if (showRadio) {
       if (!wbsSelection) {
@@ -693,13 +716,13 @@ export const AddMaterialPRDashboard = () => {
         }
       }
     }
-    
+
     // Attachment validation - mandatory
     if (files.length === 0) {
       toast.error("At least one attachment is required");
       return false;
     }
-    
+
     return true;
   };
 
@@ -772,12 +795,12 @@ export const AddMaterialPRDashboard = () => {
         <div className="space-y-6">
           {/* Supplier Details */}
           <Card>
-             <CardHeader className='bg-[#F6F4EE] mb-4'>
-                      <CardTitle className="text-lg text-black flex items-center">
-                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-                        SUPPLIER DETAILS
-                      </CardTitle>
-                    </CardHeader>
+            <CardHeader className='bg-[#F6F4EE] mb-4'>
+              <CardTitle className="text-lg text-black flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+                SUPPLIER DETAILS
+              </CardTitle>
+            </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Supplier*</InputLabel>
@@ -1137,12 +1160,12 @@ export const AddMaterialPRDashboard = () => {
 
           <Card>
             <CardHeader className='bg-[#F6F4EE] mb-4'>
-                      <CardTitle className="text-lg text-black flex items-center justify-between">
-                        <div className="flex items-center">
-                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-                        ITEM DETAILS
-                       </div>
-                        <Button
+              <CardTitle className="text-lg text-black flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                  ITEM DETAILS
+                </div>
+                <Button
                   onClick={addItem}
                   size="sm"
                   className="bg-[#C72030] hover:bg-[#C72030]/90"
@@ -1150,10 +1173,10 @@ export const AddMaterialPRDashboard = () => {
                 >
                   Add Item
                 </Button>
-                      </CardTitle>
-                    </CardHeader>
-                
-            
+              </CardTitle>
+            </CardHeader>
+
+
             <CardContent className="space-y-6">
               {items.map((item) => (
                 <div
@@ -1416,11 +1439,11 @@ export const AddMaterialPRDashboard = () => {
 
           <Card>
             <CardHeader className='bg-[#F6F4EE] mb-4'>
-                      <CardTitle className="text-lg text-black flex items-center">
-                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
-                        Attachments
-                      </CardTitle>
-                    </CardHeader>
+              <CardTitle className="text-lg text-black flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+                Attachments
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <div
                 className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
@@ -1431,6 +1454,7 @@ export const AddMaterialPRDashboard = () => {
                   <span className="font-medium">Drag & Drop or Click to Upload</span>
                   <input
                     type="file"
+                    accept=".jpg,.jpeg,.png,.pdf,.xls,.xlsx,.doc,.docx"
                     multiple
                     onChange={handleFileChange}
                     className="hidden"
@@ -1438,8 +1462,12 @@ export const AddMaterialPRDashboard = () => {
                     ref={fileInputRef}
                   />
                   <span className="ml-1">
-                    {files.length > 0 ? `${files.length} image(s) selected` : "No images chosen"}
+                    {files.length > 0 ? `${files.length} file(s) selected` : "No files chosen"}
                   </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-3 space-y-1">
+                  <p>Accepts up to 12 MB files</p>
+                  <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
                 </div>
               </div>
 

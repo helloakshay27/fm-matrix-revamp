@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Settings,
   PauseCircle,
+  Calendar as CalendarIcon,
+  ChevronDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -29,6 +31,26 @@ import { API_CONFIG } from "@/config/apiConfig";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { PermitFilterModal } from "@/components/PermitFilterModal";
 import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
+import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RecentPermitsSidebar } from "@/components/RecentPermitsSidebar";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { debounce } from "lodash";
 
 // Type definitions for permit data
@@ -244,6 +266,58 @@ const getRiskColor = (risk: string) => {
   }
 };
 
+// Sortable chart wrapper — same pattern as IncidentDashboard
+const SortableChartItem = ({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("[data-no-drag]") ||
+      target.tagName === "BUTTON"
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    if (listeners?.onPointerDown) listeners.onPointerDown(e);
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md"
+    >
+      {children}
+    </div>
+  );
+};
+
+// Analytics options for permits
+const PERMIT_ANALYTICS_OPTIONS = [
+  { value: "permitStatus", label: "Permit Status" },
+  { value: "permitType", label: "Permit Type Distribution" },
+];
+
 export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,6 +349,58 @@ export const PermitToWorkDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [pageSize] = useState(20);
+
+  // Analytics tab state
+  const getDefaultAnalyticsDateRange = () => {
+    const today = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(today.getMonth() - 1);
+    return { fromDate: lastMonth, toDate: today };
+  };
+  const formatDateForDisplay = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const [analyticsDateRange, setAnalyticsDateRange] = useState(
+    getDefaultAnalyticsDateRange()
+  );
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>(
+    PERMIT_ANALYTICS_OPTIONS.map((o) => o.value)
+  );
+  const [isAnalyticsDropdownOpen, setIsAnalyticsDropdownOpen] = useState(false);
+
+  // Drag-and-drop for chart cards
+  const [chartOrder, setChartOrder] = useState<string[]>(["permitStatus", "permitType"]);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const handleChartDragEnd = (event: { active: { id: string }; over: { id: string } | null }) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
+    setAnalyticsDateRange({
+      fromDate: new Date(startDateStr),
+      toDate: new Date(endDateStr),
+    });
+  };
+
+  const toggleAnalyticsType = (value: string) => {
+    setSelectedAnalyticsTypes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
 
   // Fetch permits on component mount and when page/filters change
   useEffect(() => {
@@ -1003,42 +1129,189 @@ export const PermitToWorkDashboard = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Permit Status Bar Chart */}
-            <AssetAnalyticsCard
-              title="Permit Status"
-              type="groupWise"
-              data={[
-                { name: 'Approved', value: permitCounts.approved },
-                { name: 'Open', value: permitCounts.open },
-                { name: 'Closed', value: permitCounts.closed },
-                { name: 'Draft', value: permitCounts.draft },
-                { name: 'Hold', value: permitCounts.hold },
-                { name: 'Rejected', value: permitCounts.rejected },
-                { name: 'Extended', value: permitCounts.extended },
-                { name: 'Expired', value: permitCounts.expired },
-              ]}
-              dateRange={{ startDate: new Date(), endDate: new Date() }}
-              info="Distribution of permits by current status"
-            />
+          {/* Toolbar: Date Filter + Analytics Selector Popover */}
+          <div className="flex justify-end items-center gap-3 mb-6">
+            {/* Date range filter button */}
+            <Button
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+            >
+              <CalendarIcon className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {formatDateForDisplay(analyticsDateRange.fromDate)} &ndash;{" "}
+                {formatDateForDisplay(analyticsDateRange.toDate)}
+              </span>
+              <Filter className="w-4 h-4 text-gray-600" />
+            </Button>
 
-            {/* Permit Type Distribution Pie Chart */}
-            <AssetAnalyticsCard
-              title="Permit Type Distribution"
-              type="categoryWise"
-              data={permits.reduce((acc: { name: string; value: number; color?: string }[], permit) => {
-                const existing = acc.find(item => item.name === permit.permit_type);
-                if (existing) {
-                  existing.value++;
-                } else {
-                  acc.push({ name: permit.permit_type, value: 1 });
-                }
-                return acc;
-              }, [])}
-              dateRange={{ startDate: new Date(), endDate: new Date() }}
-              info="Distribution of permits by type"
-            />
+            {/* Analytics Selector Popover */}
+            <Popover
+              open={isAnalyticsDropdownOpen}
+              onOpenChange={setIsAnalyticsDropdownOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 min-w-[200px] justify-between px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                >
+                  <span className="text-sm font-medium text-gray-700">
+                    {selectedAnalyticsTypes.length === 0
+                      ? "Select Analytics"
+                      : selectedAnalyticsTypes.length === PERMIT_ANALYTICS_OPTIONS.length
+                        ? "All Analytics Selected"
+                        : `${selectedAnalyticsTypes.length} / ${PERMIT_ANALYTICS_OPTIONS.length} Selected`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Select Analytics</h4>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() =>
+                          setSelectedAnalyticsTypes(
+                            PERMIT_ANALYTICS_OPTIONS.map((o) => o.value)
+                          )
+                        }
+                      >
+                        All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setSelectedAnalyticsTypes([])}
+                      >
+                        None
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                      Charts
+                    </p>
+                    <div className="space-y-2">
+                      {PERMIT_ANALYTICS_OPTIONS.map((opt) => (
+                        <div key={opt.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`permit-opt-${opt.value}`}
+                            checked={selectedAnalyticsTypes.includes(opt.value)}
+                            onCheckedChange={() => toggleAnalyticsType(opt.value)}
+                          />
+                          <label
+                            htmlFor={`permit-opt-${opt.value}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {opt.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+
+          {/* Grid Layout: Charts (left) + Recent Permits Sidebar (right) */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <div className="xl:col-span-8 space-y-6">
+              {/* Chart Grid — draggable, only show selected charts */}
+              <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleChartDragEnd}
+          >
+            <SortableContext
+              items={chartOrder.filter((k) => selectedAnalyticsTypes.includes(k))}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {chartOrder
+                  .filter((key) => selectedAnalyticsTypes.includes(key))
+                  .map((key) => {
+                    if (key === "permitStatus") {
+                      return (
+                        <SortableChartItem key="permitStatus" id="permitStatus">
+                          <AssetAnalyticsCard
+                            title="Permit Status"
+                            type="groupWise"
+                            data={[
+                              { name: 'Approved', value: permitCounts.approved },
+                              { name: 'Open', value: permitCounts.open },
+                              { name: 'Closed', value: permitCounts.closed },
+                              { name: 'Draft', value: permitCounts.draft },
+                              { name: 'Hold', value: permitCounts.hold },
+                              { name: 'Rejected', value: permitCounts.rejected },
+                              { name: 'Extended', value: permitCounts.extended },
+                              { name: 'Expired', value: permitCounts.expired },
+                            ]}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            info="Distribution of permits by current status"
+                          />
+                        </SortableChartItem>
+                      );
+                    }
+                    if (key === "permitType") {
+                      return (
+                        <SortableChartItem key="permitType" id="permitType">
+                          <AssetAnalyticsCard
+                            title="Permit Type Distribution"
+                            type="categoryWise"
+                            data={permits.reduce(
+                              (acc: { name: string; value: number; color?: string }[], permit) => {
+                                const existing = acc.find((item) => item.name === permit.permit_type);
+                                if (existing) {
+                                  existing.value++;
+                                } else {
+                                  acc.push({ name: permit.permit_type, value: 1 });
+                                }
+                                return acc;
+                              },
+                              []
+                            )}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            info="Distribution of permits by type"
+                          />
+                        </SortableChartItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                {selectedAnalyticsTypes.length === 0 && (
+                  <div className="col-span-2 flex flex-col items-center justify-center py-16 text-gray-400">
+                    <Settings className="w-12 h-12 mb-4 opacity-30" />
+                    <p className="text-lg font-medium">No analytics selected</p>
+                    <p className="text-sm mt-1">Use the selector above to choose which charts to display.</p>
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
+            </div>{/* end xl:col-span-8 */}
+
+            {/* Recent Permits Sidebar */}
+            <div className="xl:col-span-4">
+              <RecentPermitsSidebar permits={permits} loading={loading} />
+            </div>
+          </div>{/* end xl:grid-cols-12 */}
+
+          {/* Date filter dialog */}
+          <AssetAnalyticsFilterDialog
+            isOpen={isAnalyticsFilterOpen}
+            onClose={() => setIsAnalyticsFilterOpen(false)}
+            onApplyFilters={handleAnalyticsFilterApply}
+            currentStartDate={analyticsDateRange.fromDate}
+            currentEndDate={analyticsDateRange.toDate}
+          />
         </TabsContent>
       </Tabs>
 

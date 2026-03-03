@@ -6,6 +6,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchConversation, fetchConversationMessages, sendMessage } from "@/store/slices/channelSlice";
 import { emojis } from "@/utils/emojies";
+import axios from "axios";
 import { Paperclip, X, Smile } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -76,9 +77,22 @@ const DMConversation = () => {
         }
     };
 
+    const markAsRead = async () => {
+        try {
+            await axios.post(`https://${baseUrl}/conversations/${id}/mark_as_read.json`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
         fetchData();
         fetchMessages();
+        markAsRead();
     }, [id]);
 
     // useEffect(() => {

@@ -1,7 +1,7 @@
 import { useAppDispatch } from "@/store/hooks";
 import { editProjectTask } from "@/store/slices/projectTasksSlice";
 import { useDraggable } from "@dnd-kit/core";
-import { Flag, Timer, User2 } from "lucide-react";
+import { Briefcase, Flag, Timer, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CSS } from "@dnd-kit/utilities";
@@ -30,36 +30,35 @@ const TaskCard = ({
 
     const [countdown, setCountdown] = useState("");
 
-    // useEffect(() => {
-    //     if (!task?.target_date || task.status === "completed" || task.status === "overdue") {
-    //         if (task.status === "overdue") {
-    //             setCountdown("Overdue");
-    //         } else if (task.status === "completed") {
-    //             setCountdown("Completed");
-    //         }
-    //         return;
-    //     }
+    useEffect(() => {
+        if (!task?.target_date || task.status === "completed" || task.status === "overdue") {
+            if (task.status === "overdue") {
+                setCountdown("Overdue");
+            } else if (task.status === "completed") {
+                setCountdown("Completed");
+            }
+            return;
+        }
 
-    //     const interval = setInterval(() => {
-    //         const now = new Date();
-    //         const end = new Date(task.target_date);
-    //         // use end of day for display (23:59:59.999)
-    //         const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(task.target_date);
+            // use end of day for display (23:59:59.999)
+            const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
 
-    //         const diff = endOfDay.getTime() - now.getTime();
+            const diff = endOfDay.getTime() - now.getTime();
 
-    //         if (diff <= 0 && task.status !== "completed") {
-    //             // mark overdue and update display
-    //             dispatch(editProjectTask({ baseUrl, token, id: task.id, data: { status: "overdue" } }));
-    //             setCountdown("Overdue");
-    //             clearInterval(interval);
-    //         } else {
-    //             setCountdown(formatCountdown(diff));
-    //         }
-    //     }, 1000);
+            if (diff <= 0 && task.status !== "completed") {
+                // mark overdue and update display
+                setCountdown("Overdue");
+                clearInterval(interval);
+            } else {
+                setCountdown(formatCountdown(diff));
+            }
+        }, 1000);
 
-    //     return () => clearInterval(interval);
-    // }, [task.target_date, task.status, task.id, token, dispatch]);
+        return () => clearInterval(interval);
+    }, [task.target_date, task.status, task.id]);
 
     const formatCountdown = (ms) => {
         // Format milliseconds into dd:hh:mm:ss
@@ -117,8 +116,12 @@ const TaskCard = ({
                     {...listeners}
                     className="flex items-center gap-1"
                 >
+                    <Briefcase className="text-[#C72030] flex-shrink-0" size={14} />
+                    <span className="text-[10px] truncate">{task?.project_management_title || "No Project"}</span>
+                </div>
+                <div className="flex items-start gap-1">
                     <Flag className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{task?.milestone_title}</span>
+                    <span className="text-[10px] truncate">{task?.milestone_title || "No Milestone"}</span>
                 </div>
                 <div className="flex items-start gap-1">
                     <User2 className="text-[#C72030] flex-shrink-0" size={14} />
@@ -291,7 +294,7 @@ const TaskCard = ({
                             </span>
                         </span>
                         <span className="h-5 w-5 flex items-center justify-center bg-green-600 text-white rounded-full text-[7px] font-light">
-                            {getInitials(task?.responsible_person?.name)}
+                            {getInitials(task?.responsible_person_name)}
                         </span>
                     </div>
                 </div>

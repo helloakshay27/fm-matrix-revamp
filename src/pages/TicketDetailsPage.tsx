@@ -621,6 +621,8 @@ export const TicketDetailsPage = () => {
   // Add missing complaintStatus state
   const [complaintStatus, setComplaintStatus] = useState<Array<any>>([]);
 
+  // org_id for conditional fields
+  const [orgId, setOrgId] = useState<number | null>(null);
 
   const [costRows, setCostRows] = useState<Array<{
     id: number;
@@ -657,6 +659,9 @@ export const TicketDetailsPage = () => {
     proactive_reactive: '', // <-- Add this property
     review_tracking: '',
     supplier_id: '',
+    // Hold-related fields for org_id 63
+    release_date: '',
+    reason_for_hold: '',
     // Association fields - updated structure
     associatedTo: { id: '', name: '', type: '' },
     selectedAsset: '',
@@ -894,6 +899,23 @@ export const TicketDetailsPage = () => {
 
     fetchTicketDetails();
   }, [id]);
+
+  // Fetch org_id from localStorage on component mount
+  useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const foundOrgId = user?.org_id || user?.organization_id;
+      if (foundOrgId) {
+        setOrgId(Number(foundOrgId));
+      } else {
+        const standalonOrgId = localStorage.getItem('org_id');
+        if (standalonOrgId) setOrgId(Number(standalonOrgId));
+      }
+    } catch (e) {
+      const standalonOrgId = localStorage.getItem('org_id');
+      if (standalonOrgId) setOrgId(Number(standalonOrgId));
+    }
+  }, []);
 
   // Function to refresh ticket data from backend (for timer updates)
   const refreshTicketData = useCallback(async () => {
@@ -2507,6 +2529,9 @@ export const TicketDetailsPage = () => {
       supplier_id: ticketData?.supplier_id ? ticketData.supplier_id.toString() : '',
       proactive_reactive: ticketData?.proactive_reactive || '',
       review_tracking: convertedReviewDate,
+      // Hold-related fields for org_id 63
+      release_date: ticketData?.expected_date ? convertDateFormat(ticketData.expected_date) : '',
+      reason_for_hold: ticketData?.status_reason || '',
       // Association fields - use new structure
       associatedTo: (() => {
         if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
@@ -2640,6 +2665,26 @@ export const TicketDetailsPage = () => {
         throw new Error('No ticket ID available');
       }
 
+      // Validation for org_id 63 when status is "On Hold"
+      if (orgId === 63 && ticketMgmtFormData.selectedStatus) {
+        // Find the status name
+        const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+        const selectedStatusName = selectedStatusObj?.name || '';
+        
+        if (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold') {
+          if (!ticketMgmtFormData.release_date) {
+            toast.error('Release Date is mandatory ');
+            setSubmittingTicketMgmt(false);
+            return;
+          }
+          if (!ticketMgmtFormData.reason_for_hold.trim()) {
+            toast.error('Reason for Hold is mandatory ');
+            setSubmittingTicketMgmt(false);
+            return;
+          }
+        }
+      }
+
       // Build query parameters matching the curl command format
       const queryParams = new URLSearchParams();
 
@@ -2710,6 +2755,15 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.additional_notes) {
         queryParams.append('additional_notes', ticketMgmtFormData.additional_notes);
       }
+      
+      // Add hold-related fields for org_id 63
+      if (orgId === 63 && ticketMgmtFormData.release_date) {
+        queryParams.append('complaint_log[expected_date]', ticketMgmtFormData.release_date);
+      }
+      if (orgId === 63 && ticketMgmtFormData.reason_for_hold) {
+        queryParams.append('complaint_log[status_reason]', ticketMgmtFormData.reason_for_hold);
+      }
+      
       // Add vendor and identification to payload
       if (ticketMgmtFormData.supplier_id) {
         queryParams.append('supplier_id', ticketMgmtFormData.supplier_id);
@@ -5433,6 +5487,42 @@ export const TicketDetailsPage = () => {
                                   ))}
                               </MuiSelect>
                             </FormControl>
+
+                            {/* Release Date - Show only for org_id 63 when status is "On Hold" */}
+                            {orgId === 63 && (() => {
+                              const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+                              const selectedStatusName = selectedStatusObj?.name || '';
+                              return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
+                            })() && (
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
+                                value={ticketMgmtFormData.release_date}
+                                onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            )}
+
+                            {/* Reason for Hold - Show only for org_id 63 when status is "On Hold" */}
+                            {orgId === 63 && (() => {
+                              const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+                              const selectedStatusName = selectedStatusObj?.name || '';
+                              return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
+                            })() && (
+                              <TextField
+                                fullWidth
+                                size="small"
+                                multiline
+                                rows={3}
+                                label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
+                                placeholder="Enter reason for hold"
+                                value={ticketMgmtFormData.reason_for_hold}
+                                onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            )}
 
                             <FormControl fullWidth size="small">
                               <InputLabel>Severity</InputLabel>
@@ -8534,6 +8624,42 @@ export const TicketDetailsPage = () => {
                               ))}
                           </MuiSelect>
                         </FormControl>
+
+                        {/* Release Date - Show only for org_id 63 when status is "On Hold" */}
+                        {orgId === 63 && (() => {
+                          const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+                          const selectedStatusName = selectedStatusObj?.name || '';
+                          return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
+                        })() && (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
+                            value={ticketMgmtFormData.release_date}
+                            onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
+
+                        {/* Reason for Hold - Show only for org_id 63 when status is "On Hold" */}
+                        {orgId === 63 && (() => {
+                          const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+                          const selectedStatusName = selectedStatusObj?.name || '';
+                          return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
+                        })() && (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            multiline
+                            rows={3}
+                            label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
+                            placeholder="Enter reason for hold"
+                            value={ticketMgmtFormData.reason_for_hold}
+                            onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
 
                         <FormControl fullWidth size="small">
                           <InputLabel>Severity</InputLabel>

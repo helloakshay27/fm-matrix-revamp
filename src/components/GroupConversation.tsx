@@ -10,6 +10,7 @@ import { Paperclip, X, UserMinus, Smile } from "lucide-react";
 import ChatAttachments from "./ChatAttachments";
 import { emojis } from "@/utils/emojies";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import axios from "axios";
 
 const GroupConversation = () => {
     const { id } = useParams();
@@ -91,9 +92,22 @@ const GroupConversation = () => {
         }
     };
 
+    const markAsRead = async () => {
+        try {
+            await axios.post(`https://${baseUrl}/project_spaces/${id}/mark_as_read.json`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
         fetchData();
         fetchMessages();
+        markAsRead();
     }, [id]);
 
     // useEffect(() => {

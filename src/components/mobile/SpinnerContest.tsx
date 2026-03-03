@@ -187,7 +187,7 @@ export const SpinnerContest: React.FC = () => {
     ctx.fillText("Spin", centerX, centerY);
   }, [segments, rotation]);
 
-  // Handle spin
+  // Handle spin - API-driven deterministic rotation
   const handleSpin = async () => {
     if (isSpinning || segments.length === 0 || !contestData || !canSpin) return;
 
@@ -197,7 +197,7 @@ export const SpinnerContest: React.FC = () => {
       // Play casino sound
       spinSound.play();
 
-      // Call API to get the winning prize
+      // STEP 1: Call API to get the winning prize
       const result = (await newSpinnerContestApi.playContest(
         contestData.id
       )) as PlayContestResult;
@@ -206,56 +206,88 @@ export const SpinnerContest: React.FC = () => {
         throw new Error(result.message || "Failed to play contest");
       }
 
-      // Update contest data won_reward if user actually won a reward
+      // Store reward ID if user won
       if (result.won_reward === true && result.user_contest_reward) {
-        setContestData((prev) =>
-          prev
-            ? {
-                ...prev,
-                won_reward: true,
-                user_contest_reward: result.user_contest_reward,
-              }
-            : prev
+        localStorage.setItem(
+          "last_reward_id",
+          result.user_contest_reward.id.toString()
         );
       }
 
-      console.log("🎲 Won prize:", result.prize);
-      console.log(
-        "🎯 Available segments:",
-        segments.map((s) => ({ id: s.prize.id, title: s.prize.title }))
-      );
+      console.log("🎲 API returned prize:", result.prize);
 
-      // Find the index of the winning segment
+      // STEP 2: Find the winning segment index based on API prize.id
       const winningIndex = segments.findIndex(
         (s) => s.prize.id === result.prize!.id
       );
 
-      console.log(
-        "✅ Winning index:",
-        winningIndex,
-        "Prize ID:",
-        result.prize.id
-      );
-
       if (winningIndex === -1) {
-        console.error("❌ Prize not found! Looking for ID:", result.prize.id);
+        console.error("❌ Prize not found! API Prize ID:", result.prize.id);
         console.error(
-          "❌ Available prize IDs:",
+          "❌ Available segment IDs:",
           segments.map((s) => s.prize.id)
         );
         throw new Error("Winning prize not found in segments");
       }
 
+      console.log("✅ Winning segment index:", winningIndex);
+      console.log(
+        "📊 All segments:",
+        segments.map((s, i) => ({
+          index: i,
+          id: s.prize.id,
+          title: s.prize.title,
+        }))
+      );
+
+      // STEP 3: Calculate exact rotation angles
       const segmentAngle = 360 / segments.length;
 
-      // Calculate final rotation (multiple spins + winning segment)
-      // Pointer is at top, so we need to align the segment center with top
-      const spins = 5; // Number of full rotations
-      const targetAngle = winningIndex * segmentAngle + segmentAngle / 2;
-      const finalRotation = spins * 360 + (360 - targetAngle);
+      // The canvas draws segments starting from top (-90°/270°) going clockwise
+      // Segment 0 starts at top, segment 1 is clockwise from there, etc.
+      // To align winning segment with top pointer, we rotate the canvas
 
-      // Animate rotation
+      // Angle of the winning segment's center from segment 0
+      const segmentCenterAngle = winningIndex * segmentAngle + segmentAngle / 2;
+
+      // Calculate current normalized position (0-360)
+      const currentPosition = rotation % 360;
+
+      // Target position to align winning segment with top pointer
+      const targetPosition = 360 - segmentCenterAngle;
+
+      // Calculate the shortest rotation to reach target from current position
+      // Add 360 to ensure positive value, then modulo to get 0-360 range
+      let rotationNeeded = (targetPosition - currentPosition + 360) % 360;
+
+      // If rotation needed is very small, add a full rotation to make it feel natural
+      if (rotationNeeded < 45) {
+        rotationNeeded += 360;
+      }
+
+      // Number of full rotations for visual effect
+      const fullSpins = 5;
+
+      // Total rotation: full spins + rotation needed to reach target
+      const rotationToWin = fullSpins * 360 + rotationNeeded;
+
+      console.log("🎯 Rotation calculation:", {
+        totalSegments: segments.length,
+        segmentAngle,
+        winningIndex,
+        segmentCenterAngle,
+        currentRotation: rotation,
+        currentPosition,
+        targetPosition,
+        rotationNeeded,
+        rotationToWin,
+        finalRotation: rotation + rotationToWin,
+        finalPositionCheck: (rotation + rotationToWin) % 360,
+      });
+
+      // STEP 4: Animate rotation with precise easing
       const startRotation = rotation;
+      const rotationDelta = rotationToWin;
       const duration = 4000; // 4 seconds
       const startTime = Date.now();
 
@@ -264,28 +296,29 @@ export const SpinnerContest: React.FC = () => {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Easing function (ease-out cubic)
+        // Ease-out cubic for smooth deceleration
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
-        const currentRotation = startRotation + finalRotation * easeOut;
+        // Calculate current rotation
+        const currentRotation = startRotation + rotationDelta * easeOut;
         setRotation(currentRotation);
 
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Set final rotation precisely
-          const finalRot = (startRotation + finalRotation) % 360;
-          setRotation(finalRot);
+          // STEP 5: Set final rotation precisely (no modulo to preserve alignment)
+          const exactFinalRotation = startRotation + rotationDelta;
+          setRotation(exactFinalRotation);
 
-          // Spin complete - show modal immediately
+          console.log("🎉 Spin complete. Final rotation:", exactFinalRotation);
+
+          // Show result after brief delay
           setTimeout(() => {
             spinSound.playWinSound();
 
-            // Store reward ID in localStorage
-            const userRewardId = result.user_contest_reward?.id;
-            if (userRewardId) {
-              localStorage.setItem("last_reward_id", userRewardId.toString());
-              setRewardId(userRewardId);
+            // Store result data
+            if (result.user_contest_reward?.id) {
+              setRewardId(result.user_contest_reward.id);
             }
 
             setWinResult({ prize: result.prize! });
@@ -294,7 +327,7 @@ export const SpinnerContest: React.FC = () => {
             // Decrement remaining attempts
             setRemainingAttempts((prev) => Math.max(0, prev - 1));
 
-            // Show result modal immediately
+            // Show result modal
             setShowResult(true);
           }, 500);
         }
@@ -364,14 +397,6 @@ export const SpinnerContest: React.FC = () => {
       {/* Already Won Reward Screen */}
       {contestData.won_reward && contestData.user_contest_reward && (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#FFF8E7] via-white to-[#F5E6D3]">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 p-2 text-gray-700 hover:bg-white/50 rounded-full"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
           {/* Celebration Animation */}
           <div className="mb-6 relative">
             <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">
@@ -571,34 +596,19 @@ export const SpinnerContest: React.FC = () => {
                   onClick={() => {
                     setShowResult(false);
 
-                    // Check if user won a reward and update contestData
+                    // If user won a real reward (not 'none'), navigate to details
                     if (winResult && winResult.prize.reward_type !== "none") {
-                      const rewardIdStr =
-                        localStorage.getItem("last_reward_id");
-                      if (rewardIdStr) {
-                        setContestData((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                won_reward: true,
-                                user_contest_reward: {
-                                  id: parseInt(rewardIdStr),
-                                  contest_id: prev.id,
-                                  prize_id: winResult.prize.id,
-                                  reward_type: winResult.prize.reward_type,
-                                  points_value: winResult.prize.points_value,
-                                  coupon_code: winResult.prize.coupon_code,
-                                  user_id: 0,
-                                  status: "granted",
-                                  created_at: new Date().toISOString(),
-                                  updated_at: new Date().toISOString(),
-                                },
-                              }
-                            : prev
+                      const rewardId = localStorage.getItem("last_reward_id");
+                      if (rewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
                         );
+                        return;
                       }
-                    } else {
-                      // Reset for next attempt if didn't win
+                    }
+
+                    // For 'none' type, just close modal and reset
+                    if (winResult && winResult.prize.reward_type === "none") {
                       setWinResult(null);
                     }
                   }}
@@ -669,7 +679,7 @@ export const SpinnerContest: React.FC = () => {
                     </>
                   )}
 
-                {winResult.prize.reward_type === "marchandise" && (
+                {winResult.prize.reward_type === "merchandise" && (
                   <>
                     <p className="text-center text-gray-600 mb-2">
                       Merchandise Prize

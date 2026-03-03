@@ -193,7 +193,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -286,6 +286,48 @@ export const Header = () => {
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
     setNotificationCount(0);
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      // Mark as read via API
+      await axios.get(
+        `https://${localStorage.getItem("baseUrl")}/user_notifications/${notification.id}/mark_as_read.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Update UI
+      markAsRead(notification.id);
+
+      // Navigate based on notification type
+      if (notification.ntype === "conversation") {
+        navigate(
+          `/vas/channels/messages/${notification.payload.conversation_id}`
+        );
+      }
+      if (notification.ntype === "projectspace") {
+        navigate(
+          `/vas/channels/groups/${notification.payload.project_space_id}`
+        );
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      // Still navigate even if API call fails
+      if (notification.ntype === "conversation") {
+        navigate(
+          `/vas/channels/messages/${notification.payload.conversation_id}`
+        );
+      }
+      if (notification.ntype === "projectspace") {
+        navigate(
+          `/vas/channels/groups/${notification.payload.project_space_id}`
+        );
+      }
+    }
   };
 
   useEffect(() => {
@@ -702,29 +744,16 @@ export const Header = () => {
                     {notifications.map((notification) => (
                       <button
                         key={notification.id}
-                        onClick={() => {
-                          if (notification.ntype === "conversation") {
-                            navigate(
-                              `/vas/channels/messages/${notification.payload.conversation_id}`
-                            );
-                          }
-                          if (notification.ntype === "projectspace") {
-                            navigate(
-                              `/vas/channels/groups/${notification.payload.project_space_id}`
-                            );
-                          }
-                        }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -810,7 +839,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">

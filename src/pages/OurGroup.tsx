@@ -16,28 +16,28 @@ const OurGroup: React.FC = () => {
     <div className="min-h-screen bg-white">
       <EmployeeHeader />
       <div className="pt-16"></div>
-      {/* Header Image */}
+      {/* Banner Image */}
       <div
-        className="relative w-full h-auto"
-        style={{
-          maxWidth: "1920px",
-          margin: "0 auto",
-        }}
+        className="relative w-full max-w-[1920px] mx-auto"
+        style={{ overflow: "hidden" }}
       >
         {/* Back Button Overlay */}
         <button
           onClick={() => window.history.back()}
-          className="absolute top-8 left-8 flex items-center gap-2 text-black px-4 py-2 rounded-lg z-10 shadow-lg"
+          className="absolute top-8 left-8 flex items-center gap-2 text-black px-4 py-2 rounded-lg z-10 shadow-lg bg-white/60 backdrop-blur-sm"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-medium">Back</span>
         </button>
 
-        {/* Header Image */}
         <img
-          src="/our-group-header.png"
+          src="/our-group-banner.jpg"
           alt="Our Group Team"
-          className="w-full h-full object-cover"
+          className="w-full block"
+          style={{
+            clipPath: "inset(10% 0 10% 0)",
+            margin: "-6.5% 0",
+          }}
         />
       </div>
 
