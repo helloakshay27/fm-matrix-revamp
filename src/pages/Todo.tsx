@@ -1345,6 +1345,28 @@ const TodoItem = ({
 const CompletedTodoItem = ({ todo, toggleTodo }) => {
   const navigate = useNavigate();
 
+  const getPriorityBgColor = () => {
+    // If flagged, use flagged styling
+    // if (todo.is_flagged) {
+    //   return 'bg-orange-100 border-l-4 border-orange-500';
+    // }
+
+    const priority = todo.priority || '';
+
+    switch (priority) {
+      case 'P1':
+        return 'border-l-4 border-l-red-500';
+      case 'P2':
+        return 'border-l-4 border-l-green-500';
+      case 'P3':
+        return 'border-l-4 border-l-yellow-500';
+      case 'P4':
+        return 'border-l-4 border-l-blue-500';
+      default:
+        return 'border-l-4 border-l-gray-400';
+    }
+  };
+
   const handleTaskClick = () => {
     if (todo.task_management_id) {
       navigate(`/vas/tasks/${todo.task_management_id}`);
@@ -1352,7 +1374,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2">
+    <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 ${getPriorityBgColor()}`}>
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">
