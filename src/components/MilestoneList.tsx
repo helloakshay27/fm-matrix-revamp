@@ -165,6 +165,16 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const loaderRef = useRef<HTMLDivElement>(null);
+
+    // Pagination and infinite scroll state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [allMilestones, setAllMilestones] = useState([]); // Accumulated milestones for infinite scroll
+
+    // Log page changes for debugging
+    useEffect(() => {
+        console.log(`[MilestoneList] currentPage changed to: ${currentPage}`);
+    }, [currentPage]);
 
     // TanStack Query hooks for server state management
     const {
@@ -174,13 +184,52 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         error,
     } = useMilestones({
         projectId: id,
+        page: currentPage,
         sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
         sortDirection: sortDirection || undefined,
     });
 
-    // Extract milestones from response
-    const data = milestonesData?.milestones ||
-        [];
+    // Extract current page milestones and pagination info
+    const currentPageMilestones = milestonesData?.milestones || [];
+    const paginationData = milestonesData?.pagination;
+    const hasMore = currentPage < (paginationData?.total_pages || 1);
+
+    // Accumulate milestones for infinite scroll
+    useEffect(() => {
+        if (currentPage === 1) {
+            // Reset on first page (when filters/sort changes)
+            setAllMilestones(currentPageMilestones);
+        } else if (currentPageMilestones.length > 0) {
+            // Append new milestones on subsequent pages
+            setAllMilestones((prev) => [...prev, ...currentPageMilestones]);
+        }
+    }, [currentPageMilestones, currentPage]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // Only load next page if user is near the loader AND data isn't already loading
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isFetching) {
+                    setCurrentPage((prev) => prev + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (loaderRef.current) {
+            observer.observe(loaderRef.current);
+        }
+
+        return () => {
+            if (loaderRef.current) {
+                observer.unobserve(loaderRef.current);
+            }
+        };
+    }, [hasMore, isLoading, isFetching]);
+
+    // Use accumulated milestones for display
+    const data = allMilestones;
 
     // Mutations for updates
     const statusMutation = useChangeMilestoneStatus();
@@ -260,9 +309,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
         setSortColumn(newDirection ? columnKey : null);
         setSortDirection(newDirection);
-
-        // Fetch with new sort
-        getMilestones(newDirection ? columnKey : null, newDirection);
+        // Reset to page 1 when sorting changes
+        setCurrentPage(1);
     };
 
     useEffect(() => {
@@ -635,7 +683,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 rightActions={rightActions}
                 storageKey="milestone-table"
                 onSort={handleColumnSort}
-                loading={isLoading}
+                loading={isLoading && currentPage === 1}
                 // onFilterClick={() => { }}
                 canAddRow={true}
                 readonlyColumns={["id", "tasks"]}
@@ -645,6 +693,25 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
             />
+
+            {/* Infinite Scroll Loader - Show at table bottom while fetching next page */}
+            {isFetching && hasMore && (
+                <div className="border-t border-gray-200 flex justify-center py-6 bg-gray-50">
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                        <span className="text-sm text-gray-500">Loading more milestones...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Invisible trigger element for infinite scroll - always present so observer can watch it */}
+            {hasMore && <div ref={loaderRef} className="h-1" />}
+
+            {!hasMore && allMilestones.length > 0 && (
+                <div className="flex justify-center py-4 text-gray-500 text-sm">
+                    No more milestones to load
+                </div>
+            )}
 
             {showActionPanel && (
                 <SelectionPanel

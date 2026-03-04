@@ -18,13 +18,13 @@ const getToken = () => {
   const mobileToken = sessionStorage.getItem("mobile_token");
   const webToken = localStorage.getItem("token");
   const token = mobileToken || webToken;
-  
+
   if (token) {
     console.log("✅ [Milestones API] Token found:", token.substring(0, 20) + "...");
   } else {
     console.warn("⚠️ [Milestones API] No token found in sessionStorage or localStorage");
   }
-  
+
   return token;
 };
 
@@ -67,7 +67,7 @@ const apiRequest = async (
 
     const client = baseUrl ? axios : baseClient;
     const fullUrl = baseUrl ? `https://${baseUrl}${url}` : url;
-    
+
     console.log(`📡 [Milestones API] ${method.toUpperCase()} ${fullUrl}`, {
       hasToken: !!token,
       useBaseUrl: !!baseUrl,
@@ -95,13 +95,13 @@ const apiRequest = async (
     const errorMessage =
       error.response?.data?.message || error.message || "API request failed";
     const statusCode = error.response?.status;
-    
+
     console.error(`❌ [Milestones API] ${method.toUpperCase()} ${url} failed:`, {
       statusCode,
       message: errorMessage,
       data: error.response?.data,
     });
-    
+
     throw {
       message: errorMessage,
       statusCode: statusCode,
@@ -115,19 +115,25 @@ const apiRequest = async (
  * @param projectId - ID of the project
  * @param sortBy - Sort column name (backend field name)
  * @param sortDirection - 'asc' or 'desc'
+ * @param page - Page number for pagination (default 1)
  */
 export const fetchMilestones = async (
   projectId: number | string,
   sortBy?: string,
-  sortDirection?: "asc" | "desc"
+  sortDirection?: "asc" | "desc",
+  page: number = 1
 ): Promise<MilestonesListResponse> => {
-  let queryString = `q[project_management_id_eq]=${projectId}`;
+  const params = new URLSearchParams();
+  params.append('q[project_management_id_eq]', String(projectId));
+  params.append('page', String(page));
 
-  // Add sorting if provided
   if (sortBy && sortDirection) {
-    queryString +=
-      `&order_by=${sortBy}&order_direction=${sortDirection}`;
+    params.append('order_by', sortBy);
+    params.append('order_direction', sortDirection);
   }
+
+  const queryString = params.toString();
+  console.log(`📡 [Milestones API] Fetching with page=${page}, queryString:`, queryString);
 
   const response = await apiRequest(
     "get",
