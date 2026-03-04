@@ -549,6 +549,8 @@ export default function Todo() {
           );
           toast.success(`Priority changed to ${newPriority}`);
           refetch();
+          // Refetch the priority-filtered todos to remove the item from current priority list
+          fetchTodosByPriority(selectedPriority);
         }
       }
     } catch (error) {

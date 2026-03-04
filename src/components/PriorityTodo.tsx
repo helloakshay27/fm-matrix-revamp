@@ -1,5 +1,6 @@
 import { Card, CardContent } from './ui/card'
 import { Check, Pencil, ArrowRightLeft, Focus } from 'lucide-react'
+import { useDraggable } from '@dnd-kit/core';
 
 interface PriorityTodoProps {
     selectedPriority?: string;
@@ -53,6 +54,83 @@ const TodoSkeleton = () => {
     );
 };
 
+// Draggable Todo Item Component
+const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo }: any) => {
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: `todo-${todo.id}`,
+        data: { todoId: todo.id, priority: todo.priority, status: todo.status }
+    });
+
+    const isCompleted = todo.status === "completed";
+
+    return (
+        <div
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor(todo.priority)} cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+        >
+            <div className="flex items-center gap-1">
+                <button
+                    onClick={() => onEditTodo?.(todo)}
+                    className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors"
+                    title="Edit todo"
+                >
+                    <Pencil size={14} />
+                </button>
+                <button
+                    onClick={() => onConvertTodo?.(todo)}
+                    className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50"
+                    title="Convert to Task"
+                    disabled={!!todo.task_management_id}
+                >
+                    <ArrowRightLeft size={14} />
+                </button>
+                <button
+                    onClick={() => onFlagTodo?.(todo)}
+                    disabled={isCompleted}
+                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                    title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
+                >
+                    <Focus
+                        size={14}
+                        color={todo.is_flagged ? "#fa0202" : "#4b5563"}
+                    />
+                </button>
+            </div>
+
+            <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700 font-medium truncate">{todo.title}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500">
+                        {todo.user}
+                    </span>
+                    {todo.target_date && (
+                        <>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-500">
+                                Due: {todo.target_date}
+                            </span>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <button
+                onClick={() => onTodoToggle?.(todo.id)}
+                className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+            >
+                <Check
+                    size={16}
+                    className="text-primary opacity-0 group-hover:opacity-100"
+                />
+            </button>
+        </div>
+    );
+};
+
 const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo }: PriorityTodoProps) => {
     const config = selectedPriority && PRIORITY_CONFIG[selectedPriority as keyof typeof PRIORITY_CONFIG];
 
@@ -88,67 +166,14 @@ const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoT
                             <div>
                                 <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase">Open</h5>
                                 {openTodos.map((todo) => (
-                                    <div
+                                    <DraggablePriorityTodoItem
                                         key={todo.id}
-                                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor(todo.priority)}`}
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => onEditTodo?.(todo)}
-                                                className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors"
-                                                title="Edit todo"
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => onConvertTodo?.(todo)}
-                                                className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50"
-                                                title="Convert to Task"
-                                                disabled={!!todo.task_management_id}
-                                            >
-                                                <ArrowRightLeft size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => onFlagTodo?.(todo)}
-                                                className="p-1 hover:bg-gray-200 rounded transition"
-                                                title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
-                                            >
-                                                <Focus
-                                                    size={14}
-                                                    color={todo.is_flagged ? "#fa0202" : "#4b5563"}
-                                                />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex flex-col flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-700 font-medium truncate">{todo.title}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-xs text-gray-500">
-                                                    {todo.user}
-                                                </span>
-                                                {todo.target_date && (
-                                                    <>
-                                                        <span className="text-xs text-gray-500">•</span>
-                                                        <span className="text-xs text-gray-500">
-                                                            Due: {todo.target_date}
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => onTodoToggle?.(todo.id)}
-                                            className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-                                        >
-                                            <Check
-                                                size={16}
-                                                className="text-primary opacity-0 group-hover:opacity-100"
-                                            />
-                                        </button>
-                                    </div>
+                                        todo={todo}
+                                        onTodoToggle={onTodoToggle}
+                                        onEditTodo={onEditTodo}
+                                        onConvertTodo={onConvertTodo}
+                                        onFlagTodo={onFlagTodo}
+                                    />
                                 ))}
                             </div>
                         )}
