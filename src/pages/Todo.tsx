@@ -224,7 +224,7 @@ export default function Todo() {
       const params = new URLSearchParams();
       params.append("q[priority_eq]", priority);
       if (userId) {
-        params.append("q[responsible_person_id_eq]", userId);
+        params.append("q[user_id_eq]", userId);
       }
 
       const response = await axios.get(
@@ -250,7 +250,7 @@ export default function Todo() {
 
   useEffect(() => {
     fetchTodosByPriority("P1");
-  }, [])
+  }, [taskType])
 
   // Use toggle mutation hook for better cache management
   const toggleMutation = useToggleTodo();
