@@ -430,36 +430,73 @@ const TaxSetupTab: React.FC = () => (
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-//  GroupTaxTab  – inline form (no list, no modal)
+//  GroupTaxTab  – list + add + edit for tax groups
 //  APIs:
-//    GET  /lock_accounts/1/tax_rates.json          → all rates to associate
-//    POST /lock_accounts/1/create_tax_group.json   → create group
+//    GET  /lock_accounts/1/tax_groups_view.json          → list
+//    GET  /lock_accounts/1/tax_groups/{id}.json          → detail for edit
+//    POST /lock_accounts/1/create_tax_group.json         → create
+//    POST /lock_accounts/1/edit_tax_group.json           → edit
 // ════════════════════════════════════════════════════════════════════════════
 const GroupTaxTab: React.FC = () => {
-  const [allRates, setAllRates] = useState<TaxRate[]>([]);
-  const [loadingRates, setLoadingRates] = useState(true);
+  // ── list state ───────────────────────────────────────────────────────────
+  const [groups, setGroups]           = useState<TaxGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage]         = useState(10);
+  const [totalPages, setTotalPages]   = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
-  const [groupName, setGroupName]     = useState("");
-  const [groupNameErr, setGroupNameErr] = useState("");
+  // ── all available tax rates (for the form checkboxes) ───────────────────
+  const [allRates, setAllRates]       = useState<TaxRate[]>([]);
+  const [loadingRates, setLoadingRates] = useState(false);
+
+  // ── panel/form state ─────────────────────────────────────────────────────
+  const [panelOpen, setPanelOpen]     = useState(false);
+  const [editingGroup, setEditingGroup] = useState<TaxGroup | null>(null);
+  const [groupName, setGroupName]     = useState('');
+  const [groupNameErr, setGroupNameErr] = useState('');
   const [checkedIds, setCheckedIds]   = useState<Set<number>>(new Set());
   const [saving, setSaving]           = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // ── fetch available tax rates on mount ──────────────────────────────────
-  useEffect(() => {
-    const fetch = async () => {
-      setLoadingRates(true);
-      try {
-        const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
-        const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
-        setAllRates(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("Failed to fetch tax rates", err);
-      } finally {
-        setLoadingRates(false);
-      }
-    };
-    fetch();
+  // ── fetch group list ─────────────────────────────────────────────────────
+  const fetchGroups = useCallback(async () => {
+    setLoadingGroups(true);
+    try {
+      const res = await axios.get<TaxGroup[]>(
+        `${getBaseUrl()}/lock_accounts/1/tax_groups_view.json`,
+        { headers: authHeaders() }
+      );
+      const list: TaxGroup[] = Array.isArray(res.data) ? res.data : [];
+      setGroups(list);
+      setTotalRecords(list.length);
+      setTotalPages(Math.ceil(list.length / perPage) || 1);
+    } catch (err) {
+      console.error('Failed to fetch tax groups', err);
+      toast.error('Failed to load tax groups.');
+    } finally {
+      setLoadingGroups(false);
+    }
+  }, [perPage]);
+
+  // ── fetch all available tax rates (for checkboxes) ───────────────────────
+  const fetchAllRates = useCallback(async () => {
+    setLoadingRates(true);
+    try {
+      const res = await axios.get<TaxRate[]>(
+        `${getBaseUrl()}/lock_accounts/1/tax_rates.json`,
+        { headers: authHeaders() }
+      );
+      setAllRates(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Failed to fetch tax rates', err);
+    } finally {
+      setLoadingRates(false);
+    }
   }, []);
+
+  useEffect(() => { fetchGroups(); }, [fetchGroups]);
+  useEffect(() => { fetchAllRates(); }, [fetchAllRates]);
 
   // ── checkbox toggle ───────────────────────────────────────────────────────
   const toggleCheck = (id: number) => {
@@ -470,130 +507,261 @@ const GroupTaxTab: React.FC = () => {
     });
   };
 
-  // ── reset form ────────────────────────────────────────────────────────────
-  const resetForm = () => {
-    setGroupName("");
-    setGroupNameErr("");
+  // ── open Add panel ────────────────────────────────────────────────────────
+  const openAdd = () => {
+    setEditingGroup(null);
+    setGroupName('');
+    setGroupNameErr('');
+    setCheckedIds(new Set());
+    setPanelOpen(true);
+  };
+
+  // ── open Edit panel – load detail ─────────────────────────────────────────
+  const openEdit = async (group: TaxGroup) => {
+    setEditingGroup(group);
+    setGroupName(group.name);
+    setGroupNameErr('');
+    setCheckedIds(new Set());
+    setPanelOpen(true);
+    setLoadingDetail(true);
+    try {
+      const res = await axios.get<TaxGroup>(
+        `${getBaseUrl()}/lock_accounts/1/tax_groups/${group.id}.json`,
+        { headers: authHeaders() }
+      );
+      const detail = res.data;
+      const ids = new Set<number>(
+        Array.isArray(detail.tax_rates) ? detail.tax_rates.map((r) => r.id) : []
+      );
+      setCheckedIds(ids);
+      if (detail.name) setGroupName(detail.name);
+    } catch (err) {
+      toast.error('Failed to load group details.');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  // ── close panel ───────────────────────────────────────────────────────────
+  const closePanel = () => {
+    setPanelOpen(false);
+    setEditingGroup(null);
+    setGroupName('');
+    setGroupNameErr('');
     setCheckedIds(new Set());
   };
 
-  // ── save ──────────────────────────────────────────────────────────────────
+  // ── save (create or edit) ─────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!groupName.trim()) { setGroupNameErr("Tax Group Name is required"); return; }
-    setGroupNameErr("");
+    if (!groupName.trim()) { setGroupNameErr('Tax Group Name is required'); return; }
+    setGroupNameErr('');
     setSaving(true);
-
-    const selectedIds = allRates
-      .filter((r) => checkedIds.has(r.id))
-      .map((r) => r.id);
-
+    const selectedIds = allRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
     try {
-      await axios.post(
-        `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
-        { tax_group: { name: groupName, tax_rates: selectedIds } },
-        { headers: authHeaders() }
-      );
-      toast.success("Tax group created successfully!");
-      resetForm();
+      if (editingGroup) {
+        await axios.post(
+          `${getBaseUrl()}/lock_accounts/1/edit_tax_group.json`,
+          { tax_group: { id: editingGroup.id, name: groupName, tax_rates: selectedIds } },
+          { headers: authHeaders() }
+        );
+        toast.success('Tax group updated successfully!');
+      } else {
+        await axios.post(
+          `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
+          { tax_group: { name: groupName, tax_rates: selectedIds } },
+          { headers: authHeaders() }
+        );
+        toast.success('Tax group created successfully!');
+      }
+      closePanel();
+      fetchGroups();
     } catch (err: unknown) {
-      toast.error(extractErrorMsg(err, "Failed to save tax group."));
+      toast.error(extractErrorMsg(err, 'Failed to save tax group.'));
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="bg-white p-6">
-      {/* Title */}
-      <h2 className="text-xl font-bold text-[#1A1A1A] mb-6">New Tax Group</h2>
+  // ── table columns & rows ──────────────────────────────────────────────────
+  const columns: ColumnConfig[] = [
+    { key: 'actions',   label: 'Action',             sortable: false, hideable: false, draggable: false },
+    { key: 'name',      label: 'Tax Group Name',      sortable: true,  hideable: true,  draggable: true },
+    { key: 'tax_rates', label: 'Associated Tax Rates', sortable: false, hideable: true,  draggable: true },
+  ];
 
-      {/* Tax Group Name */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-[#C72030] mb-1">
-          Tax Group Name<span className="text-[#C72030]">*</span>
-        </label>
-        <input
-          type="text"
-          value={groupName}
-          onChange={(e) => {
-            setGroupName(e.target.value);
-            if (e.target.value.trim()) setGroupNameErr("");
-          }}
-          placeholder="e.g. GST20"
-          className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition ${
-            groupNameErr ? "border-red-500" : "border-gray-300"
-          }`}
-        />
-        {groupNameErr && <p className="text-xs text-red-500 mt-1">{groupNameErr}</p>}
+  const paginated = groups.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  const renderRow = (group: TaxGroup) => ({
+    actions: (
+      <div className="flex items-center gap-2">
+        <Button size="icon" variant="ghost" onClick={() => openEdit(group)}>
+          <Edit className="w-4 h-4" />
+        </Button>
       </div>
-
-      {/* Associate Taxes */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-semibold text-[#C72030]">
-            Associate Taxes<span className="text-[#C72030]">*</span>
-          </label>
-          <div className="flex items-center gap-1 text-xs text-gray-400">
-            <GripVertical className="w-3 h-3" />
-            <span>Drag taxes to reorder</span>
-            <Info className="w-3 h-3" />
-          </div>
-        </div>
-
-        {loadingRates ? (
-          <div className="flex items-center justify-center py-10">
-            <CircularProgress size={24} style={{ color: "#C72030" }} />
-          </div>
-        ) : allRates.length === 0 ? (
-          <div className="py-8 text-center text-sm text-gray-400 border border-gray-200 rounded">
-            No tax rates available. Add individual tax rates first.
-          </div>
+    ),
+    name: <span className="font-medium">{group.name}</span>,
+    tax_rates: (
+      <div className="flex flex-wrap gap-1">
+        {Array.isArray(group.tax_rates) && group.tax_rates.length > 0 ? (
+          group.tax_rates.map((r) => (
+            <span
+              key={r.id}
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#EDEAE3] text-[#C72030] border border-[#C72030]/20"
+            >
+              {r.name} · {r.rate}%
+            </span>
+          ))
         ) : (
-          <div>
-            {allRates.map((rate) => (
-              <div
-                key={rate.id}
-                className="flex items-center border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
-                style={{ minHeight: "42px" }}
-              >
-                <input
-                  type="checkbox"
-                  id={`rate-${rate.id}`}
-                  checked={checkedIds.has(rate.id)}
-                  onChange={() => toggleCheck(rate.id)}
-                  className="w-4 h-4 mr-3 accent-[#C72030] cursor-pointer flex-shrink-0"
-                />
-                <label
-                  htmlFor={`rate-${rate.id}`}
-                  className="flex-1 text-sm text-gray-800 cursor-pointer select-none"
-                >
-                  {rate.name}
-                </label>
-                <span className="text-sm text-gray-600 ml-2">{rate.rate} %</span>
-              </div>
-            ))}
-          </div>
+          <span className="text-xs text-gray-400 italic">None</span>
         )}
       </div>
+    ),
+  });
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t">
-        <Button
-          className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[72px]"
-          onClick={handleSave}
-          disabled={saving || loadingRates}
-        >
-          {saving ? "Saving…" : "Save"}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={resetForm}
-          disabled={saving}
-          className="min-w-[72px]"
-        >
-          Cancel
-        </Button>
-      </div>
+  return (
+    <div className="relative px-6 pb-8 pt-4 space-y-4">
+      <EnhancedTaskTable
+        data={paginated}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="tax-groups-table-v1"
+        hideTableExport={true}
+        enableSearch={true}
+        loading={loadingGroups}
+        leftActions={
+          <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={openAdd}>
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
+        }
+      />
+
+      {totalRecords > 0 && (
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          perPage={perPage}
+          isLoading={loadingGroups}
+          onPageChange={setCurrentPage}
+          onPerPageChange={(pp) => {
+            setPerPage(pp);
+            setCurrentPage(1);
+            setTotalPages(Math.ceil(totalRecords / pp));
+          }}
+        />
+      )}
+
+      {/* ── Add / Edit modal ─────────────────────────────────────────────── */}
+      {panelOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={closePanel} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
+            <div
+              className="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col"
+              style={{ animation: 'taxPopIn 0.18s ease-out', maxHeight: '90vh' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
+                <h2 className="text-lg font-bold text-[#1A1A1A]">
+                  {editingGroup ? 'Edit Tax Group' : 'New Tax Group'}
+                </h2>
+                <button onClick={closePanel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                  &times;
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-6 space-y-5 overflow-y-auto flex-1">
+                {/* Tax Group Name */}
+                <div className="flex items-start gap-4">
+                  <label className="w-36 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
+                    Group Name<span className="text-[#C72030]">*</span>
+                  </label>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={groupName}
+                      onChange={(e) => {
+                        setGroupName(e.target.value);
+                        if (e.target.value.trim()) setGroupNameErr('');
+                      }}
+                      placeholder="e.g. GST20"
+                      className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${groupNameErr ? 'border-red-400' : 'border-gray-300'}`}
+                    />
+                    {groupNameErr && <p className="text-xs text-red-500 mt-1">{groupNameErr}</p>}
+                  </div>
+                </div>
+
+                {/* Associate Tax Rates */}
+                <div className="flex items-start gap-4">
+                  <label className="w-36 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
+                    Tax Rates
+                  </label>
+                  <div className="flex-1">
+                    {loadingRates || loadingDetail ? (
+                      <div className="flex items-center justify-center py-6">
+                        <CircularProgress size={22} style={{ color: '#C72030' }} />
+                      </div>
+                    ) : allRates.length === 0 ? (
+                      <p className="text-sm text-gray-400 py-4 text-center border border-gray-200 rounded">
+                        No tax rates available. Add individual rates first.
+                      </p>
+                    ) : (
+                      <div className="border border-gray-200 rounded overflow-hidden max-h-56 overflow-y-auto">
+                        {allRates.map((rate) => (
+                          <div
+                            key={rate.id}
+                            className="flex items-center border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+                            style={{ minHeight: '40px' }}
+                          >
+                            <input
+                              type="checkbox"
+                              id={`grp-rate-${rate.id}`}
+                              checked={checkedIds.has(rate.id)}
+                              onChange={() => toggleCheck(rate.id)}
+                              className="w-4 h-4 mx-3 accent-[#C72030] cursor-pointer flex-shrink-0"
+                            />
+                            <label
+                              htmlFor={`grp-rate-${rate.id}`}
+                              className="flex-1 text-sm text-gray-800 cursor-pointer select-none py-2"
+                            >
+                              {rate.name}
+                            </label>
+                            <span className="text-xs font-semibold text-[#C72030] px-2">{rate.rate_type}</span>
+                            <span className="text-sm text-gray-500 pr-3">{rate.rate}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {checkedIds.size > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">{checkedIds.size} rate(s) selected</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t flex gap-3 justify-end bg-white rounded-b-lg shrink-0">
+                <Button variant="outline" disabled={saving} onClick={closePanel}>Cancel</Button>
+                <Button
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                  onClick={handleSave}
+                  disabled={saving || loadingDetail}
+                >
+                  {saving ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <style>{`
+            @keyframes taxPopIn {
+              from { transform: scale(0.93); opacity: 0; }
+              to   { transform: scale(1);    opacity: 1; }
+            }
+          `}</style>
+        </>
+      )}
     </div>
   );
 };
