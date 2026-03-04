@@ -4,6 +4,7 @@ import { Check, Pencil, ArrowRightLeft, Focus } from 'lucide-react'
 interface PriorityTodoProps {
     selectedPriority?: string;
     todos?: any[];
+    isLoading?: boolean;
     onTodoToggle?: (todoId: number | string) => void;
     onEditTodo?: (todo: any) => void;
     onConvertTodo?: (todo: any) => void;
@@ -32,7 +33,27 @@ const getPriorityBgColor = (priority?: string) => {
     }
 };
 
-const PriorityTodo = ({ selectedPriority, todos = [], onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo }: PriorityTodoProps) => {
+// Skeleton Loader Component
+const TodoSkeleton = () => {
+    return (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-100 animate-pulse border mb-2">
+            <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-gray-300 rounded" />
+                <div className="w-4 h-4 bg-gray-300 rounded" />
+                <div className="w-4 h-4 bg-gray-300 rounded" />
+            </div>
+
+            <div className="flex flex-col flex-1 gap-2">
+                <div className="h-4 bg-gray-300 rounded w-3/4" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+            </div>
+
+            <div className="w-4 h-4 bg-gray-300 rounded" />
+        </div>
+    );
+};
+
+const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo }: PriorityTodoProps) => {
     const config = selectedPriority && PRIORITY_CONFIG[selectedPriority as keyof typeof PRIORITY_CONFIG];
 
     const filteredTodos = selectedPriority
@@ -50,7 +71,13 @@ const PriorityTodo = ({ selectedPriority, todos = [], onTodoToggle, onEditTodo, 
                 </h4>
             </div>
             <CardContent className="p-3 flex-1 overflow-y-auto">
-                {!selectedPriority ? (
+                {isLoading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <TodoSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : !selectedPriority ? (
                     <p className="text-xs text-gray-500 text-center py-8">Click on a quadrant to view todos</p>
                 ) : filteredTodos.length === 0 ? (
                     <p className="text-xs text-gray-500 text-center py-8">No todos for this priority</p>
@@ -127,7 +154,7 @@ const PriorityTodo = ({ selectedPriority, todos = [], onTodoToggle, onEditTodo, 
                         )}
 
                         {/* Completed Todos */}
-                        {completedTodos.length > 0 && (
+                        {/* {completedTodos.length > 0 && (
                             <div>
                                 <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase mt-3">Completed</h5>
                                 {completedTodos.map((todo) => (
@@ -163,7 +190,7 @@ const PriorityTodo = ({ selectedPriority, todos = [], onTodoToggle, onEditTodo, 
                                     </div>
                                 ))}
                             </div>
-                        )}
+                        )} */}
                     </div>
                 )}
             </CardContent>

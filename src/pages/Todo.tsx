@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar } from "lucide-react";
+import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
 import TodoConvertModal from "@/components/TodoConvertModal";
+import TodoFilterModal, { TodoFilters } from "@/components/TodoFilterModal";
 import { Button } from "@/components/ui/button";
 import { useLayout } from "@/contexts/LayoutContext";
 import { toast } from "sonner";
@@ -142,6 +143,16 @@ export default function Todo() {
   const [isToggleConfirmOpen, setIsToggleConfirmOpen] = useState(false);
   const [todoToToggle, setTodoToToggle] = useState<any>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
+  const [priorityFilteredTodos, setPriorityFilteredTodos] = useState<any[]>([]);
+  const [isPriorityLoading, setIsPriorityLoading] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<TodoFilters>({
+    fromDate: '',
+    toDate: '',
+    selectedPriorities: [],
+    selectedCreators: [],
+    creatorSearch: '',
+  });
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);
@@ -196,6 +207,51 @@ export default function Todo() {
     getUsers();
   }, []);
 
+  // Function to fetch todos by priority
+  const fetchTodosByPriority = async (priority: string | null) => {
+    if (!priority) {
+      setPriorityFilteredTodos([]);
+      setSelectedPriority(null);
+      return;
+    }
+
+    setIsPriorityLoading(true);
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = taskType === "my" ? user.id : undefined;
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append("q[priority_eq]", priority);
+      if (userId) {
+        params.append("q[responsible_person_id_eq]", userId);
+      }
+
+      const response = await axios.get(
+        `https://${baseUrl}/todos.json?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const filteredTodos = Array.isArray(response.data.todos) ? response.data.todos : [];
+      setPriorityFilteredTodos(filteredTodos);
+      setSelectedPriority(priority);
+    } catch (error) {
+      console.error("Error fetching todos by priority:", error);
+      toast.error("Failed to fetch todos for this priority");
+      setPriorityFilteredTodos([]);
+    } finally {
+      setIsPriorityLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodosByPriority("P1");
+  }, [])
+
   // Use toggle mutation hook for better cache management
   const toggleMutation = useToggleTodo();
 
@@ -203,6 +259,14 @@ export default function Todo() {
     if (name === "members") {
       setSelectedUsers(selectedOptions);
     }
+  };
+
+  // Handle filter application
+  const handleApplyFilters = (filters: TodoFilters) => {
+    setAppliedFilters(filters);
+    // Apply filters to the todos list
+    // The filtering will be applied through the useTodos hook and local filtering
+    refetch();
   };
 
   const toggleTodo = async (id: number | string) => {
@@ -363,8 +427,30 @@ export default function Todo() {
     setIsConvertModalOpen(true);
   };
 
-  const pendingTodos = todos.filter((t) => t.status !== "completed");
-  const completedTodos = todos.filter((t) => t.status === "completed");
+  // Apply active filters to todos
+  const filteredTodosByFilters = todos.filter((todo) => {
+    // Filter by date range
+    if (appliedFilters.fromDate && todo.created_at) {
+      const todoDate = new Date(todo.created_at).toISOString().split('T')[0];
+      if (todoDate < appliedFilters.fromDate) return false;
+    }
+    if (appliedFilters.toDate && todo.created_at) {
+      const todoDate = new Date(todo.created_at).toISOString().split('T')[0];
+      if (todoDate > appliedFilters.toDate) return false;
+    }
+    // Filter by priority
+    if (appliedFilters.selectedPriorities.length > 0) {
+      if (!appliedFilters.selectedPriorities.includes(todo.priority)) return false;
+    }
+    // Filter by created by
+    if (appliedFilters.selectedCreators.length > 0) {
+      if (!appliedFilters.selectedCreators.includes(todo.created_by_id)) return false;
+    }
+    return true;
+  });
+
+  const pendingTodos = filteredTodosByFilters.filter((t) => t.status !== "completed");
+  const completedTodos = filteredTodosByFilters.filter((t) => t.status === "completed");
 
   // Group completed todos by updated_at date
   const groupedCompletedTodos = completedTodos.reduce((groups, todo) => {
@@ -485,15 +571,20 @@ export default function Todo() {
     >
       <div className="p-6">
         <div className="space-y-4">
-          <div className="flex items-stretch gap-2 w-full h-96">
+          <div className="flex items-stretch gap-2 w-full h-[19.5rem]">
             {/* Eisenhower Matrix */}
             <div className="w-1/2 h-full">
-              <EisenhowerMatrix dashboardData={dashboardData} onQuadrantClick={setSelectedPriority} selectedPriority={selectedPriority} />
+              <EisenhowerMatrix
+                dashboardData={dashboardData}
+                onQuadrantClick={fetchTodosByPriority}
+                selectedPriority={selectedPriority}
+              />
             </div>
             <div className="w-1/2 h-full">
               <PriorityTodo
                 selectedPriority={selectedPriority || undefined}
-                todos={todos}
+                todos={priorityFilteredTodos}
+                isLoading={isPriorityLoading}
                 onTodoToggle={toggleTodo}
                 onEditTodo={handleEditTodo}
                 onConvertTodo={handleConvertTodo}
@@ -504,8 +595,15 @@ export default function Todo() {
 
           <div className="flex items-end justify-between gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
-            <div className="flex items-end gap-3 flex-shrink-0">
-              <div className="flex flex-col gap-1">
+            <div className="flex items-end gap-4 flex-shrink-0">
+              <Button
+                onClick={() => setIsAddTodoModalOpen(true)}
+              // className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
+              >
+                <Plus size={18} />
+                Add
+              </Button>
+              {/* <div className="flex flex-col gap-1">
                 <label htmlFor="fromDate" className="text-xs font-semibold text-gray-600">From Date</label>
                 <div className="relative flex items-center">
                   <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
@@ -530,11 +628,31 @@ export default function Todo() {
                     className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Existing Controls - Right Side */}
             <div className="flex items-center gap-3">
+              {
+                taskType === "all" && (
+                  <div className="w-64">
+                    <MuiMultiSelect
+                      label="Members"
+                      options={users
+                        ?.filter(Boolean)
+                        .map((user: any) => ({
+                          label: user.name || user?.full_name || "Unknown",
+                          value: user?.id,
+                          id: user?.id,
+                        }))}
+                      placeholder="Select Members"
+                      value={selectedUsers}
+                      onChange={(values) => handleMultiSelectChange("members", values)}
+                      maxHeight="36px"
+                    />
+                  </div>
+                )
+              }
               <div className="flex items-center px-4 py-2">
                 <span className="text-gray-700 font-medium text-sm">My Todos</span>
                 <Switch
@@ -557,32 +675,14 @@ export default function Todo() {
                 />
                 <span className="text-gray-700 font-medium text-sm">All Todos</span>
               </div>
-              {
-                taskType === "all" && (
-                  <div className="w-64">
-                    <MuiMultiSelect
-                      label="Members"
-                      options={users
-                        ?.filter(Boolean)
-                        .map((user: any) => ({
-                          label: user.name || user?.full_name || "Unknown",
-                          value: user?.id,
-                          id: user?.id,
-                        }))}
-                      placeholder="Select Members"
-                      value={selectedUsers}
-                      onChange={(values) => handleMultiSelectChange("members", values)}
-                      maxHeight="36px"
-                    />
-                  </div>
-                )
-              }
               <Button
-                onClick={() => setIsAddTodoModalOpen(true)}
-                className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
+                variant="outline"
+                size="sm"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                title='Filter'
+                onClick={() => setIsFilterModalOpen(true)}
               >
-                <Plus size={18} />
-                Add To-Do
+                <Filter className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -663,6 +763,14 @@ export default function Todo() {
           onConfirm={handleConfirmToggle}
           isLoading={toggleLoading}
           todo={todoToToggle}
+        />
+
+        {/* Todo Filter Modal */}
+        <TodoFilterModal
+          isModalOpen={isFilterModalOpen}
+          setIsModalOpen={setIsFilterModalOpen}
+          onApplyFilters={handleApplyFilters}
+          users={users}
         />
 
         {/* Drag Overlay - shows preview of dragged item */}
@@ -1133,6 +1241,16 @@ const TodoItem = ({
           </span>
         </div>
         <div className="flex items-center gap-1">
+          {
+            todo.created_by !== todo.user && (
+              <>
+                <span className="text-xs text-muted-foreground">
+                  Assigned By : {todo.created_by}
+                </span>
+                <span className="text-xs text-muted-foreground">•</span>
+              </>
+            )
+          }
           <span className="text-xs text-muted-foreground">
             {todo.user}
           </span>
@@ -1234,7 +1352,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-green-100 border-l-4 border-green-500 transition-colors group mb-2">
+    <div className="flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2">
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">
@@ -1249,6 +1367,16 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          {
+            todo.created_by !== todo.user && (
+              <>
+                <span className="text-xs text-muted-foreground">
+                  Assigned By : {todo.created_by}
+                </span>
+                <span className="text-xs text-muted-foreground">•</span>
+              </>
+            )
+          }
           <span className="text-xs text-muted-foreground">
             {todo.user}
           </span>
@@ -1264,9 +1392,9 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       </div>
       <button
         onClick={() => toggleTodo(todo.id)}
-        className="flex-shrink-0 w-5 h-5 !bg-green-300 !text-white flex items-center justify-center hover:opacity-90 transition-all"
+        className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
       >
-        <Check size={15} color="black" />
+        <Check size={15} color="white" />
       </button>
     </div>
   );
