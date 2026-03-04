@@ -4,7 +4,7 @@ import createApiSlice from "../api/apiSlice";
 
 export const fetchIssues = createAsyncThunk(
     "fetchIssues",
-    async ({ token, baseUrl, id }: { token: string; baseUrl: string; id: string }, { rejectWithValue }) => {
+    async ({ token, baseUrl, id, page }: { token: string; baseUrl: string; id: string; page: number }, { rejectWithValue }) => {
         try {
             let url = `https://${baseUrl}/issues.json`;
             if (id) {
@@ -16,6 +16,9 @@ export const fetchIssues = createAsyncThunk(
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
+                    params: {
+                        page: page
+                    }
                 }
             );
             return response.data;

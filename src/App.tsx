@@ -1091,7 +1091,6 @@ import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
-import NotificationsPage from "./pages/NotificationsPage";
 
 
 const queryClient = new QueryClient();
