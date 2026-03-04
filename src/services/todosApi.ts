@@ -55,36 +55,44 @@ export const fetchTodos = async (
         throw new Error("Missing token or baseUrl");
     }
 
-    const params = new URLSearchParams();
-    params.append("page", page.toString());
+    let url = `https://${baseUrl}/todos.json`;
+
+    // Build query parameters conditionally
+    const queryParts: string[] = [];
+
+    // Add page parameter
+    queryParts.push(`page=${page}`);
 
     // Add user filter
     if (taskType === "my") {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         const userId = user?.id;
         if (userId) {
-            params.append("q[user_id_eq]", userId);
+            queryParts.push(`q[user_id_eq]=${userId}`);
         }
     } else if (taskType === "all" && userIds.length > 0) {
         userIds.forEach((id) => {
-            params.append("q[user_id_in][]", id);
+            queryParts.push(`q[user_id_in][]=${id}`);
         });
     }
 
     // Add search if provided
     if (search && search.trim()) {
-        params.append("q[title_cont]", search.trim());
+        queryParts.push(`q[title_cont]=${encodeURIComponent(search.trim())}`);
     }
 
     // Add date range filters if provided
     if (fromDate) {
-        params.append("q[target_date_or_updated_at_gteq]", fromDate);
+        queryParts.push(`q[target_date_or_updated_at_gteq]=${fromDate}`);
     }
     if (toDate) {
-        params.append("q[target_date_or_updated_at_lteq]", toDate);
+        queryParts.push(`q[target_date_or_updated_at_lteq]=${toDate}`);
     }
 
-    const url = `https://${baseUrl}/todos.json?${params.toString()}`;
+    // Append query parameters to URL
+    if (queryParts.length > 0) {
+        url += `?${queryParts.join("&")}`;
+    }
 
     const response = await axios.get(url, {
         headers: {

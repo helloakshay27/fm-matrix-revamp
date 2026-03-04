@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
+import moment from "moment";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchOccupantUsers } from "@/store/slices/occupantUsersSlice";
 import { fetchOccupantUserCounts } from "@/store/slices/occupantUserCountsSlice";
@@ -58,6 +59,7 @@ const columns: ColumnConfig[] = [
   { key: "status", label: "Status", sortable: true, draggable: true },
   { key: "faceRecognition", label: "Face Recognition", sortable: true, draggable: true },
   { key: "appDownloaded", label: "App Downloaded", sortable: true, draggable: true },
+  { key: "createdAt", label: "Created At", sortable: true, draggable: true },
 ];
 
 export const OccupantUserMasterDashboard = () => {
@@ -92,6 +94,7 @@ export const OccupantUserMasterDashboard = () => {
     status?: string;
     entity?: string;
     downloaded?: undefined | boolean;
+    created_at?: string;
   }>({
     name: "",
     email: "",
@@ -99,6 +102,7 @@ export const OccupantUserMasterDashboard = () => {
     status: "",
     entity: "",
     downloaded: undefined,
+    created_at: "",
   });
 
   const {
@@ -153,6 +157,7 @@ export const OccupantUserMasterDashboard = () => {
     entity?: string;
     downloaded?: undefined | boolean;
     search?: string;
+    created_at?: string;
   }) => {
     setFilters(newFilters);
     // const [firstName = "", lastName = ""] =
@@ -161,7 +166,7 @@ export const OccupantUserMasterDashboard = () => {
 
     const firstName = nameParts[0] || "";
     const lastName = nameParts[1] || "";
-    
+
     await dispatch(
       fetchOccupantUsers({
         page: 1,
@@ -174,6 +179,7 @@ export const OccupantUserMasterDashboard = () => {
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
         search_all_fields_cont: newFilters.search,
+        created_on_eq: newFilters.created_at,
         // lock_user_permissions_user_type_eq: 'pms_occupant',
       })
     );
@@ -266,6 +272,7 @@ export const OccupantUserMasterDashboard = () => {
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
           search_all_fields_cont: searchTerm,
+          created_on_eq: filters.created_at,
           // lock_user_permissions_user_type_eq: 'pms_occupant',
         })
       );
@@ -575,6 +582,8 @@ export const OccupantUserMasterDashboard = () => {
         return user.entity || "";
       case "company":
         return user.company || "";
+      case "createdAt":
+        return user.createdAt ? moment(user.createdAt).format("DD/MM/YYYY HH:mm") : "-";
       default:
         return user[columnKey] || "";
     }

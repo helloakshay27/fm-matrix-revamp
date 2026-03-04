@@ -39,6 +39,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                     .map((user: any) => ({
                         id: user.id,
                         name: user.name || user.full_name || "Unknown",
+                        department_name: user.department_name,
                     }));
                 setUsers(validUsers);
             } catch (error) {
@@ -200,7 +201,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                                 </MenuItem>
                                 {users.map((user) => (
                                     <MenuItem key={user.id} value={user.id}>
-                                        {user.name}
+                                        {user.name} - <span className='text-gray-500 text-xs ml-2 italic'>{user?.department_name}</span>
                                     </MenuItem>
                                 ))}
                             </Select>

@@ -24,6 +24,15 @@ import {
 } from "@/components/ui/tooltip";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Issue {
     id?: string;
@@ -201,11 +210,10 @@ const IssuesListPage = ({
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-
-    // Pagination state
     const [pagination, setPagination] = useState({
-        pageIndex: 0,
-        pageSize: 10,
+        current_page: 1,
+        total_count: 0,
+        total_pages: 0,
     });
 
     // Search state
@@ -229,6 +237,20 @@ const IssuesListPage = ({
                 "due_date",
             ];
     });
+
+    // Extract pagination data from Redux response
+    useEffect(() => {
+        if (data && typeof data === 'object') {
+            const paginationData = {
+                current_page: (data as any).pagination?.current_page || 1,
+                total_count: (data as any).pagination?.total_count || 0,
+                total_pages: (data as any).pagination?.total_pages || 0,
+            };
+            setPagination(paginationData);
+        }
+    }, [data]);
+
+    console.log(pagination)
 
     // Fetch control refs
     const allIssuesFetchInitiatedRef = useRef(false);
@@ -324,13 +346,13 @@ const IssuesListPage = ({
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     // Helper function to perform filtered fetch - defined early to be used in useEffects
     const performFilteredFetch = useCallback(
-        async (filterOrString: any) => {
+        async (filterOrString: any, page: number = 1) => {
             try {
                 setFilteredLoading(true);
-                let queryString: string;
+                let filterString: string;
 
                 if (typeof filterOrString === "string") {
-                    queryString = filterOrString;
+                    filterString = filterOrString;
                 } else {
                     let filter = filterOrString;
                     // Add responsible_person_id_eq if showing my issues only
@@ -340,17 +362,19 @@ const IssuesListPage = ({
                             filter["q[responsible_person_id_eq]"] = user.id.toString();
                         }
                     }
-                    queryString = qs.stringify(filter);
+                    filterString = qs.stringify(filter);
                 }
 
                 // Add responsible_person_id_eq if showing my issues only and not already in string
-                if (showMyIssuesOnly && !queryString.includes("responsible_person_id_eq")) {
+                if (showMyIssuesOnly && !filterString.includes("responsible_person_id_eq")) {
                     const user = JSON.parse(localStorage.getItem("user") || "{}");
                     if (user.id) {
-                        queryString += (queryString ? "&" : "") + `q[responsible_person_id_eq]=${user.id.toString()}`;
+                        filterString += (filterString ? "&" : "") + `q[responsible_person_id_eq]=${user.id.toString()}`;
                     }
                 }
 
+                // Build the complete query string with page parameter upfront
+                const queryString = `page=${page}${filterString ? `&${filterString}` : ""}`;
 
                 // Fetch filtered issues directly without caching
                 const response = await axios.get(
@@ -363,11 +387,21 @@ const IssuesListPage = ({
                 );
 
                 setFilteredIssues(response.data.issues || []);
+                setPagination({
+                    current_page: response.data.pagination.current_page || page,
+                    total_count: response.data.pagination.total_count || 0,
+                    total_pages: response.data.pagination.total_pages || 0,
+                });
                 setFilterSuccess(true);
             } catch (error) {
                 console.error("Error fetching filtered issues:", error);
                 toast.error("Failed to fetch filtered issues");
                 setFilteredIssues([]);
+                setPagination({
+                    current_page: 1,
+                    total_count: 0,
+                    total_pages: 0,
+                });
             } finally {
                 setFilteredLoading(false);
             }
@@ -422,7 +456,7 @@ const IssuesListPage = ({
     useEffect(() => {
         const handler = () => {
             allIssuesFetchInitiatedRef.current = false;
-            dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
         };
         window.addEventListener("issues:created", handler as EventListener);
         return () =>
@@ -440,7 +474,6 @@ const IssuesListPage = ({
             allIssuesFetchInitiatedRef.current = false;
             setFilterSuccess(false);
             setFilteredIssues([]);
-            setPagination({ pageIndex: 0, pageSize: 10 });
             prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
         }
 
@@ -449,27 +482,17 @@ const IssuesListPage = ({
             const filter = {
                 "q[project_management_id_eq]": projectId || projectIdParam || "",
                 "q[task_management_id_eq]": taskIdParam || "",
-                page: 1,
-                per_page: 10,
             };
-            performFilteredFetch(filter);
+            performFilteredFetch(filter, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         }
     }, [projectId, projectIdParam, taskIdParam, baseUrl, token, performFilteredFetch]);
 
     // Advanced filtering with search
     useEffect(() => {
         if (searchQuery.trim()) {
-            // Reset to first page when search query changes
-            setPagination((prev) => ({
-                ...prev,
-                pageIndex: 0,
-            }));
-
-            const page = 1;
             const filter = {
                 "q[title_or_project_management_title_cont]": searchQuery,
-                page,
-                per_page: 10,
                 ...(projectId && { "q[project_management_id_eq]": projectId }),
                 ...(projectIdParam && {
                     "q[project_management_id_eq]": projectIdParam,
@@ -477,12 +500,13 @@ const IssuesListPage = ({
                 ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
             };
 
-            performFilteredFetch(filter);
+            performFilteredFetch(filter, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         } else {
             // If search is cleared, reset to initial fetch
             allIssuesFetchInitiatedRef.current = false;
         }
-    }, [searchQuery, projectId, projectIdParam, taskIdParam]);
+    }, [searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
 
     // Fetch all issues only when no parameters and haven't fetched yet
     useEffect(() => {
@@ -501,49 +525,24 @@ const IssuesListPage = ({
                 if (user.id) {
                     const filter = {
                         "q[responsible_person_id_eq]": user.id.toString(),
-                        page: 1,
-                        per_page: 10,
                     };
-                    performFilteredFetch(filter);
+                    performFilteredFetch(filter, 1);
+                    setPagination((prev) => ({ ...prev, current_page: 1 }));
                 }
             } else {
-                dispatch(fetchIssues({ baseUrl, token, id: "" }));
+                dispatch(fetchIssues({ baseUrl, token, id: "", page: pagination.current_page }));
             }
             allIssuesFetchInitiatedRef.current = true;
         }
     }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
 
-    // Handle pagination for search results
-    useEffect(() => {
-        if (searchQuery.trim() && pagination.pageIndex > 0) {
-            const page = pagination.pageIndex + 1;
-            const filter = {
-                "q[title_or_project_management_title_cont]": searchQuery,
-                page,
-                per_page: 10,
-                ...(projectId && { "q[project_management_id_eq]": projectId }),
-                ...(projectIdParam && {
-                    "q[project_management_id_eq]": projectIdParam,
-                }),
-                ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
-            };
 
-            performFilteredFetch(filter);
-        }
-    }, [
-        pagination.pageIndex,
-        searchQuery,
-        projectId,
-        projectIdParam,
-        taskIdParam,
-        performFilteredFetch,
-    ]);
 
     // Handle applied filters from IssueFilterModal
     useEffect(() => {
         if (appliedFilters !== "") {
-            setPagination({ pageIndex: 0, pageSize: 10 });
-            performFilteredFetch(appliedFilters);
+            performFilteredFetch(appliedFilters, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         }
     }, [appliedFilters, performFilteredFetch]);
 
@@ -610,10 +609,7 @@ const IssuesListPage = ({
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
 
                 if (item.selectedStatuses?.length > 0) {
                     newFilter["q[status_eq]"] = item.selectedStatuses[0];
@@ -635,18 +631,18 @@ const IssuesListPage = ({
                 }
 
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
@@ -665,18 +661,16 @@ const IssuesListPage = ({
             ).unwrap();
             // Invalidate cache after issue update
             cache.invalidatePattern("issues_*");
-            performFilteredFetch(
-                projectId ? `q[project_management_id_eq]=${projectId}` : ""
-            );
+            if (projectId) {
+                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
+            }
             toast.success("Issue updated successfully");
 
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
 
                 if (item.selectedStatuses?.length > 0) {
                     newFilter["q[status_eq]"] = item.selectedStatuses[0];
@@ -698,18 +692,18 @@ const IssuesListPage = ({
                 }
 
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
@@ -731,18 +725,16 @@ const IssuesListPage = ({
             ).unwrap();
             // Invalidate cache after issue status update
             cache.invalidatePattern("issues_*");
-            performFilteredFetch(
-                projectId ? `q[project_management_id_eq]=${projectId}` : ""
-            );
+            if (projectId) {
+                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
+            }
             toast.success("Issue status updated successfully");
 
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
 
                 if (item.selectedStatuses?.length > 0) {
                     newFilter["q[status_eq]"] = item.selectedStatuses[0];
@@ -764,18 +756,18 @@ const IssuesListPage = ({
                 }
 
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
@@ -1038,8 +1030,172 @@ const IssuesListPage = ({
         </div>
     )
 
+    const handlePageChange = async (page: number) => {
+        if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading || filteredLoading) {
+            return;
+        }
+
+        try {
+            setPagination((prev) => ({ ...prev, current_page: page }));
+
+            // Determine which filter/search applies
+            if (searchQuery.trim()) {
+                const filter = {
+                    "q[title_or_project_management_title_cont]": searchQuery,
+                    ...(projectId && { "q[project_management_id_eq]": projectId }),
+                    ...(projectIdParam && {
+                        "q[project_management_id_eq]": projectIdParam,
+                    }),
+                    ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
+                };
+                await performFilteredFetch(filter, page);
+            } else if (appliedFilters) {
+                await performFilteredFetch(appliedFilters, page);
+            } else if (projectId || projectIdParam || taskIdParam) {
+                const filter = {
+                    "q[project_management_id_eq]": projectId || projectIdParam || "",
+                    "q[task_management_id_eq]": taskIdParam || "",
+                };
+                await performFilteredFetch(filter, page);
+            } else if (showMyIssuesOnly) {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                const filter = user.id ? { "q[responsible_person_id_eq]": user.id.toString() } : {};
+                await performFilteredFetch(filter, page);
+            } else {
+                // No filters/search, fetch all issues with page parameter
+                dispatch(fetchIssues({ baseUrl, token, id: "", page }));
+            }
+        } catch (error) {
+            console.error("Error changing page:", error);
+            toast.error("Failed to load page data. Please try again.");
+        }
+    };
+
+    const renderPaginationItems = () => {
+        if (!pagination.total_pages || pagination.total_pages <= 0) {
+            return null;
+        }
+        const items = [];
+        const totalPages = pagination.total_pages;
+        const currentPage = pagination.current_page;
+        const showEllipsis = totalPages > 7;
+
+        if (showEllipsis) {
+            items.push(
+                <PaginationItem key={1} className="cursor-pointer">
+                    <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={currentPage === 1}
+                        aria-disabled={loading || filteredLoading}
+                        className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                    >
+                        1
+                    </PaginationLink>
+                </PaginationItem>
+            );
+
+            if (currentPage > 4) {
+                items.push(
+                    <PaginationItem key="ellipsis1">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                                aria-disabled={loading || filteredLoading}
+                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage > 3 && currentPage < totalPages - 2) {
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                                aria-disabled={loading || filteredLoading}
+                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage < totalPages - 3) {
+                items.push(
+                    <PaginationItem key="ellipsis2">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+                    if (!items.find((item) => item.key === i.toString())) {
+                        items.push(
+                            <PaginationItem key={i} className="cursor-pointer">
+                                <PaginationLink
+                                    onClick={() => handlePageChange(i)}
+                                    isActive={currentPage === i}
+                                    aria-disabled={loading || filteredLoading}
+                                    className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                                >
+                                    {i}
+                                </PaginationLink>
+                            </PaginationItem>
+                        );
+                    }
+                }
+            }
+
+            if (totalPages > 1) {
+                items.push(
+                    <PaginationItem key={totalPages} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={currentPage === totalPages}
+                            aria-disabled={loading || filteredLoading}
+                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {totalPages}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        } else {
+            for (let i = 1; i <= totalPages; i++) {
+                items.push(
+                    <PaginationItem key={i} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(i)}
+                            isActive={currentPage === i}
+                            aria-disabled={loading || filteredLoading}
+                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        }
+
+        return items;
+    };
+
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
     };
 
     return (
@@ -1102,6 +1258,26 @@ const IssuesListPage = ({
                 onImport={handleImportIssues}
                 isUploading={isUploading}
             />
+
+            <div className="flex justify-center mt-6">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                                className={pagination.current_page === 1 || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+                        {renderPaginationItems()}
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                                className={pagination.current_page === pagination.total_pages || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
         </div>
     );
 };
