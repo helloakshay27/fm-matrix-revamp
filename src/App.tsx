@@ -1090,6 +1090,7 @@ import TaxSetupMaster from "./pages/ClubManagement/TaxSetupMaster";
 import SalesPersonMaster from "./pages/ClubManagement/SalesPersonMaster";
 import PaymentTermsMaster from "./pages/ClubManagement/PaymentTermsMaster";
 import { CustomersDetails } from "./pages/ClubManagement/CustomersDetails";
+import NotificationsPage from "./pages/NotificationsPage";
 
 
 const queryClient = new QueryClient();
@@ -1143,7 +1144,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2357,7 +2358,7 @@ function App() {
                         path="/accounting/customers/add"
                         element={<CustomersAdd />}
                       />
-                       <Route
+                      <Route
                         path="/accounting/customers/details/:id"
                         element={<CustomersDetails />}
                       />
@@ -2531,7 +2532,7 @@ function App() {
                         path="/settings/sales-order/edit/:id"
                         element={<SalesOrderCreatePage />}
                       />
-                        <Route
+                      <Route
                         path="/master/payment-terms"
                         element={<PaymentTermsMaster />}
                       />
@@ -3632,6 +3633,10 @@ function App() {
                         element={<OpportunityDetailsPage />}
                       />
                       <Route path="/vas/todo" element={<Todo />} />
+                      <Route
+                        path="/notifications"
+                        element={<NotificationsPage />}
+                      />
                       <Route
                         path="/vas/documents"
                         element={<DocumentManagement />}
