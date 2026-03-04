@@ -714,7 +714,9 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.expected_at).toLocaleDateString('en-GB')}
+                           {visitorData.expected_at && !isNaN(new Date(visitorData.expected_at))
+                            ? new Date(visitorData.expected_at).toLocaleDateString('en-GB')
+                            : "-"}
                         </span>
                       </div>
                     )}
@@ -724,10 +726,12 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Expected Time</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.expected_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {visitorData.expected_at && !isNaN(new Date(visitorData.expected_at))
+                            ? new Date(visitorData.expected_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            : "-"} 
                         </span>
                       </div>
                     )}
@@ -798,7 +802,7 @@ export const VisitorDetailsPage = () => {
 
                     {hasData(visitorData.time_since_in) && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Time Since Check-in</span>
+                        <span className="text-gray-500 min-w-[140px]">Duration</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{visitorData.time_since_in}</span>
                       </div>
