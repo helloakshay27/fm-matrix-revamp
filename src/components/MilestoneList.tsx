@@ -4,6 +4,14 @@ import { Button } from "./ui/button";
 import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
+import {
+    Breadcrumb,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "./ui/breadcrumb";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
@@ -166,6 +174,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const loaderRef = useRef<HTMLDivElement>(null);
+    const [projectName, setProjectName] = useState<string>('');
 
     // Pagination and infinite scroll state
     const [currentPage, setCurrentPage] = useState(1);
@@ -313,9 +322,27 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         setCurrentPage(1);
     };
 
+    const fetchProjectName = async () => {
+        try {
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+                : await baseClient.get(`/project_managements/${id}.json`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            setProjectName(response.data.title || response.data.project_code || '');
+        } catch (error) {
+            console.error('Failed to fetch project name:', error);
+        }
+    };
+
     useEffect(() => {
         getOwners();
-    }, [token])
+        if (token && id) {
+            fetchProjectName();
+        }
+    }, [token, id])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -666,6 +693,24 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
     return (
         <div className="px-6">
+            {/* Breadcrumbs */}
+            <Breadcrumb className="mb-2">
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink
+                            onClick={() => navigate(`/vas/projects`)}
+                            className="cursor-pointer"
+                        >
+                            {projectName || "Project"}
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>Milestones</BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+
             <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
@@ -674,6 +719,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
+
+
             <EnhancedTable
                 data={data as any[]}
                 columns={columns}
