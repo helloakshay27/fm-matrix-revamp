@@ -90,8 +90,8 @@ export const OccupantUserMobileList = () => {
       } else {
         toast.error(
           response.data.user_error_msg ||
-            response.data.message ||
-            "Failed to generate OTP"
+          response.data.message ||
+          "Failed to generate OTP"
         );
       }
     } catch (error) {
@@ -121,8 +121,9 @@ export const OccupantUserMobileList = () => {
       fetchOccupantUsers({
         page: currentPage,
         perPage: 10,
-        ...(firstName && { firstname_cont: firstName }),
-        ...(lastName && { lastname_cont: lastName }),
+        // ...(firstName && { firstname_cont: firstName }),
+        // ...(lastName && { lastname_cont: lastName }),
+        ...(searchQuery && { search_all_fields_cont: searchQuery }),
       })
     );
   };
