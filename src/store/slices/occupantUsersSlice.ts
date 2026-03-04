@@ -122,13 +122,21 @@ export const fetchOccupantUsers = createAsyncThunk(
       "q[email_cont]": email_cont,
       "q[entity_id_eq]": entity_id_eq,
       "q[search_all_fields_cont]": search_all_fields_cont,
-      "q[lock_user_permissions_user_type_eq]": lock_user_permissions_user_type_eq,
+      "q[lock_user_permissions_user_type_eq]":
+        lock_user_permissions_user_type_eq,
     });
     if (app_downloaded_eq !== undefined) {
       params.append("q[app_downloaded_eq]", String(app_downloaded_eq));
     }
+
+    // Check if current path is /settings/account/user-list-otp
+    const isUserListOtpPage = window.location.pathname.includes(
+      "/settings/account/user-list-otp"
+    );
+    const showAllParam = isUserListOtpPage ? "&show_all=true" : "";
+
     const response = await apiClient.get<OccupantUsersResponse>(
-      `/pms/account_setups/occupant_users.json?page=${page}&per_page=${perPage}&${params.toString()}`
+      `/pms/account_setups/occupant_users.json?page=${page}&per_page=${perPage}${showAllParam}&${params.toString()}`
     );
 
     const transformedUsers: OccupantUser[] = response.data.occupant_users.map(
@@ -151,9 +159,11 @@ export const fetchOccupantUsers = createAsyncThunk(
         faceRecognition: user.face_added ? "Yes" : "No",
         appDownloaded: user.app_downloaded,
         // lockUserId: user.lock_user_permission.id ?? null,
-        lockUserId: user.lock_user_permission ? user.lock_user_permission.id : null,
+        lockUserId: user.lock_user_permission
+          ? user.lock_user_permission.id
+          : null,
         entity: user.entity_name,
-        departmentName: user.department?.department_name
+        departmentName: user.department?.department_name,
       })
     );
 
