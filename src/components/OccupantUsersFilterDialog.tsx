@@ -26,6 +26,7 @@ interface Filters {
   mobile?: string;
   status?: string;
   entity?: string;
+  created_at?: string;
 }
 
 interface FilterDialogProps {
@@ -64,6 +65,7 @@ export const OccupantUsersFilterDialog = ({
       mobile: "",
       status: "",
       entity: "",
+      created_at: "",
     });
   };
 
@@ -186,6 +188,21 @@ export const OccupantUsersFilterDialog = ({
                   ))}
                 </MuiSelect>
               </FormControl>
+            </div>
+
+            <div>
+              <TextField
+                fullWidth
+                label="Created Date"
+                type="date"
+                variant="outlined"
+                value={filters.created_at}
+                onChange={(e) => handleFilterChange("created_at", e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
             </div>
           </div>
 
