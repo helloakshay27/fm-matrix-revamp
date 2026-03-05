@@ -1089,6 +1089,9 @@ interface TaskDetails {
   responsible_person?: {
     name?: string;
   };
+  project_management: {
+    name?: string;
+  }
   priority?: string;
   expected_start_date?: string;
   parent_id?: number;
@@ -1682,11 +1685,11 @@ export const ProjectTaskDetails = () => {
 
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">Priority:</p>
+                        <p className="text-sm font-medium text-gray-600">Project:</p>
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {taskDetails.priority || "-"}
+                          {taskDetails.project_management.name || "-"}
                         </p>
                       </div>
                     </div>
@@ -1705,13 +1708,6 @@ export const ProjectTaskDetails = () => {
                     </div>
 
                     <div className="flex items-start">
-                      {/* <div className="min-w-[200px]">
-                    <p className="text-sm font-medium text-gray-600">Milestone:</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
-                  </div> */}
-
                       <div className="min-w-[200px]">
                         <p className="text-sm font-medium text-gray-600">
                           {taskDetails.parent_id ? "Task" : "Milestones"}:
@@ -1846,6 +1842,16 @@ export const ProjectTaskDetails = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">Priority:</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900">
+                          {taskDetails.priority || "-"}
+                        </p>
                       </div>
                     </div>
                   </div>
