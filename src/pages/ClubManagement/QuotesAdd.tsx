@@ -214,7 +214,7 @@ export const QuotesAdd: React.FC = () => {
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
-    const [placeOfSupply, setPlaceOfSupply] = useState("");
+    
     // Items
     const [items, setItems] = useState<Item[]>([
         {
@@ -234,6 +234,7 @@ export const QuotesAdd: React.FC = () => {
         }
     ]);
 
+    const [placeOfSupply, setPlaceOfSupply] = useState("");
     const taxTypeOptions = [
         { value: "non_taxable", label: "Non-Taxable" },
         { value: "out_of_scope", label: "Out of Scope" },
