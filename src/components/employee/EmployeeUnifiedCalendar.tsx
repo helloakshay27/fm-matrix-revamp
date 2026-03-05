@@ -16,6 +16,7 @@ import {
   Users,
   Briefcase,
   Ticket,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -26,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getUser } from "@/utils/auth";
 
 interface UnifiedCalendarEvent {
   id: string;
@@ -198,12 +200,14 @@ export const EmployeeUnifiedCalendar: React.FC<
               break;
             case "TaskManagement":
             case "Task Management":
+            case "TaskAllocationTime":
             case "Task":
               eventType = "Task";
               break;
             case "Ticket":
               eventType = "Ticket";
               break;
+            case "IssueAllocationTime":
             case "Issue":
               eventType = "Issue";
               break;
@@ -708,18 +712,73 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </div>
 
-        <Button
-          onClick={() => setIsFilterModalOpen(true)}
-          variant="outline"
-          className="flex items-center gap-2 px-4 py-2 h-10"
-        >
-          <Filter className="h-4 w-4" />
-          {activeFilterCount > 0 && (
-            <span className="ml-1 px-2 py-1 text-xs bg-red-600 text-white rounded-full">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={async () => {
+              const user = getUser();
+              const email = user?.email;
+              if (email) {
+                try {
+                  toast.info("Connecting to Google Calendar...");
+                  const baseUrl =
+                    localStorage.getItem("baseUrl") ||
+                    API_CONFIG.BASE_URL ||
+                    "lockated-api.gophygital.work";
+                  const syncUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
+
+                  // Call the API to get the redirect URL
+                  const response = await fetch(syncUrl, {
+                    method: "GET",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  });
+
+                  if (response.ok) {
+                    const data = await response.json();
+                    // Open the redirect URL from API response
+                    if (data.redirect_url || data.url) {
+                      window.open(
+                        data.redirect_url || data.url,
+                        "_blank",
+                        "width=600,height=700"
+                      );
+                    } else {
+                      // Fallback: if no redirect URL in response, open the sync URL directly
+                      window.open(syncUrl, "_blank", "width=600,height=700");
+                    }
+                  } else {
+                    // If API fails, open the sync URL directly as fallback
+                    window.open(syncUrl, "_blank", "width=600,height=700");
+                    toast.warning("Opening sync page directly...");
+                  }
+                } catch (error) {
+                  console.error("Error connecting to Google Calendar:", error);
+                  toast.error("Failed to connect to Google Calendar");
+                }
+              } else {
+                toast.error("User email not found");
+              }
+            }}
+            variant="outline"
+            className="flex items-center gap-2 px-4 py-2 h-10"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Sync Google Calendar
+          </Button>
+          <Button
+            onClick={() => setIsFilterModalOpen(true)}
+            variant="outline"
+            className="flex items-center gap-2 px-4 py-2 h-10"
+          >
+            <Filter className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="ml-1 px-2 py-1 text-xs bg-red-600 text-white rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Legends */}
