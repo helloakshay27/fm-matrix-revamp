@@ -35,13 +35,13 @@ interface UnifiedCalendarEvent {
   start: string;
   end?: string;
   type:
-  | "Task"
-  | "Issue"
-  | "Meeting"
-  | "Facility"
-  | "Todo"
-  | "Google Calendar"
-  | "Ticket";
+    | "Task"
+    | "Issue"
+    | "Meeting"
+    | "Facility"
+    | "Todo"
+    | "Google Calendar"
+    | "Ticket";
   status?: string;
   color?: string;
   description?: string;
@@ -200,12 +200,14 @@ export const EmployeeUnifiedCalendar: React.FC<
               break;
             case "TaskManagement":
             case "Task Management":
+            case "TaskAllocationTime":
             case "Task":
               eventType = "Task";
               break;
             case "Ticket":
               eventType = "Ticket";
               break;
+            case "IssueAllocationTime":
             case "Issue":
               eventType = "Issue";
               break;
@@ -588,10 +590,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showTasks: !prev.showTasks,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showTasks
-                ? "bg-blue-100 text-blue-700 border border-blue-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showTasks
+                  ? "bg-blue-100 text-blue-700 border border-blue-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <CheckSquare className="w-3 h-3" />
@@ -605,10 +608,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showIssues: !prev.showIssues,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showIssues
-                ? "bg-red-100 text-red-700 border border-red-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showIssues
+                  ? "bg-red-100 text-red-700 border border-red-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Ticket className="w-3 h-3" />
@@ -622,10 +626,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showTickets: !prev.showTickets,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showTickets
-                ? "bg-orange-100 text-orange-700 border border-orange-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showTickets
+                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Ticket className="w-3 h-3" />
@@ -639,10 +644,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showMeetings: !prev.showMeetings,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showMeetings
-                ? "bg-pink-100 text-pink-700 border border-pink-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showMeetings
+                  ? "bg-pink-100 text-pink-700 border border-pink-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -656,10 +662,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showGoogleCalendar: !prev.showGoogleCalendar,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showGoogleCalendar
-                ? "bg-purple-100 text-purple-700 border border-purple-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showGoogleCalendar
+                  ? "bg-purple-100 text-purple-700 border border-purple-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
@@ -673,10 +680,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showFacilities: !prev.showFacilities,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showFacilities
-                ? "bg-green-100 text-green-700 border border-green-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showFacilities
+                  ? "bg-green-100 text-green-700 border border-green-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
@@ -690,10 +698,11 @@ export const EmployeeUnifiedCalendar: React.FC<
                   showTodos: !prev.showTodos,
                 }))
               }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeFilters.showTodos
-                ? "bg-amber-100 text-amber-700 border border-amber-300"
-                : "bg-gray-100 text-gray-500 border border-gray-300"
-                }`}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showTodos
+                  ? "bg-amber-100 text-amber-700 border border-amber-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <Briefcase className="w-3 h-3" />
@@ -710,15 +719,18 @@ export const EmployeeUnifiedCalendar: React.FC<
               const email = user?.email;
               if (email) {
                 try {
-                  toast.info('Connecting to Google Calendar...');
-                  const baseUrl = localStorage.getItem("baseUrl") || API_CONFIG.BASE_URL || "lockated-api.gophygital.work";
+                  toast.info("Connecting to Google Calendar...");
+                  const baseUrl =
+                    localStorage.getItem("baseUrl") ||
+                    API_CONFIG.BASE_URL ||
+                    "lockated-api.gophygital.work";
                   const syncUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
 
                   // Call the API to get the redirect URL
                   const response = await fetch(syncUrl, {
-                    method: 'GET',
+                    method: "GET",
                     headers: {
-                      'Content-Type': 'application/json',
+                      "Content-Type": "application/json",
                     },
                   });
 
@@ -726,22 +738,26 @@ export const EmployeeUnifiedCalendar: React.FC<
                     const data = await response.json();
                     // Open the redirect URL from API response
                     if (data.redirect_url || data.url) {
-                      window.open(data.redirect_url || data.url, '_blank', 'width=600,height=700');
+                      window.open(
+                        data.redirect_url || data.url,
+                        "_blank",
+                        "width=600,height=700"
+                      );
                     } else {
                       // Fallback: if no redirect URL in response, open the sync URL directly
-                      window.open(syncUrl, '_blank', 'width=600,height=700');
+                      window.open(syncUrl, "_blank", "width=600,height=700");
                     }
                   } else {
                     // If API fails, open the sync URL directly as fallback
-                    window.open(syncUrl, '_blank', 'width=600,height=700');
-                    toast.warning('Opening sync page directly...');
+                    window.open(syncUrl, "_blank", "width=600,height=700");
+                    toast.warning("Opening sync page directly...");
                   }
                 } catch (error) {
-                  console.error('Error connecting to Google Calendar:', error);
-                  toast.error('Failed to connect to Google Calendar');
+                  console.error("Error connecting to Google Calendar:", error);
+                  toast.error("Failed to connect to Google Calendar");
                 }
               } else {
-                toast.error('User email not found');
+                toast.error("User email not found");
               }
             }}
             variant="outline"
@@ -883,196 +899,192 @@ export const EmployeeUnifiedCalendar: React.FC<
       </div>
 
       {/* Event Hover Tooltip */}
-      {
-        hoveredEvent && (
-          <div
-            className="fixed z-50 bg-white rounded-lg shadow-lg border p-3 pointer-events-none"
-            style={{
-              left: `${mousePosition.x + 10}px`,
-              top: `${mousePosition.y - 10}px`,
-              maxWidth: "300px",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              {getEventTypeIcon(hoveredEvent.extendedProps?.type)}
-              <span className="text-xs font-semibold text-gray-500 uppercase">
-                {getEventTypeLabel(hoveredEvent.extendedProps?.type)}
-              </span>
-            </div>
-            <div className="text-sm font-semibold text-gray-900 mb-1">
-              {hoveredEvent.title}
-            </div>
-            <div className="text-xs text-gray-600 mb-1">
-              {moment(hoveredEvent.start).format("MMM DD, YYYY HH:mm")}
-            </div>
-            {hoveredEvent.extendedProps?.status && (
-              <div className="text-xs text-gray-500">
-                Status: {hoveredEvent.extendedProps.status}
-              </div>
-            )}
-            {hoveredEvent.extendedProps?.location && (
-              <div className="text-xs text-gray-500">
-                Location: {hoveredEvent.extendedProps.location}
-              </div>
-            )}
+      {hoveredEvent && (
+        <div
+          className="fixed z-50 bg-white rounded-lg shadow-lg border p-3 pointer-events-none"
+          style={{
+            left: `${mousePosition.x + 10}px`,
+            top: `${mousePosition.y - 10}px`,
+            maxWidth: "300px",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            {getEventTypeIcon(hoveredEvent.extendedProps?.type)}
+            <span className="text-xs font-semibold text-gray-500 uppercase">
+              {getEventTypeLabel(hoveredEvent.extendedProps?.type)}
+            </span>
           </div>
-        )
-      }
+          <div className="text-sm font-semibold text-gray-900 mb-1">
+            {hoveredEvent.title}
+          </div>
+          <div className="text-xs text-gray-600 mb-1">
+            {moment(hoveredEvent.start).format("MMM DD, YYYY HH:mm")}
+          </div>
+          {hoveredEvent.extendedProps?.status && (
+            <div className="text-xs text-gray-500">
+              Status: {hoveredEvent.extendedProps.status}
+            </div>
+          )}
+          {hoveredEvent.extendedProps?.location && (
+            <div className="text-xs text-gray-500">
+              Location: {hoveredEvent.extendedProps.location}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Event Details Modal */}
-      {
-        selectedEvent && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-hidden transform transition-all">
-              {/* Header */}
-              <div className="bg-white border-b border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center border"
-                        style={{
-                          backgroundColor: `${selectedEvent.backgroundColor}20`,
-                          borderColor: selectedEvent.backgroundColor,
-                        }}
-                      >
-                        {getEventTypeIcon(selectedEvent.extendedProps?.type)}
+      {selectedEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-hidden transform transition-all">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center border"
+                      style={{
+                        backgroundColor: `${selectedEvent.backgroundColor}20`,
+                        borderColor: selectedEvent.backgroundColor,
+                      }}
+                    >
+                      {getEventTypeIcon(selectedEvent.extendedProps?.type)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {getEventTypeLabel(selectedEvent.extendedProps?.type)}{" "}
+                        Details
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {selectedEvent.extendedProps?.status}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={closeEventModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto max-h-[60vh]">
+              <div className="p-6">
+                <div className="space-y-6">
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-2">
+                      Title
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      {selectedEvent.title}
+                    </div>
+                  </div>
+
+                  {/* Date and Time */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-2">
+                        Date
+                      </label>
+                      <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        {moment(selectedEvent.start).format("MMM DD, YYYY")}
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {getEventTypeLabel(selectedEvent.extendedProps?.type)}{" "}
-                          Details
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {selectedEvent.extendedProps?.status}
-                        </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-2">
+                        Time
+                      </label>
+                      <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        {moment(selectedEvent.start).format("HH:mm")}
+                        {selectedEvent.end &&
+                          ` - ${moment(selectedEvent.end).format("HH:mm")}`}
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={closeEventModal}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="overflow-y-auto max-h-[60vh]">
-                <div className="p-6">
-                  <div className="space-y-6">
-                    {/* Title */}
+                  {/* Location */}
+                  {selectedEvent.extendedProps?.location && (
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-2">
-                        Title
+                        Location
                       </label>
-                      <div className="text-base font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        {selectedEvent.title}
+                      <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        {selectedEvent.extendedProps.location}
                       </div>
                     </div>
+                  )}
 
-                    {/* Date and Time */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-2">
-                          Date
-                        </label>
-                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          {moment(selectedEvent.start).format("MMM DD, YYYY")}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-2">
-                          Time
-                        </label>
-                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          {moment(selectedEvent.start).format("HH:mm")}
-                          {selectedEvent.end &&
-                            ` - ${moment(selectedEvent.end).format("HH:mm")}`}
-                        </div>
+                  {/* Description */}
+                  {selectedEvent.extendedProps?.description && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-2">
+                        Description
+                      </label>
+                      <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        {selectedEvent.extendedProps.description}
                       </div>
                     </div>
+                  )}
 
-                    {/* Location */}
-                    {selectedEvent.extendedProps?.location && (
+                  {/* Quick Action */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-2">
-                          Location
-                        </label>
-                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          {selectedEvent.extendedProps.location}
-                        </div>
+                        <p className="text-xs font-medium text-blue-900 mb-1">
+                          View Full Details
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Click to see complete information
+                        </p>
                       </div>
-                    )}
-
-                    {/* Description */}
-                    {selectedEvent.extendedProps?.description && (
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-2">
-                          Description
-                        </label>
-                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          {selectedEvent.extendedProps.description}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Quick Action */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-blue-900 mb-1">
-                            View Full Details
-                          </p>
-                          <p className="text-xs text-blue-600">
-                            Click to see complete information
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            closeEventModal();
-                            handleSelectEvent({ event: selectedEvent });
-                          }}
-                          className="px-3 py-2 bg-[#C72030] text-white text-xs font-medium rounded hover:bg-[#a01828] transition-colors flex items-center gap-1"
+                      <button
+                        onClick={() => {
+                          closeEventModal();
+                          handleSelectEvent({ event: selectedEvent });
+                        }}
+                        className="px-3 py-2 bg-[#C72030] text-white text-xs font-medium rounded hover:bg-[#a01828] transition-colors flex items-center gap-1"
+                      >
+                        View Details
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          View Details
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Advanced Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
@@ -1173,7 +1185,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                     <Checkbox
                       checked={
                         activeFilters[
-                        key as keyof typeof activeFilters
+                          key as keyof typeof activeFilters
                         ] as boolean
                       }
                       onCheckedChange={(checked) =>
@@ -1227,7 +1239,7 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 };
 
@@ -1526,33 +1538,34 @@ const YearlyView: React.FC<{
                                   <div
                                     className={`
                                                                     inline-flex px-2 py-1 rounded text-xs font-medium border
-                                                                    ${event
-                                        .extendedProps
-                                        .status ===
-                                        "Completed"
-                                        ? "bg-green-50 text-green-700 border-green-200"
-                                        : event
-                                          .extendedProps
-                                          .status ===
-                                          "In Progress"
-                                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                                          : event
-                                            .extendedProps
-                                            .status ===
-                                            "Confirmed"
-                                            ? "bg-green-50 text-green-700 border-green-200"
-                                            : event
-                                              .extendedProps
-                                              .status ===
-                                              "Pending"
-                                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                              : event
-                                                .extendedProps
-                                                .status ===
-                                                "Scheduled"
-                                                ? "bg-purple-50 text-purple-700 border-purple-200"
-                                                : "bg-gray-50 text-gray-700 border-gray-200"
-                                      }
+                                                                    ${
+                                                                      event
+                                                                        .extendedProps
+                                                                        .status ===
+                                                                      "Completed"
+                                                                        ? "bg-green-50 text-green-700 border-green-200"
+                                                                        : event
+                                                                              .extendedProps
+                                                                              .status ===
+                                                                            "In Progress"
+                                                                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                                          : event
+                                                                                .extendedProps
+                                                                                .status ===
+                                                                              "Confirmed"
+                                                                            ? "bg-green-50 text-green-700 border-green-200"
+                                                                            : event
+                                                                                  .extendedProps
+                                                                                  .status ===
+                                                                                "Pending"
+                                                                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                                              : event
+                                                                                    .extendedProps
+                                                                                    .status ===
+                                                                                  "Scheduled"
+                                                                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                                                                : "bg-gray-50 text-gray-700 border-gray-200"
+                                                                    }
                                                                 `}
                                   >
                                     {event.extendedProps.status}

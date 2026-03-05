@@ -13,10 +13,10 @@ import {
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
-import { CalendarDays, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { CalendarDays, Plus, Eye, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import ReactSelect from 'react-select';
 import {
   Dialog,
@@ -34,6 +34,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface Holiday {
   id: string;
@@ -43,6 +44,7 @@ interface Holiday {
   applicableLocation: string;
   holidayType: string;
   applicableFor: string;
+  active: boolean;
 }
 
 interface HolidayApiResponse {
@@ -97,7 +99,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: 'applicableLocation',
-    label: 'Applicable Location',
+    label: 'Sites',
     sortable: true,
     hideable: true,
     draggable: true
@@ -111,7 +113,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: 'applicableFor',
-    label: 'Applicable For',
+    label: 'Modules',
     sortable: true,
     hideable: true,
     draggable: true
@@ -141,7 +143,20 @@ export const HolidayCalendarPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingHolidays, setLoadingHolidays] = useState(false);
   const [loadingEditData, setLoadingEditData] = useState(false);
-  
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Filter dialog
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterName, setFilterName] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterLocation, setFilterLocation] = useState('');
+  const [filterSiteIds, setFilterSiteIds] = useState<number[]>([]);
+  const [filterModules, setFilterModules] = useState<string[]>([]);
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: '', type: '', status: '', location: '', siteIds: [] as number[], modules: [] as string[]
+  });
+
   // API and Sites data
   const { baseUrl, token, endpoints } = useApiConfig();
   const [sites, setSites] = useState<Site[]>([]);
@@ -151,13 +166,13 @@ export const HolidayCalendarPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
-  // Site options - now dynamic from API
+  // Site options - now dynamic from API (via allowed_sites)
   const [siteOptions, setSiteOptions] = useState<Site[]>([]);
 
   // Customer type options
   const customerOptions = [
     'tickets',
-    'checklist', 
+    'checklist',
     'booking',
     'parking',
     'patrolling'
@@ -165,7 +180,6 @@ export const HolidayCalendarPage = () => {
 
   // Transform API response to Holiday interface
   const transformHolidayData = (apiHoliday: HolidayApiResponse, sitesData: Site[]): Holiday => {
-    // Get site names from site_ids
     const applicableLocationNames = apiHoliday.site_ids
       .map(siteId => sitesData.find(site => site.id === siteId)?.name)
       .filter(Boolean)
@@ -182,42 +196,41 @@ export const HolidayCalendarPage = () => {
       recurring: apiHoliday.is_recuring,
       applicableLocation: applicableLocationNames || 'Unknown locations',
       holidayType: apiHoliday.holiday_type,
-      applicableFor: apiHoliday.applicable_for.join(', ')
+      applicableFor: apiHoliday.applicable_for.join(', '),
+      active: apiHoliday.active,
     };
   };
 
-  // Load sites on component mount
+  // Load allowed sites using user_id from account API (same pattern as CategoryTypeTab)
   useEffect(() => {
     const loadSites = async () => {
-      if (!baseUrl || !token) {
-        console.warn('Missing API configuration for loading sites');
-        return;
-      }
-      
+      if (!baseUrl || !token) return;
       setLoadingSites(true);
       try {
-        const sitesData = await ticketManagementAPI.getAllSites();
-        setSiteOptions(sitesData);
-        console.log('Sites loaded successfully:', sitesData.length, 'sites');
+        // 1. Fetch account to get user_id
+        const accountRes = await fetch(getFullUrl('/api/users/account.json'), {
+          headers: { 'Authorization': getAuthHeader(), 'Content-Type': 'application/json' },
+        });
+        if (!accountRes.ok) throw new Error('Failed to fetch account');
+        const accountData = await accountRes.json();
+        const userId = accountData.id;
+
+        // 2. Fetch allowed_sites for this user
+        const sitesRes = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${userId}`), {
+          headers: { 'Authorization': getAuthHeader(), 'Content-Type': 'application/json' },
+        });
+        if (!sitesRes.ok) throw new Error('Failed to fetch allowed sites');
+        const sitesData = await sitesRes.json();
+        if (sitesData.sites && Array.isArray(sitesData.sites)) {
+          setSiteOptions(sitesData.sites);
+        }
       } catch (error) {
         console.error('Error loading sites:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load sites. Using fallback options.",
-          variant: "destructive",
-        });
-        // Fallback to mock data if API fails
-        setSiteOptions([
-          { id: 1, name: 'Sai Radha, Bund Garden' },
-          { id: 2, name: 'Pentagon Mangarpeta' },
-          { id: 3, name: 'Westport,Baner' },
-          { id: 4, name: 'Peninsula Corporate Park, Lower Parel' },
-        ]);
+        toast.error('Failed to load sites');
       } finally {
         setLoadingSites(false);
       }
     };
-
     loadSites();
   }, [baseUrl, token]);
 
@@ -261,11 +274,7 @@ export const HolidayCalendarPage = () => {
         }
       } catch (error) {
         console.error('Error loading holidays:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load holidays from API. Using fallback data.",
-          variant: "destructive",
-        });
+        toast.error("Failed to load holidays from API. Using fallback data.");
         // Keep using fallback data if API fails
         setHolidays([]);
       } finally {
@@ -276,17 +285,37 @@ export const HolidayCalendarPage = () => {
     loadHolidays();
   }, [baseUrl, token, endpoints, siteOptions]); // Added siteOptions dependency so holidays load after sites are loaded
 
-  // Filter holidays based on search term
+  // Filter holidays based on search term + advanced filters
   const filteredHolidays = holidays.filter(holiday => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      holiday.holidayName.toLowerCase().includes(searchLower) ||
-      holiday.date.toLowerCase().includes(searchLower) ||
-      holiday.holidayType.toLowerCase().includes(searchLower) ||
-      holiday.applicableLocation.toLowerCase().includes(searchLower) ||
-      holiday.applicableFor.toLowerCase().includes(searchLower)
-    );
+    // search term
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchesSearch =
+        holiday.holidayName.toLowerCase().includes(q) ||
+        holiday.date.toLowerCase().includes(q) ||
+        holiday.holidayType.toLowerCase().includes(q) ||
+        holiday.applicableLocation.toLowerCase().includes(q) ||
+        holiday.applicableFor.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+    // advanced filters
+    if (appliedFilters.name && !holiday.holidayName.toLowerCase().includes(appliedFilters.name.toLowerCase())) return false;
+    if (appliedFilters.type && holiday.holidayType.toLowerCase() !== appliedFilters.type.toLowerCase()) return false;
+    if (appliedFilters.status) {
+      const isActive = holiday.active;
+      if (appliedFilters.status === 'active' && !isActive) return false;
+      if (appliedFilters.status === 'inactive' && isActive) return false;
+    }
+    if (appliedFilters.location && !holiday.applicableLocation.toLowerCase().includes(appliedFilters.location.toLowerCase())) return false;
+    if (appliedFilters.siteIds.length > 0) {
+      const matched = siteOptions.filter(s => appliedFilters.siteIds.includes(s.id)).some(s => holiday.applicableLocation.includes(s.name));
+      if (!matched) return false;
+    }
+    if (appliedFilters.modules.length > 0) {
+      const matched = appliedFilters.modules.some(m => holiday.applicableFor.toLowerCase().includes(m.toLowerCase()));
+      if (!matched) return false;
+    }
+    return true;
   });
 
   // Pagination calculations
@@ -317,11 +346,7 @@ export const HolidayCalendarPage = () => {
 
   const handleUpdate = async () => {
     if (!editingHoliday || !holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -373,7 +398,8 @@ export const HolidayCalendarPage = () => {
         recurring: recurring === "yes",
         applicableLocation: selectedSiteNames,
         holidayType: selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
-        applicableFor: selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
+        applicableFor: selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', '),
+        active: editingHoliday.active,
       };
 
       const updatedHolidays = holidays.map(h => 
@@ -381,20 +407,13 @@ export const HolidayCalendarPage = () => {
       );
       setHolidays(updatedHolidays);
 
-      toast({
-        title: "Success",
-        description: "Holiday updated successfully",
-      });
+      toast.success("Holiday updated successfully");
       
       // Reset form and close dialog
       handleEditCancel();
     } catch (error) {
       console.error('Error updating holiday:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update holiday",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to update holiday");
     } finally {
       setIsSubmitting(false);
     }
@@ -415,16 +434,20 @@ export const HolidayCalendarPage = () => {
 
   const handleSubmit = async () => {
     if (!holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    // Duplicate name check
+    const duplicate = holidays.find(
+      h => h.holidayName.toLowerCase() === holidayName.trim().toLowerCase()
+    );
+    if (duplicate) {
+      toast.error("Duplicate name cannot be created");
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       // Prepare the API payload according to the specified format
       const holidayPayload = {
@@ -471,26 +494,20 @@ export const HolidayCalendarPage = () => {
         recurring: recurring === "yes",
         applicableLocation: selectedSiteNames,
         holidayType: selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
-        applicableFor: selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
+        applicableFor: selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', '),
+        active: true,
       };
 
       const updatedHolidays = [...holidays, newHoliday];
       setHolidays(updatedHolidays);
 
-      toast({
-        title: "Success",
-        description: "Holiday created successfully",
-      });
+      toast.success("Holiday created successfully");
       
       // Reset form
       handleCancel();
     } catch (error) {
       console.error('Error creating holiday:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create holiday",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to create holiday");
     } finally {
       setIsSubmitting(false);
     }
@@ -518,11 +535,7 @@ export const HolidayCalendarPage = () => {
       // First set the editing holiday from current data
       const holiday = holidays.find(h => h.id === id);
       if (!holiday) {
-        toast({
-          title: "Error",
-          description: "Holiday not found",
-          variant: "destructive",
-        });
+        toast.error("Holiday not found");
         return;
       }
 
@@ -569,19 +582,11 @@ export const HolidayCalendarPage = () => {
         
         setIsEditDialogOpen(true);
         
-        toast({
-          title: "Warning",
-          description: "Using cached data. Some fields may not be editable.",
-          variant: "destructive",
-        });
+        toast.warning("Using cached data. Some fields may not be editable.");
       }
     } catch (error) {
       console.error('Error loading holiday for edit:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load holiday data",
-        variant: "destructive",
-      });
+      toast.error("Failed to load holiday data");
     } finally {
       setLoadingEditData(false);
     }
@@ -591,31 +596,76 @@ export const HolidayCalendarPage = () => {
     console.log('Delete holiday:', id);
   };
 
+  // Toggle active/inactive status
+  const handleToggleStatus = async (holiday: Holiday) => {
+    setTogglingId(holiday.id);
+    try {
+      const newActive = !holiday.active;
+      const response = await fetch(`${baseUrl}${endpoints.UPDATE_HOLIDAY}/${holiday.id}.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          holiday_calendar: { active: newActive }
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to update status');
+      setHolidays(prev =>
+        prev.map(h => h.id === holiday.id ? { ...h, active: newActive } : h)
+      );
+      toast.success(`Holiday marked as ${newActive ? 'Active' : 'Inactive'}`);
+    } catch (error) {
+      toast.error('Failed to update holiday status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  // Apply filters
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      name: filterName,
+      type: filterType,
+      status: filterStatus,
+      location: filterLocation,
+      siteIds: filterSiteIds,
+      modules: filterModules,
+    });
+    setCurrentPage(1);
+    setIsFilterOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    setFilterName('');
+    setFilterType('');
+    setFilterStatus('');
+    setFilterLocation('');
+    setFilterSiteIds([]);
+    setFilterModules([]);
+    setAppliedFilters({ name: '', type: '', status: '', location: '', siteIds: [], modules: [] });
+    setCurrentPage(1);
+  };
+
+  const activeFilterCount = [
+    appliedFilters.name,
+    appliedFilters.type,
+    appliedFilters.status,
+    appliedFilters.location,
+  ].filter(Boolean).length + (appliedFilters.siteIds.length > 0 ? 1 : 0) + (appliedFilters.modules.length > 0 ? 1 : 0);
+
   // Render row function for enhanced task table
   const renderRow = (holiday: Holiday) => ({
     actions: (
       <div className="flex items-center gap-2">
-        {/* <button 
-          onClick={() => handleView(holiday.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
-          title="View"
-        >
-          <Eye className="w-4 h-4" />
-        </button> */}
-        <button 
-          onClick={() => handleEdit(holiday.id)} 
-          className="p-1 text-black-600 hover:bg-green-50 rounded" 
+        <button
+          onClick={() => handleEdit(holiday.id)}
+          className="p-1 text-black-600 hover:bg-green-50 rounded"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
         </button>
-        {/* <button 
-          onClick={() => handleDelete(holiday.id)} 
-          className="p-1 text-red-600 hover:bg-red-50 rounded" 
-          title="Delete"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button> */}
       </div>
     ),
     holidayName: (
@@ -636,10 +686,10 @@ export const HolidayCalendarPage = () => {
     ),
     holidayType: (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        holiday.holidayType === 'Public' 
-          ? 'bg-blue-100 text-blue-800' 
-          : holiday.holidayType === 'Festival' 
-          ? 'bg-purple-100 text-purple-800' 
+        holiday.holidayType === 'Public'
+          ? 'bg-blue-100 text-blue-800'
+          : holiday.holidayType === 'Festival'
+          ? 'bg-purple-100 text-purple-800'
           : 'bg-gray-100 text-gray-800'
       }`}>
         {holiday.holidayType}
@@ -651,11 +701,26 @@ export const HolidayCalendarPage = () => {
       </div>
     ),
     status: (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-        Active
-      </span>
-    )
+      <button
+        onClick={() => handleToggleStatus(holiday)}
+        disabled={togglingId === holiday.id}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+          holiday.active ? 'bg-green-500' : 'bg-gray-300'
+        } ${togglingId === holiday.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        title={holiday.active ? 'Click to Deactivate' : 'Click to Activate'}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            holiday.active ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+        {togglingId === holiday.id && (
+          <Loader2 className="absolute right-[-20px] top-1 w-4 h-4 animate-spin text-gray-400" />
+        )}
+      </button>
+    ),
   });
+
 
   return (
     <div className="p-6 space-y-6">
@@ -663,6 +728,17 @@ export const HolidayCalendarPage = () => {
         <h1 className="text-2xl font-bold">Holiday Calendar</h1>
       </header>
 
+      {/* Loader overlay */}
+      {loadingHolidays && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-sm text-gray-500">Loading holidays...</p>
+          </div>
+        </div>
+      )}
+
+      {!loadingHolidays && (
       <EnhancedTaskTable
         data={currentHolidays}
         columns={columns}
@@ -673,10 +749,19 @@ export const HolidayCalendarPage = () => {
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
+        rightActions={(
+          <>
+            {activeFilterCount > 0 && (
+              <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </>
+        )}
+        onFilterClick={() => setIsFilterOpen(true)}
         leftActions={(
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
             if (open) {
-              // Reset form when opening add dialog
               setHolidayName('');
               setDate(undefined);
               setRecurring('');
@@ -714,22 +799,28 @@ export const HolidayCalendarPage = () => {
                     {/* First Row */}
                     <div className="grid grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Holiday Name</Label>
-                        <Input
-                          type="text"
-                          placeholder="Enter Holiday Name"
-                          value={holidayName}
-                          onChange={(e) => setHolidayName(e.target.value)}
-                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
-                          style={{ borderRadius: '4px' }}
-                        />
+                        <Label className="text-base font-semibold">Holiday Name <span className="text-red-500">*</span></Label>
+                      <Input
+  type="text"
+  placeholder="Enter Holiday Name"
+  value={holidayName}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (/^[A-Za-z\s]*$/.test(value)) {
+      setHolidayName(value);
+    }
+  }}
+  className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+  style={{ borderRadius: '4px' }}
+/>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Date</Label>
+                        <Label className="text-base font-semibold">Date <span className="text-red-500">*</span></Label>
                         <Input
                           type="date"
                           placeholder="Select date"
                           value={date ? format(date, "yyyy-MM-dd") : ''}
+                          min={format(new Date(), "yyyy-MM-dd")}
                           onChange={(e) => {
                             if (e.target.value) {
                               setDate(new Date(e.target.value));
@@ -742,7 +833,7 @@ export const HolidayCalendarPage = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Recurring</Label>
+                        <Label className="text-base font-semibold">Recurring <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           options={[
                             { value: 'yes', label: 'Yes' },
@@ -784,7 +875,7 @@ export const HolidayCalendarPage = () => {
                     {/* Second Row */}
                     <div className="grid grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Holiday Type</Label>
+                        <Label className="text-base font-semibold">Holiday Type <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           options={[
                             { value: 'public', label: 'Public' },
@@ -823,7 +914,7 @@ export const HolidayCalendarPage = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Select Sites</Label>
+                        <Label className="text-base font-semibold">Select Sites <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           isMulti
                           options={siteOptions.map(site => ({ value: site.id, label: site.name }))}
@@ -877,7 +968,7 @@ export const HolidayCalendarPage = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Select Module</Label>
+                        <Label className="text-base font-semibold">Select Module <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           isMulti
                           options={customerOptions.map(option => ({ value: option, label: option.charAt(0).toUpperCase() + option.slice(1) }))}
@@ -955,6 +1046,95 @@ export const HolidayCalendarPage = () => {
           </Dialog>
         )}
       />
+      )}
+
+      {/* Filter Modal */}
+      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <DialogContent className="max-w-lg" aria-describedby="filter-dialog-description">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold">Filter Holidays</DialogTitle>
+            <Button variant="ghost" size="sm" onClick={() => setIsFilterOpen(false)} className="h-6 w-6 p-0">
+              <X className="h-4 w-4" />
+            </Button>
+            <div id="filter-dialog-description" className="sr-only">Filter holidays by various criteria</div>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>By Name</Label>
+              <Input
+                placeholder="Search by name..."
+                value={filterName}
+                onChange={e => setFilterName(e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>By Holiday Type</Label>
+              <ReactSelect
+                isClearable
+                options={[
+                  { value: 'Public', label: 'Public' },
+                  { value: 'Festival', label: 'Festival' },
+                  { value: 'National', label: 'National' },
+                ]}
+                value={filterType ? { value: filterType, label: filterType } : null}
+                onChange={opt => setFilterType(opt?.value || '')}
+                placeholder="Select type..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>By Status</Label>
+              <ReactSelect
+                isClearable
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                ]}
+                value={filterStatus ? { value: filterStatus, label: filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) } : null}
+                onChange={opt => setFilterStatus(opt?.value || '')}
+                placeholder="Select status..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>By Location (text)</Label>
+              <Input
+                placeholder="Filter by location..."
+                value={filterLocation}
+                onChange={e => setFilterLocation(e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>By Sites</Label>
+              <ReactSelect
+                isMulti
+                options={siteOptions.map(s => ({ value: s.id, label: s.name }))}
+                value={siteOptions.filter(s => filterSiteIds.includes(s.id)).map(s => ({ value: s.id, label: s.name }))}
+                onChange={opts => setFilterSiteIds(opts ? opts.map((o: {value: number}) => o.value) : [])}
+                placeholder="Select sites..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>By Module</Label>
+              <ReactSelect
+                isMulti
+                options={customerOptions.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                value={filterModules.map(m => ({ value: m, label: m.charAt(0).toUpperCase() + m.slice(1) }))}
+                onChange={opts => setFilterModules(opts ? opts.map((o: {value: string}) => o.value) : [])}
+                placeholder="Select modules..."
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button onClick={handleApplyFilters} className="flex-1 bg-primary text-primary-foreground">
+                Apply Filters
+              </Button>
+              <Button variant="outline" onClick={handleClearFilters} className="flex-1">
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Holiday Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
@@ -998,23 +1178,29 @@ export const HolidayCalendarPage = () => {
                   {/* First Row */}
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-holiday-name">Holiday Name</Label>
+                      <Label htmlFor="edit-holiday-name">Holiday Name <span className="text-red-500">*</span></Label>
                       <Input
                         id="edit-holiday-name"
                         placeholder="Enter Holiday Name"
                         value={holidayName}
-                        onChange={(e) => setHolidayName(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^[A-Za-z\s]*$/.test(value)) {
+                            setHolidayName(value);
+                          }
+                        }}
                         className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
                         style={{ borderRadius: '4px' }}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-date">Date</Label>
+                      <Label htmlFor="edit-date">Date <span className="text-red-500">*</span></Label>
                       <Input
                         id="edit-date"
                         type="date"
                         placeholder="Select date"
                         value={date ? format(date, "yyyy-MM-dd") : ''}
+                        min={format(new Date(), "yyyy-MM-dd")}
                         onChange={(e) => {
                           if (e.target.value) {
                             setDate(new Date(e.target.value));
@@ -1027,7 +1213,7 @@ export const HolidayCalendarPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-recurring">Recurring</Label>
+                      <Label htmlFor="edit-recurring">Recurring <span className="text-red-500">*</span></Label>
                       <ReactSelect
                         id="edit-recurring"
                         options={[
@@ -1075,7 +1261,7 @@ export const HolidayCalendarPage = () => {
                   {/* Second Row */}
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-holiday-type">Holiday Type</Label>
+                      <Label htmlFor="edit-holiday-type">Holiday Type <span className="text-red-500">*</span></Label>
                       <ReactSelect
                         id="edit-holiday-type"
                         options={[
@@ -1120,7 +1306,7 @@ export const HolidayCalendarPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-sites">Select Sites</Label>
+                      <Label htmlFor="edit-sites">Select Sites <span className="text-red-500">*</span></Label>
                       <ReactSelect
                         id="edit-sites"
                         placeholder="Select sites"
@@ -1181,7 +1367,7 @@ export const HolidayCalendarPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-modules">Select Module</Label>
+                      <Label htmlFor="edit-modules">Select Module <span className="text-red-500">*</span></Label>
                       <ReactSelect
                         id="edit-modules"
                         placeholder="Select module"

@@ -1102,6 +1102,7 @@ import { BillsAdd } from "./pages/ClubManagement/BillsAdd";
 import BillDetails from "./pages/ClubManagement/BillDetails";
 import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
 import StepathonPage from "./pages/StepathonPage";
+import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
 
 const queryClient = new QueryClient();
 
@@ -2252,7 +2253,7 @@ function App() {
                       />
                       <Route
                         path="/accounting/vendor-credits/details/:id"
-                        element={<VendorCreditsDetails />}
+                        element={<VendorCreditDetails />}
                       />
                       <Route
                         path="/accounting/vendor-credits/edit/:id"
