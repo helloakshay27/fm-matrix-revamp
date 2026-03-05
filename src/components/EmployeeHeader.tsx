@@ -317,9 +317,27 @@ export const EmployeeHeader: React.FC = () => {
     setNotificationCount((prev) => Math.max(0, prev - 1));
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
-    setNotificationCount(0);
+  const markAllAsRead = async () => {
+    try {
+      // Call API to mark all as read
+      await axios.get(
+        `https://${localStorage.getItem("baseUrl")}/user_notifications/mark_all_as_read.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Update UI after successful API call
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+      setNotificationCount(0);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      // Still update UI on error for better UX
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+      setNotificationCount(0);
+    }
   };
 
   const handleNotificationClick = async (notification: any) => {
