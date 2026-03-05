@@ -107,7 +107,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/pms/associate_asset.json?token=${token}`,
+        `${API_CONFIG.BASE_URL}/pms/associate_asset.json`,
         {
           method: 'POST',
           headers: {

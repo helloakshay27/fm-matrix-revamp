@@ -669,11 +669,20 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
+                     {hasData(visitorData.guest_vehicle_number) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Guest Vehicle Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.guest_vehicle_number}</span>
+                      </div>
+                    )}
+
                     {hasData(visitorData.visitor_host_name) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Person To Meet</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{visitorData.visitor_host_name}</span>
+                        {/* <span className="text-gray-900 font-medium">{visitorData?.person_to_meet_name ?? visitorData?.visited_to_host_name ?? visitorData?.visitor_host_name ?? "-"}</span> */}
                       </div>
                     )}
 
@@ -714,9 +723,21 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                           {visitorData.expected_at && !isNaN(new Date(visitorData.expected_at))
-                            ? new Date(visitorData.expected_at).toLocaleDateString('en-GB')
-                            : "-"}
+                          {(() => {
+                            const raw = visitorData.expected_at;
+                            if (!raw) return '-';
+                            // Try DD/MM/YY format first
+                            const parts = raw.split('/');
+                            if (parts.length === 3) {
+                              const [dd, mm, yy] = parts;
+                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
+                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
+                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
+                            }
+                            // ISO or other parseable format - force DD/MM/YYYY
+                            const d = new Date(raw);
+                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                          })()}
                         </span>
                       </div>
                     )}
@@ -744,13 +765,20 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                    {hasData(visitorData.created_at) && (
+                    {/* {hasData(visitorData.created_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created Date & Time</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
                           {new Date(visitorData.created_at).toLocaleString()}
                         </span>
+                      </div>
+                    )} */}
+                     {hasData(visitorData.created_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created Date & Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.created_at}</span>
                       </div>
                     )}
 
@@ -834,6 +862,13 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-900 font-medium">{visitorData.notes}</span>
                       </div>
                     )}
+                     {hasData(visitorData.plus_person) && (
+                      <div className="flex items-start md:col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Additional Visitor Count</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.plus_person}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -859,7 +894,19 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Pass Start Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.pass_start_date).toLocaleDateString()}
+                          {(() => {
+                            const raw = visitorData.pass_start_date;
+                            if (!raw) return '-';
+                            const parts = raw.split('/');
+                            if (parts.length === 3) {
+                              const [dd, mm, yy] = parts;
+                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
+                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
+                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
+                            }
+                            const d = new Date(raw);
+                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
+                          })()}
                         </span>
                       </div>
                     )}
@@ -869,12 +916,24 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Pass End Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {new Date(visitorData.pass_end_date).toLocaleDateString()}
+                          {(() => {
+                            const raw = visitorData.pass_end_date;
+                            if (!raw) return '-';
+                            const parts = raw.split('/');
+                            if (parts.length === 3) {
+                              const [dd, mm, yy] = parts;
+                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
+                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
+                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
+                            }
+                            const d = new Date(raw);
+                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
+                          })()}
                         </span>
                       </div>
                     )}
 
-                    {visitorData.pass_days && visitorData.pass_days.length > 0 && (
+                    {/* {visitorData.pass_days && visitorData.pass_days.length > 0 && (
                       <div className="flex items-start col-span-2">
                         <span className="text-gray-500 min-w-[140px]">Pass Days</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -885,6 +944,13 @@ export const VisitorDetailsPage = () => {
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                    )} */}
+                     {hasData(visitorData.pass_details) && (
+                      <div className="flex items-start md:col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Pass Details</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.pass_details}</span>
                       </div>
                     )}
 
