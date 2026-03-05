@@ -733,6 +733,7 @@ const AddIssueModal = ({
           // ignore if window dispatch unsupported in some envs
         }
         handleCloseDialog();
+        window.location.reload();
         toast.success("Issue created successfully!");
         // Invalidate cache after issue creation
         const { cache } = await import("../utils/cacheUtils");
