@@ -249,7 +249,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const getProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/project_managements.json`,
+        `https://${baseUrl}/project_managements/project_kanban.json`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
