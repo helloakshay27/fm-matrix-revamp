@@ -66,20 +66,24 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
     return (
         <div
             ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor(todo.priority)} cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor(todo.priority)} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
         >
             <div className="flex items-center gap-1">
                 <button
-                    onClick={() => onEditTodo?.(todo)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEditTodo?.(todo);
+                    }}
                     className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors"
                     title="Edit todo"
                 >
                     <Pencil size={14} />
                 </button>
                 <button
-                    onClick={() => onConvertTodo?.(todo)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onConvertTodo?.(todo);
+                    }}
                     className="flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50"
                     title="Convert to Task"
                     disabled={!!todo.task_management_id}
@@ -87,7 +91,10 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
                     <ArrowRightLeft size={14} />
                 </button>
                 <button
-                    onClick={() => onFlagTodo?.(todo)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onFlagTodo?.(todo);
+                    }}
                     disabled={isCompleted}
                     className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
                     title={todo.is_flagged ? "Remove from focus" : "Add to focus"}
@@ -99,27 +106,45 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
                 </button>
             </div>
 
-            <div className="flex flex-col flex-1 min-w-0">
+            <div
+                {...listeners}
+                {...attributes}
+                className="flex flex-col flex-1 cursor-grab active:cursor-grabbing"
+            >
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-700 font-medium truncate">{todo.title}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500">
-                        {todo.user}
-                    </span>
-                    {todo.target_date && (
-                        <>
-                            <span className="text-xs text-gray-500">•</span>
-                            <span className="text-xs text-gray-500">
-                                Due: {todo.target_date}
-                            </span>
-                        </>
-                    )}
+                <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500">
+                            {todo.user}
+                        </span>
+                        {todo.target_date && (
+                            <>
+                                <span className="text-xs text-gray-500">•</span>
+                                <span className="text-xs text-gray-500">
+                                    Due: {todo.target_date}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    {
+                        !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
+                            <>
+                                <span className="text-xs text-gray-500">
+                                    Assigned By : {todo.created_by}
+                                </span>
+                            </>
+                        )
+                    }
                 </div>
             </div>
 
             <button
-                onClick={() => onTodoToggle?.(todo.id)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onTodoToggle?.(todo.id);
+                }}
                 className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
             >
                 <Check

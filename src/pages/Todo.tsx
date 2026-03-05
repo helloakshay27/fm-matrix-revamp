@@ -637,7 +637,7 @@ export default function Todo() {
             <div className="flex items-center gap-3">
               {
                 taskType === "all" && (
-                  <div className="w-64">
+                  <div className="w-96">
                     <MuiMultiSelect
                       label="Members"
                       options={users
@@ -689,7 +689,7 @@ export default function Todo() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {/* ------------------------------------
                         Pending Tasks Section
                     ------------------------------------ */}
@@ -1242,28 +1242,30 @@ const TodoItem = ({
             )} {todo.title}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {todo.user}
+            </span>
+            {todo.target_date && (
+              <>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-muted-foreground">
+                  Due: {todo.target_date}
+                </span>
+              </>
+            )}
+          </div>
+
           {
-            todo.created_by !== todo.user && (
+            !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
               <>
                 <span className="text-xs text-muted-foreground">
                   Assigned By : {todo.created_by}
                 </span>
-                <span className="text-xs text-muted-foreground">•</span>
               </>
             )
           }
-          <span className="text-xs text-muted-foreground">
-            {todo.user}
-          </span>
-          {todo.target_date && (
-            <>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">
-                Due: {todo.target_date}
-              </span>
-            </>
-          )}
         </div>
       </div>
 
@@ -1390,28 +1392,30 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
             )} {todo.title}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {todo.user}
+            </span>
+            {todo.target_date && (
+              <>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-muted-foreground">
+                  Due: {todo.target_date}
+                </span>
+              </>
+            )}
+          </div>
+
           {
-            todo.created_by !== todo.user && (
+            !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
               <>
                 <span className="text-xs text-muted-foreground">
                   Assigned By : {todo.created_by}
                 </span>
-                <span className="text-xs text-muted-foreground">•</span>
               </>
             )
           }
-          <span className="text-xs text-muted-foreground">
-            {todo.user}
-          </span>
-          {todo.target_date && (
-            <>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">
-                Due: {todo.target_date}
-              </span>
-            </>
-          )}
         </div>
       </div>
       <button
