@@ -28,7 +28,7 @@ const getPriorityBgColor = (priority?: string) => {
         case 'P3':
             return 'border-l-4 border-l-yellow-500';
         case 'P4':
-            return 'border-l-4 border-l-blue-500';
+            return 'border-l-4 border-l-gray-400';
         default:
             return 'border-l-4 border-l-gray-400';
     }
@@ -62,6 +62,38 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
     });
 
     const isCompleted = todo.status === "completed";
+
+    const getPriorityLabel = () => {
+        const priority = todo.priority || '';
+        switch (priority) {
+            case 'P1':
+                return 'Q1';
+            case 'P2':
+                return 'Q2';
+            case 'P3':
+                return 'Q3';
+            case 'P4':
+                return 'Q4';
+            default:
+                return '';
+        }
+    };
+
+    const getPriorityTagColor = () => {
+        const priority = todo.priority || '';
+        switch (priority) {
+            case 'P1':
+                return 'bg-red-100 text-red-700';
+            case 'P2':
+                return 'bg-green-100 text-green-700';
+            case 'P3':
+                return 'bg-yellow-100 text-yellow-700';
+            case 'P4':
+                return 'bg-gray-100 text-gray-700';
+            default:
+                return 'bg-gray-100 text-gray-700';
+        }
+    };
 
     return (
         <div
