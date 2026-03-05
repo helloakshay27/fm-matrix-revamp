@@ -26,14 +26,16 @@ export const todosQueryKeys = {
         userIds: string[],
         search?: string,
         fromDate?: string,
-        toDate?: string
+        toDate?: string,
+        selectedAssignedTo?: string[],
+        selectedCreators?: string[]
     ) =>
         [
             ...todosQueryKeys.lists(),
-            { taskType, userIds: userIds.join(","), search, fromDate, toDate },
+            { taskType, userIds: userIds.join(","), search, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") },
         ] as const,
-    infinite: (taskType: "my" | "all", userIds: string[], search?: string, fromDate?: string, toDate?: string) =>
-        [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search, fromDate, toDate }] as const,
+    infinite: (taskType: "my" | "all", userIds: string[], search?: string, fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
+        [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
     details: () => [...todosQueryKeys.all, "detail"] as const,
     detail: (id: number | string) =>
         [...todosQueryKeys.details(), id] as const,
@@ -45,6 +47,8 @@ interface UseTodosOptions {
     search?: string;
     fromDate?: string;
     toDate?: string;
+    selectedAssignedTo?: string[];
+    selectedCreators?: string[];
 }
 
 /**
@@ -73,11 +77,13 @@ export const useTodos = ({
     search,
     fromDate,
     toDate,
+    selectedAssignedTo = [],
+    selectedCreators = [],
 }: UseTodosOptions = {}) => {
     return useInfiniteQuery({
-        queryKey: todosQueryKeys.infinite(taskType, userIds, search, fromDate, toDate),
+        queryKey: todosQueryKeys.infinite(taskType, userIds, search, fromDate, toDate, selectedAssignedTo, selectedCreators),
         queryFn: ({ pageParam = 1 }) =>
-            fetchTodos(pageParam, taskType, userIds, search, fromDate, toDate),
+            fetchTodos(pageParam, taskType, userIds, search, fromDate, toDate, selectedAssignedTo, selectedCreators),
         getNextPageParam: (lastPage) => lastPage.pagination.next_page,
         initialPageParam: 1,
         staleTime: 30 * 1000, // 30 seconds

@@ -249,7 +249,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const getProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/project_managements.json`,
+        `https://${baseUrl}/project_managements/projects_for_dropdown.json`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -266,7 +266,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     async (projectId: string) => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/milestones/milestone_kanban.json?q[project_management_id_eq]=${projectId}`,
+          `https://${baseUrl}/milestones/milestones_for_dropdown.json?q[project_management_id_eq]=${projectId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

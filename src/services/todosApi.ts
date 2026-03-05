@@ -39,6 +39,8 @@ const getBaseUrl = () => {
  * @param search - Search term
  * @param fromDate - Start date for filtering (YYYY-MM-DD format)
  * @param toDate - End date for filtering (YYYY-MM-DD format)
+ * @param selectedAssignedTo - Array of user IDs to filter by (assigned to filter)
+ * @param selectedCreators - Array of user IDs to filter by (created by filter)
  */
 export const fetchTodos = async (
     page = 1,
@@ -46,7 +48,9 @@ export const fetchTodos = async (
     userIds: string[] = [],
     search?: string,
     fromDate?: string,
-    toDate?: string
+    toDate?: string,
+    selectedAssignedTo: string[] = [],
+    selectedCreators: string[] = []
 ): Promise<TodosResponse> => {
     const token = getToken();
     const baseUrl = getBaseUrl();
@@ -73,6 +77,20 @@ export const fetchTodos = async (
     } else if (taskType === "all" && userIds.length > 0) {
         userIds.forEach((id) => {
             queryParts.push(`q[user_id_in][]=${id}`);
+        });
+    }
+
+    // Add "assigned to" filter if provided
+    if (selectedAssignedTo.length > 0) {
+        selectedAssignedTo.forEach((id) => {
+            queryParts.push(`q[user_id_in][]=${id}`);
+        });
+    }
+
+    // Add "created by" filter if provided
+    if (selectedCreators.length > 0) {
+        selectedCreators.forEach((id) => {
+            queryParts.push(`q[created_by_id_in][]=${id}`);
         });
     }
 

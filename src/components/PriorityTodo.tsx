@@ -1,5 +1,5 @@
 import { Card, CardContent } from './ui/card'
-import { Check, Pencil, ArrowRightLeft, Focus } from 'lucide-react'
+import { Check, Pencil, ArrowRightLeft, Focus, GripVertical } from 'lucide-react'
 import { useDraggable } from '@dnd-kit/core';
 
 interface PriorityTodoProps {
@@ -28,16 +28,16 @@ const getPriorityBgColor = (priority?: string) => {
         case 'P3':
             return 'border-l-4 border-l-yellow-500';
         case 'P4':
-            return 'border-l-4 border-l-blue-500';
+            return 'border-l-4 border-l-purple-300';
         default:
-            return 'border-l-4 border-l-gray-400';
+            return 'border-l-4 border-l-gray-300';
     }
 };
 
 // Skeleton Loader Component
 const TodoSkeleton = () => {
     return (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-100 animate-pulse border mb-2">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-100 border mb-2">
             <div className="flex items-center gap-1">
                 <div className="w-4 h-4 bg-gray-300 rounded" />
                 <div className="w-4 h-4 bg-gray-300 rounded" />
@@ -63,12 +63,59 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
 
     const isCompleted = todo.status === "completed";
 
+    const getPriorityLabel = () => {
+        const priority = todo.priority || '';
+        switch (priority) {
+            case 'P1':
+                return 'Q1';
+            case 'P2':
+                return 'Q2';
+            case 'P3':
+                return 'Q3';
+            case 'P4':
+                return 'Q4';
+            default:
+                return '';
+        }
+    };
+
+    const getPriorityTagColor = () => {
+        const priority = todo.priority || '';
+        switch (priority) {
+            case 'P1':
+                return 'bg-red-100 text-red-700';
+            case 'P2':
+                return 'bg-green-100 text-green-700';
+            case 'P3':
+                return 'bg-yellow-100 text-yellow-700';
+            case 'P4':
+                return 'bg-purple-100 text-purple-700';
+            default:
+                return 'bg-gray-100 text-gray-700';
+        }
+    };
+
     return (
         <div
             ref={setNodeRef}
-            className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor(todo.priority)} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+            className={`relative flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 ${todo.created_by ? 'pt-5' : ''} border ${getPriorityBgColor(todo.priority)} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
         >
+            {
+                todo.created_by && (
+                    <div className="absolute top-0 right-3">
+                        <span className="text-xs text-end text-muted-foreground">
+                            Assigned By : {todo.created_by}
+                        </span>
+                    </div>
+                )
+            }
             <div className="flex items-center gap-1">
+                <button
+                    className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors cursor-grab"
+                    title="Drag todo"
+                >
+                    <GripVertical size={14} />
+                </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -112,46 +159,46 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
                 className="flex flex-col flex-1 cursor-grab active:cursor-grabbing"
             >
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700 font-medium truncate">{todo.title}</span>
+                    <span className="text-sm text-foreground">
+                        {todo.title}
+                    </span>
                 </div>
-                <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                             {todo.user}
                         </span>
                         {todo.target_date && (
                             <>
-                                <span className="text-xs text-gray-500">•</span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted-foreground">•</span>
+                                <span className="text-xs text-muted-foreground">
                                     Due: {todo.target_date}
                                 </span>
                             </>
                         )}
                     </div>
-                    {
-                        !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
-                            <>
-                                <span className="text-xs text-gray-500">
-                                    Assigned By : {todo.created_by}
-                                </span>
-                            </>
-                        )
-                    }
                 </div>
             </div>
 
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onTodoToggle?.(todo.id);
-                }}
-                className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-            >
-                <Check
-                    size={16}
-                    className="text-primary opacity-0 group-hover:opacity-100"
-                />
-            </button>
+            <div className="flex flex-col gap-2 pb-2">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onTodoToggle?.(todo.id);
+                        }}
+                        className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+                    >
+                        <Check
+                            size={16}
+                            className="text-primary opacity-0 group-hover:opacity-100"
+                        />
+                    </button>
+                </div>
+                <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+                    {getPriorityLabel()}
+                </div>
+            </div>
         </div>
     );
 };
@@ -167,7 +214,7 @@ const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoT
     const openTodos = filteredTodos.filter(t => t.status !== 'completed');
 
     return (
-        <Card className={`shadow-sm border mb-0 rounded-[10px] w-full h-full flex flex-col ${config?.bgColor || 'bg-gray-50'} ${config?.borderColor || 'border-gray-200'}`}>
+        <Card className={`shadow-sm border mb-0 rounded-[10px] w-full h-full flex flex-col ${config?.borderColor || 'border-gray-200'}`}>
             <div className="flex items-center gap-3 p-4 border-b flex-shrink-0">
                 <h4 className={`text-sm font-medium ${config?.textColor || 'text-gray-700'}`}>
                     {selectedPriority ? config?.title : 'Select a Priority'}
@@ -202,45 +249,6 @@ const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoT
                                 ))}
                             </div>
                         )}
-
-                        {/* Completed Todos */}
-                        {/* {completedTodos.length > 0 && (
-                            <div>
-                                <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase mt-3">Completed</h5>
-                                {completedTodos.map((todo) => (
-                                    <div
-                                        key={todo.id}
-                                        className="flex items-center gap-3 p-3 rounded-lg bg-green-100 border-l-4 border-green-500 transition-colors group mb-2"
-                                    >
-                                        <div className="flex flex-col flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-700 font-medium truncate line-through opacity-75">{todo.title}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-xs text-gray-500">
-                                                    {todo.user}
-                                                </span>
-                                                {todo.target_date && (
-                                                    <>
-                                                        <span className="text-xs text-gray-500">•</span>
-                                                        <span className="text-xs text-gray-500">
-                                                            Due: {todo.target_date}
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => onTodoToggle?.(todo.id)}
-                                            className="flex-shrink-0 w-5 h-5 !bg-green-300 !text-white flex items-center justify-center hover:opacity-90 transition-all"
-                                        >
-                                            <Check size={15} color="black" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )} */}
                     </div>
                 )}
             </CardContent>
