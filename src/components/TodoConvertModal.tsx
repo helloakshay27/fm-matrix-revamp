@@ -6,6 +6,7 @@ import { useAppDispatch } from "@/store/hooks";
 import AddMilestoneForm from "./AddMilestoneForm";
 import ProjectTaskCreateModal from "./ProjectTaskCreateModal";
 import AddSubtaskModal from "./AddSubtaskModal";
+import AddOpportunityModal from "./AddOpportunityModal";
 import {
   FormControl,
   InputLabel,
@@ -259,6 +260,14 @@ const TodoConvertModal = ({
     }
   };
 
+  const handleOpportunitySuccess = () => {
+    toast.success("Opportunity created successfully from todo!");
+    closeModal();
+    if (onSuccess) {
+      onSuccess();
+    }
+  };
+
   const handleSubtaskModalClose = (value: string | boolean) => {
     if (typeof value === "string") {
       setSelectedType(value);
@@ -453,6 +462,18 @@ const TodoConvertModal = ({
                 className="w-4 h-4 cursor-pointer"
               />
               <span className="text-[14px] font-medium">Convert to Subtask</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="convertType"
+                value="Opportunity"
+                checked={selectedType === "Opportunity"}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <span className="text-[14px] font-medium">Convert to Opportunity</span>
             </label>
           </div>
         </div>
@@ -731,6 +752,17 @@ const TodoConvertModal = ({
               availableTasks={availableTasks}
               prefillData={prefillData}
               isInlineMode={true}
+            />
+          )}
+
+          {selectedType === "Opportunity" && (
+            <AddOpportunityModal
+              open={selectedType === "Opportunity"}
+              onClose={closeModal}
+              onSuccess={handleOpportunitySuccess}
+              prefillData={prefillData}
+              isInlineMode={true}
+              className="mx-0 w-full"
             />
           )}
         </div>
