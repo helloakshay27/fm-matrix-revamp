@@ -108,267 +108,458 @@ const TABS = [
 ];
 
 
- // TAB 2 → ADDRESS
-    //
-    const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
+// TAB 2 → ADDRESS
+//
+const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
 
-        const handleBillingChange = (e) => {
-            const { name, value } = e.target;
-            setBilling((prev) => ({ ...prev, [name]: value }));
-        };
-        const handleShippingChange = (e) => {
-            const { name, value } = e.target;
-            setShipping((prev) => ({ ...prev, [name]: value }));
-        };
-        const copyBillingToShipping = () => {
-            setShipping({ ...billing });
-        };
+    const handleBillingChange = (e) => {
+        const { name, value } = e.target;
+        setBilling((prev) => ({ ...prev, [name]: value }));
+    };
+    const handleShippingChange = (e) => {
+        const { name, value } = e.target;
+        setShipping((prev) => ({ ...prev, [name]: value }));
+    };
+    const copyBillingToShipping = () => {
+        setShipping({ ...billing });
+    };
 
-        // Sample country and state options
-        const countryOptions = [
-            { code: 'IN', name: 'India' },
-            { code: 'US', name: 'United States' },
-            { code: 'GB', name: 'United Kingdom' },
-        ];
-        const stateOptions = {
-            IN: ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu'],
-            US: ['California', 'Texas', 'New York', 'Florida'],
-            GB: ['England', 'Scotland', 'Wales', 'Northern Ireland'],
-        };
-        const billingStates = stateOptions[billing.country] || [];
-        const shippingStates = stateOptions[shipping.country] || [];
+    // Sample country and state options
+    const countryOptions = [
+        { code: 'IN', name: 'India' },
+        { code: 'US', name: 'United States' },
+        { code: 'GB', name: 'United Kingdom' },
+    ];
+    const stateOptions = {
+        IN: ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu'],
+        US: ['California', 'Texas', 'New York', 'Florida'],
+        GB: ['England', 'Scotland', 'Wales', 'Northern Ireland'],
+    };
+    const billingStates = stateOptions[billing.country] || [];
+    const shippingStates = stateOptions[shipping.country] || [];
 
-        return (
-            <div className="grid grid-cols-2 gap-8">
-                {/* Billing */}
-                <div>
-                    <h3 className="font-semibold mb-3">Billing Address</h3>
-                    <div className="space-y-3">
-                        <TextField label="Attention" name="attention" value={billing.attention} onChange={handleBillingChange} fullWidth />
-                        <FormControl fullWidth>
-                            <InputLabel>Country/Region</InputLabel>
-                            <Select
-                                name="country"
-                                value={billing.country}
-                                label="Country/Region"
-                                onChange={handleBillingChange}
-                            >
-                                <MenuItem value="" disabled>Select country</MenuItem>
-                                {countryOptions.map(opt => (
-                                    <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField label="Street 1" name="street1" value={billing.street1} onChange={handleBillingChange} fullWidth />
-                        <TextField label="Street 2" name="street2" value={billing.street2} onChange={handleBillingChange} fullWidth />
-                        <TextField label="City" name="city" value={billing.city} onChange={handleBillingChange} fullWidth />
-                        <FormControl fullWidth>
-                            <InputLabel>State</InputLabel>
-                            <Select
-                                name="state"
-                                value={billing.state}
-                                label="State"
-                                onChange={handleBillingChange}
-                                disabled={!billing.country}
-                            >
-                                <MenuItem value="" disabled>Select state</MenuItem>
-                                {billingStates.map(state => (
-                                    <MenuItem key={state} value={state}>{state}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField label="Pin Code" name="pincode" value={billing.pincode} onChange={handleBillingChange} fullWidth />
-                        <TextField label="Phone" name="phone" value={billing.phone} onChange={handleBillingChange} fullWidth />
-                        <TextField label="Fax Number" name="fax" value={billing.fax} onChange={handleBillingChange} fullWidth />
-                    </div>
-                </div>
-
-                {/* Shipping */}
-                <div>
-                    <h3 className="font-semibold mb-3">
-                        Shipping Address
-                        <span className="text-blue-600 text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
-                            (Copy billing address)
-                        </span>
-                    </h3>
-
-                    <div className="space-y-3">
-                        <TextField label="Attention" name="attention" value={shipping.attention} onChange={handleShippingChange} fullWidth />
-                        <FormControl fullWidth>
-                            <InputLabel>Country/Region</InputLabel>
-                            <Select
-                                name="country"
-                                value={shipping.country}
-                                label="Country/Region"
-                                onChange={handleShippingChange}
-                            >
-                                <MenuItem value="" disabled>Select country</MenuItem>
-                                {countryOptions.map(opt => (
-                                    <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField label="Street 1" name="street1" value={shipping.street1} onChange={handleShippingChange} fullWidth />
-                        <TextField label="Street 2" name="street2" value={shipping.street2} onChange={handleShippingChange} fullWidth />
-                        <TextField label="City" name="city" value={shipping.city} onChange={handleShippingChange} fullWidth />
-                        <FormControl fullWidth>
-                            <InputLabel>State</InputLabel>
-                            <Select
-                                name="state"
-                                value={shipping.state}
-                                label="State"
-                                onChange={handleShippingChange}
-                                disabled={!shipping.country}
-                            >
-                                <MenuItem value="" disabled>Select state</MenuItem>
-                                {shippingStates.map(state => (
-                                    <MenuItem key={state} value={state}>{state}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField label="Pin Code" name="pincode" value={shipping.pincode} onChange={handleShippingChange} fullWidth />
-                        <TextField label="Phone" name="phone" value={shipping.phone} onChange={handleShippingChange} fullWidth />
-                        <TextField label="Fax Number" name="fax" value={shipping.fax} onChange={handleShippingChange} fullWidth />
-                    </div>
+    return (
+        <div className="grid grid-cols-2 gap-8">
+            {/* Billing */}
+            <div>
+                <h3 className="font-semibold mb-3">Billing Address</h3>
+                <div className="space-y-3">
+                    <TextField label="Attention" name="attention" value={billing.attention} onChange={handleBillingChange} fullWidth />
+                    <FormControl fullWidth>
+                        <InputLabel>Country/Region</InputLabel>
+                        <Select
+                            name="country"
+                            value={billing.country}
+                            label="Country/Region"
+                            onChange={handleBillingChange}
+                        >
+                            <MenuItem value="" disabled>Select country</MenuItem>
+                            {countryOptions.map(opt => (
+                                <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Street 1" name="street1" value={billing.street1} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Street 2" name="street2" value={billing.street2} onChange={handleBillingChange} fullWidth />
+                    <TextField label="City" name="city" value={billing.city} onChange={handleBillingChange} fullWidth />
+                    <FormControl fullWidth>
+                        <InputLabel>State</InputLabel>
+                        <Select
+                            name="state"
+                            value={billing.state}
+                            label="State"
+                            onChange={handleBillingChange}
+                            disabled={!billing.country}
+                        >
+                            <MenuItem value="" disabled>Select state</MenuItem>
+                            {billingStates.map(state => (
+                                <MenuItem key={state} value={state}>{state}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Pin Code" name="pincode" value={billing.pincode} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Phone" name="phone" value={billing.phone} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Fax Number" name="fax" value={billing.fax} onChange={handleBillingChange} fullWidth />
                 </div>
             </div>
-        );
+
+            {/* Shipping */}
+            <div>
+                <h3 className="font-semibold mb-3">
+                    Shipping Address
+                    <span className="text-blue-600 text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
+                        (Copy billing address)
+                    </span>
+                </h3>
+
+                <div className="space-y-3">
+                    <TextField label="Attention" name="attention" value={shipping.attention} onChange={handleShippingChange} fullWidth />
+                    <FormControl fullWidth>
+                        <InputLabel>Country/Region</InputLabel>
+                        <Select
+                            name="country"
+                            value={shipping.country}
+                            label="Country/Region"
+                            onChange={handleShippingChange}
+                        >
+                            <MenuItem value="" disabled>Select country</MenuItem>
+                            {countryOptions.map(opt => (
+                                <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Street 1" name="street1" value={shipping.street1} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Street 2" name="street2" value={shipping.street2} onChange={handleShippingChange} fullWidth />
+                    <TextField label="City" name="city" value={shipping.city} onChange={handleShippingChange} fullWidth />
+                    <FormControl fullWidth>
+                        <InputLabel>State</InputLabel>
+                        <Select
+                            name="state"
+                            value={shipping.state}
+                            label="State"
+                            onChange={handleShippingChange}
+                            disabled={!shipping.country}
+                        >
+                            <MenuItem value="" disabled>Select state</MenuItem>
+                            {shippingStates.map(state => (
+                                <MenuItem key={state} value={state}>{state}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Pin Code" name="pincode" value={shipping.pincode} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Phone" name="phone" value={shipping.phone} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Fax Number" name="fax" value={shipping.fax} onChange={handleShippingChange} fullWidth />
+                </div>
+            </div>
+        </div>
+    );
+};
+const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPaymentTerms, fetchPaymentTerms, form, handleChange, setForm }) => {
+
+    const [showMore, setShowMore] = React.useState(false);
+    // paymentTerms and setPaymentTerms now come from props
+    const [editTerms, setEditTerms] = React.useState([]);
+    // const [selectedTerm, setSelectedTerm] = React.useState('Due on Receipt');
+    const [showConfig, setShowConfig] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [newRows, setNewRows] = React.useState([]); // Editable new rows
+    const [customerExemptions, setCustomerExemptions] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        if (showConfig) {
+            setEditTerms(paymentTerms.map(term => ({ id: term.id, name: term.name, days: term.days })));
+        }
+    }, [showConfig]);
+    const filteredTerms = paymentTerms.filter(term =>
+        term.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleAddNewTerm = () => {
+        setEditTerms([...editTerms, { name: '', days: '' }]);
     };
- const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPaymentTerms, fetchPaymentTerms, form, handleChange }) => {
 
-        const [showMore, setShowMore] = React.useState(false);
-        // paymentTerms and setPaymentTerms now come from props
-        const [editTerms, setEditTerms] = React.useState([]);
-        // const [selectedTerm, setSelectedTerm] = React.useState('Due on Receipt');
-        const [showConfig, setShowConfig] = React.useState(false);
-        const [searchTerm, setSearchTerm] = React.useState('');
-        const [newRows, setNewRows] = React.useState([]); // Editable new rows
-        React.useEffect(() => {
-            if (showConfig) {
-                setEditTerms(paymentTerms.map(term => ({ id: term.id, name: term.name, days: term.days })));
+    const handleNewRowChange = (idx, field, value) => {
+        setEditTerms(rows => rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    };
+
+    const handleRemoveNewRow = (idx) => {
+        setEditTerms(rows => rows.filter((_, i) => i !== idx));
+    };
+
+
+    const handleSaveTerms = async () => {
+
+        // Only add valid new rows
+        const validEdit = editTerms.filter(row => row.name.trim());
+        setEditTerms([]);
+        setShowConfig(false);
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+
+        // Build payment_terms array for API
+        const paymentTermsPayload = validEdit.map(term => ({
+            id: term.id ?? null,
+            name: term.name,
+            no_of_days: term.days || 0
+        }));
+        console.log("Saving Payment Terms Payload:", paymentTermsPayload);
+        const payload = {
+            payment_terms: paymentTermsPayload,
+            lock_account_id: 1
+        };
+
+        await axios.post(
+            `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+            payload,
+            {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
             }
-        }, [showConfig]);
-        const filteredTerms = paymentTerms.filter(term =>
-            term.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        )
+            .then(res => {
+                // Optionally handle success
+            })
+            .catch(err => {
+                alert('Failed to save payment terms');
+            });
 
-        const handleAddNewTerm = () => {
-            setEditTerms([...editTerms, { name: '', days: '' }]);
-        };
+        // Refresh payment terms list after save
+        fetchPaymentTerms();
+    };
 
-        const handleNewRowChange = (idx, field, value) => {
-            setEditTerms(rows => rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
-        };
-
-        const handleRemoveNewRow = (idx) => {
-            setEditTerms(rows => rows.filter((_, i) => i !== idx));
-        };
-
-
-        const handleSaveTerms = async () => {
-
-            // Only add valid new rows
-            const validEdit = editTerms.filter(row => row.name.trim());
-            setEditTerms([]);
-            setShowConfig(false);
-            const baseUrl = localStorage.getItem("baseUrl");
-            const token = localStorage.getItem("token");
-
-            // Build payment_terms array for API
-            const paymentTermsPayload = validEdit.map(term => ({
-                id: term.id ?? null,
-                name: term.name,
-                no_of_days: term.days || 0
-            }));
-            console.log("Saving Payment Terms Payload:", paymentTermsPayload);
-            const payload = {
-                payment_terms: paymentTermsPayload,
-                lock_account_id: 1
-            };
-
-            await axios.post(
-                `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
-                payload,
+    // Remove (deactivate) payment term by id
+    const handleRemovePaymentTerm = async (id, idx) => {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        try {
+            await axios.patch(
+                `https://${baseUrl}/payment_terms/${id}.json`,
+                { payment_term: { id, active: false } },
                 {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 }
-            )
-                .then(res => {
-                    // Optionally handle success
-                })
-                .catch(err => {
-                    alert('Failed to save payment terms');
-                });
+            );
+        } catch (err) {
+            alert('Failed to deactivate payment term');
+        }
+        setEditTerms(terms => terms.filter((_, i) => i !== idx));
+        fetchPaymentTerms();
+    };
 
-            // Refresh payment terms list after save
-            fetchPaymentTerms();
-        };
-
-        // Remove (deactivate) payment term by id
-        const handleRemovePaymentTerm = async (id, idx) => {
-            const baseUrl = localStorage.getItem("baseUrl");
-            const token = localStorage.getItem("token");
+    React.useEffect(() => {
+        const fetchCustomerExemptions = async () => {
             try {
-                await axios.patch(
-                    `https://${baseUrl}/payment_terms/${id}.json`,
-                    { payment_term: { id, active: false } },
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=customer`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
-                            'Content-Type': 'application/json'
-                        }
+                        },
                     }
                 );
+
+                console.log("Customer Tax Exemptions:", res.data);
+                setCustomerExemptions(res.data || []); // update state
             } catch (err) {
-                alert('Failed to deactivate payment term');
+                console.error("Failed to fetch customer exemptions", err);
+                setCustomerExemptions([]);
             }
-            setEditTerms(terms => terms.filter((_, i) => i !== idx));
-            fetchPaymentTerms();
         };
-        return (
-            <div className="grid grid-cols-2 gap-4">
-                {/* <TextField label="PAN" fullWidth /> */}
-                <TextField
-                    label="PAN"
-                    name="pan"
-                    value={form.pan}
-                    onChange={handleChange}
-                    fullWidth
+
+        fetchCustomerExemptions();
+    }, []);
+    return (
+        <div className="grid grid-cols-2 gap-4">
+
+            <TextField
+                select
+                label="GST Treatment"
+                name="gst_treatment"
+                value={form.gst_treatment}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select GST Treatment</MenuItem>
+                <MenuItem value="registered_regular">Registered Business – Regular</MenuItem>
+                <MenuItem value="registered_composition">Registered Business – Composition</MenuItem>
+                <MenuItem value="unregistered">Unregistered Business</MenuItem>
+                <MenuItem value="consumer">Consumer</MenuItem>
+                <MenuItem value="overseas">Overseas</MenuItem>
+                <MenuItem value="sez_unit">Special Economic Zone (SEZ) Unit</MenuItem>
+                <MenuItem value="deemed_export">Deemed Export</MenuItem>
+                <MenuItem value="tax_deductor">Tax Deductor</MenuItem>
+                <MenuItem value="sez_developer">SEZ Developer</MenuItem>
+                <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
+            </TextField>
+
+
+
+
+
+            {/* <div className="col-span-2">
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            name="overseas"
+                            checked={form.overseas}
+                            onChange={(e) =>
+                                setForm(prev => ({
+                                    ...prev,
+                                    overseas: e.target.checked
+                                }))
+                            }
+                        />
+                    }
+                    label="Overseas Customer"
                 />
+            </div> */}
 
-                {/* <TextField select label="Currency" fullWidth>
-                    <MenuItem value="INR">INR - Indian Rupee</MenuItem>
-                </TextField> */}
+            {(form.gst_treatment === "registered_regular" ||
+                form.gst_treatment === "registered_composition") && (
+                    <>
+                        {/* GSTIN / UIN */}
+                        <TextField
+                            label="GSTIN / UIN"
+                            name="gstin"
+                            value={form.gstin}
+                            onChange={handleChange}
+                            fullWidth
+                            inputProps={{ maxLength: 15 }}
+                            placeholder="Enter 15 digit GSTIN"
+                        />
 
+                        {/* Get Taxpayer Details Button */}
+                        {/* <div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          // Call GST lookup API here
+          console.log("Fetch GST details for:", form.gstin);
+        }}
+      >
+        Get Taxpayer Details
+      </Button>
+    </div> */}
+
+                        {/* Business Legal Name */}
+                        <TextField
+                            label="Business Legal Name"
+                            name="business_legal_name"
+                            value={form.business_legal_name}
+                            onChange={handleChange}
+                            fullWidth
+                        />
+
+                        {/* Business Trade Name */}
+                        <TextField
+                            label="Business Trade Name"
+                            name="business_trade_name"
+                            value={form.business_trade_name}
+                            onChange={handleChange}
+                            fullWidth
+                        />
+                    </>
+                )}
+
+            {form.gst_treatment !== "overseas" && (
                 <TextField
                     select
-                    label="Currency"
-                    name="currency"
-                    value={form.currency || ""}
+                    label="Place of Supply"
+                    name="place_of_supply"
+                    value={form.place_of_supply || ""}
                     onChange={handleChange}
                     fullWidth
                 >
-                    <MenuItem value="">Select currency</MenuItem>
-                    <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+                    <MenuItem value="">Select State</MenuItem>
+                    <MenuItem value="Maharashtra">Maharashtra</MenuItem>
+                    <MenuItem value="Karnataka">Karnataka</MenuItem>
+                    <MenuItem value="Delhi">Delhi</MenuItem>
                 </TextField>
+            )}
+            {/* <TextField label="PAN" fullWidth /> */}
+            <TextField
+                label="PAN"
+                name="pan"
+                value={form.pan}
+                onChange={handleChange}
+                fullWidth
+            />
+
+            {/* <TextField select label="Currency" fullWidth>
+                    <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+                </TextField> */}
+
+                
+            <div className="col-span-2 mt-4">
+                <div className="font-medium mb-2">Tax Preference</div>
+
+                <RadioGroup
+                    row
+                    name="tax_preference"
+                    value={form.tax_preference}
+                    onChange={handleChange}
+                >
+                    <FormControlLabel value="taxable" control={<Radio />} label="Taxable" />
+                    <FormControlLabel value="exempt" control={<Radio />} label="Tax Exempt" />
+                </RadioGroup>
+            </div>
+
+            {form.tax_preference === "exempt" && (
 
 
-                <TextField label="Opening Balance" fullWidth />
+                <TextField
+                    select
+                    label="Exemption Reason"
+                    name="exemption_reason"
+                    value={form.exemption_reason}
+                    onChange={handleChange}
+                    fullWidth
+                >
+                    <MenuItem value="" disabled>Select reason</MenuItem>
+                    {customerExemptions.map(ex => (
+                        <MenuItem key={ex.id} value={ex.id}>
+                            {ex.reason}
+                        </MenuItem>
+                    ))}
+                </TextField>
+            )}
 
-                {/* Payment Terms dropdown with search and configure */}
-                <FormControl fullWidth>
-                    <InputLabel>Payment Terms</InputLabel>
-                    <Select
-                        value={selectedTerm}
-                        label="Payment Terms"
-                        onChange={e => setSelectedTerm(e.target.value)}
-                        renderValue={val => val}
-                    >
-                        <MenuItem value="" disabled>Search or select payment term</MenuItem>
-                        {/* <MenuItem>
+
+            {form.tax_preference === "taxable" && (
+                <FormControlLabel
+                    className="col-span-2"
+                    control={
+                        <Checkbox
+                            name="apply_gst_tds"
+                            checked={form.apply_gst_tds}
+                            onChange={(e) =>
+                                setForm((prev) => ({
+                                    ...prev,
+                                    apply_gst_tds: e.target.checked,
+                                }))
+                            }
+                        />
+                    }
+                    label="Apply GST TDS for this customer"
+                />
+            )}
+
+
+            <TextField
+                select
+                label="Currency"
+                name="currency"
+                value={form.currency || ""}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select currency</MenuItem>
+                <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+            </TextField>
+
+
+            <TextField label="Opening Balance" fullWidth />
+
+            {/* Payment Terms dropdown with search and configure */}
+            <FormControl fullWidth>
+                <InputLabel>Payment Terms</InputLabel>
+                <Select
+                    value={selectedTerm}
+                    label="Payment Terms"
+                    onChange={e => setSelectedTerm(e.target.value)}
+                    renderValue={val => val}
+                >
+                    <MenuItem value="" disabled>Search or select payment term</MenuItem>
+                    {/* <MenuItem>
                             <TextField
                                 placeholder="Search Payment Terms"
                                 value={searchTerm}
@@ -377,296 +568,296 @@ const TABS = [
                                 fullWidth
                             />
                         </MenuItem> */}
-                        {filteredTerms.map(term => (
-                            <MenuItem key={term.name} value={term.name}>{term.name}</MenuItem>
-                        ))}
-                        <MenuItem>
-                            <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
-                                Configure Terms
-                            </span>
-                        </MenuItem>
-                    </Select>
-                </FormControl>
+                    {filteredTerms.map(term => (
+                        <MenuItem key={term.name} value={term.name}>{term.name}</MenuItem>
+                    ))}
+                    {/* <MenuItem>
+                        <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
+                            Configure Terms
+                        </span>
+                    </MenuItem> */}
+                </Select>
+            </FormControl>
 
-                {/* Configure Payment Terms Modal */}
-                {showConfig && (
-                    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
-                            <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
-                            <table className="w-full mb-4 text-sm">
-                                <thead>
-                                    <tr className="bg-gray-100">
-                                        <th className="p-2 border">Term Name</th>
-                                        <th className="p-2 border">Number of Days</th>
-                                        <th className="p-2 border"></th>
+            {/* Configure Payment Terms Modal */}
+            {showConfig && (
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+                        <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
+                        <table className="w-full mb-4 text-sm">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="p-2 border">Term Name</th>
+                                    <th className="p-2 border">Number of Days</th>
+                                    <th className="p-2 border"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {editTerms.map((row, idx) => (
+                                    <tr key={idx}>
+                                        <td className="border p-2">
+                                            <input
+                                                className="border rounded px-2 py-1 w-full"
+                                                placeholder="Term Name"
+                                                value={row.name}
+                                                onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="border p-2">
+                                            <input
+                                                className="border rounded px-2 py-1 w-full"
+                                                placeholder="Days"
+                                                type="number"
+                                                value={row.days}
+                                                onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="border p-2">
+                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                                if (row.id) {
+                                                    await handleRemovePaymentTerm(row.id, idx);
+                                                } else {
+                                                    handleRemoveNewRow(idx);
+                                                }
+                                            }}>Remove</button>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {editTerms.map((row, idx) => (
-                                        <tr key={idx}>
-                                            <td className="border p-2">
-                                                <input
-                                                    className="border rounded px-2 py-1 w-full"
-                                                    placeholder="Term Name"
-                                                    value={row.name}
-                                                    onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
-                                                />
-                                            </td>
-                                            <td className="border p-2">
-                                                <input
-                                                    className="border rounded px-2 py-1 w-full"
-                                                    placeholder="Days"
-                                                    type="number"
-                                                    value={row.days}
-                                                    onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
-                                                />
-                                            </td>
-                                            <td className="border p-2">
-                                                <button className="text-red-600 text-xs" onClick={async () => {
-                                                    if (row.id) {
-                                                        await handleRemovePaymentTerm(row.id, idx);
-                                                    } else {
-                                                        handleRemoveNewRow(idx);
-                                                    }
-                                                }}>Remove</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <div className="flex gap-2 mb-2">
-                                <button
-                                    className="text-blue-600 text-sm"
-                                    onClick={handleAddNewTerm}
-                                >
-                                    + Add New
-                                </button>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
-                                    onClick={handleSaveTerms}
-                                >
-                                    Save
-                                </button>
-                                <button
-                                    className="bg-gray-200 px-4 py-2 rounded"
-                                    onClick={() => {
-                                        setEditTerms(paymentTerms.map(term => ({ ...term })));
-                                        setShowConfig(false);
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="flex gap-2 mb-2">
+                            <button
+                                className="text-blue-600 text-sm"
+                                onClick={handleAddNewTerm}
+                            >
+                                + Add New
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                onClick={handleSaveTerms}
+                            >
+                                Save
+                            </button>
+                            <button
+                                className="bg-gray-200 px-4 py-2 rounded"
+                                onClick={() => {
+                                    setEditTerms(paymentTerms.map(term => ({ ...term })));
+                                    setShowConfig(false);
+                                }}
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
-                )}
-
-                {/* Documents upload */}
-                <div className="col-span-2 flex items-center gap-4">
-                    <label className="font-medium">Documents</label>
-                    <input type="file" multiple className="border rounded px-2 py-1" />
-                    <span className="text-xs text-gray-500">You can upload a maximum of 10 files, 10MB each</span>
                 </div>
+            )}
 
-                <div className="col-span-2">
-                    <FormControlLabel
-                        control={<Checkbox />}
-                        label="Allow portal access for this customer"
-                    />
-                </div>
+            {/* Documents upload */}
+            <div className="col-span-2 flex items-center gap-4">
+                <label className="font-medium">Documents</label>
+                <input type="file" multiple className="border rounded px-2 py-1" />
+                <span className="text-xs text-gray-500">You can upload a maximum of 10 files, 10MB each</span>
+            </div>
 
-                {/* More Details toggle */}
-                <div className="col-span-2">
-                    <span className="text-blue-600 text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
-                        {showMore ? 'Hide More Details' : 'Add More Details'}
-                    </span>
-                </div>
+            <div className="col-span-2">
+                <FormControlLabel
+                    control={<Checkbox />}
+                    label="Allow portal access for this customer"
+                />
+            </div>
 
-                {showMore && (
-                    <>
-                        <TextField label="Website URL" fullWidth placeholder="ex: www.zylker.com" />
-                        <TextField label="Department" fullWidth />
-                        <TextField label="Designation" fullWidth />
+            {/* More Details toggle */}
+            <div className="col-span-2">
+                <span className="text-blue-600 text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
+                    {showMore ? 'Hide More Details' : 'Add More Details'}
+                </span>
+            </div>
 
-                        {/* X (social link) */}
-                        <div className="col-span-1">
-                            <TextField
-                                label="X"
-                                placeholder="https://x.com/username"
-                                fullWidth
-                            />
-                        </div>
+            {showMore && (
+                <>
+                    <TextField label="Website URL" fullWidth placeholder="ex: www.zylker.com" />
+                    <TextField label="Department" fullWidth />
+                    <TextField label="Designation" fullWidth />
 
-                        {/* Skype Name/Number */}
-                        <div className="col-span-1">
-                            <TextField
-                                label="Skype Name/Number"
-                                placeholder="Skype ID or number"
-                                fullWidth
-                            />
-                        </div>
+                    {/* X (social link) */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="X"
+                            placeholder="https://x.com/username"
+                            fullWidth
+                        />
+                    </div>
 
-                        {/* Facebook */}
-                        <div className="col-span-1">
-                            <TextField
-                                label="Facebook"
-                                placeholder="http://www.facebook.com/username"
-                                fullWidth
-                            />
-                        </div>
-                    </>
-                )}
+                    {/* Skype Name/Number */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="Skype Name/Number"
+                            placeholder="Skype ID or number"
+                            fullWidth
+                        />
+                    </div>
 
-                {/* Customer Owner info (display only) */}
-                {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
+                    {/* Facebook */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="Facebook"
+                            placeholder="http://www.facebook.com/username"
+                            fullWidth
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Customer Owner info (display only) */}
+            {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
                     Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-blue-600">Learn More</a>
                 </div> */}
-            </div>
-        );
+        </div>
+    );
+};
+
+//
+
+//
+// TAB 3 → CONTACT PERSONS
+//
+const ContactPersonsTab = ({ rows, setRows }) => {
+    // const [rows, setRows] = React.useState([
+    //     { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }
+    // ]);
+
+    const handleRowChange = (idx, field, value) => {
+        setRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
     };
 
-    //
-   
-    //
-    // TAB 3 → CONTACT PERSONS
-    //
-    const ContactPersonsTab = ({ rows, setRows }) => {
-        // const [rows, setRows] = React.useState([
-        //     { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }
-        // ]);
+    const handleAddRow = () => {
+        setRows(prev => [...prev, { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
+    };
 
-        const handleRowChange = (idx, field, value) => {
-            setRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
-        };
+    const handleDeleteRow = (idx) => {
+        setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+    };
 
-        const handleAddRow = () => {
-            setRows(prev => [...prev, { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
-        };
-
-        const handleDeleteRow = (idx) => {
-            setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
-        };
-
-        return (
-            <div>
-                <table className="w-full border text-sm">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="p-2 border">Salutation</th>
-                            <th className="p-2 border">First Name</th>
-                            <th className="p-2 border">Last Name</th>
-                            <th className="p-2 border">Email</th>
-                            <th className="p-2 border">Work Phone</th>
-                            <th className="p-2 border">Mobile</th>
-                            <th className="p-2 border"></th>
+    return (
+        <div>
+            <table className="w-full border text-sm">
+                <thead className="bg-gray-100">
+                    <tr>
+                        <th className="p-2 border">Salutation</th>
+                        <th className="p-2 border">First Name</th>
+                        <th className="p-2 border">Last Name</th>
+                        <th className="p-2 border">Email</th>
+                        <th className="p-2 border">Work Phone</th>
+                        <th className="p-2 border">Mobile</th>
+                        <th className="p-2 border"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row, idx) => (
+                        <tr key={idx}>
+                            <td className="border p-2">
+                                <select
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.salutation}
+                                    onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
+                                >
+                                    <option value="">Select</option>
+                                    <option value="Mr">Mr</option>
+                                    <option value="Ms">Ms</option>
+                                    <option value="Mrs">Mrs</option>
+                                </select>
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.firstName}
+                                    onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
+                                    placeholder="First Name"
+                                />
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.lastName}
+                                    onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
+                                    placeholder="Last Name"
+                                />
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.email}
+                                    onChange={e => handleRowChange(idx, 'email', e.target.value)}
+                                    placeholder="Email"
+                                    type="email"
+                                />
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.workPhone}
+                                    onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
+                                    placeholder="Work Phone"
+                                    type="tel"
+                                />
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.mobile}
+                                    onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
+                                    placeholder="Mobile"
+                                    type="tel"
+                                />
+                            </td>
+                            <td className="border p-2 text-center">
+                                <button
+                                    type="button"
+                                    className="text-red-500 text-lg px-2"
+                                    onClick={() => handleDeleteRow(idx)}
+                                    title="Delete Row"
+                                    disabled={rows.length === 1}
+                                >
+                                    &#10005;
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row, idx) => (
-                            <tr key={idx}>
-                                <td className="border p-2">
-                                    <select
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.salutation}
-                                        onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="Mr">Mr</option>
-                                        <option value="Ms">Ms</option>
-                                        <option value="Mrs">Mrs</option>
-                                    </select>
-                                </td>
-                                <td className="border p-2">
-                                    <input
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.firstName}
-                                        onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
-                                        placeholder="First Name"
-                                    />
-                                </td>
-                                <td className="border p-2">
-                                    <input
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.lastName}
-                                        onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
-                                        placeholder="Last Name"
-                                    />
-                                </td>
-                                <td className="border p-2">
-                                    <input
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.email}
-                                        onChange={e => handleRowChange(idx, 'email', e.target.value)}
-                                        placeholder="Email"
-                                        type="email"
-                                    />
-                                </td>
-                                <td className="border p-2">
-                                    <input
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.workPhone}
-                                        onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
-                                        placeholder="Work Phone"
-                                        type="tel"
-                                    />
-                                </td>
-                                <td className="border p-2">
-                                    <input
-                                        className="border rounded px-2 py-1 w-full"
-                                        value={row.mobile}
-                                        onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
-                                        placeholder="Mobile"
-                                        type="tel"
-                                    />
-                                </td>
-                                <td className="border p-2 text-center">
-                                    <button
-                                        type="button"
-                                        className="text-red-500 text-lg px-2"
-                                        onClick={() => handleDeleteRow(idx)}
-                                        title="Delete Row"
-                                        disabled={rows.length === 1}
-                                    >
-                                        &#10005;
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <button
-                    type="button"
-                    className="mt-3 text-blue-600 text-sm"
-                    onClick={handleAddRow}
-                >
-                    + Add Contact Person
-                </button>
-            </div>
-        );
-    };
-
-    const CustomFieldsTab = () => (
-        <div className="text-sm text-gray-500">
-            No custom fields configured.
+                    ))}
+                </tbody>
+            </table>
+            <button
+                type="button"
+                className="mt-3 text-blue-600 text-sm"
+                onClick={handleAddRow}
+            >
+                + Add Contact Person
+            </button>
         </div>
     );
-    const ReportingTagsTab = () => (
-        <div className="text-sm text-gray-500">
-            No reporting tags available.
-        </div>
-    );
+};
 
-    const RemarksTab = ({ remarks, setRemarks }) => (
-        <TextField
-            label="Remarks"
-            multiline
-            rows={4}
-            fullWidth
-            placeholder="Enter remarks"
-        />
-    );
+const CustomFieldsTab = () => (
+    <div className="text-sm text-gray-500">
+        No custom fields configured.
+    </div>
+);
+const ReportingTagsTab = () => (
+    <div className="text-sm text-gray-500">
+        No reporting tags available.
+    </div>
+);
+
+const RemarksTab = ({ remarks, setRemarks }) => (
+    <TextField
+        label="Remarks"
+        multiline
+        rows={4}
+        fullWidth
+        placeholder="Enter remarks"
+    />
+);
 
 const CustomersAdd = () => {
     // Payment Terms state and fetch logic lifted to parent
@@ -717,6 +908,28 @@ const CustomersAdd = () => {
         opening_balance: 0,
         enable_portal: false,
         remarks: "",
+
+        // ✅ NEW GST FIELDS
+        gst_treatment: "",
+        place_of_supply: "",
+        tax_preference: "taxable",
+        exemption_reason: "",
+        apply_gst_tds: false,
+        overseas: false,
+        // gst_treatment: "",
+        gstin: "",
+        business_legal_name: "",
+        business_trade_name: "",
+
+
+
+       
+  gst_preference: "",
+  tax_exemption_id: "",
+  gst_tds_enabled: false,
+//   department: "",
+//   designation: "",
+
     });
 
     // ADDRESS
@@ -766,8 +979,20 @@ const CustomersAdd = () => {
     };
 
 
-   
+
     const handleSubmit = () => {
+
+        if (form.gst_preference === "regular" || form.gst_preference === "composition") {
+            if (!form.gstin) {
+                toast.error("GSTIN is required for Regular/Composition customers");
+                return;
+            }
+        }
+
+        if (form.tax_preference === "non_taxable" && !form.tax_exemption_id) {
+            toast.error("Exemption Reason is required");
+            return;
+        }
         // Build customer payload for API from all tabs
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
@@ -840,6 +1065,34 @@ const CustomersAdd = () => {
                 opening_balance: form.opening_balance || 0,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
+
+                gstin: form.gstin || null,
+                gst_preference: form.gst_preference || null,
+                tax_preference: form.tax_preference || null,
+                place_of_supply:
+                    form.gst_preference === "overseas" ? null : form.place_of_supply || null,
+                tax_exemption_id:
+                    form.tax_preference === "non_taxable"
+                        ? form.tax_exemption_id || null
+                        : null,
+
+                business_legal_name:
+                    form.gst_preference === "regular" ||
+                        form.gst_preference === "composition"
+                        ? form.business_legal_name || null
+                        : null,
+
+                business_trade_name:
+                    form.gst_preference === "regular" ||
+                        form.gst_preference === "composition"
+                        ? form.business_trade_name || null
+                        : null,
+
+                gst_tds_enabled:
+                    form.tax_preference === "taxable"
+                        ? form.gst_tds_enabled
+                        : false,
+
                 remarks: remarksPayload,
                 billing_address_attributes: billingPayload,
                 shipping_address_attributes: shippingPayload,
@@ -1033,6 +1286,7 @@ const CustomersAdd = () => {
                             fetchPaymentTerms={fetchPaymentTerms}
                             form={form}
                             handleChange={handleChange}
+                            setForm={setForm}
                         />
                     )}
 

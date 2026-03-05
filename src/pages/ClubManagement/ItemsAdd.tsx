@@ -140,6 +140,10 @@ const ItemsAdd = () => {
         unit: "",
         sku: "",
 
+        hsn_code: "",
+        sac_code: "",
+
+
         sellable: true,
         purchasable: true,
 
@@ -152,6 +156,12 @@ const ItemsAdd = () => {
         purchase_account: "",
         purchase_description: "",
         preferred_vendor: "",
+
+
+        tax_preference: "",
+        intra_state_tax: "",
+        inter_state_tax: "",
+        exemption_reason: "",
     });
 
     const handleChange = (e: any) => {
@@ -168,6 +178,8 @@ const ItemsAdd = () => {
     const token = localStorage.getItem("token");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
+    const [exemptions, setExemptions] = useState([]);
+    const [taxSettings, setTaxSettings] = useState<any | null>(null);
 
     React.useEffect(() => {
         const fetchAccountGroups = async () => {
@@ -187,7 +199,57 @@ const ItemsAdd = () => {
         fetchAccountGroups();
     }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
     console.log("Account Groups:", accountGroups)
+    React.useEffect(() => {
+        const fetchExemptions = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
 
+                const res = await axios.get(
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Exemptions:", res.data);
+                setExemptions(res.data || []); // adjust path if different
+            } catch (err) {
+                console.error("Failed to fetch tax exemptions", err);
+                setExemptions([]);
+            }
+        };
+
+        fetchExemptions();
+    }, []);
+
+    React.useEffect(() => {
+        const fetchTaxSettings = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/1/tax_settings.json`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Tax settings:", res.data);
+                setTaxSettings(res.data || null); // adjust based on response
+            } catch (err) {
+                console.error("Failed to fetch tax settings", err);
+                setTaxSettings(null);
+            }
+        };
+
+        fetchTaxSettings();
+    }, []);
     const payload = {
         lock_account_item: {
             name: form.name,
@@ -218,6 +280,19 @@ const ItemsAdd = () => {
             toast.error("Select at least one option from, Sales Information, Purchase Information to proceed.");
             return;
         }
+
+        if (!form.tax_preference) {
+  toast.error("Please select Tax Preference");
+  return;
+}
+
+// ✅ If Non-Taxable
+if (form.tax_preference === "non_taxable") {
+  if (!form.exemption_reason) {
+    toast.error("Please select Exemption Reason");
+    return;
+  }
+}
         if (form.sellable) {
             if (!form.selling_price || isNaN(Number(form.selling_price))) {
                 toast.error("Selling Price is required for Sellable items");
@@ -249,8 +324,29 @@ const ItemsAdd = () => {
             unit: form.unit,
             can_be_sold: form.sellable,
             can_be_purchased: form.purchasable,
-            track_inventory: false
+            track_inventory: false,
+            tax_preference: form.tax_preference,
         };
+        // HSN for Goods
+        if (form.type === "goods") {
+            itemPayload.hsn_code = form.hsn_code;
+        }
+
+        // SAC for Service
+        if (form.type === "service") {
+            itemPayload.sac = form.sac_code;
+        }
+        if (form.tax_preference === "taxable" && taxSettings) {
+            itemPayload.intra_state_tax_rate_id =
+                taxSettings.intra_state_tax_rate_id;
+
+            itemPayload.inter_state_tax_rate_id =
+                taxSettings.inter_state_tax_rate_id;
+        }
+
+        if (form.tax_preference === "non_taxable") {
+            itemPayload.tax_exemption_id = form.exemption_reason;
+        }
         if (form.sellable) {
             itemPayload.sale_description = form.sales_description;
             itemPayload.sale_rate = form.selling_price;
@@ -381,6 +477,74 @@ const ItemsAdd = () => {
                                 <MenuItem value="mg">MGS - mg</MenuItem>
                             </Select>
                         </FormControl>
+
+                        {/* HSN / SAC Code */}
+                        {form.type === "goods" ? (
+                            <TextField
+                                label="HSN Code"
+                                name="hsn_code"
+                                placeholder="Enter HSN Code"
+                                value={form.hsn_code}
+                                onChange={handleChange}
+                            />
+                        ) : (
+                            <TextField
+                                label="SAC"
+                                name="sac_code"
+                                placeholder="Enter SAC Code"
+                                value={form.sac_code}
+                                onChange={handleChange}
+                            />
+                        )}
+
+                        <FormControl fullWidth>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <Select
+                                name="tax_preference"
+                                value={form.tax_preference}
+                                label="Tax Preference"
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        tax_preference: value,
+                                        intra_state_tax: "",
+                                        inter_state_tax: "",
+                                        exemption_reason: "",
+                                    }));
+                                }}
+                            >
+                                <MenuItem value="taxable">Taxable</MenuItem>
+                                <MenuItem value="non_taxable">Non-Taxable</MenuItem>
+                                <MenuItem value="out_of_scope">Out of Scope</MenuItem>
+                                <MenuItem value="non_gst_supply">Non-GST Supply</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        {form.tax_preference === "non_taxable" && (
+                            <div className="mt-4">
+                                <FormControl fullWidth>
+                                    <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
+                                    <Select
+                                        name="exemption_reason"
+                                        value={form.exemption_reason}
+                                        label="Exemption Reason"
+                                        onChange={handleChange}
+                                    >
+                                        <MenuItem value="" disabled>
+                                            Select exemption reason
+                                        </MenuItem>
+
+                                        {exemptions.map((ex) => (
+                                            <MenuItem key={ex.id} value={ex.id}>
+                                                {ex.reason}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </div>
+                        )}
+                        {console.log("exemptions:", exemptions)}
 
                     </div>
 
@@ -1015,6 +1179,31 @@ const ItemsAdd = () => {
                     </div>
                 </div>
 
+                {form.tax_preference === "taxable" && taxSettings && (
+                    <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
+
+                        <div className="md:col-span-2 font-semibold text-gray-700">
+                            Default Tax Rates
+                        </div>
+
+                        {/* Intra State Tax (CGST + SGST) */}
+                        <TextField
+                            label="Intra State Tax Rate"
+                            value={taxSettings.intra_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                        />
+
+                        {/* Inter State Tax (IGST) */}
+                        <TextField
+                            label="Inter State Tax Rate"
+                            value={taxSettings.inter_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                        />
+
+                    </div>
+                )}
                 {/* BUTTONS */}
                 <div className="flex gap-3 mt-10 mb-5 justify-center">
                     <Button
