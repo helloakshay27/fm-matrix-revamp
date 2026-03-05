@@ -34,13 +34,13 @@ interface VendorCreditFilters {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-    // {
-    //     key: 'actions',
-    //     label: 'Action',
-    //     sortable: false,
-    //     hideable: false,
-    //     draggable: false
-    // },
+    {
+        key: 'actions',
+        label: 'Action',
+        sortable: false,
+        hideable: false,
+        draggable: false
+    },
     {
         key: 'credit_note_number',
         label: 'Credit Note#',
@@ -282,7 +282,7 @@ export const VendorCreditsListPage: React.FC = () => {
     const renderRow = (vc: VendorCredit) => ({
         actions: (
             <div className="flex items-center gap-2">
-                <input
+                {/* <input
                     type="checkbox"
                     checked={selectedRows.includes(vc.id)}
                     onChange={e => {
@@ -294,22 +294,22 @@ export const VendorCreditsListPage: React.FC = () => {
                     }}
                     title="Select for status update"
                     className="w-4 h-4 cursor-pointer accent-primary"
-                />
+                /> */}
                 <button
-                    onClick={() => navigate(`/accounting/vendor-credits/${vc.id}`)}
+                    onClick={() => navigate(`/accounting/vendor-credits/details/${vc.id}`)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                     onClick={() => navigate(`/accounting/vendor-credits/edit/${vc.id}`)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => {
                         if (confirm('Are you sure you want to delete this vendor credit?')) {
                             toast.success('Vendor credit deleted successfully!');
@@ -320,7 +320,7 @@ export const VendorCreditsListPage: React.FC = () => {
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
         credit_note_number: (
