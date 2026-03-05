@@ -1165,7 +1165,7 @@ const TodoItem = ({
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-gray-700';
+        return 'bg-gray-200 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -1409,7 +1409,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-gray-700';
+        return 'bg-gray-200 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
