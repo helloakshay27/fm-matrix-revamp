@@ -629,7 +629,7 @@ export default function Todo() {
             </div>
           </div>
 
-          <div className="flex items-stretch gap-2 w-full h-[19.5rem]">
+          <div className="flex items-stretch gap-2 w-full h-[19.5rem] !mt-1">
             {/* Eisenhower Matrix */}
             <div className="w-1/2 h-full">
               <EisenhowerMatrix
@@ -1165,7 +1165,7 @@ const TodoItem = ({
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-100 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -1347,7 +1347,7 @@ const TodoItem = ({
             )}
           </div>
         )}
-        <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
           {getPriorityLabel()}
         </div>
       </div>
@@ -1409,7 +1409,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-100 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -1420,6 +1420,9 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       navigate(`/vas/tasks/${todo.task_management_id}`);
     }
   };
+
+  // Check if task is started from the nested task_management object
+  const isTaskStarted = todo.task_management?.is_started || false;
 
   return (
     <div className={`relative flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 pt-5 ${getPriorityBgColor()}`}>
@@ -1462,14 +1465,49 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-2">
-        <button
-          onClick={() => toggleTodo(todo.id)}
-          className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
-        >
-          <Check size={15} color="white" />
-        </button>
-        <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+      <div className="flex flex-col gap-2 pb-2">
+        {/* Time Left and Active Timer for tasks only */}
+        {todo.task_management_id && (
+          <div className="flex flex-col items-end text-[12px] min-w-max">
+            {/* Time Left */}
+            <div className="flex gap-2 items-end">
+              <span className="text-xs text-gray-600 font-medium">
+                Time Left:
+              </span>
+              <CountdownTimer
+                startDate={todo.task_management?.expected_start_date}
+                targetDate={todo.target_date}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={() => toggleTodo(todo.id)}
+            className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
+          >
+            <Check size={15} color="white" />
+          </button>
+        </div>
+
+        {todo.task_management_id && (
+          <div>
+            {/* Active Timer */}
+            {isTaskStarted && (
+              <div className="flex gap-2 items-end">
+                <span className="text-xs text-gray-600 font-medium">
+                  Started:
+                </span>
+                <ActiveTimer
+                  activeTimeTillNow={todo.task_management?.active_time_till_now}
+                  isStarted={isTaskStarted}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
           {getPriorityLabel()}
         </div>
       </div>
