@@ -28,7 +28,7 @@ const getPriorityBgColor = (priority?: string) => {
         case 'P3':
             return 'border-l-4 border-l-yellow-500';
         case 'P4':
-            return 'border-l-4 border-l-purple-300';
+            return 'border-l-4 border-l-gray-400';
         default:
             return 'border-l-4 border-l-gray-300';
     }
@@ -89,7 +89,7 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
             case 'P3':
                 return 'bg-yellow-100 text-yellow-700';
             case 'P4':
-                return 'bg-purple-100 text-purple-700';
+                return 'bg-gray-100 text-gray-700';
             default:
                 return 'bg-gray-100 text-gray-700';
         }

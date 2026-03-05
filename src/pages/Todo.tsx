@@ -1133,9 +1133,9 @@ const TodoItem = ({
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-purple-300';
-      default:
         return 'border-l-4 border-l-gray-400';
+      default:
+        return 'border-l-4 border-l-gray-300';
     }
   };
 
@@ -1377,9 +1377,9 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-purple-300';
-      default:
         return 'border-l-4 border-l-gray-400';
+      default:
+        return 'border-l-4 border-l-gray-300';
     }
   };
 
