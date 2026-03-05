@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter } from "lucide-react";
+import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
@@ -117,10 +117,6 @@ export default function Todo() {
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [selectedPriority, setSelectedPriority] = useState<string | null>('P1');
 
-  // Date filter state
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
   useEffect(() => {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
@@ -152,10 +148,14 @@ export default function Todo() {
     selectedPriorities: [],
     selectedCreators: [],
     creatorSearch: '',
+    selectedAssignedTo: [],
+    assignedToSearch: '',
   });
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);
+  const assignedToIds = appliedFilters.selectedAssignedTo.map(id => id.toString());
+  const creatorIds = appliedFilters.selectedCreators.map(id => id.toString());
   const {
     data: todosData,
     isLoading,
@@ -166,8 +166,10 @@ export default function Todo() {
   } = useTodos({
     taskType,
     userIds,
-    fromDate,
-    toDate,
+    fromDate: appliedFilters.fromDate,
+    toDate: appliedFilters.toDate,
+    selectedAssignedTo: assignedToIds,
+    selectedCreators: creatorIds,
   });
 
   // Combine all pages into a single todos array
@@ -429,22 +431,9 @@ export default function Todo() {
 
   // Apply active filters to todos
   const filteredTodosByFilters = todos.filter((todo) => {
-    // Filter by date range
-    if (appliedFilters.fromDate && todo.created_at) {
-      const todoDate = new Date(todo.created_at).toISOString().split('T')[0];
-      if (todoDate < appliedFilters.fromDate) return false;
-    }
-    if (appliedFilters.toDate && todo.created_at) {
-      const todoDate = new Date(todo.created_at).toISOString().split('T')[0];
-      if (todoDate > appliedFilters.toDate) return false;
-    }
     // Filter by priority
     if (appliedFilters.selectedPriorities.length > 0) {
       if (!appliedFilters.selectedPriorities.includes(todo.priority)) return false;
-    }
-    // Filter by created by
-    if (appliedFilters.selectedCreators.length > 0) {
-      if (!appliedFilters.selectedCreators.includes(todo.created_by_id)) return false;
     }
     return true;
   });
@@ -573,64 +562,15 @@ export default function Todo() {
     >
       <div className="p-6">
         <div className="space-y-4">
-          <div className="flex items-stretch gap-2 w-full h-[19.5rem]">
-            {/* Eisenhower Matrix */}
-            <div className="w-1/2 h-full">
-              <EisenhowerMatrix
-                dashboardData={dashboardData}
-                onQuadrantClick={fetchTodosByPriority}
-                selectedPriority={selectedPriority}
-              />
-            </div>
-            <div className="w-1/2 h-full">
-              <PriorityTodo
-                selectedPriority={selectedPriority || undefined}
-                todos={priorityFilteredTodos}
-                isLoading={isPriorityLoading}
-                onTodoToggle={toggleTodo}
-                onEditTodo={handleEditTodo}
-                onConvertTodo={handleConvertTodo}
-                onFlagTodo={(todo) => handleFlagTodo(todo)}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-end justify-between gap-6 flex-wrap">
+          <div className="flex items-center justify-between gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
             <div className="flex items-end gap-4 flex-shrink-0">
               <Button
                 onClick={() => setIsAddTodoModalOpen(true)}
-              // className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2"
               >
                 <Plus size={18} />
                 Add
               </Button>
-              {/* <div className="flex flex-col gap-1">
-                <label htmlFor="fromDate" className="text-xs font-semibold text-gray-600">From Date</label>
-                <div className="relative flex items-center">
-                  <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
-                  <input
-                    id="fromDate"
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="toDate" className="text-xs font-semibold text-gray-600">To Date</label>
-                <div className="relative flex items-center">
-                  <Calendar size={14} className="absolute left-2.5 text-[#C72030]" />
-                  <input
-                    id="toDate"
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    className="pl-8 pr-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                  />
-                </div>
-              </div> */}
             </div>
 
             {/* Existing Controls - Right Side */}
@@ -686,6 +626,28 @@ export default function Todo() {
               >
                 <Filter className="w-4 h-4" />
               </Button>
+            </div>
+          </div>
+
+          <div className="flex items-stretch gap-2 w-full h-[19.5rem] !mt-1">
+            {/* Eisenhower Matrix */}
+            <div className="w-1/2 h-full">
+              <EisenhowerMatrix
+                dashboardData={dashboardData}
+                onQuadrantClick={fetchTodosByPriority}
+                selectedPriority={selectedPriority}
+              />
+            </div>
+            <div className="w-1/2 h-full">
+              <PriorityTodo
+                selectedPriority={selectedPriority || undefined}
+                todos={priorityFilteredTodos}
+                isLoading={isPriorityLoading}
+                onTodoToggle={toggleTodo}
+                onEditTodo={handleEditTodo}
+                onConvertTodo={handleConvertTodo}
+                onFlagTodo={(todo) => handleFlagTodo(todo)}
+              />
             </div>
           </div>
 
@@ -1171,18 +1133,65 @@ const TodoItem = ({
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-blue-500';
+        return 'border-l-4 border-l-purple-300';
       default:
         return 'border-l-4 border-l-gray-400';
+    }
+  };
+
+  const getPriorityLabel = () => {
+    const priority = todo.priority || '';
+    switch (priority) {
+      case 'P1':
+        return 'Q1';
+      case 'P2':
+        return 'Q2';
+      case 'P3':
+        return 'Q3';
+      case 'P4':
+        return 'Q4';
+      default:
+        return priority;
+    }
+  };
+
+  const getPriorityTagColor = () => {
+    const priority = todo.priority || '';
+    switch (priority) {
+      case 'P1':
+        return 'bg-red-100 text-red-700';
+      case 'P2':
+        return 'bg-green-100 text-green-700';
+      case 'P3':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'P4':
+        return 'bg-purple-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 border ${getPriorityBgColor()} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
+      className={`relative flex items-center gap-3 p-3 rounded-lg transition-colors group mb-2 pt-5 border ${getPriorityBgColor()} ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : ''}`}
     >
-      <div className="flex items-center gap-1">
+      {
+        todo.created_by && (
+          <div className="absolute top-0 right-3">
+            <span className="text-xs text-end text-muted-foreground">
+              Assigned By : {todo.created_by}
+            </span>
+          </div>
+        )
+      }
+      <div className="flex items-center ">
+        <button
+          className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors cursor-grab"
+          title="Drag todo"
+        >
+          <GripVertical size={14} />
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -1256,89 +1265,92 @@ const TodoItem = ({
               </>
             )}
           </div>
-
-          {
-            !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
-              <>
-                <span className="text-xs text-muted-foreground">
-                  Assigned By : {todo.created_by}
-                </span>
-              </>
-            )
-          }
         </div>
       </div>
 
-      {/* Time Left and Active Timer for tasks only */}
-      {todo.task_management_id && (
-        <div className="flex flex-col items-end gap-1 text-[12px] min-w-max">
-          {/* Time Left */}
-          <div className="flex flex-col items-end">
-            <span className="text-xs text-gray-600 font-medium">
-              Time Left:
-            </span>
-            <CountdownTimer
-              startDate={todo.task_management?.expected_start_date}
-              targetDate={todo.target_date}
-            />
-          </div>
-
-          {/* Active Timer */}
-          {isTaskStarted && (
-            <div className="flex flex-col items-end">
+      <div className="flex flex-col gap-2 pb-2">
+        {/* Time Left and Active Timer for tasks only */}
+        {todo.task_management_id && (
+          <div className="flex flex-col items-end text-[12px] min-w-max">
+            {/* Time Left */}
+            <div className="flex gap-2 items-end">
               <span className="text-xs text-gray-600 font-medium">
-                Started:
+                Time Left:
               </span>
-              <ActiveTimer
-                activeTimeTillNow={todo.task_management?.active_time_till_now}
-                isStarted={isTaskStarted}
+              <CountdownTimer
+                startDate={todo.task_management?.expected_start_date}
+                targetDate={todo.target_date}
               />
             </div>
-          )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          {/* Play/Pause buttons for tasks converted from task management */}
+          {todo.task_management_id &&
+            (isTaskStarted ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPauseTaskId(todo.task_management_id);
+                  setIsPauseModalOpen(true);
+                }}
+                disabled={isCompleted}
+                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                title="Pause task"
+              >
+                <Pause size={16} className="text-orange-500" />
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePlayTask(todo.task_management_id);
+                }}
+                disabled={isCompleted}
+                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                title="Play task"
+              >
+                <Play size={16} className="text-green-500" />
+              </button>
+            ))}
+
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTodo(todo.id);
+              }}
+              className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
+            >
+              <Check
+                size={16}
+                className="text-primary opacity-0 group-hover:opacity-100"
+              />
+            </button>
+          </div>
         </div>
-      )}
 
-      {/* Play/Pause buttons for tasks converted from task management */}
-      {todo.task_management_id &&
-        (isTaskStarted ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setPauseTaskId(todo.task_management_id);
-              setIsPauseModalOpen(true);
-            }}
-            disabled={isCompleted}
-            className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-            title="Pause task"
-          >
-            <Pause size={16} className="text-orange-500" />
-          </button>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePlayTask(todo.task_management_id);
-            }}
-            disabled={isCompleted}
-            className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-            title="Play task"
-          >
-            <Play size={16} className="text-green-500" />
-          </button>
-        ))}
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleTodo(todo.id);
-        }}
-        className="flex-shrink-0 w-4 h-4 border-2 border-primary flex items-center justify-center"
-      >
-        <Check
-          size={16}
-          className="text-primary opacity-0 group-hover:opacity-100"
-        />
-      </button>
+        {todo.task_management_id && (
+          <div>
+            {/* Active Timer */}
+            {isTaskStarted && (
+              <div className="flex gap-2 items-end">
+                <span className="text-xs text-gray-600 font-medium">
+                  Started:
+                </span>
+                <ActiveTimer
+                  activeTimeTillNow={todo.task_management?.active_time_till_now}
+                  isStarted={isTaskStarted}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+          {getPriorityLabel()}
+        </div>
+      </div>
     </div>
   );
 };
@@ -1365,9 +1377,41 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-blue-500';
+        return 'border-l-4 border-l-purple-300';
       default:
         return 'border-l-4 border-l-gray-400';
+    }
+  };
+
+  const getPriorityLabel = () => {
+    const priority = todo.priority || '';
+    switch (priority) {
+      case 'P1':
+        return 'Q1';
+      case 'P2':
+        return 'Q2';
+      case 'P3':
+        return 'Q3';
+      case 'P4':
+        return 'Q4';
+      default:
+        return priority;
+    }
+  };
+
+  const getPriorityTagColor = () => {
+    const priority = todo.priority || '';
+    switch (priority) {
+      case 'P1':
+        return 'bg-red-100 text-red-700';
+      case 'P2':
+        return 'bg-green-100 text-green-700';
+      case 'P3':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'P4':
+        return 'bg-purple-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -1377,8 +1421,20 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
     }
   };
 
+  // Check if task is started from the nested task_management object
+  const isTaskStarted = todo.task_management?.is_started || false;
+
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 ${getPriorityBgColor()}`}>
+    <div className={`relative flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 pt-5 ${getPriorityBgColor()}`}>
+      {
+        todo.created_by && (
+          <div className="absolute top-0 right-3">
+            <span className="text-xs text-end text-muted-foreground">
+              Assigned By : {todo.created_by}
+            </span>
+          </div>
+        )
+      }
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">
@@ -1406,24 +1462,55 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
               </>
             )}
           </div>
-
-          {
-            !todo.task_management_id && todo.created_by && todo.created_by !== todo.user && (
-              <>
-                <span className="text-xs text-muted-foreground">
-                  Assigned By : {todo.created_by}
-                </span>
-              </>
-            )
-          }
         </div>
       </div>
-      <button
-        onClick={() => toggleTodo(todo.id)}
-        className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
-      >
-        <Check size={15} color="white" />
-      </button>
+
+      <div className="flex flex-col gap-2 pb-2">
+        {/* Time Left and Active Timer for tasks only */}
+        {todo.task_management_id && (
+          <div className="flex flex-col items-end text-[12px] min-w-max">
+            {/* Time Left */}
+            <div className="flex gap-2 items-end">
+              <span className="text-xs text-gray-600 font-medium">
+                Time Left:
+              </span>
+              <CountdownTimer
+                startDate={todo.task_management?.expected_start_date}
+                targetDate={todo.target_date}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={() => toggleTodo(todo.id)}
+            className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
+          >
+            <Check size={15} color="white" />
+          </button>
+        </div>
+
+        {todo.task_management_id && (
+          <div>
+            {/* Active Timer */}
+            {isTaskStarted && (
+              <div className="flex gap-2 items-end">
+                <span className="text-xs text-gray-600 font-medium">
+                  Started:
+                </span>
+                <ActiveTimer
+                  activeTimeTillNow={todo.task_management?.active_time_till_now}
+                  isStarted={isTaskStarted}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+          {getPriorityLabel()}
+        </div>
+      </div>
     </div>
   );
 };

@@ -12,7 +12,8 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
     const [date, setDate] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
-    const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState('');
+    const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+    const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState(userId || '');
     const [priority, setPriority] = useState('');
 
     const priorityOptions = [
@@ -62,16 +63,16 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         } else {
             setTitle('');
             setDate(null);
-            setSelectedResponsiblePerson('');
+            setSelectedResponsiblePerson(userId || '');
             setPriority('');
         }
-    }, [isEditMode, editingTodo]);
+    }, [isEditMode, editingTodo, userId]);
 
     const closeModal = () => {
         setIsModalOpen();
         setTitle('');
         setDate(null);
-        setSelectedResponsiblePerson('');
+        setSelectedResponsiblePerson(userId || '');
         setPriority('');
     };
 
