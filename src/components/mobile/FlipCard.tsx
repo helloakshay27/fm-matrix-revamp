@@ -114,16 +114,11 @@ export const FlipCard: React.FC = () => {
         throw new Error(result.message || "Failed to flip card");
       }
 
-      // Update contest data won_reward if user actually won a reward
+      // Store reward ID if user won (don't update won_reward state yet)
       if (result.won_reward === true && result.user_contest_reward) {
-        setContestData((prev) =>
-          prev
-            ? {
-                ...prev,
-                won_reward: true,
-                user_contest_reward: result.user_contest_reward,
-              }
-            : prev
+        localStorage.setItem(
+          "last_reward_id",
+          result.user_contest_reward.id.toString()
         );
       }
 
@@ -143,14 +138,6 @@ export const FlipCard: React.FC = () => {
       setTimeout(() => {
         setWonPrize(result.prize!);
         setFlippingCard(null);
-
-        // Store user_contest_reward.id in localStorage for details page (only if exists)
-        if (result.user_contest_reward) {
-          localStorage.setItem(
-            "last_reward_id",
-            result.user_contest_reward.id.toString()
-          );
-        }
 
         // Show result modal immediately
         setShowResult(true);
@@ -345,9 +332,8 @@ export const FlipCard: React.FC = () => {
                   className="w-full perspective-1000"
                 >
                   <div
-                    className={`relative transition-all duration-600 transform-style-3d ${
-                      flippingCard === card.id ? "rotate-y-180" : ""
-                    }`}
+                    className={`relative transition-all duration-600 transform-style-3d ${flippingCard === card.id ? "rotate-y-180" : ""
+                      }`}
                   >
                     {/* Card */}
                     <div className="relative rounded-2xl overflow-hidden shadow-lg">
@@ -370,9 +356,9 @@ export const FlipCard: React.FC = () => {
                               {card.prize.reward_type === "coupon"
                                 ? card.prize.partner_name || "Coupon"
                                 : card.prize.reward_type === "points" &&
-                                    card.prize.points_value
+                                  card.prize.points_value
                                   ? `${card.prize.points_value} Points`
-                                  : card.prize.reward_type === "marchandise"
+                                  : card.prize.reward_type === "merchandise"
                                     ? "Merchandise Prize"
                                     : "Prize"}
                             </p>
@@ -435,34 +421,19 @@ export const FlipCard: React.FC = () => {
                   onClick={() => {
                     setShowResult(false);
 
-                    // Check if user won a reward and update contestData
+                    // If user won a real reward (not 'none'), navigate to details
                     if (wonPrize && wonPrize.reward_type !== "none") {
-                      const rewardIdStr =
-                        localStorage.getItem("last_reward_id");
-                      if (rewardIdStr) {
-                        setContestData((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                won_reward: true,
-                                user_contest_reward: {
-                                  id: parseInt(rewardIdStr),
-                                  contest_id: prev.id,
-                                  prize_id: wonPrize.id,
-                                  reward_type: wonPrize.reward_type,
-                                  points_value: wonPrize.points_value,
-                                  coupon_code: wonPrize.coupon_code,
-                                  user_id: 0,
-                                  status: "granted",
-                                  created_at: new Date().toISOString(),
-                                  updated_at: new Date().toISOString(),
-                                },
-                              }
-                            : prev
+                      const rewardId = localStorage.getItem("last_reward_id");
+                      if (rewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
                         );
+                        return;
                       }
-                    } else {
-                      // Reset for next attempt if didn't win
+                    }
+
+                    // For 'none' type, just close modal and reset
+                    if (wonPrize && wonPrize.reward_type === "none") {
                       setWonPrize(null);
                     }
                   }}
@@ -525,7 +496,7 @@ export const FlipCard: React.FC = () => {
                   </p>
                 )}
 
-                {wonPrize.reward_type === "marchandise" && (
+                {wonPrize.reward_type === "merchandise" && (
                   <>
                     <p className="text-center text-gray-600 mb-2">
                       Merchandise Prize

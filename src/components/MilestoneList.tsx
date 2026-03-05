@@ -4,6 +4,14 @@ import { Button } from "./ui/button";
 import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
+import {
+    Breadcrumb,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "./ui/breadcrumb";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
@@ -14,11 +22,11 @@ import { baseClient } from "@/utils/withoutTokenBase";
 import { useSearchParams } from "react-router-dom";
 import { CommonImportModal } from "./CommonImportModal";
 import {
-  useMilestones,
-  useChangeMilestoneStatus,
-  useCreateMilestone,
-  useDeleteMilestone,
-  useImportMilestones,
+    useMilestones,
+    useChangeMilestoneStatus,
+    useCreateMilestone,
+    useDeleteMilestone,
+    useImportMilestones,
 } from "@/hooks/useMilestones";
 import { CreateMilestonePayload } from "@/types/milestones";
 
@@ -165,22 +173,72 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const loaderRef = useRef<HTMLDivElement>(null);
+    const [projectName, setProjectName] = useState<string>('');
+
+    // Pagination and infinite scroll state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [allMilestones, setAllMilestones] = useState([]); // Accumulated milestones for infinite scroll
+
+    // Log page changes for debugging
+    useEffect(() => {
+        console.log(`[MilestoneList] currentPage changed to: ${currentPage}`);
+    }, [currentPage]);
 
     // TanStack Query hooks for server state management
     const {
-      data: milestonesData,
-      isLoading,
-      isFetching,
-      error,
+        data: milestonesData,
+        isLoading,
+        isFetching,
+        error,
     } = useMilestones({
-      projectId: id,
-      sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
-      sortDirection: sortDirection || undefined,
+        projectId: id,
+        page: currentPage,
+        sortBy: sortColumn ? (COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn) : undefined,
+        sortDirection: sortDirection || undefined,
     });
 
-    // Extract milestones from response
-    const data = milestonesData ||
-                 [];
+    // Extract current page milestones and pagination info
+    const currentPageMilestones = milestonesData?.milestones || [];
+    const paginationData = milestonesData?.pagination;
+    const hasMore = currentPage < (paginationData?.total_pages || 1);
+
+    // Accumulate milestones for infinite scroll
+    useEffect(() => {
+        if (currentPage === 1) {
+            // Reset on first page (when filters/sort changes)
+            setAllMilestones(currentPageMilestones);
+        } else if (currentPageMilestones.length > 0) {
+            // Append new milestones on subsequent pages
+            setAllMilestones((prev) => [...prev, ...currentPageMilestones]);
+        }
+    }, [currentPageMilestones, currentPage]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // Only load next page if user is near the loader AND data isn't already loading
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isFetching) {
+                    setCurrentPage((prev) => prev + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (loaderRef.current) {
+            observer.observe(loaderRef.current);
+        }
+
+        return () => {
+            if (loaderRef.current) {
+                observer.unobserve(loaderRef.current);
+            }
+        };
+    }, [hasMore, isLoading, isFetching]);
+
+    // Use accumulated milestones for display
+    const data = allMilestones;
 
     // Mutations for updates
     const statusMutation = useChangeMilestoneStatus();
@@ -260,14 +318,31 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
         setSortColumn(newDirection ? columnKey : null);
         setSortDirection(newDirection);
+        // Reset to page 1 when sorting changes
+        setCurrentPage(1);
+    };
 
-        // Fetch with new sort
-        getMilestones(newDirection ? columnKey : null, newDirection);
+    const fetchProjectName = async () => {
+        try {
+            const response = baseUrl
+                ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+                : await baseClient.get(`/project_managements/${id}.json`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            setProjectName(response.data.title || response.data.project_code || '');
+        } catch (error) {
+            console.error('Failed to fetch project name:', error);
+        }
     };
 
     useEffect(() => {
         getOwners();
-    }, [token])
+        if (token && id) {
+            fetchProjectName();
+        }
+    }, [token, id])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -618,6 +693,24 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
 
     return (
         <div className="px-6">
+            {/* Breadcrumbs */}
+            <Breadcrumb className="mb-2">
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink
+                            onClick={() => navigate(`/vas/projects`)}
+                            className="cursor-pointer"
+                        >
+                            {projectName || "Project"}
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>Milestones</BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+
             <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
@@ -626,6 +719,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
+
+
             <EnhancedTable
                 data={data as any[]}
                 columns={columns}
@@ -635,7 +730,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 rightActions={rightActions}
                 storageKey="milestone-table"
                 onSort={handleColumnSort}
-                loading={isLoading}
+                loading={isLoading && currentPage === 1}
                 // onFilterClick={() => { }}
                 canAddRow={true}
                 readonlyColumns={["id", "tasks"]}
@@ -645,6 +740,25 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
             />
+
+            {/* Infinite Scroll Loader - Show at table bottom while fetching next page */}
+            {isFetching && hasMore && (
+                <div className="border-t border-gray-200 flex justify-center py-6 bg-gray-50">
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                        <span className="text-sm text-gray-500">Loading more milestones...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Invisible trigger element for infinite scroll - always present so observer can watch it */}
+            {hasMore && <div ref={loaderRef} className="h-1" />}
+
+            {!hasMore && allMilestones.length > 0 && (
+                <div className="flex justify-center py-4 text-gray-500 text-sm">
+                    No more milestones to load
+                </div>
+            )}
 
             {showActionPanel && (
                 <SelectionPanel

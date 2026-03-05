@@ -821,14 +821,14 @@ export const ProjectsDashboard = () => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span
-                  className="truncate cursor-pointer"
+                <div
+                  className="max-w-[250px] truncate cursor-pointer"
                   onClick={() =>
                     navigate(`/vas/projects/${item.id}/milestones`)
                   }
                 >
                   {item.title}
-                </span>
+                </div>
               </TooltipTrigger>
               <TooltipContent className="rounded-[5px]">
                 <p>{item.title}</p>

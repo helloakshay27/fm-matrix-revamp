@@ -6,6 +6,14 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+    Breadcrumb,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
@@ -490,6 +498,8 @@ const ProjectTasksPage = () => {
     const dispatch = useAppDispatch();
 
     const [users, setUsers] = useState([])
+    const [projectName, setProjectName] = useState<string>('');
+    const [milestoneName, setMilestoneName] = useState<string>('');
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
         const saved = localStorage.getItem("taskPageViewPreference");
@@ -603,9 +613,45 @@ const ProjectTasksPage = () => {
         }
     }
 
+    const fetchProjectAndMilestoneNames = async () => {
+        try {
+            // Fetch project name
+            if (projectId) {
+                const projectResponse = baseUrl
+                    ? await axios.get(`https://${baseUrl}/project_managements/${projectId}.json`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    })
+                    : await baseClient.get(`/project_managements/${projectId}.json`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                setProjectName(projectResponse.data.title || projectResponse.data.project_code || '');
+            }
+
+            // Fetch milestone name
+            if (mid) {
+                const milestoneResponse = baseUrl
+                    ? await axios.get(`https://${baseUrl}/milestones/${mid}.json`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    })
+                    : await baseClient.get(`/milestones/${mid}.json`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                setMilestoneName(milestoneResponse.data.title || '');
+            }
+        } catch (error) {
+            console.error('Failed to fetch project/milestone names:', error);
+        }
+    }
+
     useEffect(() => {
         getStatuses()
     }, [])
+
+    useEffect(() => {
+        if (token && (projectId || mid)) {
+            fetchProjectAndMilestoneNames();
+        }
+    }, [token, projectId, mid])
 
     // Fetch projects from API
     useEffect(() => {
@@ -1511,7 +1557,7 @@ const ProjectTasksPage = () => {
                 const hasSubtasks = item.total_sub_tasks > 0;
 
                 return (
-                    <div className="flex items-center gap-2 w-full">
+                    <div className="flex items-center gap-2 w-[20rem]">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -1896,6 +1942,7 @@ const ProjectTasksPage = () => {
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
+                                    setTaskType("my");
                                     setIsOpen(false);
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
@@ -2135,6 +2182,35 @@ const ProjectTasksPage = () => {
 
     return (
         <div className="p-6">
+            {/* Breadcrumbs */}
+            {location.pathname.includes("projects") && (
+                <Breadcrumb className="mb-2">
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <BreadcrumbLink
+                                onClick={() => navigate(`/vas/projects/${projectId}/milestones/${mid}`)}
+                                className="cursor-pointer"
+                            >
+                                {projectName || "Project"}
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink
+                                onClick={() => navigate(`/vas/projects/${projectId}/milestones`)}
+                                className="cursor-pointer"
+                            >
+                                {milestoneName || "Milestone"}
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>Tasks</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            )}
+
             {
                 location.pathname.includes("projects") && (
                     <Button
@@ -2147,6 +2223,7 @@ const ProjectTasksPage = () => {
                     </Button>
                 )
             }
+
             <EnhancedTable
                 data={tasks}
                 columns={columns}

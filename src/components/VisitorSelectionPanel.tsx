@@ -509,35 +509,40 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Verify OTP Button */}
-            <Button
-              onClick={handleVerifyOtp}
-              disabled={false}
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
-            >
-              <Shield className="w-6 h-6 text-black" />
-              <span className="text-xs text-gray-600">Verify OTP</span>
-            </Button>
+            {/* Verify OTP and Resend OTP - only for single selection */}
+            {selectedVisitors.length === 1 && (
+              <>
+                {/* Verify OTP Button */}
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={false}
+                  variant="ghost"
+                  size="sm"
+                  className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <Shield className="w-6 h-6 text-black" />
+                  <span className="text-xs text-gray-600">Verify OTP</span>
+                </Button>
 
-            {/* Resend OTP Button */}
-            <Button
-              onClick={handleResendOtp}
-              disabled={isResendOtpLoading || resendOtpDisabled}
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
-            >
-              {isResendOtpLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-black" />
-              ) : (
-                <RotateCcw className="w-6 h-6 text-black" />
-              )}
-              <span className="text-xs text-gray-600">
-                {resendOtpDisabled ? `Resend (${resendCountdown}s)` : 'Resend OTP'}
-              </span>
-            </Button>
+                {/* Resend OTP Button */}
+                <Button
+                  onClick={handleResendOtp}
+                  disabled={isResendOtpLoading || resendOtpDisabled}
+                  variant="ghost"
+                  size="sm"
+                  className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  {isResendOtpLoading ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-black" />
+                  ) : (
+                    <RotateCcw className="w-6 h-6 text-black" />
+                  )}
+                  <span className="text-xs text-gray-600">
+                    {resendOtpDisabled ? `Resend (${resendCountdown}s)` : 'Resend OTP'}
+                  </span>
+                </Button>
+              </>
+            )}
 
             {/* Check In Button - Only show if there are visitors not checked in */}
             {hasNotCheckedInVisitors && onCheckIn && (

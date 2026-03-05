@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Recycle, Building, Trash2, MapPin } from 'lucide-react';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
-  fetchVendors, 
-  fetchCommodities, 
-  fetchCategories, 
+import {
+  fetchBuildings,
+  fetchWings,
+  fetchAreas,
+  fetchVendors,
+  fetchCommodities,
+  fetchCategories,
   fetchOperationalLandlords,
   createWasteGeneration,
   Building as BuildingType,
@@ -58,7 +58,7 @@ const fieldStyles = {
 const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
   const { toast: reactToast } = useToast();
-  
+
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -226,15 +226,66 @@ const AddWasteGenerationPage = () => {
     }));
   };
 
+  // if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
+  //   reactToast({
+  //     title: "Error",
+  //     description: "Please fill in all required fields",
+  //     variant: "destructive"
+  //   });
+  //   return;
+  // }
+
   const handleSave = async () => {
-    if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
-      reactToast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+    if (!formData.building) {
+      toast.error("Validation Error: Building is required.");
       return;
     }
+
+    if (!formData.date) {
+      toast.error("Validation Error: Date is required.");
+      return;
+    }
+
+    if (!formData.vendor) {
+      toast.error("Validation Error: Vendor is required.");
+      return;
+    }
+
+    if (!formData.commodity) {
+      toast.error("Validation Error: Commodity is required.");
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error("Validation Error: Category is required.");
+      return;
+    }
+
+    if (!formData.operationalName) {
+      toast.error("Validation Error: Operational Name of Landlord/Tenant is required.");
+      return;
+    }
+
+    if (!formData.generatedUnit) {
+      toast.error("Validation Error: Generated Unit is required.");
+      return;
+    }
+
+    if (parseFloat(formData.generatedUnit) <= 0) {
+      toast.error("Validation Error: Generated Unit must be greater than 0.");
+      return;
+    }
+
+    if (
+      parseFloat(formData.recycledUnit || "0") >
+      parseFloat(formData.generatedUnit)
+    ) {
+      toast.error("Validation Error: Recycled Unit cannot be greater than Generated Unit.");
+      return;
+    }
+    // continue with API call...
+
+
 
     setSubmitting(true);
     try {
@@ -257,9 +308,9 @@ const AddWasteGenerationPage = () => {
       };
 
       console.log('Submitting waste generation data:', payload);
-      
+
       const response = await createWasteGeneration(payload);
-      
+
       toast.success('Waste generation record saved successfully');
       navigate('/maintenance/waste/generation');
     } catch (error) {
@@ -321,7 +372,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -338,9 +389,9 @@ const AddWasteGenerationPage = () => {
                   disabled={loadingWings || !formData.building}
                 >
                   <MenuItem value="">
-                    {loadingWings ? 'Loading wings...' : 
-                     !formData.building ? 'Select Building First' : 
-                     'Select Wing (Optional)'}
+                    {loadingWings ? 'Loading wings...' :
+                      !formData.building ? 'Select Building First' :
+                        'Select Wing (Optional)'}
                   </MenuItem>
                   {Array.isArray(wings) && wings.map((wing) => (
                     <MenuItem key={wing.id} value={wing.id.toString()}>
@@ -349,7 +400,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -366,9 +417,9 @@ const AddWasteGenerationPage = () => {
                   disabled={loadingAreas || !formData.wing}
                 >
                   <MenuItem value="">
-                    {loadingAreas ? 'Loading areas...' : 
-                     !formData.wing ? 'Select Wing First' : 
-                     'Select Area (Optional)'}
+                    {loadingAreas ? 'Loading areas...' :
+                      !formData.wing ? 'Select Wing First' :
+                        'Select Area (Optional)'}
                   </MenuItem>
                   {Array.isArray(areas) && areas.map((area) => (
                     <MenuItem key={area.id} value={area.id.toString()}>
@@ -377,7 +428,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <TextField
                 label={<span>Date <span className="text-red-500">*</span></span>}
                 type="date"
@@ -425,7 +476,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -452,7 +503,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -479,7 +530,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-               <TextField
+              <TextField
                 fullWidth
                 label="UoM"
                 variant="outlined"
@@ -494,8 +545,8 @@ const AddWasteGenerationPage = () => {
 
             {/* Additional Waste Details */}
             <div className="">
-             
-              
+
+
               {/* <TextField
                 fullWidth
                 label="Type of Waste"
@@ -536,7 +587,7 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <TextField
                 label="Agency Name"
                 placeholder="Enter Agency Name"
@@ -550,11 +601,11 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
+              // InputProps={{
+              //   sx: fieldStyles,
+              // }}
               />
-              
+
               <TextField
                 // label="Generated Unit*"
                 label={<span>Generated Unit <span className="text-red-500">*</span></span>}
@@ -570,11 +621,11 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
+              // InputProps={{
+              //   sx: fieldStyles,
+              // }}
               />
-              
+
               <TextField
                 label="Recycled Unit"
                 type="number"
@@ -589,9 +640,9 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
+              // InputProps={{
+              //   sx: fieldStyles,
+              // }}
               />
             </div>
           </div>
@@ -599,14 +650,14 @@ const AddWasteGenerationPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">
-          <Button 
+          <Button
             type="submit"
             disabled={submitting}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Saving...' : 'Save'}
           </Button>
-          <Button 
+          <Button
             type="button"
             variant="outline"
             onClick={handleBack}

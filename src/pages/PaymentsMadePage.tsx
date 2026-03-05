@@ -9,7 +9,6 @@ import {
   MoreHorizontal,
   Download,
   Upload,
-  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast as sonnerToast } from "sonner";
@@ -167,14 +166,9 @@ export const PaymentsMadePage: React.FC = () => {
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedView, setSelectedView] = useState("All Payments");
-  const [favorites, setFavorites] = useState<string[]>(["Advance Payments"]);
   const [appliedFilters, setAppliedFilters] = useState<PaymentFilters>({});
 
   const moreMenuRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -186,13 +180,6 @@ export const PaymentsMadePage: React.FC = () => {
         setIsMoreMenuOpen(false);
         setIsImportMenuOpen(false);
         setIsExportMenuOpen(false);
-      }
-
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
       }
     };
 
@@ -273,55 +260,25 @@ export const PaymentsMadePage: React.FC = () => {
     fetchPayments(currentPage);
   }, [currentPage, fetchPayments]);
 
-  // Payment view options
-  const paymentViews = [
-    { name: "All Payments", icon: Star },
-    { name: "Draft", icon: Star },
-    { name: "Paid", icon: Star },
-    { name: "Void", icon: Star },
-    { name: "Advance Payments", icon: Star },
-    { name: "Bill Payments", icon: Star },
-  ];
-
-  // Toggle favorite
-  const toggleFavorite = (viewName: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFavorites((prev) =>
-      prev.includes(viewName)
-        ? prev.filter((fav) => fav !== viewName)
-        : [...prev, viewName]
-    );
-  };
-
-  // Separate views into favorites and default filters
-  const favoriteViews = paymentViews.filter((view) =>
-    favorites.includes(view.name)
-  );
-  const defaultViews = paymentViews.filter(
-    (view) => !favorites.includes(view.name)
-  );
-
-  // Handle view selection
-  const handleViewSelect = (viewName: string) => {
-    setSelectedView(viewName);
-    setIsDropdownOpen(false);
-    // Apply filter based on view
-    if (viewName === "All Payments") {
-      setAppliedFilters({});
-    } else if (viewName === "Paid") {
-      setAppliedFilters({ status: "PAID" });
-    } else if (viewName === "Draft") {
-      setAppliedFilters({ status: "DRAFT" });
-    } else if (viewName === "Void") {
-      setAppliedFilters({ status: "VOID" });
-    }
-    setCurrentPage(1);
-  };
-
-  // Filter payments based on selected view
+  // Filter payments based on selected view + search term
   const filteredPayments = payments.filter((payment) => {
-    if (appliedFilters.status) {
-      return payment.status === appliedFilters.status;
+    // Status filter
+    if (appliedFilters.status && payment.status !== appliedFilters.status) {
+      return false;
+    }
+    // Search filter
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.toLowerCase();
+      const matchesSearch =
+        payment.payment_number.toLowerCase().includes(q) ||
+        payment.vendor_name.toLowerCase().includes(q) ||
+        String(payment.amount).includes(q) ||
+        payment.mode.toLowerCase().includes(q) ||
+        payment.status.toLowerCase().includes(q) ||
+        payment.date.toLowerCase().includes(q) ||
+        (payment.bank_reference_number || "").toLowerCase().includes(q) ||
+        (payment.paid_through_account || "").toLowerCase().includes(q);
+      if (!matchesSearch) return false;
     }
     return true;
   });
@@ -338,14 +295,14 @@ export const PaymentsMadePage: React.FC = () => {
     },
     {
       key: "payment_number",
-      label: "PAYMENT #",
+      label: "PAYMENT",
       sortable: true,
       hideable: true,
       draggable: true,
     },
     {
       key: "reference_number",
-      label: "REFERENCE#",
+      label: "REFERENCE",
       sortable: true,
       hideable: true,
       draggable: true,
@@ -359,7 +316,7 @@ export const PaymentsMadePage: React.FC = () => {
     },
     {
       key: "bill_number",
-      label: "BILL#",
+      label: "BILL",
       sortable: true,
       hideable: true,
       draggable: true,
@@ -487,97 +444,9 @@ export const PaymentsMadePage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 bg-white min-h-screen">
-      {/* Header Actions */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        {/* Left: View Dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:text-gray-700 transition-colors"
-          >
-            {selectedView}
-            <ChevronDown
-              className={`w-4 h-4 transition-transform ${
-                isDropdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              {/* Favorites Section */}
-              {favoriteViews.length > 0 && (
-                <>
-                  <div className="px-4 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown className="w-3 h-3 text-gray-500" />
-                      <span className="text-xs font-semibold text-gray-500 uppercase">
-                        Favorites
-                      </span>
-                    </div>
-                    <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                      {favoriteViews.length}
-                    </span>
-                  </div>
-                  {favoriteViews.map((view) => (
-                    <button
-                      key={view.name}
-                      onClick={() => handleViewSelect(view.name)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
-                    >
-                      <span className="text-sm text-gray-700">{view.name}</span>
-                      <button
-                        onClick={(e) => toggleFavorite(view.name, e)}
-                        className="hover:scale-110 transition-transform"
-                      >
-                        <Star className="w-4 h-4 text-red-500 fill-red-500" />
-                      </button>
-                    </button>
-                  ))}
-                </>
-              )}
-
-              {/* Default Filters Section */}
-              <div className="px-4 py-2 flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
-                  <ChevronDown className="w-3 h-3 text-gray-500" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase">
-                    Default Filters
-                  </span>
-                </div>
-                <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                  {defaultViews.length}
-                </span>
-              </div>
-              {defaultViews.map((view) => (
-                <button
-                  key={view.name}
-                  onClick={() => handleViewSelect(view.name)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <span className="text-sm text-gray-700">{view.name}</span>
-                  <button
-                    onClick={(e) => toggleFavorite(view.name, e)}
-                    className="hover:scale-110 transition-transform"
-                  >
-                    <Star className="w-4 h-4 text-gray-400" />
-                  </button>
-                </button>
-              ))}
-
-              {/* New Custom View */}
-              <div className="border-t border-gray-200 mt-2 pt-2">
-                <button className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                  <Plus className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-blue-600 font-medium">
-                    New Custom View
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <h1 className="text-2xl font-bold">All Payments</h1>
       </div>
 
       <EnhancedTaskTable
@@ -598,18 +467,15 @@ export const PaymentsMadePage: React.FC = () => {
             <div className="relative">
               <Button
                 variant="outline"
-                className="gap-2 bg-white border-gray-300 h-9"
+                size="icon"
+                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
                 onClick={() => {
                   setIsImportMenuOpen(!isImportMenuOpen);
                   setIsExportMenuOpen(false);
                   setIsMoreMenuOpen(false);
                 }}
               >
-                <div className="flex items-center gap-2">
-                  <Upload className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-normal">Import</span>
-                  <ChevronDown className="h-4 w-4 text-gray-600" />
-                </div>
+                <Upload className="h-4 w-4 text-gray-600" />
               </Button>
               {isImportMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
@@ -630,18 +496,15 @@ export const PaymentsMadePage: React.FC = () => {
             <div className="relative">
               <Button
                 variant="outline"
-                className="gap-2 bg-white border-gray-300 h-9"
+                size="icon"
+                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
                 onClick={() => {
                   setIsExportMenuOpen(!isExportMenuOpen);
                   setIsImportMenuOpen(false);
                   setIsMoreMenuOpen(false);
                 }}
               >
-                <div className="flex items-center gap-2">
-                  <Download className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-normal">Export</span>
-                  <ChevronDown className="h-4 w-4 text-gray-600" />
-                </div>
+                <Download className="h-4 w-4 text-gray-600" />
               </Button>
               {isExportMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
@@ -699,13 +562,12 @@ export const PaymentsMadePage: React.FC = () => {
         renderRow={renderRow}
         storageKey="payments-made-dashboard-v1"
         hideTableExport={true}
-        hideTableSearch={true}
-        enableSearch={false}
+        hideTableSearch={false}
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={(val) => setSearchTerm(val)}
+        searchPlaceholder="Search payments..."
         loading={loading}
-        selectable={true}
-        selectedItems={selectedPaymentIds}
-        onSelectAll={handleSelectAll}
-        onSelectItem={handleSelectItem}
         onRowClick={(payment) => {
           setSelectedPaymentId(payment.id);
           setViewMode("detail");
@@ -722,45 +584,6 @@ export const PaymentsMadePage: React.FC = () => {
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
         />
-      )}
-      {/* Floating Bulk Action Popup */}
-      {selectedPaymentIds.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 shadow-xl rounded-lg px-4 py-3 flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs bg-gray-50 hover:bg-gray-100"
-            >
-              Bulk Update
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs text-red-600 bg-white hover:text-red-700 hover:bg-red-50 border-red-200"
-              onClick={handleDelete}
-            >
-              Delete
-            </Button>
-          </div>
-          <div className="h-4 w-px bg-gray-300 mx-2"></div>
-          <div className="flex items-center gap-2">
-            <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full min-w-[24px] text-center">
-              {selectedPaymentIds.length}
-            </span>
-            <span className="text-sm text-gray-600 font-medium">Selected</span>
-          </div>
-          <div className="h-4 w-px bg-gray-300 mx-2"></div>
-          <button
-            onClick={() => setSelectedPaymentIds([])}
-            className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <div className="flex items-center gap-1 text-xs">
-              <span>Esc</span>
-              <X className="w-4 h-4" />
-            </div>
-          </button>
-        </div>
       )}
     </div>
   );

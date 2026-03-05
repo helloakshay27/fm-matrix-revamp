@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { toast } from "sonner";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
 import {
@@ -21,6 +21,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  IconButton,
 } from "@mui/material";
 import { DurationPicker } from "./DurationPicker";
 import { CustomCalender } from "./CustomCalender";
@@ -29,6 +30,9 @@ import TasksOfDate from "./TasksOfDate";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const calculateDuration = (startDate, endDate) => {
   if (!startDate || !endDate) return "";
@@ -149,6 +153,70 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
 
+  const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+  const [baseValue, setBaseValue] = useState("");
+  const quillRef = useRef<HTMLDivElement>(null);
+  const quillEditorRef = useRef<Quill | null>(null);
+
+  // Handle STT for Description
+  useEffect(() => {
+    if (isListening && transcript && activeId === "task-description-edit") {
+      const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+      if (quillEditorRef.current) {
+        const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+        quillEditorRef.current.root.innerHTML = formattedValue;
+        setFormData(prev => ({
+          ...prev,
+          description: formattedValue,
+        }));
+      }
+    }
+  }, [isListening, transcript, activeId, baseValue, setFormData]);
+
+  // Initialize Quill Editor
+  useEffect(() => {
+    if (quillRef.current && !quillEditorRef.current) {
+      // Clear previous instance if it exists
+      if (quillEditorRef.current) {
+        quillEditorRef.current = null;
+      }
+
+      quillEditorRef.current = new Quill(quillRef.current, {
+        theme: "snow",
+        placeholder: "Enter Description...",
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link"],
+            ["clean"],
+          ],
+        },
+      });
+
+      // Handle text changes
+      quillEditorRef.current.on("text-change", () => {
+        const htmlContent = quillEditorRef.current?.root.innerHTML;
+        setFormData((prev) => ({
+          ...prev,
+          description: htmlContent || "",
+        }));
+      });
+    }
+  }, [setFormData]);
+
+  // Update Quill editor when task description is loaded
+  useEffect(() => {
+    if (quillEditorRef.current && formData.description) {
+      const currentContent = quillEditorRef.current.root.innerHTML;
+      if (currentContent !== formData.description) {
+        quillEditorRef.current.root.innerHTML = formData.description;
+      }
+    }
+  }, [formData.description]);
+
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
   const collapsibleRef = useRef(null);
@@ -198,7 +266,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     async (projectId: string) => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/milestones.json?q[project_management_id_eq]=${projectId}`,
+          `https://${baseUrl}/milestones/milestone_kanban.json?q[project_management_id_eq]=${projectId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -707,41 +775,45 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
           {/* Description */}
           <div className="mb-1">
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              placeholder="Enter Description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-              variant="outlined"
-              size="small"
-              sx={{
-                mt: 1,
-                "& .MuiOutlinedInput-root": {
-                  height: "auto !important",
-                  padding: "2px !important",
-                  display: "flex",
-                },
-                "& .MuiInputBase-input[aria-hidden='true']": {
-                  flex: 0,
-                  width: 0,
-                  height: 0,
-                  padding: "0 !important",
-                  margin: 0,
-                  display: "none",
-                },
-                "& .MuiInputBase-input": {
-                  resize: "none !important",
-                },
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Description</label>
+              {supported && (
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    if (isListening && activeId === "task-description-edit") {
+                      stopListening();
+                    } else {
+                      const currentText = quillEditorRef.current
+                        ? quillEditorRef.current.root.innerHTML
+                        : formData.description;
+                      setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                      startListening("task-description-edit");
+                    }
+                  }}
+                  color={isListening && activeId === "task-description-edit" ? "secondary" : "default"}
+                  sx={{ color: isListening && activeId === "task-description-edit" ? "#C72030" : "inherit" }}
+                >
+                  {isListening && activeId === "task-description-edit" ? (
+                    <Mic size={18} />
+                  ) : (
+                    <MicOff size={18} />
+                  )}
+                </IconButton>
+              )}
+            </div>
+            <div
+              ref={quillRef}
+              style={{
+                border: "1px solid rgba(0, 0, 0, 0.23)",
+                borderRadius: "4px",
+                minHeight: "150px",
               }}
             />
           </div>
 
           {/* Responsible Person and Role */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-2 gap-3 mb-3 mt-6">
             <div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Responsible Person *</InputLabel>
@@ -1051,6 +1123,46 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           </button>
         </div>
       </div>
+
+      <style>{`
+        .ql-toolbar {
+          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+          border-radius: 4px 4px 0 0;
+          background-color: #fafafa;
+          margin-bottom: 0 !important;
+        }
+
+        .ql-container {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-radius: 0 0 4px 4px;
+          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+          margin-top: 0 !important;
+        }
+
+        .ql-editor {
+          padding: 12px 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: rgba(0, 0, 0, 0.6);
+          font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+          color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+          color: #01569E;
+        }
+      `}</style>
     </form>
   );
 };
