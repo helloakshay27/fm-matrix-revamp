@@ -107,8 +107,11 @@ interface Item {
     tax: string;
     taxRate: number;
     amount: number;
-    account:string ;
-    customer: string
+    account: string;
+    customer: string;
+    item_tax_type?: string
+    tax_group_id?: number | null
+    tax_exemption_id?: number | null
 }
 
 interface ExternalUser {
@@ -245,8 +248,89 @@ export const BillsAdd: React.FC = () => {
             amount: 0,
             customer: "",
             account: "",
+            item_tax_type: "",
+            tax_group_id: "",
+            tax_exemption_id: ""
         }
     ]);
+
+    const [sourceOfSupply, setSourceOfSupply] = useState("");
+    const [destinationOfSupply, setDestinationOfSupply] = useState("");
+    const indianStates = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+        "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+        "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+    ];
+
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        { value: "out_of_scope", label: "Out of Scope" },
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+        //   { value: "tax_group", label: "Tax Group" }
+    ];
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        setLoadingTaxGroups(true);
+
+        axios
+            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setTaxGroups(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax groups:", error);
+            })
+            .finally(() => {
+                setLoadingTaxGroups(false);
+            });
+    }, []);
+
+    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+    const [selectedExemption, setSelectedExemption] = useState("");
+    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
+
+    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
+    const [loadingExemptions, setLoadingExemptions] = useState(false);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        setLoadingExemptions(true);
+
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setCustomerExemptions(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax exemptions:", error);
+            })
+            .finally(() => {
+                setLoadingExemptions(false);
+            });
+    }, []);
+
+
 
     // Summary
     const [discountOnTotal, setDiscountOnTotal] = useState(0);
@@ -417,29 +501,8 @@ export const BillsAdd: React.FC = () => {
     }, [baseUrl, token]);
     // Fetch items, salespersons, taxes
     useEffect(() => {
-        // Mock data - replace with actual API calls
-        // setItemOptions([
-        //     { id: '1', name: 'Cement', rate: 500 },
-        //     { id: '2', name: 'Steel', rate: 800 },
-        //     { id: '3', name: 'Bricks', rate: 10 },
-        //     { id: '4', name: 'Paint', rate: 350 }
-        // ]);
 
-        // setSalespersons([
-        //     { id: '1', name: 'Rajesh Kumar' },
-        //     { id: '2', name: 'Priya Sharma' },
-        //     { id: '3', name: 'Amit Patel' }
-        // ]);
-
-        // setTaxOptions([
-        //     { id: '1', name: 'GST 18%', rate: 18 },
-        //     { id: '2', name: 'GST 12%', rate: 12 },
-        //     { id: '3', name: 'GST 5%', rate: 5 },
-        //     { id: '4', name: 'No Tax', rate: 0 }
-        // ]);
-
-        // Set default terms and conditions
-        setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
+        // setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
     }, []);
 
     // When customer is selected
@@ -509,6 +572,7 @@ export const BillsAdd: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -675,6 +739,8 @@ export const BillsAdd: React.FC = () => {
             charge_name: adjustmentLabel,
             charge_type: adjustment >= 0 ? 'plus' : 'minus',
             tax_type: taxType.toLowerCase(),
+            destination_of_supply: destinationOfSupply,
+            source_of_supply: sourceOfSupply,
             lock_account_tax_id: (() => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
@@ -701,7 +767,7 @@ export const BillsAdd: React.FC = () => {
         }
     };
     console.log('Sale Order Payload:', saleOrderPayload2);
-console.log("items:",items)
+    console.log("items:", items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
         if (!saveAsDraft && !validate()) {
@@ -727,7 +793,7 @@ console.log("items:",items)
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_bill[status]', 'draft');
             formData.append('lock_account_bill[subject]', subject || '');
-            formData.append('lock_account_bill[total_amount]', String(totalAmount));
+            formData.append('lock_account_bill[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_bill[discount_per]', String(discountOnTotal));
                 formData.append('lock_account_bill[discount_amount]', String(totalDiscount));
@@ -741,6 +807,9 @@ console.log("items:",items)
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
             formData.append('lock_account_bill[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
 
+            //new
+            formData.append('lock_account_bill[source_of_supply]', sourceOfSupply || '');
+            formData.append('lock_account_bill[destination_of_supply]', destinationOfSupply || '');
             // Sale order items
             items.forEach((item, idx) => {
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
@@ -750,6 +819,11 @@ console.log("items:",items)
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][name]`, item.description || '');
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
+
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+
             });
 
             // Email contact persons
@@ -827,6 +901,49 @@ console.log("items:",items)
             setTaxAmount2(0);
         }
     }, [selectedTax, taxOptions, afterDiscount]);
+
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
+        });
+    const taxBreakdown: any[] = [];
+
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach(rate => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({
+                    name: rate.name,
+                    rate: rate.rate,
+                    amount: taxAmount
+                });
+            }
+        });
+    });
+    // Calculate Final Total
+
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+
+
+    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
     return (
         <div className="p-6 space-y-6 relative">
@@ -882,6 +999,60 @@ console.log("items:",items)
                                 />
                             </div>
                         </div>
+
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                {/* Source of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Source of Supply
+                                    </label>
+
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={sourceOfSupply}
+                                            onChange={(e) => setSourceOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
+
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                                {/* Destination of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Destination of Supply
+                                    </label>
+
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={destinationOfSupply}
+                                            onChange={(e) => setDestinationOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
+
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                            </div>
+                        )}
 
                         {/* {selectedCustomer && (
                             <Button
@@ -1192,7 +1363,7 @@ console.log("items:",items)
                                         <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Customer</th>
                                         {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
-                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Tax</th> */}
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
                                         <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
                                     </tr>
@@ -1353,6 +1524,56 @@ console.log("items:",items)
                                                     </Select>
                                                 </FormControl>
                                             </td> */}
+
+                                            <td className="px-4 py-3">
+                                                <FormControl size="small" sx={{ width: 200 }}>
+                                                    <Select
+                                                        //   value={item.tax_type || ""}
+                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        displayEmpty
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+
+                                                            // Static tax types
+                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                updateItem(index, "item_tax_type", value);
+                                                                updateItem(index, "tax_group_id", null);
+
+                                                                if (value === "non_taxable") {
+                                                                    setCurrentItemIndex(index);
+                                                                    setExemptionModalOpen(true);
+                                                                }
+                                                            }
+                                                            // Tax group selected
+                                                            else {
+                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "tax_group_id", value);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <MenuItem value="">Select Tax</MenuItem>
+
+                                                        {/* Static Options */}
+                                                        {taxTypeOptions.map((opt) => (
+                                                            <MenuItem key={opt.value} value={opt.value}>
+                                                                {opt.label}
+                                                            </MenuItem>
+                                                        ))}
+
+                                                        {/* Divider */}
+                                                        <MenuItem disabled>
+                                                            Tax Groups
+                                                        </MenuItem>
+
+                                                        {/* Tax Groups */}
+                                                        {taxGroups.map((group) => (
+                                                            <MenuItem key={group.id} value={group.id}>
+                                                                {group.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </td>
                                             <td className="px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
                                             </td>
@@ -1423,7 +1644,16 @@ console.log("items:",items)
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-
+                            {taxBreakdown.map((tax, index) => (
+                                <div key={index} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {tax.name} ({tax.rate}%)
+                                    </span>
+                                    <span className="font-semibold text-base">
+                                        ₹{tax.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
                             <Divider />
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
@@ -1496,7 +1726,7 @@ console.log("items:",items)
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -1970,6 +2200,59 @@ console.log("items:",items)
                     <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
                 </DialogActions>
+            </Dialog>
+
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+
+                <DialogContent>
+
+                    <FormControl fullWidth>
+
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+
+                            <MenuItem value="">Select Reason</MenuItem>
+
+                            {customerExemptions.map(ex => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                    {ex.reason}
+                                </MenuItem>
+                            ))}
+
+                        </Select>
+
+                    </FormControl>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
+                            }
+
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
+
+                </DialogActions>
+
             </Dialog>
         </div>
     );

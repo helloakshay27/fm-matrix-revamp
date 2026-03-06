@@ -1482,7 +1482,7 @@ export const SalesOrderCreatePage: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
