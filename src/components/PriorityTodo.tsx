@@ -1,6 +1,7 @@
 import { Card, CardContent } from './ui/card'
 import { Check, Pencil, ArrowRightLeft, Focus, GripVertical } from 'lucide-react'
 import { useDraggable } from '@dnd-kit/core';
+import { Button } from './ui/button';
 
 interface PriorityTodoProps {
     selectedPriority?: string;
@@ -10,6 +11,9 @@ interface PriorityTodoProps {
     onEditTodo?: (todo: any) => void;
     onConvertTodo?: (todo: any) => void;
     onFlagTodo?: (todo: any) => void;
+    hasNextPage?: boolean;
+    isFetchingNextPage?: boolean;
+    fetchNextPage?: () => void;
 }
 
 const PRIORITY_CONFIG = {
@@ -203,7 +207,7 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
     );
 };
 
-const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo }: PriorityTodoProps) => {
+const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoToggle, onEditTodo, onConvertTodo, onFlagTodo, hasNextPage = false, isFetchingNextPage = false, fetchNextPage }: PriorityTodoProps) => {
     const config = selectedPriority && PRIORITY_CONFIG[selectedPriority as keyof typeof PRIORITY_CONFIG];
 
     const filteredTodos = selectedPriority
@@ -220,7 +224,7 @@ const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoT
                     {selectedPriority ? config?.title : 'Select a Priority'}
                 </h4>
             </div>
-            <CardContent className="p-3 flex-1 overflow-y-auto">
+            <CardContent className="p-3 flex-1 overflow-y-auto flex flex-col">
                 {isLoading ? (
                     <div className="space-y-3">
                         {[1, 2, 3].map((i) => (
@@ -232,24 +236,56 @@ const PriorityTodo = ({ selectedPriority, todos = [], isLoading = false, onTodoT
                 ) : filteredTodos.length === 0 ? (
                     <p className="text-xs text-gray-500 text-center py-8">No todos for this priority</p>
                 ) : (
-                    <div className="space-y-3">
-                        {/* Open Todos */}
-                        {openTodos.length > 0 && (
-                            <div>
-                                <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase">Open</h5>
-                                {openTodos.map((todo) => (
-                                    <DraggablePriorityTodoItem
-                                        key={todo.id}
-                                        todo={todo}
-                                        onTodoToggle={onTodoToggle}
-                                        onEditTodo={onEditTodo}
-                                        onConvertTodo={onConvertTodo}
-                                        onFlagTodo={onFlagTodo}
-                                    />
-                                ))}
+                    <>
+                        <div className="space-y-3 flex-1">
+                            {/* Open Todos */}
+                            {openTodos.length > 0 && (
+                                <div>
+                                    <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase">Open</h5>
+                                    {openTodos.map((todo) => (
+                                        <DraggablePriorityTodoItem
+                                            key={todo.id}
+                                            todo={todo}
+                                            onTodoToggle={onTodoToggle}
+                                            onEditTodo={onEditTodo}
+                                            onConvertTodo={onConvertTodo}
+                                            onFlagTodo={onFlagTodo}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Completed Todos */}
+                            {completedTodos.length > 0 && (
+                                <div>
+                                    <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase">Completed</h5>
+                                    {completedTodos.map((todo) => (
+                                        <DraggablePriorityTodoItem
+                                            key={todo.id}
+                                            todo={todo}
+                                            onTodoToggle={onTodoToggle}
+                                            onEditTodo={onEditTodo}
+                                            onConvertTodo={onConvertTodo}
+                                            onFlagTodo={onFlagTodo}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Load More Button */}
+                        {hasNextPage && (
+                            <div className="flex justify-center mt-3 pt-3 border-t">
+                                <Button
+                                    onClick={() => fetchNextPage?.()}
+                                    disabled={isFetchingNextPage}
+                                    className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                >
+                                    {isFetchingNextPage ? "Loading..." : "Load More"}
+                                </Button>
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
             </CardContent>
         </Card>

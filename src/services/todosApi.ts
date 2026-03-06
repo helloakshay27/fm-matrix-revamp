@@ -194,3 +194,92 @@ export const toggleTodo = async (id: number | string, completed: boolean) => {
         },
     });
 };
+
+/**
+ * Fetch todos by priority with pagination and filters
+ * @param page - Page number (1-indexed)
+ * @param priority - Priority level (P1, P2, P3, P4)
+ * @param taskType - "my" for current user or "all" for all tasks
+ * @param excludeCompleted - Whether to exclude completed todos (default: true)
+ * @param fromDate - Start date for filtering (YYYY-MM-DD format)
+ * @param toDate - End date for filtering (YYYY-MM-DD format)
+ * @param selectedAssignedTo - Array of user IDs to filter by (assigned to filter)
+ * @param selectedCreators - Array of user IDs to filter by (created by filter)
+ */
+export const fetchPriorityTodos = async (
+    page = 1,
+    priority: string,
+    taskType: "my" | "all" = "my",
+    excludeCompleted = true,
+    fromDate?: string,
+    toDate?: string,
+    selectedAssignedTo: string[] = [],
+    selectedCreators: string[] = []
+): Promise<TodosResponse> => {
+    const token = getToken();
+    const baseUrl = getBaseUrl();
+
+    if (!token || !baseUrl) {
+        throw new Error("Missing token or baseUrl");
+    }
+
+    let url = `https://${baseUrl}/todos.json`;
+
+    // Build query parameters
+    const queryParts: string[] = [];
+
+    // Add page parameter
+    queryParts.push(`page=${page}`);
+
+    // Add priority filter
+    queryParts.push(`q[priority_eq]=${priority}`);
+
+    // Add completed status filter
+    if (excludeCompleted) {
+        queryParts.push(`q[status_not_eq]=completed`);
+    }
+
+    // Add user filter
+    if (taskType === "my") {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = user?.id;
+        if (userId) {
+            queryParts.push(`q[user_id_eq]=${userId}`);
+        }
+    }
+
+    // Add "assigned to" filter if provided
+    if (selectedAssignedTo.length > 0) {
+        selectedAssignedTo.forEach((id) => {
+            queryParts.push(`q[user_id_in][]=${id}`);
+        });
+    }
+
+    // Add "created by" filter if provided
+    if (selectedCreators.length > 0) {
+        selectedCreators.forEach((id) => {
+            queryParts.push(`q[created_by_id_in][]=${id}`);
+        });
+    }
+
+    // Add date range filters if provided
+    if (fromDate) {
+        queryParts.push(`q[target_date_or_updated_at_gteq]=${fromDate}`);
+    }
+    if (toDate) {
+        queryParts.push(`q[target_date_or_updated_at_lteq]=${toDate}`);
+    }
+
+    // Append query parameters to URL
+    if (queryParts.length > 0) {
+        url += `?${queryParts.join("&")}`;
+    }
+
+    const response = await axios.get(url, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    return response.data;
+};

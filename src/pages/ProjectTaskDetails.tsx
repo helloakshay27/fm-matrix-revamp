@@ -455,13 +455,18 @@ const Comments = ({
       outline: "none",
       padding: 0,
       margin: 0,
+      width: "100%",
     },
-    highlighter: { overflow: "hidden" },
+    highlighter: {
+      overflow: "hidden",
+      padding: "8px",
+      border: "none",
+    },
     input: {
       font: "inherit",
       backgroundColor: "transparent",
       border: "none",
-      padding: 0,
+      padding: "8px",
       margin: 0,
       outline: "none",
     },
@@ -501,21 +506,27 @@ const Comments = ({
             inputRef={textareaRef}
             value={comment}
             onChange={(e, newValue) => setComment(newValue)}
-            className="mentions w-full h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none pr-10"
+            className="mentions w-full min-h-[70px] bg-[#F2F4F4] p-0 border-2 border-[#DFDFDF] focus-within:border-[#01569E] outline-none pr-10"
             placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
             style={{
               control: {
                 backgroundColor: "#F2F4F4",
                 fontSize: 14,
                 fontWeight: "normal",
+                minHeight: 70,
+                width: "100%",
               },
               highlighter: {
                 overflow: "hidden",
+                border: "none",
+                padding: "8px",
               },
               input: {
                 margin: 0,
                 padding: "8px",
                 outline: "none",
+                border: "none",
+                minHeight: 70,
               },
               suggestions: {
                 list: {
