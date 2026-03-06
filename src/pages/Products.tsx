@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
   Circle,
 } from "lucide-react";
+import { EmployeeHeader } from "@/components/EmployeeHeader";
 
 interface Product {
   id: string;
@@ -312,11 +313,13 @@ const Products: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 lg:p-10 font-sans">
+      <EmployeeHeader />
+      <div className="pt-16"></div>
       {/* Header Container */}
       <div className="relative mb-6">
         {/* Back Button */}
         <button
-          onClick={() => navigate("/company-hub")}
+          onClick={() => navigate("/employee/company-hub")}
           className="absolute left-0 top-0 flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors py-1"
         >
           <ArrowLeft className="w-4 h-4" />

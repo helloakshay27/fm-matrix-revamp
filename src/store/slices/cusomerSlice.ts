@@ -47,8 +47,20 @@ export const createCustomer = createAsyncThunk(
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create customer'
-            return rejectWithValue(message)
+            const responseData = error.response?.data;
+            let message = 'Failed to create customer';
+            if (Array.isArray(responseData)) {
+                message = responseData.join(', ');
+            } else if (typeof responseData === 'string') {
+                message = responseData;
+            } else if (responseData?.error) {
+                message = Array.isArray(responseData.error) ? responseData.error.join(', ') : responseData.error;
+            } else if (responseData?.message) {
+                message = responseData.message;
+            } else if (responseData?.errors) {
+                message = Array.isArray(responseData.errors) ? responseData.errors.join(', ') : responseData.errors;
+            }
+            return rejectWithValue(message);
         }
     }
 )

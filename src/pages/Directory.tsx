@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { EmployeeHeader } from "@/components/EmployeeHeader";
 
 interface Employee {
   id: number;
@@ -150,7 +151,7 @@ const Directory: React.FC = () => {
     };
 
     fetchEmployeeHierarchy();
-  }, [userEmail]);
+  }, [userEmail, baseUrl]);
 
   // Get unique departments for filter
   const departments = Array.from(
@@ -203,6 +204,8 @@ const Directory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 lg:p-10 font-sans">
+      <EmployeeHeader />
+      <div className="pt-16"></div>
       {/* Header */}
       <div className="relative mb-8">
         <button

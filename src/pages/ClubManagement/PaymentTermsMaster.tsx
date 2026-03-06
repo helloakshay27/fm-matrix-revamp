@@ -216,7 +216,7 @@ const PaymentTermsMaster = () => {
 	return (
 		<div className="p-6 space-y-6">
 			<header className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold">Payment Terms Master</h1>
+				<h1 className="text-2xl font-bold">Payment Terms </h1>
 			</header>
 
 			<EnhancedTaskTable

@@ -140,6 +140,10 @@ const ItemsAdd = () => {
         unit: "",
         sku: "",
 
+        hsn_code: "",
+        sac_code: "",
+
+
         sellable: true,
         purchasable: true,
 
@@ -152,6 +156,12 @@ const ItemsAdd = () => {
         purchase_account: "",
         purchase_description: "",
         preferred_vendor: "",
+
+
+        tax_preference: "",
+        intra_state_tax: "",
+        inter_state_tax: "",
+        exemption_reason: "",
     });
 
     const handleChange = (e: any) => {
@@ -168,6 +178,8 @@ const ItemsAdd = () => {
     const token = localStorage.getItem("token");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
+    const [exemptions, setExemptions] = useState([]);
+    const [taxSettings, setTaxSettings] = useState<any | null>(null);
 
     React.useEffect(() => {
         const fetchAccountGroups = async () => {
@@ -187,7 +199,57 @@ const ItemsAdd = () => {
         fetchAccountGroups();
     }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
     console.log("Account Groups:", accountGroups)
+    React.useEffect(() => {
+        const fetchExemptions = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
 
+                const res = await axios.get(
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Exemptions:", res.data);
+                setExemptions(res.data || []); // adjust path if different
+            } catch (err) {
+                console.error("Failed to fetch tax exemptions", err);
+                setExemptions([]);
+            }
+        };
+
+        fetchExemptions();
+    }, []);
+
+    React.useEffect(() => {
+        const fetchTaxSettings = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/1/tax_settings.json`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Tax settings:", res.data);
+                setTaxSettings(res.data || null); // adjust based on response
+            } catch (err) {
+                console.error("Failed to fetch tax settings", err);
+                setTaxSettings(null);
+            }
+        };
+
+        fetchTaxSettings();
+    }, []);
     const payload = {
         lock_account_item: {
             name: form.name,
@@ -201,7 +263,7 @@ const ItemsAdd = () => {
             product_type: form.type,
             pms_supplier_id: form.preferred_vendor,
             unit: form.unit,
-            // sale_mrp: form.mrp,
+            sale_mrp: form.mrp,
             can_be_sold: form.sellable,
             can_be_purchased: form.purchasable,
             track_inventory: false
@@ -218,6 +280,19 @@ const ItemsAdd = () => {
             toast.error("Select at least one option from, Sales Information, Purchase Information to proceed.");
             return;
         }
+
+        if (!form.tax_preference) {
+  toast.error("Please select Tax Preference");
+  return;
+}
+
+// ✅ If Non-Taxable
+if (form.tax_preference === "non_taxable") {
+  if (!form.exemption_reason) {
+    toast.error("Please select Exemption Reason");
+    return;
+  }
+}
         if (form.sellable) {
             if (!form.selling_price || isNaN(Number(form.selling_price))) {
                 toast.error("Selling Price is required for Sellable items");
@@ -249,13 +324,34 @@ const ItemsAdd = () => {
             unit: form.unit,
             can_be_sold: form.sellable,
             can_be_purchased: form.purchasable,
-            track_inventory: false
+            track_inventory: false,
+            tax_preference: form.tax_preference,
         };
+        // HSN for Goods
+        if (form.type === "goods") {
+            itemPayload.hsn_code = form.hsn_code;
+        }
+
+        // SAC for Service
+        if (form.type === "service") {
+            itemPayload.sac = form.sac_code;
+        }
+        if (form.tax_preference === "taxable" && taxSettings) {
+            itemPayload.intra_state_tax_rate_id =
+                taxSettings.intra_state_tax_rate_id;
+
+            itemPayload.inter_state_tax_rate_id =
+                taxSettings.inter_state_tax_rate_id;
+        }
+
+        if (form.tax_preference === "non_taxable") {
+            itemPayload.tax_exemption_id = form.exemption_reason;
+        }
         if (form.sellable) {
             itemPayload.sale_description = form.sales_description;
             itemPayload.sale_rate = form.selling_price;
             itemPayload.sale_lock_account_ledger_id = form.sales_account;
-            // itemPayload.sale_mrp = form.mrp;
+            itemPayload.sale_mrp = form.mrp;
         }
         if (form.purchasable) {
             itemPayload.purchase_description = form.purchase_description;
@@ -382,6 +478,74 @@ const ItemsAdd = () => {
                             </Select>
                         </FormControl>
 
+                        {/* HSN / SAC Code */}
+                        {form.type === "goods" ? (
+                            <TextField
+                                label="HSN Code"
+                                name="hsn_code"
+                                placeholder="Enter HSN Code"
+                                value={form.hsn_code}
+                                onChange={handleChange}
+                            />
+                        ) : (
+                            <TextField
+                                label="SAC"
+                                name="sac_code"
+                                placeholder="Enter SAC Code"
+                                value={form.sac_code}
+                                onChange={handleChange}
+                            />
+                        )}
+
+                        <FormControl fullWidth>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <Select
+                                name="tax_preference"
+                                value={form.tax_preference}
+                                label="Tax Preference"
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        tax_preference: value,
+                                        intra_state_tax: "",
+                                        inter_state_tax: "",
+                                        exemption_reason: "",
+                                    }));
+                                }}
+                            >
+                                <MenuItem value="taxable">Taxable</MenuItem>
+                                <MenuItem value="non_taxable">Non-Taxable</MenuItem>
+                                <MenuItem value="out_of_scope">Out of Scope</MenuItem>
+                                <MenuItem value="non_gst_supply">Non-GST Supply</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        {form.tax_preference === "non_taxable" && (
+                            <div className="mt-4">
+                                <FormControl fullWidth>
+                                    <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
+                                    <Select
+                                        name="exemption_reason"
+                                        value={form.exemption_reason}
+                                        label="Exemption Reason"
+                                        onChange={handleChange}
+                                    >
+                                        <MenuItem value="" disabled>
+                                            Select exemption reason
+                                        </MenuItem>
+
+                                        {exemptions.map((ex) => (
+                                            <MenuItem key={ex.id} value={ex.id}>
+                                                {ex.reason}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </div>
+                        )}
+                        {console.log("exemptions:", exemptions)}
+
                     </div>
 
                     {/* RIGHT SIDE ATTACHMENT */}
@@ -481,7 +645,7 @@ const ItemsAdd = () => {
                             /> */}
 
 
-                            <TextField
+                            {/* <TextField
                                 placeholder="Enter selling price"
                                 fullWidth
                                 label={
@@ -521,6 +685,81 @@ const ItemsAdd = () => {
                                         paddingLeft: "12px",
                                     },
                                 }}
+                            /> */}
+
+                            <TextField
+                                placeholder="Enter selling price"
+                                fullWidth
+                                label={
+                                    <>
+                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
+                                name="selling_price"
+                                value={form.selling_price}
+                                disabled={!form.sellable}
+                                onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    // Remove anything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    // Prevent multiple dots
+                                    const parts = value.split(".");
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        selling_price: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.selling_price) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            selling_price: Number(prev.selling_price).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment
+                                            position="start"
+                                            sx={{
+                                                backgroundColor: "#f3f3f3",
+                                                borderRight: "1px solid #dcdcdc",
+                                                height: "44px",
+                                                maxHeight: "44px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                px: 1.5,
+                                                color: "#555",
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            INR
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        paddingLeft: 0,
+                                    },
+                                    "& input": {
+                                        paddingLeft: "12px",
+                                    },
+                                }}
                             />
 
 
@@ -535,6 +774,50 @@ const ItemsAdd = () => {
                                 value={form.mrp}
                                 onChange={handleChange}
                             /> */}
+
+                            <TextField
+                                disabled={!form.sellable}
+                                label="MRP"
+                                name="mrp"
+                                placeholder="Enter MRP"
+                                value={form.mrp}
+                                fullWidth
+                                onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    // Remove everything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    const parts = value.split(".");
+
+                                    // Prevent multiple dots
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        mrp: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.mrp) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            mrp: Number(prev.mrp).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
+                            />
 
 
                             <FormControl disabled={!form.sellable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
@@ -575,7 +858,7 @@ const ItemsAdd = () => {
                                 </Select>
                             </FormControl>
 
-                            <TextField
+                            {/* <TextField
                                 disabled={!form.sellable}
                                 label="Description"
                                 name="sales_description"
@@ -584,6 +867,54 @@ const ItemsAdd = () => {
                                 onChange={handleChange}
                                 multiline
                                 rows={3}
+                            /> */}
+
+                            <TextField
+                                disabled={!form.sellable}
+                                label={
+                                    <span>
+                                        Description
+                                    </span>
+                                }
+                                name="sales_description"
+                                value={form.sales_description}
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        sales_description: e.target.value,
+                                    }))
+                                }
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& textarea": {
+                                        resize: "none !important", // ✅ removes expand icon
+                                    },
+                                }}
+                                helperText={
+                                    <span style={{ textAlign: "right", display: "block" }}>
+                                        {`${form.sales_description?.length || 0}/500 characters`}
+                                    </span>
+                                }
+                                error={(form.sales_description?.length || 0) > 500}
                             />
                         </div>
                     </div>
@@ -617,7 +948,7 @@ const ItemsAdd = () => {
                                 onChange={handleChange}
                             /> */}
 
-                            <TextField
+                            {/* <TextField
                                 placeholder="Enter cost price"
                                 fullWidth
                                 label={
@@ -657,8 +988,82 @@ const ItemsAdd = () => {
                                         paddingLeft: "12px",
                                     },
                                 }}
-                            />
+                            /> */}
+                            <TextField
+                                placeholder="Enter cost price"
+                                fullWidth
+                                label={
+                                    <>
+                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                    </>
+                                }
+                                name="cost_price"
+                                value={form.cost_price}
+                                disabled={!form.purchasable}
+                                onChange={(e) => {
+                                    let value = e.target.value;
 
+                                    // Remove everything except numbers and dot
+                                    value = value.replace(/[^0-9.]/g, "");
+
+                                    const parts = value.split(".");
+
+                                    // Prevent multiple dots
+                                    if (parts.length > 2) {
+                                        value = parts[0] + "." + parts[1];
+                                    }
+
+                                    // Allow only 2 decimal places
+                                    if (parts[1]?.length > 2) {
+                                        value = parts[0] + "." + parts[1].slice(0, 2);
+                                    }
+
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        cost_price: value,
+                                    }));
+                                }}
+                                onBlur={() => {
+                                    if (form.cost_price) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            cost_price: Number(prev.cost_price).toFixed(2),
+                                        }));
+                                    }
+                                }}
+                                inputProps={{
+                                    inputMode: "decimal",
+                                    pattern: "^\\d*(\\.\\d{0,2})?$",
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment
+                                            position="start"
+                                            sx={{
+                                                backgroundColor: "#f3f3f3",
+                                                borderRight: "1px solid #dcdcdc",
+                                                height: "44px",
+                                                maxHeight: "44px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                px: 1.5,
+                                                color: "#555",
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            INR
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        paddingLeft: 0,
+                                    },
+                                    "& input": {
+                                        paddingLeft: "12px",
+                                    },
+                                }}
+                            />
                             <FormControl disabled={!form.purchasable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
                                 <InputLabel id="purchase-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
                                 <Select
@@ -697,7 +1102,7 @@ const ItemsAdd = () => {
                                 </Select>
                             </FormControl>
 
-                            <TextField
+                            {/* <TextField
                                 disabled={!form.purchasable}
                                 label="Description"
                                 name="purchase_description"
@@ -706,6 +1111,55 @@ const ItemsAdd = () => {
                                 onChange={handleChange}
                                 multiline
                                 rows={3}
+                            /> */}
+
+                            <TextField
+                                disabled={!form.purchasable}
+                                label={
+                                    <span>
+                                        Description
+                                    </span>
+                                }
+                                name="purchase_description"
+                                value={form.purchase_description}
+                                placeholder="Enter purchase description"
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        purchase_description: e.target.value,
+                                    }))
+                                }
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& textarea": {
+                                        resize: "none !important", // ✅ removes resize icon
+                                    },
+                                }}
+                                helperText={
+                                    <span style={{ textAlign: "right", display: "block" }}>
+                                        {`${form.purchase_description?.length || 0}/500 characters`}
+                                    </span>
+                                }
+                                error={(form.purchase_description?.length || 0) > 500}
                             />
 
                             <FormControl disabled={!form.purchasable}>
@@ -725,6 +1179,31 @@ const ItemsAdd = () => {
                     </div>
                 </div>
 
+                {form.tax_preference === "taxable" && taxSettings && (
+                    <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
+
+                        <div className="md:col-span-2 font-semibold text-gray-700">
+                            Default Tax Rates
+                        </div>
+
+                        {/* Intra State Tax (CGST + SGST) */}
+                        <TextField
+                            label="Intra State Tax Rate"
+                            value={taxSettings.intra_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                        />
+
+                        {/* Inter State Tax (IGST) */}
+                        <TextField
+                            label="Inter State Tax Rate"
+                            value={taxSettings.inter_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                        />
+
+                    </div>
+                )}
                 {/* BUTTONS */}
                 <div className="flex gap-3 mt-10 mb-5 justify-center">
                     <Button

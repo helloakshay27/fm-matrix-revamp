@@ -355,7 +355,7 @@ export const TaxSetupMaster: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Tax Setup Master</h1>
+        <h1 className="text-2xl font-bold">Tax Setup </h1>
       </header>
 
       <EnhancedTaskTable

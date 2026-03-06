@@ -133,11 +133,11 @@ const getUserDataFromLocalStorage = () => {
     if (userData) {
       const user = JSON.parse(userData);
       console.log('🔍 Raw user data from localStorage:', user); // Debug log
-      
+
       // Try multiple possible department field names with extensive logging
       const possibleDepartmentFields = [
         'department_name',
-        'designation', 
+        'designation',
         'department',
         'role_name',
         'lock_user_permission?.designation',
@@ -145,9 +145,9 @@ const getUserDataFromLocalStorage = () => {
         'profile?.designation',
         'profile?.department_name'
       ];
-      
+
       console.log('🔍 Checking department fields:', possibleDepartmentFields);
-      
+
       let department = '';
       // Check each possible field
       if (user.department_name) {
@@ -178,9 +178,9 @@ const getUserDataFromLocalStorage = () => {
         console.log('❌ No department field found in user data');
         console.log('Available fields:', Object.keys(user));
       }
-      
+
       console.log('🎯 Final extracted department:', department);
-      
+
       return {
         name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
         department: department,
@@ -239,13 +239,13 @@ const getUserProfileFromAlternativeAPI = async () => {
     console.log('🔄 Trying alternative API for user profile...');
     const occupantResponse = await ticketManagementAPI.getOccupantUsers();
     console.log('🔄 Occupant users response:', occupantResponse);
-    
+
     // Try to get current user from localStorage to find their ID
     const currentUserData = localStorage.getItem('user');
     if (currentUserData) {
       const user = JSON.parse(currentUserData);
       console.log('🔄 Looking for current user ID:', user.id);
-      
+
       // Find current user in occupant users list
       const currentUserProfile = occupantResponse.find(u => u.id === user.id);
       if (currentUserProfile && currentUserProfile.lock_user_permission?.designation) {
@@ -257,12 +257,12 @@ const getUserProfileFromAlternativeAPI = async () => {
         };
       }
     }
-    
+
     // Try FM users API as well
     const fmResponse = await ticketManagementAPI.getEngineers();
     const fmUsers = fmResponse.users || [];
     console.log('🔄 FM users response:', fmUsers);
-    
+
     if (currentUserData) {
       const user = JSON.parse(currentUserData);
       const currentUserFMProfile = fmUsers.find(u => u.id === user.id);
@@ -276,7 +276,7 @@ const getUserProfileFromAlternativeAPI = async () => {
         };
       }
     }
-    
+
     console.log('❌ No alternative profile found');
     return null;
   } catch (error) {
@@ -318,6 +318,9 @@ export const AddTicketDashboard = () => {
   const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [entities, setEntities] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingEntities, setLoadingEntities] = useState(false);
+  const [orgId, setOrgId] = useState<number | null>(null);
 
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -353,7 +356,9 @@ export const AddTicketDashboard = () => {
     building: '',
     wing: '',
     floor: '',
-    room: ''
+    room: '',
+    // Customer name field (for org_id 63)
+    customer_name: ''
   });
   // Set default proactiveReactive based on onBehalfOf selection
   useEffect(() => {
@@ -378,16 +383,16 @@ export const AddTicketDashboard = () => {
       console.log('🚀 API response keys:', Object.keys(response)); // Debug log
       console.log('🚀 Department field in API response:', response.department_name); // Debug log
       setUserAccount(response);
-      
+
       // Store in localStorage for future use
       localStorage.setItem('user', JSON.stringify(response));
       console.log('💾 Stored user data in localStorage:', JSON.stringify(response, null, 2));
-      
+
       // Populate form data when account is loaded for self
       if (onBehalfOf === 'self' && response) {
         let department = response.department_name || '';
         console.log('🎯 Department from API response:', department); // Debug log
-        
+
         // If no department found, try alternative APIs
         if (!department) {
           console.log('🔄 No department in main API, trying alternative sources...');
@@ -395,12 +400,12 @@ export const AddTicketDashboard = () => {
           if (alternativeProfile) {
             department = alternativeProfile.department_name || alternativeProfile.designation || alternativeProfile.role_name || '';
             console.log('🎯 Department from alternative API:', department);
-            
+
             // Update stored user data with enhanced profile
             localStorage.setItem('user', JSON.stringify(alternativeProfile));
           }
         }
-        
+
         setFormData(prev => ({
           ...prev,
           name: `${response.firstname} ${response.lastname}`,
@@ -423,7 +428,7 @@ export const AddTicketDashboard = () => {
     setLoadingAccount(true);
     try {
       const userData = getUserDataFromLocalStorage();
-      
+
       if (userData) {
         setUserAccount({
           firstname: userData.name.split(' ')[0] || '',
@@ -435,18 +440,18 @@ export const AddTicketDashboard = () => {
           email: userData.email || '',
           company_id: userData.company_id || ''
         });
-        
+
         // Populate form data when account is loaded for self
         if (onBehalfOf === 'self') {
           console.log('🎯 Setting form data with userData:', userData); // Debug log
-          
+
           // If no department in localStorage, try to fetch it fresh
           if (!userData.department) {
             console.log('🔄 No department in localStorage, will fetch from API');
             loadUserAccountFromAPI();
             return;
           }
-          
+
           setFormData(prev => ({
             ...prev,
             name: userData.name,
@@ -496,6 +501,48 @@ export const AddTicketDashboard = () => {
       }));
     }
   }, [userAccount, onBehalfOf]);
+
+  // Load org_id and entities on mount
+  useEffect(() => {
+    // Fetch org_id from localStorage
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const foundOrgId = user?.org_id || user?.organization_id;
+      if (foundOrgId) {
+        setOrgId(Number(foundOrgId));
+      } else {
+        const standalonOrgId = localStorage.getItem('org_id');
+        if (standalonOrgId) setOrgId(Number(standalonOrgId));
+      }
+    } catch (e) {
+      const standalonOrgId = localStorage.getItem('org_id');
+      if (standalonOrgId) setOrgId(Number(standalonOrgId));
+    }
+
+    // Load entities if org_id is 63
+    const loadEntities = async () => {
+      setLoadingEntities(true);
+      try {
+        const url = getFullUrl('/entities.json');
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch entities');
+        const data = await response.json();
+        // Extract entities array and map to id and name
+        const entityList = Array.isArray(data?.entities) ? data.entities : [];
+        setEntities(entityList.map(entity => ({
+          id: entity.id,
+          name: entity.name
+        })));
+      } catch (error) {
+        console.error('Error loading entities:', error);
+      } finally {
+        setLoadingEntities(false);
+      }
+    };
+
+    loadEntities();
+  }, []);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -613,7 +660,7 @@ export const AddTicketDashboard = () => {
       setCategories(response.helpdesk_categories || []);
     } catch (error) {
       console.error('Error loading categories:', error);
-          toast.error("Failed to load categories", { description: "Error" });
+      toast.error("Failed to load categories", { description: "Error" });
     } finally {
       setLoadingCategories(false);
     }
@@ -665,7 +712,7 @@ export const AddTicketDashboard = () => {
       setComplaintModes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading complaint modes:', error);
-          toast.error("Failed to load complaint modes", { description: "Error" });
+      toast.error("Failed to load complaint modes", { description: "Error" });
     } finally {
       setLoadingComplaintModes(false);
     }
@@ -694,7 +741,7 @@ export const AddTicketDashboard = () => {
       setAreas(data.areas || []);
     } catch (error) {
       console.error('Error loading areas:', error);
-          toast.error("Failed to load areas", { description: "Error" });
+      toast.error("Failed to load areas", { description: "Error" });
     } finally {
       setLoadingAreas(false);
     }
@@ -716,7 +763,7 @@ export const AddTicketDashboard = () => {
       setBuildings(data.pms_buildings || data || []);
     } catch (error) {
       console.error('Error loading buildings:', error);
-          toast.error("Failed to load buildings", { description: "Error" });
+      toast.error("Failed to load buildings", { description: "Error" });
     } finally {
       setLoadingBuildings(false);
     }
@@ -738,7 +785,7 @@ export const AddTicketDashboard = () => {
       setWings(data.wings || []);
     } catch (error) {
       console.error('Error loading wings:', error);
-          toast.error("Failed to load wings", { description: "Error" });
+      toast.error("Failed to load wings", { description: "Error" });
     } finally {
       setLoadingWings(false);
     }
@@ -760,7 +807,7 @@ export const AddTicketDashboard = () => {
       setFloors(data.floors || []);
     } catch (error) {
       console.error('Error loading floors:', error);
-          toast.error("Failed to load floors", { description: "Error" });
+      toast.error("Failed to load floors", { description: "Error" });
     } finally {
       setLoadingFloors(false);
     }
@@ -782,7 +829,7 @@ export const AddTicketDashboard = () => {
       setRooms(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading rooms:', error);
-          toast.error("Failed to load rooms", { description: "Error" });
+      toast.error("Failed to load rooms", { description: "Error" });
     } finally {
       setLoadingRooms(false);
     }
@@ -980,20 +1027,34 @@ export const AddTicketDashboard = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Validation
-    if (!ticketType || !formData.categoryType || !formData.description) {
-      toast.error("Please fill in all required fields", { description: "Validation Error" });
+    // field-level validation with specific messages
+    if (!ticketType) {
+      toast.error("Validation Error: Ticket type is required.");
+      return;
+    }
+    if (!formData.categoryType) {
+      toast.error("Validation Error: Category is required.");
+      return;
+    }
+    if (!formData.complaintMode) {
+      toast.error("Validation Error: Mode is required.");
+      return;
+    }
+
+    if (!formData.description) {
+      toast.error("Validation Error: Description is required.");
       return;
     }
 
     // Validate complaint mode is selected
     if (!formData.complaintMode) {
-      toast.error("Please select a complaint mode", { description: "Validation Error" });
+      toast.error("Validation Error: Complaint mode is required.");
       return;
     }
 
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
-      toast.error("Please select a user when creating ticket on behalf of others", { description: "Validation Error" });
+      toast.error("Validation Error: Please select a user when creating ticket on behalf of others.");
       return;
     }
 
@@ -1040,6 +1101,7 @@ export const AddTicketDashboard = () => {
         ...(formData.wing && { wing_id: parseInt(formData.wing) }),
         ...(formData.floor && { floor_id: parseInt(formData.floor) }),
         ...(formData.room && { room_id: parseInt(formData.room) }),
+        ...(formData.customer_name && { entity_id: parseInt(formData.customer_name) }),
         is_golden_ticket: isGoldenTicket,
         is_flagged: isFlagged
       };
@@ -1053,7 +1115,7 @@ export const AddTicketDashboard = () => {
       // console.log('Is Flagged:', isFlagged);
 
       console.log('Submitting ticket with data:', ticketData, 'and files:', attachedFiles);
-      
+
 
       const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       console.log('Create ticket response:', response);
@@ -1102,7 +1164,7 @@ export const AddTicketDashboard = () => {
   const handleGoBack = () => {
     const currentPath = window.location.pathname;
 
-if (currentPath.includes("/club-management/helpdesk")) {
+    if (currentPath.includes("/club-management/helpdesk")) {
       navigate("/club-management/helpdesk");
     } else if (currentPath.includes("tickets")) {
       navigate("/tickets");
@@ -1343,7 +1405,33 @@ if (currentPath.includes("/club-management/helpdesk")) {
                   <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
                 </div> */}
 
-
+            {/* Customer Name Dropdown - Only for org_id 63 */}
+            {orgId === 63 && (
+              <div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Customer Name</InputLabel>
+                  <MuiSelect
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    label="Customer Name"
+                    notched
+                    displayEmpty
+                    disabled={loadingEntities}
+                  >
+                    <MenuItem value="">Select Customer</MenuItem>
+                    {entities.map((entity) => (
+                      <MenuItem key={entity.id} value={entity.id.toString()}>
+                        {entity.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            )}
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1351,7 +1439,7 @@ if (currentPath.includes("/club-management/helpdesk")) {
               <FormControl
                 fullWidth
                 variant="outlined"
-                required
+                // required
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Category Type</InputLabel>
@@ -1421,7 +1509,7 @@ if (currentPath.includes("/club-management/helpdesk")) {
               <FormControl
                 fullWidth
                 variant="outlined"
-                required
+                // required
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Mode</InputLabel>
@@ -1518,9 +1606,11 @@ if (currentPath.includes("/club-management/helpdesk")) {
                 <InputLabel shrink>Vendor</InputLabel>
                 <MuiSelect
                   value={formData.vendor}
-                  onChange={(e) => { setFormData({
-                    ...formData, vendor: e.target.value
-                  }); console.log(e.target.value); }}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData, vendor: e.target.value
+                    }); console.log(e.target.value);
+                  }}
                   label="Vendor"
                   notched
                   displayEmpty
@@ -1580,7 +1670,7 @@ if (currentPath.includes("/club-management/helpdesk")) {
       peer-focus:text-sm
       peer-focus:text-[rgb(25,118,210)]"
               >
-                Descriptions
+                Description <span className="text-red-500">*</span>
               </label>
             </div>
           </div>
