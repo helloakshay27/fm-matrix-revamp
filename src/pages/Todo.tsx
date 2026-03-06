@@ -13,7 +13,7 @@ import { Switch } from "@mui/material";
 import { Card, CardContent } from "@/components/ui/card";
 import MuiMultiSelect from "@/components/MuiMultiSelect";
 import EisenhowerMatrix from "@/components/EisenhowerMatrix";
-import { useTodos, useToggleTodo } from "@/hooks/useTodos";
+import { useTodos, useToggleTodo, usePriorityTodos } from "@/hooks/useTodos";
 import PriorityTodo from "@/components/PriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
 
@@ -139,8 +139,6 @@ export default function Todo() {
   const [isToggleConfirmOpen, setIsToggleConfirmOpen] = useState(false);
   const [todoToToggle, setTodoToToggle] = useState<any>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
-  const [priorityFilteredTodos, setPriorityFilteredTodos] = useState<any[]>([]);
-  const [isPriorityLoading, setIsPriorityLoading] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<TodoFilters>({
     fromDate: '',
@@ -172,8 +170,27 @@ export default function Todo() {
     selectedCreators: creatorIds,
   });
 
+  // Use React Query hook for priority todos with infinite pagination
+  const {
+    data: priorityTodosData,
+    isLoading: isPriorityLoading,
+    hasNextPage: priorityHasNextPage,
+    fetchNextPage: priorityFetchNextPage,
+    isFetchingNextPage: priorityIsFetchingNextPage,
+  } = usePriorityTodos({
+    priority: selectedPriority || '',
+    taskType,
+    fromDate: appliedFilters.fromDate,
+    toDate: appliedFilters.toDate,
+    selectedAssignedTo: assignedToIds,
+    selectedCreators: creatorIds,
+  });
+
   // Combine all pages into a single todos array
   const todos = todosData?.pages.flatMap(page => page.todos) || [];
+
+  // Combine priority todos from all pages
+  const priorityFilteredTodos = priorityTodosData?.pages.flatMap(page => page.todos) || [];
 
   // Extract dashboard data from first page
   useEffect(() => {
@@ -209,49 +226,13 @@ export default function Todo() {
     getUsers();
   }, []);
 
-  // Function to fetch todos by priority
-  const fetchTodosByPriority = async (priority: string | null) => {
-    if (!priority) {
-      setPriorityFilteredTodos([]);
-      setSelectedPriority(null);
-      return;
-    }
-
-    setIsPriorityLoading(true);
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const userId = taskType === "my" ? user.id : undefined;
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append("q[priority_eq]", priority);
-      if (userId) {
-        params.append("q[user_id_eq]", userId);
-      }
-
-      const response = await axios.get(
-        `https://${baseUrl}/todos.json?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const filteredTodos = Array.isArray(response.data.todos) ? response.data.todos : [];
-      setPriorityFilteredTodos(filteredTodos);
-      setSelectedPriority(priority);
-    } catch (error) {
-      console.error("Error fetching todos by priority:", error);
-      toast.error("Failed to fetch todos for this priority");
-      setPriorityFilteredTodos([]);
-    } finally {
-      setIsPriorityLoading(false);
-    }
+  // Function to handle priority selection
+  const handlePrioritySelect = (priority: string | null) => {
+    setSelectedPriority(priority);
   };
 
   useEffect(() => {
-    fetchTodosByPriority("P1");
+    setSelectedPriority("P1");
   }, [taskType])
 
   // Use toggle mutation hook for better cache management
@@ -538,8 +519,7 @@ export default function Todo() {
           );
           toast.success(`Priority changed to ${newPriority}`);
           refetch();
-          // Refetch the priority-filtered todos to remove the item from current priority list
-          fetchTodosByPriority(selectedPriority);
+          // Cache will be automatically invalidated when priority changes
         }
       }
     } catch (error) {
@@ -634,7 +614,7 @@ export default function Todo() {
             <div className="w-1/2 h-full">
               <EisenhowerMatrix
                 dashboardData={dashboardData}
-                onQuadrantClick={fetchTodosByPriority}
+                onQuadrantClick={handlePrioritySelect}
                 selectedPriority={selectedPriority}
               />
             </div>
@@ -647,6 +627,9 @@ export default function Todo() {
                 onEditTodo={handleEditTodo}
                 onConvertTodo={handleConvertTodo}
                 onFlagTodo={(todo) => handleFlagTodo(todo)}
+                hasNextPage={priorityHasNextPage}
+                isFetchingNextPage={priorityIsFetchingNextPage}
+                fetchNextPage={priorityFetchNextPage}
               />
             </div>
           </div>

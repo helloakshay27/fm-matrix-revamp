@@ -471,6 +471,7 @@ export const InvoiceAdd: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
+     const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -641,7 +642,7 @@ export const InvoiceAdd: React.FC = () => {
             formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_invoice[subject]', subject);
             formData.append('lock_account_invoice[status]', 'draft');
-            formData.append('lock_account_invoice[total_amount]', String(totalAmount));
+            formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
                 formData.append('lock_account_invoice[discount_amount]', String(totalDiscount));
@@ -743,6 +744,49 @@ export const InvoiceAdd: React.FC = () => {
             setTaxAmount2(0);
         }
     }, [selectedTax, taxOptions, afterDiscount]);
+
+    const selectedTaxGroups = items
+            .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+            .map(item => {
+                const group = taxGroups.find(g => g.id === item.tax_group_id);
+                return {
+                    itemAmount: item.amount,
+                    taxRates: group?.tax_rates || []
+                };
+            });
+        const taxBreakdown: any[] = [];
+    
+        selectedTaxGroups.forEach(group => {
+            group.taxRates.forEach(rate => {
+                const taxAmount = (group.itemAmount * rate.rate) / 100;
+    
+                const existing = taxBreakdown.find(t => t.name === rate.name);
+    
+                if (existing) {
+                    existing.amount += taxAmount;
+                } else {
+                    taxBreakdown.push({
+                        name: rate.name,
+                        rate: rate.rate,
+                        amount: taxAmount
+                    });
+                }
+            });
+        });
+        // Calculate Final Total
+       
+        const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+        useEffect(() => {
+            const total =
+                afterDiscount +
+                totalTax  // tax from tax groups
+                - taxAmount2 + // TDS/TCS
+                (Number(adjustment) || 0);
+    
+            setTotalAmount2(total);
+    
+    
+        }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
     return (
         <div className="p-6 space-y-6 relative">
@@ -1287,7 +1331,16 @@ export const InvoiceAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-
+                            {taxBreakdown.map((tax, index) => (
+                                <div key={index} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {tax.name} ({tax.rate}%)
+                                    </span>
+                                    <span className="font-semibold text-base">
+                                        ₹{tax.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
                             <Divider />
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
@@ -1360,7 +1413,7 @@ export const InvoiceAdd: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

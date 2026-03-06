@@ -7,6 +7,7 @@ import {
 import { useCallback } from "react";
 import {
     fetchTodos,
+    fetchPriorityTodos,
     createTodo,
     updateTodo,
     deleteTodo,
@@ -36,6 +37,9 @@ export const todosQueryKeys = {
         ] as const,
     infinite: (taskType: "my" | "all", userIds: string[], search?: string, fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
         [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
+    priority: () => [...todosQueryKeys.all, "priority"] as const,
+    priorityInfinite: (priority: string, taskType: "my" | "all", fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
+        [...todosQueryKeys.priority(), "infinite", { priority, taskType, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
     details: () => [...todosQueryKeys.all, "detail"] as const,
     detail: (id: number | string) =>
         [...todosQueryKeys.details(), id] as const,
@@ -87,6 +91,56 @@ export const useTodos = ({
         getNextPageParam: (lastPage) => lastPage.pagination.next_page,
         initialPageParam: 1,
         staleTime: 30 * 1000, // 30 seconds
+    });
+};
+
+interface UsePriorityTodosOptions {
+    priority: string;
+    taskType?: "my" | "all";
+    excludeCompleted?: boolean;
+    fromDate?: string;
+    toDate?: string;
+    selectedAssignedTo?: string[];
+    selectedCreators?: string[];
+}
+
+/**
+ * usePriorityTodos - Fetch todos by priority with infinite pagination and filters
+ *
+ * Features:
+ * - Infinite pagination with React Query
+ * - Caching with 30s stale time
+ * - Filter by priority (P1, P2, P3, P4)
+ * - Filter by task type (my/all)
+ * - Date range filtering
+ * - Filter by assigned to and created by users
+ * - Option to include/exclude completed todos
+ *
+ * Example:
+ * const { data, fetchNextPage, hasNextPage, isLoading } = usePriorityTodos({
+ *   priority: "P1",
+ *   taskType: "my",
+ *   fromDate: "2026-02-28",
+ *   toDate: "2026-03-07"
+ * });
+ */
+export const usePriorityTodos = ({
+    priority,
+    taskType = "my",
+    excludeCompleted = true,
+    fromDate,
+    toDate,
+    selectedAssignedTo = [],
+    selectedCreators = [],
+}: UsePriorityTodosOptions) => {
+    return useInfiniteQuery({
+        queryKey: todosQueryKeys.priorityInfinite(priority, taskType, fromDate, toDate, selectedAssignedTo, selectedCreators),
+        queryFn: ({ pageParam = 1 }) =>
+            fetchPriorityTodos(pageParam, priority, taskType, excludeCompleted, fromDate, toDate, selectedAssignedTo, selectedCreators),
+        getNextPageParam: (lastPage) => lastPage.pagination.next_page,
+        initialPageParam: 1,
+        staleTime: 30 * 1000, // 30 seconds
+        enabled: !!priority, // Only fetch if priority is provided
     });
 };
 
