@@ -149,13 +149,14 @@ export const EditCrmCustomer = () => {
     const removeDomain = (index: number) => {
         const domain = domains[index];
         if (domain.id) {
-            // Mark existing domain for deletion
+            // Mark existing (server-side) domain for deletion via _destroy
             setDomains((prev) =>
                 prev.map((d, i) => (i === index ? { ...d, _destroy: true } : d))
             );
         } else {
-            // Remove new domain
-            if (domains.filter((d) => !d._destroy).length > 1) {
+            // Only allow removing an unsaved domain if there's at least one other visible domain
+            const visibleCount = domains.filter((d) => !d._destroy).length;
+            if (visibleCount > 1) {
                 setDomains((prev) => prev.filter((_, i) => i !== index));
             }
         }
@@ -166,14 +167,14 @@ export const EditCrmCustomer = () => {
             toast.error("Customer name is required");
             return false;
         }
-        if (!formData.email) {
-            toast.error("Email is required");
-            return false;
-        }
-        if (!formData.mobile) {
-            toast.error("Mobile number is required");
-            return false;
-        }
+        // if (!formData.email) {
+        //     toast.error("Email is required");
+        //     return false;
+        // }
+        // if (!formData.mobile) {
+        //     toast.error("Mobile number is required");
+        //     return false;
+        // }
         // for (const lease of leases) {
         //     if (!lease.leaseStartDate) {
         //         toast.error("Lease start date is required");
@@ -218,11 +219,13 @@ export const EditCrmCustomer = () => {
                     paid_parking: lease.paidParking,
                 })),
                 entity_domains_attributes : domains
-                    .filter((domain) => domain.domain.trim() !== "" || domain._destroy)
+                    .filter((domain) => domain._destroy || domain.domain.trim() !== "")
                     .map((domain) => ({
                         ...(domain.id != null && { id: domain.id }),
-                        domain: domain.domain,
-                        ...(domain._destroy && { _destroy: true }),
+                        ...(domain._destroy
+                            ? { _destroy: true }
+                            : { domain: domain.domain }
+                        ),
                     })),
             },
         };
@@ -354,24 +357,7 @@ export const EditCrmCustomer = () => {
                                 />
                             </div>
                             <div>
-                                {/* <TextField
-                                    label="Customer Code"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.customerCode}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        handleInputChange("customerCode", value);
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                /> */}
-                            </div>
-                            <div>
+                                  <div>
                                 <TextField
                                     label="Company Code*"
                                     variant="outlined"
@@ -389,10 +375,28 @@ export const EditCrmCustomer = () => {
                                     }}
                                 />
                             </div>
-                            <div>
-                                <div className="space-y-2">
+                              
+                                {/* <TextField
+                                    label="Customer Code"
+                                    variant="outlined"
+                                    fullWidth
+                                    size="small"
+                                    value={formData.customerCode}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleInputChange("customerCode", value);
+                                    }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "8px",
+                                        },
+                                    }}
+                                /> */}
+                            </div>
+                          
+                               <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <input
+                                <input
                                             type="color"
                                             value={formData.colorCode}
                                             onChange={(e) => handleInputChange("colorCode", e.target.value)}
@@ -412,8 +416,12 @@ export const EditCrmCustomer = () => {
                                                 },
                                             }}
                                         />
-                                    </div>
+                                          </div>
                                 </div>
+                            <div>
+                               
+                                        
+                                  
                             </div>
                         </div>
                     </div>
@@ -559,7 +567,9 @@ export const EditCrmCustomer = () => {
                                                         },
                                                     }}
                                                 />
-                                                {domains.filter((d) => !d._destroy).length > 1 && (
+                                                {/* Show trash for existing domains always; for new domains only when not the last visible one */}
+                                                {(domain.id ||
+                                                    domains.filter((d) => !d._destroy).length > 1) && (
                                                     <Button
                                                         variant="destructive"
                                                         size="sm"

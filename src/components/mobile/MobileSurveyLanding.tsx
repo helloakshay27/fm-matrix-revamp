@@ -76,7 +76,6 @@ interface SurveyAttach {
 export const MobileSurveyLanding: React.FC = () => {
   const navigate = useNavigate();
   const { mappingId: rawMappingId } = useParams<{ mappingId: string }>();
-  
   // Clean up mappingId in case it contains URL segments
   const mappingId = rawMappingId?.split('/')[0];
 

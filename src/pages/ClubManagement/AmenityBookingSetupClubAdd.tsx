@@ -312,29 +312,29 @@ export const AddBookingSetupClubPage = () => {
       const endHour = parseInt(slot.endTime.hour);
 
       if (slot.startTime.hour !== "00") {
-        if (
-          slot.breakTimeStart.hour === "00" ||
-          slot.breakTimeEnd.hour === "00" ||
-          slot.endTime.hour === "00"
-        ) {
-          toast.error(
-            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
-          );
-          return false;
-        }
+        // if (
+        //   slot.breakTimeStart.hour === "00" ||
+        //   slot.breakTimeEnd.hour === "00" ||
+        //   slot.endTime.hour === "00"
+        // ) {
+        //   toast.error(
+        //     `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+        //   );
+        //   return false;
+        // }
 
-        if (breakStartHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
-        if (breakEndHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
+        // if (breakStartHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
+        // if (breakEndHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
         if (endHour < startHour) {
           toast.error(
             `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`
@@ -760,9 +760,9 @@ export const AddBookingSetupClubPage = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     // Only allow letters and spaces, no numbers
-                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                    // if (/^[a-zA-Z\s]*$/.test(value)) {
                       setFormData({ ...formData, facilityName: value });
-                    }
+                    // }
                   }}
                   variant="outlined"
                   required
@@ -1727,7 +1727,7 @@ export const AddBookingSetupClubPage = () => {
                   variant="outlined"
                 />
                 <TextField
-                  label="GST(%)"
+                  label="CGST(%)"
                   value={formData.gstPercentage}
                   onChange={(e) => {
                     const value = e.target.value;

@@ -280,9 +280,9 @@ const AmenityBookingClubCalenderView = () => {
     return (
         <div className="pt-2 space-y-6">
             <div className="flex items-center justify-end">
-                <Button variant="outline" className="w-[40px] h-[40px]">
+                {/* <Button variant="outline" className="w-[40px] h-[40px]">
                     <Bell className="w-5 h-5" />
-                </Button>
+                </Button> */}
             </div>
 
             {/* Header Controls */}
@@ -317,18 +317,18 @@ const AmenityBookingClubCalenderView = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input placeholder="Search..." className="pl-10 pr-10" />
                     </div>
-                    <Button className="text-[14px]">
+                    {/* <Button className="text-[14px]">
                         <ArrowUpDown size={16} />
                         Advance Search
-                    </Button>
-                    <Button
+                    </Button> */}
+                    {/* <Button
                         variant="outline"
                         size="sm"
                         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
                         title="Filter"
                     >
                         <Filter className="w-4 h-4" />
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
 

@@ -12,79 +12,124 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 
+interface Prize {
+  id: number;
+  title: string;
+  display_name: string | null;
+  reward_type: "points" | "coupon";
+  coupon_code: string | null;
+  partner_name: string | null;
+  points_value: number | null;
+  probability_value: number;
+  probability_out_of: number;
+  icon_url: string | null;
+  image: {
+    id: number;
+    url: string;
+  } | null;
+  // other fields omitted if not used in UI
+}
+
 interface ContestDetails {
   id: number;
   name: string;
-  type: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
-  usersCap: string;
-  attemptsRequired: string;
+  description: string | null;
+  terms_and_conditions: string | null;
+  content_type: string;
   active: boolean;
-  offers: OfferDetail[];
-  termsDocument: string;
-  redemptionGuide: string;
+  start_at: string; // ISO string
+  end_at: string; // ISO string
+  user_caps: number | null;
+  user_attemp_remaining: number | null;
+  prizes: Prize[];
 }
 
-interface OfferDetail {
-  id: number;
-  offerTitle: string;
-  offerDescription: string;
-  displayName: string;
-  couponCode: string;
-  partner: string;
-  probability: string;
-  bannerImage: string;
-}
-
-const dummyContest: ContestDetails = {
-  id: 1,
-  name: "Spin the wheel",
-  type: "Spin",
-  description: "20% off on myntra fashion",
-  startDate: "26/07/2025",
-  endDate: "26/10/2025",
-  startTime: "02:00 PM",
-  endTime: "03:00 PM",
-  usersCap: "1000",
-  attemptsRequired: "5",
-  active: true,
-  offers: [
-    {
-      id: 1,
-      offerTitle: "Myntra Fashion Offer",
-      offerDescription: "₹100 Off on first purchase",
-      displayName: "Myntra 10% off",
-      couponCode: "MYF56A",
-      partner: "Myntra 10% off",
-      probability: "10/100",
-      bannerImage: "/banners/myntra-banner.jpg",
-    },
-  ],
-  termsDocument: "T&C.pdf",
-  redemptionGuide: "T&C.pdf",
-};
+// Removed hardcoded constants - will use localStorage instead
 
 export const ContestDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [contest, setContest] = useState<ContestDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setContest(dummyContest);
-      setLoading(false);
-    }, 500);
+    if (!id) return;
+
+    const fetchContest = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        // const baseUrl =  "https://uat-hi-society.lockated.com";
+        //     const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
+
+        if (!baseUrl || !token) {
+          throw new Error("Base URL or token not set in localStorage");
+        }
+
+        // Ensure protocol is present
+        const url = /^https?:\/\//i.test(baseUrl)
+          ? baseUrl
+          : `https://${baseUrl}`;
+
+        const res = await fetch(`${url}/contests/${id}.json`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+        }
+
+        const data: ContestDetails = await res.json();
+        setContest(data);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Failed to load contest details");
+        toast.error("Could not load contest details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContest();
   }, [id]);
 
+  const formatDate = (iso: string): string => {
+    try {
+      const date = new Date(iso);
+      return date.toLocaleDateString("en-GB"); // 07/02/2026
+    } catch {
+      return iso;
+    }
+  };
+
+  const formatTime = (iso: string): string => {
+    try {
+      const date = new Date(iso);
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }); // 2:00 PM
+    } catch {
+      return iso;
+    }
+  };
+
+  const getProbability = (prize: Prize) => {
+    return `${prize.probability_value}/${prize.probability_out_of}`;
+  };
+
   const handleEdit = (section: string) => {
-    toast.info(`Editing ${section} section`);
-    // Navigate to edit page or open edit modal
+    toast.info(`Editing ${section} section (not implemented yet)`);
+    // You can later navigate to /contests/${id}/edit?section=basic etc.
   };
 
   const handleBack = () => {
@@ -99,11 +144,11 @@ export const ContestDetailsPage: React.FC = () => {
     );
   }
 
-  if (!contest) {
+  if (error || !contest) {
     return (
       <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Contest not found</p>
+          <p className="text-red-600 mb-4">{error || "Contest not found"}</p>
           <Button
             onClick={handleBack}
             variant="outline"
@@ -144,7 +189,11 @@ export const ContestDetailsPage: React.FC = () => {
                 {contest.active ? "Active" : "Inactive"}
               </span>
             </div>
-            <p className="text-sm text-gray-600">{contest.type} Contest</p>
+            <p className="text-sm text-gray-600">
+              {contest.content_type.charAt(0).toUpperCase() +
+                contest.content_type.slice(1)}{" "}
+              Contest
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -195,14 +244,15 @@ export const ContestDetailsPage: React.FC = () => {
                 <p className="text-sm font-medium text-gray-500">
                   Contest Type
                 </p>
-                <p className="text-base text-[#1A1A1A]">{contest.type}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {contest.content_type.charAt(0).toUpperCase() +
+                    contest.content_type.slice(1)}
+                </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-500">
-                  Contest Description
-                </p>
+                <p className="text-sm font-medium text-gray-500">Description</p>
                 <p className="text-base text-[#1A1A1A]">
-                  {contest.description}
+                  {contest.description || "—"}
                 </p>
               </div>
             </div>
@@ -245,37 +295,47 @@ export const ContestDetailsPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">Start Date</p>
-                <p className="text-base text-[#1A1A1A]">{contest.startDate}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {formatDate(contest.start_at)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">Start Time</p>
-                <p className="text-base text-[#1A1A1A]">{contest.startTime}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {formatTime(contest.start_at)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">End Date</p>
-                <p className="text-base text-[#1A1A1A]">{contest.endDate}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {formatDate(contest.end_at)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">End Time</p>
-                <p className="text-base text-[#1A1A1A]">{contest.endTime}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {formatTime(contest.end_at)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">Users Cap</p>
-                <p className="text-base text-[#1A1A1A]">{contest.usersCap}</p>
+                <p className="text-base text-[#1A1A1A]">
+                  {contest.user_caps ?? "—"}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">
                   Attempts Required
                 </p>
                 <p className="text-base text-[#1A1A1A]">
-                  {contest.attemptsRequired}
+                  {contest.user_attemp_remaining ?? "—"}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Offers & Media */}
+        {/* Offers & Media (Prizes) */}
         <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
           <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -283,11 +343,11 @@ export const ContestDetailsPage: React.FC = () => {
                 <Gift className="w-5 h-5 text-[#C72030]" />
               </div>
               <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Offers & Media
+                Prizes / Offers
               </h3>
             </div>
             <Button
-              onClick={() => handleEdit("offers")}
+              onClick={() => handleEdit("prizes")}
               variant="outline"
               size="sm"
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
@@ -297,83 +357,110 @@ export const ContestDetailsPage: React.FC = () => {
             </Button>
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
-            {/* Offers List */}
-            {contest.offers.map((offer, index) => (
-              <div key={offer.id} className="mb-6 last:mb-0">
-                <div className="flex items-start gap-2 mb-4">
-                  <span className="text-[#C72030] font-semibold">
-                    {index + 1}.
-                  </span>
-                  <div className="flex-1">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
-                      {/* Row 1 */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Offer Title
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.offerTitle}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Coupon Code
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.couponCode}
-                        </p>
-                      </div>
-                      <div className="md:row-span-4 flex items-start justify-end">
-                        {/* Banner Image Placeholder */}
-                        <div className="w-48 h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-                          <div className="text-center p-2">
-                            <p className="text-xs text-gray-500">
-                              Banner Image
-                            </p>
+            {contest.prizes.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No prizes defined yet
+              </p>
+            ) : (
+              contest.prizes.map((prize, index) => (
+                <div
+                  key={prize.id}
+                  className="mb-8 last:mb-0 border-b pb-6 last:border-b-0"
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <span className="text-[#C72030] font-semibold text-lg">
+                      {index + 1}.
+                    </span>
+                    <div className="flex-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-6">
+                        {/* Row 1 */}
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">
+                            Prize Title
+                          </p>
+                          <p className="text-sm font-medium text-[#1A1A1A]">
+                            {prize.title}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">
+                            {" "}
+                            Reward Type
+                          </p>
+                          <p className="text-sm text-[#1A1A1A]">
+                            {/* {prize.reward_type === "points" ? "Loyalty Points" : "Coupon/Voucher"} */}
+                            {prize.reward_type === "points"
+                              ? "Points"
+                              : prize.reward_type === "coupon"
+                                ? "Coupon Code"
+                                : ""}
+                          </p>
+                        </div>
+
+                        <div className="md:row-span-4 flex items-start justify-end">
+                          <div className="w-48 h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                            {prize.image?.url || prize.icon_url ? (
+                              <img
+                                src={prize.image?.url || prize.icon_url || ""}
+                                alt={prize.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <p className="text-xs text-gray-500 text-center p-3">
+                                No banner / icon
+                              </p>
+                            )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Row 2 */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Offer Description
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.offerDescription}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Display Name
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.displayName}
-                        </p>
-                      </div>
+                        {/* Row 2 */}
+                        {/* <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">Coupon Code</p>
+                          <p className="text-sm text-[#1A1A1A]">
+                            {prize.reward_type === "points"
+                              ? `${prize.points_value ?? 0} Points`
+                              : prize.coupon_code ?? "—"}
+                          </p>
+                        </div> */}
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">
+                            {prize.reward_type === "points"
+                              ? "Points"
+                              : "Coupon Code"}
+                          </p>
 
-                      {/* Row 3 */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Partner
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.partner}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Probability
-                        </p>
-                        <p className="text-sm text-[#1A1A1A]">
-                          {offer.probability}
-                        </p>
+                          <p className="text-sm text-[#1A1A1A]">
+                            {prize.reward_type === "points"
+                              ? `${prize.points_value ?? 0} Points`
+                              : (prize.coupon_code ?? "—")}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">
+                            Partner
+                          </p>
+                          <p className="text-sm text-[#1A1A1A]">
+                            {prize.partner_name ?? "—"}
+                          </p>
+                        </div>
+
+                        {/* Row 3 */}
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-gray-500">
+                            Probability
+                          </p>
+                          <p className="text-sm text-[#1A1A1A]">
+                            {getProbability(prize)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -399,46 +486,19 @@ export const ContestDetailsPage: React.FC = () => {
             </Button>
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white rounded-lg border border-gray-200 flex flex-col items-center justify-center p-2">
-                <FileText className="w-6 h-6 text-[#C72030] mb-1" />
-                <p className="text-xs text-gray-600 truncate w-full text-center">
-                  {contest.termsDocument}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Redemption Guide */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <Trophy className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Redemption Guide
-              </h3>
-            </div>
-            <Button
-              onClick={() => handleEdit("redemption")}
-              variant="outline"
-              size="sm"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white rounded-lg border border-gray-200 flex flex-col items-center justify-center p-2">
-                <FileText className="w-6 h-6 text-[#C72030] mb-1" />
-                <p className="text-xs text-gray-600 truncate w-full text-center">
-                  {contest.redemptionGuide}
-                </p>
-              </div>
+            <div className="prose max-w-none text-sm quill-content">
+              {/* {contest.terms_and_conditions ? (
+                <p>{contest.terms_and_conditions}</p>
+              ) : (
+                <p className="text-gray-500 italic">No terms and conditions provided.</p>
+              )} */}
+              <div
+                dangerouslySetInnerHTML={{
+                  __html:
+                    contest.terms_and_conditions ||
+                    "<p className='text-gray-500'>No terms and conditions provided</p>",
+                }}
+              />
             </div>
           </CardContent>
         </Card>

@@ -218,32 +218,32 @@ interface TreeNode extends GroupMembershipData {
 export const ChartOfAccountsDashboard = () => {
   // Render cell content for Lock Account Ledgers table
   const renderLockLedgerCell = (item: any, columnKey: string) => {
-    // if (columnKey === "actions") {
-    //   return (
-    //     <div className="flex gap-2">
-    //       <Button
-    //         variant="ghost"
-    //         onClick={() =>
-    //           navigate(`/club-management/membership/group-details/${item.id}`)
-    //         }
-    //         title="View Details"
-    //         className="p-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
-    //       >
-    //         {/* <Eye className="w-4 h-4" /> */}
-    //       </Button>
-    //       <Button
-    //         variant="ghost"
-    //         onClick={() =>
-    //           navigate(`/club-management/group-membership/${item.id}/edit`)
-    //         }
-    //         title="Edit"
-    //         className="p-1 h-8 w-8 text-gray-600 hover:bg-gray-100"
-    //       >
-    //         {/* <Edit className="w-4 h-4" /> */}
-    //       </Button>
-    //     </div>
-    //   );
-    // }
+    if (columnKey === "actions") {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() =>
+              navigate(`/accounting/chart-journal/details/${item.id}`)
+            }
+            title="View Details"
+            className="p-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() =>
+              navigate(`/club-management/group-membership/${item.id}/edit`)
+            }
+            title="Edit"
+            className="p-1 h-8 w-8 text-gray-600 hover:bg-gray-100"
+          >
+            {/* <Edit className="w-4 h-4" /> */}
+          </Button>
+        </div>
+      );
+    }
     if (columnKey === "created_at" || columnKey === "updated_at") {
       return item[columnKey] ? new Date(item[columnKey]).toLocaleString() : "--";
     }
@@ -254,14 +254,14 @@ export const ChartOfAccountsDashboard = () => {
   // Columns for Lock Account Ledgers table
   const lockLedgerColumns = [
     // { key: "id", label: "ID", sortable: true },
-    // { key: "actions", label: "Action", sortable: false },
+    { key: "actions", label: "Action", sortable: false },
     { key: "name", label: "Account Name", sortable: true },
     { key: "account_code", label: "Account Code", sortable: true },
     // { key: "lock_account_group_id", label: "Group ID", sortable: true },
-    { key: "account_type", label: "Account Type", sortable: true },
-    { key: "documents", label: "Documents", sortable: false },
+    { key: "base_group_type", label: "Account Type", sortable: true },
+    // { key: "documents", label: "Documents", sortable: false },
     {
-      key: "parent_account_name",
+      key: "lock_account_group_name",
       label: "Parent Account Name",
       sortable: true,
     },
@@ -1119,7 +1119,7 @@ export const ChartOfAccountsDashboard = () => {
 
           <div
             className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer group transition-all"
-            onClick={() => navigate(`/settings/chart-journal/details/${node.id}`)}
+            onClick={() => navigate(`/accounting/chart-journal/details/${node.id}`)}
             title="View Ledger Details"
           >
             <div className="w-8 h-8 flex items-center justify-center">

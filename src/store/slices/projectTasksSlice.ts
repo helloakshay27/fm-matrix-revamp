@@ -29,13 +29,23 @@ export const fetchProjectTasks = createAsyncThunk(
 export const fetchKanbanTasksOfProject = createAsyncThunk(
     'fetchKanbanTasks',
     async (
-        { baseUrl, token, id }: { baseUrl: string; token: string; id?: string },
+        { baseUrl, token, id, responsible_person_id }: { baseUrl: string; token: string; id?: string; responsible_person_id?: string },
         { rejectWithValue }
     ) => {
         try {
-            const endpoint = id
-                ? `/task_managements/kanban.json?q[project_management_id_eq]=${id}`
-                : `/task_managements/kanban.json`;
+            let endpoint = `/task_managements/kanban.json`;
+            const params = new URLSearchParams();
+
+            if (id) {
+                params.append('q[project_management_id_eq]', id);
+            }
+            if (responsible_person_id) {
+                params.append('q[responsible_person_id_eq]', responsible_person_id);
+            }
+
+            if (params.toString()) {
+                endpoint += `?${params.toString()}`;
+            }
 
             const response = baseUrl
                 ? await axios.get(`https://${baseUrl}${endpoint}`, {

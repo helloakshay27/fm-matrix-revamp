@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,17 +28,44 @@ export const AddFacilityBookingClubPage = () => {
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.users || [];
 
-  const occupantUsersState = useAppSelector((state) => state.occupantUsers);
-  const occupantUsers = occupantUsersState?.users?.transformedUsers || [];
-  const occupantUsersLoading = occupantUsersState?.loading;
-  const occupantUsersError = occupantUsersState?.error;
+  // Direct API-based occupant users (like guest users)
+  const [occupantUsers, setOccupantUsers] = useState([]);
+  const [occupantUsersLoading, setOccupantUsersLoading] = useState(false);
+  const [occupantUsersError, setOccupantUsersError] = useState(null);
+
+  // Fetch occupant users directly (like guest users)
+  const fetchOccupantUsersDirect = async () => {
+    setOccupantUsersLoading(true);
+    setOccupantUsersError(null);
+    try {
+      const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
+        params: {
+          'q[lock_user_permissions_user_type_eq]': 'pms_occupant'
+        }
+      });
+      if (response.data && response.data.occupant_users) {
+        setOccupantUsers(response.data.occupant_users);
+      }
+    } catch (error) {
+      console.error('Error fetching occupant users:', error);
+      setOccupantUsersError(error);
+      setOccupantUsers([]);
+    } finally {
+      setOccupantUsersLoading(false);
+    }
+  };
+console.log("occupant users::::",occupantUsers)
+  // Direct API call for occupant users (bypassing Redux)
+  
+  // const occupantUsersLoading = occupantUsersState?.loading;
+  // const occupantUsersError = occupantUsersState?.error;
 
   const [guestUsers, setGuestUsers] = useState([]);
   const [guestUsersLoading, setGuestUsersLoading] = useState(false);
   const [guestUsersError, setGuestUsersError] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState('');
 
-  console.log(occupantUsersState)
+  // console.log("occu:::::",occupantUsersState)
 
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
@@ -152,11 +180,36 @@ export const AddFacilityBookingClubPage = () => {
     }
   };
 
+
+
+//   // Fetch occupant users directly (like guest users)
+// const fetchOccupantUsersDirect = async () => {
+//   setGuestUsersLoading(true);
+//   setGuestUsersError(null);
+//   try {
+//     const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
+//       params: {
+//         'q[lock_user_permissions_user_type_eq]': 'pms_occupant'
+//       }
+//     });
+//     if (response.data && response.data.occupant_users) {
+//       setGuestUsers(response.data.occupant_users);
+//     }
+//   } catch (error) {
+//     console.error('Error fetching occupant users:', error);
+//     setGuestUsersError(error);
+//     setGuestUsers([]);
+//   } finally {
+//     setGuestUsersLoading(false);
+//   }
+// };
+
   // Fetch data on component mount
   useEffect(() => {
     if (userType === 'occupant') {
-      dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
-      dispatch(fetchEntities());
+      // dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
+      // dispatch(fetchEntities());
+      fetchOccupantUsersDirect();
     } else if (userType === 'guest') {
       fetchGuestUsers();
     } else {
@@ -598,7 +651,13 @@ export const AddFacilityBookingClubPage = () => {
           totalGuestCharge = numberOfGuests * adultGuestCharge;
         }
         const slotTotal = slotsCount * perSlotCharge;
-        const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+        // Fix: Only add guest charge for members in subtotal and tax
+        let subtotalBeforeDiscount = 0;
+        if (userType === 'occupant') {
+          subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+        } else {
+          subtotalBeforeDiscount = totalGuestCharge + slotTotal;
+        }
         const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
         const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
         const gstPercentage = facilityDetails?.gst || 0;
@@ -636,8 +695,8 @@ export const AddFacilityBookingClubPage = () => {
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
-          member_charges: costSummary.totalUserCharge,
-          guest_charges: costSummary.totalGuestCharge,
+          member_charges: userType === 'occupant' ? costSummary.totalUserCharge : 0,
+          guest_charges: userType === 'occupant' ? costSummary.totalGuestCharge : costSummary.totalUserCharge,
           guest_premium_details: guestPremiumDetails,
           discount: costSummary.discountAmount,
           cgst_amount: costSummary.gstAmount,
@@ -835,7 +894,7 @@ export const AddFacilityBookingClubPage = () => {
               )}
               {userType === 'occupant' && occupantUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
-                  {user.name}
+                  {user.name || `${user.firstname || ''} ${user.lastname || ''}`.trim()}
                 </MenuItem>
               ))}
 
@@ -1291,7 +1350,13 @@ export const AddFacilityBookingClubPage = () => {
                 }
 
                 const slotTotal = selectedSlots.length * perSlotCharge;
-                const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+                // Fix: Only add guest charge for members
+                let subtotalBeforeDiscount = 0;
+                if (userType === 'occupant') {
+                  subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+                } else {
+                  subtotalBeforeDiscount = totalGuestCharge + slotTotal;
+                }
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
 
@@ -1491,7 +1556,7 @@ export const AddFacilityBookingClubPage = () => {
                     {gstPercentage > 0 && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-700">GST</span>
+                          <span className="text-gray-700">CGST</span>
                           <span className="text-sm text-gray-500">({gstPercentage}%)</span>
                         </div>
                         <span className="font-medium">₹{gstAmount.toFixed(2)}</span>

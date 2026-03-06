@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fa } from 'zod/v4/locales';
 
+import { Radio, RadioGroup, FormControlLabel } from '@mui/material';
+
 const columns: ColumnConfig[] = [
     {
         key: 'id',
@@ -37,6 +39,12 @@ const columns: ColumnConfig[] = [
         key: 'cost',
         label: 'Cost',
         sortable: true,
+        draggable: true,
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: false,
         draggable: true,
     },
 ]
@@ -85,11 +93,29 @@ const AccessoriesSetup = () => {
         fetchAccessories();
     }, []);
 
+    const handleStatusToggle = async (id) => {
+        setAccessories(prev => prev.map(acc =>
+            acc.id === id ? { ...acc, active: !acc.active } : acc
+        ));
+        // Optionally, call API to persist status change here
+    };
+
     const renderCell = (item, columnKey: string) => {
-        switch (columnKey) {
-            default:
-                return item[columnKey];
+        if (columnKey === 'status') {
+            return (
+                <div className="flex items-center justify-center">
+                    <div
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'}`}
+                        onClick={() => handleStatusToggle(item.id)}
+                    >
+                        <span
+                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                    </div>
+                </div>
+            );
         }
+        return item[columnKey];
     };
 
     const renderActions = (accessory) => (

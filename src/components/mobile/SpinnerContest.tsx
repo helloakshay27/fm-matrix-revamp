@@ -1,68 +1,118 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { X, ChevronLeft } from "lucide-react";
 import {
-  spinnerContestApi,
-  SpinnerContest as SpinnerContestType,
-  SpinnerSegment,
-} from "@/services/spinnerContestApi";
+  newSpinnerContestApi,
+  Contest,
+  Prize,
+} from "@/services/newSpinnerContestApi";
+import { spinSound } from "@/utils/spinSound";
+import { toast } from "sonner";
 
-interface VoucherResult {
-  voucher_code: string;
-  discount_text: string;
-  segment_label: string;
+interface WheelSegment {
+  id: number;
+  label: string;
+  color: string;
+  prize: Prize;
+}
+
+interface WinResult {
+  prize: Prize;
+}
+
+interface PlayContestResult {
+  success: boolean;
+  contest_type: string;
+  user_contest_reward: {
+    id: number;
+    contest_id: number;
+    prize_id: number;
+    reward_type: string;
+    points_value: number | null;
+    coupon_code: string | null;
+    user_id: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  prize: Prize;
+  message?: string;
+  won_reward?: boolean;
+  user_attempt_count?: number;
+  user_attemp_remaining?: number;
 }
 
 export const SpinnerContest: React.FC = () => {
   const navigate = useNavigate();
   const { contestId } = useParams<{ contestId: string }>();
+  const [searchParams] = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Get URL parameters
+  const orgId = searchParams.get("org_id");
+  const token = searchParams.get("token");
+  const urlContestId = searchParams.get("contest_id") || contestId;
+
+  console.warn("🎯 Component Params:", {
+    orgId,
+    token: token ? "exists" : "missing",
+    contest_id_from_query: searchParams.get("contest_id"),
+    contestId_from_route: contestId,
+    final_urlContestId: urlContestId,
+  });
 
   // Loading and data states
   const [isLoading, setIsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [spinnerData, setSpinnerData] = useState<SpinnerContestType | null>(
-    null
-  );
+  const [contestData, setContestData] = useState<Contest | null>(null);
+  const [segments, setSegments] = useState<WheelSegment[]>([]);
   const [rotation, setRotation] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [voucherResult, setVoucherResult] = useState<VoucherResult | null>(
-    null
-  );
+  const [winResult, setWinResult] = useState<WinResult | null>(null);
+  const [canSpin, setCanSpin] = useState(true);
+  const [rewardId, setRewardId] = useState<number | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number>(0);
 
   // Fetch spinner contest data
   useEffect(() => {
-    const fetchSpinnerData = async () => {
+    const fetchContestData = async () => {
       setIsLoading(true);
       try {
-        let data: SpinnerContestType;
-
-        if (contestId) {
-          // Fetch specific contest
-          data = await spinnerContestApi.getContestById(contestId);
-        } else {
-          // Fetch first active contest
-          const contests = await spinnerContestApi.getActiveContests();
-          if (contests.length === 0) {
-            throw new Error("No active contests found");
-          }
-          data = contests[0];
+        // Contest ID is required
+        if (!urlContestId) {
+          console.error("❌ No contest ID provided");
+          setIsLoading(false);
+          setCanSpin(false);
+          return;
         }
 
-        setSpinnerData(data);
+        // Fetch specific contest by ID
+        const data = await newSpinnerContestApi.getContestById(urlContestId);
+        setContestData(data);
+        setRemainingAttempts(data.user_attemp_remaining || 0);
+
+        // Convert prizes to wheel segments
+        const wheelSegments = newSpinnerContestApi.convertPrizesToSegments(
+          data.prizes
+        );
+        setSegments(wheelSegments);
       } catch (error) {
-        console.error("Error fetching spinner data:", error);
+        console.error("❌ Error fetching contest data:", error);
+        if (error instanceof Error) {
+          console.error("❌ Error message:", error.message);
+        }
+        setCanSpin(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSpinnerData();
-  }, [contestId]);
+    fetchContestData();
+  }, [urlContestId, orgId, token]);
 
   // Draw wheel on canvas
   useEffect(() => {
-    if (!spinnerData || !canvasRef.current) return;
+    if (segments.length === 0 || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -72,8 +122,7 @@ export const SpinnerContest: React.FC = () => {
     const centerY = canvas.height / 2;
     const radius = Math.min(centerX, centerY) - 10;
 
-    const activeSegments = spinnerData.segments.filter((s) => s.active);
-    const segmentAngle = (2 * Math.PI) / activeSegments.length;
+    const segmentAngle = (2 * Math.PI) / segments.length;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -85,7 +134,7 @@ export const SpinnerContest: React.FC = () => {
     ctx.translate(-centerX, -centerY);
 
     // Draw segments
-    activeSegments.forEach((segment, index) => {
+    segments.forEach((segment, index) => {
       const startAngle = index * segmentAngle - Math.PI / 2;
       const endAngle = startAngle + segmentAngle;
 
@@ -107,7 +156,15 @@ export const SpinnerContest: React.FC = () => {
       ctx.textAlign = "right";
       ctx.fillStyle = "#000";
       ctx.font = "bold 11px Arial";
-      ctx.fillText(segment.label, radius - 20, 5);
+
+      // Truncate long text
+      const maxLength = 20;
+      const text =
+        segment.label.length > maxLength
+          ? segment.label.substring(0, maxLength) + "..."
+          : segment.label;
+
+      ctx.fillText(text, radius - 20, 5);
       ctx.restore();
     });
 
@@ -128,88 +185,183 @@ export const SpinnerContest: React.FC = () => {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Spin", centerX, centerY);
-  }, [spinnerData, rotation]);
+  }, [segments, rotation]);
 
-  // Handle spin
+  // Handle spin - API-driven deterministic rotation
   const handleSpin = async () => {
-    if (isSpinning || !spinnerData) return;
+    if (isSpinning || segments.length === 0 || !contestData || !canSpin) return;
 
     setIsSpinning(true);
 
-    const activeSegments = spinnerData.segments.filter((s) => s.active);
-    const randomIndex = Math.floor(Math.random() * activeSegments.length);
-    const segmentAngle = 360 / activeSegments.length;
-
-    // Calculate final rotation (multiple spins + random segment)
-    const spins = 5; // Number of full rotations
-    const finalRotation =
-      spins * 360 + (360 - randomIndex * segmentAngle - segmentAngle / 2);
-
-    // Animate rotation
-    let currentRotation = rotation;
-    const duration = 4000; // 4 seconds
-    const startTime = Date.now();
-
-    const animate = () => {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Easing function (ease-out)
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-
-      currentRotation = rotation + finalRotation * easeOut;
-      setRotation(currentRotation % 360);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        // Spin complete - show result
-        setTimeout(() => {
-          handleSpinComplete(activeSegments[randomIndex]);
-        }, 500);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  };
-
-  // Handle spin complete
-  const handleSpinComplete = async (selectedSegment: SpinnerSegment) => {
     try {
-      if (!spinnerData) return;
+      // Play casino sound
+      spinSound.play();
 
-      // Call API to record spin and get voucher
-      const result = await spinnerContestApi.spinWheel(
-        spinnerData.id,
-        selectedSegment.id
+      // STEP 1: Call API to get the winning prize
+      const result = (await newSpinnerContestApi.playContest(
+        contestData.id
+      )) as PlayContestResult;
+
+      if (!result.success || !result.prize) {
+        throw new Error(result.message || "Failed to play contest");
+      }
+
+      // Store reward ID if user won
+      if (result.won_reward === true && result.user_contest_reward) {
+        localStorage.setItem(
+          "last_reward_id",
+          result.user_contest_reward.id.toString()
+        );
+      }
+
+      console.log("🎲 API returned prize:", result.prize);
+
+      // STEP 2: Find the winning segment index based on API prize.id
+      const winningIndex = segments.findIndex(
+        (s) => s.prize.id === result.prize!.id
       );
 
-      if (result.success) {
-        const voucherData: VoucherResult = {
-          voucher_code: result.voucher.voucher_code,
-          discount_text: result.voucher.discount_text,
-          segment_label: selectedSegment.label,
-        };
-
-        setVoucherResult(voucherData);
-        setShowResult(true);
+      if (winningIndex === -1) {
+        console.error("❌ Prize not found! API Prize ID:", result.prize.id);
+        console.error(
+          "❌ Available segment IDs:",
+          segments.map((s) => s.prize.id)
+        );
+        throw new Error("Winning prize not found in segments");
       }
+
+      console.log("✅ Winning segment index:", winningIndex);
+      console.log(
+        "📊 All segments:",
+        segments.map((s, i) => ({
+          index: i,
+          id: s.prize.id,
+          title: s.prize.title,
+        }))
+      );
+
+      // STEP 3: Calculate exact rotation angles
+      const segmentAngle = 360 / segments.length;
+
+      // The canvas draws segments starting from top (-90°/270°) going clockwise
+      // Segment 0 starts at top, segment 1 is clockwise from there, etc.
+      // To align winning segment with top pointer, we rotate the canvas
+
+      // Angle of the winning segment's center from segment 0
+      const segmentCenterAngle = winningIndex * segmentAngle + segmentAngle / 2;
+
+      // Calculate current normalized position (0-360)
+      const currentPosition = rotation % 360;
+
+      // Target position to align winning segment with top pointer
+      const targetPosition = 360 - segmentCenterAngle;
+
+      // Calculate the shortest rotation to reach target from current position
+      // Add 360 to ensure positive value, then modulo to get 0-360 range
+      let rotationNeeded = (targetPosition - currentPosition + 360) % 360;
+
+      // If rotation needed is very small, add a full rotation to make it feel natural
+      if (rotationNeeded < 45) {
+        rotationNeeded += 360;
+      }
+
+      // Number of full rotations for visual effect
+      const fullSpins = 5;
+
+      // Total rotation: full spins + rotation needed to reach target
+      const rotationToWin = fullSpins * 360 + rotationNeeded;
+
+      console.log("🎯 Rotation calculation:", {
+        totalSegments: segments.length,
+        segmentAngle,
+        winningIndex,
+        segmentCenterAngle,
+        currentRotation: rotation,
+        currentPosition,
+        targetPosition,
+        rotationNeeded,
+        rotationToWin,
+        finalRotation: rotation + rotationToWin,
+        finalPositionCheck: (rotation + rotationToWin) % 360,
+      });
+
+      // STEP 4: Animate rotation with precise easing
+      const startRotation = rotation;
+      const rotationDelta = rotationToWin;
+      const duration = 4000; // 4 seconds
+      const startTime = Date.now();
+
+      const animate = () => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease-out cubic for smooth deceleration
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+
+        // Calculate current rotation
+        const currentRotation = startRotation + rotationDelta * easeOut;
+        setRotation(currentRotation);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // STEP 5: Set final rotation precisely (no modulo to preserve alignment)
+          const exactFinalRotation = startRotation + rotationDelta;
+          setRotation(exactFinalRotation);
+
+          console.log("🎉 Spin complete. Final rotation:", exactFinalRotation);
+
+          // Show result after brief delay
+          setTimeout(() => {
+            spinSound.playWinSound();
+
+            // Store result data
+            if (result.user_contest_reward?.id) {
+              setRewardId(result.user_contest_reward.id);
+            }
+
+            setWinResult({ prize: result.prize! });
+            setIsSpinning(false);
+
+            // Decrement remaining attempts
+            setRemainingAttempts((prev) => Math.max(0, prev - 1));
+
+            // Show result modal
+            setShowResult(true);
+          }, 500);
+        }
+      };
+
+      requestAnimationFrame(animate);
     } catch (error) {
-      console.error("Error recording spin:", error);
-      // Show error message to user
-      alert("Failed to process spin. Please try again.");
-    } finally {
+      console.error("❌ Error during spin:", error);
+
+      // Stop the spinning sound
+      spinSound.stop();
+
+      // Show error message
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to spin. Please try again.";
+      toast.error(message);
+
+      // Re-enable spinning button
       setIsSpinning(false);
     }
   };
 
-  // Copy voucher code
-  const copyVoucherCode = () => {
-    if (voucherResult) {
-      navigator.clipboard.writeText(voucherResult.voucher_code);
-      // Show success toast or feedback
-      alert("Voucher code copied to clipboard!");
+  // Copy prize code or information
+  const copyPrizeInfo = () => {
+    if (winResult) {
+      const textToCopy =
+        winResult.prize.reward_type === "coupon"
+          ? winResult.prize.coupon_code || winResult.prize.title
+          : `${winResult.prize.title} - ${winResult.prize.points_value} points`;
+
+      navigator.clipboard.writeText(textToCopy);
+      toast.success("Prize information copied to clipboard!");
     }
   };
 
@@ -222,11 +374,13 @@ export const SpinnerContest: React.FC = () => {
     );
   }
 
-  if (!spinnerData) {
+  if (!contestData || segments.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Contest not found</p>
+          <p className="text-gray-600 mb-4">
+            Contest not found or has no active prizes
+          </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[#B88B15] font-medium"
@@ -240,109 +394,347 @@ export const SpinnerContest: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-gray-700 hover:bg-gray-100 rounded-full"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-6 py-8 flex flex-col items-center">
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {spinnerData.title}
-        </h1>
-
-        {/* Description */}
-        <p className="text-center text-gray-600 mb-8 max-w-md">
-          {spinnerData.description}
-        </p>
-
-        {/* Spinner Wheel */}
-        <div className="relative mb-8">
-          {/* Pointer/Arrow at top */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-            <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-[#B88B15]" />
+      {/* Already Won Reward Screen */}
+      {contestData.won_reward && contestData.user_contest_reward && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#FFF8E7] via-white to-[#F5E6D3]">
+          {/* Celebration Animation */}
+          <div className="mb-6 relative">
+            <div className="w-32 h-32 bg-gradient-to-br from-[#B88B15] to-[#D4A574] rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-6xl">🎉</span>
+            </div>
+            {/* Sparkles */}
+            <span className="absolute -top-2 -left-2 text-3xl animate-bounce">
+              ✨
+            </span>
+            <span className="absolute -top-2 -right-2 text-3xl animate-bounce delay-100">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -left-2 text-3xl animate-bounce delay-200">
+              ✨
+            </span>
+            <span className="absolute -bottom-2 -right-2 text-3xl animate-bounce delay-300">
+              ✨
+            </span>
           </div>
 
-          <canvas
-            ref={canvasRef}
-            width={360}
-            height={360}
-            className="max-w-full h-auto"
-          />
+          {/* Message */}
+          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">
+            You've Already Won!
+          </h1>
+          <p className="text-gray-600 text-center mb-8 max-w-sm">
+            Congratulations! You have already won a reward in this contest. View
+            your prize details below.
+          </p>
+
+          {/* Reward Info Card */}
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mb-6 border-2 border-[#D4A574]">
+            <div className="text-center">
+              <div className="text-5xl mb-3">🎁</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {contestData.name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Reward Status:{" "}
+                <span className="font-semibold text-[#B88B15] capitalize">
+                  {contestData.user_contest_reward.status}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* View Details Button */}
+          <button
+            onClick={() => {
+              if (contestData.user_contest_reward && orgId && token) {
+                navigate(
+                  `/scratchcard/details/${contestData.user_contest_reward.id}?org_id=${orgId}&token=${token}`
+                );
+              }
+            }}
+            className="w-full max-w-sm bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <span>🎯</span>
+              View Reward Details
+            </span>
+          </button>
+
+          {/* Decorative elements */}
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-pulse">
+            🎊
+          </div>
+          <div className="absolute top-20 right-10 text-4xl opacity-20 animate-pulse delay-100">
+            🎈
+          </div>
+          <div className="absolute bottom-20 left-16 text-4xl opacity-20 animate-pulse delay-200">
+            🎁
+          </div>
+          <div className="absolute bottom-10 right-16 text-4xl opacity-20 animate-pulse delay-300">
+            ⭐
+          </div>
         </div>
+      )}
 
-        {/* Tap to Spin Button */}
-        <button
-          onClick={handleSpin}
-          disabled={isSpinning}
-          className="w-full max-w-md bg-[#B88B15] text-white py-4 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#9a7612] transition-colors"
-        >
-          {isSpinning ? "Spinning..." : "Tap To Spin"}
-        </button>
+      {/* Normal Game Screen - only show if not won */}
+      {!contestData.won_reward && (
+        <>
+          {/* Main Content */}
+          <div className="px-4 py-6 flex flex-col items-center">
+            {/* Title & Description Card */}
+            <div className="w-full max-w-md mb-9 bg-gradient-to-br from-[#FFF8E7] to-[#F5E6D3] rounded-2xl p-6 shadow-lg">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+                {contestData.name}
+              </h1>
 
-        {/* Terms and Conditions */}
-        <p className="text-center text-xs text-gray-500 mt-6 max-w-md whitespace-pre-line">
-          {spinnerData.terms_conditions}
-        </p>
-      </div>
+              {/* {contestData.description && (
+            <p className="text-center text-gray-700 text-sm mb-4">
+              {contestData.description}
+            </p>
+          )} */}
 
-      {/* Result Modal */}
-      {showResult && voucherResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative">
-            {/* Close button */}
-            <button
-              onClick={() => {
-                setShowResult(false);
-                setVoucherResult(null);
-              }}
-              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Gift icon */}
-            <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
-              <div className="text-4xl">🎁</div>
+              {/* Contest Period */}
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+                <span className="bg-white/70 px-3 py-1.5 rounded-full">
+                  📅 Valid:{" "}
+                  {new Date(contestData.start_at).toLocaleDateString()} -{" "}
+                  {new Date(contestData.end_at).toLocaleDateString()}
+                </span>
+              </div>
             </div>
 
-            {/* Congratulations text */}
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
-              Congratulations!
-            </h2>
+            {/* Instruction Text */}
+            {/* <p className="text-center text-gray-600 text-sm mb-6 max-w-md">
+          🎁 Tap the wheel or button below to spin and win exciting prizes!
+        </p> */}
 
-            {/* Won voucher text */}
-            <p className="text-center text-gray-600 mb-2">
-              You've won a voucher for
-            </p>
+            {/* Spinner Wheel with Enhanced Styling */}
+            <div className="relative mb-8">
+              {/* Outer Ring Decoration */}
+              <div className="absolute inset-0 rounded-full border-8 border-[#FFF8E7] -m-4 shadow-xl" />
 
-            <p className="text-center text-2xl font-bold text-gray-900 mb-6">
-              {voucherResult.discount_text}
-            </p>
+              {/* Pointer/Arrow at top */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 z-10 drop-shadow-lg">
+                <div className="relative">
+                  <div className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[24px] border-t-[#B88B15]" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#B88B15] rounded-full -mt-2 shadow-md" />
+                </div>
+              </div>
 
-            {/* Voucher Code label */}
-            <p className="text-center text-gray-600 mb-3">Voucher Code</p>
+              <canvas
+                ref={canvasRef}
+                width={360}
+                height={360}
+                className="max-w-full h-auto cursor-pointer drop-shadow-2xl rounded-full"
+                onClick={handleSpin}
+              />
+            </div>
 
-            {/* Voucher code */}
-            <p className="text-center text-xl font-bold text-gray-900 mb-6 tracking-wider">
-              {voucherResult.voucher_code}
-            </p>
+            {/* Attempts Remaining Badge */}
+            <div className="mb-4 bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white px-6 py-2 rounded-full shadow-md">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg">🎯</span>
+                <p className="text-sm font-semibold">
+                  Attempts Remaining{" "}
+                  <span className="text-xl font-bold">{remainingAttempts}</span>
+                </p>
+              </div>
+            </div>
 
-            {/* Copy button */}
+            {/* Tap to Spin Button */}
             <button
-              onClick={copyVoucherCode}
-              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors"
+              onClick={handleSpin}
+              disabled={isSpinning || !canSpin || remainingAttempts <= 0}
+              className="w-full max-w-md bg-gradient-to-r from-[#B88B15] to-[#D4A574] text-white py-4 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
             >
-              Copy To Clipboard
+              {isSpinning ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">🎰</span>
+                  Spinning...
+                </span>
+              ) : remainingAttempts <= 0 ? (
+                "No Attempts Left"
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <span>🎯</span>
+                  Tap To Spin
+                </span>
+              )}
             </button>
+
+            {/* Prize Preview Section */}
+            <div className="w-full max-w-md mt-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+                🏆 Available Prizes
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {contestData.prizes.slice(0, 4).map((prize) => (
+                  <div
+                    key={prize.id}
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 text-center shadow-sm"
+                  >
+                    <div className="text-3xl mb-2">🎁</div>
+                    <p className="font-semibold text-sm text-gray-900 mb-1">
+                      {prize.title}
+                    </p>
+                    {prize.points_value && (
+                      <p className="text-xs text-[#B88B15] font-medium">
+                        {prize.points_value} Points
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Result Modal */}
+          {showResult && winResult && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative">
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    setShowResult(false);
+
+                    // If user won a real reward (not 'none'), navigate to details
+                    if (winResult && winResult.prize.reward_type !== "none") {
+                      const rewardId = localStorage.getItem("last_reward_id");
+                      if (rewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${rewardId}?org_id=${orgId}&token=${token}`
+                        );
+                        return;
+                      }
+                    }
+
+                    // For 'none' type, just close modal and reset
+                    if (winResult && winResult.prize.reward_type === "none") {
+                      setWinResult(null);
+                    }
+                  }}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+
+                {/* Gift icon - different for none type */}
+                <div className="w-20 h-20 mx-auto mb-6 bg-[#F5E6D3] rounded-full flex items-center justify-center">
+                  <div className="text-4xl">
+                    {winResult.prize.reward_type === "none" ? "😔" : "🎁"}
+                  </div>
+                </div>
+
+                {/* Title text - different for none type */}
+                <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
+                  {winResult.prize.reward_type === "none"
+                    ? "Better Luck Next Time!"
+                    : "Congratulations!"}
+                </h2>
+
+                {/* Description text - different for none type */}
+                {winResult.prize.reward_type !== "none" && (
+                  <p className="text-center text-gray-600 mb-2">You've won</p>
+                )}
+
+                {/* Prize title - only show for non-none rewards */}
+                {winResult.prize.reward_type !== "none" && (
+                  <p className="text-center text-2xl font-bold text-gray-900 mb-6">
+                    {winResult.prize.title}
+                  </p>
+                )}
+
+                {/* Display prize details based on type */}
+                {winResult.prize.reward_type === "coupon" &&
+                  winResult.prize.coupon_code && (
+                    <>
+                      {/* Coupon Code label */}
+                      <p className="text-center text-gray-600 mb-3">
+                        Coupon Code
+                      </p>
+
+                      {/* Coupon code */}
+                      <p className="text-center text-xl font-bold text-gray-900 mb-3 tracking-wider">
+                        {winResult.prize.coupon_code}
+                      </p>
+
+                      {/* Partner name if available */}
+                      {winResult.prize.partner_name && (
+                        <p className="text-center text-sm text-gray-500 mb-6">
+                          Partner: {winResult.prize.partner_name}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                {(winResult.prize.reward_type === "points" ||
+                  !winResult.prize.coupon_code) &&
+                  winResult.prize.points_value && (
+                    <>
+                      <p className="text-center text-gray-600 mb-3">
+                        Loyalty Points
+                      </p>
+                      <p className="text-center text-3xl font-bold text-[#B88B15] mb-6">
+                        {winResult.prize.points_value} Points
+                      </p>
+                    </>
+                  )}
+
+                {winResult.prize.reward_type === "merchandise" && (
+                  <>
+                    <p className="text-center text-gray-600 mb-2">
+                      Merchandise Prize
+                    </p>
+                    {winResult.prize.coupon_code && (
+                      <p className="text-center text-sm text-gray-500 mb-6">
+                        Code: {winResult.prize.coupon_code}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {winResult.prize.reward_type === "none" && (
+                  <>
+                    <p className="text-center text-gray-600 mb-6">
+                      Don't give up! Try again for a chance to win exciting
+                      prizes.
+                    </p>
+                  </>
+                )}
+
+                {/* Copy button - only show if coupon_code exists and not 'none' type */}
+                {winResult.prize.coupon_code &&
+                  winResult.prize.reward_type !== "none" && (
+                    <button
+                      onClick={copyPrizeInfo}
+                      className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors mb-3"
+                    >
+                      Copy To Clipboard
+                    </button>
+                  )}
+
+                {/* View Voucher Details button - hide for 'none' type */}
+                {winResult.prize.reward_type !== "none" && (
+                  <button
+                    onClick={() => {
+                      const storedRewardId =
+                        localStorage.getItem("last_reward_id");
+                      if (storedRewardId && orgId && token) {
+                        navigate(
+                          `/scratchcard/details/${storedRewardId}?org_id=${orgId}&token=${token}`
+                        );
+                      }
+                    }}
+                    className={`w-full border-2 border-[#B88B15] text-[#B88B15] py-4 rounded-lg font-semibold hover:bg-[#FFF8E7] transition-colors ${
+                      winResult.prize.coupon_code ? "" : "mt-3"
+                    }`}
+                  >
+                    View Details
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

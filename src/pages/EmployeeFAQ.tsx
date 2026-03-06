@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, Search, Plus, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { EmployeeHeader } from "@/components/EmployeeHeader";
 
 const categories = [
   "General Information",
@@ -66,6 +67,8 @@ const EmployeeFAQ: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 md:p-8 lg:p-12 font-sans text-gray-800">
+      <EmployeeHeader />
+      <div className="pt-16"></div>
       {/* Header Navigation */}
       <div className="max-w-[1400px] mx-auto mb-8">
         <button

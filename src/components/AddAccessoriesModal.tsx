@@ -21,13 +21,19 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
 
     // Update form data when editingAccessory changes
     React.useEffect(() => {
+        function format2Decimals(val) {
+            if (val === undefined || val === null || val === "") return "";
+            const num = Number(val);
+            if (isNaN(num)) return val;
+            return num.toFixed(2);
+        }
         if (editingAccessory) {
             setFormData({
                 name: editingAccessory.name || "",
-                quantity: editingAccessory.quantity || "",
+                quantity: format2Decimals(editingAccessory.quantity),
                 unit: editingAccessory.unit || "",
-                maxStockLevel: editingAccessory.max_stock_level || "",
-                costPerUnit: editingAccessory.cost || "",
+                maxStockLevel: format2Decimals(editingAccessory.max_stock_level),
+                costPerUnit: format2Decimals(editingAccessory.cost),
             });
         } else {
             setFormData({
@@ -44,10 +50,16 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
         const { name } = e.target;
         let { value } = e.target;
 
-        // For quantity field: allow only digits (no negative sign, no other chars)
-        if (name === 'quantity') {
-            // remove any non-digit characters (this strips '-' as well)
-            value = String(value).replace(/[^0-9]/g, '');
+        // Allow only numbers with up to 2 decimal places for quantity, maxStockLevel, and costPerUnit
+        if (["quantity", "maxStockLevel", "costPerUnit"].includes(name)) {
+            // Allow empty string, or valid number with up to 2 decimals
+            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                setFormData((prev) => ({
+                    ...prev,
+                    [name]: value,
+                }));
+            }
+            return;
         }
 
         setFormData((prev) => ({
@@ -175,9 +187,10 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                             }
                         }}
                         inputProps={{
-                            inputMode: 'numeric',
-                            pattern: '[0-9]*',
-                            min: 0
+                            inputMode: 'decimal',
+                            pattern: '^\\d*\\.?\\d{0,2}$',
+                            min: 0,
+                            step: '0.01'
                         }}
                         required
                     />

@@ -196,11 +196,11 @@ export const TransactionsDetails = () => {
     }, [id])
 
     const handleEditClick = () => {
-        navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
+        navigate(`/accounting/vas/membership-plan/setup/edit/${id}`);
     };
 
     const handleClose = () => {
-        navigate("/settings/manual-journal");
+        navigate("/accounting/manual-journal");
     };
 
     if (loading) {

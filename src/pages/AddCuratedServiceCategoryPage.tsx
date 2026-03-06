@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import { TextField } from "@mui/material";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 
 const fieldStyles = {
   height: '45px',
@@ -29,12 +29,14 @@ const fieldStyles = {
   },
 };
 
+
 export const AddCuratedServiceCategoryPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     service_cat_name: "",
+    service_tag: "", // default value
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -97,6 +99,10 @@ export const AddCuratedServiceCategoryPage = () => {
       toast.error("Service image is required");
       return false;
     }
+    if (!formData.service_tag) {
+      toast.error("Service tag is required");
+      return false;
+    }
     return true;
   };
 
@@ -114,6 +120,7 @@ export const AddCuratedServiceCategoryPage = () => {
       formDataToSend.append("name", formData.service_cat_name);
       formDataToSend.append("attachment", imageFile!);
       formDataToSend.append("active", "1");
+      formDataToSend.append("service_tag", formData.service_tag);
 
       const apiUrl = getFullUrl("/osr_setups/create_osr_category.json");
       const response = await fetch(apiUrl, {
@@ -161,9 +168,9 @@ export const AddCuratedServiceCategoryPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE CATEGORY</h1>
       </div>
 
-      <form 
-      onSubmit={handleSubmit} 
-      className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6">
         {/* Service Category Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
@@ -190,12 +197,45 @@ export const AddCuratedServiceCategoryPage = () => {
                 slotProps={{
                   inputLabel: {
                     shrink: true,
+                    sx: {
+                      "& .MuiFormLabel-asterisk": {
+                        color: "red",
+                      },
+                    },
                   },
                 }}
                 InputProps={{
                   sx: fieldStyles,
                 }}
               />
+
+              {/* Service Tag Dropdown */}
+              <FormControl
+                fullWidth
+                required
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink sx={{
+                  "& .MuiFormLabel-asterisk": {
+                    color: "red",   // or #d32f2f
+                  },
+                }}>Service Tag</InputLabel>
+                <MuiSelect
+                  value={formData.service_tag}
+                  onChange={(e) => handleInputChange("service_tag", e.target.value)}
+                  label="Service Tag"
+                  notched
+                  displayEmpty
+
+                >
+                  <MenuItem value="">
+                    {"Select Service tag"}
+                  </MenuItem>
+                  <MenuItem value="curated">Curated</MenuItem>
+                  <MenuItem value="supported">Supported</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>

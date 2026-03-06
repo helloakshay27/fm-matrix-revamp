@@ -414,7 +414,7 @@ export const VisitorsDashboard = () => {
       console.log('🔍 Using site ID for visitor history:', siteId);
       console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
       const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-      setVisitorHistoryData(data.visitors);
+      setVisitorHistoryData(data.visitors || []);
       setHistoryPagination({
         currentPage: data.pagination?.current_page || 1,
         totalPages: data.pagination?.total_pages || 1,
@@ -590,12 +590,14 @@ export const VisitorsDashboard = () => {
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     { key: 'check_out_time', label: 'Check-Out Time', sortable: true, hideable: true, draggable: true },
+    { key: 'created_by', label: 'Created By', sortable: true, hideable: true, draggable: true },
+    { key: 'created_at', label: 'Created On', sortable: true, hideable: true, draggable: true },
 
     // { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
 
   // Filter visitors based on search term
-  const filteredVisitors = visitorHistoryData.filter(visitor =>
+  const filteredVisitors = (visitorHistoryData || []).filter(visitor =>
     visitor.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     visitor.pass_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     visitor.primary_host?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -894,6 +896,12 @@ export const VisitorsDashboard = () => {
         );
       case 'check_in_time':
         return visitor.check_in_time || '--';
+      case 'check_out_time':
+        return visitor.check_out_time || '--';
+      case 'created_by':
+        return visitor.created_by || '--';
+      case 'created_at':
+        return visitor.created_at || '--';
       case 'pass_number':
         return visitor.pass_number || '--';
       case 'status':
@@ -1882,14 +1890,14 @@ export const VisitorsDashboard = () => {
               rightActions={
                 <div className="flex gap-2">
                   {/* Export Button */}
-                  <Button
+                  {/* <Button
                     onClick={handleExport}
                     variant="outline"
                     size="sm"
                     className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
                   >
                     <Download className="w-4 h-4 " />
-                  </Button>
+                  </Button> */}
                   <ColumnVisibilityMenu
                     columns={visitorHistoryColumns}
                     columnVisibility={visitorHistoryColumnVisibility}

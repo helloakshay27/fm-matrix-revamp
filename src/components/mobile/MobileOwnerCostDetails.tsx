@@ -38,13 +38,14 @@ interface OwnershipCost {
 
 // Mobile Owner Cost API Service
 const mobileOwnerCostApiService = {
-  async updateAssetBreakdownStatus(token: string, assetId: number): Promise<void> {
+  async updateAssetBreakdownStatus(token: string, assetId: number, baseUrl?: string): Promise<void> {
     try {
       const url = `/pms/assets/${assetId}.json`;
-      
+
       console.log("🔄 UPDATING ASSET BREAKDOWN STATUS:");
       console.log("  - URL:", url);
       console.log("  - Asset ID:", assetId);
+      console.log("  - Override Base URL:", baseUrl);
 
       await baseClient.put(
         url,
@@ -52,6 +53,7 @@ const mobileOwnerCostApiService = {
           pms_asset: { breakdown: "true", status: "breakdown" }
         },
         {
+          baseURL: baseUrl ? (baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`) : undefined,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -69,20 +71,22 @@ const mobileOwnerCostApiService = {
     asset_id: number;
     replaced: boolean;
     repaired: boolean;
-  cost: number;
-  warranty_in_month: number;
+    cost: number;
+    warranty_in_month: number;
     warranty_type: string;
     payment_status: string;
     in_use_reason: string;
-  }): Promise<void> {
+  }, baseUrl?: string): Promise<void> {
     try {
       const url = `/pms/ownership_cost.json`;
-      
+
       console.log("💾 CREATING OWNERSHIP COST:");
       console.log("  - URL:", url);
       console.log("  - Payload:", payload);
+      console.log("  - Override Base URL:", baseUrl);
 
       await baseClient.post(url, payload, {
+        baseURL: baseUrl ? (baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`) : undefined,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -104,16 +108,18 @@ const mobileOwnerCostApiService = {
     warranty_type: string;
     cost: string;
     repaired: boolean;
-  }): Promise<void> {
+  }, baseUrl?: string): Promise<void> {
     try {
       const url = `/pms/assets/create_ownership_cost?id=${assetId}`;
-      
+
       console.log("💾 CREATING ASSET OWNERSHIP COST:");
       console.log("  - URL:", url);
       console.log("  - Asset ID:", assetId);
       console.log("  - Payload:", payload);
+      console.log("  - Override Base URL:", baseUrl);
 
       await baseClient.post(url, payload, {
+        baseURL: baseUrl ? (baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`) : undefined,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -149,9 +155,11 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
 
         // Ensure we have the site id: use asset.pms_site_id if present, otherwise fetch asset details
         let siteId: number | null | undefined = asset.pms_site_id;
+        const baseUrl = sessionStorage.getItem('mobile_base_url');
 
         if (!siteId) {
           const assetResponse = await baseClient.get(`/pms/assets/${asset.id}.json`, {
+            baseURL: baseUrl ? (baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`) : undefined,
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -167,6 +175,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
         if (!siteId) return;
 
         const response = await baseClient.get('/currencies.json', {
+          baseURL: baseUrl ? (baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`) : undefined,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -246,7 +255,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
       try {
         setLoading(true);
         const token = sessionStorage.getItem('mobile_token') || sessionStorage.getItem('token');
-        
+
         if (!token) {
           throw new Error('No authentication token available');
         }
@@ -255,7 +264,8 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
           throw new Error('Asset ID is missing');
         }
 
-        await mobileOwnerCostApiService.updateAssetBreakdownStatus(token, asset.id);
+        const baseUrl = sessionStorage.getItem('mobile_base_url') || undefined;
+        await mobileOwnerCostApiService.updateAssetBreakdownStatus(token, asset.id, baseUrl);
 
         if (refreshAssetData) {
           refreshAssetData();
@@ -289,7 +299,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
 
   const handleSubmit = async () => {
     const token = sessionStorage.getItem('mobile_token') || sessionStorage.getItem('token');
-    
+
     if (!token) {
       alert('No authentication token available');
       return;
@@ -313,7 +323,8 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
 
     try {
       setLoading(true);
-      await mobileOwnerCostApiService.createOwnershipCost(token, payload);
+      const baseUrl = sessionStorage.getItem('mobile_base_url') || undefined;
+      await mobileOwnerCostApiService.createOwnershipCost(token, payload, baseUrl);
 
       setShowModal(false);
       setFormData({
@@ -356,7 +367,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
 
   const handleAssetStatusSubmit = async () => {
     const token = sessionStorage.getItem('mobile_token') || sessionStorage.getItem('token');
-    
+
     if (!token) {
       alert('No authentication token available');
       return;
@@ -382,7 +393,8 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
         repaired: assetStatusFormData.status === 'repaired',
       };
 
-      await mobileOwnerCostApiService.createAssetOwnershipCost(token, asset.id, payload);
+      const baseUrl = sessionStorage.getItem('mobile_base_url') || undefined;
+      await mobileOwnerCostApiService.createAssetOwnershipCost(token, asset.id, payload, baseUrl);
 
       setShowAssetStatusModal(false);
       setAssetStatusFormData({
@@ -494,7 +506,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Cost</p>
                       <p className="font-semibold text-gray-900">
-                        {item.cost !== null && item.cost !== undefined 
+                        {item.cost !== null && item.cost !== undefined
                           ? `${currency}${item.cost.toLocaleString()}`
                           : 'N/A'}
                       </p>
@@ -502,7 +514,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Warranty</p>
                       <p className="font-semibold text-gray-900">
-                        {item.warranty_in_month !== null && item.warranty_in_month !== undefined 
+                        {item.warranty_in_month !== null && item.warranty_in_month !== undefined
                           ? `${item.warranty_in_month} Months`
                           : 'N/A'}
                       </p>
@@ -539,8 +551,8 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
       </div>
 
       {/* Asset Status Update Modal (when toggling to IN USE) */}
-      <Dialog 
-        open={showModal} 
+      <Dialog
+        open={showModal}
         onOpenChange={(open) => {
           setShowModal(open);
           if (!open) {

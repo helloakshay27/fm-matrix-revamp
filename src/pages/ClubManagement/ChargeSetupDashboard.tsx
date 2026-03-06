@@ -151,8 +151,12 @@ export const ChargeSetupDashboard = () => {
   const fetchChargeSetups = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('https://club-uat-api.lockated.com/account/charge_setups.json', {
+      // const token = localStorage.getItem('token');
+      // const baseUrl = localStorage.getItem("baseUrl");
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const res = await fetch(`${baseUrl}/account/charge_setups.json`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
@@ -466,7 +470,7 @@ export const ChargeSetupDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/charge-setup/add');
+    navigate('/accounting/charge-setup/add');
   };
 
   // Render membership status badge
@@ -707,7 +711,7 @@ export const ChargeSetupDashboard = () => {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/details/${item.id}`)}
+            onClick={() => navigate(`/accounting/charge-setup/details/${item.id}`)}
             title="View"
             className="p-0"
           >
@@ -715,7 +719,7 @@ export const ChargeSetupDashboard = () => {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/charge-setup/edit/${item.id}`)}
+            onClick={() => navigate(`/accounting/charge-setup/edit/${item.id}`)}
             title="Edit"
             className="p-0"
           >

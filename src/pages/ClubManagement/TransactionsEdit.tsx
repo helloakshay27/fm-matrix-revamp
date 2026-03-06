@@ -158,7 +158,7 @@ const TransactionsEdit = () => {
                 },
             });
             console.log('API response:', response.data);
-            navigate('/settings/transactions');
+            navigate('/accounting/transactions');
             // Optionally show success message or redirect
         } catch (error) {
             console.error('Error submitting journal entry:', error);

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Upload, Eye, Edit, Trash2, Loader2, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Download, Upload, Eye, Edit, Trash2, Loader2, X, BarChart3 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
@@ -426,99 +427,152 @@ const UtilityWasteGenerationDashboard = () => {
 
   return (
     <>
-      <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          {/* <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-            <p className="text-muted-foreground text-sm sm:text-base ml-3">
-              {totalCount > 0 && `Total: ${totalCount} records`}
-            </p>
-          </div> */}
-        </div>
+      <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger
+              value="list"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-list w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M8 6h13" />
+                <path d="M8 12h13" />
+                <path d="M8 18h13" />
+                <path d="M3 6h.01" />
+                <path d="M3 12h.01" />
+                <path d="M3 18h.01" />
+              </svg>
+              Waste List
+            </TabsTrigger>
 
-        {/* Main Card */}
-        <CardContent className="p-4">
-          <EnhancedTable
-            data={filteredData}
-            columns={columns}
-            // selectable={true}
-            selectedItems={selectedItems}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            getItemId={getItemId}
-            renderCell={renderCell}
-            storageKey="waste-generation-table"
-            enableExport={true}
-            exportFileName="waste-generation-data"
-            handleExport={handleTableExport}
-            pagination={true}
-            pageSize={10}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search by location, vendor, commodity, etc..."
-            onFilterClick={handleFilters}
-            emptyMessage={
-              hasActiveFilters 
-                ? `No waste generation records found with the current filters${getActiveFiltersDescription()}. Try adjusting your filter criteria or click 'Clear' to view all records.`
-                : "No waste generation data available. Click 'Action' to create a new record."
-            }
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2">
-                <Button 
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
-                  onClick={handleActionClick}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Action
-                </Button>
-                {hasActiveFilters && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      Filters Applied
-                    </Badge>
-                    <Button 
-                      onClick={handleClearFilters} 
-                      variant="outline" 
-                      size="sm"
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      <X className="mr-1 h-3 w-3" />
-                      Clear
-                    </Button>
+            <TabsTrigger
+              value="analytics"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+              </svg>
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Waste List Tab */}
+          <TabsContent value="list" className="mt-4">
+            <div className="flex-1 space-y-4">
+              <CardContent className="p-4">
+                <EnhancedTable
+                  data={filteredData}
+                  columns={columns}
+                  // selectable={true}
+                  selectedItems={selectedItems}
+                  onSelectAll={handleSelectAll}
+                  onSelectItem={handleSelectItem}
+                  getItemId={getItemId}
+                  renderCell={renderCell}
+                  storageKey="waste-generation-table"
+                  enableExport={true}
+                  exportFileName="waste-generation-data"
+                  handleExport={handleTableExport}
+                  pagination={true}
+                  pageSize={10}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  searchPlaceholder="Search by location, vendor, commodity, etc..."
+                  onFilterClick={handleFilters}
+                  emptyMessage={
+                    hasActiveFilters 
+                      ? `No waste generation records found with the current filters${getActiveFiltersDescription()}. Try adjusting your filter criteria or click 'Clear' to view all records.`
+                      : "No waste generation data available. Click 'Action' to create a new record."
+                  }
+                  leftActions={
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button 
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
+                        onClick={handleActionClick}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Action
+                      </Button>
+                      {hasActiveFilters && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            Filters Applied
+                          </Badge>
+                          <Button 
+                            onClick={handleClearFilters} 
+                            variant="outline" 
+                            size="sm"
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            <X className="mr-1 h-3 w-3" />
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  }
+                />
+                
+                {/* API Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1 || isLoading}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages || isLoading}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
                 )}
-              </div>
-            }
-          />
-          
-          {/* API Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </p>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages || isLoading}
-                >
-                  Next
-                </Button>
+              </CardContent>
+            </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="mt-4">
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">Analytics Coming Soon</p>
+                <p className="text-sm mt-1">Waste generation analytics will be available here.</p>
               </div>
             </div>
-          )}
-        </CardContent>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Action Panel */}

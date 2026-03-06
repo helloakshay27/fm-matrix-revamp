@@ -229,8 +229,8 @@ const ProjectCard = ({ project }) => {
                     <div className="text-gray-600 text-xs">Members</div>
                     <TooltipProvider>
                         <div className="flex items-center">
-                            {/* Display team members */}
-                            {project?.project_team?.project_team_members?.map((member, index) => {
+                            {/* Display first 5 team members */}
+                            {project?.project_team?.project_team_members?.slice(0, 5).map((member, index) => {
                                 if (!member?.user) return null;
                                 const id = member.user.id || member.user.name;
                                 const userName = member.user.full_name || member.user.name || '';
@@ -250,6 +250,13 @@ const ProjectCard = ({ project }) => {
                                     </Tooltip>
                                 );
                             })}
+                            
+                            {/* Show +X badge if more than 5 members */}
+                            {project?.project_team?.project_team_members && project.project_team.project_team_members.length > 5 && (
+                                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-400 text-white -ml-2">
+                                    +{project.project_team.project_team_members.length - 5}
+                                </div>
+                            )}
                         </div>
                     </TooltipProvider>
                 </div>

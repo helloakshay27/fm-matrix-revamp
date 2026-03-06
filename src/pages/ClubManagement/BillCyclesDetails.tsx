@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, DollarSign ,NotepadText,FileCog } from "lucide-react";
+import { ArrowLeft, User, DollarSign, NotepadText, FileCog } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
@@ -124,16 +124,21 @@ export const BillCyclesDetails = () => {
     // });
 
     const [formData, setFormData] = useState({
-  billCycleName: "",
-  startDate: "",
-  endDate: "",
-  paymentDueDays: "",
-  billCycleFrequency: "",
-  fine: "",
-  interest: "",
-  charges: "",
-  expense: false,
-});
+        billCycleName: "",
+        startDate: "",
+        endDate: "",
+        paymentDueDays: "",
+        billCycleFrequency: "",
+        fine: "",
+        fineRate: "",
+        interest: "",
+        interestRate: "",
+        charges: [],
+        expense: false,
+        frequency: "",
+        dueDate: "",
+        active: 1,
+    });
 
 
     const getAmenities = async () => {
@@ -150,63 +155,50 @@ export const BillCyclesDetails = () => {
         }
     }
 
-    useEffect(() => {
-        getAmenities()
-    }, [])
-
-    const fetchMembershipPlanDetails = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(`https://${baseUrl}/membership_plans/${id}.json`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                }
-            })
-
-            const data = response.data;
-            const amenityDetailsMap = {};
-            data.plan_amenities.forEach((amenity) => {
-                amenityDetailsMap[amenity.facility_setup_id] = {
-                    frequency: amenity.frequency || "",
-                    slotLimit: amenity.slot_limit || "",
-                    canBookAfterSlotLimit: amenity.can_book_after_slot_limit || false,
-                    price: amenity.price || "",
-                    allowMultipleSlots: amenity.allow_multiple_slots || false,
-                    multipleSlots: amenity.multiple_slots || "",
-                };
-            });
-
-            setFormData({
-                name: data.name,
-                price: data.price,
-                userLimit: data.user_limit,
-                renewalTerms: data.renewal_terms,
-                paymentFrequency: data.payment_plan?.name || "",
-                usageLimits: data.usage_limits || "",
-                discountEligibility: data.discount_eligibility || "",
-                amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),
-                amenityDetails: amenityDetailsMap,
-                active: data.active,
-                createdAt: data.created_at,
-                createdBy: data.created_by,
-            })
-        } catch (error) {
-            console.log(error)
-        } finally {
-            setLoading(false);
-        }
-    }
 
     useEffect(() => {
-        fetchMembershipPlanDetails();
-    }, [id])
+        const fetchBillCycleDetails = async () => {
+            setLoading(true);
+            try {
+                // Use your API config if available, else fallback to localStorage
+                const apiBase = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+                const response = await axios.get(`${apiBase}/account/society_bill_cycles/${id}.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                    },
+                });
+                const data = response.data.society_bill_cycle;
+                setFormData({
+                    billCycleName: data.name || "",
+                    startDate: data.start_month || "",
+                    endDate: data.end_month || "",
+                    paymentDueDays: data.payment_due_in?.toString() || "",
+                    billCycleFrequency: data.frequency || "",
+                    fine: data.fine_type || "",
+                    interest: data.interest_type || "",
+                    charges: data.charge_names || [],
+                    expense: !!data.expense_bill,
+                    frequency: data.frequency || "",
+                    dueDate: data.due_date || "",
+                    active: data.active,
+                    fineRate: data.fine_rate?.toString() || "",
+                    interestRate: data.interest_rate?.toString() || "",
+                });
+            } catch (error) {
+                toast.error("Failed to fetch bill cycle details");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBillCycleDetails();
+    }, [id, baseUrl, token]);
 
     const handleEditClick = () => {
-        navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
+        navigate(`/accounting/vas/membership-plan/setup/edit/${id}`);
     };
 
     const handleClose = () => {
-        navigate("/settings/bill-cycles");
+        navigate("/accounting/bill-cycles");
     };
 
     if (loading) {
@@ -246,95 +238,113 @@ export const BillCyclesDetails = () => {
 
 
                 <div className="space-y-6">
-  <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-    <div className="flex items-center gap-3">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-        <FileCog className="w-4 h-4" />
-      </div>
-      <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-        Bill Cycle Details
-      </h3>
-    </div>
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <FileCog className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                                Bill Cycle Details
+                            </h3>
+                        </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Bill Cycle Name</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.billCycleName || "-"}
-        </span>
-      </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Bill Cycle Name</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.billCycleName || "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Start Date</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.startDate
-            ? new Date(formData.startDate).toLocaleDateString("en-GB")
-            : "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Start Date</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.startDate
+                                        ? new Date(formData.startDate).toLocaleDateString("en-GB")
+                                        : "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">End Date</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.endDate
-            ? new Date(formData.endDate).toLocaleDateString("en-GB")
-            : "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">End Date</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.endDate
+                                        ? new Date(formData.endDate).toLocaleDateString("en-GB")
+                                        : "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Payment Due (Days)</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.paymentDueDays || "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Payment Due (Days)</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.paymentDueDays || "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Bill Cycle Frequency</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.billCycleFrequency || "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Bill Cycle Frequency</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.billCycleFrequency || "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Fine</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.fine || "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Fine Type</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.fine || "-"}
+                                </span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Fine Rate</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.fineRate
+                                        ? ` ${formData.fineRate}${formData.fine === "percentage" ? "%" : ""}`
+                                        : "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Interest</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.interest || "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Interest Type</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.interest || "-"}
+                                </span>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Interest Rate</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.interestRate
+                                        ? `${formData.interestRate}${formData.interest === "percentage" ? "%" : ""}`
+                                        : "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Charges</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.charges || "-"}
-        </span>
-      </div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Charges</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.charges || "-"}
+                                </span>
+                            </div>
 
-      <div className="flex items-start">
-        <span className="text-gray-500 min-w-[140px]">Expense</span>
-        <span className="text-gray-500 mx-2">:</span>
-        <span className="text-gray-900 font-medium">
-          {formData.expense ? "Yes" : "No"}
-        </span>
-      </div>
-    </div>
-  </div>
-</div>
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Expense</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {formData.expense ? "Yes" : "No"}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </ThemeProvider>

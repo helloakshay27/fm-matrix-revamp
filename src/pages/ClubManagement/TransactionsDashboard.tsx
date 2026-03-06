@@ -473,7 +473,7 @@ export const TransactionsDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/settings/transactions/add');
+    navigate('/accounting/transactions/add');
   };
 
   // Render membership status badge
@@ -550,7 +550,7 @@ export const TransactionsDashboard = () => {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/transactions/details/${item.id}`)}
+            onClick={() => navigate(`/accounting/transactions/details/${item.id}`)}
             title="View Details"
             className="p-0"
           >
@@ -558,7 +558,7 @@ export const TransactionsDashboard = () => {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate(`/settings/transactions/Edit/${item.id || item.actions}`)}
+            onClick={() => navigate(`/accounting/transactions/Edit/${item.id || item.actions}`)}
             title="Edit"
             className="p-0"
           >

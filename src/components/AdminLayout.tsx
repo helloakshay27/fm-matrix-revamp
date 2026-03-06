@@ -11,7 +11,9 @@ interface AdminLayoutContextType {
   toggleSidebar: () => void;
 }
 
-const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(undefined);
+const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
+  undefined
+);
 
 export const useAdminLayout = () => {
   const context = useContext(AdminLayoutContext);
@@ -29,6 +31,18 @@ export const AdminLayout: React.FC = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  // PWA routes that should not show sidebar
+  const PWA_ROUTES = [
+    "/login-page",
+    "/ops-console/settings/account/user-list-otp",
+  ];
+
+  // Check if current route is a PWA route
+  const isPWARoute = PWA_ROUTES.some(
+    (route) =>
+      location.pathname === route || location.pathname.startsWith(route + "/")
+  );
+
   // Get the current page title based on the route
   const getPageTitle = () => {
     const path = location.pathname;
@@ -41,16 +55,24 @@ export const AdminLayout: React.FC = () => {
     return "Admin Console";
   };
 
+  // If PWA route, render without sidebar
+  if (isPWARoute) {
+    return (
+      <div className="min-h-screen bg-[#fafafa]">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#fafafa]">
       {/* Header */}
       <Header />
-      
+
       {/* Sidebar */}
       <AdminSidebar />
-      
+
       {/* Dynamic Header */}
-     
 
       {/* Main content */}
       <main

@@ -264,17 +264,17 @@ export const EditPlusServicePage = () => {
       formDataToSend.append("plus_service[service_category_id]", formData.service_category_id);
       formDataToSend.append("plus_service[active]", formData?.active?.toString());
 
-      if (formData.order_no) {
+      // if (formData.order_no) {
         formDataToSend.append("plus_service[order_no]", formData.order_no);
-      }
+      // }
 
-      if (formData.mobile) {
+      // if (formData.mobile) {
         formDataToSend.append("plus_service[mobile]", formData.mobile);
-      }
+      // }
 
-      if (formData.address) {
+      // if (formData.address) {
         formDataToSend.append("plus_service[address]", formData.address);
-      }
+      // }
 
       if (imageChanged) {
         if (attachment) {

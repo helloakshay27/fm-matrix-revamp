@@ -4,12 +4,13 @@ import { cache } from "@/utils/cacheUtils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIssues, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import AddIssueModal from "@/components/AddIssueModal";
-import { FormControl, MenuItem, Select } from "@mui/material";
+import IssueFilterModal from "@/components/IssueFilterModal";
+import { FormControl, MenuItem, Select, Switch, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -21,6 +22,17 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Issue {
     id?: string;
@@ -34,6 +46,7 @@ interface Issue {
     priority?: string;
     status?: string;
     assigned_to?: string;
+    raised_by?: string;
     created_by?: string;
     created_at?: string;
     updated_at?: string;
@@ -117,6 +130,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "raised_by",
+        label: "Raised By",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "start_date",
         label: "Start Date",
         sortable: true,
@@ -184,11 +204,19 @@ const IssuesListPage = ({
     const [filterSuccess, setFilterSuccess] = useState(false);
     const [filteredIssues, setFilteredIssues] = useState<any[]>([]);
     const [filteredLoading, setFilteredLoading] = useState(false);
-
-    // Pagination state
+    const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(false);
+    const [appliedFilters, setAppliedFilters] = useState(""); // For IssueFilterModal
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState<Array<{ row: number; errors: string[] }>>([]);
+    const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
     const [pagination, setPagination] = useState({
-        pageIndex: 0,
-        pageSize: 10,
+        current_page: 1,
+        total_count: 0,
+        total_pages: 0,
     });
 
     // Search state
@@ -213,6 +241,20 @@ const IssuesListPage = ({
             ];
     });
 
+    // Extract pagination data from Redux response
+    useEffect(() => {
+        if (data && typeof data === 'object') {
+            const paginationData = {
+                current_page: (data as any).pagination?.current_page || 1,
+                total_count: (data as any).pagination?.total_count || 0,
+                total_pages: (data as any).pagination?.total_pages || 0,
+            };
+            setPagination(paginationData);
+        }
+    }, [data]);
+
+    console.log(pagination)
+
     // Fetch control refs
     const allIssuesFetchInitiatedRef = useRef(false);
     const prevParamsRef = useRef({
@@ -235,6 +277,7 @@ const IssuesListPage = ({
             priority: issue.priority || "",
             status: issue.status || "Open",
             assigned_to: issue.responsible_person_id,
+            raised_by: issue?.created_by?.name,
             created_by: issue.created_by?.full_name || issue.created_by_name || "",
             created_at: issue.created_at || "",
             updated_at: issue.updated_at || "",
@@ -257,8 +300,13 @@ const IssuesListPage = ({
     const displayIssues = useMemo(() => {
         let issuesToDisplay;
 
+        // If showing my issues only, use filtered issues
+        if (showMyIssuesOnly) {
+            issuesToDisplay =
+                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
+        }
         // If search is active, use filtered issues
-        if (searchQuery.trim()) {
+        else if (searchQuery.trim()) {
             issuesToDisplay =
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
@@ -267,8 +315,9 @@ const IssuesListPage = ({
             issuesToDisplay =
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
-        // Check if localStorage filters are applied
+        // Check if filters are applied (either from modal or localStorage)
         else if (
+            appliedFilters ||
             localStorage.getItem("IssueFilters") ||
             localStorage.getItem("issueStatus")
         ) {
@@ -287,58 +336,80 @@ const IssuesListPage = ({
         projectId,
         projectIdParam,
         taskIdParam,
+        showMyIssuesOnly,
+        appliedFilters,
     ]);
 
     const issues: Issue[] = displayIssues.map(mapIssueData);
 
     const [users, setUsers] = useState([]);
     const [issueTypeOptions, setIssueTypeOptions] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [openIssueModal, setOpenIssueModal] = useState(false);
-
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     // Helper function to perform filtered fetch - defined early to be used in useEffects
     const performFilteredFetch = useCallback(
-        async (filterOrString: any) => {
+        async (filterOrString: any, page: number = 1) => {
             try {
                 setFilteredLoading(true);
-                let queryString: string;
+                let filterString: string;
 
                 if (typeof filterOrString === "string") {
-                    queryString = filterOrString;
+                    filterString = filterOrString;
                 } else {
-                    queryString = qs.stringify(filterOrString);
+                    let filter = filterOrString;
+                    // Add responsible_person_id_eq if showing my issues only
+                    if (showMyIssuesOnly) {
+                        const user = JSON.parse(localStorage.getItem("user") || "{}");
+                        if (user.id) {
+                            filter["q[responsible_person_id_eq]"] = user.id.toString();
+                        }
+                    }
+                    filterString = qs.stringify(filter);
                 }
 
-                // Create cache key for filtered issues - include projectId and taskIdParam to prevent stale cache
-                const cacheKey = `issues_filtered_${projectId}_${projectIdParam}_${taskIdParam}_${queryString}`;
+                // Add responsible_person_id_eq if showing my issues only and not already in string
+                if (showMyIssuesOnly && !filterString.includes("responsible_person_id_eq")) {
+                    const user = JSON.parse(localStorage.getItem("user") || "{}");
+                    if (user.id) {
+                        filterString += (filterString ? "&" : "") + `q[responsible_person_id_eq]=${user.id.toString()}`;
+                    }
+                }
 
-                const cachedResult = await cache.getOrFetch(
-                    cacheKey,
-                    async () => {
-                        const response = await axios.get(
-                            `https://${baseUrl}/issues.json?${queryString}`,
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${token}`,
-                                },
-                            }
-                        );
-                        return response.data.issues || [];
-                    },
-                    1 * 60 * 1000, // Fresh for 1 minute
-                    5 * 60 * 1000 // Stale up to 5 minutes
+                // Build the complete query string with page parameter upfront
+                const queryString = `page=${page}${filterString ? `&${filterString}` : ""}`;
+
+                // Fetch filtered issues directly without caching
+                const response = await axios.get(
+                    `https://${baseUrl}/issues.json?${queryString}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
                 );
 
-                setFilteredIssues(cachedResult.data);
+                setFilteredIssues(response.data.issues || []);
+                setPagination({
+                    current_page: response.data.pagination.current_page || page,
+                    total_count: response.data.pagination.total_count || 0,
+                    total_pages: response.data.pagination.total_pages || 0,
+                });
                 setFilterSuccess(true);
             } catch (error) {
                 console.error("Error fetching filtered issues:", error);
                 toast.error("Failed to fetch filtered issues");
                 setFilteredIssues([]);
+                setPagination({
+                    current_page: 1,
+                    total_count: 0,
+                    total_pages: 0,
+                });
             } finally {
                 setFilteredLoading(false);
             }
         },
-        [baseUrl, token, projectId, projectIdParam, taskIdParam]
+        [baseUrl, token, projectId, projectIdParam, taskIdParam, showMyIssuesOnly]
     );
 
     const getUsers = useCallback(async () => {
@@ -354,15 +425,41 @@ const IssuesListPage = ({
         }
     }, [baseUrl, token]);
 
+    const getProjects = useCallback(async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/project_managements.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const projectsList = response.data?.project_managements || response.data?.data?.project_managements || [];
+            setProjects(projectsList);
+        } catch (error) {
+            console.log("Error fetching projects:", error);
+        }
+    }, [baseUrl, token]);
+
     useEffect(() => {
-        getUsers();
-    }, [getUsers]);
+        if (token && baseUrl) {
+            getUsers();
+            getProjects();
+        }
+    }, [token, baseUrl, getUsers, getProjects]);
+
+    // Handle showMyIssuesOnly toggle
+    useEffect(() => {
+        if (!projectId && !projectIdParam && !taskIdParam && !searchQuery.trim()) {
+            allIssuesFetchInitiatedRef.current = false;
+            setFilterSuccess(false);
+            setFilteredIssues([]);
+        }
+    }, [showMyIssuesOnly, projectId, projectIdParam, taskIdParam, searchQuery]);
 
     // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
     useEffect(() => {
         const handler = () => {
             allIssuesFetchInitiatedRef.current = false;
-            dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
         };
         window.addEventListener("issues:created", handler as EventListener);
         return () =>
@@ -380,7 +477,6 @@ const IssuesListPage = ({
             allIssuesFetchInitiatedRef.current = false;
             setFilterSuccess(false);
             setFilteredIssues([]);
-            setPagination({ pageIndex: 0, pageSize: 10 });
             prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
         }
 
@@ -389,27 +485,17 @@ const IssuesListPage = ({
             const filter = {
                 "q[project_management_id_eq]": projectId || projectIdParam || "",
                 "q[task_management_id_eq]": taskIdParam || "",
-                page: 1,
-                per_page: 10,
             };
-            performFilteredFetch(filter);
+            performFilteredFetch(filter, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         }
     }, [projectId, projectIdParam, taskIdParam, baseUrl, token, performFilteredFetch]);
 
     // Advanced filtering with search
     useEffect(() => {
         if (searchQuery.trim()) {
-            // Reset to first page when search query changes
-            setPagination((prev) => ({
-                ...prev,
-                pageIndex: 0,
-            }));
-
-            const page = 1;
             const filter = {
                 "q[title_or_project_management_title_cont]": searchQuery,
-                page,
-                per_page: 10,
                 ...(projectId && { "q[project_management_id_eq]": projectId }),
                 ...(projectIdParam && {
                     "q[project_management_id_eq]": projectIdParam,
@@ -417,12 +503,13 @@ const IssuesListPage = ({
                 ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
             };
 
-            performFilteredFetch(filter);
+            performFilteredFetch(filter, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         } else {
             // If search is cleared, reset to initial fetch
             allIssuesFetchInitiatedRef.current = false;
         }
-    }, [searchQuery, projectId, projectIdParam, taskIdParam]);
+    }, [searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
 
     // Fetch all issues only when no parameters and haven't fetched yet
     useEffect(() => {
@@ -436,60 +523,48 @@ const IssuesListPage = ({
             baseUrl &&
             token
         ) {
-            dispatch(fetchIssues({ baseUrl, token, id: "" }));
+            if (showMyIssuesOnly) {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                if (user.id) {
+                    const filter = {
+                        "q[responsible_person_id_eq]": user.id.toString(),
+                    };
+                    performFilteredFetch(filter, 1);
+                    setPagination((prev) => ({ ...prev, current_page: 1 }));
+                }
+            } else {
+                dispatch(fetchIssues({ baseUrl, token, id: "", page: pagination.current_page }));
+            }
             allIssuesFetchInitiatedRef.current = true;
         }
-    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery]);
+    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
 
-    // Handle pagination for search results
+
+
+    // Handle applied filters from IssueFilterModal
     useEffect(() => {
-        if (searchQuery.trim() && pagination.pageIndex > 0) {
-            const page = pagination.pageIndex + 1;
-            const filter = {
-                "q[title_or_project_management_title_cont]": searchQuery,
-                page,
-                per_page: 10,
-                ...(projectId && { "q[project_management_id_eq]": projectId }),
-                ...(projectIdParam && {
-                    "q[project_management_id_eq]": projectIdParam,
-                }),
-                ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
-            };
-
-            performFilteredFetch(filter);
+        if (appliedFilters !== "") {
+            performFilteredFetch(appliedFilters, 1);
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
         }
-    }, [
-        pagination.pageIndex,
-        searchQuery,
-        projectId,
-        projectIdParam,
-        taskIdParam,
-        performFilteredFetch,
-    ]);
+    }, [appliedFilters, performFilteredFetch]);
 
     const fetchData = useCallback(async () => {
         try {
-            const cachedResult = await cache.getOrFetch(
-                "issue_types",
-                async () => {
-                    const response = await axios.get(
-                        `https://${baseUrl}/issue_types.json`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    );
-                    const issueTypes = response.data.issue_types || response.data || [];
-                    return issueTypes.map((i: any) => ({
-                        value: i.id,
-                        label: i.name,
-                    }));
-                },
-                5 * 60 * 1000, // Fresh for 5 minutes
-                30 * 60 * 1000 // Stale up to 30 minutes
+            const response = await axios.get(
+                `https://${baseUrl}/issue_types.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
-            setIssueTypeOptions(cachedResult.data);
+            const issueTypes = response.data || [];
+            const mappedTypes = issueTypes.map((i: any) => ({
+                value: i.id,
+                label: i.name,
+            }));
+            setIssueTypeOptions(mappedTypes);
         } catch (error) {
             console.error("Error fetching issue types:", error);
             toast.error("Failed to load issue types.");
@@ -537,41 +612,40 @@ const IssuesListPage = ({
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
@@ -590,49 +664,49 @@ const IssuesListPage = ({
             ).unwrap();
             // Invalidate cache after issue update
             cache.invalidatePattern("issues_*");
-            performFilteredFetch(
-                projectId ? `q[project_management_id_eq]=${projectId}` : ""
-            );
+            if (projectId) {
+                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
+            }
             toast.success("Issue updated successfully");
 
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
@@ -654,56 +728,132 @@ const IssuesListPage = ({
             ).unwrap();
             // Invalidate cache after issue status update
             cache.invalidatePattern("issues_*");
-            performFilteredFetch(
-                projectId ? `q[project_management_id_eq]=${projectId}` : ""
-            );
+            if (projectId) {
+                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
+            }
             toast.success("Issue status updated successfully");
 
             // Refresh with appropriate filter
             if (localStorage.getItem("IssueFilters")) {
                 const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter = {
-                    "q[status_in][]":
-                        item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
-                    "q[created_by_id_eq]":
-                        item.selectedCreators?.length > 0 ? item.selectedCreators : [],
-                    "q[start_date_eq]": item.dates?.["Start Date"],
-                    "q[end_date_eq]": item.dates?.["End Date"],
-                    "q[responsible_person_id_in][]":
-                        item.selectedResponsible?.length > 0
-                            ? item.selectedResponsible
-                            : [],
-                    "q[issue_type_in][]":
-                        item.selectedTypes?.length > 0 ? item.selectedTypes : [],
-                    "q[project_management_id_in][]":
-                        item.selectedProjects?.length > 0 ? item.selectedProjects : [],
-                    "q[task_management_id_in][]":
-                        item.selectedTasks?.length > 0 ? item.selectedTasks : [],
-                    "q[subtask_management_id_in][]":
-                        item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
+                const newFilter: any = {};
+
+                if (item.selectedStatuses?.length > 0) {
+                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
+                }
+                if (item.selectedPriority?.length > 0) {
+                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
+                }
+                if (item.selectedTypes?.length > 0) {
+                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
+                }
+                if (item.selectedProjects?.length > 0) {
+                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
+                }
+                if (item.selectedResponsible?.length > 0) {
+                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
+                }
+                if (item.selectedCreators?.length > 0) {
+                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
+                }
+
                 const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString);
+                performFilteredFetch(queryString, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else if (localStorage.getItem("issueStatus")) {
                 const status = localStorage.getItem("issueStatus");
                 const filter = {
                     "q[status_eq]": status,
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
                 };
-                performFilteredFetch(filter);
+                performFilteredFetch(filter, 1);
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
             } else {
                 allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
             }
         } catch (error) {
             console.log(error);
         }
     };
 
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/sample_issue.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_issues.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImportIssues = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            const response = await axios.post(`https://${baseUrl}/issues/import_issues.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            // Parse the response
+            const data = response.data;
+            const importResult = data.import_result;
+
+            const created = importResult?.created || 0;
+            const failed = importResult?.failed || [];
+
+            setImportResults({ created, failed: failed.length });
+
+            // If there are errors, show error modal
+            if (failed && failed.length > 0) {
+                setImportErrors(failed);
+                setIsErrorModalOpen(true);
+            } else {
+                // Success case - show toast and fetch data
+                toast.success(`Successfully imported ${created} issues`);
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+
+                // Invalidate cache and fetch fresh data
+                cache.invalidatePattern("issues*");
+                dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import issues");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const renderCell = (item: any, columnKey: string) => {
+        if (columnKey === "title") {
+            return (
+                <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={item.title}>
+                    {item.title}
+                </div>
+            )
+        }
         if (columnKey === "priority") {
             return item[columnKey];
         }
@@ -856,19 +1006,209 @@ const IssuesListPage = ({
     const leftActions = (
         <>
             {shouldShow("employee_project_issues", "create") && (
+                // <Button
+                //     className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                //     onClick={handleOpenDialog}
+                // >
+                //     <Plus className="w-4 h-4 mr-2" />
+                //     Add
+                // </Button>
                 <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                    onClick={handleOpenDialog}
+                    onClick={() => setShowActionPanel(true)}
                 >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add
+                    Action
                 </Button>
             )}
         </>
     );
 
+    const rightActions = (
+        <div className="flex items-center gap-1 mr-4">
+            <span className="text-gray-700 font-medium text-sm">All Issues</span>
+            <Switch
+                checked={showMyIssuesOnly}
+                onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
+                sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                    },
+                }}
+            />
+            <span className="text-gray-700 font-medium text-sm">My Issues</span>
+        </div>
+    )
+
+    const handlePageChange = async (page: number) => {
+        if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading || filteredLoading) {
+            return;
+        }
+
+        try {
+            setPagination((prev) => ({ ...prev, current_page: page }));
+
+            // Determine which filter/search applies
+            if (searchQuery.trim()) {
+                const filter = {
+                    "q[title_or_project_management_title_cont]": searchQuery,
+                    ...(projectId && { "q[project_management_id_eq]": projectId }),
+                    ...(projectIdParam && {
+                        "q[project_management_id_eq]": projectIdParam,
+                    }),
+                    ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
+                };
+                await performFilteredFetch(filter, page);
+            } else if (appliedFilters) {
+                await performFilteredFetch(appliedFilters, page);
+            } else if (projectId || projectIdParam || taskIdParam) {
+                const filter = {
+                    "q[project_management_id_eq]": projectId || projectIdParam || "",
+                    "q[task_management_id_eq]": taskIdParam || "",
+                };
+                await performFilteredFetch(filter, page);
+            } else if (showMyIssuesOnly) {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                const filter = user.id ? { "q[responsible_person_id_eq]": user.id.toString() } : {};
+                await performFilteredFetch(filter, page);
+            } else {
+                // No filters/search, fetch all issues with page parameter
+                dispatch(fetchIssues({ baseUrl, token, id: "", page }));
+            }
+        } catch (error) {
+            console.error("Error changing page:", error);
+            toast.error("Failed to load page data. Please try again.");
+        }
+    };
+
+    const renderPaginationItems = () => {
+        if (!pagination.total_pages || pagination.total_pages <= 0) {
+            return null;
+        }
+        const items = [];
+        const totalPages = pagination.total_pages;
+        const currentPage = pagination.current_page;
+        const showEllipsis = totalPages > 7;
+
+        if (showEllipsis) {
+            items.push(
+                <PaginationItem key={1} className="cursor-pointer">
+                    <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={currentPage === 1}
+                        aria-disabled={loading || filteredLoading}
+                        className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                    >
+                        1
+                    </PaginationLink>
+                </PaginationItem>
+            );
+
+            if (currentPage > 4) {
+                items.push(
+                    <PaginationItem key="ellipsis1">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                                aria-disabled={loading || filteredLoading}
+                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage > 3 && currentPage < totalPages - 2) {
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={currentPage === i}
+                                aria-disabled={loading || filteredLoading}
+                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (currentPage < totalPages - 3) {
+                items.push(
+                    <PaginationItem key="ellipsis2">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+                    if (!items.find((item) => item.key === i.toString())) {
+                        items.push(
+                            <PaginationItem key={i} className="cursor-pointer">
+                                <PaginationLink
+                                    onClick={() => handlePageChange(i)}
+                                    isActive={currentPage === i}
+                                    aria-disabled={loading || filteredLoading}
+                                    className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                                >
+                                    {i}
+                                </PaginationLink>
+                            </PaginationItem>
+                        );
+                    }
+                }
+            }
+
+            if (totalPages > 1) {
+                items.push(
+                    <PaginationItem key={totalPages} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={currentPage === totalPages}
+                            aria-disabled={loading || filteredLoading}
+                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {totalPages}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        } else {
+            for (let i = 1; i <= totalPages; i++) {
+                items.push(
+                    <PaginationItem key={i} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(i)}
+                            isActive={currentPage === i}
+                            aria-disabled={loading || filteredLoading}
+                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        }
+
+        return items;
+    };
+
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
     };
 
     return (
@@ -882,11 +1222,33 @@ const IssuesListPage = ({
                 renderCell={renderCell}
                 loading={loading || filteredLoading}
                 leftActions={leftActions}
+                onFilterClick={() => setIsFilterModalOpen(true)}
+                rightActions={rightActions}
                 emptyMessage={
                     filterSuccess && issues.length === 0
                         ? "Try adjusting the filters."
                         : "No issues found. Create one to get started."
                 }
+            />
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={handleOpenDialog}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            {/* Issue Filter Modal */}
+            <IssueFilterModal
+                isModalOpen={isFilterModalOpen}
+                setIsModalOpen={setIsFilterModalOpen}
+                onApplyFilters={(filterString) => {
+                    setAppliedFilters(filterString);
+                }}
+                issueTypes={issueTypeOptions}
+                users={users}
+                projects={projects}
             />
 
             {/* Add Issue Modal */}
@@ -897,6 +1259,106 @@ const IssuesListPage = ({
                     preSelectedProjectId || projectId || projectIdParam
                 }
             />
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Issues"
+                entityType="issues"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImportIssues}
+                isUploading={isUploading}
+            />
+
+            {/* Import Error Modal */}
+            <Dialog
+                open={isErrorModalOpen}
+                onClose={() => setIsErrorModalOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 600, fontSize: "18px", borderBottom: "2px solid #E95420" }}>
+                    Import Summary
+                </DialogTitle>
+                <DialogContent sx={{ py: 3 }}>
+                    <div className="space-y-4">
+                        {/* Summary Stats */}
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded">
+                                <div className="text-xs text-gray-600">Successfully Created</div>
+                                <div className="text-2xl font-bold text-green-600">{importResults.created}</div>
+                            </div>
+                            <div className="flex-1 p-3 bg-red-50 border border-red-200 rounded">
+                                <div className="text-xs text-gray-600">Failed Records</div>
+                                <div className="text-2xl font-bold text-red-600">{importResults.failed}</div>
+                            </div>
+                        </div>
+
+                        {/* Error Details */}
+                        {importErrors.length > 0 && (
+                            <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-96 overflow-y-auto">
+                                <div className="text-sm font-semibold mb-3 text-gray-700">Error Details:</div>
+                                <div className="space-y-3">
+                                    {importErrors.map((error, idx) => (
+                                        <div key={idx} className="bg-white p-3 rounded border border-gray-200">
+                                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                                                Row {error.row}
+                                            </div>
+                                            <div className="text-sm text-red-600 space-y-1">
+                                                {error.errors?.map((err, errIdx) => (
+                                                    <div key={errIdx} className="flex items-start gap-2">
+                                                        <span className="text-red-500 mt-0.5">•</span>
+                                                        <span>{err}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsErrorModalOpen(false);
+                                    setIsImportModalOpen(false);
+                                    setSelectedFile(null);
+                                    // Fetch data anyway to show what was created
+                                    cache.invalidatePattern("issues*");
+                                    dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
+                                }}
+                            >
+                                Close & Refresh
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <div className="flex justify-center mt-6">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                                className={pagination.current_page === 1 || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+                        {renderPaginationItems()}
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                                className={pagination.current_page === pagination.total_pages || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
         </div>
     );
 };

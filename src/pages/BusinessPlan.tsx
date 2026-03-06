@@ -1,27 +1,28 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { EmployeeHeader } from "@/components/EmployeeHeader";
+
+const years = [2015, 2018, 2022, 2025, 2027, 2028, 2029, 2030, 2031];
+
+// Map years to horizontal positions (approximate pixels)
+// Total width roughly 2000px
+const yearPositions: Record<number, number> = {
+  2015: 100,
+  2018: 400,
+  2022: 750,
+  2025: 1000,
+  2027: 1250,
+  2028: 1400,
+  2029: 1600,
+  2030: 1800,
+  2031: 2000,
+};
 
 const BusinessPlan = () => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeYear, setActiveYear] = useState(2022);
-
-  const years = [2015, 2018, 2022, 2025, 2027, 2028, 2029, 2030, 2031];
-
-  // Map years to horizontal positions (approximate pixels)
-  // Total width roughly 2000px
-  const yearPositions: Record<number, number> = {
-    2015: 100,
-    2018: 400,
-    2022: 750,
-    2025: 1000,
-    2027: 1250,
-    2028: 1400,
-    2029: 1600,
-    2030: 1800,
-    2031: 2000,
-  };
 
   const handleYearClick = (year: number) => {
     setActiveYear(year);
@@ -67,6 +68,8 @@ const BusinessPlan = () => {
 
   return (
     <div className="flex flex-col h-screen bg-white">
+      <EmployeeHeader />
+      <div className="pt-16"></div>
       {/* Header */}
       <div className="flex items-center px-4 py-4 md:px-8 border-b border-gray-100 flex-shrink-0 z-10 bg-white">
         <button

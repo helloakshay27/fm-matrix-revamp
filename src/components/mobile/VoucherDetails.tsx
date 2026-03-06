@@ -1,34 +1,106 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { scratchCardApi, ScratchCardData } from "@/services/scratchCardApi";
+import { baseClient } from "@/utils/withoutTokenBase";
+import { toast } from "sonner";
+
+interface UserContestReward {
+  id: number;
+  reward_type: string;
+  status: string;
+  points_value: number | null;
+  coupon_code: string | null;
+  claimed_at?: string;
+  contest: {
+    id: number;
+    name: string;
+    description: string;
+    terms_and_conditions: string | null;
+    content_type: string;
+    start_at: string;
+    end_at: string;
+    status: string;
+  };
+  prize: {
+    id: number;
+    title: string;
+    description?: string;
+    display_name: string | null;
+    reward_type: string;
+    coupon_code: string | null;
+    partner_name: string | null;
+    points_value: number | null;
+    icon_url: string | null;
+    image: unknown | null;
+    product: unknown | null;
+  };
+}
 
 export const VoucherDetails: React.FC = () => {
   const navigate = useNavigate();
-  const { cardId } = useParams<{ cardId: string }>();
+  const { cardId, rewardId } = useParams<{
+    cardId?: string;
+    rewardId?: string;
+  }>();
+  const [searchParams] = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
   const [voucherData, setVoucherData] = useState<ScratchCardData | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [rewardData, setRewardData] = useState<UserContestReward | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "details"
+  );
   const [showCode, setShowCode] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   useEffect(() => {
     const fetchVoucherData = async () => {
-      if (!cardId) return;
+      // If rewardId is present, use new API structure
+      if (rewardId) {
+        setIsLoading(true);
+        try {
+          const orgId = searchParams.get("org_id");
+          const token = searchParams.get("token");
 
-      setIsLoading(true);
-      try {
-        const data = await scratchCardApi.getScratchCardById(cardId);
-        setVoucherData(data);
-      } catch (error) {
-        console.error("Error fetching voucher data:", error);
-      } finally {
-        setIsLoading(false);
+          if (!orgId || !token) {
+            console.error("Missing org_id or token");
+            return;
+          }
+
+          // Pass org_id and token as params for baseClient interceptor
+          const params: Record<string, string> = {};
+          if (token) params.token = token;
+          // if (orgId) params.org_id = orgId;
+
+          const response = await baseClient.get(
+            `/user_contest_rewards/${rewardId}`,
+            { params }
+          );
+          setRewardData(response.data);
+          console.warn("✅ Reward data loaded:", response.data);
+        } catch (error) {
+          console.error("Error fetching reward data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      // Otherwise use old API structure
+      else if (cardId) {
+        setIsLoading(true);
+        try {
+          const data = await scratchCardApi.getScratchCardById(cardId);
+          setVoucherData(data);
+        } catch (error) {
+          console.error("Error fetching voucher data:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchVoucherData();
-  }, [cardId]);
+  }, [cardId, rewardId, searchParams]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -39,21 +111,116 @@ export const VoucherDetails: React.FC = () => {
   };
 
   const copyCode = () => {
-    if (voucherData) {
-      navigator.clipboard.writeText(voucherData.voucher_code);
-      alert("Voucher code copied to clipboard!");
+    const code =
+      rewardData?.coupon_code ||
+      rewardData?.prize?.coupon_code ||
+      voucherData?.voucher_code;
+    if (code) {
+      navigator.clipboard.writeText(code);
+      toast.success("Voucher code copied to clipboard!");
     }
   };
 
+  const handleRedeemMerchandise = async () => {
+    if (!rewardId || isClaiming) return;
+
+    setIsClaiming(true);
+    try {
+      const token = searchParams.get("token");
+      const orgId = searchParams.get("org_id");
+
+      if (!token) {
+        toast.error("Missing authentication token");
+        return;
+      }
+
+      const params: Record<string, string> = { reward_type: "merchandise" };
+      if (token) params.token = token;
+
+      await baseClient.put(
+        `/user_contest_rewards/${rewardId}`,
+        {
+          user_contest_reward: {
+            status: "claimed",
+          },
+        },
+        { params }
+      );
+
+      // Refresh reward data
+      const response = await baseClient.get(
+        `/user_contest_rewards/${rewardId}`,
+        { params: { token } }
+      );
+      setRewardData(response.data);
+
+      toast.success("Successfully redeemed merchandise!", {
+        description: "Your reward status has been updated to claimed.",
+      });
+    } catch (error) {
+      console.error("Error redeeming merchandise:", error);
+      toast.error("Failed to redeem merchandise", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  // Use appropriate data based on which is available
+  const displayData = rewardData
+    ? {
+        title: rewardData.prize?.title || "Voucher",
+        description:
+          rewardData.contest?.description ||
+          rewardData.prize?.display_name ||
+          rewardData.prize?.description ||
+          "",
+        image_url:
+          (rewardData.prize?.image as { url?: string })?.url ||
+          rewardData.prize?.icon_url ||
+          null,
+        value: rewardData.prize?.partner_name || "",
+        code: rewardData.coupon_code || rewardData.prize?.coupon_code || "",
+        points_value: rewardData.points_value || rewardData.prize?.points_value,
+        status: rewardData.status,
+        contest_title: rewardData.contest?.name || "Contest",
+        contest_type: rewardData.contest?.content_type || "",
+        valid_till: rewardData.contest?.end_at || "",
+        terms: rewardData.contest?.terms_and_conditions || "",
+        reward_type: rewardData.prize?.reward_type || rewardData.reward_type,
+        product: rewardData.prize?.product || null,
+      }
+    : voucherData
+      ? {
+          title: voucherData.reward?.title || "",
+          description: voucherData.reward?.description || "",
+          image_url: voucherData.reward?.image_url || null,
+          value: "",
+          code: voucherData.voucher_code || "",
+          points_value: null,
+          status: "",
+          contest_title: "",
+          contest_type: "",
+          valid_till: voucherData.valid_until || "",
+          terms: "",
+          reward_type: "",
+          product: null,
+        }
+      : null;
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-[#B88B15] animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B88B15] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  if (!voucherData) {
+  if (!voucherData && !rewardData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
@@ -71,54 +238,49 @@ export const VoucherDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-[#9EAFC9] text-white px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-1 -ml-1 hover:bg-white/10 rounded-full"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-lg font-medium">Contest & promotion</h1>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="pb-8">
         {/* Product Image */}
-        <div className="w-full bg-[#F5E6D3] px-4 py-8">
-          <img
-            src={
-              voucherData.reward.image_url ||
-              "https://via.placeholder.com/400x300"
-            }
-            alt={voucherData.reward.title}
-            className="w-full h-48 object-cover rounded-lg"
-          />
+        <div className="w-full bg-[#F5E6D3] ">
+          {displayData?.image_url ? (
+            <img
+              src={displayData.image_url}
+              alt={displayData?.title}
+              className="w-full h-48 object-cover rounded-lg"
+            />
+          ) : (
+            <div className="w-full h-48 bg-white rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-2">🎁</div>
+                <p className="text-gray-500 text-sm">No Image Available</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Voucher Info */}
         <div className="px-4 py-4">
           <h2 className="text-lg font-bold text-gray-900 mb-2">
-            {voucherData.reward.title}
+            {displayData?.title}
           </h2>
           <p className="text-sm text-gray-600 mb-4">
-            {voucherData.reward.description}
+            {displayData?.description}
           </p>
 
-          {/* Voucher Code Section */}
-          <div className="bg-[#F5E6D3] rounded-lg p-3 flex items-center justify-between mb-4">
-            <span className="text-gray-900 font-mono tracking-wider">
-              {showCode ? voucherData.voucher_code : "•".repeat(15)}
-            </span>
-            <button
-              onClick={handleGetCode}
-              className="text-gray-900 font-semibold text-sm"
-            >
-              Get Code
-            </button>
-          </div>
+          {/* Voucher Code Section - only show if there's a code */}
+          {displayData?.code && (
+            <div className="bg-[#F5E6D3] rounded-lg p-3 flex items-center justify-between mb-4">
+              <span className="text-gray-900 font-mono tracking-wider">
+                {showCode ? displayData?.code : "•".repeat(15)}
+              </span>
+              <button
+                onClick={handleGetCode}
+                className="text-gray-900 font-semibold text-sm"
+              >
+                Get Code
+              </button>
+            </div>
+          )}
 
           {/* Details Section */}
           <div className="border-t border-gray-200">
@@ -136,347 +298,227 @@ export const VoucherDetails: React.FC = () => {
 
             {expandedSection === "details" && (
               <div className="pb-4 space-y-2">
-                {voucherData.details.map((detail, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <span className="text-gray-600 text-sm">•</span>
-                    <span className="text-gray-600 text-sm flex-1">
-                      {detail}
-                    </span>
+                {voucherData?.details ? (
+                  voucherData.details.map((detail, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <span className="text-gray-600 text-sm">•</span>
+                      <span className="text-gray-600 text-sm flex-1">
+                        {detail}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-600 text-sm space-y-1">
+                    {/* Show merchandise product details */}
+                    {displayData?.reward_type === "merchandise" &&
+                      displayData?.product && (
+                        <div className="space-y-3 mb-4">
+                          <div className="bg-[#FFF8E7] border border-[#D4A574] rounded-lg p-4">
+                            <h3 className="font-semibold text-gray-900 mb-2">
+                              Product Information
+                            </h3>
+                            {(displayData.product as { name?: string })
+                              ?.name && (
+                              <p className="mb-2">
+                                <strong>Name:</strong>{" "}
+                                {(displayData.product as { name: string }).name}
+                              </p>
+                            )}
+                            {(displayData.product as { description?: string })
+                              ?.description && (
+                              <p className="mb-2">
+                                <strong>Description:</strong>{" "}
+                                <span
+                                  dangerouslySetInnerHTML={{
+                                    __html: (
+                                      displayData.product as {
+                                        description: string;
+                                      }
+                                    ).description,
+                                  }}
+                                />
+                              </p>
+                            )}
+                            {(displayData.product as { sku?: string })?.sku && (
+                              <p className="mb-2">
+                                <strong>SKU:</strong>{" "}
+                                {(displayData.product as { sku: string }).sku}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Show points for spin contests with no coupon code */}
+                    {displayData?.contest_type === "spin" &&
+                      !displayData?.code &&
+                      displayData?.points_value && (
+                        <div className="bg-[#FFF8E7] border border-[#D4A574] rounded-lg p-4 mb-3">
+                          <p className="text-center text-sm text-gray-600 mb-1">
+                            Loyalty Points Earned
+                          </p>
+                          <p className="text-center text-2xl font-bold text-[#B88B15]">
+                            {displayData.points_value} Points
+                          </p>
+                        </div>
+                      )}
+                    {displayData?.value && (
+                      <p>
+                        <strong>Partner:</strong> {displayData.value}
+                      </p>
+                    )}
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      <span className="capitalize">{displayData?.status}</span>
+                    </p>
+                    {rewardData && (
+                      <>
+                        <p>
+                          <strong>Contest:</strong>{" "}
+                          {rewardData.contest?.name ||
+                            displayData?.contest_title}
+                        </p>
+                        {rewardData.claimed_at && (
+                          <p>
+                            <strong>Claimed:</strong>{" "}
+                            {new Date(rewardData.claimed_at).toLocaleString()}
+                          </p>
+                        )}
+                        {displayData?.valid_till && (
+                          <p>
+                            <strong>Valid Till:</strong>{" "}
+                            {new Date(
+                              displayData.valid_till
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
 
           {/* How to Redeem Section */}
-          <div className="border-t border-gray-200">
-            <button
-              onClick={() => toggleSection("redeem")}
-              className="w-full flex items-center justify-between py-4"
-            >
-              <span className="font-semibold text-gray-900">How to redeem</span>
-              {expandedSection === "redeem" ? (
-                <ChevronDown className="w-5 h-5 text-gray-600" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
+          {(voucherData?.redemption_steps ||
+            (displayData?.reward_type === "merchandise" &&
+              (displayData?.product as { redemption_instructions?: string })
+                ?.redemption_instructions)) && (
+            <div className="border-t border-gray-200">
+              <button
+                onClick={() => toggleSection("redeem")}
+                className="w-full flex items-center justify-between py-4"
+              >
+                <span className="font-semibold text-gray-900">
+                  How to redeem
+                </span>
+                {expandedSection === "redeem" ? (
+                  <ChevronDown className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
 
-            {expandedSection === "redeem" && (
-              <div className="pb-4">
-                <ol className="space-y-2">
-                  {voucherData.redemption_steps.map((step, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <span className="text-gray-900 font-medium text-sm">
-                        {index + 1}.
-                      </span>
-                      <span className="text-gray-600 text-sm flex-1">
-                        {step}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-          </div>
+              {expandedSection === "redeem" && (
+                <div className="pb-4">
+                  {voucherData?.redemption_steps ? (
+                    <ol className="space-y-2">
+                      {voucherData.redemption_steps.map((step, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="text-gray-900 font-medium text-sm">
+                            {index + 1}.
+                          </span>
+                          <span className="text-gray-600 text-sm flex-1">
+                            {step}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : displayData?.reward_type === "merchandise" &&
+                    (
+                      displayData?.product as {
+                        redemption_instructions?: string;
+                      }
+                    )?.redemption_instructions ? (
+                    <div
+                      className="text-gray-600 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: (
+                          displayData.product as {
+                            redemption_instructions: string;
+                          }
+                        ).redemption_instructions,
+                      }}
+                    />
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Terms & Conditions Section */}
-          <div className="border-t border-gray-200">
-            <button
-              onClick={() => toggleSection("terms")}
-              className="w-full flex items-center justify-between py-4"
-            >
-              <span className="font-semibold text-gray-900">
-                Terms & Conditions
-              </span>
-              {expandedSection === "terms" ? (
-                <ChevronDown className="w-5 h-5 text-gray-600" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-600" />
+          {(voucherData?.terms_conditions ||
+            displayData?.terms ||
+            (displayData?.reward_type === "merchandise" &&
+              (displayData?.product as { terms_and_conditions?: string })
+                ?.terms_and_conditions)) && (
+            <div className="border-t border-gray-200">
+              <button
+                onClick={() => toggleSection("terms")}
+                className="w-full flex items-center justify-between py-4"
+              >
+                <span className="font-semibold text-gray-900">
+                  Terms & Conditions
+                </span>
+                {expandedSection === "terms" ? (
+                  <ChevronDown className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+
+              {expandedSection === "terms" && (
+                <div className="pb-4 space-y-2">
+                  {voucherData?.terms_conditions ? (
+                    voucherData.terms_conditions.map((term, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="text-gray-600 text-sm">•</span>
+                        <span className="text-gray-600 text-sm flex-1">
+                          {term}
+                        </span>
+                      </div>
+                    ))
+                  ) : displayData?.reward_type === "merchandise" &&
+                    (displayData?.product as { terms_and_conditions?: string })
+                      ?.terms_and_conditions ? (
+                    <div
+                      className="text-gray-600 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: (
+                          displayData.product as {
+                            terms_and_conditions: string;
+                          }
+                        ).terms_and_conditions,
+                      }}
+                    />
+                  ) : displayData?.terms ? (
+                    <div
+                      className="text-gray-600 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: displayData.terms,
+                      }}
+                    />
+                  ) : null}
+                </div>
               )}
-            </button>
-
-            {expandedSection === "terms" && (
-              <div className="pb-4 space-y-2">
-                {voucherData.terms_conditions.map((term, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <span className="text-gray-600 text-sm">•</span>
-                    <span className="text-gray-600 text-sm flex-1">{term}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Illustration */}
-          <div className="mt-8 flex justify-center px-4 pb-8">
-            {/* Boxing Day Illustration */}
-            <div className="relative w-full max-w-xs">
-              <svg viewBox="0 0 250 150" className="w-full h-auto">
-                {/* Background stars/sparkles */}
-                <g opacity="0.4">
-                  <text x="30" y="30" fontSize="16" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="200" y="40" fontSize="12" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="180" y="120" fontSize="14" fill="#FFD700">
-                    ✨
-                  </text>
-                  <text x="220" y="80" fontSize="10" fill="#FFD700">
-                    ⭐
-                  </text>
-                </g>
-
-                {/* "BOXING DAY" Gift Box on left */}
-                <g transform="translate(20, 60)">
-                  {/* Gift box base */}
-                  <rect
-                    x="0"
-                    y="30"
-                    width="60"
-                    height="50"
-                    fill="#D4AF37"
-                    stroke="#000"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="0"
-                    y="30"
-                    width="60"
-                    height="50"
-                    fill="url(#goldPattern)"
-                    opacity="0.3"
-                  />
-
-                  {/* Ribbon vertical */}
-                  <rect x="25" y="30" width="10" height="50" fill="#8B0000" />
-
-                  {/* Gift box lid */}
-                  <rect
-                    x="-5"
-                    y="20"
-                    width="70"
-                    height="15"
-                    fill="#F4C430"
-                    stroke="#000"
-                    strokeWidth="1.5"
-                  />
-
-                  {/* Ribbon horizontal on lid */}
-                  <rect x="-5" y="25" width="70" height="5" fill="#8B0000" />
-
-                  {/* Bow */}
-                  <circle cx="30" cy="22" r="6" fill="#8B0000" />
-                  <circle cx="22" cy="20" r="5" fill="#8B0000" />
-                  <circle cx="38" cy="20" r="5" fill="#8B0000" />
-
-                  {/* "BOXING DAY" text */}
-                  <text
-                    x="30"
-                    y="-10"
-                    fontSize="9"
-                    fontWeight="bold"
-                    fill="#000"
-                    textAnchor="middle"
-                  >
-                    BOXING
-                  </text>
-                  <text
-                    x="30"
-                    y="2"
-                    fontSize="9"
-                    fontWeight="bold"
-                    fill="#000"
-                    textAnchor="middle"
-                  >
-                    DAY
-                  </text>
-                  <text
-                    x="30"
-                    y="12"
-                    fontSize="6"
-                    fill="#666"
-                    textAnchor="middle"
-                  >
-                    SPECIAL SALE
-                  </text>
-                </g>
-
-                {/* Small pink gift boxes on bottom left */}
-                <g transform="translate(10, 95)">
-                  <rect
-                    x="0"
-                    y="0"
-                    width="20"
-                    height="20"
-                    fill="#FFB6C1"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="8" y="0" width="4" height="20" fill="#FF69B4" />
-                  <rect x="0" y="8" width="20" height="4" fill="#FF69B4" />
-
-                  <rect
-                    x="25"
-                    y="5"
-                    width="15"
-                    height="15"
-                    fill="#FFB6C1"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="30" y="5" width="5" height="15" fill="#FF69B4" />
-                  <rect x="25" y="10" width="15" height="5" fill="#FF69B4" />
-                </g>
-
-                {/* Yellow gift box bottom left */}
-                <g transform="translate(45, 100)">
-                  <rect
-                    x="0"
-                    y="0"
-                    width="18"
-                    height="18"
-                    fill="#FFD700"
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                  <rect x="7" y="0" width="4" height="18" fill="#FFA500" />
-                  <rect x="0" y="7" width="18" height="4" fill="#FFA500" />
-                </g>
-
-                {/* Person carrying gift boxes on right */}
-                <g transform="translate(140, 45)">
-                  {/* Person body */}
-                  <ellipse cx="25" cy="25" rx="12" ry="18" fill="#C8A870" />
-
-                  {/* Person head */}
-                  <circle cx="25" cy="10" r="8" fill="#D4A574" />
-
-                  {/* Hair */}
-                  <path
-                    d="M 17 8 Q 17 2, 25 2 Q 33 2, 33 8 L 33 12 L 17 12 Z"
-                    fill="#2C1810"
-                  />
-
-                  {/* Face features */}
-                  <circle cx="22" cy="10" r="1" fill="#000" />
-                  <circle cx="28" cy="10" r="1" fill="#000" />
-                  <path
-                    d="M 23 13 Q 25 14, 27 13"
-                    stroke="#000"
-                    strokeWidth="0.5"
-                    fill="none"
-                  />
-
-                  {/* Arms holding boxes */}
-                  <rect
-                    x="8"
-                    y="20"
-                    width="4"
-                    height="15"
-                    fill="#C8A870"
-                    rx="2"
-                  />
-                  <rect
-                    x="33"
-                    y="20"
-                    width="4"
-                    height="15"
-                    fill="#C8A870"
-                    rx="2"
-                  />
-
-                  {/* Legs */}
-                  <rect
-                    x="18"
-                    y="40"
-                    width="5"
-                    height="20"
-                    fill="#2C3E50"
-                    rx="2"
-                  />
-                  <rect
-                    x="27"
-                    y="40"
-                    width="5"
-                    height="20"
-                    fill="#2C3E50"
-                    rx="2"
-                  />
-
-                  {/* Shoes */}
-                  <ellipse cx="20" cy="62" rx="4" ry="2" fill="#000" />
-                  <ellipse cx="29" cy="62" rx="4" ry="2" fill="#000" />
-
-                  {/* Gift boxes being carried */}
-                  <g transform="translate(-8, 12)">
-                    {/* Blue/yellow box */}
-                    <rect
-                      x="0"
-                      y="0"
-                      width="25"
-                      height="18"
-                      fill="#4169E1"
-                      stroke="#000"
-                      strokeWidth="1"
-                    />
-                    <rect x="10" y="0" width="5" height="18" fill="#FFD700" />
-                    <rect x="0" y="7" width="25" height="4" fill="#FFD700" />
-
-                    {/* Yellow box on top */}
-                    <rect
-                      x="5"
-                      y="-12"
-                      width="20"
-                      height="15"
-                      fill="#FFD700"
-                      stroke="#000"
-                      strokeWidth="1"
-                    />
-                    <rect x="12" y="-12" width="6" height="15" fill="#FF69B4" />
-                    <rect x="5" y="-6" width="20" height="4" fill="#FF69B4" />
-
-                    {/* Ribbon bow */}
-                    <circle cx="15" cy="-14" r="3" fill="#FF1493" />
-                  </g>
-                </g>
-
-                {/* Scattered gift emojis */}
-                <text x="200" y="135" fontSize="14" opacity="0.6">
-                  🎁
-                </text>
-                <text x="70" y="25" fontSize="12" opacity="0.5">
-                  🎁
-                </text>
-
-                {/* Pattern definition */}
-                <defs>
-                  <pattern
-                    id="goldPattern"
-                    x="0"
-                    y="0"
-                    width="10"
-                    height="10"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <rect width="10" height="10" fill="none" />
-                    <path
-                      d="M 0 5 L 5 0 L 10 5 L 5 10 Z"
-                      fill="#FFD700"
-                      opacity="0.3"
-                    />
-                  </pattern>
-                </defs>
-              </svg>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Copy Code Button (if code is shown) */}
-      {showCode && (
+      {showCode && displayData?.code && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <button
             onClick={copyCode}
@@ -486,6 +528,21 @@ export const VoucherDetails: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Redeem Now Button for merchandise rewards */}
+      {displayData?.reward_type === "merchandise" &&
+        displayData?.status === "granted" &&
+        !showCode && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+            <button
+              onClick={handleRedeemMerchandise}
+              disabled={isClaiming}
+              className="w-full bg-[#B88B15] text-white py-4 rounded-lg font-semibold hover:bg-[#9a7612] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isClaiming ? "Redeeming..." : "Redeem Now"}
+            </button>
+          </div>
+        )}
     </div>
   );
 };

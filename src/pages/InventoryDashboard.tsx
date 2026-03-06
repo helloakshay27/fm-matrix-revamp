@@ -187,6 +187,7 @@ export const InventoryDashboard = () => {
   const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
   const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] =
     useState(false);
+  const [orgId, setOrgId] = useState<number | null>(null);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -388,6 +389,34 @@ export const InventoryDashboard = () => {
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<
     string[]
   >(["itemsStatus", "categoryWise", "greenConsumption"]);
+
+  // Load org_id from user account
+  useEffect(() => {
+    try {
+      // first try explicit org_id stored separately (common pattern)
+      const storedOrg = localStorage.getItem('org_id');
+      if (storedOrg) {
+        const num = Number(storedOrg);
+        if (!Number.isNaN(num)) {
+          setOrgId(num);
+          return;
+        }
+      }
+
+      // fallback to user object which may contain org_id/company_id
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.org_id) {
+          setOrgId(user.org_id);
+        } else if (user.company_id) {
+          setOrgId(user.company_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load org_id:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (inventoryItems) {
@@ -800,15 +829,13 @@ export const InventoryDashboard = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${
-              item.active === "Active" ? "bg-green-500" : "bg-gray-300"
-            }`}
+            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${item.active === "Active" ? "bg-green-500" : "bg-gray-300"
+              }`}
             onClick={() => handleStatusToggle(item.id)}
           >
             <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${
-                item.active === "Active" ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${item.active === "Active" ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </div>
         </div>
@@ -923,17 +950,51 @@ export const InventoryDashboard = () => {
     setShowBulkUpload(true);
   };
 
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3 items-center">
-      <Button
-        onClick={handleActionClick}
-        className="bg-primary text-primary-foreground hover:bg-primary/90"
-        variant="default"
-      >
-        <Plus className="w-4 h-4" /> Action
-      </Button>
-    </div>
-  );
+  const renderCustomActions = () => {
+    // Hide Action button for org_id 63
+    if (orgId === 63) {
+      return null;
+    }
+    return (
+      <div className="flex flex-wrap gap-3 items-center">
+        <Button
+          onClick={handleActionClick}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          variant="default"
+        >
+          <Plus className="w-4 h-4" /> Action
+        </Button>
+      </div>
+    );
+  };
+
+  const waitForExportReady = async (fileName: string, baseUrl: string): Promise<Response> => {
+    while (true) {
+      const res = await fetch(
+        `https://${baseUrl}/pms/inventories/export_status?key=${encodeURIComponent(fileName)}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }
+      );
+
+      // Check if the response is the actual file (Excel)
+      const contentType = res.headers.get("content-type");
+
+      if (contentType?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+        return res; // ✅ Excel file is ready
+      }
+
+      // Otherwise backend returns JSON status
+      const data = await res.json();
+
+      if (data.status === "failed" || data.status === "error") {
+        throw new Error("Export generation failed");
+      }
+
+      // ⏳ still processing → wait 1.5 seconds
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  };
 
   const handleExport = async () => {
     const baseUrl = localStorage.getItem("baseUrl");
@@ -941,79 +1002,70 @@ export const InventoryDashboard = () => {
     const siteId = localStorage.getItem("selectedSiteId");
     try {
       if (!baseUrl || !token || !siteId) {
-        toast.error("Missing base URL, token, or site ID");
+        toast.error("Configuration Error", {
+          description: "Missing base URL, token, or site ID. Please log in again.",
+        });
         return;
       }
 
-      let url = `https://${baseUrl}/pms/inventories.xlsx`;
-      const queryParams = new URLSearchParams();
+      toast.info("Preparing export...", {
+        description: "Please wait while the file is being generated...",
+      });
 
-      // Add site_id parameter
-      queryParams.append("site_id", siteId);
+      // STEP 1: Start export generation
+      const exportUrl = `https://${baseUrl}/pms/inventories/inventory_data_report_export`;
+      console.log("Initiating inventory export with URL:", exportUrl);
 
-      // Add active filter parameters to export
-      if (activeFilters && Object.keys(activeFilters).length > 0) {
-        Object.entries(activeFilters).forEach(([key, value]) => {
-          if (value) {
-            queryParams.append(key, value);
-          }
-        });
-      }
-
-      // Add selected items if any
-      if (selectedItems.length > 0) {
-        queryParams.append("ids", selectedItems.join(","));
-      }
-
-      // Append query parameters to URL
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-
-      const response = await axios.get(url, {
-        responseType: "blob",
+      const response = await fetch(exportUrl, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.data || response.data.size === 0) {
-        toast.error("Empty file received from server");
-        return;
+      if (!response.ok) {
+        throw new Error("Failed to start export generation");
       }
 
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      const { export_key } = await response.json();
+      if (!export_key) {
+        throw new Error("Export key not returned from server");
+      }
+
+      console.log("Export initiated, export key:", export_key);
+
+      toast("Generating export file", {
+        description: "Please wait while the file is being prepared…",
       });
 
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
+      // STEP 2: ⏳ Wait until file is READY
+      const fileResponse = await waitForExportReady(export_key, baseUrl);
 
-      // Create descriptive filename based on filters
-      let filename = "inventories";
-      if (Object.keys(activeFilters).length > 0) {
-        filename += "_filtered";
-      }
-      if (selectedItems.length > 0) {
-        filename += "_selected";
-      }
-      filename += ".xlsx";
+      // STEP 3: Download file (only once, guaranteed ready)
+      const blob = await fileResponse.blob();
+      const url = window.URL.createObjectURL(blob);
 
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
+      const a = document.createElement("a");
+      a.href = url;
+      // Use export_key as filename with .xlsx extension
+      a.download = `${export_key}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
-      const message =
-        Object.keys(activeFilters).length > 0
-          ? "Filtered inventory data exported successfully"
-          : "Inventory data exported successfully";
-      toast.success(message);
+      toast.success("Export complete", {
+        description: "Inventory data downloaded successfully.",
+      });
     } catch (error) {
       console.error("Export failed:", error);
-      toast.error("Failed to export inventory data");
+      toast.error("Failed to export inventory data", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
     }
   };
 
@@ -1211,13 +1263,13 @@ export const InventoryDashboard = () => {
   // Group data from API - with safety check
   const groupChartData =
     analyticsData.categoryData?.category_counts &&
-    Array.isArray(analyticsData.categoryData.category_counts)
+      Array.isArray(analyticsData.categoryData.category_counts)
       ? analyticsData.categoryData.category_counts.map(
-          ({ group_name, item_count }) => ({
-            name: group_name,
-            value: item_count,
-          })
-        )
+        ({ group_name, item_count }) => ({
+          name: group_name,
+          value: item_count,
+        })
+      )
       : [];
 
   const resetFilters = () => {
@@ -1367,7 +1419,7 @@ export const InventoryDashboard = () => {
                           >
                             <SortableChartItem id={id}>
                               {id === "inventory_cost_over_month" &&
-                              !card.data ? (
+                                !card.data ? (
                                 <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
                                   <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
                                   <div className="flex-1 bg-gray-100 rounded" />

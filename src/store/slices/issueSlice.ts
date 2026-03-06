@@ -4,7 +4,7 @@ import createApiSlice from "../api/apiSlice";
 
 export const fetchIssues = createAsyncThunk(
     "fetchIssues",
-    async ({ token, baseUrl, id }: { token: string; baseUrl: string; id: string }, { rejectWithValue }) => {
+    async ({ token, baseUrl, id, page }: { token: string; baseUrl: string; id: string; page: number }, { rejectWithValue }) => {
         try {
             let url = `https://${baseUrl}/issues.json`;
             if (id) {
@@ -16,6 +16,9 @@ export const fetchIssues = createAsyncThunk(
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
+                    params: {
+                        page: page
+                    }
                 }
             );
             return response.data;
@@ -88,14 +91,20 @@ export const updateIssue = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
+            const headers: Record<string, string> = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            // If sending JSON (not FormData), set content type. Let the browser set boundary for FormData.
+            if (!(data instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+
             const response = await axios.put(
                 `https://${baseUrl}/issues/${id}.json`,
                 data,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
+                    headers,
                 }
             );
             return response.data;
