@@ -179,7 +179,7 @@ export const MuiMultiSelect = ({
                     },
                 }}
             >
-                {options.map((option) => (
+                {options.filter((option) => !value.some(v => v.value === option.value)).map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                         {option.label}
                     </MenuItem>

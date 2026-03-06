@@ -10,7 +10,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import AddIssueModal from "@/components/AddIssueModal";
 import IssueFilterModal from "@/components/IssueFilterModal";
-import { FormControl, MenuItem, Select, Switch } from "@mui/material";
+import { FormControl, MenuItem, Select, Switch, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -210,6 +210,9 @@ const IssuesListPage = ({
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState<Array<{ row: number; errors: string[] }>>([]);
+    const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
     const [pagination, setPagination] = useState({
         current_page: 1,
         total_count: 0,
@@ -806,25 +809,35 @@ const IssuesListPage = ({
         try {
             const formData = new FormData();
             formData.append("file", selectedFile);
-            const response = await axios.post(`https://${baseUrl}/issues/import_issues.xlsx`, formData, {
+            const response = await axios.post(`https://${baseUrl}/issues/import_issues.json`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
-                responseType: 'blob',
             });
 
-            const blob = new Blob([response.data], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'issues_response.xlsx';
-            link.click();
-            window.URL.revokeObjectURL(url);
+            // Parse the response
+            const data = response.data;
+            const importResult = data.import_result;
 
-            window.location.reload();
+            const created = importResult?.created || 0;
+            const failed = importResult?.failed || [];
 
+            setImportResults({ created, failed: failed.length });
+
+            // If there are errors, show error modal
+            if (failed && failed.length > 0) {
+                setImportErrors(failed);
+                setIsErrorModalOpen(true);
+            } else {
+                // Success case - show toast and fetch data
+                toast.success(`Successfully imported ${created} issues`);
+                setIsImportModalOpen(false);
+                setSelectedFile(null);
+
+                // Invalidate cache and fetch fresh data
+                cache.invalidatePattern("issues*");
+                dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
+            }
         } catch (error) {
             console.log(error);
             toast.error("Failed to import issues");
@@ -1258,6 +1271,74 @@ const IssuesListPage = ({
                 onImport={handleImportIssues}
                 isUploading={isUploading}
             />
+
+            {/* Import Error Modal */}
+            <Dialog
+                open={isErrorModalOpen}
+                onClose={() => setIsErrorModalOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 600, fontSize: "18px", borderBottom: "2px solid #E95420" }}>
+                    Import Summary
+                </DialogTitle>
+                <DialogContent sx={{ py: 3 }}>
+                    <div className="space-y-4">
+                        {/* Summary Stats */}
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded">
+                                <div className="text-xs text-gray-600">Successfully Created</div>
+                                <div className="text-2xl font-bold text-green-600">{importResults.created}</div>
+                            </div>
+                            <div className="flex-1 p-3 bg-red-50 border border-red-200 rounded">
+                                <div className="text-xs text-gray-600">Failed Records</div>
+                                <div className="text-2xl font-bold text-red-600">{importResults.failed}</div>
+                            </div>
+                        </div>
+
+                        {/* Error Details */}
+                        {importErrors.length > 0 && (
+                            <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-96 overflow-y-auto">
+                                <div className="text-sm font-semibold mb-3 text-gray-700">Error Details:</div>
+                                <div className="space-y-3">
+                                    {importErrors.map((error, idx) => (
+                                        <div key={idx} className="bg-white p-3 rounded border border-gray-200">
+                                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                                                Row {error.row}
+                                            </div>
+                                            <div className="text-sm text-red-600 space-y-1">
+                                                {error.errors?.map((err, errIdx) => (
+                                                    <div key={errIdx} className="flex items-start gap-2">
+                                                        <span className="text-red-500 mt-0.5">•</span>
+                                                        <span>{err}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsErrorModalOpen(false);
+                                    setIsImportModalOpen(false);
+                                    setSelectedFile(null);
+                                    // Fetch data anyway to show what was created
+                                    cache.invalidatePattern("issues*");
+                                    dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
+                                }}
+                            >
+                                Close & Refresh
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <div className="flex justify-center mt-6">
                 <Pagination>

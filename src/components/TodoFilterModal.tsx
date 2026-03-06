@@ -15,6 +15,8 @@ export interface TodoFilters {
     selectedPriorities: string[];
     selectedCreators: string[];
     creatorSearch: string;
+    selectedAssignedTo: string[];
+    assignedToSearch: string;
 }
 
 const PRIORITY_OPTIONS = [
@@ -43,6 +45,8 @@ const TodoFilterModal = ({
                     selectedPriorities: [],
                     selectedCreators: [],
                     creatorSearch: "",
+                    selectedAssignedTo: [],
+                    assignedToSearch: "",
                 };
         } catch (error) {
             console.error("Error parsing todoFilters from localStorage:", error);
@@ -52,6 +56,8 @@ const TodoFilterModal = ({
                 selectedPriorities: [],
                 selectedCreators: [],
                 creatorSearch: "",
+                selectedAssignedTo: [],
+                assignedToSearch: "",
             };
         }
     };
@@ -67,6 +73,12 @@ const TodoFilterModal = ({
     const [creatorSearch, setCreatorSearch] = useState(
         getInitialFilters().creatorSearch
     );
+    const [selectedAssignedTo, setSelectedAssignedTo] = useState(
+        getInitialFilters().selectedAssignedTo
+    );
+    const [assignedToSearch, setAssignedToSearch] = useState(
+        getInitialFilters().assignedToSearch
+    );
 
     const userOptions = users.map((user: any) => ({
         label: user.full_name || user.name || "Unknown",
@@ -81,22 +93,26 @@ const TodoFilterModal = ({
             selectedPriorities,
             selectedCreators,
             creatorSearch,
+            selectedAssignedTo,
+            assignedToSearch,
         };
         if (
             selectedPriorities.length > 0 ||
             selectedCreators.length > 0 ||
             fromDate ||
             toDate ||
-            creatorSearch
+            creatorSearch ||
+            selectedAssignedTo.length > 0
         ) {
             localStorage.setItem("todoFilters", JSON.stringify(filters));
         }
-    }, [fromDate, toDate, selectedPriorities, selectedCreators, creatorSearch]);
+    }, [fromDate, toDate, selectedPriorities, selectedCreators, creatorSearch, selectedAssignedTo, assignedToSearch]);
 
     // Dropdown open/close state
     const [dropdowns, setDropdowns] = useState({
         priority: false,
         createdBy: false,
+        assignedTo: false,
         fromDate: false,
         toDate: false,
     });
@@ -110,6 +126,7 @@ const TodoFilterModal = ({
             return {
                 priority: false,
                 createdBy: false,
+                assignedTo: false,
                 fromDate: false,
                 toDate: false,
                 [key]: true,
@@ -189,6 +206,8 @@ const TodoFilterModal = ({
         setSelectedPriorities([]);
         setSelectedCreators([]);
         setCreatorSearch("");
+        setSelectedAssignedTo([]);
+        setAssignedToSearch("");
         localStorage.removeItem("todoFilters");
 
         onApplyFilters({
@@ -197,6 +216,8 @@ const TodoFilterModal = ({
             selectedPriorities: [],
             selectedCreators: [],
             creatorSearch: "",
+            selectedAssignedTo: [],
+            assignedToSearch: "",
         });
     };
 
@@ -208,6 +229,8 @@ const TodoFilterModal = ({
             selectedPriorities,
             selectedCreators,
             creatorSearch,
+            selectedAssignedTo,
+            assignedToSearch,
         };
         onApplyFilters(filters);
         closeModal();
@@ -345,6 +368,44 @@ const TodoFilterModal = ({
                                     selectedCreators,
                                     setSelectedCreators,
                                     creatorSearch
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Assigned To Filter */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("assignedTo")}
+                        >
+                            <span className="font-medium text-sm select-none">Assigned To</span>
+                            {dropdowns.assignedTo ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.assignedTo && (
+                            <div className="mt-4 border">
+                                <div className="relative border-b">
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter by assigned user..."
+                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                        value={assignedToSearch}
+                                        onChange={(e) => setAssignedToSearch(e.target.value)}
+                                    />
+                                </div>
+                                {renderCheckboxList(
+                                    userOptions,
+                                    selectedAssignedTo,
+                                    setSelectedAssignedTo,
+                                    assignedToSearch
                                 )}
                             </div>
                         )}

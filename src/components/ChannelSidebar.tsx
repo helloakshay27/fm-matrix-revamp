@@ -159,10 +159,11 @@ const ChannelSidebar = () => {
                                             ? conversation.receiver_name
                                             : conversation.sender_name;
                                     const isActive = location.pathname === `/vas/channels/messages/${conversation.id}`;
+                                    const hasUnreadMessages = conversation.last_message_read === false;
 
                                     return (
                                         <div
-                                            className={`text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded ${isActive
+                                            className={`text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded flex items-center justify-between gap-2 ${isActive
                                                 ? 'text-red-600 font-semibold'
                                                 : 'hover:text-red-600'
                                                 }`}
@@ -171,7 +172,10 @@ const ChannelSidebar = () => {
                                                 navigate(`/vas/channels/messages/${conversation.id}`)
                                             }
                                         >
-                                            {displayedName}
+                                            <span className="flex-1 truncate">{displayedName}</span>
+                                            {hasUnreadMessages && (
+                                                <div className="w-2 h-2 rounded-full bg-red-600 flex-shrink-0" />
+                                            )}
                                         </div>
                                     );
                                 })
@@ -207,16 +211,20 @@ const ChannelSidebar = () => {
                             ) : filteredGroups.length > 0 ? (
                                 filteredGroups.map((group) => {
                                     const isActive = location.pathname === `/vas/channels/groups/${group.id}`;
+                                    const hasUnreadMessages = group.last_message_read === false;
                                     return (
                                         <div
-                                            className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded ${isActive
+                                            className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded flex items-center justify-between gap-2 ${isActive
                                                 ? 'text-red-600 font-semibold'
                                                 : 'hover:text-red-600'
                                                 }`}
                                             key={group.id}
                                             onClick={() => navigate(`/vas/channels/groups/${group.id}`)}
                                         >
-                                            {group.name}
+                                            <span className="flex-1 truncate">{group.name}</span>
+                                            {hasUnreadMessages && (
+                                                <div className="w-2 h-2 rounded-full bg-red-600 flex-shrink-0" />
+                                            )}
                                         </div>
                                     )
                                 })

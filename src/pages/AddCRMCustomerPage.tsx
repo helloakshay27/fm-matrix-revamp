@@ -208,9 +208,12 @@ export const AddCRMCustomerPage = () => {
       ).unwrap();
       toast.success("Customer created successfully");
       navigate(`/crm/customers`);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      toast.error("Failed to create customer");
+      const message = typeof error === 'string'
+        ? error
+        : error?.message || "Failed to create customer";
+      toast.error(message);
     }
   };
 
