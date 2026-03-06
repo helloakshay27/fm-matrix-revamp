@@ -946,6 +946,7 @@ import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
+import TrainingBulkUploadPage from "./pages/TrainingBulkUploadPage";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
@@ -1160,7 +1161,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2863,6 +2864,10 @@ function App() {
                       <Route
                         path="/safety/incident"
                         element={<IncidentDashboard />}
+                      />
+                      <Route
+                        path="/trainings/bulk-upload"
+                        element={<TrainingBulkUploadPage />}
                       />
                       <Route
                         path="/safety/incident/add"
@@ -4691,7 +4696,10 @@ function App() {
                         path="/pulse/community-modules/banner-list/:id"
                         element={<BannerDetailsPage />}
                       />
-                      <Route path="/pulse/stepathon" element={<StepathonPage />} />
+                      <Route
+                        path="/pulse/stepathon"
+                        element={<StepathonPage />}
+                      />
                       <Route path="/pulse/events" element={<CRMEventsPage />} />
                       <Route
                         path="/pulse/events/add"
@@ -5394,17 +5402,14 @@ function App() {
                       path="/flipcard/:gameId/card/:cardId"
                       element={<FlipCardDetails />}
                     />
-                    <Route
-                      path="/mobile/todos"
-                      element={<MobileTodo />}
-                    />
+                    <Route path="/mobile/todos" element={<MobileTodo />} />
 
                     {/* Mobile Channels Route */}
-                    <Route path="/mobile/channels" element={<MobileChannelsLayout />}>
-                      <Route
-                        index
-                        element={<MobileChannelLayout />}
-                      />
+                    <Route
+                      path="/mobile/channels"
+                      element={<MobileChannelsLayout />}
+                    >
+                      <Route index element={<MobileChannelLayout />} />
                       <Route
                         path="/mobile/channels/messages/:id"
                         element={<MobileDMConversation />}
