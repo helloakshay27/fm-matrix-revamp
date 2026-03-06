@@ -214,7 +214,7 @@ const DMConversation = () => {
 
     return (
         <div
-            className={`flex flex-col ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
+            className={`flex flex-col ${localStorage.getItem('user_role_name') === 'Employee' ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
                 } min-w-0 overflow-hidden`}
         >
             <div className="flex justify-between items-center px-6 pt-4 border-b">

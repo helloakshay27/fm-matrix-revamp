@@ -1689,7 +1689,7 @@ export const ProjectTaskDetails = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {taskDetails.project_management.name || "-"}
+                          {taskDetails?.project_management?.name || "-"}
                         </p>
                       </div>
                     </div>
