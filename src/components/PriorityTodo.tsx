@@ -195,7 +195,7 @@ const DraggablePriorityTodoItem = ({ todo, onTodoToggle, onEditTodo, onConvertTo
                         />
                     </button>
                 </div>
-                <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+                <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
                     {getPriorityLabel()}
                 </div>
             </div>

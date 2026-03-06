@@ -831,6 +831,10 @@ import WeeklyReport from "./components/WeeklyReport";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
+import { MobileChannelsLayout } from "./pages/MobileChannelsLayout";
+import MobileChannelLayout from "./pages/MobileChannelLayout";
+import MobileDMConversation from "./pages/MobileDMConversation";
+import MobileGroupConversation from "./pages/MobileGroupConversation";
 import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
@@ -1103,6 +1107,7 @@ import BillDetails from "./pages/ClubManagement/BillDetails";
 import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
 import StepathonPage from "./pages/StepathonPage";
 import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
+import MobileTodo from "./pages/MobileTodo";
 
 const queryClient = new QueryClient();
 
@@ -1715,7 +1720,7 @@ function App() {
                           index
                           element={
                             <div
-                              className={`flex justify-center items-center ${localStorage.getItem("selectedView") === "employee" ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                              className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                             >
                               Select a Chat/Group to view messages
                             </div>
@@ -5389,6 +5394,26 @@ function App() {
                       path="/flipcard/:gameId/card/:cardId"
                       element={<FlipCardDetails />}
                     />
+                    <Route
+                      path="/mobile/todos"
+                      element={<MobileTodo />}
+                    />
+
+                    {/* Mobile Channels Route */}
+                    <Route path="/mobile/channels" element={<MobileChannelsLayout />}>
+                      <Route
+                        index
+                        element={<MobileChannelLayout />}
+                      />
+                      <Route
+                        path="/mobile/channels/messages/:id"
+                        element={<MobileDMConversation />}
+                      />
+                      <Route
+                        path="/mobile/channels/groups/:id"
+                        element={<MobileGroupConversation />}
+                      />
+                    </Route>
                   </Routes>
                   <Toaster />
                   <SonnerToaster
