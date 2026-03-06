@@ -977,10 +977,6 @@ import { SpeechProvider } from "./contexts/SpeechContext";
 import SupportedServiceDashboard from "./pages/SupportedServiceDashboard";
 import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
-// import RouteLogger from "./components/RouteLogger";
-import ModulesManagement from "./pages/settings/ModulesManagement";
-import NotificationsPage from "./pages/NotificationsPage";
-
 import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
 import { AddClubBroadcastPage } from "./pages/AddClubBroadcastPage";
 import { AddClubEventPage } from "./pages/AddClubEventPage";
