@@ -425,7 +425,10 @@ const Chats = ({ messages, onReply, bottomRef }) => {
         if (!parentMessage) return null;
 
         return (
-            <div className={`mb-2 border-l-4 ${isMe ? 'border-gray-400 bg-gray-50' : 'border-[#C72030] bg-red-50'} rounded p-2`}>
+            <div
+                onClick={() => scrollToMessage(parentMessage.id)}
+                className={`mb-2 border-l-4 ${isMe ? 'border-gray-400 bg-gray-50 hover:bg-gray-100' : 'border-[#C72030] bg-red-50 hover:bg-red-100'} rounded p-2 cursor-pointer transition-colors duration-200`}
+            >
                 <div className="text-xs font-semibold text-gray-700 mb-1">
                     {parentMessage.user_name}
                 </div>
