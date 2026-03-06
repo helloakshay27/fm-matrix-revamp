@@ -384,50 +384,6 @@ export const EmployeeHeader: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = async (notification: any) => {
-    try {
-      // Mark as read via API
-      await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications/${notification.id}/mark_as_read.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Update UI
-      markAsRead(notification.id);
-
-      // Navigate based on notification type
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      // Still navigate even if API call fails
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    } finally {
-      setIsNotificationOpen(false);
-    }
-  };
-
   useEffect(() => {
     fetchNotifications();
     // Poll for new notifications every 30 seconds
