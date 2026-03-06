@@ -1715,7 +1715,7 @@ function App() {
                           index
                           element={
                             <div
-                              className={`flex justify-center items-center ${localStorage.getItem("selectedView") === "employee" ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                              className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                             >
                               Select a Chat/Group to view messages
                             </div>
