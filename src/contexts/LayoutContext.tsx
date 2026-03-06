@@ -130,11 +130,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       newSection = "Dashboard";
     } else if (path.startsWith("/pulse")) {
       newSection = "Pulse Privilege";
-    } else {
-      // For any other route, default to Dashboard
-      newSection = "Dashboard";
     }
-
     // Always update the section when route changes
     console.log(
       `🔄 Section change: ${currentSection} → ${newSection} (path: ${path})`

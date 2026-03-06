@@ -831,6 +831,10 @@ import WeeklyReport from "./components/WeeklyReport";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
+import { MobileChannelsLayout } from "./pages/MobileChannelsLayout";
+import MobileChannelLayout from "./pages/MobileChannelLayout";
+import MobileDMConversation from "./pages/MobileDMConversation";
+import MobileGroupConversation from "./pages/MobileGroupConversation";
 import DMConversation from "./pages/DMConversation";
 import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
 import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
@@ -942,6 +946,7 @@ import ProjectDetailsMobile from "./pages/ProjectDetailsMobile";
 import ProjectTaskDetailsMobile from "./components/ProjectTaskDetailsMobile";
 import MilestoneDetailsMobile from "./components/MilestoneDetailsMobile";
 import VisitorSharingFormWeb from "./components/VisitorSharingFormWeb";
+import TrainingBulkUploadPage from "./pages/TrainingBulkUploadPage";
 import { ActionLayoutProvider } from "./contexts/ActionLayoutContext";
 import EventUserDetailsPage from "./pages/EventUserDetailsPage";
 import { OnlyOfficePublicEditorPage } from "./pages/OnlyOfficePublicEditorPage";
@@ -1105,6 +1110,7 @@ import BillDetails from "./pages/ClubManagement/BillDetails";
 import CreditNoteDetails from "./pages/ClubManagement/CreditNoteDetails";
 import StepathonPage from "./pages/StepathonPage";
 import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
+import MobileTodo from "./pages/MobileTodo";
 
 const queryClient = new QueryClient();
 
@@ -1157,7 +1163,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1717,7 +1723,7 @@ function App() {
                           index
                           element={
                             <div
-                              className={`flex justify-center items-center ${localStorage.getItem("selectedView") === "employee" ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                              className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                             >
                               Select a Chat/Group to view messages
                             </div>
@@ -2860,6 +2866,10 @@ function App() {
                       <Route
                         path="/safety/incident"
                         element={<IncidentDashboard />}
+                      />
+                      <Route
+                        path="/trainings/bulk-upload"
+                        element={<TrainingBulkUploadPage />}
                       />
                       <Route
                         path="/safety/incident/add"
@@ -4688,7 +4698,10 @@ function App() {
                         path="/pulse/community-modules/banner-list/:id"
                         element={<BannerDetailsPage />}
                       />
-                      <Route path="/pulse/stepathon" element={<StepathonPage />} />
+                      <Route
+                        path="/pulse/stepathon"
+                        element={<StepathonPage />}
+                      />
                       <Route path="/pulse/events" element={<CRMEventsPage />} />
                       <Route
                         path="/pulse/events/add"
@@ -5391,6 +5404,23 @@ function App() {
                       path="/flipcard/:gameId/card/:cardId"
                       element={<FlipCardDetails />}
                     />
+                    <Route path="/mobile/todos" element={<MobileTodo />} />
+
+                    {/* Mobile Channels Route */}
+                    <Route
+                      path="/mobile/channels"
+                      element={<MobileChannelsLayout />}
+                    >
+                      <Route index element={<MobileChannelLayout />} />
+                      <Route
+                        path="/mobile/channels/messages/:id"
+                        element={<MobileDMConversation />}
+                      />
+                      <Route
+                        path="/mobile/channels/groups/:id"
+                        element={<MobileGroupConversation />}
+                      />
+                    </Route>
                   </Routes>
                   <Toaster />
                   <SonnerToaster

@@ -299,8 +299,8 @@ const modulesByPackage = {
                     icon: Calculator,
                     href: "/accounting/default-tax-preferences",
                 },
-                { name: "Charges ", href: "/accounting/charge-setup" },
-                { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
+                // { name: "Charges ", href: "/accounting/charge-setup" },
+                // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
 
             ],
         },
