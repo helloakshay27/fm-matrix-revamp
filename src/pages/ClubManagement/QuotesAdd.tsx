@@ -214,7 +214,7 @@ export const QuotesAdd: React.FC = () => {
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
-    
+
     // Items
     const [items, setItems] = useState<Item[]>([
         {
@@ -477,6 +477,7 @@ export const QuotesAdd: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
+     const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -594,7 +595,7 @@ export const QuotesAdd: React.FC = () => {
             terms_and_conditions: termsAndConditions,
             subject: subject,
             status: 'draft',
-            total_amount: totalAmount,
+            total_amount: totalAmount2,
             discount_per: discountTypeOnTotal === 'percentage' ? discountOnTotal : undefined,
             discount_amount: discountTypeOnTotal === 'percentage' ? totalDiscount : discountOnTotal,
             charge_amount: adjustment,
@@ -647,7 +648,7 @@ export const QuotesAdd: React.FC = () => {
             formData.append('lock_account_quote[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_quote[subject]', subject);
             formData.append('lock_account_quote[status]', 'draft');
-            formData.append('lock_account_quote[total_amount]', String(totalAmount));
+            formData.append('lock_account_quote[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_quote[discount_per]', String(discountOnTotal));
                 formData.append('lock_account_quote[discount_amount]', String(totalDiscount));
@@ -743,7 +744,62 @@ export const QuotesAdd: React.FC = () => {
             setTaxAmount2(0);
         }
     }, [selectedTax, taxOptions, afterDiscount]);
+    // Calculate TDS / TCS tax
+    useEffect(() => {
+        const selected = taxOptions.find(t => t.name === selectedTax);
+
+        if (selected && typeof selected.percentage === "number") {
+            setTaxAmount2((afterDiscount * selected.percentage) / 100);
+        } else {
+            setTaxAmount2(0);
+        }
+    }, [selectedTax, taxOptions, afterDiscount]);
+
+
+
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
+        });
+    const taxBreakdown: any[] = [];
+
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach(rate => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({
+                    name: rate.name,
+                    rate: rate.rate,
+                    amount: taxAmount
+                });
+            }
+        });
+    });
+    // Calculate Final Total
    
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+
+
+    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -1172,7 +1228,7 @@ export const QuotesAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value))}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1188,6 +1244,18 @@ export const QuotesAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
+
+
+                            {taxBreakdown.map((tax, index) => (
+                                <div key={index} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {tax.name} ({tax.rate}%)
+                                    </span>
+                                    <span className="font-semibold text-base">
+                                        ₹{tax.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
 
                             <Divider />
 
@@ -1261,7 +1329,10 @@ export const QuotesAdd: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">
+                                    {/* ₹{totalAmount.toFixed(2)} */}
+                                    ₹{totalAmount2.toFixed(2)}
+                                </span>
                             </div>
                         </div>
                     </div>
