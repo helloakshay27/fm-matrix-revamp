@@ -20,7 +20,7 @@ interface SalesOrder {
     status: 'draft' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'closed';
     payment_terms: string;
     reference_number: string;
-    salesperson: string;
+    sales_person_name: string;
     active: boolean;
     created_at: string;
     updated_at: string;
@@ -98,7 +98,7 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'salesperson',
+        key: 'sales_person_name',
         label: 'Salesperson',
         sortable: true,
         hideable: true,
@@ -127,112 +127,158 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
     });
 
     // Fetch sales order data from API
-    const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
-        setLoading(true);
-        try {
-            // Mock data - replace with actual API call
-            const mockData: SalesOrder[] = [
-                {
-                    id: 1,
-                    order_number: 'SO-00004',
-                    customer_name: 'Lockated',
-                    date: '2026-02-11',
-                    expected_shipment_date: '2026-02-25',
-                    amount: 2845.00,
-                    status: 'confirmed',
-                    payment_terms: 'Due on Receipt',
-                    reference_number: '12',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-02-11',
-                    updated_at: '2026-02-11'
-                },
-                {
-                    id: 2,
-                    order_number: 'SO-00003',
-                    customer_name: 'Lockated',
-                    date: '2026-02-11',
-                    expected_shipment_date: '2026-02-18',
-                    amount: 2987.50,
-                    status: 'draft',
-                    payment_terms: 'Net 30',
-                    reference_number: '',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-02-11',
-                    updated_at: '2026-02-11'
-                },
-                {
-                    id: 3,
-                    order_number: 'SO-00002',
-                    customer_name: 'Lockated',
-                    date: '2026-01-13',
-                    expected_shipment_date: '2026-01-28',
-                    amount: 12100.00,
-                    status: 'closed',
-                    payment_terms: 'Net 45',
-                    reference_number: 'TEST',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-01-13',
-                    updated_at: '2026-01-28'
-                },
-                {
-                    id: 4,
-                    order_number: 'SO-00001',
-                    customer_name: 'Lockated',
-                    date: '2026-01-12',
-                    expected_shipment_date: '2026-01-28',
-                    amount: 1389.90,
-                    status: 'closed',
-                    payment_terms: 'Due on Receipt',
-                    reference_number: '11',
-                    salesperson: 'SalesJay',
-                    active: true,
-                    created_at: '2026-01-12',
-                    updated_at: '2026-01-28'
-                }
-            ];
+    // const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
+    //     setLoading(true);
+    //     try {
+    //         // Mock data - replace with actual API call
+    //         const mockData: SalesOrder[] = [
+    //             {
+    //                 id: 1,
+    //                 order_number: 'SO-00004',
+    //                 customer_name: 'Lockated',
+    //                 date: '2026-02-11',
+    //                 expected_shipment_date: '2026-02-25',
+    //                 amount: 2845.00,
+    //                 status: 'confirmed',
+    //                 payment_terms: 'Due on Receipt',
+    //                 reference_number: '12',
+    //                 salesperson: 'SalesJay',
+    //                 active: true,
+    //                 created_at: '2026-02-11',
+    //                 updated_at: '2026-02-11'
+    //             },
+    //             {
+    //                 id: 2,
+    //                 order_number: 'SO-00003',
+    //                 customer_name: 'Lockated',
+    //                 date: '2026-02-11',
+    //                 expected_shipment_date: '2026-02-18',
+    //                 amount: 2987.50,
+    //                 status: 'draft',
+    //                 payment_terms: 'Net 30',
+    //                 reference_number: '',
+    //                 salesperson: 'SalesJay',
+    //                 active: true,
+    //                 created_at: '2026-02-11',
+    //                 updated_at: '2026-02-11'
+    //             },
+    //             {
+    //                 id: 3,
+    //                 order_number: 'SO-00002',
+    //                 customer_name: 'Lockated',
+    //                 date: '2026-01-13',
+    //                 expected_shipment_date: '2026-01-28',
+    //                 amount: 12100.00,
+    //                 status: 'closed',
+    //                 payment_terms: 'Net 45',
+    //                 reference_number: 'TEST',
+    //                 salesperson: 'SalesJay',
+    //                 active: true,
+    //                 created_at: '2026-01-13',
+    //                 updated_at: '2026-01-28'
+    //             },
+    //             {
+    //                 id: 4,
+    //                 order_number: 'SO-00001',
+    //                 customer_name: 'Lockated',
+    //                 date: '2026-01-12',
+    //                 expected_shipment_date: '2026-01-28',
+    //                 amount: 1389.90,
+    //                 status: 'closed',
+    //                 payment_terms: 'Due on Receipt',
+    //                 reference_number: '11',
+    //                 salesperson: 'SalesJay',
+    //                 active: true,
+    //                 created_at: '2026-01-12',
+    //                 updated_at: '2026-01-28'
+    //             }
+    //         ];
 
-            // Filter based on search
-            let filteredData = mockData;
-            if (search.trim()) {
-                filteredData = mockData.filter(order =>
-                    order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-                    order.customer_name.toLowerCase().includes(search.toLowerCase())
-                );
+    //         // Filter based on search
+    //         let filteredData = mockData;
+    //         if (search.trim()) {
+    //             filteredData = mockData.filter(order =>
+    //                 order.order_number.toLowerCase().includes(search.toLowerCase()) ||
+    //                 order.customer_name.toLowerCase().includes(search.toLowerCase())
+    //             );
+    //         }
+
+    //         // Apply filters
+    //         if (filters.status) {
+    //             filteredData = filteredData.filter(order => order.status === filters.status);
+    //         }
+
+    //         const totalCount = filteredData.length;
+    //         const totalPages = Math.ceil(totalCount / per_page);
+    //         const startIndex = (page - 1) * per_page;
+    //         const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+
+    //         setSalesOrderData(paginatedData);
+    //         setPagination({
+    //             current_page: page,
+    //             per_page: per_page,
+    //             total_pages: totalPages,
+    //             total_count: totalCount,
+    //             has_next_page: page < totalPages,
+    //             has_prev_page: page > 1
+    //         });
+
+    //     } catch (error: unknown) {
+    //         console.error('Error fetching sales order data:', error);
+    //         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    //         toast.error(`Failed to load sales order data: ${errorMessage}`, {
+    //             duration: 5000,
+    //         });
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+
+      const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
+            setLoading(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams({
+                    lock_account_id: '1',
+                    // page: String(page),
+                    // per_page: String(per_page),
+                });
+                if (search) params.append('search', search);
+                if (filters.status) params.append('status', filters.status);
+                if (filters.customerId) params.append('customer_id', String(filters.customerId));
+                if (filters.dateFrom) params.append('date_from', filters.dateFrom);
+                if (filters.dateTo) params.append('date_to', filters.dateTo);
+    
+                const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?q[recurring_eq]=true&${params.toString()}`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                console.log('API Response:', data);
+                // Assume API returns { data: SalesOrder[], pagination: {...} }
+                setSalesOrderData(Array.isArray(data) ? data: []);
+                setPagination(data.pagination || {
+                    current_page: page,
+                    per_page: per_page,
+                    total_pages: 1,
+                    total_count: 0,
+                    has_next_page: false,
+                    has_prev_page: false
+                });
+            } catch (error: unknown) {
+                console.error('Error fetching sales order data:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                toast.error(`Failed to load sales order data: ${errorMessage}`, {
+                    duration: 5000,
+                });
+            } finally {
+                setLoading(false);
             }
-
-            // Apply filters
-            if (filters.status) {
-                filteredData = filteredData.filter(order => order.status === filters.status);
-            }
-
-            const totalCount = filteredData.length;
-            const totalPages = Math.ceil(totalCount / per_page);
-            const startIndex = (page - 1) * per_page;
-            const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-
-            setSalesOrderData(paginatedData);
-            setPagination({
-                current_page: page,
-                per_page: per_page,
-                total_pages: totalPages,
-                total_count: totalCount,
-                has_next_page: page < totalPages,
-                has_prev_page: page > 1
-            });
-
-        } catch (error: unknown) {
-            console.error('Error fetching sales order data:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast.error(`Failed to load sales order data: ${errorMessage}`, {
-                duration: 5000,
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
 
     // Load data on component mount and when page/perPage/filters change
     useEffect(() => {
@@ -285,14 +331,14 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                <button
+                {/* <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
                     <Eye className="w-4 h-4" />
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
@@ -305,7 +351,7 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
         order_number: (
@@ -334,14 +380,14 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
         ),
         amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {/* ₹{order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
             </span>
         ),
         payment_terms: (
             <span className="text-sm text-gray-600">{order.payment_terms}</span>
         ),
-        salesperson: (
-            <span className="text-sm text-gray-600">{order.salesperson}</span>
+        sales_person_name: (
+            <span className="text-sm text-gray-600">{order.sales_person_name}</span>
         ),
         status: (
             <div className="flex items-center justify-center">
