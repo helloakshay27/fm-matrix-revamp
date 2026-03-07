@@ -155,7 +155,7 @@ export const ManualJournalDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json?q[transaction_type_eq]=Journal Entry`;
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',

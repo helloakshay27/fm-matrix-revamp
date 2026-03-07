@@ -8,6 +8,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
+import axios from "axios";
 
 // Type definitions for Bill
 interface Bill {
@@ -56,7 +57,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "date",
-    label: "Date",
+    label: "Start On",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -68,13 +69,13 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-  {
-    key: "reference_number",
-    label: "Reference Number",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "reference_number",
+  //   label: "Reference Number",
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true,
+  // },
   {
     key: "vendor_name",
     label: "Vendor Name",
@@ -91,7 +92,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "due_date",
-    label: "Due Date",
+    label: "Ends On",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -129,66 +130,128 @@ export const RecurringBillsDashboard: React.FC = () => {
     has_next_page: false,
     has_prev_page: false,
   });
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
 
   // Fetch bill data from API
+  // const fetchBillData = async (
+  //   page = 1,
+  //   per_page = 10,
+  //   search = "",
+  //   filters: BillFilters = {}
+  // ) => {
+  //   setLoading(true);
+  //   try {
+  //     // Load recurring bills from localStorage
+  //     const storedBills = JSON.parse(
+  //       localStorage.getItem("recurringBills") || "[]"
+  //     );
+
+  //     // Use stored bills directly (no mock data)
+  //     const mockData: Bill[] = storedBills;
+
+  //     // Filter based on search
+  //     let filteredData = mockData;
+  //     if (search.trim()) {
+  //       filteredData = mockData.filter(
+  //         (bill) =>
+  //           bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
+  //           bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
+  //           bill.reference_number.toLowerCase().includes(search.toLowerCase())
+  //       );
+  //     }
+
+  //     // Apply filters
+  //     if (filters.status) {
+  //       filteredData = filteredData.filter(
+  //         (order) => order.status === filters.status
+  //       );
+  //     }
+
+  //     const totalCount = filteredData.length;
+  //     const totalPages = Math.ceil(totalCount / per_page);
+  //     const startIndex = (page - 1) * per_page;
+  //     const paginatedData = filteredData.slice(
+  //       startIndex,
+  //       startIndex + per_page
+  //     );
+
+  //     setBillData(paginatedData);
+  //     setPagination({
+  //       current_page: page,
+  //       per_page: per_page,
+  //       total_pages: totalPages,
+  //       total_count: totalCount,
+  //       has_next_page: page < totalPages,
+  //       has_prev_page: page > 1,
+  //     });
+  //   } catch (error: unknown) {
+  //     console.error("Error fetching bill data:", error);
+  //     const errorMessage =
+  //       error instanceof Error ? error.message : "Unknown error";
+  //     toast.error(`Failed to load bill data: ${errorMessage}`, {
+  //       duration: 5000,
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const fetchBillData = async (
     page = 1,
     per_page = 10,
-    search = "",
+    search = '',
     filters: BillFilters = {}
   ) => {
     setLoading(true);
+
     try {
-      // Load recurring bills from localStorage
-      const storedBills = JSON.parse(
-        localStorage.getItem("recurringBills") || "[]"
+      const response = await axios.get(
+        `https://${baseUrl}/lock_account_bills.json?q[recurring_eq]=true`,
+        {
+          params: {
+            lock_account_id: 1,
+            //   page,
+            //   per_page,
+            //   search,
+            //   status: filters.status || undefined,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+          },
+        }
       );
 
-      // Use stored bills directly (no mock data)
-      const mockData: Bill[] = storedBills;
+      // 🔥 Adjust this based on actual API response structure
+      const apiData = response.data;
 
-      // Filter based on search
-      let filteredData = mockData;
-      if (search.trim()) {
-        filteredData = mockData.filter(
-          (bill) =>
-            bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
-            bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
-            bill.reference_number.toLowerCase().includes(search.toLowerCase())
-        );
-      }
+      const bills: Bill[] = apiData?.data || apiData || [];
 
-      // Apply filters
-      if (filters.status) {
-        filteredData = filteredData.filter(
-          (order) => order.status === filters.status
-        );
-      }
+      setBillData(bills);
 
-      const totalCount = filteredData.length;
-      const totalPages = Math.ceil(totalCount / per_page);
-      const startIndex = (page - 1) * per_page;
-      const paginatedData = filteredData.slice(
-        startIndex,
-        startIndex + per_page
-      );
-
-      setBillData(paginatedData);
       setPagination({
-        current_page: page,
-        per_page: per_page,
-        total_pages: totalPages,
-        total_count: totalCount,
-        has_next_page: page < totalPages,
-        has_prev_page: page > 1,
+        current_page: apiData?.current_page || page,
+        per_page: apiData?.per_page || per_page,
+        total_pages: apiData?.total_pages || 1,
+        total_count: apiData?.total_count || bills.length,
+        has_next_page:
+          (apiData?.current_page || page) <
+          (apiData?.total_pages || 1),
+        has_prev_page:
+          (apiData?.current_page || page) > 1,
       });
+
     } catch (error: unknown) {
       console.error("Error fetching bill data:", error);
+
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
+
       toast.error(`Failed to load bill data: ${errorMessage}`, {
         duration: 5000,
       });
+
     } finally {
       setLoading(false);
     }
@@ -246,7 +309,7 @@ export const RecurringBillsDashboard: React.FC = () => {
   const renderRow = (bill: Bill) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <button
+        {/* <button
           onClick={() => handleView(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
@@ -266,16 +329,18 @@ export const RecurringBillsDashboard: React.FC = () => {
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
     ),
     date: (
       <span className="text-sm text-gray-600">
-        {new Date(bill.date).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })}
+        {bill?.recurring_detail?.start_date
+          ? new Date(bill.recurring_detail.start_date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+          : '-'}
       </span>
     ),
     bill_number: (
@@ -294,17 +359,25 @@ export const RecurringBillsDashboard: React.FC = () => {
     ),
     due_date: (
       <span className="text-sm text-gray-600">
-        {new Date(bill.due_date).toLocaleDateString("en-GB", {
+        {/* {new Date(bill.due_date).toLocaleDateString("en-GB", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
-        })}
+        })} */}
+
+        {bill?.recurring_detail?.end_date
+          ? new Date(bill.recurring_detail.end_date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+          : '-'}
       </span>
     ),
     amount: (
       <span className="text-sm font-medium text-gray-900">
         ₹
-        {bill.amount.toLocaleString("en-IN", {
+        {bill.total_amount.toLocaleString("en-IN", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}
@@ -313,10 +386,10 @@ export const RecurringBillsDashboard: React.FC = () => {
     balance_due: (
       <span className="text-sm font-medium text-gray-900">
         ₹
-        {bill.balance_due.toLocaleString("en-IN", {
+        {/* {bill.balance_due.toLocaleString("en-IN", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })}
+        })} */}
       </span>
     ),
   });
