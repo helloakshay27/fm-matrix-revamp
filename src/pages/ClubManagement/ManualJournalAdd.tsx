@@ -15,6 +15,10 @@ import { Button } from '@/components/ui/button';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
@@ -291,7 +295,7 @@ const ManualJournalAdd = () => {
 			const response = await axios.post(url, formData, {
 				headers: {
 					// 'Content-Type': 'application/json',
-					"Content-Type": "multipart/form-data",
+					// "Content-Type": "multipart/form-data",
 					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
 			});
@@ -315,12 +319,31 @@ const ManualJournalAdd = () => {
 							label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
 							type="date"
 							value={date}
+							placeholder="Select date"
 							onChange={e => setDate(e.target.value)}
 							variant="outlined"
 							// required
 							InputLabelProps={{ shrink: true }}
 							className="w-full"
 						/>
+
+
+						{/* <LocalizationProvider dateAdapter={AdapterDayjs}>
+							<DatePicker
+								label={<span>Date<span style={{ color: '#C72030' }}>*</span></span>}
+								format="DD/MM/YYYY"
+								value={date ? dayjs(date) : null}
+								onChange={(newValue) => {
+									setDate(newValue ? newValue.format("YYYY-MM-DD") : "");
+								}}
+								slotProps={{
+									textField: {
+										placeholder: "dd/mm/yyyy",
+										fullWidth: true
+									}
+								}}
+							/>
+						</LocalizationProvider> */}
 						{/* <TextField
 								label={<span>Journal#<span style={{ color: '#C72030' }}>*</span></span>}
 								type="number"
@@ -343,9 +366,12 @@ const ManualJournalAdd = () => {
 							label="Reference#"
 							value={reference}
 							onChange={e => setReference(e.target.value)}
+							placeholder="Enter reference number"
 							variant="outlined"
 							className="w-full"
+							InputLabelProps={{ shrink: true }}
 						/>
+
 
 					</div>
 
@@ -356,6 +382,7 @@ const ManualJournalAdd = () => {
 							value={notes}
 							onChange={e => setNotes(e.target.value)}
 							variant="outlined"
+							placeholder="Enter notes or journal description"
 							fullWidth
 							multiline
 							rows={4}
@@ -422,7 +449,7 @@ const ManualJournalAdd = () => {
 										<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Contact (INR)</th>
 										<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Debits</th>
 										<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Credits</th>
-										<th className="border border-gray-300 px-4 py-3"></th>
+										<th className="border border-gray-300 px-4 py-3 text-left font-semibold">Action</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -688,16 +715,16 @@ const ManualJournalAdd = () => {
 							type="submit"
 							className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
 						>
-							Save and Publish
+							Save
 						</Button>
-						<Button
+						{/* <Button
 							variant="outline"
 							type="button"
 							className="min-w-[120px]"
-						// onClick={handleSaveDraft} // Add your draft handler if needed
+						onClick={handleSaveDraft} // Add your draft handler if needed
 						>
 							Save as Draft
-						</Button>
+						</Button> */}
 						<Button
 							variant="outline"
 							type="button"
