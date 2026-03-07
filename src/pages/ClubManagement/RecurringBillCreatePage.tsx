@@ -678,23 +678,45 @@ export const RecurringBillCreatePage: React.FC = () => {
       formData.append('lock_account_bill[recurring]', 'true');
       formData.append('lock_account_bill[profile_name]', profileName);
 
-      formData.append('lock_account_bill[recurring_detail][start_date]', salesOrderDate);
-      formData.append('lock_account_bill[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
+      // formData.append('lock_account_bill[recurring_detail][start_date]', salesOrderDate);
+      // formData.append('lock_account_bill[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
 
-      formData.append(
-        'lock_account_bill[recurring_detail][repeat_type]',
-        repeatType
-      );
+      // formData.append(
+      //   'lock_account_bill[recurring_detail][repeat_type]',
+      //   repeatType
+      // );
 
-      formData.append(
-        'lock_account_bill[recurring_detail][repeat_value]',
-        String(repeatCount)
-      );
+      // formData.append(
+      //   'lock_account_bill[recurring_detail][repeat_value]',
+      //   String(repeatCount)
+      // );
 
-      formData.append(
-        'lock_account_bill[recurring_detail][never_expires]',
-        neverExpires ? 'true' : 'false'
-      );
+      // formData.append(
+      //   'lock_account_bill[recurring_detail][never_expires]',
+      //   neverExpires ? 'true' : 'false'
+      // );
+
+       formData.append('recurring_detail[start_date]', salesOrderDate);
+
+            formData.append(
+                'recurring_detail[end_date]',
+                neverExpires ? '' : expectedShipmentDate
+            );
+
+            formData.append(
+                'recurring_detail[repeat_type]',
+                repeatType
+            );
+
+            formData.append(
+                'recurring_detail[repeat_value]',
+                String(repeatCount)
+            );
+
+            formData.append(
+                'recurring_detail[never_expires]',
+                neverExpires ? 'true' : 'false'
+            );
       // Invoice items
       items.forEach((item, idx) => {
         formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
@@ -1044,7 +1066,7 @@ export const RecurringBillCreatePage: React.FC = () => {
             </div>
 
 
-
+{/* 
             <div>
               <label className="block text-sm font-medium mb-2">
                 Order Number
@@ -1056,7 +1078,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                 placeholder="Enter order number"
                 sx={fieldStyles}
               />
-            </div>
+            </div> */}
 
             {/* Repeat Every */}
             <div>
@@ -1253,7 +1275,7 @@ export const RecurringBillCreatePage: React.FC = () => {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium ">
                 Subject
               </label>
@@ -1267,10 +1289,10 @@ export const RecurringBillCreatePage: React.FC = () => {
                 placeholder="Enter subject"
                 sx={fieldStyles}
               />
-            </div>
+            </div> */}
 
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium mb-2">
                 Salesperson
               </label>
@@ -1287,7 +1309,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
+            </div> */}
 
 
           </div>
@@ -1598,7 +1620,7 @@ export const RecurringBillCreatePage: React.FC = () => {
         </Section>
 
         {/* Customer Notes */}
-        <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
+        <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
           <TextField
             fullWidth
             multiline
@@ -1610,7 +1632,7 @@ export const RecurringBillCreatePage: React.FC = () => {
         </Section>
 
         {/* Terms & Conditions */}
-        <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
+        {/* <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
           <TextField
             fullWidth
             multiline
@@ -1619,10 +1641,10 @@ export const RecurringBillCreatePage: React.FC = () => {
             onChange={(e) => setTermsAndConditions(e.target.value)}
             placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
           />
-        </Section>
+        </Section> */}
 
         {/* Attachments */}
-        <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+        {/* <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <input
@@ -1673,10 +1695,10 @@ export const RecurringBillCreatePage: React.FC = () => {
               label="Display attachments in customer portal and emails"
             />
           </div>
-        </Section>
+        </Section> */}
 
         {/* Email Communications */}
-        <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
+        {/* <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
           <div className="space-y-4">
             <FormControlLabel
               control={
@@ -1686,10 +1708,10 @@ export const RecurringBillCreatePage: React.FC = () => {
                 />
               }
               label="Send email to selected customer above"
-            />
+            /> */}
 
             {/* Contact Persons Section */}
-            {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+            {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
               <div>
                 <Typography variant="body2" className="font-semibold mb-2">
                   Select contact persons to email
@@ -1716,14 +1738,14 @@ export const RecurringBillCreatePage: React.FC = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* External Users Section */}
-            <div>
+            {/* <div>
               <div className="flex items-center justify-between mb-2">
                 <Typography variant="body2" className="font-semibold">
                   Add external users (email users other than the selected customer above)
-                </Typography>
+                </Typography> */}
                 {/* <Button
                                                     startIcon={<PersonAdd />}
                                                     onClick={() => setAddUserDialogOpen(true)}
@@ -1733,7 +1755,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-              </div>
+              {/* </div>
 
               {externalUsers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -1749,14 +1771,14 @@ export const RecurringBillCreatePage: React.FC = () => {
               )}
             </div>
           </div>
-        </Section>
+        </Section> */}
 
         {/* Additional Fields */}
-        <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+        {/* <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
           <Typography variant="body2" className="text-gray-600">
             Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
           </Typography>
-        </Section>
+        </Section> */}
       </div>
 
       <div className="flex items-center gap-3 justify-center pt-2">

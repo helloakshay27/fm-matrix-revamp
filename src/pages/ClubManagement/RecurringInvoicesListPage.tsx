@@ -71,27 +71,27 @@ const columns: ColumnConfig[] = [
     },
     {
         key: 'date',
-        label: 'Order Date',
+        label: 'Start On',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
         key: 'expected_shipment_date',
-        label: 'Expected Shipment',
+        label: 'Ends On',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
-        key: 'amount',
+        key: 'total_amount',
         label: 'Amount',
         sortable: true,
         hideable: true,
         draggable: true
     },
     {
-        key: 'payment_terms',
+        key: 'payment_term',
         label: 'Payment Terms',
         sortable: true,
         hideable: true,
@@ -111,9 +111,10 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     }
-]; 
+];
 
-export const RecurringInvoicesListPage: React.FC = () => { const navigate = useNavigate(); const [currentPage, setCurrentPage] = useState(1); const [perPage, setPerPage] = useState(10); const [searchTerm, setSearchTerm] = useState(''); const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+export const RecurringInvoicesListPage: React.FC = () => {
+    const navigate = useNavigate(); const [currentPage, setCurrentPage] = useState(1); const [perPage, setPerPage] = useState(10); const [searchTerm, setSearchTerm] = useState(''); const debouncedSearchQuery = useDebounce(searchTerm, 1000);
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(false);
@@ -235,50 +236,50 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
     // };
 
 
-      const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
-            setLoading(true);
-            try {
-                const baseUrl = localStorage.getItem('baseUrl');
-                const token = localStorage.getItem('token');
-                const params = new URLSearchParams({
-                    lock_account_id: '1',
-                    // page: String(page),
-                    // per_page: String(per_page),
-                });
-                if (search) params.append('search', search);
-                if (filters.status) params.append('status', filters.status);
-                if (filters.customerId) params.append('customer_id', String(filters.customerId));
-                if (filters.dateFrom) params.append('date_from', filters.dateFrom);
-                if (filters.dateTo) params.append('date_to', filters.dateTo);
-    
-                const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?q[recurring_eq]=true&${params.toString()}`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json',
-                    },
-                });
-                const data = await response.json();
-                console.log('API Response:', data);
-                // Assume API returns { data: SalesOrder[], pagination: {...} }
-                setSalesOrderData(Array.isArray(data) ? data: []);
-                setPagination(data.pagination || {
-                    current_page: page,
-                    per_page: per_page,
-                    total_pages: 1,
-                    total_count: 0,
-                    has_next_page: false,
-                    has_prev_page: false
-                });
-            } catch (error: unknown) {
-                console.error('Error fetching sales order data:', error);
-                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                toast.error(`Failed to load sales order data: ${errorMessage}`, {
-                    duration: 5000,
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
+        setLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams({
+                lock_account_id: '1',
+                // page: String(page),
+                // per_page: String(per_page),
+            });
+            if (search) params.append('search', search);
+            if (filters.status) params.append('status', filters.status);
+            if (filters.customerId) params.append('customer_id', String(filters.customerId));
+            if (filters.dateFrom) params.append('date_from', filters.dateFrom);
+            if (filters.dateTo) params.append('date_to', filters.dateTo);
+
+            const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?q[recurring_eq]=true&${params.toString()}`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            console.log('API Response:', data);
+            // Assume API returns { data: SalesOrder[], pagination: {...} }
+            setSalesOrderData(Array.isArray(data) ? data : []);
+            setPagination(data.pagination || {
+                current_page: page,
+                per_page: per_page,
+                total_pages: 1,
+                total_count: 0,
+                has_next_page: false,
+                has_prev_page: false
+            });
+        } catch (error: unknown) {
+            console.error('Error fetching sales order data:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed to load sales order data: ${errorMessage}`, {
+                duration: 5000,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Load data on component mount and when page/perPage/filters change
     useEffect(() => {
@@ -362,29 +363,39 @@ export const RecurringInvoicesListPage: React.FC = () => { const navigate = useN
         ),
         date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
+
+
+                {order?.recurring_detail?.start_date
+                    ? new Date(order.recurring_detail.start_date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    })
+                    : '-'}
+
             </span>
         ),
         expected_shipment_date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.expected_shipment_date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
+
+
+                {order?.recurring_detail?.end_date
+                    ? new Date(order.recurring_detail.end_date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    })
+                    : '-'}
+
             </span>
         ),
-        amount: (
+        total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                {/* ₹{order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
+                ₹{order.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
         ),
-        payment_terms: (
-            <span className="text-sm text-gray-600">{order.payment_terms}</span>
+        payment_term: (
+            <span className="text-sm text-gray-600">{order.payment_term}</span>
         ),
         sales_person_name: (
             <span className="text-sm text-gray-600">{order.sales_person_name}</span>

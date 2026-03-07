@@ -662,21 +662,43 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             formData.append('lock_account_invoice[recurring]', 'true');
             formData.append('lock_account_invoice[profile_name]', profileName);
 
-            formData.append('lock_account_invoice[recurring_detail][start_date]', salesOrderDate);
-            formData.append('lock_account_invoice[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
+            // formData.append('lock_account_invoice[recurring_detail][start_date]', salesOrderDate);
+            // formData.append('lock_account_invoice[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_type]',
+            //     repeatType
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_value]',
+            //     String(repeatCount)
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][never_expires]',
+            //     neverExpires ? 'true' : 'false'
+            // );
+
+            formData.append('recurring_detail[start_date]', salesOrderDate);
 
             formData.append(
-                'lock_account_invoice[recurring_detail][repeat_type]',
+                'recurring_detail[end_date]',
+                neverExpires ? '' : expectedShipmentDate
+            );
+
+            formData.append(
+                'recurring_detail[repeat_type]',
                 repeatType
             );
 
             formData.append(
-                'lock_account_invoice[recurring_detail][repeat_value]',
+                'recurring_detail[repeat_value]',
                 String(repeatCount)
             );
 
             formData.append(
-                'lock_account_invoice[recurring_detail][never_expires]',
+                'recurring_detail[never_expires]',
                 neverExpires ? 'true' : 'false'
             );
             // Invoice items
@@ -1548,7 +1570,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 </Section>
 
                 {/* Attachments */}
-                <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                {/* <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <input
@@ -1599,10 +1621,10 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                             label="Display attachments in customer portal and emails"
                         />
                     </div>
-                </Section>
+                </Section> */}
 
                 {/* Email Communications */}
-                <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <FormControlLabel
                             control={
@@ -1615,7 +1637,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         />
 
                         {/* Contact Persons Section */}
-                        {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
                             <div>
                                 <Typography variant="body2" className="font-semibold mb-2">
                                     Select contact persons to email
@@ -1642,15 +1664,15 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
-                        {/* External Users Section */}
-                        <div>
+                {/* External Users Section */}
+                {/* <div>
                             <div className="flex items-center justify-between mb-2">
                                 <Typography variant="body2" className="font-semibold">
                                     Add external users (email users other than the selected customer above)
-                                </Typography>
-                                {/* <Button
+                                </Typography> */}
+                {/* <Button
                                                     startIcon={<PersonAdd />}
                                                     onClick={() => setAddUserDialogOpen(true)}
                                                     size="small"
@@ -1659,7 +1681,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-                            </div>
+                {/* </div>
 
                             {externalUsers.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
@@ -1675,14 +1697,14 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </Section>
+                </Section> */}
 
                 {/* Additional Fields */}
-                <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
                     <Typography variant="body2" className="text-gray-600">
                         Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
                     </Typography>
-                </Section>
+                </Section> */}
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">

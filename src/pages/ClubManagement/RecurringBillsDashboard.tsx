@@ -57,7 +57,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "date",
-    label: "Date",
+    label: "Start On",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -69,13 +69,13 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-  {
-    key: "reference_number",
-    label: "Reference Number",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "reference_number",
+  //   label: "Reference Number",
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true,
+  // },
   {
     key: "vendor_name",
     label: "Vendor Name",
@@ -92,7 +92,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "due_date",
-    label: "Due Date",
+    label: "Ends On",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -131,7 +131,7 @@ export const RecurringBillsDashboard: React.FC = () => {
     has_prev_page: false,
   });
   const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
 
   // Fetch bill data from API
   // const fetchBillData = async (
@@ -198,64 +198,64 @@ export const RecurringBillsDashboard: React.FC = () => {
   // };
 
 
-    const fetchBillData = async (
-        page = 1,
-        per_page = 10,
-        search = '',
-        filters: BillFilters = {}
-    ) => {
-        setLoading(true);
+  const fetchBillData = async (
+    page = 1,
+    per_page = 10,
+    search = '',
+    filters: BillFilters = {}
+  ) => {
+    setLoading(true);
 
-        try {
-            const response = await axios.get(
-                `https://${baseUrl}/lock_account_bills.json?q[recurring_eq]=true`,
-                {
-                    params: {
-                        lock_account_id: 1,
-                        //   page,
-                        //   per_page,
-                        //   search,
-                        //   status: filters.status || undefined,
-                    },
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
-                    },
-                }
-            );
-
-            // 🔥 Adjust this based on actual API response structure
-            const apiData = response.data;
-
-            const bills: Bill[] = apiData?.data || apiData || [];
-
-            setBillData(bills);
-
-            setPagination({
-                current_page: apiData?.current_page || page,
-                per_page: apiData?.per_page || per_page,
-                total_pages: apiData?.total_pages || 1,
-                total_count: apiData?.total_count || bills.length,
-                has_next_page:
-                    (apiData?.current_page || page) <
-                    (apiData?.total_pages || 1),
-                has_prev_page:
-                    (apiData?.current_page || page) > 1,
-            });
-
-        } catch (error: unknown) {
-            console.error("Error fetching bill data:", error);
-
-            const errorMessage =
-                error instanceof Error ? error.message : "Unknown error";
-
-            toast.error(`Failed to load bill data: ${errorMessage}`, {
-                duration: 5000,
-            });
-
-        } finally {
-            setLoading(false);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/lock_account_bills.json?q[recurring_eq]=true`,
+        {
+          params: {
+            lock_account_id: 1,
+            //   page,
+            //   per_page,
+            //   search,
+            //   status: filters.status || undefined,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+          },
         }
-    };
+      );
+
+      // 🔥 Adjust this based on actual API response structure
+      const apiData = response.data;
+
+      const bills: Bill[] = apiData?.data || apiData || [];
+
+      setBillData(bills);
+
+      setPagination({
+        current_page: apiData?.current_page || page,
+        per_page: apiData?.per_page || per_page,
+        total_pages: apiData?.total_pages || 1,
+        total_count: apiData?.total_count || bills.length,
+        has_next_page:
+          (apiData?.current_page || page) <
+          (apiData?.total_pages || 1),
+        has_prev_page:
+          (apiData?.current_page || page) > 1,
+      });
+
+    } catch (error: unknown) {
+      console.error("Error fetching bill data:", error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+
+      toast.error(`Failed to load bill data: ${errorMessage}`, {
+        duration: 5000,
+      });
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
@@ -309,7 +309,7 @@ export const RecurringBillsDashboard: React.FC = () => {
   const renderRow = (bill: Bill) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <button
+        {/* <button
           onClick={() => handleView(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
@@ -329,16 +329,18 @@ export const RecurringBillsDashboard: React.FC = () => {
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
     ),
     date: (
       <span className="text-sm text-gray-600">
-        {new Date(bill.date).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })}
+        {bill?.recurring_detail?.start_date
+          ? new Date(bill.recurring_detail.start_date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+          : '-'}
       </span>
     ),
     bill_number: (
@@ -362,15 +364,23 @@ export const RecurringBillsDashboard: React.FC = () => {
           month: "2-digit",
           year: "numeric",
         })} */}
+
+        {bill?.recurring_detail?.end_date
+          ? new Date(bill.recurring_detail.end_date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+          : '-'}
       </span>
     ),
     amount: (
       <span className="text-sm font-medium text-gray-900">
         ₹
-        {/* {bill.amount.toLocaleString("en-IN", {
+        {bill.total_amount.toLocaleString("en-IN", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })} */}
+        })}
       </span>
     ),
     balance_due: (
