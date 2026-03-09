@@ -246,7 +246,7 @@ export const AddBookingSetupPage = () => {
     setLoadingDepartments(true);
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/admin/facility_categories.json`,
+        `https://${baseUrl}/pms/admin/facility_categories.json?source=web`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
