@@ -7,6 +7,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import NewConversationModal from "./NewConversationModal";
 import { fetchConversations, fetchGroups } from "@/store/slices/channelSlice";
 import { Skeleton } from "./ui/skeleton";
+import { useNotification } from "@/contexts/NotificationContext";
 
 const ChannelSidebar = () => {
     const { id } = useParams();
@@ -30,6 +31,9 @@ const ChannelSidebar = () => {
     const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
     const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
+
+    // Use notification context to listen for new notifications
+    const { notifications } = useNotification();
 
     const fetchInternalUsers = async () => {
         try {
@@ -73,6 +77,51 @@ const ChannelSidebar = () => {
         getConversations();
         getGroups();
     }, []);
+
+    // Move conversation to top when a notification arrives
+    useEffect(() => {
+        if (notifications.length === 0) return;
+
+        const latestNotification = notifications[0];
+
+        // If notification is for a conversation, move it to top
+        if (latestNotification.ntype === "conversation" && latestNotification.payload?.conversation_id) {
+            const conversationId = latestNotification.payload.conversation_id;
+
+            setConversations((prevConversations) => {
+                const conversationIndex = prevConversations.findIndex((c) => c.id === conversationId);
+
+                if (conversationIndex !== -1 && conversationIndex !== 0) {
+                    // Move conversation to top
+                    const reorderedConversations = [...prevConversations];
+                    const [conversation] = reorderedConversations.splice(conversationIndex, 1);
+                    reorderedConversations.unshift(conversation);
+                    return reorderedConversations;
+                }
+
+                return prevConversations;
+            });
+        }
+
+        // If notification is for a group, move it to top
+        if (latestNotification.ntype === "projectspace" && latestNotification.payload?.project_space_id) {
+            const groupId = latestNotification.payload.project_space_id;
+
+            setGroups((prevGroups) => {
+                const groupIndex = prevGroups.findIndex((g) => g.id === groupId);
+
+                if (groupIndex !== -1 && groupIndex !== 0) {
+                    // Move group to top
+                    const reorderedGroups = [...prevGroups];
+                    const [group] = reorderedGroups.splice(groupIndex, 1);
+                    reorderedGroups.unshift(group);
+                    return reorderedGroups;
+                }
+
+                return prevGroups;
+            });
+        }
+    }, [notifications]);
 
     const handleSidebarSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
@@ -168,9 +217,16 @@ const ChannelSidebar = () => {
                                                 : 'hover:text-red-600'
                                                 }`}
                                             key={conversation.id}
-                                            onClick={() =>
-                                                navigate(`/vas/channels/messages/${conversation.id}`)
-                                            }
+                                            onClick={() => {
+                                                setConversations((prev) =>
+                                                    prev.map((c) =>
+                                                        c.id === conversation.id
+                                                            ? { ...c, last_message_read: true }
+                                                            : c
+                                                    )
+                                                );
+                                                navigate(`/vas/channels/messages/${conversation.id}`);
+                                            }}
                                         >
                                             <span className="flex-1 truncate">{displayedName}</span>
                                             {hasUnreadMessages && (
@@ -219,7 +275,16 @@ const ChannelSidebar = () => {
                                                 : 'hover:text-red-600'
                                                 }`}
                                             key={group.id}
-                                            onClick={() => navigate(`/vas/channels/groups/${group.id}`)}
+                                            onClick={() => {
+                                                setGroups((prev) =>
+                                                    prev.map((g) =>
+                                                        g.id === group.id
+                                                            ? { ...g, last_message_read: true }
+                                                            : g
+                                                    )
+                                                );
+                                                navigate(`/vas/channels/groups/${group.id}`);
+                                            }}
                                         >
                                             <span className="flex-1 truncate">{group.name}</span>
                                             {hasUnreadMessages && (
