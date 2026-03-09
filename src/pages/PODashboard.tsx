@@ -196,6 +196,7 @@ export const PODashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const [orgId, setOrgId] = useState<number | null>(null);
 
   const { loading } = useAppSelector(state => state.getPurchaseOrders)
 
@@ -267,6 +268,33 @@ export const PODashboard = () => {
       toast.error(error);
     }
   };
+    useEffect(() => {
+      try {
+        // first try explicit org_id stored separately (common pattern)
+        const storedOrg = localStorage.getItem('org_id');
+        if (storedOrg) {
+          const num = Number(storedOrg);
+          if (!Number.isNaN(num)) {
+            setOrgId(num);
+            return;
+          }
+        }
+  
+        // fallback to user object which may contain org_id/company_id
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.org_id) {
+            setOrgId(user.org_id);
+          } else if (user.company_id) {
+            setOrgId(user.company_id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load org_id:', error);
+      }
+    }, []);
+  
 
   useEffect(() => {
     fetchData();
@@ -567,8 +595,9 @@ export const PODashboard = () => {
     return items;
   };
 
-  const leftActions = (
+  const leftActions = orgId === 63 ? null : (
     <>
+    
       <Button
         style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
         className="hover:bg-[#F2EEE9]/90"

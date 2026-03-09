@@ -13,7 +13,7 @@ import { Switch } from "@mui/material";
 import { Card, CardContent } from "@/components/ui/card";
 import MuiMultiSelect from "@/components/MuiMultiSelect";
 import EisenhowerMatrix from "@/components/EisenhowerMatrix";
-import { useTodos, useToggleTodo } from "@/hooks/useTodos";
+import { useTodos, useToggleTodo, usePriorityTodos } from "@/hooks/useTodos";
 import PriorityTodo from "@/components/PriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
 
@@ -139,8 +139,6 @@ export default function Todo() {
   const [isToggleConfirmOpen, setIsToggleConfirmOpen] = useState(false);
   const [todoToToggle, setTodoToToggle] = useState<any>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
-  const [priorityFilteredTodos, setPriorityFilteredTodos] = useState<any[]>([]);
-  const [isPriorityLoading, setIsPriorityLoading] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<TodoFilters>({
     fromDate: '',
@@ -172,8 +170,27 @@ export default function Todo() {
     selectedCreators: creatorIds,
   });
 
+  // Use React Query hook for priority todos with infinite pagination
+  const {
+    data: priorityTodosData,
+    isLoading: isPriorityLoading,
+    hasNextPage: priorityHasNextPage,
+    fetchNextPage: priorityFetchNextPage,
+    isFetchingNextPage: priorityIsFetchingNextPage,
+  } = usePriorityTodos({
+    priority: selectedPriority || '',
+    taskType,
+    fromDate: appliedFilters.fromDate,
+    toDate: appliedFilters.toDate,
+    selectedAssignedTo: assignedToIds,
+    selectedCreators: creatorIds,
+  });
+
   // Combine all pages into a single todos array
   const todos = todosData?.pages.flatMap(page => page.todos) || [];
+
+  // Combine priority todos from all pages
+  const priorityFilteredTodos = priorityTodosData?.pages.flatMap(page => page.todos) || [];
 
   // Extract dashboard data from first page
   useEffect(() => {
@@ -209,49 +226,13 @@ export default function Todo() {
     getUsers();
   }, []);
 
-  // Function to fetch todos by priority
-  const fetchTodosByPriority = async (priority: string | null) => {
-    if (!priority) {
-      setPriorityFilteredTodos([]);
-      setSelectedPriority(null);
-      return;
-    }
-
-    setIsPriorityLoading(true);
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const userId = taskType === "my" ? user.id : undefined;
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append("q[priority_eq]", priority);
-      if (userId) {
-        params.append("q[user_id_eq]", userId);
-      }
-
-      const response = await axios.get(
-        `https://${baseUrl}/todos.json?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const filteredTodos = Array.isArray(response.data.todos) ? response.data.todos : [];
-      setPriorityFilteredTodos(filteredTodos);
-      setSelectedPriority(priority);
-    } catch (error) {
-      console.error("Error fetching todos by priority:", error);
-      toast.error("Failed to fetch todos for this priority");
-      setPriorityFilteredTodos([]);
-    } finally {
-      setIsPriorityLoading(false);
-    }
+  // Function to handle priority selection
+  const handlePrioritySelect = (priority: string | null) => {
+    setSelectedPriority(priority);
   };
 
   useEffect(() => {
-    fetchTodosByPriority("P1");
+    setSelectedPriority("P1");
   }, [taskType])
 
   // Use toggle mutation hook for better cache management
@@ -538,8 +519,7 @@ export default function Todo() {
           );
           toast.success(`Priority changed to ${newPriority}`);
           refetch();
-          // Refetch the priority-filtered todos to remove the item from current priority list
-          fetchTodosByPriority(selectedPriority);
+          // Cache will be automatically invalidated when priority changes
         }
       }
     } catch (error) {
@@ -629,12 +609,12 @@ export default function Todo() {
             </div>
           </div>
 
-          <div className="flex items-stretch gap-2 w-full h-[19.5rem]">
+          <div className="flex items-stretch gap-2 w-full h-[19.5rem] !mt-1">
             {/* Eisenhower Matrix */}
             <div className="w-1/2 h-full">
               <EisenhowerMatrix
                 dashboardData={dashboardData}
-                onQuadrantClick={fetchTodosByPriority}
+                onQuadrantClick={handlePrioritySelect}
                 selectedPriority={selectedPriority}
               />
             </div>
@@ -647,6 +627,9 @@ export default function Todo() {
                 onEditTodo={handleEditTodo}
                 onConvertTodo={handleConvertTodo}
                 onFlagTodo={(todo) => handleFlagTodo(todo)}
+                hasNextPage={priorityHasNextPage}
+                isFetchingNextPage={priorityIsFetchingNextPage}
+                fetchNextPage={priorityFetchNextPage}
               />
             </div>
           </div>
@@ -1133,9 +1116,9 @@ const TodoItem = ({
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-purple-300';
-      default:
         return 'border-l-4 border-l-gray-400';
+      default:
+        return 'border-l-4 border-l-gray-300';
     }
   };
 
@@ -1165,7 +1148,7 @@ const TodoItem = ({
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-gray-200 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -1347,7 +1330,7 @@ const TodoItem = ({
             )}
           </div>
         )}
-        <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
           {getPriorityLabel()}
         </div>
       </div>
@@ -1377,9 +1360,9 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'border-l-4 border-l-yellow-500';
       case 'P4':
-        return 'border-l-4 border-l-purple-300';
-      default:
         return 'border-l-4 border-l-gray-400';
+      default:
+        return 'border-l-4 border-l-gray-300';
     }
   };
 
@@ -1409,7 +1392,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       case 'P3':
         return 'bg-yellow-100 text-yellow-700';
       case 'P4':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-gray-200 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -1420,6 +1403,9 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       navigate(`/vas/tasks/${todo.task_management_id}`);
     }
   };
+
+  // Check if task is started from the nested task_management object
+  const isTaskStarted = todo.task_management?.is_started || false;
 
   return (
     <div className={`relative flex items-center gap-3 p-3 rounded-lg border transition-colors group mb-2 pt-5 ${getPriorityBgColor()}`}>
@@ -1462,14 +1448,49 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-2">
-        <button
-          onClick={() => toggleTodo(todo.id)}
-          className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
-        >
-          <Check size={15} color="white" />
-        </button>
-        <div className={`px-1 py-0.5 text-[8px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
+      <div className="flex flex-col gap-2 pb-2">
+        {/* Time Left and Active Timer for tasks only */}
+        {todo.task_management_id && (
+          <div className="flex flex-col items-end text-[12px] min-w-max">
+            {/* Time Left */}
+            <div className="flex gap-2 items-end">
+              <span className="text-xs text-gray-600 font-medium">
+                Time Left:
+              </span>
+              <CountdownTimer
+                startDate={todo.task_management?.expected_start_date}
+                targetDate={todo.target_date}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={() => toggleTodo(todo.id)}
+            className="flex-shrink-0 w-4 h-4 !bg-[#c72030] !text-white flex items-center justify-center hover:opacity-90 transition-all"
+          >
+            <Check size={15} color="white" />
+          </button>
+        </div>
+
+        {todo.task_management_id && (
+          <div>
+            {/* Active Timer */}
+            {isTaskStarted && (
+              <div className="flex gap-2 items-end">
+                <span className="text-xs text-gray-600 font-medium">
+                  Started:
+                </span>
+                <ActiveTimer
+                  activeTimeTillNow={todo.task_management?.active_time_till_now}
+                  isStarted={isTaskStarted}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        <div className={`px-1 py-0.5 text-[10px] font-semibold absolute bottom-1 right-3 ${getPriorityTagColor()}`}>
           {getPriorityLabel()}
         </div>
       </div>

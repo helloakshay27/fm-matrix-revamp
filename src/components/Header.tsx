@@ -193,7 +193,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -283,9 +283,31 @@ export const Header = () => {
     setNotificationCount((prev) => Math.max(0, prev - 1));
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
-    setNotificationCount(0);
+  const markAllAsRead = async () => {
+    try {
+      // Call API to mark all as read
+      await axios.get(
+        `https://${localStorage.getItem("baseUrl")}/user_notifications/mark_all_as_read.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Update UI after successful API call
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, read: true }))
+      );
+      setNotificationCount(0);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      // Still update UI on error for better UX
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, read: true }))
+      );
+      setNotificationCount(0);
+    }
   };
 
   const handleNotificationClick = async (notification: any) => {
@@ -532,7 +554,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {isViSite && selectedCompany?.id !== 294 && (
+              {isViSite && selectedCompany?.id !== 294 && !isWebSite && (
                 <button
                   onClick={() => navigate("/msafedashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -542,7 +564,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {isWebSite && !isViSite && selectedCompany?.id !== 294 && (
+              {!isViSite && selectedCompany?.id !== 294 && !isWebSite && (
                 <button
                   onClick={() =>
                     window.open(
@@ -745,15 +767,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -839,7 +863,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">

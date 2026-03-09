@@ -147,98 +147,99 @@ export const EmployeeUnifiedCalendar: React.FC<
   const userId = localStorage.getItem("userId") || "87989";
 
   // Fetch calendar data from API
-  useEffect(() => {
-    const fetchCalendarData = async () => {
-      setIsLoading(true);
-      try {
-        const token = API_CONFIG.TOKEN;
-        const baseUrl = API_CONFIG.BASE_URL;
+  const fetchCalendarData = async () => {
+    setIsLoading(true);
+    try {
+      const token = API_CONFIG.TOKEN;
+      const baseUrl = API_CONFIG.BASE_URL;
 
-        // Build API URL with date filter parameters
-        let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
+      // Build API URL with date filter parameters
+      let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
 
-        // Add date filters to API call
-        if (activeFilters.dateFrom) {
-          apiUrl += `&date_from=${activeFilters.dateFrom}`;
-        }
-        if (activeFilters.dateTo) {
-          apiUrl += `&date_to=${activeFilters.dateTo}`;
-        }
-
-        console.log("📅 Fetching calendar data with filters:", {
-          dateFrom: activeFilters.dateFrom,
-          dateTo: activeFilters.dateTo,
-          apiUrl,
-        });
-
-        const response = await fetch(apiUrl);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch calendar data");
-        }
-
-        const data = await response.json();
-
-        // Map API data to calendar event format
-        const mappedEvents = (data.user_calendars || []).map((item: any) => {
-          // Map calendarable_type to internal event types
-          let eventType = "Todo"; // Default
-
-          switch (item.calendarable_type) {
-            case "Todo":
-              eventType = "Todo";
-              break;
-            case "GoogleCalendarEvent":
-              eventType = "Google Calendar";
-              break;
-            case "Meeting":
-              eventType = "Meeting";
-              break;
-            case "FacilityBooking":
-            case "Facility Booking":
-              eventType = "Facility";
-              break;
-            case "TaskManagement":
-            case "Task Management":
-            case "TaskAllocationTime":
-            case "Task":
-              eventType = "Task";
-              break;
-            case "Ticket":
-              eventType = "Ticket";
-              break;
-            case "IssueAllocationTime":
-            case "Issue":
-              eventType = "Issue";
-              break;
-            default:
-              eventType = "Todo";
-          }
-
-          return {
-            id: item.id.toString(),
-            title: item.title || "Untitled Event",
-            start: item.start_at,
-            end: item.end_at,
-            type: eventType,
-            status: item.status,
-            description: item.description,
-            color: item.color || getColorForType(eventType),
-            location: item.location,
-            redirectUrl: item.redirect_url,
-          };
-        });
-
-        setEvents(mappedEvents);
-        console.log("✅ Fetched events:", mappedEvents.length);
-      } catch (error) {
-        console.error("Error fetching calendar data:", error);
-        toast.error("Failed to load calendar events");
-      } finally {
-        setIsLoading(false);
+      // Add date filters to API call
+      if (activeFilters.dateFrom) {
+        apiUrl += `&date_from=${activeFilters.dateFrom}`;
       }
-    };
+      if (activeFilters.dateTo) {
+        apiUrl += `&date_to=${activeFilters.dateTo}`;
+      }
 
+      console.log("📅 Fetching calendar data with filters:", {
+        dateFrom: activeFilters.dateFrom,
+        dateTo: activeFilters.dateTo,
+        apiUrl,
+      });
+
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch calendar data");
+      }
+
+      const data = await response.json();
+
+      // Map API data to calendar event format
+      const mappedEvents = (data.user_calendars || []).map((item: any) => {
+        // Map calendarable_type to internal event types
+        let eventType = "Todo"; // Default
+
+        switch (item.calendarable_type) {
+          case "Todo":
+            eventType = "Todo";
+            break;
+          case "GoogleCalendarEvent":
+            eventType = "Google Calendar";
+            break;
+          case "Meeting":
+            eventType = "Meeting";
+            break;
+          case "FacilityBooking":
+          case "Facility Booking":
+            eventType = "Facility";
+            break;
+          case "TaskManagement":
+          case "Task Management":
+          case "TaskAllocationTime":
+          case "Task":
+            eventType = "Task";
+            break;
+          case "Ticket":
+            eventType = "Ticket";
+            break;
+          case "IssueAllocationTime":
+          case "Issue":
+            eventType = "Issue";
+            break;
+          default:
+            eventType = "Todo";
+        }
+
+        return {
+          id: item.id.toString(),
+          title: item.title || "Untitled Event",
+          start: item.start_at,
+          end: item.end_at,
+          type: eventType,
+          status: item.status,
+          description: item.description,
+          color: item.color || getColorForType(eventType),
+          location: item.location,
+          redirectUrl: item.redirect_url,
+        };
+      });
+
+      setEvents(mappedEvents);
+      console.log("✅ Fetched events:", mappedEvents.length);
+    } catch (error) {
+      console.error("Error fetching calendar data:", error);
+      toast.error("Failed to load calendar events");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch calendar data on mount and when filters change
+  useEffect(() => {
     fetchCalendarData();
   }, [userId, activeFilters.dateFrom, activeFilters.dateTo]);
 
@@ -716,48 +717,69 @@ export const EmployeeUnifiedCalendar: React.FC<
           <Button
             onClick={async () => {
               const user = getUser();
-              const email = user?.email;
+              // Try multiple sources for email
+              const email =
+                user?.email ||
+                localStorage.getItem("userEmail") ||
+                localStorage.getItem("email");
+
+              console.log("User object:", user);
+              console.log("Email found:", email);
+
               if (email) {
                 try {
-                  toast.info("Connecting to Google Calendar...");
-                  const baseUrl =
-                    localStorage.getItem("baseUrl") ||
-                    API_CONFIG.BASE_URL ||
-                    "lockated-api.gophygital.work";
-                  const syncUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
+                  toast.info("Checking Google Calendar connection...");
+                  const baseUrl = "lockated-api.gophygital.work";
 
-                  // Call the API to get the redirect URL
-                  const response = await fetch(syncUrl, {
+                  // Step 1: Check connection status
+                  const statusUrl = `https://${baseUrl}/google_calander/status?email=${encodeURIComponent(email)}`;
+                  console.log("Status URL:", statusUrl);
+
+                  const statusResponse = await fetch(statusUrl, {
                     method: "GET",
                     headers: {
                       "Content-Type": "application/json",
                     },
                   });
 
-                  if (response.ok) {
-                    const data = await response.json();
-                    // Open the redirect URL from API response
-                    if (data.redirect_url || data.url) {
-                      window.open(
-                        data.redirect_url || data.url,
-                        "_blank",
-                        "width=600,height=700"
-                      );
+                  if (!statusResponse.ok) {
+                    throw new Error("Failed to check Google Calendar status");
+                  }
+
+                  const statusData = await statusResponse.json();
+                  console.log("Google Calendar status:", statusData);
+
+                  if (statusData.connected === true) {
+                    // Step 2a: If connected, call sync API
+                    toast.info("Syncing Google Calendar events...");
+                    const syncUrl = `https://${baseUrl}/google_calander/sync?email=${encodeURIComponent(email)}`;
+                    console.log("Sync URL:", syncUrl);
+
+                    const syncResponse = await fetch(syncUrl);
+
+                    if (syncResponse.ok) {
+                      toast.success("Google Calendar synced successfully!");
+                      // Refresh calendar data
+                      fetchCalendarData();
                     } else {
-                      // Fallback: if no redirect URL in response, open the sync URL directly
-                      window.open(syncUrl, "_blank", "width=600,height=700");
+                      toast.error("Failed to sync Google Calendar");
                     }
                   } else {
-                    // If API fails, open the sync URL directly as fallback
-                    window.open(syncUrl, "_blank", "width=600,height=700");
-                    toast.warning("Opening sync page directly...");
+                    // Step 2b: If not connected, open connect URL in new tab
+                    toast.info("Opening Google Calendar connection...");
+                    const connectUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
+                    console.log("Connect URL:", connectUrl);
+
+                    // Open in new tab directly
+                    window.open(connectUrl, "_blank");
                   }
                 } catch (error) {
-                  console.error("Error connecting to Google Calendar:", error);
-                  toast.error("Failed to connect to Google Calendar");
+                  console.error("Error with Google Calendar:", error);
+                  toast.error("Failed to process Google Calendar request");
                 }
               } else {
-                toast.error("User email not found");
+                toast.error("User email not found. Please log in again.");
+                console.error("No email found in user object or localStorage");
               }
             }}
             variant="outline"
