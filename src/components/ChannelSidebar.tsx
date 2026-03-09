@@ -89,13 +89,24 @@ const ChannelSidebar = () => {
             const conversationId = latestNotification.payload.conversation_id;
 
             setConversations((prevConversations) => {
-                const conversationIndex = prevConversations.findIndex((c) => c.id === conversationId);
+                const conversationIndex = prevConversations.findIndex((c) => c.id === conversationId || c.id === String(conversationId));
 
-                if (conversationIndex !== -1 && conversationIndex !== 0) {
-                    // Move conversation to top
+                if (conversationIndex !== -1) {
+                    // Move conversation to top and mark as unread
                     const reorderedConversations = [...prevConversations];
-                    const [conversation] = reorderedConversations.splice(conversationIndex, 1);
-                    reorderedConversations.unshift(conversation);
+                    const conversation = reorderedConversations[conversationIndex];
+
+                    // Mark as unread if not already
+                    if (conversation.last_message_read !== false) {
+                        conversation.last_message_read = false;
+                    }
+
+                    // Only move if not already at top
+                    if (conversationIndex !== 0) {
+                        const [movedConversation] = reorderedConversations.splice(conversationIndex, 1);
+                        reorderedConversations.unshift(movedConversation);
+                    }
+
                     return reorderedConversations;
                 }
 
@@ -108,13 +119,24 @@ const ChannelSidebar = () => {
             const groupId = latestNotification.payload.project_space_id;
 
             setGroups((prevGroups) => {
-                const groupIndex = prevGroups.findIndex((g) => g.id === groupId);
+                const groupIndex = prevGroups.findIndex((g) => g.id === groupId || g.id === String(groupId));
 
-                if (groupIndex !== -1 && groupIndex !== 0) {
-                    // Move group to top
+                if (groupIndex !== -1) {
+                    // Move group to top and mark as unread
                     const reorderedGroups = [...prevGroups];
-                    const [group] = reorderedGroups.splice(groupIndex, 1);
-                    reorderedGroups.unshift(group);
+                    const group = reorderedGroups[groupIndex];
+
+                    // Mark as unread if not already
+                    if (group.last_message_read !== false) {
+                        group.last_message_read = false;
+                    }
+
+                    // Only move if not already at top
+                    if (groupIndex !== 0) {
+                        const [movedGroup] = reorderedGroups.splice(groupIndex, 1);
+                        reorderedGroups.unshift(movedGroup);
+                    }
+
                     return reorderedGroups;
                 }
 
