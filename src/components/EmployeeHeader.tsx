@@ -43,6 +43,7 @@ import { RootState } from "@/store/store";
 import { getUser, clearAuth } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 import axios from "axios";
@@ -127,9 +128,17 @@ export const EmployeeHeader: React.FC = () => {
   };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
+
+  // Use Notification Context
+  const {
+    notifications,
+    notificationCount,
+    isNotificationOpen,
+    setIsNotificationOpen,
+    markAsRead,
+    markAllAsRead,
+    handleNotificationClick: handleNotificationClickContext,
+  } = useNotification();
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -289,107 +298,22 @@ export const EmployeeHeader: React.FC = () => {
     navigate("/profile/settings");
   };
 
-  const fetchNotifications = async () => {
-    try {
-      // Mock notifications - replace with actual API call
-      const userNotifications = await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      setNotifications(userNotifications.data.unread_notifications);
-      setNotificationCount(userNotifications.data.unread_notifications.length);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
-
-  const markAsRead = (notificationId: number) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-    setNotificationCount((prev) => Math.max(0, prev - 1));
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      // Call API to mark all as read
-      await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications/mark_all_as_read.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Update UI after successful API call
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
-      setNotificationCount(0);
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      // Still update UI on error for better UX
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
-      setNotificationCount(0);
-    }
-  };
-
+  // Wrap handleNotificationClickContext to add navigation
   const handleNotificationClick = async (notification: any) => {
-    try {
-      // Mark as read via API
-      await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications/${notification.id}/mark_as_read.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+    await handleNotificationClickContext(notification);
+    
+    // Navigate based on notification type
+    if (notification.ntype === "conversation") {
+      navigate(
+        `/vas/channels/messages/${notification.payload.conversation_id}`
       );
-
-      // Update UI
-      markAsRead(notification.id);
-
-      // Navigate based on notification type
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      // Still navigate even if API call fails
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    } finally {
-      setIsNotificationOpen(false);
+    }
+    if (notification.ntype === "projectspace") {
+      navigate(
+        `/vas/channels/groups/${notification.payload.project_space_id}`
+      );
     }
   };
-
-  useEffect(() => {
-    fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    // const interval = setInterval(fetchNotifications, 30000);
-    // return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const loadUserInfo = () => {
