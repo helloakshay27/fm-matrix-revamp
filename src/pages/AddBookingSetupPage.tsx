@@ -393,7 +393,7 @@ export const AddBookingSetupPage = () => {
     else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
-    } else if (!formData.cancellationText) {
+    } else if (window.location.hostname !== 'pulse.panchshil.com' && !formData.cancellationText) {
       toast.error("Please enter Cancellation Policies");
       return false;
     }
@@ -2370,14 +2370,18 @@ export const AddBookingSetupPage = () => {
               ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="font-medium text-gray-700">
-                Cancellation Policy <span>*</span>
-              </div>
-              <div className="border rounded">
-                <div ref={cancellationQuillRef} className="min-h-[140px] p-2 bg-white" />
-              </div>
-            </div>
+            {
+              window.location.hostname !== 'pulse.panchshil.com' && (
+                <div className="space-y-3">
+                  <div className="font-medium text-gray-700">
+                    Cancellation Policy <span>*</span>
+                  </div>
+                  <div className="border rounded">
+                    <div ref={cancellationQuillRef} className="min-h-[140px] p-2 bg-white" />
+                  </div>
+                </div>
+              )
+            }
           </div>
 
           <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>

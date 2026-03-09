@@ -1392,14 +1392,18 @@ export const BookingSetupDetailPage = () => {
               ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="font-medium text-gray-700">
-                Cancellation Policy<span>*</span>
-              </div>
-              <div className="border rounded bg-gray-50 p-4 prose prose-sm max-w-none min-h-[140px]"
-                dangerouslySetInnerHTML={{ __html: formData.cancellationText || "<p className='text-gray-500'>No cancellation policy provided</p>" }}
-              />
-            </div>
+            {
+              window.location.hostname !== "pulse.panchshil.com" && (
+                <div className="space-y-3">
+                  <div className="font-medium text-gray-700">
+                    Cancellation Policy<span>*</span>
+                  </div>
+                  <div className="border rounded bg-gray-50 p-4 prose prose-sm max-w-none min-h-[140px]"
+                    dangerouslySetInnerHTML={{ __html: formData.cancellationText || "<p className='text-gray-500'>No cancellation policy provided</p>" }}
+                  />
+                </div>
+              )
+            }
           </div>
 
           {/* /* Additional Setup */}
