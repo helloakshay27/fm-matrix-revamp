@@ -45,6 +45,7 @@ import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
 import axios from "axios";
+import { useNotification } from "@/contexts/NotificationContext";
 
 export interface Company {
   id: number;
@@ -68,6 +69,17 @@ export const Header = () => {
     role_name?: string;
   } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+
+  // Use Notification Context
+  const {
+    notifications,
+    notificationCount,
+    isNotificationOpen,
+    setIsNotificationOpen,
+    markAsRead,
+    markAllAsRead,
+    handleNotificationClick,
+  } = useNotification();
 
   const currentPath = window.location.pathname;
 
@@ -106,9 +118,6 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
   const navigate = useNavigate();
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     if (selectedSite) {
@@ -193,7 +202,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -254,110 +263,6 @@ export const Header = () => {
       console.error("Failed to change site:", error);
     }
   };
-
-  const fetchNotifications = async () => {
-    try {
-      // Mock notifications - replace with actual API call
-      const userNotifications = await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      setNotifications(userNotifications.data.unread_notifications);
-      setNotificationCount(userNotifications.data.unread_notifications.length);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
-
-  const markAsRead = (notificationId: number) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-    setNotificationCount((prev) => Math.max(0, prev - 1));
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      // Call API to mark all as read
-      await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications/mark_all_as_read.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Update UI after successful API call
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, read: true }))
-      );
-      setNotificationCount(0);
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      // Still update UI on error for better UX
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, read: true }))
-      );
-      setNotificationCount(0);
-    }
-  };
-
-  const handleNotificationClick = async (notification: any) => {
-    try {
-      // Mark as read via API
-      await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/user_notifications/${notification.id}/mark_as_read.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Update UI
-      markAsRead(notification.id);
-
-      // Navigate based on notification type
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      // Still navigate even if API call fails
-      if (notification.ntype === "conversation") {
-        navigate(
-          `/vas/channels/messages/${notification.payload.conversation_id}`
-        );
-      }
-      if (notification.ntype === "projectspace") {
-        navigate(
-          `/vas/channels/groups/${notification.payload.project_space_id}`
-        );
-      }
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    // const interval = setInterval(fetchNotifications, 30000);
-    // return () => clearInterval(interval);
-  }, []);
 
   // Compute profile display name (prefer VI account when available)
   const profileDisplayName =
@@ -714,14 +619,14 @@ export const Header = () => {
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              {/* <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+              <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
                 <Bell className="w-5 h-5 text-[#1a1a1a]" />
                 {notificationCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
                     {notificationCount}
                   </Badge>
                 )}
-              </button> */}
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -767,17 +672,15 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
                                 ? "bg-[#C72030]"
                                 : "bg-gray-300"
-                            }`}
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -863,7 +766,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
