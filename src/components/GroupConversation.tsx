@@ -52,6 +52,9 @@ const GroupConversation = () => {
     const { manager: webSocketManager, connect } = useWebSocket();
 
     useEffect(() => {
+        textareaRef.current.focus();
+    }, [id])
+    useEffect(() => {
         console.log('🔌 WebSocket connection effect running');
 
         if (token) {
