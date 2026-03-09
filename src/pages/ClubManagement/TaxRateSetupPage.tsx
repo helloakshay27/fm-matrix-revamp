@@ -163,7 +163,14 @@ const TaxRatesTable: React.FC = () => {
   const validate = (f: typeof emptyForm) => {
     const e: Record<string, string> = {};
     if (!f.name.trim()) e.name = "Tax Name is required";
-    if (!f.rate) e.rate = "Rate (%) is required";
+    if (!f.rate) {
+      e.rate = "Rate (%) is required";
+    } else {
+      const rateNum = parseFloat(f.rate);
+      if (isNaN(rateNum) || rateNum < 0 || rateNum > 100) {
+        e.rate = "Rate must be between 0 and 100";
+      }
+    }
     if (!f.rate_type) e.rate_type = "Tax Type is required";
     return e;
   };
@@ -395,14 +402,14 @@ const TaxRatesTable: React.FC = () => {
 
               {/* Footer */}
               <div className="px-6 py-4 border-t flex gap-3 justify-end bg-white rounded-b-lg">
-                <Button variant="outline" disabled={formBusy} onClick={closePanel}>Cancel</Button>
                 <Button
                   className="bg-[#C72030] hover:bg-[#A01020] text-white"
                   onClick={handleSave}
                   disabled={formBusy}
                 >
-                  {formBusy ? "Saving…" : "Save"}
+                  {formBusy ? (editingTax ? "Updating…" : "Saving…") : (editingTax ? "Update" : "Save")}
                 </Button>
+                <Button variant="outline" disabled={formBusy} onClick={closePanel}>Cancel</Button>
               </div>
             </div>
           </div>
