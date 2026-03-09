@@ -432,10 +432,14 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
 
   // https://pulse-api.lockated.com/get_otps/verify_otp.json?email=sumitra.patil@lockated.com&otp=999999
   const response = await fetch(
-    `${baseUrl}/get_otps/verify_otp.json?email=${email}&otp=${otp}`,
+    `https://live-api.gophygital.work/verify_code.json`,
     {
-      method: "GET",
+      method: "POST",
       headers,
+      body: JSON.stringify({
+        email: email,
+        otp: otp,
+      }),
     }
   );
 
