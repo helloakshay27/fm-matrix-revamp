@@ -100,6 +100,8 @@ const defaultForm: GstForm = {
 };
 
 const TaxSetup: React.FC = () => {
+    // Validation state
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [form, setForm] = useState<GstForm>(defaultForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -164,6 +166,20 @@ const TaxSetup: React.FC = () => {
   // ── Submit: PATCH /lock_accounts/1/gst_settings.json ─────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    const newErrors: { [key: string]: string } = {};
+    if (!form.gstin.trim()) newErrors.gstin = "GSTIN is required";
+    if (!form.gstRegisteredOn) newErrors.gstRegisteredOn = "GST Registered On is required";
+    if (!form.gstinUsername.trim()) newErrors.gstinUsername = "GSTIN Username is required";
+    if (!form.reportingPeriod) newErrors.reportingPeriod = "Reporting Period is required";
+    if (!form.generateFirstTaxReturnFrom) newErrors.generateFirstTaxReturnFrom = "First Tax Return Date is required";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
 
     const baseUrl = API_CONFIG.BASE_URL;
     const token = API_CONFIG.TOKEN;
@@ -248,9 +264,11 @@ const TaxSetup: React.FC = () => {
                 name="gstin"
                 value={form.gstin}
                 onChange={handleChange}
-                className="w-full"
+                className={`w-full ${errors.gstin ? 'border-red-500' : ''}`}
                 placeholder="Enter GSTIN"
                 inputProps={{ maxLength: 15 }}
+                error={!!errors.gstin}
+                helperText={errors.gstin}
               />
             </div>
             <div>
@@ -266,8 +284,10 @@ const TaxSetup: React.FC = () => {
                 type="date"
                 value={form.gstRegisteredOn}
                 onChange={handleChange}
-                className="w-full"
+                className={`w-full ${errors.gstRegisteredOn ? 'border-red-500' : ''}`}
                 InputLabelProps={{ shrink: true }}
+                error={!!errors.gstRegisteredOn}
+                helperText={errors.gstRegisteredOn}
               />
             </div>
           </div>
@@ -379,14 +399,16 @@ const TaxSetup: React.FC = () => {
                 name="gstinUsername"
                 value={form.gstinUsername}
                 onChange={handleChange}
-                className="w-full"
+                className={`w-full ${errors.gstinUsername ? 'border-red-500' : ''}`}
                 placeholder="Enter GSTIN Username"
+                error={!!errors.gstinUsername}
+                helperText={errors.gstinUsername}
               />
             </div>
 
             {/* Reporting Period */}
             <div>
-              <FormControl size="small" fullWidth sx={{ mt: 0 }}>
+              <FormControl size="small" fullWidth sx={{ mt: 0 }} error={!!errors.reportingPeriod}>
                 <InputLabel id="reporting-period-label">
                   Reporting Period <span style={{ color: "#C72030" }}>*</span>
                 </InputLabel>
@@ -404,6 +426,7 @@ const TaxSetup: React.FC = () => {
                     setForm((prev) => ({ ...prev, reportingPeriod: e.target.value as string }))
                   }
                   displayEmpty
+                  className={errors.reportingPeriod ? 'border-red-500' : ''}
                 >
                   <MenuItem value="">
                     <span style={{ color: "#888" }}>Select</span>
@@ -412,6 +435,9 @@ const TaxSetup: React.FC = () => {
                   <MenuItem value="quarterly">Quarterly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
+                {errors.reportingPeriod && (
+                  <div className="text-xs text-red-500 mt-1">{errors.reportingPeriod}</div>
+                )}
               </FormControl>
             </div>
 
@@ -429,8 +455,10 @@ const TaxSetup: React.FC = () => {
                 type="date"
                 value={form.generateFirstTaxReturnFrom}
                 onChange={handleChange}
-                className="w-full"
+                className={`w-full ${errors.generateFirstTaxReturnFrom ? 'border-red-500' : ''}`}
                 InputLabelProps={{ shrink: true }}
+                error={!!errors.generateFirstTaxReturnFrom}
+                helperText={errors.generateFirstTaxReturnFrom}
               />
             </div>
           </div>
