@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -7,54 +7,99 @@ import MenuItem from '@mui/material/MenuItem';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { User, FileCog, NotepadText } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-
-const taxSummaryData = [
-    {
-        ledgerId: 2606,
-        name: "Sinking Fund",
-        taxPercentage: 0.0,
-        transactionAmount: 0.0,
-        taxAmount: 0.0,
-    },
-    {
-        ledgerId: 2607,
-        name: "Repair Fund",
-        taxPercentage: 0.0,
-        transactionAmount: 0.0,
-        taxAmount: 0.0,
-    },
-    {
-        ledgerId: 2608,
-        name: "Common Maintenance Charges",
-        taxPercentage: 18.0,
-        transactionAmount: 50000,
-        taxAmount: 9000,
-    },
-    {
-        ledgerId: 2615,
-        name: "CGST",
-        taxPercentage: 9.0,
-        transactionAmount: 4500,
-        taxAmount: 0.0,
-    },
-    {
-        ledgerId: 2616,
-        name: "SGST",
-        taxPercentage: 9.0,
-        transactionAmount: 4500,
-        taxAmount: 0.0,
-    },
-];
+// const taxSummaryData = [
+//     {
+//         ledgerId: 2606,
+//         name: "Sinking Fund",
+//         taxPercentage: 0.0,
+//         transactionAmount: 0.0,
+//         taxAmount: 0.0,
+//     },
+//     {
+//         ledgerId: 2607,
+//         name: "Repair Fund",
+//         taxPercentage: 0.0,
+//         transactionAmount: 0.0,
+//         taxAmount: 0.0,
+//     },
+//     {
+//         ledgerId: 2608,
+//         name: "Common Maintenance Charges",
+//         taxPercentage: 18.0,
+//         transactionAmount: 50000,
+//         taxAmount: 9000,
+//     },
+//     {
+//         ledgerId: 2615,
+//         name: "CGST",
+//         taxPercentage: 9.0,
+//         transactionAmount: 4500,
+//         taxAmount: 0.0,
+//     },
+//     {
+//         ledgerId: 2616,
+//         name: "SGST",
+//         taxPercentage: 9.0,
+//         transactionAmount: 4500,
+//         taxAmount: 0.0,
+//     },
+// ];
 
 const TaxSummaryReport: React.FC = () => {
 
-    const balanceTabs = ["Tax Summary"];
-    const [activeBalanceTab, setActiveBalanceTab] = useState<"Tax Summary">("Tax Summary");
+    // const balanceTabs = ["Tax Summary"];
+    // const [activeBalanceTab, setActiveBalanceTab] = useState<"Tax Summary">("Tax Summary");
 
+      const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const navigate = useNavigate();
+    
+        const [gstData, setGstData] = useState<any[]>([]);
+        const [loading, setLoading] = useState(false);
+
+           const fetchTaxSummary = async () => {
+        //   if (!filters.fromDate || !filters.toDate) {
+        //     alert("Please select From Date and To Date");
+        //     return;
+        //   }
+
+        try {
+            setLoading(true);
+
+            const response = await axios.get(
+                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers/tax_summary_report.json`,
+                {
+                    params: {
+                        start_date: filters.fromDate,
+                        end_date: filters.toDate,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            setGstData(response.data || []);
+
+        } catch (error) {
+            console.error("Tax summary API error", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTaxSummary();
+    }, []);
     const TaxSummaryTable = () => {
         return (
             <div className="overflow-x-auto">
+                <h1 className="text-center font-semibold mb-4">
+                    Tax Summary
+                </h1>
                 <table className="w-full border-collapse border border-gray-300">
                     <thead>
                         <tr className="bg-[#E5E0D3]">
@@ -68,36 +113,45 @@ const TaxSummaryReport: React.FC = () => {
                                 Tax Percentage
                             </th>
                             <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
-                                Transaction Amount
+                                Amount
                             </th>
-                            <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
+                            {/* <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
                                 Tax Amount
-                            </th>
+                            </th> */}
                         </tr>
                     </thead>
 
                     <tbody>
-                        {taxSummaryData.map((row, index) => (
+                        {gstData?.map((row, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                                 <td className="border border-gray-300 px-4 py-3">
-                                    {row.ledgerId}
+                                    {row?.id}
                                 </td>
-                                <td className="border border-gray-300 px-4 py-3">
-                                    {row.name}
-                                </td>
+                                {/* <td className="border border-gray-300 px-4 py-3">
+                                    {row?.name}
+                                </td> */}
+
+                                <td className="border px-4 py-3">
+  <span
+    className="text-blue-600 cursor-pointer hover:underline hover:text-blue-800"
+    onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
+  >
+    {row.name}
+  </span>
+</td>
                                 <td className="border border-gray-300 px-4 py-3 text-center">
-                                    {row.taxPercentage.toFixed(2)} %
+                                    {row?.tax_rate_per?.toFixed(2)} %
                                 </td>
                                 <td className="border border-gray-300 px-4 py-3 text-right">
-                                    {row.transactionAmount.toFixed(2)}
+                                    {row?.current_total?.toFixed(2)}
                                 </td>
-                                <td className="border border-gray-300 px-4 py-3 text-right">
-                                    {row.taxAmount.toFixed(2)}
-                                </td>
+                                {/* <td className="border border-gray-300 px-4 py-3 text-right">
+                                    {row?.taxAmount?.toFixed(2)}
+                                </td> */}
                             </tr>
                         ))}
 
-                        {taxSummaryData.length === 0 && (
+                        {gstData.length === 0 && (
                             <tr>
                                 <td
                                     colSpan={5}
@@ -183,7 +237,7 @@ const TaxSummaryReport: React.FC = () => {
             </div>
             {/* Tabs for account types */}
             <div className="bg-white rounded-lg border p-6 mb-6">
-                <div className="grid grid-cols-1 border mb-4">
+                {/* <div className="grid grid-cols-1 border mb-4">
                     {balanceTabs.map(tab => (
                         <button
                             key={tab}
@@ -199,7 +253,7 @@ const TaxSummaryReport: React.FC = () => {
                             {tab}
                         </button>
                     ))}
-                </div>
+                </div> */}
 
 
                 <div className="bg-white p-4 border rounded-lg">

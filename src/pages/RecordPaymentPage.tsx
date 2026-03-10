@@ -56,6 +56,8 @@ interface UnpaidInvoice {
     due_date: string;
     total: number;
     balance_due: number;
+    // optional field that might be provided by the API later
+    payment_received_on?: string;
 }
 
 interface InvoicePaymentRow extends UnpaidInvoice {
@@ -91,12 +93,14 @@ export const RecordPaymentPage: React.FC = () => {
     const [taxDeducted, setTaxDeducted] = useState(false);
     const [tdsAccount, setTdsAccount] = useState("Advance Tax");
     const [notes, setNotes] = useState("");
+    const [attachments, setAttachments] = useState<File[]>([]);
 
     const [receivedFullAmount, setReceivedFullAmount] = useState(false);
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [ledgers, setLedgers] = useState<Ledger[]>([]);
     const [invoiceRows, setInvoiceRows] = useState<InvoicePaymentRow[]>([]);
     const [invoicesLoading, setInvoicesLoading] = useState(false);
+    const [invoiceError, setInvoiceError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const authHeaders = { Authorization: `Bearer ${token}` };
@@ -135,6 +139,14 @@ export const RecordPaymentPage: React.FC = () => {
             }
             return;
         }
+
+        // sanity checks before issuing request
+        if (!baseUrl || !token) {
+            setInvoiceError("Missing base URL or auth token");
+            return;
+        }
+
+        setInvoiceError(null);
         setInvoicesLoading(true);
         axios
             .get(`https://${baseUrl}/lock_account_invoices.json`, {
@@ -145,21 +157,26 @@ export const RecordPaymentPage: React.FC = () => {
                     "q[status_not_eq]": "paid",
                 },
                 headers: authHeaders,
+                timeout: 10000, // 10 seconds, avoid hanging indefinitely
             })
             .then((res) => {
                 const data: UnpaidInvoice[] = res.data?.data || res.data || [];
                 const today = format(new Date(), "dd/MM/yyyy");
                 const rows = data.map((inv) => ({
                     ...inv,
-                    paymentReceivedOn: today,
-                    withholdingTax: "",
+                    // prefer an existing saved date if API returns it
+                    paymentReceivedOn: inv.payment_received_on || today,
                     payment: inv.balance_due?.toString() ?? "",
                 }));
                 setInvoiceRows(rows);
                 const total = rows.reduce((s, r) => s + (parseFloat(r.payment) || 0), 0);
                 setAmountReceived(total.toFixed(2));
             })
-            .catch(() => setInvoiceRows([]))
+            .catch((err) => {
+                console.error("Invoice fetch error", err);
+                setInvoiceError("Failed to load invoices. Please try again later.");
+                setInvoiceRows([]);
+            })
             .finally(() => setInvoicesLoading(false));
     }, [receivedFullAmount, selectedCustomerId]);
 
@@ -172,6 +189,13 @@ export const RecordPaymentPage: React.FC = () => {
         (sum, r) => sum + (parseFloat(r.payment) || 0),
         0
     );
+
+    // if we're in "received full amount" mode, keep the amountReceived synced with invoice payments
+    useEffect(() => {
+        if (receivedFullAmount) {
+            setAmountReceived(totalPayment.toFixed(2));
+        }
+    }, [invoiceRows, receivedFullAmount, totalPayment]);
 
     const handlePayInFull = (id: number) => {
         setInvoiceRows((rows) =>
@@ -192,7 +216,7 @@ export const RecordPaymentPage: React.FC = () => {
         setSubmitting(true);
         try {
             const excessAmount = Math.max(0, (parseFloat(amountReceived) || 0) - totalPayment);
-            const payload = {
+            const payload: any = {
                 lock_payment: {
                     payment_of: "LockAccountCustomer",
                     payment_of_id: selectedCustomerId,
@@ -220,6 +244,14 @@ export const RecordPaymentPage: React.FC = () => {
                     attachments_attributes: [],
                 },
             };
+            // include attachments if user selected any
+            if (attachments.length > 0) {
+                payload.lock_payment.attachments_attributes = attachments.map((f) => ({
+                    filename: f.name,
+                    // TODO: convert `f` to required upload format
+                }));
+            }
+
             await axios.post(
                 `https://${baseUrl}/lock_payments.json?lock_account_id=1`,
                 payload,
@@ -485,6 +517,10 @@ export const RecordPaymentPage: React.FC = () => {
 
                             {invoicesLoading ? (
                                 <div className="py-6 text-center text-sm text-gray-500">Loading invoices…</div>
+                            ) : invoiceError ? (
+                                <div className="bg-red-50 border border-red-200 rounded-sm p-6 text-center text-red-600 text-sm">
+                                    {invoiceError}
+                                </div>
                             ) : invoiceRows.length === 0 ? (
                                 <div className="bg-white border border-gray-100 rounded-sm p-6 text-center text-gray-500">
                                     There are no unpaid invoices associated with this customer.
@@ -584,9 +620,29 @@ export const RecordPaymentPage: React.FC = () => {
                                 <div className="mb-4">
                                     <Label className="text-sm font-medium">Attachments</Label>
                                     <div className="mt-2 flex items-center gap-3">
-                                        <Button variant="outline" className="h-9 flex items-center gap-2"><Upload className="h-4 w-4" /> Upload File</Button>
+                                        <label className="h-9 flex items-center gap-2 cursor-pointer">
+                                            <Upload className="h-4 w-4" />
+                                            <span>Upload File</span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    if (e.target.files) {
+                                                        setAttachments(Array.from(e.target.files));
+                                                    }
+                                                }}
+                                            />
+                                        </label>
                                         <div className="text-sm text-gray-500">You can upload a maximum of 5 files, 5MB each</div>
                                     </div>
+                                    {attachments.length > 0 && (
+                                        <ul className="mt-2 text-sm list-disc list-inside">
+                                            {attachments.map((f, idx) => (
+                                                <li key={idx}>{f.name}</li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
 
                                 <div className="mb-6">

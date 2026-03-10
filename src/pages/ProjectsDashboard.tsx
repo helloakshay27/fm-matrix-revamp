@@ -13,6 +13,7 @@ import {
   ChartNoAxesColumn,
   ChevronDown,
   Eye,
+  Filter,
   List,
   LogOut,
   Plus,
@@ -1134,7 +1135,7 @@ export const ProjectsDashboard = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -1183,6 +1184,15 @@ export const ProjectsDashboard = () => {
                 </div>
               )}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+              title='Filter'
+              onClick={() => setIsFilterModalOpen(true)}
+            >
+              <Filter className="w-4 h-4" />
+            </Button>
             {/* <div className="relative">
               <button
                 onClick={() => setOpenStatusOptions(!openStatusOptions)}
@@ -1217,7 +1227,11 @@ export const ProjectsDashboard = () => {
           </div>
         </div>
 
-        <ProjectManagementKanban fetchData={refetchProjects} />
+        <ProjectManagementKanban
+          fetchData={refetchProjects}
+          appliedFilters={appliedFilters}
+          selectedFilterOption={selectedFilterOption}
+        />
 
         <AddProjectModal
           openDialog={openDialog}
