@@ -43,6 +43,10 @@ import {
   Mail,
   Gem,
   MessageSquare,
+  Search,
+  Paperclip,
+  CreditCard,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +78,18 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
+import {
+  FormControl,
+  Select as MuiSelect,
+  MenuItem as MuiMenuItem,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import {
+  CloudUpload,
+  AttachFile,
+  Close as MuiClose,
+} from "@mui/icons-material";
 
 export const CreatePaymentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -129,6 +145,7 @@ export const CreatePaymentPage: React.FC = () => {
   // Attachments
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // Bills fetched from API after vendor selection
   const [bills, setBills] = useState<LockAccountBill[]>([]);
@@ -348,101 +365,68 @@ export const CreatePaymentPage: React.FC = () => {
               </TabsList>
             </div>
 
-            {/* ── FIELDSET: Vendor Name with floating label on dropdown border ── */}
-            <div className="relative mt-2">
-              <fieldset className="border border-gray-300 rounded-md px-4 pb-4 bg-[#f9f9fa]">
-                <legend className="px-2 ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-[#f9f9fa]">
-                  Vendor Name*
-                </legend>
-                <div className="relative">
-                  <Popover open={isVendorOpen} onOpenChange={setIsVendorOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={isVendorOpen}
-                        className={cn(
-                          "w-full justify-between text-left font-normal h-9 bg-white hover:bg-white focus:ring-0 rounded-[4px]",
-                          selectedVendor
-                            ? "border-gray-300 text-gray-900"
-                            : "text-gray-400 border-red-300"
-                        )}
-                      >
-                        {selectedSupplier ? (
-                          <span className="flex items-center gap-2 truncate">
-                            <span className="h-5 w-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-semibold flex items-center justify-center shrink-0">
-                              {(
-                                selectedSupplier.name?.[0] ?? "?"
-                              ).toUpperCase()}
-                            </span>
-                            <span className="font-medium text-gray-900 truncate">
-                              {selectedSupplier.name}
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="truncate">
-                            {selectedVendor
-                              ? "Loading..."
-                              : suppliersLoading
-                                ? "Loading vendors..."
-                                : "Select Vendor"}
-                          </span>
-                        )}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search" />
-                        <CommandList>
-                          <CommandEmpty>No vendor found.</CommandEmpty>
-                          <CommandGroup>
-                            {suppliersLoading ? (
-                              <div className="py-4 text-center text-xs text-gray-500">
-                                Loading suppliers...
-                              </div>
-                            ) : (
-                              suppliers.map((supplier) => (
-                                <CommandItem
-                                  key={supplier.id}
-                                  value={supplier.name}
-                                  onSelect={() =>
-                                    handleVendorSelect(String(supplier.id))
-                                  }
-                                  onClick={() =>
-                                    handleVendorSelect(String(supplier.id))
-                                  }
-                                  className="flex items-center gap-3 p-2 cursor-pointer aria-selected:bg-blue-50"
-                                >
-                                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                                    {(supplier.name ?? "?")[0].toUpperCase()}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium text-blue-600 text-sm">
-                                      {supplier.name}
-                                    </span>
-                                    <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                                      <span>{supplier.email ?? "-"}</span>
-                                      {supplier.company_name && (
-                                        <span className="border-l border-gray-300 pl-2">
-                                          {supplier.company_name}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {selectedVendor === String(supplier.id) && (
-                                    <Check className="ml-auto h-4 w-4 text-blue-600" />
-                                  )}
-                                </CommandItem>
-                              ))
-                            )}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </fieldset>
+            {/* ── Vendor Name – MUI Select (same as BillsAdd style) ── */}
+            <div className="mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Vendor Name<span className="text-red-500">*</span>
+              </label>
+              <FormControl fullWidth error={!selectedVendor}>
+                <MuiSelect
+                  value={selectedSupplier?.id || ""}
+                  onChange={(e) => {
+                    const vendorId = String(e.target.value);
+                    if (vendorId) {
+                      handleVendorSelect(vendorId);
+                    } else {
+                      setSelectedVendor(null);
+                      setBills([]);
+                      setAppliedAmounts({});
+                    }
+                  }}
+                  displayEmpty
+                  sx={{
+                    height: { xs: 28, sm: 36, md: 45 },
+                    "& .MuiInputBase-input, & .MuiSelect-select": {
+                      padding: { xs: "8px", sm: "10px", md: "12px" },
+                    },
+                    backgroundColor: "#fff",
+                    borderRadius: "6px",
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 350,
+                      },
+                    },
+                  }}
+                >
+                  <MuiMenuItem value="" disabled>
+                    Select a vendor
+                  </MuiMenuItem>
+                  {suppliers.map((option) => (
+                    <MuiMenuItem key={option.id} value={option.id}>
+                      {option.company_name
+                        ? option.name
+                          ? `${option.name} (${option.company_name})`
+                          : option.company_name
+                        : option.name || "Unknown Vendor"}
+                    </MuiMenuItem>
+                  ))}
+                  <MuiMenuItem
+                    sx={{
+                      p: 0,
+                      position: "sticky",
+                      bottom: 0,
+                      background: "white",
+                      zIndex: 10,
+                      mt: 1,
+                    }}
+                    disableRipple
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  ></MuiMenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
@@ -455,180 +439,168 @@ export const CreatePaymentPage: React.FC = () => {
                   "opacity-50 blur-[2px] pointer-events-none select-none grayscale-[0.3]"
               )}
             >
-              {/* ── FIELDSET BOX: Payment Details ── */}
-              <fieldset className="border border-gray-300 rounded-md px-5 pb-5">
-                <legend className="px-2 ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-white">
-                  Payment Details
-                </legend>
-
-                <div className="space-y-4 mt-3">
-                  {/* Payment # — label on input border */}
-                  <div className="grid grid-cols-12 gap-8 items-center">
-                    <div className="col-span-5">
-                      <fieldset className="border border-gray-200 rounded-md">
-                        <legend className="px-2 ml-2 text-xs font-medium text-gray-500 bg-white">
-                          Payment #*
-                        </legend>
-                        <div className="relative px-2 pb-2">
-                          <Input
-                            value={paymentNumber}
-                            onChange={(e) => setPaymentNumber(e.target.value)}
-                            className="pr-8 border-0 bg-white h-8 text-sm shadow-none focus-visible:ring-0 p-0"
-                          />
-                          <Settings className="absolute right-3 top-1.5 h-4 w-4 text-blue-400 cursor-pointer opacity-70" />
-                        </div>
-                      </fieldset>
-                    </div>
-                  </div>
-
-                  {/* Payment Made — label on input border */}
-                  <div className="grid grid-cols-12 gap-8 items-center">
-                    <div className="col-span-5">
-                      <fieldset className="border border-gray-200 rounded-md">
-                        <legend className="px-2 ml-2 text-xs font-medium text-gray-500 bg-white">
-                          Payment Made*
-                        </legend>
-                        <div className="flex items-center px-2 pb-2">
-                          <span className="text-gray-500 text-sm font-medium mr-2">
-                            INR
-                          </span>
-                          <Input
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="flex-1 border-0 bg-white h-8 text-sm shadow-none focus-visible:ring-0 p-0"
-                          />
-                        </div>
-                      </fieldset>
-                    </div>
-                  </div>
-
-                  {/* TDS (Vendor Advance Only) — label on input border */}
-                  {activeTab === "vendor_advance" && (
-                    <div className="grid grid-cols-12 gap-8 items-center">
-                      <div className="col-span-5">
-                        <fieldset className="border border-gray-200 rounded-md">
-                          <legend className="px-2 ml-2 text-xs font-medium text-gray-500 bg-white">
-                            TDS
-                          </legend>
-                          <div className="px-2 pb-2">
-                            <Select>
-                              <SelectTrigger className="border-0 bg-white text-gray-700 h-8 text-sm shadow-none focus:ring-0 p-0">
-                                <SelectValue placeholder="Select a Tax" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[300px]">
-                                <SelectItem value="commission_brokerage_2">
-                                  Commission or Brokerage [2%]
-                                </SelectItem>
-                                <SelectItem value="commission_brokerage_reduced_3_75">
-                                  Commission or Brokerage (Reduced) [3.75%]
-                                </SelectItem>
-                                <SelectItem value="dividend_10">
-                                  Dividend [10%]
-                                </SelectItem>
-                                <SelectItem value="dividend_reduced_7_5">
-                                  Dividend (Reduced) [7.5%]
-                                </SelectItem>
-                                <SelectItem value="other_interest_10">
-                                  Other Interest than securities [10%]
-                                </SelectItem>
-                                <SelectItem value="other_interest_reduced_7_5">
-                                  Other Interest than securities (Reduced)
-                                  [7.5%]
-                                </SelectItem>
-                                <SelectItem value="contractors_others_2">
-                                  Payment of contractors for Others [2%]
-                                </SelectItem>
-                                <SelectItem value="contractors_others_reduced_1_5">
-                                  Payment of contractors for Others (Reduced)
-                                  [1.5%]
-                                </SelectItem>
-                                <SelectItem value="contractors_huf_1">
-                                  Payment of contractors HUF/Indiv [1%]
-                                </SelectItem>
-                                <SelectItem value="contractors_huf_reduced_0_75">
-                                  Payment of contractors HUF/Indiv (Reduced)
-                                  [0.75%]
-                                </SelectItem>
-                                <SelectItem value="professional_fees_10">
-                                  Professional Fees [10%]
-                                </SelectItem>
-                                <SelectItem value="professional_fees_reduced_7_5">
-                                  Professional Fees (Reduced) [7.5%]
-                                </SelectItem>
-                                <SelectItem value="rent_land_furniture_10">
-                                  Rent on land or furniture etc [10%]
-                                </SelectItem>
-                                <SelectItem value="rent_land_furniture_reduced_7_5">
-                                  Rent on land or furniture etc (Reduced) [7.5%]
-                                </SelectItem>
-                                <SelectItem value="tds_1">TDS [1%]</SelectItem>
-                                <SelectItem value="technical_fees_2">
-                                  Technical Fees (2%) [2%]
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </fieldset>
+              {/* ── PAYMENT DETAILS ── */}
+              <div className="border border-gray-200 bg-white">
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                  <FileText
+                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    strokeWidth={2}
+                  />
+                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                    PAYMENT DETAILS
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Payment # */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Payment #<span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          value={paymentNumber}
+                          onChange={(e) => setPaymentNumber(e.target.value)}
+                          className="pr-8 h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm"
+                        />
+                        <Settings className="absolute right-3 top-2.5 h-4 w-4 text-blue-400 cursor-pointer opacity-70" />
                       </div>
                     </div>
-                  )}
 
-                  {/* Payment Date — label on input border */}
-                  <div className="grid grid-cols-12 gap-8 items-center">
-                    <div className="col-span-5">
-                      <fieldset className="border border-gray-200 rounded-md">
-                        <legend className="px-2 ml-2 text-xs font-medium text-gray-500 bg-white">
-                          Payment Date*
-                        </legend>
-                        <div className="px-2 pb-2">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className={cn(
-                                  "w-full justify-start text-left font-normal bg-white h-8 text-sm p-0 hover:bg-white shadow-none",
-                                  !date && "text-muted-foreground"
-                                )}
-                              >
-                                {date
-                                  ? format(date, "dd/MM/yyyy")
-                                  : "dd/MM/yyyy"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <Calendar
-                                mode="single"
-                                selected={date}
-                                onSelect={setDate}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </fieldset>
+                    {/* Payment Made */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Payment Made<span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center h-[38px] border border-gray-300 rounded-md px-3 bg-white focus-within:ring-1 focus-within:ring-gray-950 focus-within:border-gray-950 transition-colors shadow-sm">
+                        <span className="text-gray-500 text-sm font-medium mr-2">
+                          INR
+                        </span>
+                        <input
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="flex-1 w-full outline-none text-sm bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* TDS (Vendor Advance Only) */}
+                    {activeTab === "vendor_advance" && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                          TDS
+                        </label>
+                        <Select>
+                          <SelectTrigger className="h-[38px] border-gray-300 text-gray-700 text-sm shadow-sm bg-white">
+                            <SelectValue placeholder="Select a Tax" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[300px]">
+                            <SelectItem value="commission_brokerage_2">
+                              Commission or Brokerage [2%]
+                            </SelectItem>
+                            <SelectItem value="commission_brokerage_reduced_3_75">
+                              Commission or Brokerage (Reduced) [3.75%]
+                            </SelectItem>
+                            <SelectItem value="dividend_10">
+                              Dividend [10%]
+                            </SelectItem>
+                            <SelectItem value="dividend_reduced_7_5">
+                              Dividend (Reduced) [7.5%]
+                            </SelectItem>
+                            <SelectItem value="other_interest_10">
+                              Other Interest than securities [10%]
+                            </SelectItem>
+                            <SelectItem value="other_interest_reduced_7_5">
+                              Other Interest than securities (Reduced) [7.5%]
+                            </SelectItem>
+                            <SelectItem value="contractors_others_2">
+                              Payment of contractors for Others [2%]
+                            </SelectItem>
+                            <SelectItem value="contractors_others_reduced_1_5">
+                              Payment of contractors for Others (Reduced) [1.5%]
+                            </SelectItem>
+                            <SelectItem value="contractors_huf_1">
+                              Payment of contractors HUF/Indiv [1%]
+                            </SelectItem>
+                            <SelectItem value="contractors_huf_reduced_0_75">
+                              Payment of contractors HUF/Indiv (Reduced) [0.75%]
+                            </SelectItem>
+                            <SelectItem value="professional_fees_10">
+                              Professional Fees [10%]
+                            </SelectItem>
+                            <SelectItem value="professional_fees_reduced_7_5">
+                              Professional Fees (Reduced) [7.5%]
+                            </SelectItem>
+                            <SelectItem value="rent_land_furniture_10">
+                              Rent on land or furniture etc [10%]
+                            </SelectItem>
+                            <SelectItem value="rent_land_furniture_reduced_7_5">
+                              Rent on land or furniture etc (Reduced) [7.5%]
+                            </SelectItem>
+                            <SelectItem value="tds_1">TDS [1%]</SelectItem>
+                            <SelectItem value="technical_fees_2">
+                              Technical Fees (2%) [2%]
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Payment Date */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Bill Date<span className="text-red-500">*</span>
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-between text-left font-normal h-[38px] text-sm border-gray-300 shadow-sm bg-white",
+                              !date && "text-muted-foreground"
+                            )}
+                          >
+                            {date ? format(date, "dd-MM-yyyy") : "dd-mm-yyyy"}
+                            <CalendarIcon className="h-4 w-4 text-gray-600" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                 </div>
-              </fieldset>
+              </div>
 
-              {/* ── FIELDSET BOX: Payment Method ── */}
-              <fieldset className="border border-gray-300 rounded-md px-5 pb-5">
-                <legend className="px-2 ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-white">
-                  Payment Method
-                </legend>
-
-                <div className="space-y-4 mt-3">
-                  {/* Payment Mode */}
-                  <div className="grid grid-cols-12 gap-8 items-center">
-                    <Label className="col-span-2 text-gray-700 font-medium text-sm">
-                      Payment Mode
-                    </Label>
-                    <div className="col-span-5">
+              {/* ── PAYMENT METHOD ── */}
+              <div className="border border-gray-200 mt-6 bg-white">
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                  <CreditCard
+                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    strokeWidth={2}
+                  />
+                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                    PAYMENT METHOD
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Payment Mode */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Payment Mode
+                      </label>
                       <Select
                         value={paymentMode}
                         onValueChange={setPaymentMode}
                       >
-                        <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                        <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
                           <SelectValue placeholder="Choose payment mode" />
                         </SelectTrigger>
                         <SelectContent>
@@ -643,19 +615,17 @@ export const CreatePaymentPage: React.FC = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  {/* Paid Through */}
-                  <div className="grid grid-cols-12 gap-8 items-center">
-                    <Label className="col-span-2 text-black font-medium text-sm">
-                      Paid Through*
-                    </Label>
-                    <div className="col-span-5">
+                    {/* Paid Through */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Paid Through<span className="text-red-500">*</span>
+                      </label>
                       <Select
                         value={paidThrough}
                         onValueChange={setPaidThrough}
                       >
-                        <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                        <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
                           <SelectValue placeholder="Select an account" />
                         </SelectTrigger>
                         <SelectContent>
@@ -666,18 +636,16 @@ export const CreatePaymentPage: React.FC = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  {/* Deposit To & Reference (Vendor Advance Only) */}
-                  {activeTab === "vendor_advance" && (
-                    <>
-                      <div className="grid grid-cols-12 gap-8 items-center">
-                        <Label className="col-span-2 text-gray-700 font-medium text-sm">
-                          Deposit To
-                        </Label>
-                        <div className="col-span-5">
+                    {/* Deposit To & Reference (Vendor Advance Only) */}
+                    {activeTab === "vendor_advance" && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium mb-2 text-gray-700">
+                            Deposit To
+                          </label>
                           <Select defaultValue="prepaid_expenses">
-                            <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                            <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
                               <SelectValue placeholder="Select Account" />
                             </SelectTrigger>
                             <SelectContent>
@@ -687,33 +655,37 @@ export const CreatePaymentPage: React.FC = () => {
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-12 gap-8 items-center">
-                        <Label className="col-span-2 text-gray-700 font-medium text-sm">
-                          Reference#
-                        </Label>
-                        <div className="col-span-5">
+                        <div>
+                          <label className="block text-sm font-medium mb-2 text-gray-700">
+                            Reference#
+                          </label>
                           <Input
                             value={reference}
                             onChange={(e) => setReference(e.target.value)}
-                            className="border-gray-200 bg-white h-9 text-sm"
+                            className="border-gray-300 bg-white h-[38px] text-sm shadow-sm"
                           />
                         </div>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </fieldset>
+              </div>
 
-              {/* ── FIELDSET BOX: Bills Table (Bill Payment Only) ── */}
+              {/* ── BILLS TABLE (Bill Payment Only) ── */}
               {activeTab === "bill_payment" && (
-                <fieldset className="border border-gray-300 rounded-md px-5 pb-5">
-                  <legend className="px-2 ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-white">
-                    Bills
-                  </legend>
+                <div className="border border-gray-200 mt-6 bg-white">
+                  <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                    <FileText
+                      className="w-[18px] h-[18px] text-[#db4a4a]"
+                      strokeWidth={2}
+                    />
+                    <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                      BILLS
+                    </span>
+                  </div>
 
-                  <div className="mt-3">
+                  <div className="p-5">
                     <div className="flex justify-end mb-2">
                       <button
                         type="button"
@@ -799,21 +771,21 @@ export const CreatePaymentPage: React.FC = () => {
                                   [bill.id]: e.target.value,
                                 }))
                               }
-                              className="w-24 text-right border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white"
+                              className="w-24 text-right border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white"
                             />
                           </div>
                         </div>
                       ))}
 
                     {/* Total Row */}
-                    <div className="flex justify-between items-center py-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center py-4">
                       <div className="text-sm font-medium">Total :</div>
                       <div className="text-sm text-gray-700 font-medium">
                         ₹{totalApplied.toFixed(2)}
                       </div>
                     </div>
                   </div>
-                </fieldset>
+                </div>
               )}
 
               {/* Summary Card (Bill Payment Only) */}
@@ -854,102 +826,124 @@ export const CreatePaymentPage: React.FC = () => {
                 </div>
               )}
 
-              {/* ── FIELDSET BOX: Notes & Attachments ── */}
-              <fieldset className="border border-gray-300 rounded-md px-5 pb-5">
-                <legend className="px-2 ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-white">
-                  Notes &amp; Attachments
-                </legend>
-
-                <div className="grid grid-cols-12 gap-8 mt-3">
-                  <div className="col-span-7 space-y-6">
-                    <div className="space-y-2">
-                      <Label className="text-gray-700 font-medium text-sm">
-                        Notes (Internal use. Not visible to vendor)
-                      </Label>
-                      <Textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="min-h-24 w-full border-gray-300 bg-white"
-                        placeholder="Add internal notes..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-gray-700 font-medium text-sm">
-                        Attachments
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          className="h-8 border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 gap-2 font-normal text-xs"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="h-3 w-3" />
-                          Upload File
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          multiple
-                          className="hidden"
-                          accept="*/*"
-                          onChange={(e) => {
-                            const files = Array.from(e.target.files || []);
-                            if (attachmentFiles.length + files.length > 5) {
-                              sonnerToast.error("Maximum 5 files allowed.");
-                              return;
-                            }
-                            setAttachmentFiles((prev) => [...prev, ...files]);
-                          }}
-                        />
-                      </div>
-                      {attachmentFiles.length > 0 && (
-                        <ul className="mt-2 space-y-1">
-                          {attachmentFiles.map((file, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-center gap-2 text-xs text-gray-700"
-                            >
-                              <span className="truncate max-w-[200px]">
-                                {file.name}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setAttachmentFiles((prev) =>
-                                    prev.filter((_, i) => i !== idx)
-                                  )
-                                }
-                                className="text-red-400 hover:text-red-600 ml-auto"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        You can upload a maximum of 5 files, 10MB each
-                      </p>
-                    </div>
-
-                    <div className="pt-2">
-                      <p className="text-xs text-gray-500">
-                        Additional Fields: Start adding custom fields for your
-                        payments made by going to{" "}
-                        <span className="text-gray-700 text-xs italic">
-                          Settings ➜ Purchases ➜ Payments Made.
-                        </span>
-                      </p>
-                    </div>
-                  </div>
+              {/* ── CUSTOMER NOTES ── */}
+              <div className="border border-gray-200 mt-6 bg-white">
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                  <FileText
+                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    strokeWidth={2}
+                  />
+                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                    NOTES
+                  </span>
                 </div>
-              </fieldset>
+                <div className="p-5">
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full min-h-[96px] border border-gray-400 p-3 text-sm rounded-[4px] resize-y placeholder-gray-400 focus:outline-none"
+                    placeholder="Enter any notes for the customer"
+                  />
+                </div>
+              </div>
+
+              {/* ── ATTACH FILES ── */}
+              <div className="border border-gray-200 mt-6 bg-white">
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                  <Paperclip
+                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    strokeWidth={2}
+                  />
+                  <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                    ATTACH FILES TO SALES ORDER
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="border border-dashed border-gray-300 p-12 text-center bg-white hover:bg-gray-50 transition-colors">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (attachmentFiles.length + files.length > 10) {
+                          sonnerToast.error("Maximum 10 files allowed.");
+                          return;
+                        }
+                        setAttachmentFiles((prev) => [...prev, ...files]);
+                      }}
+                      className="hidden"
+                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="cursor-pointer flex flex-col items-center justify-center m-0"
+                    >
+                      <CloudUpload className="w-8 h-8 text-[#98a2b3] mb-3" />
+                      <Typography
+                        variant="body2"
+                        className="text-[#344054] font-semibold mb-1"
+                      >
+                        Upload File
+                      </Typography>
+                      <Typography variant="caption" className="text-[#667085]">
+                        You can upload a maximum of 10 files, 5MB each
+                      </Typography>
+                    </label>
+                  </div>
+
+                  {attachmentFiles.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      {attachmentFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 p-3 border border-gray-200 rounded"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AttachFile
+                              fontSize="small"
+                              className="text-gray-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              ({(file.size / 1024).toFixed(2)} KB)
+                            </span>
+                          </div>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAttachmentFiles((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              );
+                            }}
+                          >
+                            <MuiClose
+                              fontSize="small"
+                              className="text-gray-500"
+                            />
+                          </IconButton>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <p className="text-xs text-gray-500">
+                  Additional Fields: Start adding custom fields for your
+                  payments made by going to{" "}
+                  <span className="text-gray-700 text-xs italic">
+                    Settings ➜ Purchases ➜ Payments Made.
+                  </span>
+                </p>
+              </div>
 
               {/* Footer Actions */}
-              <div className="mt-4 flex items-center gap-2 border-t border-gray-200 pt-4 pb-4">
+              <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
                 <Button
                   variant="outline"
                   disabled={isSaving}

@@ -471,7 +471,7 @@ export const InvoiceAdd: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
-     const [totalAmount2, setTotalAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -641,7 +641,11 @@ export const InvoiceAdd: React.FC = () => {
             formData.append('lock_account_invoice[customer_notes]', customerNotes);
             formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_invoice[subject]', subject);
-            formData.append('lock_account_invoice[status]', 'draft');
+            // formData.append('lock_account_invoice[status]', 'draft');
+            formData.append(
+                'lock_account_invoice[status]',
+                saveAsDraft ? 'draft' : 'sent'
+            );
             formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
@@ -746,47 +750,47 @@ export const InvoiceAdd: React.FC = () => {
     }, [selectedTax, taxOptions, afterDiscount]);
 
     const selectedTaxGroups = items
-            .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
-            .map(item => {
-                const group = taxGroups.find(g => g.id === item.tax_group_id);
-                return {
-                    itemAmount: item.amount,
-                    taxRates: group?.tax_rates || []
-                };
-            });
-        const taxBreakdown: any[] = [];
-    
-        selectedTaxGroups.forEach(group => {
-            group.taxRates.forEach(rate => {
-                const taxAmount = (group.itemAmount * rate.rate) / 100;
-    
-                const existing = taxBreakdown.find(t => t.name === rate.name);
-    
-                if (existing) {
-                    existing.amount += taxAmount;
-                } else {
-                    taxBreakdown.push({
-                        name: rate.name,
-                        rate: rate.rate,
-                        amount: taxAmount
-                    });
-                }
-            });
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
         });
-        // Calculate Final Total
-       
-        const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
-        useEffect(() => {
-            const total =
-                afterDiscount +
-                totalTax  // tax from tax groups
-                - taxAmount2 + // TDS/TCS
-                (Number(adjustment) || 0);
-    
-            setTotalAmount2(total);
-    
-    
-        }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+    const taxBreakdown: any[] = [];
+
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach(rate => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({
+                    name: rate.name,
+                    rate: rate.rate,
+                    amount: taxAmount
+                });
+            }
+        });
+    });
+    // Calculate Final Total
+
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+
+
+    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
     return (
         <div className="p-6 space-y-6 relative">

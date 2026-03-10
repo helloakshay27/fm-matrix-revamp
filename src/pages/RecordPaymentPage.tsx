@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
     X,
     ChevronDown,
@@ -32,26 +33,205 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
+interface Customer {
+    id: number;
+    salutation: string;
+    first_name: string;
+    last_name: string;
+    company_name: string;
+    email: string;
+    mobile: string;
+    pan: string;
+}
+
+interface Ledger {
+    id: number;
+    name: string;
+}
+
+interface UnpaidInvoice {
+    id: number;
+    invoice_number: string;
+    invoice_date: string;
+    due_date: string;
+    total: number;
+    balance_due: number;
+}
+
+interface InvoicePaymentRow extends UnpaidInvoice {
+    paymentReceivedOn: string;
+    withholdingTax: string;
+    payment: string;
+}
+
+const PAYMENT_MODES = [
+    "Bank Remittance",
+    "Bank Transfer",
+    "Cash",
+    "Cheque",
+    "Credit Card",
+    "UPI",
+];
+
 export const RecordPaymentPage: React.FC = () => {
     const navigate = useNavigate();
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+
     const [customerOpen, setCustomerOpen] = useState(false);
-    const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+    const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
     const [date, setDate] = useState<Date | null>(new Date());
 
     const [amountReceived, setAmountReceived] = useState("");
     const [bankCharges, setBankCharges] = useState("");
     const [paymentNumber, setPaymentNumber] = useState("7");
-    const [paymentMode, setPaymentMode] = useState("Cash");
-    const [depositTo, setDepositTo] = useState("Petty Cash");
+    const [paymentMode, setPaymentMode] = useState("");
+    const [depositTo, setDepositTo] = useState("");
     const [reference, setReference] = useState("");
     const [taxDeducted, setTaxDeducted] = useState(false);
     const [tdsAccount, setTdsAccount] = useState("Advance Tax");
     const [notes, setNotes] = useState("");
 
-    const customers = [
-        { id: "1", name: "Mr. Ajay P", email: "ajay.pihulkar@lockated.com" },
-        { id: "2", name: "mm mm", email: "mm@gmail.com" },
-    ];
+    const [receivedFullAmount, setReceivedFullAmount] = useState(false);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [ledgers, setLedgers] = useState<Ledger[]>([]);
+    const [invoiceRows, setInvoiceRows] = useState<InvoicePaymentRow[]>([]);
+    const [invoicesLoading, setInvoicesLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const authHeaders = { Authorization: `Bearer ${token}` };
+
+    // Fetch customers on mount
+    useEffect(() => {
+        axios
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+                headers: authHeaders,
+            })
+            .then((res) => {
+                const data: Customer[] = res.data?.data || res.data || [];
+                setCustomers(data);
+            })
+            .catch(() => setCustomers([]));
+    }, []);
+
+    // Fetch ledgers on mount
+    useEffect(() => {
+        axios
+            .get(`https://${baseUrl}/lock_accounts/1/lock_account_ledgers.json`, {
+                headers: authHeaders,
+            })
+            .then((res) => {
+                const data: Ledger[] = res.data?.data || res.data || [];
+                setLedgers(data);
+            })
+            .catch(() => setLedgers([]));
+    }, []);
+
+    // Fetch unpaid invoices when "Received full amount" is checked
+    useEffect(() => {
+        if (!receivedFullAmount || !selectedCustomerId) {
+            if (!receivedFullAmount) {
+                setInvoiceRows([]);
+            }
+            return;
+        }
+        setInvoicesLoading(true);
+        axios
+            .get(`https://${baseUrl}/lock_account_invoices.json`, {
+                params: {
+                    lock_account_id: 1,
+                    "q[lock_account_customer_id_eq]": selectedCustomerId,
+                    // "q[sent_eq]": 1,
+                    "q[status_not_eq]": "paid",
+                },
+                headers: authHeaders,
+            })
+            .then((res) => {
+                const data: UnpaidInvoice[] = res.data?.data || res.data || [];
+                const today = format(new Date(), "dd/MM/yyyy");
+                const rows = data.map((inv) => ({
+                    ...inv,
+                    paymentReceivedOn: today,
+                    withholdingTax: "",
+                    payment: inv.balance_due?.toString() ?? "",
+                }));
+                setInvoiceRows(rows);
+                const total = rows.reduce((s, r) => s + (parseFloat(r.payment) || 0), 0);
+                setAmountReceived(total.toFixed(2));
+            })
+            .catch(() => setInvoiceRows([]))
+            .finally(() => setInvoicesLoading(false));
+    }, [receivedFullAmount, selectedCustomerId]);
+
+    const selectedCustomer = customers.find((c) => c.id === selectedCustomerId) ?? null;
+
+    const getCustomerDisplayName = (c: Customer) =>
+        [c.salutation, c.first_name, c.last_name].filter(Boolean).join(" ") || c.company_name || c.email;
+
+    const totalPayment = invoiceRows.reduce(
+        (sum, r) => sum + (parseFloat(r.payment) || 0),
+        0
+    );
+
+    const handlePayInFull = (id: number) => {
+        setInvoiceRows((rows) =>
+            rows.map((r) =>
+                r.id === id ? { ...r, payment: r.balance_due?.toString() ?? "" } : r
+            )
+        );
+    };
+
+    const handleInvoiceRowChange = (id: number, field: keyof InvoicePaymentRow, value: string) => {
+        setInvoiceRows((rows) =>
+            rows.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+        );
+    };
+
+    const handleSubmit = async (status: "draft" | "paid") => {
+        if (!selectedCustomerId) return;
+        setSubmitting(true);
+        try {
+            const excessAmount = Math.max(0, (parseFloat(amountReceived) || 0) - totalPayment);
+            const payload = {
+                lock_payment: {
+                    payment_of: "LockAccountCustomer",
+                    payment_of_id: selectedCustomerId,
+                    payment_made: false,
+                    paid_amount: parseFloat(amountReceived) || 0,
+                    bank_charges: parseFloat(bankCharges) || 0,
+                    payment_date: date ? format(date, "dd/MM/yyyy") : "",
+                    payment_mode: paymentMode,
+                    order_number: reference,
+                    deposit_to_ledger_id: depositTo ? parseInt(depositTo) : null,
+                    tax_deducted: taxDeducted,
+                    tds_lock_account_ledger_id: taxDeducted && tdsAccount ? tdsAccount : null,
+                    notes,
+                    payment_amount: totalPayment,
+                    excess_amount: excessAmount,
+                    status,
+                    lock_bill_payments_attributes: invoiceRows
+                        .filter((r) => parseFloat(r.payment) > 0)
+                        .map((r) => ({
+                            resource_id: r.id,
+                            resource_type: "LockAccountInvoice",
+                            amount: parseFloat(r.payment) || 0,
+                            payment_date: r.paymentReceivedOn,
+                        })),
+                    attachments_attributes: [],
+                },
+            };
+            await axios.post(
+                `https://${baseUrl}/lock_payments.json?lock_account_id=1`,
+                payload,
+                { headers: { ...authHeaders, "Content-Type": "application/json" } }
+            );
+            navigate(-1);
+        } catch (err) {
+            console.error("Failed to save payment:", err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white">
@@ -83,11 +263,11 @@ export const RecordPaymentPage: React.FC = () => {
                                             aria-expanded={customerOpen}
                                             className={cn(
                                                 "w-full justify-between text-left font-normal border-gray-300 text-gray-700 h-9 bg-white hover:bg-white focus:ring-0 focus:border-blue-500 rounded-[4px]",
-                                                !selectedCustomer && "border-red-300 text-gray-400"
+                                                !selectedCustomerId && "border-red-300 text-gray-400"
                                             )}
                                         >
                                             {selectedCustomer
-                                                ? customers.find((c) => c.id === selectedCustomer)?.name
+                                                ? getCustomerDisplayName(selectedCustomer)
                                                 : "Select Customer"}
                                             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
@@ -98,27 +278,33 @@ export const RecordPaymentPage: React.FC = () => {
                                             <CommandList>
                                                 <CommandEmpty>No customer found.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {customers.map((c) => (
-                                                        <CommandItem
-                                                            key={c.id}
-                                                            value={c.name}
-                                                            onSelect={() => setSelectedCustomer(c.id)}
-                                                            className="flex items-center gap-3 p-2 cursor-pointer aria-selected:bg-blue-50"
-                                                        >
-                                                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                                                                {c.name.charAt(0)}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium text-blue-600 text-sm">{c.name}</span>
-                                                                <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                                                                    <span>{c.email}</span>
+                                                    {customers.map((c) => {
+                                                        const displayName = getCustomerDisplayName(c);
+                                                        return (
+                                                            <CommandItem
+                                                                key={c.id}
+                                                                value={displayName}
+                                                                onSelect={() => {
+                                                                    setSelectedCustomerId(c.id);
+                                                                    setCustomerOpen(false);
+                                                                }}
+                                                                className="flex items-center gap-3 p-2 cursor-pointer aria-selected:bg-blue-50"
+                                                            >
+                                                                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
+                                                                    {displayName.charAt(0).toUpperCase()}
                                                                 </div>
-                                                            </div>
-                                                            {selectedCustomer === c.id && (
-                                                                <Check className="ml-auto h-4 w-4 text-blue-600" />
-                                                            )}
-                                                        </CommandItem>
-                                                    ))}
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium text-blue-600 text-sm">{displayName}</span>
+                                                                    <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                                                                        <span>{c.email}</span>
+                                                                    </div>
+                                                                </div>
+                                                                {selectedCustomerId === c.id && (
+                                                                    <Check className="ml-auto h-4 w-4 text-blue-600" />
+                                                                )}
+                                                            </CommandItem>
+                                                        );
+                                                    })}
                                                 </CommandGroup>
                                             </CommandList>
                                         </Command>
@@ -127,30 +313,63 @@ export const RecordPaymentPage: React.FC = () => {
 
                                 {selectedCustomer && (
                                     <Button className="bg-[#404b69] hover:bg-[#353f5a] text-white text-xs h-9 px-4 flex items-center gap-2 rounded-md shrink-0">
-                                        <span>{customers.find((c) => c.id === selectedCustomer)?.name}'s Details</span>
+                                        <span>{getCustomerDisplayName(selectedCustomer)}'s Details</span>
                                         <ChevronRight className="h-3 w-3" />
                                     </Button>
                                 )}
                             </div>
 
-                            <div className="col-span-2 text-sm text-gray-500">PAN: <span className="text-blue-500 cursor-pointer">Add PAN</span></div>
+                            <div className="col-span-2 text-sm text-gray-500">
+                                PAN:{" "}
+                                {selectedCustomer?.pan ? (
+                                    <span className="text-gray-700">{selectedCustomer.pan}</span>
+                                ) : (
+                                    <span className="text-blue-500 cursor-pointer">Add PAN</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Main white content area */}
                 <div className="px-6 py-6 bg-white">
-                    <div className={cn("space-y-6 transition-all duration-300", !selectedCustomer && "opacity-50 blur-[2px] pointer-events-none select-none grayscale-[0.3]")}>
+                    <div className={cn("space-y-6 transition-all duration-300", !selectedCustomerId && "opacity-50 blur-[2px] pointer-events-none select-none grayscale-[0.3]")}>
                         {/* Amount Received */}
-                        <div className="grid grid-cols-12 gap-8 items-center">
-                            <Label className="col-span-2 text-red-500 font-medium text-sm">Amount Received*</Label>
-                            <div className="col-span-5 flex items-center gap-0">
-                                <div className="px-3 border border-r-0 rounded-l-md h-9 flex items-center justify-center bg-[#f9f9fa] text-gray-500 text-sm border-gray-200 min-w-[50px]">INR</div>
-                                <Input value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)} className="flex-1 border-gray-200 bg-white rounded-l-none h-9 text-sm focus:border-blue-400" />
+                        <div className="grid grid-cols-12 gap-8 items-start">
+                            <Label className="col-span-2 text-red-500 font-medium text-sm pt-2">Amount Received*</Label>
+                            <div className="col-span-5">
+                                <div className="flex items-center gap-0">
+                                    <div className="px-3 border border-r-0 rounded-l-md h-9 flex items-center justify-center bg-[#f9f9fa] text-gray-500 text-sm border-gray-200 min-w-[50px]">INR</div>
+                                    <Input
+                                        value={amountReceived}
+                                        onChange={(e) => setAmountReceived(e.target.value)}
+                                        className="flex-1 border-gray-200 bg-white rounded-l-none h-9 text-sm focus:border-blue-400"
+                                    />
+                                </div>
+                                <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={receivedFullAmount}
+                                        onChange={(e) => {
+                                            setReceivedFullAmount(e.target.checked);
+                                            if (!e.target.checked) {
+                                                setAmountReceived("");
+                                                setInvoiceRows([]);
+                                            }
+                                        }}
+                                        className="accent-blue-600"
+                                    />
+                                    <span className="text-xs text-gray-600">
+                                        Received full amount
+                                        {invoiceRows.length > 0 && (
+                                            <span className="text-gray-500"> (₹{totalPayment.toFixed(2)})</span>
+                                        )}
+                                    </span>
+                                </label>
                             </div>
 
-                            <div className="col-span-2 text-sm text-gray-500">Bank Charges (if any)</div>
-                            <div className="col-span-3">
+                            <div className="col-span-2 text-sm text-gray-500 pt-2">Bank Charges (if any)</div>
+                            <div className="col-span-3 pt-0">
                                 <Input value={bankCharges} onChange={(e) => setBankCharges(e.target.value)} className="h-9 text-sm" />
                             </div>
                         </div>
@@ -171,33 +390,38 @@ export const RecordPaymentPage: React.FC = () => {
                                 </Popover>
                             </div>
 
-                            <Label className="col-span-2 text-red-500 font-medium text-sm">Payment #*</Label>
+                            {/* <Label className="col-span-2 text-red-500 font-medium text-sm">Payment #*</Label>
                             <div className="col-span-3">
                                 <Input value={paymentNumber} onChange={(e) => setPaymentNumber(e.target.value)} className="h-9 text-sm pr-8" />
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Payment Mode & Deposit To & Reference */}
                         <div className="grid grid-cols-12 gap-8 items-center">
                             <Label className="col-span-2 text-gray-700 font-medium text-sm">Payment Mode</Label>
                             <div className="col-span-3">
-                                <Select>
-                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm"><SelectValue>{paymentMode}</SelectValue></SelectTrigger>
+                                <Select value={paymentMode} onValueChange={setPaymentMode}>
+                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Cash">Cash</SelectItem>
-                                        <SelectItem value="Card">Card</SelectItem>
-                                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                        {PAYMENT_MODES.map((mode) => (
+                                            <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <Label className="col-span-2 text-red-500 font-medium text-sm">Deposit To*</Label>
                             <div className="col-span-3">
-                                <Select>
-                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm"><SelectValue>{depositTo}</SelectValue></SelectTrigger>
+                                <Select value={depositTo} onValueChange={setDepositTo}>
+                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Petty Cash">Petty Cash</SelectItem>
-                                        <SelectItem value="Bank Account">Bank Account</SelectItem>
+                                        {ledgers.map((l) => (
+                                            <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -228,8 +452,10 @@ export const RecordPaymentPage: React.FC = () => {
                             <div className="grid grid-cols-12 gap-8 items-center">
                                 <Label className="col-span-2 text-red-500 font-medium text-sm">TDS Tax Account*</Label>
                                 <div className="col-span-5 relative">
-                                    <Select>
-                                        <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm"><SelectValue>{tdsAccount}</SelectValue></SelectTrigger>
+                                    <Select value={tdsAccount} onValueChange={setTdsAccount}>
+                                        <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Advance Tax">Advance Tax</SelectItem>
                                             <SelectItem value="Employee Advance">Employee Advance</SelectItem>
@@ -241,13 +467,110 @@ export const RecordPaymentPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Unpaid Invoices placeholder */}
+                        {/* Unpaid Invoices */}
                         <div className="mt-4 border-t pt-4">
                             <div className="flex justify-between items-center mb-3">
                                 <h4 className="text-sm font-medium text-gray-700">Unpaid Invoices</h4>
-                                <div className="text-sm text-blue-500 cursor-pointer">Clear Applied Amount</div>
+                                <div
+                                    className="text-sm text-blue-500 cursor-pointer"
+                                    onClick={() =>
+                                        setInvoiceRows((rows) =>
+                                            rows.map((r) => ({ ...r, payment: "" }))
+                                        )
+                                    }
+                                >
+                                    Clear Applied Amount
+                                </div>
                             </div>
-                            <div className="bg-white border border-gray-100 rounded-sm p-6 text-center text-gray-500">There are no unpaid invoices associated with this customer.</div>
+
+                            {invoicesLoading ? (
+                                <div className="py-6 text-center text-sm text-gray-500">Loading invoices…</div>
+                            ) : invoiceRows.length === 0 ? (
+                                <div className="bg-white border border-gray-100 rounded-sm p-6 text-center text-gray-500">
+                                    There are no unpaid invoices associated with this customer.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-200">
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">Date</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">Invoice Number</th>
+                                                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">Invoice Amount</th>
+                                                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">Amount Due</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">
+                                                    Payment Received On
+                                                </th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 pr-4">Withholding Tax</th>
+                                                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-2">Payment</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {invoiceRows.map((row) => (
+                                                <tr key={row.id} className="border-b border-gray-100">
+                                                    <td className="py-3 pr-4 align-top">
+                                                        <div className="text-gray-800">
+                                                            {row.invoice_date ? format(new Date(row.invoice_date), "dd/MM/yyyy") : "—"}
+                                                        </div>
+                                                        {row.due_date && (
+                                                            <div className="text-xs text-gray-500 mt-0.5">
+                                                                Due Date:<br />
+                                                                {format(new Date(row.due_date), "dd/MM/yyyy")}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3 pr-4 align-top text-blue-600">{row.invoice_number}</td>
+                                                    <td className="py-3 pr-4 align-top text-right">{row.total?.toFixed(2)}</td>
+                                                    <td className="py-3 pr-4 align-top text-right text-blue-600">{row.balance_due?.toFixed(2)}</td>
+                                                    <td className="py-3 pr-4 align-top">
+                                                        <Input
+                                                            value={row.paymentReceivedOn}
+                                                            onChange={(e) =>
+                                                                handleInvoiceRowChange(row.id, "paymentReceivedOn", e.target.value)
+                                                            }
+                                                            className="h-8 text-sm w-32"
+                                                        />
+                                                    </td>
+                                                    <td className="py-3 pr-4 align-top">
+                                                        <Input
+                                                            value={row.withholdingTax}
+                                                            onChange={(e) =>
+                                                                handleInvoiceRowChange(row.id, "withholdingTax", e.target.value)
+                                                            }
+                                                            className="h-8 text-sm w-32"
+                                                        />
+                                                    </td>
+                                                    <td className="py-3 align-top text-right">
+                                                        <Input
+                                                            value={row.payment}
+                                                            onChange={(e) =>
+                                                                handleInvoiceRowChange(row.id, "payment", e.target.value)
+                                                            }
+                                                            className="h-8 text-sm w-28 text-right ml-auto"
+                                                        />
+                                                        <div
+                                                            className="text-xs text-blue-500 cursor-pointer mt-1 text-right"
+                                                            onClick={() => handlePayInFull(row.id)}
+                                                        >
+                                                            Pay in Full
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colSpan={4} className="pt-3 text-xs text-gray-500 italic">
+                                                    **List contains only SENT invoices
+                                                </td>
+                                                <td className="pt-3 text-right font-medium text-gray-700">Total</td>
+                                                <td></td>
+                                                <td className="pt-3 text-right font-medium text-gray-700">{totalPayment.toFixed(2)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
                         {/* Bottom area with notes, attachments, summary and actions */}
@@ -269,24 +592,37 @@ export const RecordPaymentPage: React.FC = () => {
                                 <div className="mb-6">
                                     <label className="flex items-center gap-3">
                                         <input type="checkbox" defaultChecked />
-                                        <span className="text-sm">Send a \"Thank you\" note for this payment</span>
+                                        <span className="text-sm">Send a "Thank you" note for this payment</span>
                                     </label>
 
-                                    <div className="mt-3 flex items-center gap-2 flex-wrap">
-                                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm flex items-center gap-2">
-                                            <input type="checkbox" defaultChecked />
-                                            <span>Ajay P &lt;ajay.pihulkar@lockated.com&gt;</span>
+                                    {selectedCustomer && (
+                                        <div className="mt-3 flex items-center gap-2 flex-wrap">
+                                            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm flex items-center gap-2">
+                                                <input type="checkbox" defaultChecked />
+                                                <span>
+                                                    {getCustomerDisplayName(selectedCustomer)} &lt;{selectedCustomer.email}&gt;
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm flex items-center gap-2">
-                                            <input type="checkbox" />
-                                            <span>mm mm &lt;mm@gmail.com&gt;</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-3">
-                                    <Button variant="outline" className="px-4">Save as Draft</Button>
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-4">Save as Paid</Button>
+                                    <Button
+                                        variant="outline"
+                                        className="px-4"
+                                        disabled={submitting}
+                                        onClick={() => handleSubmit("draft")}
+                                    >
+                                        {submitting ? "Saving…" : "Save as Draft"}
+                                    </Button>
+                                    <Button
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                                        disabled={submitting}
+                                        onClick={() => handleSubmit("paid")}
+                                    >
+                                        {submitting ? "Saving…" : "Save as Paid"}
+                                    </Button>
                                     <Button variant="ghost" className="px-4" onClick={() => navigate(-1)}>Cancel</Button>
                                 </div>
                             </div>
@@ -296,19 +632,23 @@ export const RecordPaymentPage: React.FC = () => {
                                     <div className="text-sm text-gray-600 mb-3">Total</div>
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="text-sm text-gray-600">Amount Received :</div>
-                                        <div className="text-sm font-medium">0.00</div>
+                                        <div className="text-sm font-medium">{amountReceived || "0.00"}</div>
                                     </div>
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="text-sm text-gray-600">Amount used for Payments :</div>
-                                        <div className="text-sm font-medium">0.00</div>
+                                        <div className="text-sm font-medium">{totalPayment.toFixed(2)}</div>
                                     </div>
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="text-sm text-gray-600">Amount Refunded :</div>
                                         <div className="text-sm font-medium">0.00</div>
                                     </div>
                                     <div className="flex justify-between items-center mt-3 border-t pt-3">
-                                        <div className="text-sm text-red-500">Amount in Excess:</div>
-                                        <div className="text-sm font-medium">₹ 0.00</div>
+                                        <div className="text-sm text-red-500 flex items-center gap-1">
+                                            ⚠ Amount in Excess:
+                                        </div>
+                                        <div className="text-sm font-medium">
+                                            ₹ {Math.max(0, (parseFloat(amountReceived) || 0) - totalPayment).toFixed(2)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

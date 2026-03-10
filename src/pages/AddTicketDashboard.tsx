@@ -1340,7 +1340,7 @@ export const AddTicketDashboard = () => {
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <Ticket size={16} color="#C72030" />
               </span>
-              Tickets Type
+              Tickets Type 
             </h2>
           </div>
           <div className="p-6 space-y-6">
@@ -1445,7 +1445,7 @@ export const AddTicketDashboard = () => {
                 // required
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <InputLabel shrink>Category Type</InputLabel>
+                <InputLabel shrink>Category Type <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.categoryType}
                   onChange={(e) => handleCategoryChange(e.target.value)}
@@ -1515,7 +1515,7 @@ export const AddTicketDashboard = () => {
                 // required
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <InputLabel shrink>Mode</InputLabel>
+                <InputLabel shrink>Mode <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.complaintMode}
                   onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
