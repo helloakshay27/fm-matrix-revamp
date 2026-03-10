@@ -1114,100 +1114,100 @@ import MobileTodo from "./pages/MobileTodo";
 const queryClient = new QueryClient();
 
 // WebSocket Notification Handler Component
-const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { manager: webSocketManager, connect } = useWebSocket();
-  const { addNotification } = useNotification();
-  const navigate = useNavigate();
-  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
-  const [isSubscribed, setIsSubscribed] = useState(false);
+// const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+//   const { manager: webSocketManager, connect } = useWebSocket();
+//   const { addNotification } = useNotification();
+//   const navigate = useNavigate();
+//   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+//   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+//   const token = localStorage.getItem("token");
+//   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Connect to WebSocket
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+//   // Connect to WebSocket
+//   useEffect(() => {
+//     console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+//     if (token) {
+//       console.warn("✅ Token available, connecting...");
+//       connect(token, socketUrl);
+//     } else {
+//       console.error("❌ No token available for WebSocket connection");
+//     }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+//     return () => {
+//       console.warn("🧹 Cleaning up WebSocket subscriptions");
+//     };
+//   }, [token, connect, socketUrl]);
 
-  // Subscribe to notifications
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
-          setIsSubscribed(true);
-          toast.success("Real-time notifications enabled!", {
-            duration: 2000,
-          });
-        },
-        onMessageNotification: (message) => {
-          console.warn("📨 Received notification:", message);
-          if (message.user_id !== currentUser.id) {
-            return;
-          }
+//   // Subscribe to notifications
+//   useEffect(() => {
+//     const subscriptionTimer = setTimeout(() => {
+//       const sub = webSocketManager.subscribeToUserNotifications({
+//         onConnected: () => {
+//           console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
+//           setIsSubscribed(true);
+//           toast.success("Real-time notifications enabled!", {
+//             duration: 2000,
+//           });
+//         },
+//         onMessageNotification: (message) => {
+//           console.warn("📨 Received notification:", message);
+//           if (message.user_id !== currentUser.id) {
+//             return;
+//           }
 
-          // Add notification to context
-          const notification = {
-            id: message.id || Date.now(),
-            title: message.title || "New Notification",
-            message: message.body || message.message || "You have a new notification",
-            ntype: message.ntype,
-            type: message.type,
-            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            read: false,
-            payload: message.payload,
-          };
+//           // Add notification to context
+//           const notification = {
+//             id: message.id || Date.now(),
+//             title: message.title || "New Notification",
+//             message: message.body || message.message || "You have a new notification",
+//             ntype: message.ntype,
+//             type: message.type,
+//             time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+//             read: false,
+//             payload: message.payload,
+//           };
 
-          addNotification(notification);
+//           addNotification(notification);
 
-          // Show browser notification
-          if ("Notification" in window) {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                const notif = new Notification(notification.title, {
-                  body: notification.message,
-                  icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
-                });
+//           // Show browser notification
+//           if ("Notification" in window) {
+//             Notification.requestPermission().then((permission) => {
+//               if (permission === "granted") {
+//                 const notif = new Notification(notification.title, {
+//                   body: notification.message,
+//                   icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
+//                 });
 
-                notif.onclick = () => {
-                  window.focus();
-                  if (message.ntype === "conversation") {
-                    navigate(`/vas/channels/messages/${message.conversation_id}`);
-                  } else if (message.ntype === "projectspace") {
-                    navigate(`/vas/channels/groups/${message.project_space_id}`);
-                  }
-                };
-              }
-            });
-          }
-        },
-        onDisconnected: () => {
-          console.warn("❌ Notification subscription disconnected");
-          setIsSubscribed(false);
-          toast.error("Real-time notifications disconnected");
-        },
-      });
-      console.warn("📋 Subscription object:", sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+//                 notif.onclick = () => {
+//                   window.focus();
+//                   if (message.ntype === "conversation") {
+//                     navigate(`/vas/channels/messages/${message.conversation_id}`);
+//                   } else if (message.ntype === "projectspace") {
+//                     navigate(`/vas/channels/groups/${message.project_space_id}`);
+//                   }
+//                 };
+//               }
+//             });
+//           }
+//         },
+//         onDisconnected: () => {
+//           console.warn("❌ Notification subscription disconnected");
+//           setIsSubscribed(false);
+//           toast.error("Real-time notifications disconnected");
+//         },
+//       });
+//       console.warn("📋 Subscription object:", sub);
+//     }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.warn("⏰ Clearing subscription timer");
-      clearTimeout(subscriptionTimer);
-    };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
+//     return () => {
+//       console.warn("⏰ Clearing subscription timer");
+//       clearTimeout(subscriptionTimer);
+//     };
+//   }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
 
-  return <>{children}</>;
-};
+//   return <>{children}</>;
+// };
 
 function App() {
   const dispatch = useAppDispatch();
@@ -1219,7 +1219,7 @@ function App() {
 
   const navigate = useNavigate();
 
-  const { manager: webSocketManager, connect } = useWebSocket();
+  // const { manager: webSocketManager, connect } = useWebSocket();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const [isSubscribed, setIsSubscribed] = useState(false);
