@@ -560,6 +560,13 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 <Plus className="w-4 h-4 mr-2" />
                 Action
             </Button>
+
+            <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-gray-700 font-medium text-sm">Total Milestones:</span>
+                <span className="text-lg font-bold text-[#C72030]">
+                    {paginationData?.total_count || 0}
+                </span>
+            </div>
         </>
     );
 
@@ -694,7 +701,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     return (
         <div className="px-6">
             {/* Breadcrumbs */}
-            <Breadcrumb className="mb-2">
+            <Breadcrumb className="mb-4">
                 <BreadcrumbList>
                     <BreadcrumbItem>
                         <BreadcrumbLink
@@ -711,14 +718,14 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 </BreadcrumbList>
             </Breadcrumb>
 
-            <Button
+            {/* <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
                 className="px-0 mb-2"
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
-            </Button>
+            </Button> */}
 
 
             <EnhancedTable
