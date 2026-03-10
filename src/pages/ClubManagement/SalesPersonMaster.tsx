@@ -225,23 +225,23 @@ export const SalesPersonMaster: React.FC = () => {
     //         toast.error('Failed to update status');
     //     }
     // };
- const handleToggleStatus = async (sp: SalesPerson) => {
-    try {
-        const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+    const handleToggleStatus = async (sp: SalesPerson) => {
+        try {
+            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
 
-        await fetch(
-            url,
-            getAuthOptions('PATCH', {
-                sales_person: { active: !sp.active },
-            })
-        );
+            await fetch(
+                url,
+                getAuthOptions('PATCH', {
+                    sales_person: { active: !sp.active },
+                })
+            );
 
-        toast.success('Status updated successfully');
-        fetchSalesPersons();
-    } catch {
-        toast.error('Failed to update status');
-    }
-};
+            toast.success('Status updated successfully');
+            fetchSalesPersons();
+        } catch {
+            toast.error('Failed to update status');
+        }
+    };
     // ================= RENDER ROW =================
     const renderRow = (sp: SalesPerson) => ({
         actions: (
@@ -257,7 +257,7 @@ export const SalesPersonMaster: React.FC = () => {
                     <Edit className="w-4 h-4" />
                 </Button>
 
-                <Button
+                {/* <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => handleToggleStatus(sp)}
@@ -266,7 +266,16 @@ export const SalesPersonMaster: React.FC = () => {
                         className={`w-4 h-4 ${sp.active ? 'text-red-500' : 'text-green-600'
                             }`}
                     />
+                </Button> */}
+
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDelete(sp)}
+                >
+                    <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
+
             </div>
         ),
         name: <span>{sp.name}</span>,
@@ -283,25 +292,45 @@ export const SalesPersonMaster: React.FC = () => {
         // ),
 
         status: (
-    <div className="flex items-center justify-center">
-        <div
-            className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${
-                sp.active ? "bg-green-500" : "bg-gray-300"
-            }`}
-            onClick={() => handleToggleStatus(sp)}
-        >
-            <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                    sp.active ? "translate-x-6" : "translate-x-1"
-                }`}
-            />
-        </div>
-    </div>
-),
+            <div className="flex items-center justify-center">
+                <div
+                    className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${sp.active ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                    onClick={() => handleToggleStatus(sp)}
+                >
+                    <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${sp.active ? "translate-x-6" : "translate-x-1"
+                            }`}
+                    />
+                </div>
+            </div>
+        ),
     });
 
 
-   
+    const handleDelete = async (sp: SalesPerson) => {
+        try {
+            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${API_CONFIG.TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) throw new Error("Delete failed");
+
+            toast.success("Salesperson deleted successfully");
+
+            fetchSalesPersons();
+        } catch {
+            toast.error("Failed to delete salesperson");
+        }
+    };
+
+
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
@@ -387,7 +416,7 @@ export const SalesPersonMaster: React.FC = () => {
                         </div>
                     </div>
 
-                <div className="flex justify-center mt-4 gap-3">
+                    <div className="flex justify-center mt-4 gap-3">
                         <Button onClick={handleAdd} disabled={submitting}>
                             {submitting ? 'Adding...' : 'Add'}
                         </Button>
