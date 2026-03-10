@@ -1276,73 +1276,73 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
-          setIsSubscribed(true);
-          toast.success("Real-time connection established!", {
-            duration: 2000,
-          });
-        },
-        onMessageNotification: (message) => {
-          console.warn(message);
-          if (message.user_id !== currentUser.id) {
-            return;
-          }
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+  //         setIsSubscribed(true);
+  //         toast.success("Real-time connection established!", {
+  //           duration: 2000,
+  //         });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         console.warn(message);
+  //         if (message.user_id !== currentUser.id) {
+  //           return;
+  //         }
 
-          if (!("Notification" in window)) {
-            toast.error("Not supported");
-            return;
-          }
+  //         if (!("Notification" in window)) {
+  //           toast.error("Not supported");
+  //           return;
+  //         }
 
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              const notification = new Notification("New Message Received", {
-                body: message.body,
-              });
+  //         Notification.requestPermission().then((permission) => {
+  //           if (permission === "granted") {
+  //             const notification = new Notification("New Message Received", {
+  //               body: message.body,
+  //             });
 
-              notification.onclick = () => {
-                window.focus();
-                if (message.ntype === "conversation") {
-                  navigate(`/vas/channels/messages/${message.conversation_id}`);
-                } else if (message.ntype === "projectspace") {
-                  navigate(`/vas/channels/groups/${message.project_space_id}`);
-                }
-              };
-            }
-          });
-        },
-        onDisconnected: () => {
-          console.warn("❌ Chat subscription disconnected");
-          setIsSubscribed(false);
-          toast.error("Real-time chat disconnected");
-        },
-      });
-      console.warn("📋 Subscription object:", sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+  //             notification.onclick = () => {
+  //               window.focus();
+  //               if (message.ntype === "conversation") {
+  //                 navigate(`/vas/channels/messages/${message.conversation_id}`);
+  //               } else if (message.ntype === "projectspace") {
+  //                 navigate(`/vas/channels/groups/${message.project_space_id}`);
+  //               }
+  //             };
+  //           }
+  //         });
+  //       },
+  //       onDisconnected: () => {
+  //         console.warn("❌ Chat subscription disconnected");
+  //         setIsSubscribed(false);
+  //         toast.error("Real-time chat disconnected");
+  //       },
+  //     });
+  //     console.warn("📋 Subscription object:", sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.warn("⏰ Clearing subscription timer");
-      clearTimeout(subscriptionTimer);
-    };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+  //   return () => {
+  //     console.warn("⏰ Clearing subscription timer");
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
