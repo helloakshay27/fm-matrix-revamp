@@ -14,6 +14,14 @@ import { format } from "date-fns";
 import { MenuItem, Select, TextField, FormControl } from "@mui/material";
 import { useLayout } from "@/contexts/LayoutContext";
 import axios from "axios";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Dependency {
   title?: string;
@@ -188,6 +196,8 @@ export const MilestoneDetailsPage = () => {
   const [isDependencyCollapsed, setIsDependencyCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDependenciesLoading, setIsDependenciesLoading] = useState(true);
+  const [projectName, setProjectName] = useState<string>('');
+  const [milestoneName, setMilestoneName] = useState<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
@@ -232,10 +242,46 @@ export const MilestoneDetailsPage = () => {
     }
   };
 
+  const fetchProjectAndMilestoneNames = async () => {
+    try {
+      // Fetch project name
+      if (id) {
+        const projectResponse = baseUrl
+          ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          : await axios.get(`/project_managements/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        setProjectName(projectResponse.data.title || projectResponse.data.project_code || '');
+      }
+
+      // Fetch milestone name
+      if (mid) {
+        const milestoneResponse = baseUrl
+          ? await axios.get(`https://${baseUrl}/milestones/${mid}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          : await axios.get(`/milestones/${mid}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        setMilestoneName(milestoneResponse.data.title || '');
+      }
+    } catch (error) {
+      console.error('Failed to fetch project/milestone names:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     getDependencies();
   }, [mid]);
+
+  useEffect(() => {
+    if (token && (id || mid)) {
+      fetchProjectAndMilestoneNames();
+    }
+  }, [token, id, mid]);
 
   useEffect(() => {
     getOwners();
@@ -469,16 +515,41 @@ export const MilestoneDetailsPage = () => {
 
   return (
     <>
-      <div className="m-4">
-        <Button
+      <div className="p-6">
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate(`/vas/projects`)}
+                className="cursor-pointer"
+              >
+                {projectName || "Project"}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate(`/vas/projects/${id}/milestones`)}
+                className="cursor-pointer"
+              >
+                Milestones
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{milestoneName || "Milestone"}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        {/* <Button
           variant="ghost"
           onClick={() => navigate(-1)}
           className="py-0"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
-        </Button>
-        <div className="px-4 pt-1">
+        </Button> */}
+        <div>
           {isLoading ? (
             <>
               {/* Loading Skeleton for Title */}

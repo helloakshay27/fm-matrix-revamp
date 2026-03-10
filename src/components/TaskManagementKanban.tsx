@@ -288,7 +288,17 @@ const VirtualizedTaskColumn = ({
     );
 };
 
-const TaskManagementKanban = ({ fetchData, showMyTasksOnly = false }) => {
+const TaskManagementKanban = ({
+    fetchData,
+    showMyTasksOnly = false,
+    selectedFilterOption,
+    selectedStatuses = [],
+    selectedWorkflowStatus = [],
+    selectedResponsible = [],
+    selectedCreators = [],
+    selectedProjects = [],
+    dates = { startDate: '', endDate: '' }
+}) => {
     const { id } = useParams();
     const { data, loading } = useAppSelector((state) => state.fetchKanbanTasksOfProject);
     const taskList = Array.isArray(data)
@@ -341,9 +351,33 @@ const TaskManagementKanban = ({ fetchData, showMyTasksOnly = false }) => {
                     params.responsible_person_id = user.id.toString();
                 }
             }
+
+            // Add filter parameters
+            if (selectedFilterOption) {
+                params.selectedFilterOption = selectedFilterOption;
+            }
+            if (selectedStatuses && selectedStatuses.length > 0) {
+                params.selectedStatuses = selectedStatuses;
+            }
+            if (selectedWorkflowStatus && selectedWorkflowStatus.length > 0) {
+                params.selectedWorkflowStatus = selectedWorkflowStatus;
+            }
+            if (selectedResponsible && selectedResponsible.length > 0) {
+                params.selectedResponsible = selectedResponsible;
+            }
+            if (selectedCreators && selectedCreators.length > 0) {
+                params.selectedCreators = selectedCreators;
+            }
+            if (selectedProjects && selectedProjects.length > 0) {
+                params.selectedProjects = selectedProjects;
+            }
+            if (dates && (dates.startDate || dates.endDate)) {
+                params.dates = dates;
+            }
+
             dispatch(fetchKanbanTasksOfProject(params));
         }
-    }, [dispatch, token, baseUrl, id, showMyTasksOnly]);
+    }, [dispatch, token, baseUrl, id, showMyTasksOnly, selectedFilterOption, selectedStatuses, selectedWorkflowStatus, selectedResponsible, selectedCreators, selectedProjects, dates]);
 
     // Restore scroll positions after data loads
     useEffect(() => {

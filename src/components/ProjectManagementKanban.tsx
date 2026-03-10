@@ -39,7 +39,7 @@ export const cardsTitle = [
     },
 ];
 
-const ProjectManagementKanban = ({ fetchData }) => {
+const ProjectManagementKanban = ({ fetchData, appliedFilters = '', selectedFilterOption = 'all' }) => {
     const { setCurrentSection } = useLayout();
 
     const view = localStorage.getItem("selectedView");
@@ -60,14 +60,14 @@ const ProjectManagementKanban = ({ fetchData }) => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                await dispatch(fetchKanbanProjects({ token, baseUrl }));
+                await dispatch(fetchKanbanProjects({ token, baseUrl, filters: appliedFilters, selectedFilterOption }));
             } catch (error) {
                 console.log(error)
             }
         }
 
         fetchProjects();
-    }, [])
+    }, [appliedFilters, selectedFilterOption])
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const activeData = event.active.data.current;
