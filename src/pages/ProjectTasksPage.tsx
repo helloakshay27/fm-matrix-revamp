@@ -512,6 +512,16 @@ const ProjectTasksPage = () => {
     const [taskType, setTaskType] = useState<"all" | "my">("all");
     const [currentPage, setCurrentPage] = useState(1);
 
+    useEffect(() => {
+        const path = location.pathname;
+
+        if (path.includes("/projects/") && path.includes("/milestones/")) {
+            setTaskType("all");
+        } else if (path === "/vas/tasks") {
+            setTaskType("my");
+        }
+    }, [location.pathname]);
+
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
@@ -1894,6 +1904,13 @@ const ProjectTasksPage = () => {
                     Action
                 </Button>
             )}
+
+            <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
+                <span className="text-lg font-bold text-[#C72030]">
+                    {paginationData?.total_count || 0}
+                </span>
+            </div>
         </>
     );
 
@@ -1902,9 +1919,9 @@ const ProjectTasksPage = () => {
             {/* Task Type Toggle - Only show when NOT in milestone context */}
             {!mid && (
                 <div className="flex items-center px-4 py-2">
-                    <span className="text-gray-700 font-medium text-sm">All task</span>
+                    <span className="text-gray-700 font-medium text-sm">My Tasks</span>
                     <Switch
-                        checked={taskType === "my"}
+                        checked={taskType === "all"}
                         onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
                         sx={{
                             '& .MuiSwitch-switchBase.Mui-checked': {
@@ -1915,7 +1932,7 @@ const ProjectTasksPage = () => {
                             },
                         }}
                     />
-                    <span className="text-gray-700 font-medium text-sm">My Task</span>
+                    <span className="text-gray-700 font-medium text-sm">All Tasks</span>
                 </div>
             )}
 
@@ -1942,7 +1959,6 @@ const ProjectTasksPage = () => {
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
-                                    setTaskType("my");
                                     setIsOpen(false);
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
@@ -2033,9 +2049,9 @@ const ProjectTasksPage = () => {
                         {/* Task Type Toggle - Only show when NOT in milestone context */}
                         {!mid && (
                             <div className="flex items-center gap-2 px-4 py-2">
-                                <span className="text-gray-700 font-medium text-sm">All task</span>
+                                <span className="text-gray-700 font-medium text-sm">My Task</span>
                                 <Switch
-                                    checked={taskType === "my"}
+                                    checked={taskType === "all"}
                                     onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
                                     sx={{
                                         '& .MuiSwitch-switchBase.Mui-checked': {
@@ -2046,7 +2062,7 @@ const ProjectTasksPage = () => {
                                         },
                                     }}
                                 />
-                                <span className="text-gray-700 font-medium text-sm">My Task</span>
+                                <span className="text-gray-700 font-medium text-sm">All Task</span>
                             </div>
                         )}
 
@@ -2101,7 +2117,17 @@ const ProjectTasksPage = () => {
                     </div>
                 </div>
 
-                <TaskManagementKanban fetchData={() => { setCurrentPage(1); refetchTasks(); }} showMyTasksOnly={taskType === "my"} />
+                <TaskManagementKanban
+                    fetchData={() => { setCurrentPage(1); refetchTasks(); }}
+                    showMyTasksOnly={taskType === "my"}
+                    selectedFilterOption={selectedFilterOption}
+                    selectedStatuses={selectedStatuses}
+                    selectedWorkflowStatus={selectedWorkflowStatus}
+                    selectedResponsible={selectedResponsible}
+                    selectedCreators={selectedCreators}
+                    selectedProjects={selectedProjects}
+                    dates={dates}
+                />
 
                 <Dialog
                     open={openTaskModal}
@@ -2184,7 +2210,7 @@ const ProjectTasksPage = () => {
         <div className="p-6">
             {/* Breadcrumbs */}
             {location.pathname.includes("projects") && (
-                <Breadcrumb className="mb-2">
+                <Breadcrumb className="mb-4">
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink
@@ -2211,7 +2237,7 @@ const ProjectTasksPage = () => {
                 </Breadcrumb>
             )}
 
-            {
+            {/* {
                 location.pathname.includes("projects") && (
                     <Button
                         variant="ghost"
@@ -2222,7 +2248,7 @@ const ProjectTasksPage = () => {
                         Back
                     </Button>
                 )
-            }
+            } */}
 
             <EnhancedTable
                 data={tasks}

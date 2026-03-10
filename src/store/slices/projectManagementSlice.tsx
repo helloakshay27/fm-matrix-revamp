@@ -51,13 +51,22 @@ export const createProject = createAsyncThunk(
     }
 )
 
-export const fetchKanbanProjects = createAsyncThunk('fetchKanbanProjects', async ({ token, baseUrl }: { token: string, baseUrl: string }, { rejectWithValue }) => {
+export const fetchKanbanProjects = createAsyncThunk('fetchKanbanProjects', async ({ token, baseUrl, filters = '', selectedFilterOption = 'all' }: { token: string, baseUrl: string, filters?: string, selectedFilterOption?: string }, { rejectWithValue }) => {
     try {
         let params = new URLSearchParams();
-        // params.append(
-        //     'q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]',
-        //     JSON.parse(localStorage.getItem('user')).id
-        // );
+        
+        // Apply selectedFilterOption if no advanced filters are applied
+        if (!filters || filters === '') {
+            if (selectedFilterOption && selectedFilterOption !== 'all') {
+                params.append('q[status_eq]', selectedFilterOption);
+            }
+        } else {
+            // Parse and append filters from appliedFilters string
+            const filterParams = new URLSearchParams(filters);
+            filterParams.forEach((value, key) => {
+                params.append(key, value);
+            });
+        }
 
         // Use baseClient for mobile flow (when baseUrl not available)
         const response = baseUrl

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import axios from 'axios';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -21,6 +22,59 @@ interface PaymentReceived {
     unused_amount: number;
     status: 'PAID' | 'DRAFT' | 'VOID';
 }
+
+// API shape returned by lock_payments.json (subset)
+interface LockPaymentAPI {
+    id: number;
+    order_number?: string;
+    receipt_number?: string;
+    payment_of?: string;
+    payment_mode?: string;
+    payment_method?: string;
+    payment_status?: string;
+    created_at?: string;
+    paid_amount?: string;
+    total_amount?: string;
+    neft_reference?: string;
+    pg_transaction_id?: string;
+    payment_gateway?: string;
+    bank_name?: string;
+    invoice_number?: string;
+}
+
+// Helper mapper
+const mapLockPayment = (lp: LockPaymentAPI): PaymentReceived => {
+    const statusRaw = (lp.payment_status || '').toLowerCase();
+    let status: PaymentReceived['status'] = 'DRAFT';
+    if (statusRaw === 'paid' || statusRaw === 'success') status = 'PAID';
+    else if (statusRaw === 'void' || statusRaw === 'failed') status = 'VOID';
+
+    const date = lp.created_at
+        ? new Date(lp.created_at).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+          })
+        : '-';
+
+    const paymentNumber = lp.receipt_number || lp.order_number || lp.id;
+    const mode = lp.payment_mode || lp.payment_method || '';
+    const amount = parseFloat(lp.paid_amount || lp.total_amount || '0') || 0;
+
+    return {
+        id: lp.id,
+        payment_number: Number(paymentNumber),
+        date,
+        type: lp.payment_of || 'Invoice Payment',
+        reference_number: lp.order_number || '',
+        customer_name: lp.payment_of || '',
+        invoice_number: lp.invoice_number || '',
+        mode,
+        amount,
+        unused_amount: 0,
+        status,
+    };
+};
 
 const columns: ColumnConfig[] = [
     { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
@@ -53,40 +107,57 @@ export const PaymentsReceivedListPage: React.FC = () => {
         has_prev_page: false
     });
 
-    // Mock data - replace with actual API call
-    const mockData: PaymentReceived[] = [
-        { id: 6, payment_number: 6, date: '2026-02-03', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: '', mode: 'Cash', amount: 1000, unused_amount: 1000, status: 'PAID' },
-        { id: 5, payment_number: 5, date: '2025-11-13', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: 'INV-000003', mode: 'Cash', amount: 100, unused_amount: 0, status: 'PAID' },
-        { id: 4, payment_number: 4, date: '2025-11-13', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: 'INV-000003', mode: 'Cash', amount: 159.87, unused_amount: 0, status: 'PAID' },
-        { id: 3, payment_number: 3, date: '2025-11-13', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: '', mode: 'Cash', amount: 100, unused_amount: 100, status: 'PAID' },
-        { id: 2, payment_number: 2, date: '2025-11-13', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: 'INV-000002', mode: 'Cash', amount: 300, unused_amount: 0, status: 'PAID' },
-        { id: 1, payment_number: 1, date: '2025-11-12', type: 'Invoice Payment', reference_number: '', customer_name: 'Lockated', invoice_number: 'INV-000001', mode: 'Cash', amount: 1665, unused_amount: 0, status: 'PAID' },
-    ];
+    // Payment data state will come from API
 
-    // Fetch data (mocked)
-    useEffect(() => {
+    // helper to fetch list
+    const fetchPayments = async () => {
         setLoading(true);
-        let filteredData = mockData;
-        if (debouncedSearchQuery.trim()) {
-            filteredData = filteredData.filter(payment =>
-                payment.customer_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-                payment.invoice_number.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const res = await axios.get(
+                `https://${baseUrl}/lock_payments.json`,
+                {
+                    params: {
+                        lock_account_id: 1,
+                        'q[payment_made_eq]': 0,
+                        page: currentPage,
+                        per_page: perPage,
+                        search: debouncedSearchQuery || undefined,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
+            const data = res.data;
+            const list: LockPaymentAPI[] = data.lock_payments || data || [];
+            const mapped = list.map(mapLockPayment);
+            setPaymentData(mapped);
+            if (data.pagination) {
+                setPagination({
+                    current_page: data.pagination.current_page || currentPage,
+                    per_page: data.pagination.per_page || perPage,
+                    total_pages: data.pagination.total_pages || 1,
+                    total_count: data.pagination.total_count || mapped.length,
+                    has_next_page: (data.pagination.current_page || currentPage) < (data.pagination.total_pages || 1),
+                    has_prev_page: (data.pagination.current_page || currentPage) > 1,
+                });
+            } else {
+                setPagination((p) => ({ ...p, total_count: mapped.length }));
+            }
+        } catch (err) {
+            console.error('Failed to load payments', err);
+        } finally {
+            setLoading(false);
         }
-        const totalCount = filteredData.length;
-        const totalPages = Math.ceil(totalCount / perPage);
-        const startIndex = (currentPage - 1) * perPage;
-        const paginatedData = filteredData.slice(startIndex, startIndex + perPage);
-        setPaymentData(paginatedData);
-        setPagination({
-            current_page: currentPage,
-            per_page: perPage,
-            total_pages: totalPages,
-            total_count: totalCount,
-            has_next_page: currentPage < totalPages,
-            has_prev_page: currentPage > 1
-        });
-        setLoading(false);
+    };
+
+
+    // Fetch data from API whenever page/perPage/search changes
+    useEffect(() => {
+        fetchPayments();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, perPage, debouncedSearchQuery]);
 
     // Render row for table

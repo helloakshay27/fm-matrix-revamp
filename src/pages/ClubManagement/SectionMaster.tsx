@@ -311,12 +311,13 @@ export const SectionMaster: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setAddModalOpen(false); setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); }} disabled={addSubmitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddSection} disabled={addSubmitting}>
+             <Button onClick={handleAddSection} disabled={addSubmitting}>
               {addSubmitting ? 'Adding...' : 'Add'}
             </Button>
+            <Button variant="outline" onClick={() => { setAddModalOpen(false); setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); }} disabled={addSubmitting}>
+              Cancel
+            </Button>
+           
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -377,12 +378,13 @@ export const SectionMaster: React.FC = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting}>
+            <Button onClick={handleEditSection} disabled={editSubmitting || editLoading}>
+              {editSubmitting ? 'Updating...' : 'Update'}
+            </Button>
+            <Button variant="outline" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting}>
               Cancel
             </Button>
-            <Button onClick={handleEditSection} disabled={editSubmitting || editLoading}>
-              {editSubmitting ? 'Saving...' : 'Save'}
-            </Button>
+            
           </DialogFooter>
         </DialogContent>
       </Dialog>

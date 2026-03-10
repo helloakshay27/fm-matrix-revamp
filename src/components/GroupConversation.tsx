@@ -52,6 +52,9 @@ const GroupConversation = () => {
     const { manager: webSocketManager, connect } = useWebSocket();
 
     useEffect(() => {
+        textareaRef.current.focus();
+    }, [id])
+    useEffect(() => {
         console.log('🔌 WebSocket connection effect running');
 
         if (token) {
@@ -310,7 +313,7 @@ const GroupConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.user_id === currentUser.id && message.conversation_id !== id) {
+                    if (message.project_space_id !== id) {
                         return;
                     }
 

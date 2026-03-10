@@ -409,7 +409,7 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   const email = localStorage.getItem("temp_email");
   const otptoken = localStorage.getItem("temp_token");
   const baseUrl = getBaseUrl();
-  // const token = getToken();
+  const token = getToken();
 
   if (!email) {
     throw new Error(
@@ -417,9 +417,9 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
     );
   }
 
-  // if (!baseUrl) {
-  //   throw new Error("Base URL not found. Please login again.");
-  // }
+  if (!baseUrl) {
+    throw new Error("Base URL not found. Please login again.");
+  }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -432,10 +432,14 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
 
   // https://pulse-api.lockated.com/get_otps/verify_otp.json?email=sumitra.patil@lockated.com&otp=999999
   const response = await fetch(
-    `https://pulse-api.lockated.com/get_otps/verify_otp.json?email=${email}&otp=${otp}`,
+    `https://live-api.gophygital.work/verify_code.json`,
     {
-      method: "GET",
+      method: "POST",
       headers,
+      body: JSON.stringify({
+        email: email,
+        otp: otp,
+      }),
     }
   );
 

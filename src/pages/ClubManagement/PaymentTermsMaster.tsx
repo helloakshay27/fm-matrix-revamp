@@ -8,7 +8,8 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit ,Trash2} from 'lucide-react';	
+import { Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const columns: ColumnConfig[] = [
 	{ key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
@@ -29,6 +30,7 @@ const PaymentTermsMaster = () => {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalRecords, setTotalRecords] = useState(0);
 	const [loading, setLoading] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
 
 	// Modal logic (unchanged)
 	const [editTerms, setEditTerms] = useState<PaymentTerm[]>([]);
@@ -87,16 +89,34 @@ const PaymentTermsMaster = () => {
 					},
 				}
 			);
+			toast.success("Payment term deleted successfully");
 			fetchPaymentTerms();
 		} catch (err) {
-			alert("Failed to remove payment term");
+			toast.error("Failed to delete payment term");
 		}
 	};
 
 	const handleSaveTerms = async () => {
 		const validEdit = editTerms.filter(row => row.name.trim());
-		setEditTerms([]);
-		setShowConfig(false);
+		// setEditTerms([]);
+		// setShowConfig(false);
+
+		const errors = [];
+
+		editTerms.forEach((row, index) => {
+			if (!row.name.trim()) {
+				errors.push(`Row ${index + 1}: Term Name is required`);
+			}
+
+			if (!row.days || Number(row.days) <= 0) {
+				errors.push(`Row ${index + 1}: Number of Days is required`);
+			}
+		});
+
+		if (errors.length > 0) {
+			toast.error(errors.join(", "));
+			return;
+		}
 		const baseUrl = localStorage.getItem("baseUrl");
 		const token = localStorage.getItem("token");
 		const paymentTermsPayload = validEdit.map(term => ({
@@ -119,13 +139,22 @@ const PaymentTermsMaster = () => {
 					},
 				}
 			);
+
+			toast.success("Payment term created successfully");
+
 			fetchPaymentTerms();
+
+			// close modal
+			setShowConfig(false);
+
+			// reset rows
+			setEditTerms([{ name: "", days: "" }]);
 		} catch (err) {
-			alert("Failed to save payment terms");
+			toast.error("Failed to save payment terms");
 		}
 	};
 
-    // Edit modal state
+	// Edit modal state
 	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [editForm, setEditForm] = useState<PaymentTerm>({ id: 0, name: '', days: '' });
 	const [editErrors, setEditErrors] = useState<{ name?: string; days?: string }>({});
@@ -185,17 +214,24 @@ const PaymentTermsMaster = () => {
 					},
 				}
 			);
+			toast.success("Payment term updated successfully");
 			setEditModalOpen(false);
 			fetchPaymentTerms();
 		} catch (err) {
-			alert('Failed to update payment term');
+			toast.error("Failed to update payment term");
 		} finally {
 			setEditSubmitting(false);
 		}
 	};
 
-	const paginatedTerms = paymentTerms.slice((currentPage - 1) * perPage, currentPage * perPage);
-
+	const filteredTerms = paymentTerms.filter((term) =>
+		term.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		String(term.days).includes(searchQuery)
+	);
+	const paginatedTerms = filteredTerms.slice(
+		(currentPage - 1) * perPage,
+		currentPage * perPage
+	);
 	const renderRow = (term: PaymentTerm) => ({
 		actions: (
 			<div className="flex items-center gap-2">
@@ -203,16 +239,18 @@ const PaymentTermsMaster = () => {
 					<Edit className="w-4 h-4" />
 				</Button>
 				<Button size="icon" variant="ghost" title="Remove" onClick={() => handleRemovePaymentTerm(term.id)}>
-					{/* <span className="text-red-600">Remove</span> */}
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                                                        
+					<Trash2 className="w-4 h-4 text-red-600" />
+
 				</Button>
 			</div>
 		),
 		name: <span>{term.name}</span>,
 		days: <span>{term.days}</span>,
 	});
-
+	const handleTableSearch = (value: string) => {
+		setSearchQuery(value);
+		setCurrentPage(1);
+	};
 	return (
 		<div className="p-6 space-y-6">
 			<header className="flex items-center justify-between">
@@ -227,9 +265,13 @@ const PaymentTermsMaster = () => {
 				hideTableExport={true}
 				hideTableSearch={false}
 				enableSearch={true}
+				onSearch={handleTableSearch}
 				loading={loading}
 				leftActions={(
-					<Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => { setEditTerms([]); setShowConfig(true); }}>
+					<Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => {
+						setEditTerms([{ name: "", days: "" }]);
+						setShowConfig(true);
+					}}>
 						<Plus className="w-4 h-4 mr-2" /> Add
 					</Button>
 				)}
@@ -262,11 +304,11 @@ const PaymentTermsMaster = () => {
 							<span className="text-sm text-muted-foreground">Loading...</span>
 						</div>
 					) : (
-						<table className="w-full mb-4 text-sm">
+						<table className="w-full mt-5 mb-4 text-sm border border-gray-300 border-collapse">
 							<thead>
 								<tr className="bg-gray-100">
-									<th className="p-2 border">Term Name</th>
-									<th className="p-2 border">Number of Days</th>
+									<th className="p-2 border">Term Name <span className="text-red-500">*</span></th>
+									<th className="p-2 border">Number of Days <span className="text-red-500">*</span></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -298,7 +340,7 @@ const PaymentTermsMaster = () => {
 						<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={handleEditPaymentTerm} disabled={editSubmitting || editLoading}>
 							{editSubmitting ? 'Saving...' : 'Save'}
 						</Button>
-						<Button className="bg-gray-200 px-4 py-2 rounded" variant="ghost" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting || editLoading}>
+						<Button variant="outline" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting || editLoading}>
 							Cancel
 						</Button>
 					</DialogFooter>
@@ -312,12 +354,12 @@ const PaymentTermsMaster = () => {
 						<DialogHeader>
 							<DialogTitle>Add Payment Term</DialogTitle>
 						</DialogHeader>
-						<table className="w-full mb-4 text-sm">
+						<table className="w-full  mt-5 mb-4 text-sm border border-gray-300 border-collapse">
 							<thead>
 								<tr className="bg-gray-100">
-									<th className="p-2 border">Term Name</th>
-									<th className="p-2 border">Number of Days</th>
-									<th className="p-2 border"></th>
+									<th className="p-2 border">Term Name <span className="text-red-500">*</span></th>
+									<th className="p-2 border">Number of Days <span className="text-red-500">*</span></th>
+									<th className="p-2 border"> Action</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -341,21 +383,28 @@ const PaymentTermsMaster = () => {
 											/>
 										</td>
 										<td className="border p-2">
-											<Button size="icon" variant="ghost" title="Remove" onClick={() => handleRemoveNewRow(idx)}>
-												{/* <span className="text-red-600 text-xs">Remove</span> */}
-                                                <Trash2 className="w-4 h-4 text-red-600" />
-											</Button>
+											{idx !== 0 && (
+												<Button size="icon" variant="ghost" title="Remove" onClick={() => handleRemoveNewRow(idx)}>
+													<Trash2 className="w-4 h-4 text-red-600" />
+												</Button>
+											)}
 										</td>
 									</tr>
 								))}
 							</tbody>
 						</table>
 						<div className="flex gap-2 mb-2">
-							<Button className="text-blue-600 text-sm" variant="ghost" onClick={handleAddNewTerm}>+ Add New</Button>
+							<Button
+								className="bg-primary text-primary-foreground hover:bg-primary/90"
+								onClick={handleAddNewTerm}
+							>
+								<Plus className="w-4 h-4 mr-2" /> Add
+							</Button>
 						</div>
+
 						<DialogFooter>
 							<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={handleSaveTerms}>Save</Button>
-							<Button className="bg-gray-200 px-4 py-2 rounded" variant="ghost" onClick={() => { setEditTerms([]); setShowConfig(false); }}>Cancel</Button>
+							<Button variant="outline" onClick={() => { setEditTerms([]); setShowConfig(false); }}>Cancel</Button>
 						</DialogFooter>
 					</DialogContent>
 				</Dialog>

@@ -916,6 +916,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Time</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">AMC Type</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Technician Name</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Vendor</th>
                   </tr>
                 </thead>
@@ -927,6 +928,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                         <td className="py-3 px-4">{visit.scheduled_date || '-'}</td>
                         <td className="py-3 px-4">{visit.scheduled_time || '-'}</td>
                       <td className="py-3 px-4">{amc?.amc_type || '-'}</td>
+                      <td className="py-3 px-4">{visit.technician?.name || '-'}</td>
+
                         <td className="py-3 px-4">{visit.vendor_name || '-'}</td>
                     </tr>
                     ))
