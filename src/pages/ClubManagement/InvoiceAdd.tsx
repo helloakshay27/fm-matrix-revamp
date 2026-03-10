@@ -616,7 +616,7 @@ export const InvoiceAdd: React.FC = () => {
         }
     };
     console.log('Invoice Payload:', invoicePayload2);
-
+console.log("date:",salesOrderDate)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
         if (!saveAsDraft && !validate()) {
@@ -636,7 +636,7 @@ export const InvoiceAdd: React.FC = () => {
             formData.append('lock_account_invoice[date]', salesOrderDate);
             formData.append('lock_account_invoice[due_date]', expectedShipmentDate);
             formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
-            formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
+            // formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
             formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_invoice[customer_notes]', customerNotes);
             formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);

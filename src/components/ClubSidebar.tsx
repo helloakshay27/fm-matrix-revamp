@@ -310,6 +310,7 @@ const modulesByPackage = {
             icon: FileText,
             subItems: [
                 { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
+                { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
                 {
                     name: "Profit & Loss",
                     href: "/accounting/reports/profit-and-loss",

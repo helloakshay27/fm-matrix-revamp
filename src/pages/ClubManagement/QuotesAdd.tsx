@@ -477,7 +477,7 @@ export const QuotesAdd: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
-     const [totalAmount2, setTotalAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -639,6 +639,26 @@ export const QuotesAdd: React.FC = () => {
 
             // Build FormData for invoice
             const formData = new FormData();
+
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_quote[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_quote[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_quote[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('lock_account_quote[lock_account_customer_id]', selectedCustomer?.id || '');
             formData.append('lock_account_quote[reference_number]', referenceNumber);
             formData.append('lock_account_quote[date]', salesOrderDate);
@@ -786,7 +806,7 @@ export const QuotesAdd: React.FC = () => {
         });
     });
     // Calculate Final Total
-   
+
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
     useEffect(() => {
         const total =
@@ -799,7 +819,14 @@ export const QuotesAdd: React.FC = () => {
 
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+    const totalGSTAmount = taxBreakdown.reduce(
+        (sum, tax) => sum + Number(tax.amount || 0),
+        0
+    );
 
+    console.log("tax gst amount total:", totalGSTAmount)
+    console.log("sub total :", subTotal)
+    console.log("tax amount 2 tds :", taxAmount2)
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
