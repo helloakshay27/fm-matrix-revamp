@@ -1628,7 +1628,12 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="mt-4 overflow-hidden" ref={firstContentRef}>
-                <p className="text-sm text-gray-900">{taskDetails.description}</p>
+                <div
+                  className="prose prose-sm max-w-none quill-content"
+                  dangerouslySetInnerHTML={{
+                    __html: taskDetails?.description || '<p>No description provided</p>'
+                  }}
+                />
               </div>
             </div>
 
