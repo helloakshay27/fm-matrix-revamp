@@ -4681,6 +4681,10 @@ function App() {
                             path="/master/user/occupant-users"
                             element={<OccupantUserMasterDashboard />}
                           />
+                          <Route
+                            path="/master/user/lockated-users"
+                            element={<LockedUsersDashboard />}
+                          />
                           {/* Material Master Route */}
                           <Route
                             path="/master/material-ebom"
