@@ -648,6 +648,25 @@ export const RecurringBillCreatePage: React.FC = () => {
 
       // Build FormData for invoice
       const formData = new FormData();
+      const totalGSTAmount = taxBreakdown.reduce(
+        (sum, tax) => sum + Number(tax.amount || 0),
+        0
+      );
+
+      formData.append(
+        'lock_account_bill[sub_total_amount]',
+        String(subTotal)
+      );
+
+      formData.append(
+        'lock_account_bill[taxable_amount]',
+        String(totalGSTAmount)
+      );
+
+      formData.append(
+        'lock_account_bill[lock_account_tax_amount]',
+        String(taxAmount2)
+      );
       formData.append('lock_account_bill[pms_supplier_id]', selectedCustomer?.id || '');
       formData.append('lock_account_bill[order_number]', referenceNumber);
       formData.append('lock_account_bill[payment_term_id]', selectedTerm);
@@ -696,27 +715,27 @@ export const RecurringBillCreatePage: React.FC = () => {
       //   neverExpires ? 'true' : 'false'
       // );
 
-       formData.append('recurring_detail[start_date]', salesOrderDate);
+      formData.append('recurring_detail[start_date]', salesOrderDate);
 
-            formData.append(
-                'recurring_detail[end_date]',
-                neverExpires ? '' : expectedShipmentDate
-            );
+      formData.append(
+        'recurring_detail[end_date]',
+        neverExpires ? '' : expectedShipmentDate
+      );
 
-            formData.append(
-                'recurring_detail[repeat_type]',
-                repeatType
-            );
+      formData.append(
+        'recurring_detail[repeat_type]',
+        repeatType
+      );
 
-            formData.append(
-                'recurring_detail[repeat_value]',
-                String(repeatCount)
-            );
+      formData.append(
+        'recurring_detail[repeat_value]',
+        String(repeatCount)
+      );
 
-            formData.append(
-                'recurring_detail[never_expires]',
-                neverExpires ? 'true' : 'false'
-            );
+      formData.append(
+        'recurring_detail[never_expires]',
+        neverExpires ? 'true' : 'false'
+      );
       // Invoice items
       items.forEach((item, idx) => {
         formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
@@ -1066,7 +1085,7 @@ export const RecurringBillCreatePage: React.FC = () => {
             </div>
 
 
-{/* 
+            {/* 
             <div>
               <label className="block text-sm font-medium mb-2">
                 Order Number
@@ -1710,8 +1729,8 @@ export const RecurringBillCreatePage: React.FC = () => {
               label="Send email to selected customer above"
             /> */}
 
-            {/* Contact Persons Section */}
-            {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+        {/* Contact Persons Section */}
+        {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
               <div>
                 <Typography variant="body2" className="font-semibold mb-2">
                   Select contact persons to email
@@ -1740,13 +1759,13 @@ export const RecurringBillCreatePage: React.FC = () => {
               </div>
             )} */}
 
-            {/* External Users Section */}
-            {/* <div>
+        {/* External Users Section */}
+        {/* <div>
               <div className="flex items-center justify-between mb-2">
                 <Typography variant="body2" className="font-semibold">
                   Add external users (email users other than the selected customer above)
                 </Typography> */}
-                {/* <Button
+        {/* <Button
                                                     startIcon={<PersonAdd />}
                                                     onClick={() => setAddUserDialogOpen(true)}
                                                     size="small"
@@ -1755,7 +1774,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-              {/* </div>
+        {/* </div>
 
               {externalUsers.length > 0 && (
                 <div className="flex flex-wrap gap-2">

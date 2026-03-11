@@ -102,12 +102,39 @@ export const SalesPersonMaster: React.FC = () => {
     }, [fetchSalesPersons]);
 
     // ================= ADD =================
-    const handleAdd = async () => {
-        if (!formData.name.trim() || !formData.email.trim()) {
-            toast.error('Name and Email are required');
-            return;
+    const validateForm = () => {
+        const nameRegex = /^[A-Za-z\s]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!formData.name.trim()) {
+            toast.error("Name is required");
+            return false;
         }
 
+        if (!nameRegex.test(formData.name)) {
+            toast.error("Name field should accept alphabet characters only.");
+            return false;
+        }
+
+        if (!formData.email.trim()) {
+            toast.error("Email is required");
+            return false;
+        }
+
+        if (!emailRegex.test(formData.email)) {
+            toast.error("Invalid email format . Example: name@example.com");
+            return false;
+        }
+
+        return true;
+    };
+    const handleAdd = async () => {
+        // if (!formData.name.trim() || !formData.email.trim()) {
+        //     toast.error('Name and Email are required');
+        //     return;
+        // }
+
+        if (!validateForm()) return;
         setSubmitting(true);
 
         try {
@@ -145,10 +172,12 @@ export const SalesPersonMaster: React.FC = () => {
 
     // ================= EDIT =================
     const handleUpdate = async () => {
-        if (!formData.name.trim() || !formData.email.trim()) {
-            toast.error('Name and Email are required');
-            return;
-        }
+        // if (!formData.name.trim() || !formData.email.trim()) {
+        //     toast.error('Name and Email are required');
+        //     return;
+        // }
+
+        if (!validateForm()) return;
 
         setSubmitting(true);
 
@@ -179,6 +208,23 @@ export const SalesPersonMaster: React.FC = () => {
     };
 
     // ================= TOGGLE ACTIVE =================
+    // const handleToggleStatus = async (sp: SalesPerson) => {
+    //     try {
+    //         const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+
+    //         await fetch(
+    //             url,
+    //             getAuthOptions('PATCH', {
+    //                 sales_person: { active: !sp.active },
+    //             })
+    //         );
+
+    //         toast.success('Status updated');
+    //         fetchSalesPersons();
+    //     } catch {
+    //         toast.error('Failed to update status');
+    //     }
+    // };
     const handleToggleStatus = async (sp: SalesPerson) => {
         try {
             const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
@@ -190,13 +236,12 @@ export const SalesPersonMaster: React.FC = () => {
                 })
             );
 
-            toast.success('Status updated');
+            toast.success('Status updated successfully');
             fetchSalesPersons();
         } catch {
             toast.error('Failed to update status');
         }
     };
-
     // ================= RENDER ROW =================
     const renderRow = (sp: SalesPerson) => ({
         actions: (
@@ -212,7 +257,7 @@ export const SalesPersonMaster: React.FC = () => {
                     <Edit className="w-4 h-4" />
                 </Button>
 
-                <Button
+                {/* <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => handleToggleStatus(sp)}
@@ -221,28 +266,76 @@ export const SalesPersonMaster: React.FC = () => {
                         className={`w-4 h-4 ${sp.active ? 'text-red-500' : 'text-green-600'
                             }`}
                     />
+                </Button> */}
+
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDelete(sp)}
+                >
+                    <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
+
             </div>
         ),
         name: <span>{sp.name}</span>,
         email: <span>{sp.email}</span>,
+        // status: (
+        //     <span
+        //         className={`px-2 py-1 rounded text-xs font-medium ${sp.active
+        //             ? 'bg-green-100 text-green-700'
+        //             : 'bg-red-100 text-red-700'
+        //             }`}
+        //     >
+        //         {sp.active ? 'Active' : 'Inactive'}
+        //     </span>
+        // ),
+
         status: (
-            <span
-                className={`px-2 py-1 rounded text-xs font-medium ${sp.active
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                    }`}
-            >
-                {sp.active ? 'Active' : 'Inactive'}
-            </span>
+            <div className="flex items-center justify-center">
+                <div
+                    className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${sp.active ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                    onClick={() => handleToggleStatus(sp)}
+                >
+                    <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${sp.active ? "translate-x-6" : "translate-x-1"
+                            }`}
+                    />
+                </div>
+            </div>
         ),
     });
+
+
+    const handleDelete = async (sp: SalesPerson) => {
+        try {
+            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${API_CONFIG.TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) throw new Error("Delete failed");
+
+            toast.success("Salesperson deleted successfully");
+
+            fetchSalesPersons();
+        } catch {
+            toast.error("Failed to delete salesperson");
+        }
+    };
+
 
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">
-                    Sales Person 
+                    Sales Person
                 </h1>
             </header>
 
@@ -257,7 +350,16 @@ export const SalesPersonMaster: React.FC = () => {
                 leftActions={
                     <Button
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => setAddModalOpen(true)}
+                        // onClick={() => setAddModalOpen(true)}
+                        onClick={() => {
+                            setFormData({
+                                id: 0,
+                                name: "",
+                                email: "",
+                                active: true,
+                            });
+                            setAddModalOpen(true);
+                        }}
                     >
                         <Plus className="w-4 h-4 mr-2" /> Add
                     </Button>
@@ -265,7 +367,20 @@ export const SalesPersonMaster: React.FC = () => {
             />
 
             {/* Add Modal */}
-            <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+            <Dialog open={addModalOpen}
+                // onOpenChange={setAddModalOpen}
+                onOpenChange={(open) => {
+                    setAddModalOpen(open);
+                    if (!open) {
+                        setFormData({
+                            id: 0,
+                            name: "",
+                            email: "",
+                            active: true,
+                        });
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add Salesperson</DialogTitle>
@@ -273,17 +388,25 @@ export const SalesPersonMaster: React.FC = () => {
 
                     <div className="space-y-4">
                         <div>
-                            <Label>Name</Label>
+                            <Label>Name <span className="text-red-500">*</span></Label>
                             <Input
                                 value={formData.name}
-                                onChange={(e) =>
-                                    setFormData((s) => ({ ...s, name: e.target.value }))
-                                }
+                                // onChange={(e) =>
+                                //     setFormData((s) => ({ ...s, name: e.target.value }))
+                                // }
+
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                        setFormData((s) => ({ ...s, name: value }));
+                                    }
+                                }}
+
                             />
                         </div>
 
                         <div>
-                            <Label>Email</Label>
+                            <Label>Email <span className="text-red-500">*</span></Label>
                             <Input
                                 value={formData.email}
                                 onChange={(e) =>
@@ -293,14 +416,14 @@ export const SalesPersonMaster: React.FC = () => {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <div className="flex justify-center mt-4 gap-3">
                         <Button onClick={handleAdd} disabled={submitting}>
                             {submitting ? 'Adding...' : 'Add'}
                         </Button>
-                        <Button variant="ghost" onClick={() => setAddModalOpen(false)}>
+                        <Button variant="outline" onClick={() => setAddModalOpen(false)}>
                             Cancel
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
 
@@ -313,17 +436,25 @@ export const SalesPersonMaster: React.FC = () => {
 
                     <div className="space-y-4">
                         <div>
-                            <Label>Name</Label>
+                            <Label>Name <span className="text-red-500">*</span></Label>
                             <Input
                                 value={formData.name}
-                                onChange={(e) =>
-                                    setFormData((s) => ({ ...s, name: e.target.value }))
-                                }
+                                // onChange={(e) =>
+                                //     setFormData((s) => ({ ...s, name: e.target.value }))
+                                // }
+
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                        setFormData((s) => ({ ...s, name: value }));
+                                    }
+                                }}
+
                             />
                         </div>
 
                         <div>
-                            <Label>Email</Label>
+                            <Label>Email <span className="text-red-500">*</span></Label>
                             <Input
                                 value={formData.email}
                                 onChange={(e) =>
@@ -333,14 +464,14 @@ export const SalesPersonMaster: React.FC = () => {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <div className="flex justify-center mt-4 gap-3">
                         <Button onClick={handleUpdate} disabled={submitting}>
-                            {submitting ? 'Saving...' : 'Save'}
+                            {submitting ? 'Updating...' : 'Update'}
                         </Button>
-                        <Button variant="ghost" onClick={() => setEditModalOpen(false)}>
+                        <Button variant="outline" onClick={() => setEditModalOpen(false)}>
                             Cancel
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

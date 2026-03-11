@@ -215,11 +215,23 @@ export const TaxSetupMaster: React.FC = () => {
   const validateForm = (form: typeof addForm): Record<string, string> => {
     const errs: Record<string, string> = {};
     if (!form.name.trim()) errs.name = 'Tax Name is required';
-    if (!form.percentage || parseFloat(form.percentage) < 0) errs.percentage = 'Valid Rate (%) is required';
+    const percentage = parseFloat(form.percentage);
+    if (!form.percentage) {
+      errs.percentage = 'Rate (%) is required';
+    } else if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+      errs.percentage = 'Rate (%) must be between 0 and 100';
+    }
     if (!form.tax_type) errs.tax_type = 'Tax Type is required';
     if (!form.lock_account_tax_section_id) errs.lock_account_tax_section_id = 'Section is required';
     if (!form.start_date) errs.start_date = 'Start Date is required';
     if (!form.end_date) errs.end_date = 'End Date is required';
+    if (form.start_date && form.end_date) {
+      const startDate = new Date(form.start_date);
+      const endDate = new Date(form.end_date);
+      if (endDate < startDate) {
+        errs.end_date = 'End Date must be on or after Start Date';
+      }
+    }
     if (form.higher_rate && !form.diff_rate_reason.trim()) errs.diff_rate_reason = 'Reason for Higher Rate is required';
     return errs;
   };
@@ -229,6 +241,10 @@ export const TaxSetupMaster: React.FC = () => {
     const errs = validateForm(addForm);
     if (Object.keys(errs).length > 0) {
       setAddErrors(errs);
+      // Show all errors as toast
+      Object.values(errs).forEach((msg) => {
+        if (msg) toast.error(msg);
+      });
       return;
     }
     setAddErrors({});
@@ -276,6 +292,10 @@ export const TaxSetupMaster: React.FC = () => {
     const errs = validateForm(editForm);
     if (Object.keys(errs).length > 0) {
       setEditErrors(errs);
+      // Show all errors as toast
+      Object.values(errs).forEach((msg) => {
+        if (msg) toast.error(msg);
+      });
       return;
     }
     setEditErrors({});
@@ -437,7 +457,7 @@ export const TaxSetupMaster: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="add-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                <Input
+                {/* <Input
                   id="add-percentage"
                   type="number"
                   value={addForm.percentage}
@@ -448,6 +468,31 @@ export const TaxSetupMaster: React.FC = () => {
                   placeholder="Enter tax rate"
                   className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   step="0.01"
+                /> */}
+
+                <Input
+                  id="add-percentage"
+                  type="number"
+                  value={addForm.percentage}
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  onChange={(e) => {
+                    let value = e.target.value;
+
+                    // Allow only numbers with up to 2 decimal places
+                    const regex = /^\d{0,3}(\.\d{0,2})?$/;
+
+                    if (!regex.test(value)) return;
+
+                    if (Number(value) > 100) value = "100";
+
+                    setAddForm((s) => ({ ...s, percentage: value }));
+
+                    if (value) setAddErrors((s) => ({ ...s, percentage: undefined }));
+                  }}
+                  placeholder="Enter tax rate"
+                  className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {addErrors.percentage && <p className="text-xs text-red-500">{addErrors.percentage}</p>}
               </div>
@@ -566,9 +611,17 @@ export const TaxSetupMaster: React.FC = () => {
                     id="add-end-date"
                     type="date"
                     value={addForm.end_date}
+                    min={addForm.start_date || undefined}
                     onChange={(e) => {
-                      setAddForm((s) => ({ ...s, end_date: e.target.value }));
-                      if (e.target.value) setAddErrors((s) => ({ ...s, end_date: undefined }));
+                      const val = e.target.value;
+                      // If selected end date is before start date, clear it
+                      if (addForm.start_date && val && val < addForm.start_date) {
+                        setAddForm((s) => ({ ...s, end_date: '' }));
+                        setAddErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
+                      } else {
+                        setAddForm((s) => ({ ...s, end_date: val }));
+                        if (val) setAddErrors((s) => ({ ...s, end_date: undefined }));
+                      }
                     }}
                     className={addErrors.end_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
@@ -577,9 +630,12 @@ export const TaxSetupMaster: React.FC = () => {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex flex-row gap-2 justify-end">
+            <Button onClick={handleAddTax} disabled={addSubmitting}>
+              {addSubmitting ? 'Saving...' : 'Save'}
+            </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => {
                 setAddModalOpen(false);
                 setAddErrors({});
@@ -598,9 +654,6 @@ export const TaxSetupMaster: React.FC = () => {
               disabled={addSubmitting}
             >
               Cancel
-            </Button>
-            <Button onClick={handleAddTax} disabled={addSubmitting}>
-              {addSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -656,7 +709,7 @@ export const TaxSetupMaster: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="edit-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                  <Input
+                  {/* <Input
                     id="edit-percentage"
                     type="number"
                     value={editForm.percentage}
@@ -667,6 +720,30 @@ export const TaxSetupMaster: React.FC = () => {
                     placeholder="Enter tax rate"
                     className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     step="0.01"
+                  /> */}
+
+                  <Input
+                    id="edit-percentage"
+                    type="number"
+                    value={editForm.percentage}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      const regex = /^\d{0,3}(\.\d{0,2})?$/;
+
+                      if (!regex.test(value)) return;
+
+                      if (Number(value) > 100) value = "100";
+
+                      setEditForm((s) => ({ ...s, percentage: value }));
+
+                      if (value) setEditErrors((s) => ({ ...s, percentage: undefined }));
+                    }}
+                    placeholder="Enter tax rate"
+                    className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
                   {editErrors.percentage && <p className="text-xs text-red-500">{editErrors.percentage}</p>}
                 </div>
@@ -785,9 +862,16 @@ export const TaxSetupMaster: React.FC = () => {
                       id="edit-end-date"
                       type="date"
                       value={editForm.end_date}
+                      min={editForm.start_date || undefined}
                       onChange={(e) => {
-                        setEditForm((s) => ({ ...s, end_date: e.target.value }));
-                        if (e.target.value) setEditErrors((s) => ({ ...s, end_date: undefined }));
+                        const val = e.target.value;
+                        if (editForm.start_date && val && val < editForm.start_date) {
+                          setEditForm((s) => ({ ...s, end_date: '' }));
+                          setEditErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
+                        } else {
+                          setEditForm((s) => ({ ...s, end_date: val }));
+                          if (val) setEditErrors((s) => ({ ...s, end_date: undefined }));
+                        }
                       }}
                       className={editErrors.end_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
@@ -797,9 +881,12 @@ export const TaxSetupMaster: React.FC = () => {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex flex-row gap-2 justify-end">
+            <Button onClick={handleEditTax} disabled={editSubmitting || editLoading}>
+              {editSubmitting ? 'Updating...' : 'Update'}
+            </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => {
                 setEditModalOpen(false);
                 setEditErrors({});
@@ -819,9 +906,6 @@ export const TaxSetupMaster: React.FC = () => {
               disabled={editSubmitting}
             >
               Cancel
-            </Button>
-            <Button onClick={handleEditTax} disabled={editSubmitting || editLoading}>
-              {editSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

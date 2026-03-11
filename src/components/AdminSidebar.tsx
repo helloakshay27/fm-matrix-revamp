@@ -55,7 +55,7 @@ const adminNavigationStructure = {
           // { name: "FM Users", href: "/ops-console/master/user/fm-users" },
           { name: "Admin Users", href: "/ops-console/admin/users" },
           // { name: "Create Admin User", href: "/ops-console/admin/create-admin-user" },
-          { name: "Roles", href: "/ops-console/settings/roles/role" },
+          { name: "Roles", href: `${window.location.hostname === "localhost" ? "/ops-console/settings/vi-roles/role" : "/ops-console/settings/roles/role"}` },
           {
             name: "Locked Users",
             href: "/ops-console/settings/account/locked-users",

@@ -133,7 +133,7 @@ export const ManualJournalDetails = () => {
         currency: "",
         journalRows: [],
 
-        //   createdAt: "",
+          createdAt: "",
         //   createdBy: "",
         //   active: true,
     });
@@ -173,12 +173,14 @@ export const ManualJournalDetails = () => {
                 journalNo: data.voucher_number || "",
                 referenceNo: data.reference || "",
                 notes: data.description || "",
-                reportingMethod: "", // Not present in API
+                reportingMethod: data.reporting_method || "", // Not present in API
                 currency: "", // Not present in API
+                createdAt:data.created_at,
                 journalRows: Array.isArray(data.records) ? data.records.map((rec: any) => ({
                     accountName: rec.ledger_name || "",
                     description: data.description || "",
                     contactName: "", // Not present in API
+                    resource:rec.resource || "",
                     debit: rec.tr_type === "dr" ? rec.amount.toFixed(2) : "0.00",
                     credit: rec.tr_type === "cr" ? rec.amount.toFixed(2) : "0.00",
                 })) : [],
@@ -262,13 +264,13 @@ export const ManualJournalDetails = () => {
                             </div>
 
                             {/* Journal# */}
-                            <div className="flex items-start">
+                            {/* <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Journal#</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {formData.journalNo || "-"}
                                 </span>
-                            </div>
+                            </div> */}
 
                             {/* Reference# */}
                             <div className="flex items-start">
@@ -298,13 +300,13 @@ export const ManualJournalDetails = () => {
                             </div>
 
                             {/* Currency */}
-                            <div className="flex items-start">
+                            {/* <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Currency</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {formData.currency || "-"}
                                 </span>
-                            </div>
+                            </div> */}
 
                             {/* Created On */}
                             <div className="flex items-start">
@@ -318,22 +320,22 @@ export const ManualJournalDetails = () => {
                             </div>
 
                             {/* Created By */}
-                            <div className="flex items-start">
+                            {/* <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Created By</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {formData.createdBy || "-"}
                                 </span>
-                            </div>
+                            </div> */}
 
                             {/* Status */}
-                            <div className="flex items-start">
+                            {/* <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Status</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
                                     {formData.active ? "Active" : "Inactive"}
                                 </span>
-                            </div>
+                            </div> */}
 
                         </div>
 
@@ -359,7 +361,7 @@ export const ManualJournalDetails = () => {
                                                 <tr key={idx} className="bg-white text-sm">
                                                     <td className="px-3 py-2 border-t border-gray-200">{row.accountName || '-'}</td>
                                                     <td className="px-3 py-2 border-t border-gray-200">{row.note || '-'}</td>
-                                                    <td className="px-3 py-2 border-t border-gray-200">{row.contactName || '-'}</td>
+                                                    <td className="px-3 py-2 border-t border-gray-200">{row.resource || '-'}</td>
                                                     <td className="px-3 py-2 border-t border-gray-200">{row.debit || '0.00'}</td>
                                                     <td className="px-3 py-2 border-t border-gray-200">{row.credit || '0.00'}</td>
                                                 </tr>
@@ -375,7 +377,7 @@ export const ManualJournalDetails = () => {
                         </div>
 
                     </div>
-
+{console.log("formData.journalRows:",formData.journalRows)}
                     {/* Subtotal Card */}
 
 
