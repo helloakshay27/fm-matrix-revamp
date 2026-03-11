@@ -130,7 +130,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1&q[active_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
