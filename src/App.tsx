@@ -1053,6 +1053,13 @@ import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashbo
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
 import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
+import DetailsSaleCustomerReport from "./pages/ClubManagement/DetailsSaleCustomerReport";
+import SalesByItemReport from "./pages/ClubManagement/SalesByItemReport";
+import DetailsSalesByItemReport from "./pages/ClubManagement/DetailsSalesByItemReport";
+import SalesBySalesPersonReport from "./pages/ClubManagement/SalesBySalesPersonReport";
+import SalesSummaryReport from "./pages/ClubManagement/SalesSummaryReport";
+import SalesByCustomerReport from "./pages/ClubManagement/SalesByCustomerReport";
+
 import EditBudget from "./pages/ClubManagement/BudgetEdit";
 import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
@@ -1132,87 +1139,87 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
-  // useEffect(() => {
-  //   console.warn("🔌 WebSocket connection effect running");
+  useEffect(() => {
+    console.warn("🔌 WebSocket connection effect running");
 
-  //   if (token) {
-  //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
-  //   } else {
-  //     console.error("❌ No token available for WebSocket connection");
-  //   }
+    if (token) {
+      console.warn("✅ Token available, connecting...");
+      connect(token, socketUrl);
+    } else {
+      console.error("❌ No token available for WebSocket connection");
+    }
 
-  //   return () => {
-  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
-  //   };
-  // }, [token, connect, socketUrl]);
+    return () => {
+      console.warn("🧹 Cleaning up WebSocket subscriptions");
+    };
+  }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
-  // useEffect(() => {
-  //   const subscriptionTimer = setTimeout(() => {
-  //     const sub = webSocketManager.subscribeToUserNotifications({
-  //       onConnected: () => {
-  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
-  //         setIsSubscribed(true);
-  //         toast.success("Real-time notifications enabled!", {
-  //           duration: 2000,
-  //         });
-  //       },
-  //       onMessageNotification: (message) => {
-  //         console.warn("📨 Received notification:", message);
-  //         if (message.user_id !== currentUser.id) {
-  //           return;
-  //         }
+  useEffect(() => {
+    const subscriptionTimer = setTimeout(() => {
+      const sub = webSocketManager.subscribeToUserNotifications({
+        onConnected: () => {
+          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
+          setIsSubscribed(true);
+          toast.success("Real-time notifications enabled!", {
+            duration: 2000,
+          });
+        },
+        onMessageNotification: (message) => {
+          console.warn("📨 Received notification:", message);
+          if (message.user_id !== currentUser.id) {
+            return;
+          }
 
-  //         // Add notification to context
-  //         const notification = {
-  //           id: message.id || Date.now(),
-  //           title: message.title || "New Notification",
-  //           message: message.body || message.message || "You have a new notification",
-  //           ntype: message.ntype,
-  //           type: message.type,
-  //           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-  //           read: false,
-  //           payload: message.payload,
-  //         };
+          // Add notification to context
+          const notification = {
+            id: message.id || Date.now(),
+            title: message.title || "New Notification",
+            message: message.body || message.message || "You have a new notification",
+            ntype: message.ntype,
+            type: message.type,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            read: false,
+            payload: message.payload,
+          };
 
-  //         addNotification(notification);
+          addNotification(notification);
 
-  //         // Show browser notification
-  //         if ("Notification" in window) {
-  //           Notification.requestPermission().then((permission) => {
-  //             if (permission === "granted") {
-  //               const notif = new Notification(notification.title, {
-  //                 body: notification.message,
-  //                 icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
-  //               });
+          // Show browser notification
+          if ("Notification" in window) {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                const notif = new Notification(notification.title, {
+                  body: notification.message,
+                  icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
+                });
 
-  //               notif.onclick = () => {
-  //                 window.focus();
-  //                 if (message.ntype === "conversation") {
-  //                   navigate(`/vas/channels/messages/${message.conversation_id}`);
-  //                 } else if (message.ntype === "projectspace") {
-  //                   navigate(`/vas/channels/groups/${message.project_space_id}`);
-  //                 }
-  //               };
-  //             }
-  //           });
-  //         }
-  //       },
-  //       onDisconnected: () => {
-  //         console.warn("❌ Notification subscription disconnected");
-  //         setIsSubscribed(false);
-  //         toast.error("Real-time notifications disconnected");
-  //       },
-  //     });
-  //     console.warn("📋 Subscription object:", sub);
-  //   }, 2000); // Wait 2 seconds for connection to establish
+                notif.onclick = () => {
+                  window.focus();
+                  if (message.ntype === "conversation") {
+                    navigate(`/vas/channels/messages/${message.conversation_id}`);
+                  } else if (message.ntype === "projectspace") {
+                    navigate(`/vas/channels/groups/${message.project_space_id}`);
+                  }
+                };
+              }
+            });
+          }
+        },
+        onDisconnected: () => {
+          console.warn("❌ Notification subscription disconnected");
+          setIsSubscribed(false);
+          toast.error("Real-time notifications disconnected");
+        },
+      });
+      console.warn("📋 Subscription object:", sub);
+    }, 2000); // Wait 2 seconds for connection to establish
 
-  //   return () => {
-  //     console.warn("⏰ Clearing subscription timer");
-  //     clearTimeout(subscriptionTimer);
-  //   };
-  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
+    return () => {
+      console.warn("⏰ Clearing subscription timer");
+      clearTimeout(subscriptionTimer);
+    };
+  }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
 
   return <>{children}</>;
 };
@@ -1284,73 +1291,73 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
-  // useEffect(() => {
-  //   console.warn("🔌 WebSocket connection effect running");
+  useEffect(() => {
+    console.warn("🔌 WebSocket connection effect running");
 
-  //   if (token) {
-  //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
-  //   } else {
-  //     console.error("❌ No token available for WebSocket connection");
-  //   }
+    if (token) {
+      console.warn("✅ Token available, connecting...");
+      connect(token, socketUrl);
+    } else {
+      console.error("❌ No token available for WebSocket connection");
+    }
 
-  //   return () => {
-  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
-  //   };
-  // }, [token, connect, socketUrl]);
+    return () => {
+      console.warn("🧹 Cleaning up WebSocket subscriptions");
+    };
+  }, [token, connect, socketUrl]);
 
-  // useEffect(() => {
-  //   const subscriptionTimer = setTimeout(() => {
-  //     const sub = webSocketManager.subscribeToUserNotifications({
-  //       onConnected: () => {
-  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
-  //         setIsSubscribed(true);
-  //         toast.success("Real-time connection established!", {
-  //           duration: 2000,
-  //         });
-  //       },
-  //       onMessageNotification: (message) => {
-  //         console.warn(message);
-  //         if (message.user_id !== currentUser.id) {
-  //           return;
-  //         }
+  useEffect(() => {
+    const subscriptionTimer = setTimeout(() => {
+      const sub = webSocketManager.subscribeToUserNotifications({
+        onConnected: () => {
+          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+          setIsSubscribed(true);
+          toast.success("Real-time connection established!", {
+            duration: 2000,
+          });
+        },
+        onMessageNotification: (message) => {
+          console.warn(message);
+          if (message.user_id !== currentUser.id) {
+            return;
+          }
 
-  //         if (!("Notification" in window)) {
-  //           toast.error("Not supported");
-  //           return;
-  //         }
+          if (!("Notification" in window)) {
+            toast.error("Not supported");
+            return;
+          }
 
-  //         Notification.requestPermission().then((permission) => {
-  //           if (permission === "granted") {
-  //             const notification = new Notification("New Message Received", {
-  //               body: message.body,
-  //             });
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+              const notification = new Notification("New Message Received", {
+                body: message.body,
+              });
 
-  //             notification.onclick = () => {
-  //               window.focus();
-  //               if (message.ntype === "conversation") {
-  //                 navigate(`/vas/channels/messages/${message.conversation_id}`);
-  //               } else if (message.ntype === "projectspace") {
-  //                 navigate(`/vas/channels/groups/${message.project_space_id}`);
-  //               }
-  //             };
-  //           }
-  //         });
-  //       },
-  //       onDisconnected: () => {
-  //         console.warn("❌ Chat subscription disconnected");
-  //         setIsSubscribed(false);
-  //         toast.error("Real-time chat disconnected");
-  //       },
-  //     });
-  //     console.warn("📋 Subscription object:", sub);
-  //   }, 2000); // Wait 2 seconds for connection to establish
+              notification.onclick = () => {
+                window.focus();
+                if (message.ntype === "conversation") {
+                  navigate(`/vas/channels/messages/${message.conversation_id}`);
+                } else if (message.ntype === "projectspace") {
+                  navigate(`/vas/channels/groups/${message.project_space_id}`);
+                }
+              };
+            }
+          });
+        },
+        onDisconnected: () => {
+          console.warn("❌ Chat subscription disconnected");
+          setIsSubscribed(false);
+          toast.error("Real-time chat disconnected");
+        },
+      });
+      console.warn("📋 Subscription object:", sub);
+    }, 2000); // Wait 2 seconds for connection to establish
 
-  //   return () => {
-  //     console.warn("⏰ Clearing subscription timer");
-  //     clearTimeout(subscriptionTimer);
-  //   };
-  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+    return () => {
+      console.warn("⏰ Clearing subscription timer");
+      clearTimeout(subscriptionTimer);
+    };
+  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
@@ -2433,6 +2440,33 @@ function App() {
                             path="/accounting/reports/balance-sheet"
                             element={<BalanceSheetReport />}
                           />
+                          <Route
+                            path="/accounting/reports/sales-by-customer"
+                            element={<SalesByCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-customer/details/:customerName"
+                            element={<DetailsSaleCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-item"
+                            element={<SalesByItemReport />}
+
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-item/details/:itemName"
+                            element={<DetailsSalesByItemReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-sales-person"
+                            element={<SalesBySalesPersonReport />}
+                          />
+
+
+                          <Route
+                            path="/accounting/reports/sales-summary"
+                            element={<SalesSummaryReport />}
+                          />
 
                           <Route
                             path="/accounting/reports/balance-sheet/details/:id"
@@ -2445,7 +2479,7 @@ function App() {
 
                           <Route
                             path="/accounting/reports/trial-balance/details/:id"
-                            element={<TrialBalanceDetails/>}
+                            element={<TrialBalanceDetails />}
                           />
                           {/* <Route */}
                           <Route
@@ -2463,7 +2497,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/reports/tax-summary/details/:id"
-                            element={<TaxSummaryDetails/>}
+                            element={<TaxSummaryDetails />}
                           />
                           {/* <Route */}
                           <Route
@@ -2474,12 +2508,12 @@ function App() {
                             path="/accounting/reports/gst-payable/details/:id"
                             element={<GSTPayableDetails />}
                           />
-                           <Route
+                          <Route
                             path="/accounting/reports/gst-receivable"
-                            element={<GstReceivableReport/>}
+                            element={<GstReceivableReport />}
                           />
 
-                           <Route
+                          <Route
                             path="/accounting/reports/gst-receivable/details/:id"
                             element={<GSTReceivableDetails />}
                           />

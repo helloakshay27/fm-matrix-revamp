@@ -7,11 +7,18 @@ import {
     Select,
     FormControl,
     InputAdornment,
-    IconButton
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    InputLabel
 } from '@mui/material';
+import { RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import {
     Close,
-    CloudUpload
+    CloudUpload,
+    Search
 } from '@mui/icons-material';
 import { Receipt, FileText } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
@@ -55,10 +62,26 @@ export const ExpenseCreatePage: React.FC = () => {
     const [amount, setAmount] = useState('');
     const [currency, setCurrency] = useState('INR');
     const [paidThrough, setPaidThrough] = useState('');
+    const [expenseType, setExpenseType] = useState<'goods' | 'services'>('goods');
+    const [hsnCode, setHsnCode] = useState('');
+    const [sacCode, setSacCode] = useState('');
     const [vendor, setVendor] = useState('');
+    const [gstTreatment, setGstTreatment] = useState('');
+    const [sourceOfSupply, setSourceOfSupply] = useState('');
+    const [destinationOfSupply, setDestinationOfSupply] = useState('');
+    const [reverseCharge, setReverseCharge] = useState(false);
+    const [taxId, setTaxId] = useState('');
+    const [amountIs, setAmountIs] = useState<'inclusive' | 'exclusive'>('exclusive');
+    const [invoiceNumber, setInvoiceNumber] = useState('');
+    const [notes, setNotes] = useState('');
+    const [customer, setCustomer] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
     const [description, setDescription] = useState('');
     const [receipts, setReceipts] = useState<File[]>([]);
+
+    // reporting tags modal
+    const [showTagModal, setShowTagModal] = useState(false);
+    const [reportingTagAccount, setReportingTagAccount] = useState('');
 
     // Dropdowns data
     const [accountLedgers, setAccountLedgers] = useState<AccountLedger[]>([]);
@@ -176,10 +199,34 @@ export const ExpenseCreatePage: React.FC = () => {
         if (!expenseAccount) newErrors.expenseAccount = 'Expense account is required';
         if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Valid amount is required';
         if (!paidThrough) newErrors.paidThrough = 'Paid through is required';
+        // optionally validate HSN/SAC codes depending on type
+        if (expenseType === 'goods' && !hsnCode) newErrors.hsnCode = 'HSN code is required for goods';
+        if (expenseType === 'services' && !sacCode) newErrors.sacCode = 'SAC code is required for services';
+        if (!gstTreatment) newErrors.gstTreatment = 'GST treatment is required';
+        if (!sourceOfSupply) newErrors.sourceOfSupply = 'Source of supply is required';
+        if (!destinationOfSupply) newErrors.destinationOfSupply = 'Destination of supply is required';
+        if (!taxId) newErrors.taxId = 'Tax selection is required';
+        if (!invoiceNumber) newErrors.invoiceNumber = 'Invoice number is required';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+    // clear irrelevant code when expense type changes
+    useEffect(() => {
+        if (expenseType === 'goods') {
+            setSacCode('');
+        } else {
+            setHsnCode('');
+        }
+        // also clear any related errors
+        setErrors(prev => {
+            const copy = { ...prev };
+            delete copy.hsnCode;
+            delete copy.sacCode;
+            return copy;
+        });
+    }, [expenseType]);
 
     // Handle submit
     const handleSubmit = async () => {
@@ -205,8 +252,20 @@ export const ExpenseCreatePage: React.FC = () => {
                     reference_number: referenceNumber,
                     description: description,
                     organization_id: parseInt(organizationId),
-                    customer_id: null, // Blank for now as per requirement
+                    customer_id: customer ? parseInt(customer) : null,
                     vendor_id: vendor ? parseInt(vendor) : null
+                    ,
+                    expense_type: expenseType,
+                    hsn_code: expenseType === 'goods' ? hsnCode : null,
+                    sac_code: expenseType === 'services' ? sacCode : null,
+                    gst_treatment: gstTreatment || null,
+                    source_of_supply: sourceOfSupply || null,
+                    destination_of_supply: destinationOfSupply || null,
+                    reverse_charge: reverseCharge,
+                    tax_id: taxId || null,
+                    amount_is: amountIs,
+                    invoice_number: invoiceNumber,
+                    notes: notes,
                 }
             };
 
@@ -368,6 +427,53 @@ export const ExpenseCreatePage: React.FC = () => {
                             </FormControl>
                         </div>
 
+                        {/* Expense type radio and conditional codes */}
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium mb-2">
+                                Expense Type
+                            </label>
+                            <RadioGroup
+                                row
+                                value={expenseType}
+                                onChange={(e) => setExpenseType(e.target.value as 'goods' | 'services')}
+                            >
+                                <FormControlLabel value="goods" control={<Radio />} label="Goods" />
+                                <FormControlLabel value="services" control={<Radio />} label="Services" />
+                            </RadioGroup>
+                        </div>
+
+                        {expenseType === 'goods' && (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    HSN Code <span className="text-red-500">*</span>
+                                </label>
+                                <TextField
+                                    fullWidth
+                                    value={hsnCode}
+                                    onChange={(e) => setHsnCode(e.target.value)}
+                                    placeholder="Enter HSN code"
+                                    error={!!errors.hsnCode}
+                                    helperText={errors.hsnCode}
+                                />
+                            </div>
+                        )}
+
+                        {expenseType === 'services' && (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    SAC Code <span className="text-red-500">*</span>
+                                </label>
+                                <TextField
+                                    fullWidth
+                                    value={sacCode}
+                                    onChange={(e) => setSacCode(e.target.value)}
+                                    placeholder="Enter SAC code"
+                                    error={!!errors.sacCode}
+                                    helperText={errors.sacCode}
+                                />
+                            </div>
+                        )}
+
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Vendor
@@ -392,7 +498,185 @@ export const ExpenseCreatePage: React.FC = () => {
                             </FormControl>
                         </div>
 
+                        {/* Additional tax/GST fields */}
                         <div>
+                            <label className="block text-sm font-medium mb-2">
+                                GST Treatment<span className="text-red-500">*</span>
+                            </label>
+                            <FormControl fullWidth error={!!errors.gstTreatment}>
+                                <Select
+                                    value={gstTreatment}
+                                    onChange={(e) => setGstTreatment(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select treatment
+                                    </MenuItem>
+                                    {/* TODO: populate with real options */}
+                                    <MenuItem value="taxable">Taxable</MenuItem>
+                                    <MenuItem value="exempt">Exempt</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Source of Supply<span className="text-red-500">*</span>
+                            </label>
+                            <FormControl fullWidth error={!!errors.sourceOfSupply}>
+                                <Select
+                                    value={sourceOfSupply}
+                                    onChange={(e) => setSourceOfSupply(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>
+                                        State/Province
+                                    </MenuItem>
+                                    {/* placeholder states */}
+                                    <MenuItem value="MH">[MH] - Maharashtra</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Destination of Supply<span className="text-red-500">*</span>
+                            </label>
+                            <FormControl fullWidth error={!!errors.destinationOfSupply}>
+                                <Select
+                                    value={destinationOfSupply}
+                                    onChange={(e) => setDestinationOfSupply(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select destination
+                                    </MenuItem>
+                                    <MenuItem value="MH">[MH] - Maharashtra</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div>
+
+                        <div className="md:col-span-2 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="reverseCharge"
+                                checked={reverseCharge}
+                                onChange={(e) => setReverseCharge(e.target.checked)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="reverseCharge" className="text-sm">
+                                This transaction is applicable for reverse charge
+                            </label>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Tax
+                            </label>
+                            <FormControl fullWidth error={!!errors.taxId}>
+                                <Select
+                                    value={taxId}
+                                    onChange={(e) => setTaxId(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select a Tax
+                                    </MenuItem>
+                                    {/* TODO: populate dynamic tax options */}
+                                    <MenuItem value="1">GST 5%</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium mb-2">
+                                Amount Is
+                            </label>
+                            <RadioGroup
+                                row
+                                value={amountIs}
+                                onChange={(e) => setAmountIs(e.target.value as 'inclusive' | 'exclusive')}
+                            >
+                                <FormControlLabel value="inclusive" control={<Radio />} label="Tax Inclusive" />
+                                <FormControlLabel value="exclusive" control={<Radio />} label="Tax Exclusive" />
+                            </RadioGroup>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Invoice#<span className="text-red-500">*</span>
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={invoiceNumber}
+                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                                placeholder="Enter invoice number"
+                                error={!!errors.invoiceNumber}
+                                helperText={errors.invoiceNumber}
+                                sx={fieldStyles}
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium mb-2">
+                                Notes
+                            </label>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Max. 500 characters"
+                            />
+                        </div>
+
+                        {/* Customer selection (optional) with reporting tags link */}
+                        <div className="md:col-span-2 flex items-start gap-6">
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium mb-2">
+                                    Customer Name
+                                </label>
+                                <FormControl fullWidth>
+                                    <Select
+                                        value={customer}
+                                        onChange={(e) => setCustomer(e.target.value)}
+                                        displayEmpty
+                                        sx={fieldStyles}
+                                        endAdornment={
+                                            <InputAdornment position="end">
+                                                <IconButton size="small">
+                                                    <Search fontSize="small" />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        }
+                                    >
+                                        <MenuItem value="">
+                                            Select or add a customer
+                                        </MenuItem>
+                                        {/* TODO: populate customer list */}
+                                    </Select>
+                                </FormControl>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="block text-sm font-medium mb-2">
+                                    Reporting Tags
+                                </label>
+                                <button
+                                    type="button"
+                                    className="text-sm text-primary hover:underline"
+                                    onClick={() => setShowTagModal(true)}
+                                >
+                                    Associate Tags
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* <div>
                             <label className="block text-sm font-medium mb-2">
                                 Reference #
                             </label>
@@ -403,9 +687,9 @@ export const ExpenseCreatePage: React.FC = () => {
                                 placeholder="Enter reference number"
                                 sx={fieldStyles}
                             />
-                        </div>
+                        </div> */}
 
-                        <div className="md:col-span-2">
+                        {/* <div className="md:col-span-2">
                             <label className="block text-sm font-medium mb-2">
                                 Description
                             </label>
@@ -417,9 +701,58 @@ export const ExpenseCreatePage: React.FC = () => {
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Enter description"
                             />
-                        </div>
+                        </div> */}
                     </div>
                 </Section>
+
+                {/* reporting tags modal */}
+                <Dialog
+                    open={showTagModal}
+                    onClose={() => setShowTagModal(false)}
+                    fullWidth
+                    maxWidth="xs"
+                >
+                    <DialogTitle className="flex items-center justify-between">
+                        <span>Associate Tags</span>
+                        <IconButton size="small" onClick={() => setShowTagModal(false)}>
+                            <Close />
+                        </IconButton>
+                    </DialogTitle>
+                    <DialogContent dividers>
+                        <FormControl fullWidth size="small">
+                            <InputLabel id="tag-account-label">Accounts</InputLabel>
+                            <Select
+                                labelId="tag-account-label"
+                                value={reportingTagAccount}
+                                label="Accounts"
+                                onChange={(e) => setReportingTagAccount(e.target.value)}
+                                sx={{ minWidth: 120 }}
+                            >
+                                <MenuItem value="">None</MenuItem>
+                                {/* TODO: populate real tag accounts */}
+                            </Select>
+                        </FormControl>
+                    </DialogContent>
+                    <DialogActions sx={{ px: 3, py: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => setShowTagModal(false)}
+                            size="small"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                                console.log('selected tag account', reportingTagAccount);
+                                setShowTagModal(false);
+                            }}
+                        >
+                            Save
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
                 {/* Receipts Section */}
                 <Section title="Receipts" icon={<FileText className="w-5 h-5" />}>

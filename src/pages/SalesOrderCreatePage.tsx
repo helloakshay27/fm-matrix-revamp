@@ -694,6 +694,26 @@ export const SalesOrderCreatePage: React.FC = () => {
 
             // Build FormData for sale order
             const formData = new FormData();
+
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'sale_order[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'sale_order[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'sale_order[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('sale_order[lock_account_customer_id]', selectedCustomer?.id || '');
             formData.append('sale_order[reference_number]', referenceNumber);
             formData.append('sale_order[date]', salesOrderDate);

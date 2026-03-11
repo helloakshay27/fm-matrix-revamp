@@ -740,6 +740,25 @@ export const VendorCreditsAdd: React.FC = () => {
 
             // Build FormData for sale order
             const formData = new FormData();
+               const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_supplier_credit[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_supplier_credit[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_supplier_credit[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
             formData.append('lock_account_supplier_credit[order_number]', referenceNumber);
             formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
