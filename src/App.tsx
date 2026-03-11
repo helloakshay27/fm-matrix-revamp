@@ -1053,6 +1053,13 @@ import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashbo
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import CustomersAdd from "./pages/ClubManagement/CustomersAdd";
 import CustomersDashboard from "./pages/ClubManagement/CustomersDashboard";
+import DetailsSaleCustomerReport from "./pages/ClubManagement/DetailsSaleCustomerReport";
+import SalesByItemReport from "./pages/ClubManagement/SalesByItemReport";
+import DetailsSalesByItemReport from "./pages/ClubManagement/DetailsSalesByItemReport";
+import SalesBySalesPersonReport from "./pages/ClubManagement/SalesBySalesPersonReport";
+import SalesSummaryReport from "./pages/ClubManagement/SalesSummaryReport";
+import SalesByCustomerReport from "./pages/ClubManagement/SalesByCustomerReport";
+
 import EditBudget from "./pages/ClubManagement/BudgetEdit";
 import GstPayableReport from "./pages/ClubManagement/GstPayableReport";
 import ItemsAdd from "./pages/ClubManagement/ItemsAdd";
@@ -2432,6 +2439,33 @@ function App() {
                           <Route
                             path="/accounting/reports/balance-sheet"
                             element={<BalanceSheetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-customer"
+                            element={<SalesByCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-customer/details/:customerName"
+                            element={<DetailsSaleCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-item"
+                            element={<SalesByItemReport />}
+
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-item/details/:itemName"
+                            element={<DetailsSalesByItemReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-by-sales-person"
+                            element={<SalesBySalesPersonReport />}
+                          />
+
+
+                          <Route
+                            path="/accounting/reports/sales-summary"
+                            element={<SalesSummaryReport />}
                           />
 
                           <Route
