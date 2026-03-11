@@ -782,6 +782,25 @@ export const BillsAdd: React.FC = () => {
 
             // Build FormData for sale order
             const formData = new FormData();
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_bill[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_bill[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_bill[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('lock_account_bill[pms_supplier_id]', selectedCustomer?.id || '');
             formData.append('lock_account_bill[order_number]', referenceNumber);
             formData.append('lock_account_bill[bill_date]', salesOrderDate);

@@ -636,6 +636,26 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
 
             // Build FormData for invoice
             const formData = new FormData();
+
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_invoice[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_invoice[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_invoice[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('lock_account_invoice[lock_account_customer_id]', selectedCustomer?.id || '');
             formData.append('lock_account_invoice[order_number]', referenceNumber);
             formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
