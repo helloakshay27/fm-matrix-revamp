@@ -114,6 +114,7 @@ interface CheckpointData {
   updated_at: string;
   qr_code_available: boolean;
   qr_code_url?: string;
+  location_qr_code_url?: string | null;
   building_name?: string;
   wing_name?: string;
   floor_name?: string;
@@ -1402,7 +1403,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Area</TableHead>
                         <TableHead>Floor</TableHead>
                         <TableHead>Room</TableHead>
-                        {/* <TableHead>QR Code</TableHead> */}
+                        <TableHead>QR Code</TableHead>
                         <TableHead>Created On</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1439,97 +1440,44 @@ export const PatrollingDetailPage: React.FC = () => {
                               <TableCell className="text-sm">
                                 {checkpoint.room_name || "—"}
                               </TableCell>
-                            
-                              {/* <TableCell>
-                                {checkpoint.qr_code_available ? (
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="default"
-                                      className="text-xs"
-                                    >
-                                      <QrCode className="w-3 h-3 mr-1" />
-                                      Available
-                                    </Badge>
-                                    {checkpoint.qr_code_url && (
-                                      <div className="flex gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            window.open(
-                                              checkpoint.qr_code_url,
-                                              "_blank"
-                                            )
-                                          }
-                                          className="p-1 h-6 w-6"
-                                          title="View QR Code"
-                                        >
-                                          <Eye className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            try {
-                                              const baseUrl = API_CONFIG.BASE_URL;
-                                              const token = API_CONFIG.TOKEN;
 
-                                              if (!baseUrl || !token) {
-                                                throw new Error("API configuration is missing");
-                                              }
-
-                                              // Use the new API endpoint for downloading QR codes
-                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpoint.id}]`);
-
-                                              const response = await fetch(apiUrl, {
-                                                method: "GET",
-                                                headers: {
-                                                  "Content-Type": "application/json",
-                                                  Accept: "application/json",
-                                                  Authorization: getAuthHeader(),
-                                                },
-                                              });
-
-                                              if (!response.ok) {
-                                                throw new Error(`HTTP error! status: ${response.status}`);
-                                              }
-
-                                              const blob = await response.blob();
-                                              const url = window.URL.createObjectURL(blob);
-                                              const a = document.createElement("a");
-                                              a.href = url;
-                                              a.download = `checkpoint_${checkpoint.id}_qr_code.pdf`;
-                                              document.body.appendChild(a);
-                                              a.click();
-                                              window.URL.revokeObjectURL(url);
-                                              document.body.removeChild(a);
-                                              toast.success(
-                                                "QR Code downloaded successfully!"
-                                              );
-                                            } catch (error: any) {
-                                              console.error('Error downloading QR Code:', error);
-                                              toast.error(
-                                                `Failed to download QR Code: ${error.message}`
-                                              );
-                                            }
-                                          }}
-                                          className="p-1 h-6 w-6"
-                                          title="Download QR Code"
-                                        >
-                                          <Download className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
+                              {/* QR Code column */}
+                              <TableCell>
+                                {checkpoint.location_qr_code_url ? (
+                                  <button
+                                    onClick={() => window.open(checkpoint.location_qr_code_url!, '_blank')}
+                                    className="group relative flex items-center justify-center"
+                                    title="Click to open QR code"
                                   >
-                                    Not Available
-                                  </Badge>
+                                    <img
+                                      src={checkpoint.location_qr_code_url}
+                                      alt={`QR Code – ${checkpoint.name}`}
+                                      className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
+                                    />
+                                    <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Eye className="w-4 h-4 text-[#C72030]" />
+                                    </span>
+                                  </button>
+                                ) : checkpoint.qr_code_url ? (
+                                  <button
+                                    onClick={() => window.open(checkpoint.qr_code_url!, '_blank')}
+                                    className="group relative flex items-center justify-center"
+                                    title="Click to open QR code"
+                                  >
+                                    <img
+                                      src={checkpoint.qr_code_url}
+                                      alt={`QR Code – ${checkpoint.name}`}
+                                      className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
+                                    />
+                                    {/* <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Eye className="w-4 h-4 text-[#C72030]" />
+                                    </span> */}
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-gray-400">—</span>
                                 )}
-                              </TableCell> */}
+                              </TableCell>
+
                               <TableCell className="text-xs text-gray-600">
                                 {formatDateTime(checkpoint.created_at)}
                               </TableCell>
@@ -1538,7 +1486,7 @@ export const PatrollingDetailPage: React.FC = () => {
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={9}
+                            colSpan={10}
                             className="text-center text-gray-600"
                           >
                             No checkpoints available.
