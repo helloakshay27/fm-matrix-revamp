@@ -319,6 +319,29 @@ const modulesByPackage = {
                     name: "GST Payable",
                     href: "/accounting/reports/gst-payable",
                 },
+
+{
+  name: "Sales Reports",
+  icon: FileText, 
+  subItems: [
+    {
+      name: "Sales by Customer",
+      href: "/accounting/reports/sales-by-customer",
+    },
+    {
+      name: "Sales by Item",
+      href: "/accounting/reports/sales-by-item",
+    },
+    {
+      name: "Sales by Sales Person",
+      href: "/accounting/reports/sales-by-sales-person",
+    },
+    {
+      name: "Sales Summary",
+      href: "/accounting/reports/sales-summary",
+    },
+  ],
+},
                 {
                     name: "GST Receivable",
                     href: "/accounting/reports/gst-receivable",
@@ -327,6 +350,7 @@ const modulesByPackage = {
                     name: "Tax Summary",
                     href: "/accounting/reports/tax-summary",
                 },
+             
             ],
         },
     ],
@@ -498,68 +522,122 @@ export const ClubSidebar: React.FC = () => {
         }
     };
 
+    // const renderMenuItem = (item: any) => {
+    //     const hasSubItems = item.subItems && item.subItems.length > 0;
+    //     const isExpanded = expandedItems.includes(item.name);
+    //     const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+
+    //     if (hasSubItems) {
+    //         return (
+    //             <div key={item.name}>
+    //                 <button
+    //                     onClick={() => toggleExpand(item.name)}
+    //                     className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+    //                 >
+    //                     <div className="flex items-center gap-3">
+    //                         {isActive && (
+    //                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+    //                         )}
+    //                         <item.icon className="w-5 h-5" />
+    //                         <span>{item.name}</span>
+    //                     </div>
+    //                     {isExpanded ? (
+    //                         <ChevronDown className="w-4 h-4" />
+    //                     ) : (
+    //                         <ChevronRight className="w-4 h-4" />
+    //                     )}
+    //                 </button>
+    //                 {isExpanded && (
+    //                     <div className="ml-8 space-y-1">
+    //                         {item.subItems.map((subItem: any) => (
+    //                             <button
+    //                                 key={subItem.name}
+    //                                 onClick={() => handleNavigation(subItem.href)}
+    //                                 className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
+    //                                     }`}
+    //                             >
+    //                                 {isActiveRoute(subItem.href, "exact") && (
+    //                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+    //                                 )}
+    //                                 {subItem.name}
+    //                             </button>
+    //                         ))}
+    //                     </div>
+    //                 )}
+    //             </div>
+    //         );
+    //     }
+
+    //     return (
+    //         <div key={item.name}>
+    //             <button
+    //                 onClick={() => handleNavigation(item.href, item.blank)}
+    //                 className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+    //                     }`}
+    //             >
+    //                 {isActive && (
+    //                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+    //                 )}
+    //                 <item.icon className="w-5 h-5" />
+    //                 <span>{item.name}</span>
+    //             </button>
+    //         </div>
+    //     );
+    // };
+
     const renderMenuItem = (item: any) => {
-        const hasSubItems = item.subItems && item.subItems.length > 0;
-        const isExpanded = expandedItems.includes(item.name);
-        const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+  const key = item.href || item.name;
+  const hasSubItems = item.subItems && item.subItems.length > 0;
+  const isExpanded = expandedItems.includes(key);
+  const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
 
-        if (hasSubItems) {
-            return (
-                <div key={item.name}>
-                    <button
-                        onClick={() => toggleExpand(item.name)}
-                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
-                    >
-                        <div className="flex items-center gap-3">
-                            {isActive && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                            )}
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.name}</span>
-                        </div>
-                        {isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
-                        ) : (
-                            <ChevronRight className="w-4 h-4" />
-                        )}
-                    </button>
-                    {isExpanded && (
-                        <div className="ml-8 space-y-1">
-                            {item.subItems.map((subItem: any) => (
-                                <button
-                                    key={subItem.name}
-                                    onClick={() => handleNavigation(subItem.href)}
-                                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                                        }`}
-                                >
-                                    {isActiveRoute(subItem.href, "exact") && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                                    )}
-                                    {subItem.name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-        }
+  if (hasSubItems) {
+    return (
+      <div key={key}>
+        <button
+          onClick={() => toggleExpand(key)}
+          className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold text-[#1a1a1a] hover:bg-[#DBC2A9] relative"
+        >
+          <div className="flex items-center gap-3">
+            {item.icon && <item.icon className="w-5 h-5" />}
+            <span>{item.name}</span>
+          </div>
 
-        return (
-            <div key={item.name}>
-                <button
-                    onClick={() => handleNavigation(item.href, item.blank)}
-                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-                        }`}
-                >
-                    {isActive && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                    )}
-                    <item.icon className="w-5 h-5" />
-                    <span>{item.name}</span>
-                </button>
-            </div>
-        );
-    };
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}
+        </button>
+
+        {isExpanded && (
+          <div className="ml-4 space-y-1">
+            {item.subItems.map((subItem: any) =>
+              renderMenuItem(subItem)
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      key={key}
+      onClick={() => handleNavigation(item.href)}
+      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
+        item.color || "text-[#1a1a1a]"
+      }`}
+    >
+      {isActive && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
+      )}
+
+      {item.icon && <item.icon className="w-5 h-5" />}
+      <span>{item.name}</span>
+    </button>
+  );
+};
 
     const CollapsedMenuItem = ({ item, level = 0 }) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
