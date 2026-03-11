@@ -1454,21 +1454,6 @@ export const PatrollingDetailPage: React.FC = () => {
                                       alt={`QR Code – ${checkpoint.name}`}
                                       className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
                                     />
-                                    <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Eye className="w-4 h-4 text-[#C72030]" />
-                                    </span>
-                                  </button>
-                                ) : checkpoint.qr_code_url ? (
-                                  <button
-                                    onClick={() => window.open(checkpoint.qr_code_url!, '_blank')}
-                                    className="group relative flex items-center justify-center"
-                                    title="Click to open QR code"
-                                  >
-                                    <img
-                                      src={checkpoint.qr_code_url}
-                                      alt={`QR Code – ${checkpoint.name}`}
-                                      className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
-                                    />
                                     {/* <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Eye className="w-4 h-4 text-[#C72030]" />
                                     </span> */}
