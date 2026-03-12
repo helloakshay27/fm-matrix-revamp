@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     // TextField,
     FormControl,
@@ -136,12 +136,16 @@ const ItemsEdit = () => {
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const [exemptions, setExemptions] = useState([]);
 
     const [form, setForm] = useState({
         type: "goods",
         name: "",
         unit: "",
         sku: "",
+        hsn_code: "",
+        sac_code: "",
+
         sellable: true,
         purchasable: true,
         selling_price: "",
@@ -152,6 +156,11 @@ const ItemsEdit = () => {
         purchase_account: "",
         purchase_description: "",
         preferred_vendor: "",
+
+        tax_preference: "",
+        intra_state_tax: "",
+        inter_state_tax: "",
+        exemption_reason: "",
     });
     const [loading, setLoading] = useState(false);
     const [accountGroups, setAccountGroups] = React.useState([]);
@@ -177,6 +186,8 @@ const ItemsEdit = () => {
         };
         fetchAccountGroups();
     }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
+
+
     React.useEffect(() => {
         const fetchItemDetails = async () => {
             setLoading(true);
@@ -199,6 +210,8 @@ const ItemsEdit = () => {
                     name: data.name || "",
                     unit: data.unit || "",
                     sku: data.sku || "",
+                    hsn_code: data.hsn_code || "",
+                    sac_code: data.sac || "",
                     sellable: data.can_be_sold ?? true,
                     purchasable: data.can_be_purchased ?? true,
                     selling_price: data.sale_rate?.toString() || "",
@@ -209,6 +222,8 @@ const ItemsEdit = () => {
                     purchase_account: data.purchase_lock_account_ledger_id?.toString() || "",
                     purchase_description: data.purchase_description || "",
                     preferred_vendor: data.pms_supplier_id?.toString() || "",
+                    tax_preference: data.tax_preference || "",
+                    exemption_reason: data.tax_exemption_id?.toString() || "",
                 });
             } catch (error) {
                 toast.error("Failed to fetch item details");
@@ -218,6 +233,63 @@ const ItemsEdit = () => {
         };
         if (id) fetchItemDetails();
     }, [id, baseUrl, token]);
+
+
+    React.useEffect(() => {
+        const fetchExemptions = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Exemptions:", res.data);
+                setExemptions(res.data || []); // adjust path if different
+            } catch (err) {
+                console.error("Failed to fetch tax exemptions", err);
+                setExemptions([]);
+            }
+        };
+
+        fetchExemptions();
+    }, []);
+
+
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+
+    useEffect(() => {
+        setLoadingCustomers(true);
+
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+
+        axios
+            .get(`https://${baseUrl}/pms/suppliers.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((res) => {
+                console.log("suppliers:", res);
+                setCustomers(res?.data?.pms_suppliers || []);
+            })
+            .catch((err) => {
+                console.error("Supplier API error", err);
+            })
+            .finally(() => {
+                setLoadingCustomers(false);
+            });
+    }, []);
 
     const handleChange = (e: any) => {
         const { name, value, type, checked } = e.target;
@@ -246,6 +318,17 @@ const ItemsEdit = () => {
             toast.error("Please mention the item name.");
             return;
         }
+        if (!form.tax_preference) {
+            toast.error("Please select Tax Preference");
+            return;
+        }
+        // ✅ If Non-Taxable
+        if (form.tax_preference === "non_taxable") {
+            if (!form.exemption_reason) {
+                toast.error("Please select Exemption Reason");
+                return;
+            }
+        }
         if (!form.sellable && !form.purchasable) {
             toast.error("Select at least one option from, Sales Information, Purchase Information to proceed.");
             return;
@@ -257,6 +340,14 @@ const ItemsEdit = () => {
             }
             if (!form.sales_account) {
                 toast.error("Sales Account is required for Sellable items");
+                return;
+            }
+            if (
+                form.mrp &&
+                !isNaN(Number(form.mrp)) &&
+                Number(form.selling_price) > Number(form.mrp)
+            ) {
+                toast.error("Selling Price cannot be greater than MRP.");
                 return;
             }
         }
@@ -295,16 +386,85 @@ const ItemsEdit = () => {
         const payload = {
             lock_account_item: itemPayload
         };
+
+
+
+        const formData = new FormData();
+        formData.append("lock_account_item[name]", form.name);
+        formData.append("lock_account_item[sku]", form.sku);
+        formData.append("lock_account_item[product_type]", form.type);
+        formData.append("lock_account_item[pms_supplier_id]", form.preferred_vendor);
+        formData.append("lock_account_item[unit]", form.unit);
+        formData.append("lock_account_item[can_be_sold]", form.sellable);
+        formData.append("lock_account_item[can_be_purchased]", form.purchasable);
+        formData.append("lock_account_item[track_inventory]", "false");
+        formData.append("lock_account_item[tax_preference]", form.tax_preference);
+        if (form.type === "goods") {
+            formData.append("lock_account_item[hsn_code]", form.hsn_code);
+        }
+
+        if (form.type === "service") {
+            formData.append("lock_account_item[sac]", form.sac_code);
+        }
+
+        if (form.tax_preference === "taxable" && taxSettings) {
+            formData.append(
+                "lock_account_item[intra_state_tax_rate_id]",
+                taxSettings.intra_state_tax_rate_id
+            );
+
+            formData.append(
+                "lock_account_item[inter_state_tax_rate_id]",
+                taxSettings.inter_state_tax_rate_id
+            );
+        }
+
+        if (form.tax_preference === "non_taxable") {
+            formData.append(
+                "lock_account_item[tax_exemption_id]",
+                form.exemption_reason
+            );
+        }
+
+        if (form.sellable) {
+            formData.append("lock_account_item[sale_description]", form.sales_description);
+            formData.append("lock_account_item[sale_rate]", form.selling_price);
+            formData.append("lock_account_item[sale_lock_account_ledger_id]", form.sales_account);
+            formData.append("lock_account_item[sale_mrp]", form.mrp);
+        }
+        if (form.purchasable) {
+            formData.append("lock_account_item[purchase_description]", form.purchase_description);
+            formData.append("lock_account_item[purchase_rate]", form.cost_price);
+            formData.append(
+                "lock_account_item[purchase_lock_account_ledger_id]",
+                form.purchase_account
+            );
+        }
+
+        if (image) {
+            formData.append(
+                "lock_account_item[icon_attributes][document]",
+                image
+            );
+        }
+
+        formData.append(
+            "lock_account_item[icon_attributes][active]",
+            "true"
+        );
+        formData.append("lock_account_id", "1");
+
         try {
             let apiBase = baseUrl;
             apiBase = `https://${baseUrl}`;
             await axios.patch(
                 `${apiBase}/lock_account_items/${id}.json`,
-                payload,
+                // payload,
+                formData,
                 {
                     headers: {
                         "Authorization": token ? `Bearer ${token}` : undefined,
-                        "Content-Type": "application/json"
+                        // "Content-Type": "application/json"
                     }
                 }
             );
@@ -411,6 +571,67 @@ const ItemsEdit = () => {
                                 <MenuItem value="mg">MGS - mg</MenuItem>
                             </Select>
                         </FormControl>
+
+                        {form.type === "goods" ? (
+                            <TextField
+                                label="HSN Code"
+                                name="hsn_code"
+                                placeholder="Enter HSN Code"
+                                value={form.hsn_code}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        ) : (
+                            <TextField
+                                label="SAC"
+                                name="sac_code"
+                                placeholder="Enter SAC Code"
+                                value={form.sac_code}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        )}
+
+
+                        <FormControl fullWidth>
+                            <InputLabel>Tax Preference *</InputLabel>
+                            <Select
+                                name="tax_preference"
+                                value={form.tax_preference}
+                                label="Tax Preference"
+                                onChange={handleChange}
+                                displayEmpty
+                            >
+                                <MenuItem value="">Select Tax Preference</MenuItem>
+                                <MenuItem value="taxable">Taxable</MenuItem>
+                                <MenuItem value="non_taxable">Non-Taxable</MenuItem>
+                                <MenuItem value="out_of_scope">Out of Scope</MenuItem>
+                                <MenuItem value="non_gst_supply">Non-GST Supply</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        {form.tax_preference === "non_taxable" && (
+                            <FormControl fullWidth>
+                                <InputLabel>Exemption Reason</InputLabel>
+                                <Select
+                                    name="exemption_reason"
+                                    value={form.exemption_reason}
+                                    label="Exemption Reason"
+                                    onChange={handleChange}
+                                    displayEmpty
+                                >
+                                    <MenuItem value="">
+                                        Select exemption reason
+                                    </MenuItem>
+
+                                    {exemptions.map((ex) => (
+                                        <MenuItem key={ex.id} value={ex.id}>
+                                            {ex.reason}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
 
                     </div>
 
@@ -1062,10 +1283,19 @@ const ItemsEdit = () => {
                                     value={form.preferred_vendor}
                                     label="Preferred Vendor"
                                     onChange={handleChange}
+                                    displayEmpty
                                 >
-                                    <MenuItem value="" disabled>Select vendor</MenuItem>
+                                    {/* <MenuItem value="" disabled>Select vendor</MenuItem>
                                     <MenuItem value="Vendor 1">Vendor 1</MenuItem>
-                                    <MenuItem value="Vendor 2">Vendor 2</MenuItem>
+                                    <MenuItem value="Vendor 2">Vendor 2</MenuItem> */}
+                                    <MenuItem value="">Select vendor</MenuItem>
+                                    {/* <MenuItem value="Vendor 1">Vendor 1</MenuItem>
+                                                                        <MenuItem value="Vendor 2">Vendor 2</MenuItem> */}
+                                    {customers.map((supplier: any) => (
+                                        <MenuItem key={supplier.id} value={supplier.id}>
+                                            {supplier.company_name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </div>

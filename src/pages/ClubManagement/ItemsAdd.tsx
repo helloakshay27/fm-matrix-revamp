@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
     // TextField,
@@ -18,36 +18,13 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
-
-// const muiTheme = createTheme({
-//   components: {
-//     MuiTextField: {
-//       styleOverrides: {
-//         root: {
-//           width: "100%",
-//           "& .MuiOutlinedInput-root": {
-//             borderRadius: "6px",
-//             height: "44px",
-//           },
-//         },
-//       },
-//     },
-//     MuiFormControl: {
-//       styleOverrides: {
-//         root: {
-//           width: "100%",
-//           "& .MuiOutlinedInput-root": {
-//             borderRadius: "6px",
-//             height: "44px",
-//           },
-//         },
-//       },
-//     },
-//   },
-// });
-
-
-
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
+} from "@mui/material";
 
 const muiTheme = createTheme({
     components: {
@@ -131,9 +108,25 @@ const muiTheme = createTheme({
 
 
 
+interface Customer {
+    id: string;
+    name: string;
+    // email: string;
+    // currency: string;
+    // billingAddress: string;
+    // shippingAddress: string;
+    // customerType: string;
+    // paymentTerms: string;
+    // portalStatus: string;
+    // language: string;
+    // outstandingReceivables: number;
+    // unusedCredits: number;
+    // contactPersons: ContactPerson[];
+}
+
 const ItemsAdd = () => {
     const navigate = useNavigate();
-
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [form, setForm] = useState({
         type: "goods",
         name: "",
@@ -250,6 +243,36 @@ const ItemsAdd = () => {
 
         fetchTaxSettings();
     }, []);
+
+
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+
+    useEffect(() => {
+        setLoadingCustomers(true);
+
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+
+        axios
+            .get(`https://${baseUrl}/pms/suppliers.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((res) => {
+                console.log("suppliers:", res);
+                setCustomers(res?.data?.pms_suppliers || []);
+            })
+            .catch((err) => {
+                console.error("Supplier API error", err);
+            })
+            .finally(() => {
+                setLoadingCustomers(false);
+            });
+    }, []);
     const payload = {
         lock_account_item: {
             name: form.name,
@@ -269,7 +292,7 @@ const ItemsAdd = () => {
             track_inventory: false
         }
     };
-    console.log("Payload for submission:", payload)
+    console.log("Payload for Item submission:", payload)
     const handleSubmit = () => {
         // Validation
         if (!form.name.trim()) {
@@ -282,17 +305,17 @@ const ItemsAdd = () => {
         }
 
         if (!form.tax_preference) {
-  toast.error("Please select Tax Preference");
-  return;
-}
+            toast.error("Please select Tax Preference");
+            return;
+        }
 
-// ✅ If Non-Taxable
-if (form.tax_preference === "non_taxable") {
-  if (!form.exemption_reason) {
-    toast.error("Please select Exemption Reason");
-    return;
-  }
-}
+        // ✅ If Non-Taxable
+        if (form.tax_preference === "non_taxable") {
+            if (!form.exemption_reason) {
+                toast.error("Please select Exemption Reason");
+                return;
+            }
+        }
         if (form.sellable) {
             if (!form.selling_price || isNaN(Number(form.selling_price))) {
                 toast.error("Selling Price is required for Sellable items");
@@ -300,6 +323,14 @@ if (form.tax_preference === "non_taxable") {
             }
             if (!form.sales_account) {
                 toast.error("Sales Account is required for Sellable items");
+                return;
+            }
+            if (
+                form.mrp &&
+                !isNaN(Number(form.mrp)) &&
+                Number(form.selling_price) > Number(form.mrp)
+            ) {
+                toast.error("Selling Price cannot be greater than MRP.");
                 return;
             }
         }
@@ -316,59 +347,125 @@ if (form.tax_preference === "non_taxable") {
 
         const token = localStorage.getItem("token");
         // Build payload conditionally
-        const itemPayload = {
-            name: form.name,
-            sku: form.sku,
-            product_type: form.type,
-            pms_supplier_id: form.preferred_vendor,
-            unit: form.unit,
-            can_be_sold: form.sellable,
-            can_be_purchased: form.purchasable,
-            track_inventory: false,
-            tax_preference: form.tax_preference,
-        };
+        // const itemPayload = {
+        //     name: form.name,
+        //     sku: form.sku,
+        //     product_type: form.type,
+        //     pms_supplier_id: form.preferred_vendor,
+        //     unit: form.unit,
+        //     can_be_sold: form.sellable,
+        //     can_be_purchased: form.purchasable,
+        //     track_inventory: false,
+        //     tax_preference: form.tax_preference,
+        // };
         // HSN for Goods
+        // if (form.type === "goods") {
+        //     itemPayload.hsn_code = form.hsn_code;
+        // }
+
+        // // SAC for Service
+        // if (form.type === "service") {
+        //     itemPayload.sac = form.sac_code;
+        // }
+        // if (form.tax_preference === "taxable" && taxSettings) {
+        //     itemPayload.intra_state_tax_rate_id =
+        //         taxSettings.intra_state_tax_rate_id;
+
+        //     itemPayload.inter_state_tax_rate_id =
+        //         taxSettings.inter_state_tax_rate_id;
+        // }
+
+        // if (form.tax_preference === "non_taxable") {
+        //     itemPayload.tax_exemption_id = form.exemption_reason;
+        // }
+        // if (form.sellable) {
+        //     itemPayload.sale_description = form.sales_description;
+        //     itemPayload.sale_rate = form.selling_price;
+        //     itemPayload.sale_lock_account_ledger_id = form.sales_account;
+        //     itemPayload.sale_mrp = form.mrp;
+        // }
+        // if (form.purchasable) {
+        //     itemPayload.purchase_description = form.purchase_description;
+        //     itemPayload.purchase_rate = form.cost_price;
+        //     itemPayload.purchase_lock_account_ledger_id = form.purchase_account;
+        // }
+        // const payload = {
+        //     lock_account_item: itemPayload,
+        //     lock_account_id: "1"
+        // };
+
+        const formData = new FormData();
+        formData.append("lock_account_item[name]", form.name);
+        formData.append("lock_account_item[sku]", form.sku);
+        formData.append("lock_account_item[product_type]", form.type);
+        formData.append("lock_account_item[pms_supplier_id]", form.preferred_vendor);
+        formData.append("lock_account_item[unit]", form.unit);
+        formData.append("lock_account_item[can_be_sold]", form.sellable);
+        formData.append("lock_account_item[can_be_purchased]", form.purchasable);
+        formData.append("lock_account_item[track_inventory]", "false");
+        formData.append("lock_account_item[tax_preference]", form.tax_preference);
         if (form.type === "goods") {
-            itemPayload.hsn_code = form.hsn_code;
+            formData.append("lock_account_item[hsn_code]", form.hsn_code);
         }
 
-        // SAC for Service
         if (form.type === "service") {
-            itemPayload.sac = form.sac_code;
+            formData.append("lock_account_item[sac]", form.sac_code);
         }
-        if (form.tax_preference === "taxable" && taxSettings) {
-            itemPayload.intra_state_tax_rate_id =
-                taxSettings.intra_state_tax_rate_id;
 
-            itemPayload.inter_state_tax_rate_id =
-                taxSettings.inter_state_tax_rate_id;
+        if (form.tax_preference === "taxable" && taxSettings) {
+            formData.append(
+                "lock_account_item[intra_state_tax_rate_id]",
+                taxSettings.intra_state_tax_rate_id
+            );
+
+            formData.append(
+                "lock_account_item[inter_state_tax_rate_id]",
+                taxSettings.inter_state_tax_rate_id
+            );
         }
 
         if (form.tax_preference === "non_taxable") {
-            itemPayload.tax_exemption_id = form.exemption_reason;
+            formData.append(
+                "lock_account_item[tax_exemption_id]",
+                form.exemption_reason
+            );
         }
+
         if (form.sellable) {
-            itemPayload.sale_description = form.sales_description;
-            itemPayload.sale_rate = form.selling_price;
-            itemPayload.sale_lock_account_ledger_id = form.sales_account;
-            itemPayload.sale_mrp = form.mrp;
+            formData.append("lock_account_item[sale_description]", form.sales_description);
+            formData.append("lock_account_item[sale_rate]", form.selling_price);
+            formData.append("lock_account_item[sale_lock_account_ledger_id]", form.sales_account);
+            formData.append("lock_account_item[sale_mrp]", form.mrp);
         }
         if (form.purchasable) {
-            itemPayload.purchase_description = form.purchase_description;
-            itemPayload.purchase_rate = form.cost_price;
-            itemPayload.purchase_lock_account_ledger_id = form.purchase_account;
+            formData.append("lock_account_item[purchase_description]", form.purchase_description);
+            formData.append("lock_account_item[purchase_rate]", form.cost_price);
+            formData.append(
+                "lock_account_item[purchase_lock_account_ledger_id]",
+                form.purchase_account
+            );
         }
-        const payload = {
-            lock_account_item: itemPayload,
-            lock_account_id: "1"
-        };
+
+        if (image) {
+            formData.append(
+                "lock_account_item[icon_attributes][document]",
+                image
+            );
+        }
+
+        formData.append(
+            "lock_account_item[icon_attributes][active]",
+            "true"
+        );
+        formData.append("lock_account_id", "1");
         axios.post(
             `https://${baseUrl}/lock_account_items.json`,
-            payload,
+            // payload,
+            formData,
             {
                 headers: {
                     "Authorization": token ? `Bearer ${token}` : undefined,
-                    "Content-Type": "application/json"
+                    
                 }
             }
         )
@@ -393,6 +490,7 @@ if (form.tax_preference === "non_taxable") {
     const handleRemoveImage = () => {
         setImage(null);
         setPreview(null);
+        setOpenDeleteDialog(false);
     };
 
     return (
@@ -444,6 +542,7 @@ if (form.tax_preference === "non_taxable") {
                             placeholder="Enter item name"
                             value={form.name}
                             onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
                         />
 
                         {/* SKU  ✅ NEW */}
@@ -453,6 +552,7 @@ if (form.tax_preference === "non_taxable") {
                             placeholder="Enter SKU"
                             value={form.sku}
                             onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
                         />
 
                         {/* UNIT */}
@@ -463,8 +563,9 @@ if (form.tax_preference === "non_taxable") {
                                 value={form.unit}
                                 label="Usage Unit"
                                 onChange={handleChange}
+                                displayEmpty
                             >
-                                <MenuItem value="" disabled>Select unit</MenuItem>
+                                <MenuItem value="" >Select unit</MenuItem>
                                 <MenuItem value="box">BOX - box</MenuItem>
                                 <MenuItem value="cm">CMS - cm</MenuItem>
                                 <MenuItem value="dz">DOZ - dz</MenuItem>
@@ -486,6 +587,7 @@ if (form.tax_preference === "non_taxable") {
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
                                 onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
                             />
                         ) : (
                             <TextField
@@ -494,6 +596,7 @@ if (form.tax_preference === "non_taxable") {
                                 placeholder="Enter SAC Code"
                                 value={form.sac_code}
                                 onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
                             />
                         )}
 
@@ -513,7 +616,9 @@ if (form.tax_preference === "non_taxable") {
                                         exemption_reason: "",
                                     }));
                                 }}
+                                displayEmpty
                             >
+                                <MenuItem value=""> Select Tax Preference</MenuItem>
                                 <MenuItem value="taxable">Taxable</MenuItem>
                                 <MenuItem value="non_taxable">Non-Taxable</MenuItem>
                                 <MenuItem value="out_of_scope">Out of Scope</MenuItem>
@@ -530,8 +635,9 @@ if (form.tax_preference === "non_taxable") {
                                         value={form.exemption_reason}
                                         label="Exemption Reason"
                                         onChange={handleChange}
+                                        displayEmpty
                                     >
-                                        <MenuItem value="" disabled>
+                                        <MenuItem value="">
                                             Select exemption reason
                                         </MenuItem>
 
@@ -595,10 +701,11 @@ if (form.tax_preference === "non_taxable") {
 
                                     <button
                                         type="button"
-                                        onClick={handleRemoveImage}
+                                        // onClick={handleRemoveImage}
+                                        onClick={() => setOpenDeleteDialog(true)}
                                         className="text-gray-500 hover:text-red-600"
                                     >
-                                        🗑
+                                        <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -696,6 +803,7 @@ if (form.tax_preference === "non_taxable") {
                                     </>
                                 }
                                 name="selling_price"
+                                InputLabelProps={{ shrink: true }}
                                 value={form.selling_price}
                                 disabled={!form.sellable}
                                 onChange={(e) => {
@@ -782,6 +890,7 @@ if (form.tax_preference === "non_taxable") {
                                 placeholder="Enter MRP"
                                 value={form.mrp}
                                 fullWidth
+                                InputLabelProps={{ shrink: true }}
                                 onChange={(e) => {
                                     let value = e.target.value;
 
@@ -841,8 +950,9 @@ if (form.tax_preference === "non_taxable") {
                                             },
                                         },
                                     }}
+
                                 >
-                                    <MenuItem value="" disabled>
+                                    <MenuItem value="" >
                                         Select Account Ledger
                                     </MenuItem>
                                     {accountGroups.map(group => (
@@ -877,6 +987,7 @@ if (form.tax_preference === "non_taxable") {
                                     </span>
                                 }
                                 name="sales_description"
+                                placeholder="Enter sales description"
                                 value={form.sales_description}
                                 onChange={(e) =>
                                     setForm((prev) => ({
@@ -915,6 +1026,7 @@ if (form.tax_preference === "non_taxable") {
                                     </span>
                                 }
                                 error={(form.sales_description?.length || 0) > 500}
+                                InputLabelProps={{ shrink: true }}
                             />
                         </div>
                     </div>
@@ -1000,6 +1112,7 @@ if (form.tax_preference === "non_taxable") {
                                 name="cost_price"
                                 value={form.cost_price}
                                 disabled={!form.purchasable}
+                                InputLabelProps={{ shrink: true }}
                                 onChange={(e) => {
                                     let value = e.target.value;
 
@@ -1086,7 +1199,7 @@ if (form.tax_preference === "non_taxable") {
                                         },
                                     }}
                                 >
-                                    <MenuItem value="" disabled>
+                                    <MenuItem value="">
                                         Select Account Ledger
                                     </MenuItem>
                                     {accountGroups.map(group => (
@@ -1132,6 +1245,7 @@ if (form.tax_preference === "non_taxable") {
                                 variant="outlined"
                                 fullWidth
                                 multiline
+                                // InputLabelProps={{ shrink: true }}
                                 rows={4}
                                 InputLabelProps={{ shrink: true }}
                                 inputProps={{ maxLength: 500 }}
@@ -1169,10 +1283,16 @@ if (form.tax_preference === "non_taxable") {
                                     value={form.preferred_vendor}
                                     label="Preferred Vendor"
                                     onChange={handleChange}
+                                    displayEmpty
                                 >
-                                    <MenuItem value="" disabled>Select vendor</MenuItem>
-                                    <MenuItem value="Vendor 1">Vendor 1</MenuItem>
-                                    <MenuItem value="Vendor 2">Vendor 2</MenuItem>
+                                    <MenuItem value="">Select vendor</MenuItem>
+                                    {/* <MenuItem value="Vendor 1">Vendor 1</MenuItem>
+                                    <MenuItem value="Vendor 2">Vendor 2</MenuItem> */}
+                                    {customers.map((supplier: any) => (
+                                        <MenuItem key={supplier.id} value={supplier.id}>
+                                            {supplier.company_name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </div>
@@ -1192,6 +1312,7 @@ if (form.tax_preference === "non_taxable") {
                             value={taxSettings.intra_state_tax_rate || "-"}
                             disabled
                             fullWidth
+                            InputLabelProps={{ shrink: true }}
                         />
 
                         {/* Inter State Tax (IGST) */}
@@ -1200,6 +1321,7 @@ if (form.tax_preference === "non_taxable") {
                             value={taxSettings.inter_state_tax_rate || "-"}
                             disabled
                             fullWidth
+                            InputLabelProps={{ shrink: true }}
                         />
 
                     </div>
@@ -1218,6 +1340,30 @@ if (form.tax_preference === "non_taxable") {
                     </Button>
                 </div>
             </div>
+
+
+            <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+                <DialogTitle>Delete Image</DialogTitle>
+
+                <DialogContent>
+                    Are you sure about deleting this image?
+                </DialogContent>
+
+                <DialogActions>
+                    <Button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleRemoveImage}
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpenDeleteDialog(false)}
+                    >
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </ThemeProvider>
     );
 };
