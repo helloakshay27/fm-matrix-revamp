@@ -457,7 +457,7 @@ export const TaxSetupMaster: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="add-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                <Input
+                {/* <Input
                   id="add-percentage"
                   type="number"
                   value={addForm.percentage}
@@ -468,6 +468,31 @@ export const TaxSetupMaster: React.FC = () => {
                   placeholder="Enter tax rate"
                   className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   step="0.01"
+                /> */}
+
+                <Input
+                  id="add-percentage"
+                  type="number"
+                  value={addForm.percentage}
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  onChange={(e) => {
+                    let value = e.target.value;
+
+                    // Allow only numbers with up to 2 decimal places
+                    const regex = /^\d{0,3}(\.\d{0,2})?$/;
+
+                    if (!regex.test(value)) return;
+
+                    if (Number(value) > 100) value = "100";
+
+                    setAddForm((s) => ({ ...s, percentage: value }));
+
+                    if (value) setAddErrors((s) => ({ ...s, percentage: undefined }));
+                  }}
+                  placeholder="Enter tax rate"
+                  className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {addErrors.percentage && <p className="text-xs text-red-500">{addErrors.percentage}</p>}
               </div>
@@ -684,7 +709,7 @@ export const TaxSetupMaster: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="edit-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                  <Input
+                  {/* <Input
                     id="edit-percentage"
                     type="number"
                     value={editForm.percentage}
@@ -695,6 +720,30 @@ export const TaxSetupMaster: React.FC = () => {
                     placeholder="Enter tax rate"
                     className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     step="0.01"
+                  /> */}
+
+                  <Input
+                    id="edit-percentage"
+                    type="number"
+                    value={editForm.percentage}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      const regex = /^\d{0,3}(\.\d{0,2})?$/;
+
+                      if (!regex.test(value)) return;
+
+                      if (Number(value) > 100) value = "100";
+
+                      setEditForm((s) => ({ ...s, percentage: value }));
+
+                      if (value) setEditErrors((s) => ({ ...s, percentage: undefined }));
+                    }}
+                    placeholder="Enter tax rate"
+                    className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
                   {editErrors.percentage && <p className="text-xs text-red-500">{editErrors.percentage}</p>}
                 </div>

@@ -22,6 +22,7 @@ import {
   Plus,
   AlertCircle,
   Code,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,23 @@ import {
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { DeletePatrollingModal } from "@/components/DeletePatrollingModal";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Type definitions matching the API response
 interface ChecklistData {
@@ -114,6 +132,7 @@ interface CheckpointData {
   updated_at: string;
   qr_code_available: boolean;
   qr_code_url?: string;
+  location_qr_code_url?: string | null;
   building_name?: string;
   wing_name?: string;
   floor_name?: string;
@@ -149,6 +168,82 @@ interface PatrollingDetail {
   };
 }
 
+// ── Sortable row component for the checkpoints table ─────────────────────────
+interface SortableCheckpointRowProps {
+  checkpoint: CheckpointData;
+  formatDateTime: (d: string) => string;
+}
+
+const SortableCheckpointRow: React.FC<SortableCheckpointRowProps> = ({
+  checkpoint,
+  formatDateTime,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: checkpoint.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    background: isDragging ? "#FFF5F5" : undefined,
+    zIndex: isDragging ? 1 : undefined,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      {/* Drag handle */}
+      <TableCell className="w-8 px-2">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-[#C72030] transition-colors p-1 rounded"
+          title="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">#{checkpoint.order_sequence}</Badge>
+      </TableCell>
+      <TableCell className="font-medium">{checkpoint.name}</TableCell>
+      <TableCell>{checkpoint.description || "—"}</TableCell>
+      <TableCell className="text-sm">{checkpoint.building_name || "—"}</TableCell>
+      <TableCell className="text-sm">{checkpoint.wing_name || "—"}</TableCell>
+      <TableCell className="text-sm">{checkpoint.area_name || "—"}</TableCell>
+      <TableCell className="text-sm">{checkpoint.floor_name || "—"}</TableCell>
+      <TableCell className="text-sm">{checkpoint.room_name || "—"}</TableCell>
+      {/* QR Code column */}
+      <TableCell>
+        {checkpoint.location_qr_code_url ? (
+          <button
+            onClick={() => window.open(checkpoint.location_qr_code_url!, "_blank")}
+            className="group relative flex items-center justify-center"
+            title="Click to open QR code"
+          >
+            <img
+              src={checkpoint.location_qr_code_url}
+              alt={`QR Code – ${checkpoint.name}`}
+              className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
+            />
+          </button>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )}
+      </TableCell>
+      <TableCell className="text-xs text-gray-600">
+        {formatDateTime(checkpoint.created_at)}
+      </TableCell>
+    </TableRow>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const PatrollingDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -156,6 +251,8 @@ export const PatrollingDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("patrol-information");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [localCheckpoints, setLocalCheckpoints] = useState<CheckpointData[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
 
   // State for checklist questions when checklist is selected
   const [checklistQuestions, setChecklistQuestions] = useState<QuestionData[]>(
@@ -169,6 +266,15 @@ export const PatrollingDetailPage: React.FC = () => {
       fetchPatrollingDetail(parseInt(id));
     }
   }, [id]);
+
+  // Sync localCheckpoints whenever patrolling data changes
+  useEffect(() => {
+    if (patrolling?.checkpoints) {
+      setLocalCheckpoints(
+        [...patrolling.checkpoints].sort((a, b) => a.order_sequence - b.order_sequence)
+      );
+    }
+  }, [patrolling?.checkpoints]);
 
   // Fetch checklist questions when patrolling has a checklist
   useEffect(() => {
@@ -278,6 +384,77 @@ export const PatrollingDetailPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleCheckpointDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !id) return;
+
+    const oldIndex = localCheckpoints.findIndex((c) => c.id === active.id);
+    const newIndex = localCheckpoints.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Reorder locally and assign new order_sequence values
+    const reordered = arrayMove(localCheckpoints, oldIndex, newIndex).map(
+      (cp, idx) => ({ ...cp, order_sequence: idx + 1 })
+    );
+    setLocalCheckpoints(reordered);
+
+    setIsReordering(true);
+    try {
+      const apiUrl = getFullUrl(`/patrolling/routes/${id}/reorder_checkpoints`);
+      const response = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({
+          checkpoints: reordered.map((cp) => ({
+            id: cp.id,
+            order_sequence: cp.order_sequence,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success("Checkpoint order updated successfully!");
+
+      // Also update the patrolling state so re-renders stay consistent
+      setPatrolling((prev) =>
+        prev
+          ? {
+              ...prev,
+              checkpoints: prev.checkpoints.map((cp) => {
+                const updated = reordered.find((r) => r.id === cp.id);
+                return updated ? { ...cp, order_sequence: updated.order_sequence } : cp;
+              }),
+            }
+          : prev
+      );
+    } catch (error: unknown) {
+      console.error("Error reordering checkpoints:", error);
+      toast.error("Failed to update checkpoint order. Please try again.");
+      // Revert to original order on failure
+      if (patrolling?.checkpoints) {
+        setLocalCheckpoints(
+          [...patrolling.checkpoints].sort((a, b) => a.order_sequence - b.order_sequence)
+        );
+      }
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -1382,11 +1559,19 @@ export const PatrollingDetailPage: React.FC = () => {
           <TabsContent value="checkpoints" className="p-4 sm:p-6">
             <Card className="mb-6 border-none bg-transparent shadow-none">
               <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <MapPin className="figma-card-icon" />
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <MapPin className="figma-card-icon" />
+                    </div>
+                    <h3 className="figma-card-title">Checkpoints ({patrolling.checkpoints?.length || 0})</h3>
                   </div>
-                  <h3 className="figma-card-title">Checkpoints ({patrolling.checkpoints?.length || 0})</h3>
+                  {isReordering && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
+                      <span>Saving order...</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="figma-card-content">
@@ -1394,6 +1579,7 @@ export const PatrollingDetailPage: React.FC = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8"></TableHead>
                         <TableHead>Order</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
@@ -1402,143 +1588,34 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Area</TableHead>
                         <TableHead>Floor</TableHead>
                         <TableHead>Room</TableHead>
-                        {/* <TableHead>QR Code</TableHead> */}
+                        <TableHead>QR Code</TableHead>
                         <TableHead>Created On</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
-                      {patrolling.checkpoints &&
-                      patrolling.checkpoints.length > 0 ? (
-                        patrolling.checkpoints
-                          .sort((a, b) => a.order_sequence - b.order_sequence)
-                          .map((checkpoint) => (
-                            <TableRow key={checkpoint.id}>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  #{checkpoint.order_sequence}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {checkpoint.name}
-                              </TableCell>
-                              <TableCell>
-                                {checkpoint.description || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.building_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.wing_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.area_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.floor_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.room_name || "—"}
-                              </TableCell>
-                            
-                              {/* <TableCell>
-                                {checkpoint.qr_code_available ? (
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="default"
-                                      className="text-xs"
-                                    >
-                                      <QrCode className="w-3 h-3 mr-1" />
-                                      Available
-                                    </Badge>
-                                    {checkpoint.qr_code_url && (
-                                      <div className="flex gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            window.open(
-                                              checkpoint.qr_code_url,
-                                              "_blank"
-                                            )
-                                          }
-                                          className="p-1 h-6 w-6"
-                                          title="View QR Code"
-                                        >
-                                          <Eye className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            try {
-                                              const baseUrl = API_CONFIG.BASE_URL;
-                                              const token = API_CONFIG.TOKEN;
-
-                                              if (!baseUrl || !token) {
-                                                throw new Error("API configuration is missing");
-                                              }
-
-                                              // Use the new API endpoint for downloading QR codes
-                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpoint.id}]`);
-
-                                              const response = await fetch(apiUrl, {
-                                                method: "GET",
-                                                headers: {
-                                                  "Content-Type": "application/json",
-                                                  Accept: "application/json",
-                                                  Authorization: getAuthHeader(),
-                                                },
-                                              });
-
-                                              if (!response.ok) {
-                                                throw new Error(`HTTP error! status: ${response.status}`);
-                                              }
-
-                                              const blob = await response.blob();
-                                              const url = window.URL.createObjectURL(blob);
-                                              const a = document.createElement("a");
-                                              a.href = url;
-                                              a.download = `checkpoint_${checkpoint.id}_qr_code.pdf`;
-                                              document.body.appendChild(a);
-                                              a.click();
-                                              window.URL.revokeObjectURL(url);
-                                              document.body.removeChild(a);
-                                              toast.success(
-                                                "QR Code downloaded successfully!"
-                                              );
-                                            } catch (error: any) {
-                                              console.error('Error downloading QR Code:', error);
-                                              toast.error(
-                                                `Failed to download QR Code: ${error.message}`
-                                              );
-                                            }
-                                          }}
-                                          className="p-1 h-6 w-6"
-                                          title="Download QR Code"
-                                        >
-                                          <Download className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    Not Available
-                                  </Badge>
-                                )}
-                              </TableCell> */}
-                              <TableCell className="text-xs text-gray-600">
-                                {formatDateTime(checkpoint.created_at)}
-                              </TableCell>
-                            </TableRow>
-                          ))
+                      {localCheckpoints.length > 0 ? (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleCheckpointDragEnd}
+                        >
+                          <SortableContext
+                            items={localCheckpoints.map((c) => c.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {localCheckpoints.map((checkpoint) => (
+                              <SortableCheckpointRow
+                                key={checkpoint.id}
+                                checkpoint={checkpoint}
+                                formatDateTime={formatDateTime}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={9}
+                            colSpan={11}
                             className="text-center text-gray-600"
                           >
                             No checkpoints available.
@@ -1547,6 +1624,12 @@ export const PatrollingDetailPage: React.FC = () => {
                       )}
                     </TableBody>
                   </Table>
+                  {localCheckpoints.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                      <GripVertical className="w-3 h-3" />
+                      Drag rows to reorder checkpoints
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>

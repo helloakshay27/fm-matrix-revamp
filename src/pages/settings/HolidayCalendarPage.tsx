@@ -145,6 +145,19 @@ export const HolidayCalendarPage = () => {
   const [loadingEditData, setLoadingEditData] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Multi-add: pending holiday rows before final save
+  interface PendingHoliday {
+    id: string;
+    holidayName: string;
+    date: Date;
+    recurring: string;
+    selectedType: string;
+    selectedSites: number[];
+    selectedCustomers: string[];
+  }
+  const [pendingHolidays, setPendingHolidays] = useState<PendingHoliday[]>([]);
+  const [addRowError, setAddRowError] = useState('');
+
   // Filter dialog
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterName, setFilterName] = useState('');
@@ -432,82 +445,104 @@ export const HolidayCalendarPage = () => {
     setIsEditDialogOpen(false);
   };
 
-  const handleSubmit = async () => {
+  // Add current row to the pending list (does not call API yet)
+  const handleAddRow = () => {
     if (!holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
-      toast.error("Please fill all required fields");
+      setAddRowError('Please fill all fields before adding.');
       return;
     }
+    // Duplicate check within pending list and existing holidays
+    const allNames = [
+      ...holidays.map(h => h.holidayName.toLowerCase()),
+      ...pendingHolidays.map(p => p.holidayName.toLowerCase()),
+    ];
+    if (allNames.includes(holidayName.trim().toLowerCase())) {
+      setAddRowError('Duplicate name: this holiday already exists.');
+      return;
+    }
+    setAddRowError('');
+    setPendingHolidays(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        holidayName: holidayName.trim(),
+        date,
+        recurring,
+        selectedType,
+        selectedSites: [...selectedSites],
+        selectedCustomers: [...selectedCustomers],
+      },
+    ]);
+    // Clear row for next entry
+    setHolidayName('');
+    setDate(undefined);
+    setRecurring('');
+    setSelectedSites([]);
+    setSelectedType('');
+    setSelectedCustomers([]);
+  };
 
-    // Duplicate name check
-    const duplicate = holidays.find(
-      h => h.holidayName.toLowerCase() === holidayName.trim().toLowerCase()
-    );
-    if (duplicate) {
-      toast.error("Duplicate name cannot be created");
+  // Remove a pending row
+  const handleRemovePending = (id: string) => {
+    setPendingHolidays(prev => prev.filter(p => p.id !== id));
+  };
+
+  // Submit all pending holidays to the API
+  const handleSubmit = async () => {
+    const toSubmit = [...pendingHolidays];
+    if (toSubmit.length === 0) {
+      toast.error('Please add at least one holiday before saving.');
       return;
     }
 
     setIsSubmitting(true);
+    const created: Holiday[] = [];
     try {
-      // Prepare the API payload according to the specified format
-      const holidayPayload = {
-        holiday_calendar: {
-          name: holidayName,
-          is_recuring: recurring === "yes",
-          holiday_date: date.toISOString(),
-          holiday_type: selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
-          site_ids: selectedSites,
-          applicable_for: selectedCustomers
+      for (const item of toSubmit) {
+        const holidayPayload = {
+          holiday_calendar: {
+            name: item.holidayName,
+            is_recuring: item.recurring === 'yes',
+            holiday_date: item.date.toISOString(),
+            holiday_type: item.selectedType.charAt(0).toUpperCase() + item.selectedType.slice(1),
+            site_ids: item.selectedSites,
+            applicable_for: item.selectedCustomers,
+          },
+        };
+        const response = await fetch(`${baseUrl}${endpoints.CREATE_HOLIDAY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(holidayPayload),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-      };
-
-      console.log('Submitting holiday with payload:', holidayPayload);
-
-      // Make API call using the specified endpoint
-      const response = await fetch(`${baseUrl}${endpoints.CREATE_HOLIDAY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(holidayPayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const responseData = await response.json();
+        const siteNames = siteOptions
+          .filter(site => item.selectedSites.includes(site.id))
+          .map(site => site.name)
+          .join(', ');
+        created.push({
+          id: String(responseData.id || Date.now()),
+          holidayName: item.holidayName,
+          date: format(item.date, 'dd MMMM yyyy'),
+          recurring: item.recurring === 'yes',
+          applicableLocation: siteNames,
+          holidayType: item.selectedType.charAt(0).toUpperCase() + item.selectedType.slice(1),
+          applicableFor: item.selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', '),
+          active: true,
+        });
       }
-
-      const responseData = await response.json();
-      console.log('Holiday created successfully:', responseData);
-
-      // Update local holidays list with the new holiday
-      const selectedSiteNames = siteOptions
-        .filter(site => selectedSites.includes(site.id))
-        .map(site => site.name)
-        .join(', ');
-
-      const newHoliday: Holiday = {
-        id: String(responseData.id || holidays.length + 1),
-        holidayName,
-        date: format(date, "dd MMMM yyyy"),
-        recurring: recurring === "yes",
-        applicableLocation: selectedSiteNames,
-        holidayType: selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
-        applicableFor: selectedCustomers.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', '),
-        active: true,
-      };
-
-      const updatedHolidays = [...holidays, newHoliday];
-      setHolidays(updatedHolidays);
-
-      toast.success("Holiday created successfully");
-      
-      // Reset form
+      setHolidays(prev => [...prev, ...created]);
+      toast.success(`${created.length} holiday${created.length > 1 ? 's' : ''} created successfully`);
       handleCancel();
     } catch (error) {
-      console.error('Error creating holiday:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to create holiday");
+      console.error('Error creating holidays:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create holiday');
     } finally {
       setIsSubmitting(false);
     }
@@ -521,7 +556,8 @@ export const HolidayCalendarPage = () => {
     setSelectedSites([]);
     setSelectedType('');
     setSelectedCustomers([]);
-    
+    setPendingHolidays([]);
+    setAddRowError('');
     setIsAddDialogOpen(false);
   };
 
@@ -776,7 +812,7 @@ export const HolidayCalendarPage = () => {
                 <Plus className="w-4 h-4 mr-2" /> Add Holiday
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="add-holiday-dialog-description">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="add-holiday-dialog-description">
               <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <DialogTitle className="text-lg font-semibold text-gray-900">ADD HOLIDAY</DialogTitle>
                 <Button
@@ -788,256 +824,197 @@ export const HolidayCalendarPage = () => {
                   <X className="h-4 w-4" />
                 </Button>
                 <div id="add-holiday-dialog-description" className="sr-only">
-                  Add a new holiday with name, date, recurrence, sites, type, and modules
+                  Add one or more holidays with name, date, recurrence, sites, type, and modules
                 </div>
               </DialogHeader>
-              
-              <div className="space-y-6 py-4">
-                {/* Holiday Form */}
+
+              <div className="space-y-4 py-2">
+                {/* Input Row */}
                 <Card>
-                  <CardContent className="space-y-6 pt-6">
-                    {/* First Row */}
-                    <div className="grid grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Holiday Name <span className="text-red-500">*</span></Label>
-                      <Input
-  type="text"
-  placeholder="Enter Holiday Name"
-  value={holidayName}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (/^[A-Za-z\s]*$/.test(value)) {
-      setHolidayName(value);
-    }
-  }}
-  className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
-  style={{ borderRadius: '4px' }}
-/>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Date <span className="text-red-500">*</span></Label>
+                  <CardContent className="pt-5 pb-4">
+                    <div className="grid grid-cols-6 gap-3 items-end">
+                      {/* Holiday Name */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Holiday Name <span className="text-red-500">*</span></Label>
                         <Input
-                          type="date"
-                          placeholder="Select date"
-                          value={date ? format(date, "yyyy-MM-dd") : ''}
-                          min={format(new Date(), "yyyy-MM-dd")}
+                          type="text"
+                          placeholder="Enter Holiday Name"
+                          value={holidayName}
                           onChange={(e) => {
-                            if (e.target.value) {
-                              setDate(new Date(e.target.value));
-                            } else {
-                              setDate(undefined);
+                            const value = e.target.value;
+                            if (/^[A-Za-z\s]*$/.test(value)) {
+                              setHolidayName(value);
+                              setAddRowError('');
                             }
                           }}
-                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0 text-sm"
                           style={{ borderRadius: '4px' }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Recurring <span className="text-red-500">*</span></Label>
+
+                      {/* Date */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Date <span className="text-red-500">*</span></Label>
+                        <Input
+                          type="date"
+                          value={date ? format(date, 'yyyy-MM-dd') : ''}
+                          min={format(new Date(), 'yyyy-MM-dd')}
+                          onChange={(e) => {
+                            setDate(e.target.value ? new Date(e.target.value) : undefined);
+                            setAddRowError('');
+                          }}
+                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0 text-sm"
+                          style={{ borderRadius: '4px' }}
+                        />
+                      </div>
+
+                      {/* Recurring */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Recurring <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           options={[
                             { value: 'yes', label: 'Yes' },
-                            { value: 'no', label: 'No' }
+                            { value: 'no', label: 'No' },
                           ]}
                           value={recurring ? { value: recurring, label: recurring === 'yes' ? 'Yes' : 'No' } : null}
-                          onChange={(selected) => {
-                            setRecurring(selected ? selected.value : '');
-                          }}
-                          placeholder="Select recurring option"
+                          onChange={(sel) => { setRecurring(sel ? sel.value : ''); setAddRowError(''); }}
+                          placeholder="Select..."
                           isClearable
                           styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: '40px',
-                              border: '1px solid #e2e8f0',
-                              boxShadow: 'none',
-                              '&:hover': {
-                                border: '1px solid #cbd5e1'
-                              }
-                            }),
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isSelected 
-                                ? '#dbeafe' 
-                                : state.isFocused 
-                                ? '#f0f9ff' 
-                                : 'white',
-                              color: state.isSelected ? '#1e40af' : '#374151',
-                              '&:hover': {
-                                backgroundColor: '#f0f9ff'
-                              }
-                            })
+                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
+                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
                           }}
                         />
                       </div>
-                    </div>
-                    
-                    {/* Second Row */}
-                    <div className="grid grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Holiday Type <span className="text-red-500">*</span></Label>
+
+                      {/* Holiday Type */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Holiday Type <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           options={[
                             { value: 'public', label: 'Public' },
                             { value: 'festival', label: 'Festival' },
-                            { value: 'maintenance', label: 'Maintenance' }
+                            { value: 'maintenance', label: 'Maintenance' },
                           ]}
                           value={selectedType ? { value: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) } : null}
-                          onChange={(selected) => {
-                            setSelectedType(selected ? selected.value : '');
-                          }}
-                          placeholder="Select holiday type"
+                          onChange={(sel) => { setSelectedType(sel ? sel.value : ''); setAddRowError(''); }}
+                          placeholder="Select..."
                           isClearable
                           styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: '40px',
-                              border: '1px solid #d1d5db',
-                              boxShadow: 'none',
-                              '&:hover': {
-                                border: '1px solid #cbd5e1'
-                              }
-                            }),
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isSelected 
-                                ? '#dbeafe' 
-                                : state.isFocused 
-                                ? '#f0f9ff' 
-                                : 'white',
-                              color: state.isSelected ? '#1e40af' : '#374151',
-                              '&:hover': {
-                                backgroundColor: '#f0f9ff'
-                              }
-                            })
+                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
+                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
                           }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Select Sites <span className="text-red-500">*</span></Label>
+
+                      {/* Select Sites */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Select Sites <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           isMulti
-                          options={siteOptions.map(site => ({ value: site.id, label: site.name }))}
-                          value={siteOptions.filter(site => selectedSites.includes(site.id)).map(site => ({ value: site.id, label: site.name }))}
-                          onChange={(selected) => {
-                            const siteIds = selected ? selected.map(s => s.value) : [];
-                            setSelectedSites(siteIds);
-                          }}
+                          options={siteOptions.map(s => ({ value: s.id, label: s.name }))}
+                          value={siteOptions.filter(s => selectedSites.includes(s.id)).map(s => ({ value: s.id, label: s.name }))}
+                          onChange={(sel) => { setSelectedSites(sel ? sel.map(s => s.value) : []); setAddRowError(''); }}
                           placeholder="Select sites..."
                           isLoading={loadingSites}
                           isDisabled={loadingSites}
                           styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: '40px',
-                              border: '1px solid #d1d5db',
-                              boxShadow: 'none',
-                              '&:hover': {
-                                border: '1px solid #cbd5e1'
-                              }
-                            }),
-                            multiValue: (base) => ({
-                              ...base,
-                              backgroundColor: '#f1f5f9'
-                            }),
-                            multiValueLabel: (base) => ({
-                              ...base,
-                              color: '#334155'
-                            }),
-                            multiValueRemove: (base) => ({
-                              ...base,
-                              color: '#64748b',
-                              '&:hover': {
-                                backgroundColor: '#e2e8f0',
-                                color: '#475569'
-                              }
-                            }),
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isSelected 
-                                ? '#dbeafe' 
-                                : state.isFocused 
-                                ? '#f0f9ff' 
-                                : 'white',
-                              color: state.isSelected ? '#1e40af' : '#374151',
-                              '&:hover': {
-                                backgroundColor: '#f0f9ff'
-                              }
-                            })
+                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
+                            multiValue: (base) => ({ ...base, backgroundColor: '#f1f5f9' }),
+                            multiValueLabel: (base) => ({ ...base, color: '#334155', fontSize: '12px' }),
+                            multiValueRemove: (base) => ({ ...base, color: '#64748b' }),
+                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
                           }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-base font-semibold">Select Module <span className="text-red-500">*</span></Label>
+
+                      {/* Select Module */}
+                      <div className="space-y-1">
+                        <Label className="text-sm font-semibold">Select Module <span className="text-red-500">*</span></Label>
                         <ReactSelect
                           isMulti
-                          options={customerOptions.map(option => ({ value: option, label: option.charAt(0).toUpperCase() + option.slice(1) }))}
-                          value={customerOptions.filter(option => selectedCustomers.includes(option)).map(option => ({ value: option, label: option.charAt(0).toUpperCase() + option.slice(1) }))}
-                          onChange={(selected) => {
-                            const modules = selected ? selected.map(s => s.value) : [];
-                            setSelectedCustomers(modules);
-                          }}
+                          options={customerOptions.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                          value={customerOptions.filter(o => selectedCustomers.includes(o)).map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                          onChange={(sel) => { setSelectedCustomers(sel ? sel.map(s => s.value) : []); setAddRowError(''); }}
                           placeholder="Select modules..."
                           styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: '40px',
-                              border: '1px solid #d1d5db',
-                              boxShadow: 'none',
-                              '&:hover': {
-                                border: '1px solid #cbd5e1'
-                              }
-                            }),
-                            multiValue: (base) => ({
-                              ...base,
-                              backgroundColor: '#f1f5f9'
-                            }),
-                            multiValueLabel: (base) => ({
-                              ...base,
-                              color: '#334155'
-                            }),
-                            multiValueRemove: (base) => ({
-                              ...base,
-                              color: '#64748b',
-                              '&:hover': {
-                                backgroundColor: '#e2e8f0',
-                                color: '#475569'
-                              }
-                            }),
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isSelected 
-                                ? '#dbeafe' 
-                                : state.isFocused 
-                                ? '#f0f9ff' 
-                                : 'white',
-                              color: state.isSelected ? '#1e40af' : '#374151',
-                              '&:hover': {
-                                backgroundColor: '#f0f9ff'
-                              }
-                            })
+                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
+                            multiValue: (base) => ({ ...base, backgroundColor: '#f1f5f9' }),
+                            multiValueLabel: (base) => ({ ...base, color: '#334155', fontSize: '12px' }),
+                            multiValueRemove: (base) => ({ ...base, color: '#64748b' }),
+                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
                           }}
                         />
                       </div>
                     </div>
+
+                    {/* Validation error */}
+                    {addRowError && (
+                      <p className="text-red-500 text-xs mt-2">{addRowError}</p>
+                    )}
+
+                    {/* Add button below the row */}
+                    <div className="flex justify-end mt-4">
+                      <Button
+                        type="button"
+                        onClick={handleAddRow}
+                        className="bg-[#C72030] hover:bg-[#A61B29] text-white font-semibold px-6 h-10"
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Add
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                  <Button 
-                    type="submit" 
-                    className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold flex-1 h-11" 
-                    disabled={isSubmitting}
+                {/* Pending holidays list */}
+                {pendingHolidays.length > 0 && (
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 border-b">
+                      <span className="text-sm font-semibold text-gray-700">
+                        Holidays to be saved ({pendingHolidays.length})
+                      </span>
+                    </div>
+                    <div className="divide-y max-h-60 overflow-y-auto">
+                      {pendingHolidays.map((item, idx) => (
+                        <div key={item.id} className="flex items-center justify-between px-4 py-2 hover:bg-gray-50">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <span className="text-xs font-medium text-gray-500 w-5">{idx + 1}.</span>
+                            <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]" title={item.holidayName}>{item.holidayName}</span>
+                            <span className="text-xs text-gray-500">{format(item.date, 'dd MMM yyyy')}</span>
+                            <span className="text-xs text-gray-500">{item.recurring === 'yes' ? 'Recurring' : 'Non-recurring'}</span>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                              {item.selectedType.charAt(0).toUpperCase() + item.selectedType.slice(1)}
+                            </span>
+                            <span className="text-xs text-gray-500 truncate max-w-[100px]" title={siteOptions.filter(s => item.selectedSites.includes(s.id)).map(s => s.name).join(', ')}>
+                              {siteOptions.filter(s => item.selectedSites.includes(s.id)).map(s => s.name).join(', ') || '—'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleRemovePending(item.id)}
+                            className="ml-3 text-gray-400 hover:text-red-500 flex-shrink-0"
+                            title="Remove"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Save All / Cancel */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button
+                    type="button"
+                    className="bg-[#C72030] hover:bg-[#A61B29] text-white font-semibold flex-1 h-11"
+                    disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
-                    {isSubmitting ? 'Adding Holiday...' : 'Add Holiday'}
+                    {isSubmitting
+                      ? 'Saving...'
+                      : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCancel} 
-                    className="flex-1 h-11"
-                  >
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11">
                     Cancel
                   </Button>
                 </div>

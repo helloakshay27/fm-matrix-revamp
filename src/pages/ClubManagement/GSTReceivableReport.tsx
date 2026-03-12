@@ -83,7 +83,7 @@ import { useNavigate } from "react-router-dom";
 // ];
 
 
-const GstPayableReport: React.FC = () => {
+const GstReceivableReport: React.FC = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
@@ -164,7 +164,7 @@ const GstPayableReport: React.FC = () => {
                                 </td> */}
                                 <td
                                     className="border px-4 py-3 text-blue-600 hover:text-blue-800 cursor-pointer"
-                                    onClick={() => navigate(`/accounting/reports/gst-payable/details/${row.id}`)}
+                                    onClick={() => navigate(`/accounting/reports/gst-receivable/details/${row.id}`)}
                                 >
                                     {row.name}
                                 </td>
@@ -225,7 +225,7 @@ const GstPayableReport: React.FC = () => {
 
                                 <td
                                     className="border px-4 py-3 text-blue-600 hover:text-blue-800 cursor-pointer"
-                                    onClick={() => navigate(`/accounting/reports/gst-payable/details/${row.id}`)}
+                                    onClick={() => navigate(`/accounting/reports/gst-receivable/details/${row.id}`)}
                                 >
                                     {row.name}
                                 </td>
@@ -265,7 +265,7 @@ const GstPayableReport: React.FC = () => {
         return (
             <div className="overflow-x-auto">
                 <h1 className="text-center font-semibold mb-4">
-                    GST Payable
+                    GST Receivable
                 </h1>
                 <table className="w-full border-collapse border border-gray-300">
                     <thead>
@@ -293,7 +293,7 @@ const GstPayableReport: React.FC = () => {
                                 <td className="border px-4 py-3">
                                     <span
                                         className="text-blue-600 cursor-pointer hover:underline hover:text-blue-800"
-                                        onClick={() => navigate(`/accounting/reports/gst-payable/details/${row.id}`)}
+                                        onClick={() => navigate(`/accounting/reports/gst-receivable/details/${row.id}`)}
                                     >
                                         {row.name}
                                     </span>
@@ -303,7 +303,7 @@ const GstPayableReport: React.FC = () => {
                                 </td>
 
                                 <td className="border px-4 py-3 text-right">
-                                    {Number(row.current_total_credits).toFixed(2)}
+                                    {Number(row.current_total_debits).toFixed(2)}
                                 </td>
 
                                 {/* <td className="border px-4 py-3 text-right">
@@ -357,7 +357,7 @@ const GstPayableReport: React.FC = () => {
                         <NotepadText className="w-6 h-6" />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                        GST Payable
+                        GST  Receivable
                     </h3>
                 </div>
 
@@ -428,4 +428,4 @@ const GstPayableReport: React.FC = () => {
     );
 };
 
-export default GstPayableReport;
+export default GstReceivableReport;

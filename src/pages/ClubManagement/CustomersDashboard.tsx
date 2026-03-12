@@ -46,15 +46,15 @@ interface CustomerData {
 }
 
 const dummyCustomers: CustomerData[] = [
-  {
-    id: 1,
-    name: "Lockated",
-    company_name: "Lockated",
-    email: "nita@gmail.com",
-    work_phone: "0770777771",
-    receivables: 0,
-    unused_credits: 1370,
-  },
+  // {
+  //   id: 1,
+  //   name: "Lockated",
+  //   company_name: "Lockated",
+  //   email: "nita@gmail.com",
+  //   work_phone: "0770777771",
+  //   receivables: 0,
+  //   unused_credits: 1370,
+  // },
   
 ];
 

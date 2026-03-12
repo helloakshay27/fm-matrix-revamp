@@ -242,6 +242,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
+                  {order.status !== "sent" && (
                 <input
                     type="checkbox"
                     checked={selectedRows.includes(order.id)}
@@ -254,6 +255,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     }}
                     className="cursor-pointer"
                 />
+                 )}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"

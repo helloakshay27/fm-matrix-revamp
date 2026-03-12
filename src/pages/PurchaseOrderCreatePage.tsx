@@ -34,7 +34,7 @@ import {
     AttachFile,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart,Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAddresses, getInventories } from '@/store/slices/materialPRSlice';
 
@@ -151,7 +151,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             taxRate: 0,
             amount: 0,
             account_id: 0
-            ,item_tax_type: '',
+            , item_tax_type: '',
             tax_group_id: null,
             tax_exemption_id: null
         }
@@ -590,7 +590,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             taxRate: 0,
             amount: 0,
             account_id: 0
-            ,item_tax_type: '',
+            , item_tax_type: '',
             tax_group_id: null,
             tax_exemption_id: null
         }]);
@@ -649,7 +649,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             ? (subTotal * discountOnTotal) / 100
             : discountOnTotal;
         const calcAfterDiscount = subTotal - calcTotalDiscount;
-        
+
         const selected = taxOptions.find(t => t.name === selectedTax);
         // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
@@ -791,7 +791,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             // So likely the tax is GLOBAL, applied to the subtotal?
             // The Summary section has "Select a Tax".
             // So I should treat `selectedTax` as the global tax.
-
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
             const payload = {
                 pms_purchase_order: {
                     pms_supplier_id: selectedVendor?.id,
@@ -821,7 +824,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     // For now, mapping what's available.
                     tax_percentage: selectedTaxObj?.rate || 0,
 
-                    pms_po_inventories_attributes: inventoriesAttributes
+                    pms_po_inventories_attributes: inventoriesAttributes,
+
+                    /* NEW FIELDS ADDED */
+                    sub_total_amount: subTotal,
+                    taxable_amount: totalGSTAmount,
+                    lock_account_tax_amount: taxAmount2,
                 },
                 attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
@@ -1187,26 +1195,26 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
                                                         {accountGroups.length > 0
                                                             ? accountGroups.map((group) =>
-                                                                  group.ledgers && group.ledgers.length > 0
-                                                                      ? [
-                                                                            <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
-                                                                            ...group.ledgers.map((ledger: any) => (
-                                                                                <MenuItem key={ledger.id} value={ledger.id}>
-                                                                                    {ledger.name}
-                                                                                </MenuItem>
-                                                                            )),
-                                                                        ]
-                                                                      : (
-                                                                            <MenuItem key={`group-${group.id}`} value={group.id}>
-                                                                                {group.group_name}
+                                                                group.ledgers && group.ledgers.length > 0
+                                                                    ? [
+                                                                        <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
+                                                                        ...group.ledgers.map((ledger: any) => (
+                                                                            <MenuItem key={ledger.id} value={ledger.id}>
+                                                                                {ledger.name}
                                                                             </MenuItem>
-                                                                        )
-                                                              )
+                                                                        )),
+                                                                    ]
+                                                                    : (
+                                                                        <MenuItem key={`group-${group.id}`} value={group.id}>
+                                                                            {group.group_name}
+                                                                        </MenuItem>
+                                                                    )
+                                                            )
                                                             : accountLedgers.map((ledger: any) => (
-                                                                  <MenuItem key={ledger.id} value={ledger.id}>
-                                                                      {ledger.name}
-                                                                  </MenuItem>
-                                                              ))}
+                                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                                    {ledger.name}
+                                                                </MenuItem>
+                                                            ))}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1313,8 +1321,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     </div>
                 </Section>
 
-               
-                 <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+
+                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
                     <div className="flex justify-end">
                         <div className="w-full md:w-1/2 space-y-4">
                             <div className="flex justify-between items-center py-2">

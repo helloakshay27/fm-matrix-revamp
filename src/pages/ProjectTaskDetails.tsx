@@ -1535,10 +1535,14 @@ export const ProjectTaskDetails = () => {
         </Breadcrumb>
       )}
 
-      {/* <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button> */}
+      {
+        window.location.pathname === "/vas/tasks" && (
+          <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        )
+      }
 
       <div className="pt-1">
         {isLoading ? (

@@ -425,11 +425,11 @@ export const EditSchedulePage = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
-  
+
   // Add activity name validation state
   const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
   const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
-  
+
   const [loadingStates, setLoadingStates] = useState({
     taskGroups: false,
     taskSubGroups: false,
@@ -453,7 +453,7 @@ export const EditSchedulePage = () => {
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         console.log('Users API response:', usersData);
-        
+
         // Handle different possible response structures
         let usersArray = [];
         if (usersData.users && Array.isArray(usersData.users)) {
@@ -463,14 +463,14 @@ export const EditSchedulePage = () => {
         } else if (usersData.data && Array.isArray(usersData.data)) {
           usersArray = usersData.data;
         }
-        
+
         // Ensure users have required properties
         const formattedUsers = usersArray.map((user: any) => ({
           id: user.id || user.user_id || user.ID,
           name: user.name || user.user_name || user.full_name || user.display_name || `User ${user.id}`,
           email: user.email || user.user_email || user.email_address || ''
         }));
-        
+
         console.log('Formatted users:', formattedUsers);
         setUsers(formattedUsers);
       } else {
@@ -686,7 +686,7 @@ export const EditSchedulePage = () => {
     if (apiData && users.length > 0 && categories.length > 0 && groups.length > 0) {
       // Handle ticket assignment mapping - try to find ID from name if name is provided
       if (apiData.custom_form.task_assigner_name && !apiData.custom_form.task_assigner_id) {
-        const matchingUser = users.find(user => 
+        const matchingUser = users.find(user =>
           user.name === apiData.custom_form.task_assigner_name
         );
         if (matchingUser) {
@@ -696,7 +696,7 @@ export const EditSchedulePage = () => {
 
       // Handle category mapping - try to find ID from name if name is provided
       if (apiData.custom_form.helpdesk_category_name && !apiData.custom_form.helpdesk_category_id) {
-        const matchingCategory = categories.find(category => 
+        const matchingCategory = categories.find(category =>
           category.name === apiData.custom_form.helpdesk_category_name
         );
         if (matchingCategory) {
@@ -708,14 +708,14 @@ export const EditSchedulePage = () => {
       if (apiData.asset_task.group_name && apiData.asset_task.assignment_type === 'group') {
         const groupNames = apiData.asset_task.group_name.split(',').map(name => name.trim());
         const matchingGroupIds = [];
-        
+
         groupNames.forEach(groupName => {
           const matchingGroup = groups.find(group => group.name === groupName);
           if (matchingGroup) {
             matchingGroupIds.push(matchingGroup.id.toString());
           }
         });
-        
+
         if (matchingGroupIds.length > 0) {
           console.log('Mapped group names to IDs:', groupNames, '->', matchingGroupIds);
           setFormData(prev => ({ ...prev, selectedGroups: matchingGroupIds }));
@@ -784,7 +784,7 @@ export const EditSchedulePage = () => {
 
         // Validate selectedUsers against users
         if (users.length > 0 && prev.selectedUsers && prev.selectedUsers.length > 0) {
-          const validUsers = prev.selectedUsers.filter(userId => 
+          const validUsers = prev.selectedUsers.filter(userId =>
             users.some(user => user.id.toString() === userId.toString())
           );
           if (validUsers.length !== prev.selectedUsers.length) {
@@ -796,7 +796,7 @@ export const EditSchedulePage = () => {
 
         // Validate selectedGroups against groups
         if (groups.length > 0 && prev.selectedGroups && prev.selectedGroups.length > 0) {
-          const validGroups = prev.selectedGroups.filter(groupId => 
+          const validGroups = prev.selectedGroups.filter(groupId =>
             groups.some(group => group.id.toString() === groupId.toString())
           );
           if (validGroups.length !== prev.selectedGroups.length) {
@@ -814,14 +814,14 @@ export const EditSchedulePage = () => {
   // Helper function to normalize dropdown values
   const normalizeDropdownValue = (value: string, validOptions: string[]): string => {
     if (!value) return '';
-    
+
     const normalizedValue = value.toLowerCase().trim();
-    
+
     // Direct match
     if (validOptions.includes(normalizedValue)) {
       return normalizedValue;
     }
-    
+
     // Handle common variations
     const variations: { [key: string]: string } = {
       'hours': 'hour',
@@ -837,12 +837,12 @@ export const EditSchedulePage = () => {
       'months': 'month',
       'mo': 'month'
     };
-    
+
     // Check variations
     if (variations[normalizedValue] && validOptions.includes(variations[normalizedValue])) {
       return variations[normalizedValue];
     }
-    
+
     console.warn(`Unrecognized dropdown value: "${value}". Available options:`, validOptions);
     return '';
   };
@@ -941,6 +941,8 @@ export const EditSchedulePage = () => {
         setAttachments(data.custom_form.attachments);
       }
 
+      console.log(data.custom_form.content)
+
       // Map question sections from content
       if (data.custom_form.content && data.custom_form.content.length > 0) {
         const mappedSections = [{
@@ -955,7 +957,7 @@ export const EditSchedulePage = () => {
             group: item.group_id || '',
             subGroup: item.sub_group_id || '',
             task: item.label || '',
-            inputType: mapInputType(item.type || 'text'),
+            inputType: (item.type === 'text' && item.values && item.values.length > 0) ? 'options-inputs' : mapInputType(item.type || 'text'),
             mandatory: item.required === 'true',
             helpText: !!item.hint,
             helpTextValue: item.hint || '',
@@ -1008,14 +1010,14 @@ export const EditSchedulePage = () => {
           }))
         }];
         setQuestionSections(mappedSections);
-        
+
         // Auto-load sub-groups for tasks that have group values
         const uniqueGroupIds = [...new Set(
           data.custom_form.content
             .filter(item => item.group_id && item.group_id.trim() !== '')
             .map(item => item.group_id)
         )];
-        
+
         if (uniqueGroupIds.length > 0) {
           console.log('Auto-loading sub-groups for groups:', uniqueGroupIds);
           uniqueGroupIds.forEach(groupId => {
@@ -1029,21 +1031,21 @@ export const EditSchedulePage = () => {
         const cronParts = data.asset_task.cron_expression.split(' ');
         if (cronParts.length >= 5) {
           // Parse and format minutes with leading zeros to match UI checkboxes
-          const minutes = cronParts[0] !== '*' 
+          const minutes = cronParts[0] !== '*'
             ? cronParts[0].split(',').map(m => {
-                const num = parseInt(m);
-                return !isNaN(num) && num >= 0 && num <= 59 ? num.toString().padStart(2, '0') : m;
-              })
+              const num = parseInt(m);
+              return !isNaN(num) && num >= 0 && num <= 59 ? num.toString().padStart(2, '0') : m;
+            })
             : [];
-          
+
           // Parse and format hours with leading zeros to match UI checkboxes
-          const hours = cronParts[1] !== '*' 
+          const hours = cronParts[1] !== '*'
             ? cronParts[1].split(',').map(h => {
-                const num = parseInt(h);
-                return !isNaN(num) && num >= 0 && num <= 23 ? num.toString().padStart(2, '0') : h;
-              })
+              const num = parseInt(h);
+              return !isNaN(num) && num >= 0 && num <= 23 ? num.toString().padStart(2, '0') : h;
+            })
             : [];
-          
+
           const days = cronParts[2] !== '*' ? cronParts[2].split(',') : [];
           const monthString = cronParts[3] !== '*' ? cronParts[3] : '';
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
@@ -1265,7 +1267,7 @@ export const EditSchedulePage = () => {
 
   const handleUpdateSchedule = async () => {
     console.log('handleUpdateSchedule called');
-    
+
     if (!customFormCode) {
       toast.error('Custom form code is required for updating');
       return;
@@ -1277,7 +1279,7 @@ export const EditSchedulePage = () => {
     const basicErrors = await validateBasicConfiguration();
     const scheduleErrors = validateScheduleSetup();
     const questionErrors = validateQuestionSetup();
-    
+
     // Only validate time setup if editTiming is enabled
     let timeValid = true;
     if (editTiming) {
@@ -1302,9 +1304,9 @@ export const EditSchedulePage = () => {
     try {
       // Build the API payload
       const payload = buildAPIPayload();
-      
+
       console.log('Update payload:', payload);
-      
+
       // Make PUT API call to update the schedule
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/pms/custom_forms/${id}/edit_checklist.json?access_token=${API_CONFIG.TOKEN}`,
@@ -1585,7 +1587,8 @@ export const EditSchedulePage = () => {
       'text': 'text',
       'number': 'number',
       'checkbox': 'checkbox-group',
-      'date': 'date'
+      'date': 'date',
+      'options-inputs': 'options-inputs'
     };
     return typeMapping[inputType] || 'text';
   };
@@ -1742,24 +1745,24 @@ export const EditSchedulePage = () => {
           values: values,
           weightage: task.weightage || "",
           rating_enabled: task.rating ? "true" : "false",
-          question_hint_image_ids: task.helpText && task.helpTextAttachments 
+          question_hint_image_ids: task.helpText && task.helpTextAttachments
             ? (() => {
-                // Get only existing attachment IDs (numeric, from original API data)
-                const existingIds = task.helpTextAttachments
-                  .map(attachment => {
-                    if (attachment.id && 
-                        !attachment.id.toString().startsWith('existing_') && 
-                        !attachment.id.toString().includes('-') &&
-                        !isNaN(Number(attachment.id))) {
-                      return attachment.id;
-                    }
-                    return null;
-                  })
-                  .filter(id => id !== null);
-                
-                // If no existing IDs found, return empty array (all are newly added)
-                return existingIds.length > 0 ? existingIds : [];
-              })()
+              // Get only existing attachment IDs (numeric, from original API data)
+              const existingIds = task.helpTextAttachments
+                .map(attachment => {
+                  if (attachment.id &&
+                    !attachment.id.toString().startsWith('existing_') &&
+                    !attachment.id.toString().includes('-') &&
+                    !isNaN(Number(attachment.id))) {
+                    return attachment.id;
+                  }
+                  return null;
+                })
+                .filter(id => id !== null);
+
+              // If no existing IDs found, return empty array (all are newly added)
+              return existingIds.length > 0 ? existingIds : [];
+            })()
             : []
         };
       })
@@ -1768,7 +1771,7 @@ export const EditSchedulePage = () => {
     // Build custom_form object
     const customForm: any = {};
     let contentIndex = 1; // Track position in content array
-    
+
     questionSections.forEach((section) => {
       section.tasks.filter(task => task.task.trim()).forEach(task => {
         // If this task has help text and attachments, add them with correct index
@@ -1780,7 +1783,7 @@ export const EditSchedulePage = () => {
           if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
             throw new Error('Please attach a help file for all tasks where Help Text is checked.');
           }
-          
+
           // Create individual question_for_{contentIndex} for each task with help text
           customForm[`question_for_${contentIndex}`] = task.helpTextAttachments.map(attachment => {
             // Handle both existing attachments (with URLs) and new attachments (with base64 content)
@@ -1802,7 +1805,7 @@ export const EditSchedulePage = () => {
             }
           });
         }
-        
+
         contentIndex++;
       });
     });
@@ -2044,7 +2047,8 @@ export const EditSchedulePage = () => {
       'checkbox-group': 'checkbox',
       'textarea': 'text',
       'date': 'date',
-      'options-inputs': 'options-inputs'
+      'options-inputs': 'options-inputs',
+      'option': 'options-inputs'
     };
     const mappedType = typeMapping[apiType] || 'text';
     console.log('mapInputType:', apiType, '->', mappedType);
@@ -2111,7 +2115,7 @@ export const EditSchedulePage = () => {
       if (templateData && templateData.content) {
         // Convert template content to tasks format
         const templateTasks = templateData.content.map((question: any, index: number) => {
-          const inputType = mapInputType(question.type);
+          const inputType = (question.type === 'text' && question.values && question.values.length > 0) ? 'options-inputs' : mapInputType(question.type);
 
           // Initialize default values for different input types
           let dropdownValues = [{ label: '', type: 'positive' }];
@@ -2447,14 +2451,14 @@ export const EditSchedulePage = () => {
         onChange={async (e) => {
           const value = e.target.value;
           updateFormData('activityName', value);
-          
+
           // Clear previous validation result and errors
           setActivityNameValidationResult(null);
           setFieldErrors(prev => {
             const { activityName, ...rest } = prev;
             return rest;
           });
-          
+
           // Real-time validation with debouncing
           if (value.trim().length > 2) {
             setIsValidatingActivityName(true);
@@ -2467,19 +2471,19 @@ export const EditSchedulePage = () => {
             }
           }
         }}
-        sx={{ 
+        sx={{
           mb: 3,
           '& .MuiFormHelperText-root': {
-            color: fieldErrors.activityName ? '#d32f2f' : 
-                   (isValidatingActivityName ? '#ed6c02' : 
-                    (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
+            color: fieldErrors.activityName ? '#d32f2f' :
+              (isValidatingActivityName ? '#ed6c02' :
+                (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
           }
         }}
         error={!!fieldErrors.activityName}
         helperText={
-          fieldErrors.activityName || 
-          (isValidatingActivityName ? 'Checking availability...' : 
-           (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+          fieldErrors.activityName ||
+          (isValidatingActivityName ? 'Checking availability...' :
+            (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
         }
       />
 
@@ -2722,7 +2726,7 @@ export const EditSchedulePage = () => {
           {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
           {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
             <Box sx={{ minWidth: 0 }}>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
                 <Select
@@ -2946,8 +2950,8 @@ export const EditSchedulePage = () => {
                     if (!selected || selected.length === 0) {
                       return <span style={{ color: '#aaa' }}>Select Groups</span>;
                     }
-                    console.log("groups:--",groups);
-                    
+                    console.log("groups:--", groups);
+
                     return groups
                       .filter(group => selected.includes(group.id.toString()))
                       .map(group => group.name)
@@ -2968,7 +2972,7 @@ export const EditSchedulePage = () => {
                   </Typography>
                 )}
               </FormControl>
-              
+
               {/* Display selected groups as chips */}
               {/* {formData.selectedGroups && formData.selectedGroups.length > 0 && (
                 <Box sx={{ mt: 2 }}>
@@ -2998,7 +3002,7 @@ export const EditSchedulePage = () => {
                   </Box>
                 </Box>
               )} */}
-              
+
             </Box>
           )}
 
@@ -3710,7 +3714,7 @@ export const EditSchedulePage = () => {
                         onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
                         sx={fieldStyles}
                       />
-                      
+
                       {/* File attachment for help text */}
                       <Box sx={{ mt: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -4171,8 +4175,8 @@ export const EditSchedulePage = () => {
       ))}
     </div>
   );
-      console.log("timeSetupData:--", timeSetupData);
-      console.log("editTiming:--", editTiming);
+  console.log("timeSetupData:--", timeSetupData);
+  console.log("editTiming:--", editTiming);
 
   const renderTimeSetup = () => (
     <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
@@ -4199,7 +4203,7 @@ export const EditSchedulePage = () => {
             Time Setup
           </Typography>
         </Box>
-        
+
         <FormControlLabel
           control={
             <Checkbox
@@ -4293,7 +4297,7 @@ export const EditSchedulePage = () => {
         <RedButton
           onClick={handleUpdateSchedule}
           disabled={isSubmitting}
-          // startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
+        // startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
         >
           {isSubmitting ? 'Updating...' : 'Update Schedule'}
         </RedButton>

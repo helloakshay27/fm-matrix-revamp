@@ -66,7 +66,7 @@ export const LockedUsersDashboard = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        getFullUrl("/pms/users/locked_users.json"),
+        getFullUrl(`${location.pathname.startsWith("/master") ? "/pms/users/locked_users.json?selected_site_wise=true" : "/pms/users/locked_users.json"}`),
         {
           method: "GET",
           headers: {

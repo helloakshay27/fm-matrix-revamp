@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { NotepadText, ArrowLeft } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"
 
 // Custom theme for MUI components - matching ManualJournalDetails
 const muiTheme = createTheme({
@@ -93,11 +94,12 @@ const ProfitAndLossReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const [pnlData, setPnlData] = useState<PnlResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const balanceTabs = ["Expenditure", "Income"];
-  const [activeBalanceTab, setActiveBalanceTab] = useState<
-    "Expenditure" | "Income"
-  >("Expenditure");
+  // const balanceTabs = ["Expenditure", "Income"];
+  // const [activeBalanceTab, setActiveBalanceTab] = useState<
+  //   "Expenditure" | "Income"
+  // >("Expenditure");
 
   // Recursive component to render groups and their children/ledgers
   const GroupTable = ({
@@ -124,7 +126,16 @@ const ProfitAndLossReport: React.FC = () => {
                 className="border border-gray-300 px-4 py-3"
                 style={{ paddingLeft: `${(depth + 1) * 20}px` }}
               >
-                {ledger.ledger_name}
+                {/* {ledger.ledger_name} */}
+
+                <span
+                  className="text-blue-600 cursor-pointer hover:underline"
+                  onClick={() =>
+                    navigate(`/accounting/reports/profit-and-loss/details/${ledger.ledger_id}`)
+                  }
+                >
+                  {ledger.ledger_name}
+                </span>
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
                 {/* {Math.abs(ledger.total).toLocaleString(undefined, {
@@ -151,13 +162,13 @@ const ProfitAndLossReport: React.FC = () => {
           rows.push(
             <tr
               key={`group-${child.group_id}`}
-              className="bg-gray-50 font-semibold"
+              className="bg-gray-50 font-bold"
             >
               <td className="border border-gray-300 px-4 py-3 text-center">
                 -
               </td>
               <td
-                className="border border-gray-300 px-4 py-3"
+                className="border border-gray-300 px-4 py-3 font-bold"
                 style={{ paddingLeft: `${depth * 20}px` }}
               >
                 {child.group_name}
@@ -185,71 +196,257 @@ const ProfitAndLossReport: React.FC = () => {
     };
 
     return (
+
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
+
+        <h3 className="text-center font-semibold mb-4">
+          PROFIT & LOSS
+        </h3>
+
+        <table className="w-full border-collapse border border-gray-300 bg-white">
+
           <thead>
             <tr className="bg-[#E5E0D3]">
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold w-1/4">
+
+              <th className="border border-gray-300 px-4 py-3 text-center">
                 Previous Year
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-left font-semibold w-1/2">
-                {title}
+              <th className="border border-gray-300 px-4 py-3 text-left">
+                Expenditure
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold w-1/8">
-                Total
+              <th className="border border-gray-300 px-4 py-3 text-center">
+                Amount
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold w-1/8">
+              <th className="border border-gray-300 px-4 py-3 text-center">
                 Current Year
               </th>
+
+              <th className="border border-gray-300 px-4 py-3 text-center">
+                Previous Year
+              </th>
+              <th className="border border-gray-300 px-4 py-3 text-left">
+                Income
+              </th>
+              <th className="border border-gray-300 px-4 py-3 text-center">
+                Amount
+              </th>
+              <th className="border border-gray-300 px-4 py-3 text-center">
+                Current Year
+              </th>
+
             </tr>
           </thead>
+
+          {/* <tbody>
+
+      <tr className="bg-gray-100 font-bold">
+
+        <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+        <td className="border border-gray-300 px-4 py-3">
+          {pnlData?.expenditure.group_name}
+        </td>
+
+        <td className="border border-gray-300 px-4 py-3 text-right">
+          {Number(pnlData?.expenditure.total).toLocaleString(undefined,{
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+          })}
+        </td>
+
+        <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+
+        <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+        <td className="border border-gray-300 px-4 py-3">
+          {pnlData?.income.group_name}
+        </td>
+
+        <td className="border border-gray-300 px-4 py-3 text-right">
+          {Number(pnlData?.income.total).toLocaleString(undefined,{
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+          })}
+        </td>
+
+        <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+      </tr>
+
+    </tbody> */}
+
+
+          {/* <tbody>
+
+<tr className="bg-gray-100 font-bold">
+
+<td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+<td className="border border-gray-300 px-4 py-3">
+{pnlData?.expenditure.group_name}
+</td>
+
+<td className="border border-gray-300 px-4 py-3 text-right">
+{Number(pnlData?.expenditure.total).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
+</td>
+
+<td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+<td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+<td className="border border-gray-300 px-4 py-3">
+{pnlData?.income.group_name}
+</td>
+
+<td className="border border-gray-300 px-4 py-3 text-right">
+{Number(pnlData?.income.total).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
+</td>
+
+<td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+</tr>
+
+{pnlData?.expenditure && renderGroupRows(pnlData.expenditure)}
+{pnlData?.income && renderGroupRows(pnlData.income)}
+
+</tbody> */}
+
+
+
+
           <tbody>
-            <tr className="bg-gray-100 font-bold">
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                -
-              </td>
+
+            {/* <tr className="bg-gray-100 font-bold">
+
+              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
               <td className="border border-gray-300 px-4 py-3">
-                {group.group_name}
+                {pnlData?.expenditure.group_name}
               </td>
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                {/* {Math.abs(group.total).toLocaleString(undefined, {
+
+              <td className="border border-gray-300 px-4 py-3 text-right">
+                {Number(pnlData?.expenditure.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} */}
-                {Number(group.total).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  maximumFractionDigits: 2
                 })}
               </td>
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                -
-              </td>
-            </tr>
-            {renderGroupRows(group)}
-            <tr className="bg-gray-100 font-bold">
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                -
-              </td>
+
+              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
               <td className="border border-gray-300 px-4 py-3">
-                Total {title}
+                {pnlData?.income.group_name}
               </td>
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                {/* {Math.abs(group.total).toLocaleString(undefined, {
+
+              <td className="border border-gray-300 px-4 py-3 text-right">
+                {Number(pnlData?.income.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} */}
-                {Number(group.total).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  maximumFractionDigits: 2
                 })}
               </td>
-              <td className="border border-gray-300 px-4 py-3 text-center">
-                -
-              </td>
-            </tr>
+
+              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
+
+            </tr> */}
+
+            {(() => {
+
+              const expRows = pnlData?.expenditure ? renderGroupRows(pnlData.expenditure) : [];
+              const incRows = pnlData?.income ? renderGroupRows(pnlData.income) : [];
+
+              const maxRows = Math.max(expRows.length, incRows.length);
+
+              const rows = [];
+
+              for (let i = 0; i < maxRows; i++) {
+
+                rows.push(
+
+                  <tr key={i}>
+
+                    {/* Expenditure side */}
+
+                    {expRows[i] ? expRows[i].props.children : (
+                      <>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                      </>
+                    )}
+
+                    {/* Income side */}
+
+                    {incRows[i] ? incRows[i].props.children : (
+                      <>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td>
+                      </>
+                    )}
+
+                  </tr>
+
+                );
+
+              }
+
+              return rows;
+
+            })()}
+
           </tbody>
+
+          <tfoot>
+
+            <tr className="bg-gray-200 font-bold">
+
+              <td className="border border-gray-300 px-4 py-3"></td>
+
+              <td className="border border-gray-300 px-4 py-3">
+                Total Expenditure
+              </td>
+
+              <td className="border border-gray-300 px-4 py-3 text-right">
+                {Number(pnlData?.totals.expense_total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2
+                })}
+              </td>
+
+              <td className="border border-gray-300 px-4 py-3"></td>
+
+
+              <td className="border border-gray-300 px-4 py-3"></td>
+
+              <td className="border border-gray-300 px-4 py-3">
+                Total Income
+              </td>
+
+              <td className="border border-gray-300 px-4 py-3 text-right">
+                {Number(pnlData?.totals.income_total).toLocaleString(undefined, {
+                  minimumFractionDigits: 2
+                })}
+              </td>
+
+              <td className="border border-gray-300 px-4 py-3"></td>
+
+            </tr>
+
+          </tfoot>
+
         </table>
+
       </div>
+
     );
   };
 
@@ -345,8 +542,18 @@ const ProfitAndLossReport: React.FC = () => {
           </div>
         </div>
 
+
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+          </div>
+        ) : (
+          pnlData && (
+            <GroupTable group={pnlData?.expenditure} title="Expenditure" />
+          )
+        )}
         <div className="bg-white rounded-lg border p-6 mb-6">
-          <div className="grid grid-cols-2 border-b mb-6">
+          {/* <div className="grid grid-cols-2 border-b mb-6">
             {balanceTabs.map((tab) => (
               <button
                 key={tab}
@@ -364,9 +571,9 @@ const ProfitAndLossReport: React.FC = () => {
                 {tab}
               </button>
             ))}
-          </div>
+          </div> */}
 
-          <div className="bg-white min-h-[400px]">
+          {/* <div className="bg-white min-h-[400px]">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
@@ -384,7 +591,7 @@ const ProfitAndLossReport: React.FC = () => {
                 )}
               </>
             )}
-          </div>
+          </div> */}
 
           {/* Totals Section matching ManualJournalDetails style */}
           {/* {pnlData && !loading && (
