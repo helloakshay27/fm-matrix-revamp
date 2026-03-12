@@ -755,6 +755,20 @@ export const roleService = {
         lock_modules: enabledModuleIds,
       };
 
+      const viPayload = {
+        role: {
+          user_id: localStorage.getItem("userId"),
+          name: roleWithModules.role_name,
+          title: roleWithModules.role_name,
+          description: "",
+          resource_type: "Pms::CompanySetup",
+          resource_id: localStorage.getItem("selectedCompanyId"),
+          active: true,
+          modules: enabledModuleIds,
+          the_role: permissionsHash,
+        }
+      }
+
       console.log("Updating role with payload:", payload);
       console.log("Role ID being used:", roleWithModules.role_id);
       console.log(
@@ -764,7 +778,7 @@ export const roleService = {
 
       await apiClient.patch(
         `${ENDPOINTS.ROLES.replace(".json", "")}/${roleWithModules.role_id}.json`,
-        payload
+        window.location.hostname === "localhost" ? viPayload : payload
       );
     } catch (error) {
       console.error("Error updating role with modules:", error);

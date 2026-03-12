@@ -54,7 +54,7 @@ export const permissionService = {
       }
 
       const response = await apiClient.get<UserRoleResponse>(
-        "/pms/users/get_user_role.json"
+        `${window.location.hostname === "localhost" ? "/pms/users/get_role.json": "/pms/users/get_user_role.json"}`
       );
 
       if (response.data.success) {

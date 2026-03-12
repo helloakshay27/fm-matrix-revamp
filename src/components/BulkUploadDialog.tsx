@@ -12,7 +12,7 @@ interface BulkUploadDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   uploadType?: "upload" | "update";
-  context?: "assets" | "custom_forms" | "measurements"; // New prop to determine context
+  context?: "assets" | "custom_forms" | "measurements" | "patrolling"; // New prop to determine context
   onImport?: (file: File) => void;
 }
 
@@ -21,7 +21,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   onOpenChange,
   title,
   uploadType = "upload",
-  context = "assets", // Default to assets for backward compatibility
+  context = "assets" as "assets" | "custom_forms" | "measurements" | "patrolling", // Default to assets for backward compatibility
   onImport
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -123,6 +123,9 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       } else if (context === "measurements") {
         endpoint = ENDPOINTS.ASSET_MEASUREMENT_SAMPLE;
         filename = 'measurement_sample_format.xlsx';
+      } else if (context === "patrolling") {
+        endpoint = '/patrolling_checkpoints_bulk_upload_sample.xlsx';
+        filename = 'patrolling_checkpoints_bulk_upload_sample.xlsx';
       } else {
         endpoint = '/assets/asset.xlsx';
         filename = 'asset_sample_format.xlsx';
@@ -225,6 +228,9 @@ const handleImport = async () => {
     } else if (context === "measurements") {
       endpoint = ENDPOINTS.ASSET_MEASUREMENT_IMPORT;
       formData.append("measurement_file", selectedFile);
+    } else if (context === "patrolling") {
+      endpoint = ENDPOINTS.PATROLLING_IMPORT_CHECKPOINTS;
+      formData.append("file", selectedFile);
     }
 
     await apiClient.post(endpoint, formData, {

@@ -1125,6 +1125,8 @@ import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetail
 import { TaxSummaryDetails } from "./pages/ClubManagement/TaxSummaryDetails";
 import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
+import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
+import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 
 const queryClient = new QueryClient();
 
@@ -1453,8 +1455,16 @@ function App() {
                             element={<RoleDashboard />}
                           />
                           <Route
+                            path="settings/vi-roles/role"
+                            element={<RoleDashboardVi />}
+                          />
+                          <Route
                             path="settings/roles/role/add"
                             element={<AddRolePage />}
+                          />
+                          <Route
+                            path="settings/vi-roles/role/add"
+                            element={<AddRolePageVi />}
                           />
                           <Route
                             path="settings/account/lock-module"
@@ -1925,6 +1935,10 @@ function App() {
                           <Route
                             path="/settings/roles/role/add"
                             element={<AddRolePage />}
+                          />
+                          <Route
+                            path="/settings/vi-roles/role/add"
+                            element={<AddRolePageVi />}
                           />
                           <Route
                             path="/settings/users/edit-details/:id"
@@ -4666,6 +4680,10 @@ function App() {
                           <Route
                             path="/master/user/occupant-users"
                             element={<OccupantUserMasterDashboard />}
+                          />
+                          <Route
+                            path="/master/user/lockated-users"
+                            element={<LockedUsersDashboard />}
                           />
                           {/* Material Master Route */}
                           <Route
