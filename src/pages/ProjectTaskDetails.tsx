@@ -39,6 +39,14 @@ import {
   Slide,
   Select as MuiSelect,
 } from "@mui/material";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -1216,6 +1224,8 @@ export const ProjectTaskDetails = () => {
   const [addingTodo, setAddingTodo] = useState(false);
   const [statuses, setStatuses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [projectName, setProjectName] = useState<string>("");
+  const [milestoneName, setMilestoneName] = useState<string>("");
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1444,6 +1454,42 @@ export const ProjectTaskDetails = () => {
     }
   };
 
+  const fetchProjectAndMilestoneNames = async () => {
+    try {
+      // Fetch project name
+      if (id) {
+        const projectResponse = baseUrl
+          ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          : await axios.get(`/project_managements/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        setProjectName(projectResponse.data.title || projectResponse.data.project_code || '');
+      }
+
+      // Fetch milestone name
+      if (mid) {
+        const milestoneResponse = baseUrl
+          ? await axios.get(`https://${baseUrl}/milestones/${mid}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          : await axios.get(`/milestones/${mid}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        setMilestoneName(milestoneResponse.data.title || '');
+      }
+    } catch (error) {
+      console.error('Failed to fetch project/milestone names:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (token && (id || mid)) {
+      fetchProjectAndMilestoneNames();
+    }
+  }, [token, id, mid]);
+
   useEffect(() => {
     if (activeTab === "subtasks" && taskDetails?.parent_id) {
       setActiveTab("dependency");
@@ -1452,10 +1498,48 @@ export const ProjectTaskDetails = () => {
 
   return (
     <div className="my-4 m-8">
-      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
+      {location.pathname.includes("projects") && (
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate(`/vas/projects/${id}/milestones/${mid}`)}
+                className="cursor-pointer"
+              >
+                {projectName || "Project"}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate(`/vas/projects/${id}/milestones`)}
+                className="cursor-pointer"
+              >
+                {milestoneName || "Milestone"}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate(`/vas/projects/${id}/milestones/${mid}/tasks`)}
+                className="cursor-pointer"
+              >
+                Tasks
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{taskDetails.title.split(' ').slice(0, 5).join(' ')}...</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
+
+      {/* <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
-      </Button>
+      </Button> */}
+
       <div className="pt-1">
         {isLoading ? (
           <>
@@ -1628,7 +1712,12 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="mt-4 overflow-hidden" ref={firstContentRef}>
-                <p className="text-sm text-gray-900">{taskDetails.description}</p>
+                <div
+                  className="prose prose-sm max-w-none quill-content"
+                  dangerouslySetInnerHTML={{
+                    __html: taskDetails?.description || '<p>No description provided</p>'
+                  }}
+                />
               </div>
             </div>
 

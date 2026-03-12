@@ -24,6 +24,7 @@ const DMConversation = () => {
     const emojiPickerRef = useRef(null);
     const isUserInitiatedScroll = useRef(false);
     const bottomRef = useRef(null);
+    const textareaRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState("chat");
     const [input, setInput] = useState("");
@@ -40,6 +41,10 @@ const DMConversation = () => {
     });
 
     const { manager: webSocketManager, connect } = useWebSocket();
+
+    useEffect(() => {
+        textareaRef.current.focus();
+    }, [id])
 
     useEffect(() => {
         console.log('🔌 WebSocket connection effect running');
@@ -180,7 +185,7 @@ const DMConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.user_id === currentUser.id && message.conversation_id !== id) {
+                    if (message.conversation_id !== id) {
                         return;
                     }
 
@@ -331,6 +336,7 @@ const DMConversation = () => {
                         )}
 
                         <textarea
+                            ref={textareaRef}
                             placeholder="Type here and hit enter"
                             className="w-full bg-transparent py-1 pr-2 pl-12 text-sm focus:outline-none resize-none max-h-24 overflow-y-auto"
                             rows={1}

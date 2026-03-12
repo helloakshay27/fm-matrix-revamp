@@ -259,7 +259,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const protocol = baseUrl.startsWith("https") ? "" : "https://";
 
       const response = await axios.get(
         `${protocol}${baseUrl}/communities/3/posts.json`,
@@ -388,7 +388,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const protocol = baseUrl.startsWith("https") ? "" : "https://";
 
       const formData = new FormData();
       formData.append("body", postText);
@@ -917,6 +917,39 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                           ) : null}
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Poll Options Display */}
+                  {post.poll_options && post.poll_options.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200 mt-3">
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📊 Poll</p>
+                      <div className="space-y-2.5">
+                        {post.poll_options.map((option: any, index: number) => {
+                          const totalVotes = post.poll_options.reduce((sum: number, opt: any) => sum + (opt.votes_count || 0), 0);
+                          const percentage = totalVotes > 0 ? ((option.votes_count || 0) / totalVotes) * 100 : 0;
+                          
+                          return (
+                            <div key={index} className="flex items-center gap-3">
+                              <button className="flex-1 text-left hover:opacity-80 transition-opacity">
+                                <div className="text-sm font-medium text-gray-900 mb-1">{option.name}</div>
+                                <div className="w-full bg-gray-300 rounded-full h-2.5 overflow-hidden">
+                                  <div
+                                    className="bg-[#C72030] h-full transition-all duration-300"
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </div>
+                              </button>
+                              <div className="text-sm font-semibold text-gray-700 min-w-fit">
+                                {percentage.toFixed(0)}%
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+                        Total votes: {post.poll_options.reduce((sum: number, opt: any) => sum + (opt.votes_count || 0), 0)}
+                      </p>
                     </div>
                   )}
 
@@ -1763,7 +1796,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold text-gray-900">
-                    Create Admin Post
+                    Create Poll
                   </h2>
                   <button
                     onClick={() => {
@@ -1883,7 +1916,18 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   Cancel
                 </button>
                 <button
-                  onClick={handlePublish}
+                  onClick={() => {
+                    const validOptions = pollOptions.filter((o) => o.trim());
+                    if (validOptions.length < 2) {
+                      toast.error("Please add at least 2 poll options");
+                      return;
+                    }
+                    if (!postText.trim()) {
+                      toast.error("Please add poll question/description");
+                      return;
+                    }
+                    handlePublish();
+                  }}
                   disabled={
                     !postText.trim() ||
                     pollOptions.filter((o) => o.trim()).length < 2
@@ -2074,71 +2118,96 @@ const TownHallCard = ({
 };
 
 // AutoScrollEvents Component
+interface UpcomingEventData {
+  title?: string;
+  event_name?: string;
+  event_date?: string;
+  event_time?: string;
+  description?: string;
+  event_description?: string;
+  location?: string;
+  image_url?: string;
+  logo?: { url?: string };
+}
+
 const AutoScrollEvents = () => {
-  const events = [
-    {
-      title: "Office Lunch Party",
-      date: "Saturday, Jan 8 at 8:30 pm",
-      description: "Get together to Party with Colleagues on Jan 8 at 8:30 pm.",
-      image:
-        "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=400&fit=crop",
-      month: "JAN",
-      day: "8",
-    },
-    {
-      title: "Wish Ketki Patle",
-      date: "Saturday, Jan 8 at 8:30 pm",
-      description:
-        "Let's rejoin all together tomorrow at 6:30 to celebrate her birthday.",
-      image:
-        "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&h=400&fit=crop",
-      month: "JAN",
-      day: "8",
-    },
-    {
-      title: "Wish Ketki Patle",
-      date: "Saturday, Jan 9 at 8:30 pm",
-      description:
-        "Let's rejoin all together tomorrow at 6:30 to celebrate her birthday.",
-      image:
-        "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&h=400&fit=crop",
-      month: "JAN",
-      day: "9",
-    },
-    {
-      title: "Team Building Workshop",
-      date: "Monday, Jan 15 at 2:00 pm",
-      description:
-        "Join us for an interactive team building session to strengthen collaboration.",
-      image:
-        "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=400&fit=crop",
-      month: "JAN",
-      day: "15",
-    },
-    {
-      title: "Product Launch Event",
-      date: "Friday, Jan 20 at 6:00 pm",
-      description:
-        "Celebrate the launch of our new product with the entire team.",
-      image:
-        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=400&fit=crop",
-      month: "JAN",
-      day: "20",
-    },
-  ];
+  const [events, setEvents] = useState<UpcomingEventData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl =
+          localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/pms/admin/events/upcoming_events.json?token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data && response.data.upcoming) {
+          setEvents(response.data.upcoming);
+        }
+      } catch (error) {
+        console.error("Failed to fetch upcoming events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUpcomingEvents();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full min-h-[100px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+      </div>
+    );
+  }
+
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=400&fit=crop";
+
+  const formattedEvents = events.map((ev: UpcomingEventData) => ({
+    title: ev.title || ev.event_name || "Upcoming Event",
+    date: ev.event_date
+      ? `${ev.event_date} ${ev.event_time || ""}`.trim()
+      : "Just announced",
+    description: ev.description || ev.event_description || ev.location || "",
+    image: ev.image_url || ev.logo?.url || fallbackImage,
+    month: "",
+    day: "",
+  }));
 
   // Duplicate events for seamless loop
-  const duplicatedEvents = [...events, ...events, ...events];
+  const duplicatedEvents =
+    formattedEvents.length > 0
+      ? [...formattedEvents, ...formattedEvents, ...formattedEvents]
+      : [];
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <div className="animate-scroll-vertical">
-        {duplicatedEvents.map((event, index) => (
-          <div key={index} className="mb-4">
-            <EventCard {...event} />
-          </div>
-        ))}
-      </div>
+      {duplicatedEvents.length > 0 ? (
+        <div className="animate-scroll-vertical">
+          {duplicatedEvents.map((event, index) => (
+            <div key={index} className="mb-4">
+              <EventCard {...event} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+          <Calendar className="w-12 h-12 mb-2 opacity-20" />
+          <p>No upcoming events</p>
+        </div>
+      )}
 
       <style>{`
         @keyframes scroll-vertical {
@@ -2210,6 +2279,11 @@ interface Post {
     id: string;
     url: string;
     document_content_type: string;
+  }>;
+  poll_options?: Array<{
+    id?: string;
+    name: string;
+    votes_count?: number;
   }>;
   likes_with_emoji?: {
     thumb?: number;

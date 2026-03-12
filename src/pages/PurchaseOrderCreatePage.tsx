@@ -34,7 +34,7 @@ import {
     AttachFile,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart,Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAddresses, getInventories } from '@/store/slices/materialPRSlice';
 
@@ -95,6 +95,10 @@ interface Item {
     taxRate: number;
     amount: number;
     account_id: number;
+    // fields used by the tax dropdown (tax groups/exemptions)
+    item_tax_type?: string;
+    tax_group_id?: number | null;
+    tax_exemption_id?: number | null;
 }
 
 export const PurchaseOrderCreatePage: React.FC = () => {
@@ -147,6 +151,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             taxRate: 0,
             amount: 0,
             account_id: 0
+            , item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null
         }
     ]);
 
@@ -158,6 +165,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [adjustment, setAdjustment] = useState(0);
     const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
     const [taxAmount2, setTaxAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
     const [addresses, setAddresses] = useState([])
 
     // Notes & Attachments
@@ -188,6 +196,21 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     // Dropdowns data
     const [itemOptions, setItemOptions] = useState<{ id: string; inventory_name: string; rate: number }[]>([]);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+
+    // additional tax dropdown data (copied from QuotesAdd)
+    const taxTypeOptions = [
+        { value: 'non_taxable', label: 'Non-Taxable' },
+        { value: 'out_of_scope', label: 'Out of Scope' },
+        { value: 'non_gst_supply', label: 'Non-GST Supply' },
+    ];
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+
+    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedExemption, setSelectedExemption] = useState('');
+    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
+    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
+    const [loadingExemptions, setLoadingExemptions] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -351,6 +374,56 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchTaxes();
         setSelectedTax('');
     }, [taxType]);
+
+    // Fetch tax groups for dropdown (same logic as QuotesAdd)
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        setLoadingTaxGroups(true);
+
+        axios
+            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((res) => {
+                setTaxGroups(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax groups:", error);
+            })
+            .finally(() => {
+                setLoadingTaxGroups(false);
+            });
+    }, []);
+
+    // Fetch item-level tax exemptions (used when non_taxable selected)
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        setLoadingExemptions(true);
+
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((res) => {
+                setCustomerExemptions(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax exemptions:", error);
+            })
+            .finally(() => {
+                setLoadingExemptions(false);
+            });
+    }, []);
 
     // Update taxAmount2 using percentage from selected tax option
     // Moved after calculations to avoid ReferenceError
@@ -517,6 +590,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             taxRate: 0,
             amount: 0,
             account_id: 0
+            , item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null
         }]);
     };
 
@@ -534,13 +610,37 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         : discountOnTotal;
     const afterDiscount = subTotal - totalDiscount;
 
+    // compute tax breakdown for any item-level tax groups (similar to QuotesAdd)
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
+        });
+    const taxBreakdown: any[] = [];
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach((rate: any) => {
+            const taxAmt = (group.itemAmount * rate.rate) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) {
+                existing.amount += taxAmt;
+            } else {
+                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmt });
+            }
+        });
+    });
+    const totalTaxGroups = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+
     // Find selected tax rate
     const selectedTaxObj = taxOptions.find(t => t.id === selectedTax);
     const taxRate = selectedTaxObj?.rate || 0;
     const taxAmount = (afterDiscount * taxRate) / 100;
 
-    // Update totalAmount to subtract TDS/TCS (taxAmount2)
-    const totalAmount = afterDiscount + adjustment - taxAmount2;
+    // Update totalAmount to subtract TDS/TCS (taxAmount2) and add any item-group taxes
+    const totalAmount = afterDiscount + totalTaxGroups + adjustment - taxAmount2;
 
     // Update taxAmount2 using percentage from selected tax option
     useEffect(() => {
@@ -549,7 +649,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             ? (subTotal * discountOnTotal) / 100
             : discountOnTotal;
         const calcAfterDiscount = subTotal - calcTotalDiscount;
-        
+
         const selected = taxOptions.find(t => t.name === selectedTax);
         // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
@@ -559,6 +659,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             setTaxAmount2(0);
         }
     }, [selectedTax, taxOptions, subTotal, discountOnTotal, discountTypeOnTotal]);
+
+    // Update totalAmount2 to include tax groups and adjustment
+    useEffect(() => {
+        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
+            ? (subTotal * discountOnTotal) / 100
+            : discountOnTotal;
+        const calcAfterDiscount = subTotal - calcTotalDiscount;
+        setTotalAmount2(calcAfterDiscount + totalTaxGroups - taxAmount2 + adjustment);
+    }, [subTotal, discountOnTotal, discountTypeOnTotal, totalTaxGroups, taxAmount2, adjustment]);
 
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -682,7 +791,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             // So likely the tax is GLOBAL, applied to the subtotal?
             // The Summary section has "Select a Tax".
             // So I should treat `selectedTax` as the global tax.
-
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
             const payload = {
                 pms_purchase_order: {
                     pms_supplier_id: selectedVendor?.id,
@@ -712,7 +824,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     // For now, mapping what's available.
                     tax_percentage: selectedTaxObj?.rate || 0,
 
-                    pms_po_inventories_attributes: inventoriesAttributes
+                    pms_po_inventories_attributes: inventoriesAttributes,
+
+                    /* NEW FIELDS ADDED */
+                    sub_total_amount: subTotal,
+                    taxable_amount: totalGSTAmount,
+                    lock_account_tax_amount: taxAmount2,
                 },
                 attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
@@ -1078,26 +1195,26 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
                                                         {accountGroups.length > 0
                                                             ? accountGroups.map((group) =>
-                                                                  group.ledgers && group.ledgers.length > 0
-                                                                      ? [
-                                                                            <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
-                                                                            ...group.ledgers.map((ledger: any) => (
-                                                                                <MenuItem key={ledger.id} value={ledger.id}>
-                                                                                    {ledger.name}
-                                                                                </MenuItem>
-                                                                            )),
-                                                                        ]
-                                                                      : (
-                                                                            <MenuItem key={`group-${group.id}`} value={group.id}>
-                                                                                {group.group_name}
+                                                                group.ledgers && group.ledgers.length > 0
+                                                                    ? [
+                                                                        <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
+                                                                        ...group.ledgers.map((ledger: any) => (
+                                                                            <MenuItem key={ledger.id} value={ledger.id}>
+                                                                                {ledger.name}
                                                                             </MenuItem>
-                                                                        )
-                                                              )
+                                                                        )),
+                                                                    ]
+                                                                    : (
+                                                                        <MenuItem key={`group-${group.id}`} value={group.id}>
+                                                                            {group.group_name}
+                                                                        </MenuItem>
+                                                                    )
+                                                            )
                                                             : accountLedgers.map((ledger: any) => (
-                                                                  <MenuItem key={ledger.id} value={ledger.id}>
-                                                                      {ledger.name}
-                                                                  </MenuItem>
-                                                              ))}
+                                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                                    {ledger.name}
+                                                                </MenuItem>
+                                                            ))}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1122,36 +1239,47 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 200 }}>
+                                                <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        value={item.tax || ''}
-                                                        onChange={(e) => updateItem(index, 'tax', e.target.value)}
+                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
-                                                        size="small"
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            // Static tax types
+                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                updateItem(index, "item_tax_type", value);
+                                                                updateItem(index, "tax_group_id", null);
+
+                                                                if (value === "non_taxable") {
+                                                                    setCurrentItemIndex(index);
+                                                                    setExemptionModalOpen(true);
+                                                                }
+                                                            }
+                                                            // Tax group selected
+                                                            else {
+                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "tax_group_id", value);
+                                                            }
+                                                        }}
                                                     >
-                                                        <MenuItem value="">Select Tax Type</MenuItem>
-                                                        <MenuItem value="non-taxable">Non-Taxable</MenuItem>
-                                                        <MenuItem value="out-of-scope">
-                                                            <div>
-                                                                <div>Out of Scope</div>
-                                                                <div style={{ fontSize: '0.75rem', color: '#666' }}>Supplies on which you don't charge any GST or include them in the returns.</div>
-                                                            </div>
-                                                        </MenuItem>
-                                                        <MenuItem value="non-gst">
-                                                            <div>
-                                                                <div>Non-GST Supply</div>
-                                                                <div style={{ fontSize: '0.75rem', color: '#666' }}>Supplies which do not come under GST such as petroleum products and liquor.</div>
-                                                            </div>
-                                                        </MenuItem>
-                                                        <Divider sx={{ my: 1 }} />
-                                                        <ListSubheader>Tax Group</ListSubheader>
-                                                        <MenuItem value="gst0">GST0 [0%]</MenuItem>
-                                                        <MenuItem value="gst5">GST5 [5%]</MenuItem>
-                                                        <MenuItem value="gst12">GST12 [12%]</MenuItem>
-                                                        <MenuItem value="gst18">GST18 [18%]</MenuItem>
-                                                        <MenuItem value="gst40">GST40 [40%]</MenuItem>
-                                                        <MenuItem value="gst28">GST28 [28%]</MenuItem>
-                                                        <MenuItem value="gst23">GST [23%]</MenuItem>
+                                                        <MenuItem value="">Select Tax</MenuItem>
+
+                                                        {/* Static Options */}
+                                                        {taxTypeOptions.map((opt) => (
+                                                            <MenuItem key={opt.value} value={opt.value}>
+                                                                {opt.label}
+                                                            </MenuItem>
+                                                        ))}
+
+                                                        {/* Divider */}
+                                                        <MenuItem disabled>Tax Groups</MenuItem>
+
+                                                        {/* Tax Groups */}
+                                                        {taxGroups.map((group) => (
+                                                            <MenuItem key={group.id} value={group.id}>
+                                                                {group.name}
+                                                            </MenuItem>
+                                                        ))}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1193,87 +1321,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     </div>
                 </Section>
 
-                {/* Summary Section */}
-                {/* <Section title="Summary" icon={<Package className="w-5 h-5" />}>
-                    <div className="flex justify-end">
-                        <div className="w-full md:w-1/2 space-y-4">
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
-                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
-                            </div>
 
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
-                                <div className="flex items-center gap-2">
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || 0)}
-                                        inputProps={{ min: 0, max: 100, step: 0.01 }}
-                                        sx={{ width: 80 }}
-                                    />
-                                    <span className="text-sm">%</span>
-                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            <Divider />
-
-                            <div className="flex flex-wrap items-center gap-3 py-2">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-sm font-medium">Tax Type:</span>
-                                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                                        <Select
-                                            value={taxType}
-                                            onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
-                                        >
-                                            <MenuItem value="TDS">TDS</MenuItem>
-                                            <MenuItem value="TCS">TCS</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </div>
-
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <Select
-                                        value={selectedTax}
-                                        onChange={(e) => setSelectedTax(e.target.value)}
-                                        displayEmpty
-                                    >
-                                        <MenuItem value="">Select a Tax</MenuItem>
-                                        {taxOptions.map(tax => (
-                                            <MenuItem key={tax.id} value={tax.id}>{tax.name}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <span className="font-semibold text-base text-red-600">-₹{taxAmount.toFixed(2)}</span>
-                            </div>
-
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Adjustment</span>
-                                <div className="flex items-center gap-2">
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
-                                        inputProps={{ step: 0.01 }}
-                                        sx={{ width: 100 }}
-                                    />
-                                </div>
-                            </div>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
-                                <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </Section> */}
-
-                 <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
                     <div className="flex justify-end">
                         <div className="w-full md:w-1/2 space-y-4">
                             <div className="flex justify-between items-center py-2">
@@ -1304,6 +1353,17 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
+
+                            {taxBreakdown.map((tax, index) => (
+                                <div key={index} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {tax.name} ({tax.rate}%)
+                                    </span>
+                                    <span className="font-semibold text-base">
+                                        ₹{tax.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
 
                             <Divider />
 
@@ -1377,7 +1437,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -1780,6 +1840,60 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
                 </DialogActions>
+            </Dialog>
+
+            {/* Exemption modal used by tax dropdown */}
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+
+                <DialogContent>
+
+                    <FormControl fullWidth>
+
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+
+                            <MenuItem value="">Select Reason</MenuItem>
+
+                            {customerExemptions.map(ex => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                    {ex.reason}
+                                </MenuItem>
+                            ))}
+
+                        </Select>
+
+                    </FormControl>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
+                            }
+
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
+
+                </DialogActions>
+
             </Dialog>
         </div>
     );
