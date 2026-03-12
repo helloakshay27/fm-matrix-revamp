@@ -196,7 +196,9 @@ import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 import { EditPermitChecklist } from "./pages/EditPermitCheklist";
+import CompanySetup from "./pages/CompanySetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
+
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -4815,6 +4817,10 @@ function App() {
                             path="/master/inventory-type/edit/:id"
                             element={<EditInventoryTypePage />}
                           />
+                           <Route
+                             path="/settings/company-hub/Company-setup"
+                             element={<CompanySetup />}
+                           />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
