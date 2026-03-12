@@ -137,7 +137,7 @@ const ItemsEdit = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [exemptions, setExemptions] = useState([]);
-
+    const [taxSettings, setTaxSettings] = useState<any | null>(null);
     const [form, setForm] = useState({
         type: "goods",
         name: "",
@@ -186,6 +186,31 @@ const ItemsEdit = () => {
         };
         fetchAccountGroups();
     }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
+    React.useEffect(() => {
+        const fetchTaxSettings = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/1/tax_settings.json`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                console.log("Tax settings:", res.data);
+                setTaxSettings(res.data || null); // adjust based on response
+            } catch (err) {
+                console.error("Failed to fetch tax settings", err);
+                setTaxSettings(null);
+            }
+        };
+
+        fetchTaxSettings();
+    }, []);
 
 
     React.useEffect(() => {
@@ -1301,6 +1326,34 @@ const ItemsEdit = () => {
                         </div>
                     </div>
                 </div>
+
+                {form.tax_preference === "taxable" && taxSettings && (
+                    <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
+
+                        <div className="md:col-span-2 font-semibold text-gray-700">
+                            Default Tax Rates
+                        </div>
+
+                        {/* Intra State Tax (CGST + SGST) */}
+                        <TextField
+                            label="Intra State Tax Rate"
+                            value={taxSettings.intra_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                        />
+
+                        {/* Inter State Tax (IGST) */}
+                        <TextField
+                            label="Inter State Tax Rate"
+                            value={taxSettings.inter_state_tax_rate || "-"}
+                            disabled
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                        />
+
+                    </div>
+                )}
 
                 {/* BUTTONS */}
                 <div className="flex gap-3 mt-10 mb-5 justify-center">

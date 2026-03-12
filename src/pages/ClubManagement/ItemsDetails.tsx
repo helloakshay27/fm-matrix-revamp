@@ -141,6 +141,8 @@ export const ItemsDetails = () => {
         hsn_code: "",
         sac: "",
         supplier:"",
+        intra_state_tax_rate: "",
+        inter_state_tax_rate:"",
     });
 
 
@@ -195,6 +197,8 @@ export const ItemsDetails = () => {
                     sku: data.sku || "",
                     hsn_code: data.hsn_code || "",
                     sac: data.sac || "",
+                    intra_state_tax_rate:data.intra_state_tax_rate || "",
+                    inter_state_tax_rate: data.inter_state_tax_rate || "",
                 });
             } catch (error) {
                 toast.error("Failed to fetch item details");
@@ -516,7 +520,26 @@ export const ItemsDetails = () => {
                             </div>
                         </div>
 
-                        
+                         <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Default Tax Rates</h4>
+                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Intra State Tax Rate</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.intra_state_tax_rate || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Inter State Tax Rate</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.inter_state_tax_rate || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Reporting Tags */}
                         <div>
