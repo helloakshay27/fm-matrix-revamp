@@ -85,12 +85,12 @@ const SalesByItemReport: React.FC = () => {
   };
 
   const totalQty = salesByItemData.reduce(
-    (sum, row) => sum + row.quantity_sold,
+    (sum, row) => sum + (row.quantity_sold || 0),
     0
   );
 
   const totalAmount = salesByItemData.reduce(
-    (sum, row) => sum + row.amount,
+    (sum, row) => sum + (row.amount || 0),
     0
   );
 
@@ -134,12 +134,12 @@ const SalesByItemReport: React.FC = () => {
                     onClick={() => handleQuantityClick(row.name, row)}
                     className="text-[#C72030] hover:text-[#A01020] underline font-medium"
                   >
-                    {row.quantity_sold.toFixed(2)}
+                    {(row.quantity_sold || 0).toFixed(2)}
                   </button>
                 </td>
 
                 <td className="border px-4 py-3 text-right">
-                  ₹{row.amount.toFixed(2)}
+                  ₹{(row.amount || 0).toFixed(2)}
                 </td>
 
                 <td className="border px-4 py-3 text-right">
