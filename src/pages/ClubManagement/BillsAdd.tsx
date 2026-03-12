@@ -770,9 +770,9 @@ export const BillsAdd: React.FC = () => {
     console.log("items:", items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
-            return;
-        }
+        // if (!saveAsDraft && !validate()) {
+        //     return;
+        // }
 
         setIsSubmitting(true);
 
@@ -810,7 +810,11 @@ export const BillsAdd: React.FC = () => {
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_bill[status]', 'draft');
+            // formData.append('lock_account_bill[status]', 'draft');
+            formData.append(
+  'lock_account_bill[status]',
+  saveAsDraft ? 'draft' : 'open'
+);
             formData.append('lock_account_bill[subject]', subject || '');
             formData.append('lock_account_bill[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
@@ -1964,7 +1968,7 @@ export const BillsAdd: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Submitting...' : 'Save as Open'}
                 </Button>
             </div>
 
