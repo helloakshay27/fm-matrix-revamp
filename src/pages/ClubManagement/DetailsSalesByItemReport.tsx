@@ -1,33 +1,92 @@
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import TextField from '@mui/material/TextField';
+
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileCog } from 'lucide-react';
+import axios from "axios";
+import { toast } from "sonner";
 
-const data = [
-  {
-    customer: "Lockated",
-    quantity: 1,
-    amount: 490,
-    avgPrice: 490,
-  },
-];
+interface SalesItem {
+  id: number;
+  name: string;
+  sku: string;
+  quantity_sold: number;
+  amount: number;
+  amount_with_tax: number;
+  average: number | null;
+}
+
+interface CustomerSale {
+  customer: string;
+  quantity: number;
+  amount: number;
+  avgPrice: number;
+}
+
 
 const DetailsSalesByItemReport = () => {
   const { itemName } = useParams<{ itemName: string }>();
   const navigate = useNavigate();
+  const [itemSales, setItemSales] = useState<SalesItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchItemSales = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        if (!baseUrl || !token) {
+          setError("Missing base URL or token");
+          setLoading(false);
+          return;
+        }
+        const url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = Array.isArray(response.data) ? response.data : [];
+        setItemSales(data);
+      } catch (err) {
+        setError("Failed to fetch item sales");
+        toast.error("Failed to fetch item sales");
+        setItemSales([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItemSales();
+  }, [baseUrl, token]);
+
+  // Filter for the current itemName
+  const filteredSales = itemSales.filter(
+    (item) => item.name?.toLowerCase() === (itemName || "").toLowerCase()
+  );
+
+  // Map to table rows (simulate customer breakdown if needed)
+  // For now, show one row per item (API does not provide customer breakdown)
+  const tableData: CustomerSale[] = filteredSales.map((item) => ({
+    customer: item.name,
+    quantity: item.quantity_sold || 0,
+    amount: item.amount || 0,
+    avgPrice: item.average ?? 0,
+  }));
+
+  const totalQty = tableData.reduce((sum, r) => sum + (r.quantity || 0), 0);
+  const totalAmount = tableData.reduce((sum, r) => sum + (r.amount || 0), 0);
 
   const handleBack = () => {
-    // return to item report listing
     navigate('/accounting/reports/sales-by-item');
   };
 
-  const totalQty = data.reduce((sum, r) => sum + r.quantity, 0);
-  const totalAmount = data.reduce((sum, r) => sum + r.amount, 0);
-
   return (
     <div className="p-6 bg-[#f9f7f2] min-h-screen">
-
       <div className="bg-white rounded-lg border-2 p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
           <Button
@@ -44,77 +103,65 @@ const DetailsSalesByItemReport = () => {
             Sales by Item - {itemName}
           </h3>
         </div>
-
-        {/* no filters required for details page */}
       </div>
-
       {/* TABLE */}
-
       <div className="bg-white border rounded-md overflow-hidden">
-
-        <table className="w-full">
-
-          <thead className="bg-gray-100 text-sm">
-
-            <tr>
-              <th className="text-left p-3">Customer Name</th>
-              <th className="text-center p-3">Quantity</th>
-              <th className="text-right p-3">Amount</th>
-              <th className="text-right p-3">Average Price</th>
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {data.map((row, index) => (
-
-              <tr key={index} className="border-t">
-
-                <td className="p-3 text-blue-600">
-                  {row.customer}
-                </td>
-
-                <td className="p-3 text-center">
-                  {row.quantity}
-                </td>
-
-                <td className="p-3 text-right">
-                  ₹{row.amount.toFixed(2)}
-                </td>
-
-                <td className="p-3 text-right">
-                  ₹{row.avgPrice.toFixed(2)}
-                </td>
-
+        {loading ? (
+          <div className="flex justify-center items-center p-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-red-600">{error}</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-100 text-sm">
+              <tr>
+                <th className="text-left p-3">Customer Name</th>
+                <th className="text-center p-3">Quantity</th>
+                <th className="text-right p-3">Amount</th>
+                <th className="text-right p-3">Average Price</th>
               </tr>
-
-            ))}
-
-            {/* TOTAL */}
-
-            <tr className="border-t font-semibold bg-gray-50">
-
-              <td className="p-3">Total</td>
-
-              <td className="p-3 text-center">
-                {totalQty.toFixed(2)}
-              </td>
-
-              <td className="p-3 text-right">
-                ₹{totalAmount.toFixed(2)}
-              </td>
-
-              <td></td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
+            </thead>
+            <tbody>
+              {tableData.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                tableData.map((row, index) => (
+                  <tr key={index} className="border-t">
+                    <td className="p-3 text-blue-600">
+                      {row.customer}
+                    </td>
+                    <td className="p-3 text-center">
+                      {(row.quantity || 0).toFixed(2)}
+                    </td>
+                    <td className="p-3 text-right">
+                      ₹{(row.amount || 0).toFixed(2)}
+                    </td>
+                    <td className="p-3 text-right">
+                      ₹{(row.avgPrice || 0).toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              )}
+              {/* TOTAL */}
+              <tr className="border-t font-semibold bg-gray-50">
+                <td className="p-3">Total</td>
+                <td className="p-3 text-center">
+                  {totalQty.toFixed(2)}
+                </td>
+                <td className="p-3 text-right">
+                  ₹{totalAmount.toFixed(2)}
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </div>
-
     </div>
   );
 };

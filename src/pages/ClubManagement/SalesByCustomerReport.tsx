@@ -42,37 +42,40 @@ const SalesByCustomerReport: React.FC = () => {
     const [activeBalanceTab, setActiveBalanceTab] = useState<"Sales by Customer">("Sales by Customer");
 
     // Fetch sales data from API
-    useEffect(() => {
-        const fetchSalesData = async () => {
-            setLoading(true);
-            try {
-                if (!baseUrl || !token) {
-                    toast.error('Missing base URL or token');
-                    setLoading(false);
-                    return;
-                }
-
-                const url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=1`;
-                const response = await axios.get(url, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = Array.isArray(response.data) ? response.data : [];
-                setSalesByCustomerData(data);
-                console.log('Fetched sales by customer:', data);
-            } catch (error) {
-                console.error('Error fetching sales data:', error);
-                toast.error('Failed to fetch sales data');
-                setSalesByCustomerData([]);
-            } finally {
+    // API fetch with date filter
+    const fetchSalesData = async (fromDate?: string, toDate?: string) => {
+        setLoading(true);
+        try {
+            if (!baseUrl || !token) {
+                toast.error('Missing base URL or token');
                 setLoading(false);
+                return;
             }
-        };
+            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=1`;
+            if (fromDate && toDate) {
+                // Format dates as DD/MM/YYYY
+                url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
+            }
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = Array.isArray(response.data) ? response.data : [];
+            setSalesByCustomerData(data);
+            console.log('Fetched sales by customer:', data);
+        } catch (error) {
+            console.error('Error fetching sales data:', error);
+            toast.error('Failed to fetch sales data');
+            setSalesByCustomerData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchSalesData();
+    useEffect(() => {
+        fetchSalesData(); // initial fetch without date filter
     }, [baseUrl, token]);
 
     const SalesTable = () => {
@@ -169,10 +172,14 @@ const SalesByCustomerReport: React.FC = () => {
             alert('Please select From Date and To Date');
             return;
         }
-        console.log('From Date:', filters.fromDate);
-        console.log('To Date:', filters.toDate);
-        // later you can call API here
-        // fetchBalanceSheet(form.fromDate, form.toDate, form.financialYear)
+        // Convert YYYY-MM-DD to DD/MM/YYYY for API
+        const formatDate = (date: string) => {
+            const [yyyy, mm, dd] = date.split('-');
+            return `${dd}/${mm}/${yyyy}`;
+        };
+        const fromDate = formatDate(filters.fromDate);
+        const toDate = formatDate(filters.toDate);
+        fetchSalesData(fromDate, toDate);
     };
 
     const handleInvoiceCountClick = (customerName: string) => {
