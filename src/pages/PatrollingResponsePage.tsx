@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, CheckCircle, AlertCircle, Activity, Plus, X, ChevronLeft, ChevronRight, Paperclip, CalendarIcon, Filter } from 'lucide-react';
+import { Shield, CheckCircle, AlertCircle, Activity, X, ChevronLeft, ChevronRight, Paperclip, CalendarIcon, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BulkUploadDialog } from '@/components/BulkUploadDialog';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
@@ -134,28 +132,6 @@ const toOpts = (arr: RawItem[], fallback: string): DropdownOption[] =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PatrollingResponsePage = () => {
-  // Action panel state (like ScheduleListDashboard)
-  const [showActionPanel, setShowActionPanel] = useState(false);
-  // Bulk upload dialog state
-  const [showImportModal, setShowImportModal] = useState(false);
-
-  const handleActionClick = () => setShowActionPanel((prev) => !prev);
-
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button
-        onClick={handleActionClick}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
-      >
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-        Action
-      </Button>
-    </div>
-  );
-
-  // Define selectionActions for SelectionPanel
-  const selectionActions: { label: string; icon: React.ElementType; onClick?: () => void }[] = [];
-
   const navigate = useNavigate();
   const [responseData, setResponseData] = useState<PatrollingResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -890,13 +866,6 @@ export const PatrollingResponsePage = () => {
 
         {/* List Tab */}
         <TabsContent value="list" className="mt-0">
-          {/* Bulk Upload Dialog */}
-          <BulkUploadDialog
-            open={showImportModal}
-            onOpenChange={setShowImportModal}
-            title="Bulk Upload Patrolling Checkpoints"
-            context="patrolling"
-          />
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
             {/* Total Visits Card */}
@@ -1002,14 +971,6 @@ export const PatrollingResponsePage = () => {
           {/* Enhanced Data Table */}
           <div className="overflow-x-auto animate-fade-in">
             <div className="space-y-4">
-            {showActionPanel && (
-              <SelectionPanel
-                actions={selectionActions}
-                onClearSelection={() => setShowActionPanel(false)}
-                onImport={() => setShowImportModal(true)}
-              />
-            )}
-          
             <EnhancedTable
               data={responseData}
               columns={enhancedTableColumns}
@@ -1020,7 +981,6 @@ export const PatrollingResponsePage = () => {
               handleExport={handleExport}
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
-              leftActions={renderCustomActions()}
               searchPlaceholder="Search responses..."
               pagination={false}
               pageSize={pagination.per_page}

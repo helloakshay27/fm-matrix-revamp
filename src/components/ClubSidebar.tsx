@@ -332,10 +332,10 @@ const modulesByPackage = {
       name: "Sales by Item",
       href: "/accounting/reports/sales-by-item",
     },
-    {
-      name: "Sales by Sales Person",
-      href: "/accounting/reports/sales-by-sales-person",
-    },
+    // {
+    //   name: "Sales by Sales Person",
+    //   href: "/accounting/reports/sales-by-sales-person",
+    // },
     {
       name: "Sales Summary",
       href: "/accounting/reports/sales-summary",
