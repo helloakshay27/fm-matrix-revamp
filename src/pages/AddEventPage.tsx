@@ -508,9 +508,6 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
-                  inputProps={{
-                    min: new Date().toISOString().split('T')[0],
-                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',
